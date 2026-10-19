@@ -5,22 +5,22 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%26%20pgvector-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/afawzy886619888866-cloud/Sierra-Estates)
-[![Inventory](https://img.shields.io/badge/Inventory-11%2C488%20Units%20(11%2C017%20Synced)-3ECF8E)](https://sierra-estates.net)
+[![Inventory](https://img.shields.io/badge/Inventory-12%2C443%20Units%20(12%2C333%20Synced)-3ECF8E)](https://sierra-estates.net)
 [![Production](https://img.shields.io/badge/Status-100%25%20Production%20Ready-gold.svg)](https://sierra-estates.net)
 [![Deploy](https://img.shields.io/badge/Deploy%20Gates-9%2F9%20Passed-brightgreen)](https://sierra-estates.net)
 <!-- markdownlint-disable-next-line MD051 -->
 [![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainers)
 
-> **Sierra Estates Realty** is the premier enterprise luxury PropTech intelligence platform engineered for the Egyptian luxury property market (New Cairo / Fifth Settlement). It unites client property discovery, algorithmic valuation, automated WhatsApp & Telegram lead concierges, interactive spatial masterplan maps, and an autonomous multi-agent fleet grounded by a unified **Obsidian + ECC Memory Brain Engine**.
+> **Sierra Estates Realty** is the premier enterprise luxury PropTech intelligence platform engineered for the Egyptian luxury property market (New Cairo / Fifth Settlement). It unites client property discovery, algorithmic valuation, automated WhatsApp & Telegram lead concierges, interactive spatial masterplan maps, and an autonomous multi-agent fleet grounded by a unified **RAG Memory Brain Engine (Obsidian + ECC + Supabase pgvector)**.
 
 ---
 
 ## 🏛️ System Architecture
 
-The platform operates as a high-performance **Turborepo** monorepo featuring a dual-domain Next.js 16 deployment backed by Supabase PostgreSQL:
+The platform operates as a high-performance **Turborepo** monorepo featuring a dual-domain Next.js 16 deployment backed by Supabase PostgreSQL & pgvector:
 
 - **Client Web Portal ([`https://sierra-estates.net`](https://sierra-estates.net)):** High-polish luxury buyer experience featuring deep obsidian glassmorphism, high-contrast Plus Jakarta Sans typography, interactive Leaflet spatial masterplan map with GPS polygon boundaries, 3D virtual tours, real-time ROI/installment calculators, AI investment teasers, multilingual search (Arabic/English), and Easy Listing intake.
-- **Admin Intelligence OS ([`https://admin.sierra-estates.net`](https://admin.sierra-estates.net)):** Full-featured operational command deck with RBAC session guards, live master inventory governance (**11,488 verified units — 11,017 synced to Supabase**), owner negotiation tracking, CRM pipelines, agent hubs, and automated WhatsApp outreach queues.
+- **Admin Intelligence OS ([`https://admin.sierra-estates.net`](https://admin.sierra-estates.net)):** Full-featured operational command deck with RBAC session guards, live master inventory governance (**12,443 verified listings — 12,333 unique units synced to Supabase & Map**), owner negotiation tracking, CRM pipelines, agent hubs, and automated WhatsApp outreach queues.
 
 ```mermaid
 flowchart TD
@@ -191,6 +191,46 @@ pnpm dev:web
 ```
 
 The client portal will be available at `http://localhost:3000`.
+
+### Canonical Commands (Run from repo root)
+
+```bash
+pnpm dev                   # Start dev server
+pnpm build                 # Production build
+pnpm lint                  # Lint all packages
+pnpm type-check            # TypeScript type-check across all packages
+pnpm test                  # Run Jest test suite (143 suites, 1,542 tests)
+pnpm test:ci               # CI mode with coverage
+pnpm test:prod             # Live production smoke (14/14 assertions)
+pnpm deploy:check          # 9-stage deploy readiness gate
+pnpm check:backend         # Verify Supabase is canonical backend
+pnpm check:public-env      # Verify no secrets in NEXT_PUBLIC_* vars
+pnpm deploy:supabase       # Apply Supabase schema migrations
+pnpm migrate:supabase      # Migrate legacy data to Supabase
+pnpm env:sync              # Sync env vars from Vercel project
+pnpm fetch:real-data       # Fetch live real-estate data
+pnpm export:inventory      # Generate Excel inventory exports
+pnpm briefing:daily        # Daily executive intelligence briefing
+pnpm mcp:smoke-test        # MCP protocol smoke test (19/19)
+pnpm run-harness           # AI reasoning harness (10/10)
+```
+
+---
+
+## 📁 Documentation Index
+
+| Document | Purpose |
+|---|---|
+| **[README.md](./README.md)** | Unified project overview — start here |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | Runtime topology, repository boundaries, data/write boundaries |
+| **[DEPLOYMENT.md](./DEPLOYMENT.md)** | Deployment matrix, backend policy, canonical command set |
+| **[SECURITY.md](./SECURITY.md)** | Active security contract, guardrails, checklist |
+| **[CONTRIBUTING.md](./CONTRIBUTING.md)** | Local setup, branching, PR validation, code standards |
+| **[MASTER_PROJECT_ROADMAP.md](./MASTER_PROJECT_ROADMAP.md)** | M1–M12 milestone summary (all 12 completed) |
+| **[API.md](./API.md)** | Public + admin API endpoint documentation |
+| **[AGENTS.md](./AGENTS.md)** | Agent operational briefing (MCD protocol entrance) |
+| **[GEMINI.md](./GEMINI.md)** | Antigravity / Gemini project guidelines |
+| **[docs/MASTER_PROJECT_PLAN.md](./docs/MASTER_PROJECT_PLAN.md)** | Authoritative master project plan |
 
 ---
 
