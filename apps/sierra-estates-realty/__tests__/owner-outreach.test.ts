@@ -103,8 +103,18 @@ describe('OwnerOutreachService — Batch Enqueue & Schedule Scheduling', () => {
 
     expect(typeof slot0).toBe('string');
     expect(typeof slot1).toBe('string');
-    const diff = new Date(slot1).getTime() - new Date(slot0).getTime();
-    expect(diff).toBeCloseTo(3600000, -3); // ~1 hour difference
+    // 2026-10-19: slots are window-clamped — when "now" is outside the
+    // 12:00-20:00 Cairo window both offsets roll to the SAME 12:00 opening
+    // (diff 0); inside the window the offset spreads them ~1h apart.
+    const diff = Math.abs(new Date(slot1).getTime() - new Date(slot0).getTime());
+    expect(diff).toBeLessThanOrEqual(3600000 + 500);
+    const hourOf = (iso: string) =>
+      Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', hour12: false, hour: '2-digit' })
+        .format(new Date(iso))) % 24;
+    expect(hourOf(slot0)).toBeGreaterThanOrEqual(12);
+    expect(hourOf(slot0)).toBeLessThan(20);
+    expect(hourOf(slot1)).toBeGreaterThanOrEqual(12);
+    expect(hourOf(slot1)).toBeLessThan(20);
   });
 
   it('enqueues batch capped at requested size (40)', async () => {
@@ -137,5 +147,68 @@ describe('OwnerOutreachService — Batch Enqueue & Schedule Scheduling', () => {
     expect(status.config.batchSizePerNumber).toBe(40);
     expect(typeof status.currentCairoHour).toBe('number');
     expect(typeof status.isOperatingWindow).toBe('boolean');
+  });
+});
+
+// ── 2026-10-19 fix: operating-window enforcement ──────────────────────────
+describe('OwnerOutreachService — Operating-window enforcement (2026-10-19 fix)', () => {
+  // currentHourInZone is re-exported through the (partially mocked) module;
+  // the mock spreads jest.requireActual, so this is the REAL implementation.
+  const { currentHourInZone } = jest.requireActual('../lib/server/whatsapp-queue');
+
+  const cairoClock = (d: Date) => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Cairo', hour12: false,
+      hour: '2-digit', minute: '2-digit',
+    }).formatToParts(d);
+    const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? 0) % 24;
+    const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? 0);
+    return { hour, minute };
+  };
+
+  it('every scheduled slot lands inside the 12:00-20:00 Cairo window', () => {
+    for (const offset of [0, 3, 12, 26]) {
+      const slot = new Date(OwnerOutreachService.getNextHourlySlot(offset));
+      const { hour } = cairoClock(slot);
+      expect(hour).toBeGreaterThanOrEqual(12);
+      expect(hour).toBeLessThan(20);
+    }
+  });
+
+  it('an out-of-window "now" rolls forward to exactly the next 12:00 Cairo opening', () => {
+    const nowCairoHour = currentHourInZone('Africa/Cairo', new Date());
+    const slot = new Date(OwnerOutreachService.getNextHourlySlot(0));
+    const { hour, minute } = cairoClock(slot);
+    if (nowCairoHour >= 12 && nowCairoHour < 20) {
+      // In-window: unchanged pass-through behavior.
+      expect(hour).toBe(nowCairoHour);
+    } else if (nowCairoHour < 12) {
+      // Before the window: today's 12:00 opening, sharp.
+      expect(hour).toBe(12);
+      expect(minute).toBe(0);
+    } else {
+      // After 20:00: tomorrow's 12:00 opening, sharp.
+      expect(hour).toBe(12);
+      expect(minute).toBe(0);
+      expect(slot.getTime()).toBeGreaterThan(Date.now());
+    }
+  });
+
+  it('rolled slots are always in the future (never dispatched in the past)', () => {
+    const slot = new Date(OwnerOutreachService.getNextHourlySlot(0));
+    expect(slot.getTime()).toBeGreaterThan(Date.now() - 60_000);
+  });
+
+  it('the eligible-inventory source list contains no dead Windows paths', async () => {
+    // The H:/Sheets/… paths could never resolve on Linux hosts; the fix
+    // removed them. Guard against reintroduction by checking the source.
+    const source = require('fs').readFileSync(
+      require('path').join(__dirname, '..', 'lib', 'services', 'OwnerOutreachService.ts'),
+      'utf8',
+    );
+    expect(source).not.toMatch(/H:[\\/]/);
+    // Silent catch blocks are also forbidden in this service (they hide
+    // canonical-source failures and quietly shrink the outreach pool).
+    expect(source).not.toMatch(/catch\s*\(\)\s*\{\s*\}|catch\s*\{\s*\}/);
   });
 });

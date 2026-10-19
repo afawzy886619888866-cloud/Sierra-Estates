@@ -109,17 +109,52 @@ export function generateOwnerOutreachMessage(owner: OwnerInventoryItem): string 
 
 export class OwnerOutreachService {
   /**
-   * Reads inventory sheets, finding direct owners with valid mobile contacts.
+   * Reads inventory, finding direct owners with valid mobile contacts.
+   *
+   * 2026-10-19 fix: the Windows drive-letter sheet paths were dead on every
+   * real host (Vercel/EC2 run Linux) — removed. Canonical source order is now
+   * Supabase `listings` (owner-direct rows) first, repo `data/*.csv`
+   * exports second (the workflow-09 sheet export lives there). DB errors
+   * are logged, never silently swallowed (a silent blend failure would
+   * hide the primary source and quietly shrink the outreach pool).
    */
   static async loadEligibleInventory(): Promise<OwnerInventoryItem[]> {
     const items: OwnerInventoryItem[] = [];
     const seenPhones = new Set<string>();
 
+    // 1. Canonical inventory (Supabase owner-direct listings)
+    try {
+      const dbListings = await listRecords<any>('listings', {
+        where: [{ column: 'owner_type', value: 'owner' }],
+        limit: 1000,
+      });
+      for (const row of dbListings) {
+        const e164 = normalizeEgyptPhone(row.owner_phone || row.contact_info);
+        if (e164 && !seenPhones.has(e164)) {
+          seenPhones.add(e164);
+          items.push({
+            id: row.id,
+            name: row.owner_name || '',
+            phone: row.owner_phone || '',
+            e164Phone: e164,
+            compound: row.compound || '',
+            zone: row.zone || row.location_area || '',
+            dealType: (row.deal_type || row.offer_type || 'sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
+            propertyType: row.property_type || '',
+            priceEgp: parseFloat(row.price_egp || row.price) || 0,
+            code: row.code || row.unit_code || row.id,
+          });
+        }
+      }
+      logger.info(`[OwnerOutreachService] Supabase blend: ${items.length} owner-direct listings`);
+    } catch (err: any) {
+      logger.error('[OwnerOutreachService] Supabase owner-listing blend FAILED (canonical source unavailable):', err?.message ?? err);
+    }
+
+    // 2. Repo data exports (Linux-relative — the workflow-09 sheet export)
     const possiblePaths = [
       path.resolve(process.cwd(), 'data/master_inventory_clean_no_duplicates.csv'),
       path.resolve(process.cwd(), 'data/Sierra_Estates_Owners_Rent_Master.csv'),
-      'H:/Sheets/Final_RealEstate_Database.xlsx',
-      'H:/Sheets/Owners_Inventory.json',
     ];
 
     for (const filePath of possiblePaths) {
@@ -165,83 +200,54 @@ export class OwnerOutreachService {
               code: codeIdx >= 0 ? (row[codeIdx] || '').replace(/['"]/g, '').trim() : `SE-O-${i}`,
             });
           }
-        } else if (filePath.endsWith('.json')) {
-          const content = fs.readFileSync(filePath, 'utf8');
-          const data = JSON.parse(content);
-          const list = Array.isArray(data) ? data : Object.values(data);
-
-          for (let idx = 0; idx < list.length; idx++) {
-            const item: any = list[idx];
-            const rawPhone = item.mobile || item.phone || item.contact_info || '';
-            const e164 = normalizeEgyptPhone(rawPhone);
-            if (!e164 || seenPhones.has(e164)) continue;
-
-            seenPhones.add(e164);
-            items.push({
-              id: item.id || `json-${idx}`,
-              name: item.name || '',
-              phone: rawPhone,
-              e164Phone: e164,
-              compound: item.compound || '',
-              zone: item.zone || '',
-              dealType: (item.deal_type || 'rent').toLowerCase().includes('rent') ? 'rent' : 'sale',
-              propertyType: item.property_type || item.type || '',
-              priceEgp: parseFloat(item.price_egp || item.price) || 0,
-              code: item.code || item.sierraCode || `SE-J-${idx}`,
-            });
-          }
         }
       } catch (err: any) {
         logger.warn(`[OwnerOutreachService] Failed reading ${filePath}:`, err?.message);
       }
     }
 
-    // Also blend in verified Supabase listings if available
-    try {
-      const dbListings = await listRecords<any>('listings', {
-        where: [{ column: 'owner_type', value: 'owner' }],
-        limit: 100,
-      });
-      for (const row of dbListings) {
-        const e164 = normalizeEgyptPhone(row.owner_phone || row.contact_info);
-        if (e164 && !seenPhones.has(e164)) {
-          seenPhones.add(e164);
-          items.push({
-            id: row.id,
-            name: row.owner_name || '',
-            phone: row.owner_phone || '',
-            e164Phone: e164,
-            compound: row.compound || '',
-            zone: row.zone || '',
-            dealType: (row.deal_type || 'sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
-            propertyType: row.property_type || '',
-            priceEgp: parseFloat(row.price_egp || row.price) || 0,
-            code: row.sierra_code || row.id,
-          });
-        }
-      }
-    } catch {}
-
     logger.info(`[OwnerOutreachService] Loaded ${items.length} eligible unique owner listings`);
     return items;
   }
 
   /**
-   * Computes the scheduled ISO timestamps distributed across the 12:00 PM to 8:00 PM window.
+   * Computes the scheduled ISO timestamps distributed across the operating
+   * window (12:00–20:00 Africa/Cairo, the canonical config in
+   * lib/server/whatsapp-queue.ts).
+   *
+   * 2026-10-19 fix: the previous version computed a Cairo-window target and
+   * then ignored it — jobs scheduled outside the window (nights, early
+   * mornings) were dispatched at `now + offset` anyway. Now a slot outside
+   * the window rolls forward to the next window opening (12:00 Cairo, same
+   * or next day), DST-safe via the Intl wall-clock offset.
    */
   static getNextHourlySlot(hourOffset: number = 0): string {
+    const WINDOW_START = 12; // 12:00 Cairo
+    const WINDOW_END = 20;   // 20:00 Cairo
     const now = new Date();
-    // Cairo is UTC+2 or UTC+3 depending on DST; use current hour in Africa/Cairo
-    const cairoHour = currentHourInZone('Africa/Cairo', now);
-    let _targetCairoHour = 12;
+    const scheduled = new Date(now.getTime() + hourOffset * 3600 * 1000);
 
-    if (cairoHour >= 12 && cairoHour < 20) {
-      _targetCairoHour = Math.min(19, cairoHour + hourOffset);
+    const cairoHour = currentHourInZone('Africa/Cairo', scheduled);
+    if (cairoHour >= WINDOW_START && cairoHour < WINDOW_END) {
+      return scheduled.toISOString();
     }
 
-
-    const scheduled = new Date(now.getTime() + hourOffset * 3600 * 1000);
-    return scheduled.toISOString();
+    // Outside the window → roll to the next 12:00 Cairo opening.
+    // Full wall-clock round-trip: expressing Cairo's H:M:S as UTC ms and
+    // subtracting the actual instant yields the zone offset (DST included).
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Cairo', hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(scheduled);
+    const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+    const wallMs = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'), get('second'));
+    const offset = wallMs - scheduled.getTime();
+    const wallDayStart = wallMs - (wallMs % 86400000);
+    const days = cairoHour >= WINDOW_END ? 1 : 0; // after 20:00 → tomorrow
+    const targetWallMs = wallDayStart + days * 86400000 + WINDOW_START * 3600000;
+    const rolled = new Date(targetWallMs - offset);
+    return rolled.toISOString();
   }
 
   /**
@@ -346,7 +352,10 @@ export class OwnerOutreachService {
         where: [{ column: 'status', op: 'in', value: ['contacted', 'negotiating'] }],
       });
       activeNegotiations = negs.length;
-    } catch {}
+    } catch (err: any) {
+      logger.error('[OwnerOutreachService] getStatus metrics lookup FAILED (reporting zeros is dishonest — surfacing the error):', err?.message ?? err);
+      throw err;
+    }
 
     const inventory = await this.loadEligibleInventory();
 

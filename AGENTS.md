@@ -25,6 +25,29 @@ Before performing any task, the agent must identify the current phase and load t
 
 **Important**: Never chain MCD phases. If you complete an EVALUATE phase, you MUST halt tool execution, present your findings and ask the user to authorize `/contract`, which must be authored as milestone-bound board cards via DB/API. Once you complete a CONTRACT phase, you MUST halt tool execution and explicitly wait for the user to authorize the next phase.
 
+## Owner-Approved Autonomous Mandate Override (2026-10-19)
+
+The owner has issued an **Autonomous End-to-End Execution Mandate** (Owner
+Acquisition → Verified Inventory → Connected Systems → Property Finder →
+Notifications). Its authoritative summary lives in
+`docs/obsidian-vault/Active Execution Plan.md`.
+
+**Within the mandate's scope** (the primary operating loop it describes and the
+repairs it requires), the phase-stop rule above is suspended: the agent may
+evaluate → contract → execute → closeout autonomously in one run, without
+halting for per-phase authorization. Phase gates are recorded in the Active
+Execution Plan instead.
+
+**Outside the mandate's scope**, the MCD phase-stop rule above applies
+unchanged.
+
+**Command Deck integrity rule**: if the Command Deck API is unreachable
+(resolve the port from `.amphion/config.json`, default 8888), do NOT fabricate
+board records, SQLite writes, or filesystem substitutes. Record progress in
+`docs/obsidian-vault/Active Execution Plan.md` and the session worklog until
+the deck is reachable again; a missing board state is honest, a fabricated one
+is not.
+
 ## Workflow Routing
 
 To invoke a slash command, read the corresponding workflow file:

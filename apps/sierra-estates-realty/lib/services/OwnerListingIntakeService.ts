@@ -54,7 +54,7 @@ import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { escapeTelegramHtml, sendTelegramMessage } from '@/lib/telegram';
 import { deriveCityFromCompound } from '@/lib/services/AugustOwnersAgentService';
-import { generateSierraCode } from '@/lib/services/coding-algorithm';
+import { resolveUnitCode } from '@/lib/server/unit-codes';
 
 export type IntakeSource =
   | 'whatsapp-august-owners'
@@ -835,25 +835,20 @@ export class OwnerListingIntakeService {
     const mode = rawMode === 'rent' || rawMode === 'sale' ? rawMode : null;
     const price = Number(extracted.price) > 0 ? Number(extracted.price) : undefined;
 
-    // 7 + 3F: a canonical code is assigned ONLY when it can be derived
-    // safely under the established Sierra coding scheme; the intake code
-    // remains the stable cross-reference, and a retry re-derives the same
-    // code deterministically (same compound/rooms/price inputs).
-    let listingCode: string | null = null;
-    if (mode && compound && propertyType && price != null && extracted.bedrooms != null) {
-      try {
-        listingCode = generateSierraCode({
-          compound,
-          rooms: Number(extracted.bedrooms),
-          price,
-          furnishingStatus: extracted.finishing != null ? String(extracted.finishing) : undefined,
-          features: [],
-        });
-      } catch {
-        listingCode = null;
-      }
-    }
-    if (!listingCode) {
+    // 7 + 3F (2026-10-19 stability + anti-collision fix): the listing code
+    // is now OWNED BY THE DATABASE. Migration 031 mints
+    // SE-{RNT|SL}-{AREA}-{SERIAL} atomically from a Postgres sequence when
+    // `code` arrives NULL — zero collisions under concurrent inserts,
+    // price-independent, and frozen forever by the freeze trigger. The
+    // legacy generateSierraCode embedded the PRICE (VS-3F-45K) so every
+    // price edit re-minted the code; the TS-side deterministic derivation
+    // (resolveUnitCode) has birthday collisions (~8% at 2k intakes per
+    // compound+deal) and survives ONLY as the pre-migration fallback below.
+    // The intake code remains the stable owner-facing cross-reference;
+    // unitId is the durable link. A code still requires compound + type +
+    // mode — without them the meaningful prefix cannot exist (NEEDS_CODE).
+    const codeEligible = Boolean(mode && compound && propertyType);
+    if (!codeEligible) {
       await updateRecord('owner_listing_intakes', intake.id, {
         state: 'NEEDS_CODE',
         missingFields: this.computeMissing(extracted),
@@ -872,7 +867,9 @@ export class OwnerListingIntakeService {
     const now = new Date().toISOString();
 
     const listingDocument = {
-      code: listingCode,
+      // DB-owned (migration 031): absent code lets the INSERT trigger mint a
+      // sequence-backed serial — see the stability note above.
+      code: undefined,
       title: `${propertyType} · ${compound}`,
       titleAr: `${propertyType} في ${compound}`,
       compound,
@@ -912,10 +909,23 @@ export class OwnerListingIntakeService {
     };
 
     try {
-      const created = await insertRecord<{ id: string }>(
+      const created = await insertRecord<{ id: string; code?: string | null }>(
         'listings',
         toListingColumns(listingDocument),
       );
+      // The trigger-minted code rides back on the inserted row. If the
+      // migration has not been applied (code NULL), fall back to the
+      // deterministic TS mint so the intake cross-reference still exists —
+      // loudly, because without uq_listings_code that path carries the
+      // birthday-collision risk documented above.
+      let listingCode: string | null = created?.code ?? null;
+      if (!listingCode) {
+        listingCode = resolveUnitCode({ compound, dealType: mode ?? 'sale', seed: intake.id, code: null }).code;
+        logger.warn(
+          '[OwnerIntake] listings.code returned null — migration 20261019_031 not applied; ' +
+          `fell back to deterministic TS code ${listingCode} (birthday-collision risk without uq_listings_code)`,
+        );
+      }
       await updateRecord('owner_listing_intakes', intake.id, {
         state: 'REVIEW_REQUIRED',
         unitId: created.id,

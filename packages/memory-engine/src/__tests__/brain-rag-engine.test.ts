@@ -92,3 +92,44 @@ describe('Unified Memory Brain Engine RAG (Obsidian + ECC)', () => {
     expect(matches[0].content).toContain('transfer fees must be settled');
   });
 });
+
+// ── 2026-10-19: startup strategic-goal resolver (mandate persistence) ──────
+describe('MemoryBrainEngine — vault goal persistence (2026-10-19)', () => {
+  it('resolves the active goal from the vault Active Execution Plan marker when no explicit goal is given', () => {
+    const vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sierra-vault-goal-'));
+    fs.writeFileSync(
+      path.join(vaultDir, 'Active Execution Plan.md'),
+      '# Active Execution Plan\n\n**Active Strategic Goal:** Run the primary operating loop end-to-end with zero fabricated data.\n',
+      'utf-8'
+    );
+    const brain = new MemoryBrainEngine({
+      vaultDir,
+      storePath: path.join(os.tmpdir(), `sierra-store-goal-${Date.now()}.json`),
+    });
+    expect(brain.getActiveGoal()).toBe('Run the primary operating loop end-to-end with zero fabricated data.');
+  });
+
+  it('an explicit options.activeGoal overrides the vault marker', () => {
+    const vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sierra-vault-goal-2-'));
+    fs.writeFileSync(
+      path.join(vaultDir, 'Active Execution Plan.md'),
+      '**Active Strategic Goal:** vault goal\n',
+      'utf-8'
+    );
+    const brain = new MemoryBrainEngine({
+      vaultDir,
+      storePath: path.join(os.tmpdir(), `sierra-store-goal-2-${Date.now()}.json`),
+      activeGoal: 'explicit goal wins',
+    });
+    expect(brain.getActiveGoal()).toBe('explicit goal wins');
+  });
+
+  it('a vault without the marker falls back to the standing default (never throws)', () => {
+    const vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sierra-vault-goal-3-'));
+    const brain = new MemoryBrainEngine({
+      vaultDir,
+      storePath: path.join(os.tmpdir(), `sierra-store-goal-3-${Date.now()}.json`),
+    });
+    expect(brain.getActiveGoal()).toContain('deterministic closure in New Cairo');
+  });
+});

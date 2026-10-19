@@ -75,7 +75,16 @@ export class MemoryBrainEngine {
 
     this.ecc = new EpisodicContextCache(storePath);
     this.obsidian = new ObsidianMemory(storePath);
-    this.activeGoal = options.activeGoal || 'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
+    // Goal precedence (2026-10-19, mandate persistence rule):
+    //   1. explicit options.activeGoal (caller knows best)
+    //   2. the vault's Active Execution Plan marker — survives restarts and
+    //      context loss, so the owner-approved mandate keeps steering the
+    //      fleet without anyone re-setting it
+    //   3. the standing default
+    this.activeGoal =
+      options.activeGoal ||
+      this.resolveVaultGoal() ||
+      'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
 
     this.scanVault();
   }
@@ -88,6 +97,26 @@ export class MemoryBrainEngine {
     if (fs.existsSync(relativeVault)) return relativeVault;
 
     return cwdVault;
+  }
+
+  /**
+   * Startup strategic-goal resolver (mandate 2026-10-19): reads the active
+   * goal from the vault's Active Execution Plan note so the owner-approved
+   * mandate survives process restarts and context loss. Marker format:
+   *   **Active Strategic Goal:** <goal text>
+   * Unreadable/missing marker → undefined (default applies). Never throws —
+   * a goal-lookup failure must not take the engine down.
+   */
+  private resolveVaultGoal(): string | undefined {
+    try {
+      const goalNote = path.join(this.vaultDir, 'Active Execution Plan.md');
+      if (!fs.existsSync(goalNote)) return undefined;
+      const content = fs.readFileSync(goalNote, 'utf8');
+      const match = content.match(/^\s*\*\*Active Strategic Goal:\*\*\s*(.+)$/m);
+      return match?.[1]?.trim() || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**
