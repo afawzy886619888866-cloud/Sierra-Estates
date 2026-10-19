@@ -107,7 +107,17 @@ export default function PropertyCard({
     </span>
   ) : null;
 
-  const imageList = p.images && p.images.length > 0 ? p.images : [p.img];
+  const validImages = Array.isArray(p.images)
+    ? p.images.filter(
+        (x) =>
+          typeof x === 'string' &&
+          x.startsWith('http') &&
+          !x.includes('unsplash.com') &&
+          !x.includes('placeholder') &&
+          !x.includes('stock')
+      )
+    : [];
+  const imageList = validImages.length > 0 ? validImages : [p.img];
   const currentImg = imageList[activeImgIndex] || p.img;
 
   const handleNextImg = (e: React.MouseEvent) => {
