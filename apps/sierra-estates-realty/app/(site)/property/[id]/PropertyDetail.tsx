@@ -519,6 +519,17 @@ export default function PropertyDetail({ id }: { id: string }) {
                     );
                   })()}
                 </div>
+
+                {/* Institutional Real Estate Intelligence, Legal Due Diligence & Closing Simulation */}
+                <PropertyIntelligenceDossier
+                  priceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 0)}
+                  areaSqm={p.area || 0}
+                  compound={p.cmp || ''}
+                  propertyType={p.type || ''}
+                  isRent={p.mode === 'rent'}
+                  isAr={isAr}
+                  code={p.code}
+                />
               </Reveal>
             </div>
 
