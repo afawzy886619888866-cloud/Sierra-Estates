@@ -44,7 +44,7 @@ export async function verifyAppCheck(req: NextRequest) {
 
   const rawHeader =
     req.headers.get('x-app-attestation') ||
-    req.headers.get('x-firebase-appcheck') ||
+    req.headers.get('x-sierra-attestation') ||
     req.headers.get('x-api-key') ||
     req.headers.get('authorization') ||
     '';
