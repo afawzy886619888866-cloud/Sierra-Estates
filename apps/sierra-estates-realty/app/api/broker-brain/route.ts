@@ -51,16 +51,22 @@ function extractCompound(q: string): string | null {
 
 // ── Query Supabase inventory with semantic + filter fallback ──────────────
 async function queryInventory(intent: ReturnType<typeof parseIntent>, query: string, supabase: ReturnType<typeof getSupabase>) {
+  // Inventory lives in public.listings (the adapter's canonical table for
+  // the properties collection). Live deal_type values are lowercase
+  // ('rent' | 'sale' | 'resale') — capitalized eq filters returned zero rows.
   let sb = supabase
-    .from('properties')
-    .select('id,reference_code,compound,property_type,deal_type,price,area_sqm,bedrooms,bathrooms,furnishing,availability,source_channel,description')
+    .from('listings')
+    .select('id,reference_code,compound,property_type,deal_type,price,area_sqm,bedrooms,bathrooms,furnishing_status,availability,source_channel,description')
     .eq('availability', 'Available')
     .not('compound', 'is', null)
+    // Same price gate as getMarketStats: zero-price rows are data gaps and
+    // must not rank as the "cheapest" matches in a price-ascending window.
+    .gt('price', 0)
     .limit(20)
     .order('price', { ascending: true });
 
-  if (intent.isRent && !intent.isBuy) sb = sb.eq('deal_type', 'Rent');
-  else if (intent.isBuy && !intent.isRent) sb = sb.eq('deal_type', 'Sale');
+  if (intent.isRent && !intent.isBuy) sb = sb.eq('deal_type', 'rent');
+  else if (intent.isBuy && !intent.isRent) sb = sb.in('deal_type', ['sale', 'resale']);
   if (intent.beds) sb = sb.eq('bedrooms', parseInt(intent.beds));
   if (intent.maxPrice) sb = sb.lte('price', parseInt(intent.maxPrice));
   if (intent.minArea) sb = sb.gte('area_sqm', parseInt(intent.minArea));
@@ -75,15 +81,15 @@ async function queryInventory(intent: ReturnType<typeof parseIntent>, query: str
 // ── Load market intelligence (compound price stats) ───────────────────────
 async function getMarketStats(compound: string | null, dealType: 'rent' | 'sale' | 'both', supabase: ReturnType<typeof getSupabase>) {
   let q = supabase
-    .from('properties')
+    .from('listings')
     .select('compound,price,area_sqm,deal_type,property_type')
     .eq('availability', 'Available')
     .not('price', 'is', null)
     .gt('price', 0);
 
   if (compound) q = q.ilike('compound', `%${compound}%`);
-  if (dealType === 'rent') q = q.eq('deal_type', 'Rent');
-  else if (dealType === 'sale') q = q.eq('deal_type', 'Sale');
+  if (dealType === 'rent') q = q.eq('deal_type', 'rent');
+  else if (dealType === 'sale') q = q.in('deal_type', ['sale', 'resale']);
 
   const { data } = await q.limit(500);
   if (!data?.length) return null;
@@ -123,13 +129,13 @@ async function saveSessionMemory(sessionId: string, messages: any[], profile: an
 
 // ── Format listing for broker response ───────────────────────────────────
 function formatListing(p: any, idx: number): string {
-  const price = p.price > 0 ? `EGP ${p.price.toLocaleString()}${p.deal_type === 'Rent' ? '/mo' : ''}` : 'Price on request';
+  const price = p.price > 0 ? `EGP ${p.price.toLocaleString()}${p.deal_type === 'rent' ? '/mo' : ''}` : 'Price on request';
   const area = p.area_sqm ? ` | ${p.area_sqm} sqm` : '';
   const beds = p.bedrooms ? ` | ${p.bedrooms}BR` : '';
   const ref = p.reference_code ? ` [${p.reference_code}]` : '';
   const source = p.source_channel?.includes('owner') || p.source_channel?.includes('Owner') ? ' ⭐ Direct Owner' : '';
   return `${idx}. **${p.property_type} in ${p.compound}**${ref}${source}
-   ${price}${area}${beds} | ${p.furnishing || 'N/A furnishing'} | ${p.availability}`;
+   ${price}${area}${beds} | ${p.furnishing_status || 'N/A furnishing'} | ${p.availability}`;
 }
 
 // ── SYSTEM PROMPT — The Broker Brain ─────────────────────────────────────
@@ -177,8 +183,6 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getSupabase();
-    const genAI = getGemini();
-
     // 1. Load session memory
     const session = await loadSessionMemory(sessionId, supabase);
     const history = session.messages as { role: string; content: string }[];
@@ -214,25 +218,37 @@ export async function POST(req: NextRequest) {
 
     const fullSystemPrompt = SYSTEM_PROMPT + inventoryContext + statsContext + profileContext;
 
-    // 5. Build conversation for Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    // 5. AI step — with honest degradation.
+    // The Gemini key has been wrong/absent in the past; a raw provider 401
+    // must never leak to public visitors and the page must never die: when
+    // the AI step fails we still answer with the REAL inventory fetched in
+    // step 3 (anti-fabrication: real rows + an explicit notice, never a
+    // made-up advisor voice). A valid GEMINI_API_KEY restores full AI mode
+    // with no code change.
+    let reply: string | null = null;
+    try {
+      const genAI = getGemini();
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-    // Convert history to Gemini format
-    const geminiHistory = history.slice(-20).map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user' as 'user' | 'model',
-      parts: [{ text: m.content }],
-    }));
+      // Convert history to Gemini format
+      const geminiHistory = history.slice(-20).map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user' as 'user' | 'model',
+        parts: [{ text: m.content }],
+      }));
 
-    const chat = model.startChat({
-      history: [
-        { role: 'user', parts: [{ text: fullSystemPrompt }] },
-        { role: 'model', parts: [{ text: 'Understood. I am Samir, Sierra Estates elite broker. Ready to help.' }] },
-        ...geminiHistory,
-      ],
-    });
+      const chat = model.startChat({
+        history: [
+          { role: 'user', parts: [{ text: fullSystemPrompt }] },
+          { role: 'model', parts: [{ text: 'Understood. I am Samir, Sierra Estates elite broker. Ready to help.' }] },
+          ...geminiHistory,
+        ],
+      });
 
-    const result = await chat.sendMessage(message);
-    const reply = result.response.text();
+      const result = await chat.sendMessage(message);
+      reply = result.response.text();
+    } catch (aiErr: any) {
+      console.error('[broker-brain] AI step failed; answering with live inventory only:', aiErr?.message);
+    }
 
     // 6. Extract profile updates (budget, preferences) from conversation
     const updatedProfile = { ...profile };
@@ -242,6 +258,19 @@ export async function POST(req: NextRequest) {
     if (intent.isRent) updatedProfile.intent = 'rent';
     if (intent.isBuy) updatedProfile.intent = 'buy';
     updatedProfile.last_active = new Date().toISOString();
+
+    // Honest fallback reply when the AI advisor is down — real data only.
+    if (!reply) {
+      reply =
+        `Our AI advisor is temporarily unavailable — here is the live inventory matching your request:\n\n` +
+        (listings.length > 0
+          ? listings.map((p, i) => formatListing(p, i + 1)).join('\n')
+          : 'No exact inventory match right now — share your budget and preferred compound and we will keep looking.') +
+        (marketStats
+          ? `\n\nMarket stats for ${marketStats.compound || 'the market'}: ${marketStats.count} available units, avg EGP ${marketStats.avg?.toLocaleString()}, median EGP ${marketStats.median?.toLocaleString()}.`
+          : '') +
+        `\n\nTo book a viewing or reach us on WhatsApp: +20 109 204 8333.`;
+    }
 
     // 7. Save session memory
     const updatedHistory = [
