@@ -20,6 +20,7 @@ const ENV_KEYS = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_URL',
   'POSTGRES_URL',
+  'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -96,6 +97,18 @@ describe('resolveSupabaseAnonKey', () => {
     setEnv('NODE_ENV', 'development');
     expect(resolveSupabaseAnonKey()).toBe('placeholder-anon-key');
   });
+
+  it('resolves the new-style publishable key', () => {
+    setEnv('NODE_ENV', 'production');
+    setEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_value');
+    expect(resolveSupabaseAnonKey()).toBe('sb_publishable_value');
+  });
+
+  it('prefers the publishable key over the legacy anon key', () => {
+    setEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_value');
+    setEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'legacy-anon-value');
+    expect(resolveSupabaseAnonKey()).toBe('sb_publishable_value');
+  });
 });
 
 describe('isSupabaseAdminConfigured', () => {
@@ -126,6 +139,12 @@ describe('isSupabaseConfigured', () => {
   it('returns true when url and anon key are both provided', () => {
     setEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://proj.supabase.co');
     setEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key-123');
+    expect(isSupabaseConfigured()).toBe(true);
+  });
+
+  it('returns true when url and publishable key are provided', () => {
+    setEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://proj.supabase.co');
+    setEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_value');
     expect(isSupabaseConfigured()).toBe(true);
   });
 });

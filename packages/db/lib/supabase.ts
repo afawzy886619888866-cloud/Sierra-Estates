@@ -37,12 +37,14 @@ export function resolveSupabaseUrl(): string {
 /** Anon (publishable) key. Required in production; placeholder allowed locally. */
 export function resolveSupabaseAnonKey(): string {
     const key =
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_ANON_KEY;
 
     if (key) return key;
     if (isProduction()) {
         throw new Error(
-            'NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_ANON_KEY) must be set in production.'
+            'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) must be set in production.'
         );
     }
     return 'placeholder-anon-key';
@@ -76,7 +78,9 @@ export function isSupabaseAdminConfigured(): boolean {
 export function isSupabaseConfigured(): boolean {
     return Boolean(
         (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || process.env.POSTGRES_URL) &&
-            (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY)
+            (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+                process.env.SUPABASE_ANON_KEY)
     );
 }
 
