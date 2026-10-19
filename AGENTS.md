@@ -25,28 +25,36 @@ Before performing any task, the agent must identify the current phase and load t
 
 **Important**: Never chain MCD phases. If you complete an EVALUATE phase, you MUST halt tool execution, present your findings and ask the user to authorize `/contract`, which must be authored as milestone-bound board cards via DB/API. Once you complete a CONTRACT phase, you MUST halt tool execution and explicitly wait for the user to authorize the next phase.
 
-## Owner-Approved Autonomous Mandate Override (2026-10-19)
+## Owner-Approved Autonomous Execution Mandate (2026-10-19) — Scoped Exception
 
-The owner has issued an **Autonomous End-to-End Execution Mandate** (Owner
-Acquisition → Verified Inventory → Connected Systems → Property Finder →
-Notifications). Its authoritative summary lives in
-`docs/obsidian-vault/Active Execution Plan.md`.
+The repository owner issued a written **Autonomous End-to-End Execution Mandate**
+(Owner Acquisition → Verified Inventory → Connected Systems → Property Finder →
+Notifications). Its authoritative records live in
+`docs/obsidian-vault/Active-Execution-Mandate.md`,
+`docs/obsidian-vault/Active Execution Plan.md`, and
+`docs/BASELINE_AUDIT_2026-10-19.md`.
 
 **Within the mandate's scope** (the primary operating loop it describes and the
-repairs it requires), the phase-stop rule above is suspended: the agent may
-evaluate → contract → execute → closeout autonomously in one run, without
-halting for per-phase authorization. Phase gates are recorded in the Active
-Execution Plan instead.
+repairs it requires), the phase-halt rule above is superseded: the executing
+agent may evaluate → contract → execute → closeout autonomously in one run,
+without halting for per-phase authorization, because the mandate itself is the
+standing authorization. Phase gates are recorded in the Active Execution Plan /
+Active-Execution-Mandate memory files instead.
 
 **Outside the mandate's scope**, the MCD phase-stop rule above applies
-unchanged.
+unchanged. The exception covers THIS mandate only; any unrelated task reverts
+to the standard MCD phase-halt workflow.
 
-**Command Deck integrity rule**: if the Command Deck API is unreachable
-(resolve the port from `.amphion/config.json`, default 8888), do NOT fabricate
-board records, SQLite writes, or filesystem substitutes. Record progress in
-`docs/obsidian-vault/Active Execution Plan.md` and the session worklog until
-the deck is reachable again; a missing board state is honest, a fabricated one
-is not.
+**Constraints that apply WITHOUT exception:**
+
+1. **No fabricated Command Deck records.** If the Command Deck API is
+   unreachable (resolve the port from `.amphion/config.json`, default 8888),
+   do NOT fabricate board records, SQLite writes, or filesystem substitutes.
+   Report via repository files (docs/, worklog) and say so — a missing board
+   state is honest, a fabricated one is not.
+2. **No fabricated data** (§21 no-fabrication policy stands).
+3. Mandate-scope changes to production data still require the normal
+   verification gates (lint / type-check / test:ci / RLS tests).
 
 ## Workflow Routing
 

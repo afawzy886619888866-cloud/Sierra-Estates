@@ -22,3 +22,21 @@ if (!existsSync(OUT)) {
 } else {
   console.log('[ensure-snapshot] snapshot.json already exists.');
 }
+
+// 2026-10-19 baseline audit: data/consolidated-master-inventory.json (12.5 MB)
+// is untracked by the data-hygiene contract (git rm --cached; see
+// __tests__/data-hygiene-and-git-weight.test.ts). It is imported by
+// lib/services/ListingAvailabilitySyncService (always via dynamic import), so
+// webpack still resolves it during `next build` — a clean checkout therefore
+// needs a stub until the operator regenerates the real file via
+// `scripts/merge-inventory-master.ts` / `scripts/export-master-excel-csv.ts`.
+// Same pattern as the snapshot stub above: build stays green, zero listings
+// are fabricated (§21 — an empty array is the honest unknown).
+const CONSOLIDATED = resolve(__dirname, '../data/consolidated-master-inventory.json');
+if (!existsSync(CONSOLIDATED)) {
+  console.log('[ensure-snapshot] consolidated-master-inventory.json not found, creating empty stub...');
+  writeFileSync(CONSOLIDATED, JSON.stringify({ units: [], generatedAt: new Date().toISOString() }) + '\n');
+  console.log(`[ensure-snapshot] created stub at ${CONSOLIDATED}`);
+} else {
+  console.log('[ensure-snapshot] consolidated-master-inventory.json already exists.');
+}

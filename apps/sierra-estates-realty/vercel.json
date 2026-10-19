@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
+  "git": {
+    "deploymentEnabled": true
+  },
   "crons": [
     {
       "path": "/api/cron/dispatch/night",

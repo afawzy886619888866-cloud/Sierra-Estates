@@ -87,6 +87,44 @@ export class MemoryBrainEngine {
       'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
 
     this.scanVault();
+    // 2026-10-19 mandate: the active strategic goal must survive restarts
+    // and context loss — resolve it from the durable vault note when the
+    // caller did not pin an explicit goal. See
+    // docs/obsidian-vault/Active-Execution-Mandate.md.
+    if (!options.activeGoal) {
+      const resolved = this.resolveActiveGoalFromVault();
+      if (resolved) this.activeGoal = resolved;
+    }
+  }
+
+  /**
+   * Resolve the fleet's active strategic goal from the durable vault note
+   * (docs/obsidian-vault/Active-Execution-Mandate.md). Returns null when no
+   * ACTIVE mandate note exists — the constructor default then stands.
+   *
+   * Format contract (see the note): a `**Issued:** ... **Status:** ACTIVE`
+   * marker line and a `## 🧭 Strategic Goal (recovers after any context
+   * loss)` section whose first paragraph is the goal text.
+   */
+  public resolveActiveGoalFromVault(): string | null {
+    this.scanVault();
+    const note = this.vaultCache.get('active-execution-mandate.md');
+    if (!note) return null;
+
+    // Only an ACTIVE mandate drives the fleet.
+    if (!/\*\*Status:\*\*\s*ACTIVE/i.test(note.content)) return null;
+
+    const section = note.content.match(
+      /##\s*🧭\s*Strategic Goal[^\n]*\n+([\s\S]*?)(?=\n## |\n---|$)/,
+    );
+    if (!section) return null;
+
+    // First non-empty, non-heading, non-blockquote line of the section.
+    const goalLine = section[1]
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#') && !l.startsWith('>'))[0];
+    return goalLine || null;
   }
 
   private resolveVaultDir(): string {
