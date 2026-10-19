@@ -83,7 +83,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="light"
+      data-theme="dark"
       dir="ltr"
       className={[
         jakarta.variable,
