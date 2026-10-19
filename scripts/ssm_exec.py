@@ -21,7 +21,11 @@ cmd = aws_base + [
     '--query', 'Command.CommandId', '--output', 'text'
 ]
 
-res = subprocess.run(cmd, capture_output=True, text=True)
+env = os.environ.copy()
+env['PYTHONUTF8'] = '1'
+env['PYTHONIOENCODING'] = 'utf-8'
+
+res = subprocess.run(cmd, capture_output=True, text=True, env=env)
 cmd_id = res.stdout.strip()
 if not cmd_id or res.returncode != 0:
     print("Failed to send SSM command:", res.stderr)
@@ -33,7 +37,7 @@ for _ in range(45):
         'ssm', 'get-command-invocation',
         '--command-id', cmd_id, '--instance-id', instance_id
     ]
-    out_res = subprocess.run(out_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+    out_res = subprocess.run(out_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore', env=env)
     try:
         data = json.loads(out_res.stdout)
         status = data.get('Status')
