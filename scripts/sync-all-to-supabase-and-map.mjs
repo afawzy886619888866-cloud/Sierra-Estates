@@ -309,6 +309,8 @@ async function main() {
       sync_source: sourceHeritage,
       latitude: lat,
       longitude: lng,
+      publish_status: 'PUBLISHABLE',
+      status: 'active',
       updated_at: new Date().toISOString(),
     };
 
