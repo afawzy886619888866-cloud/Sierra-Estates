@@ -11,6 +11,7 @@ else
 fi
 
 cd "$ROOT_DIR"
+node apps/sierra-estates-realty/scripts/ensure-snapshot.mjs || true
 node scripts/sync-inventory-snapshot.mjs || true
 export NODE_OPTIONS="--max-old-space-size=7168"
 pnpm --filter sierra-estates-client-page build

@@ -9,7 +9,7 @@
     "tunnel": "node scripts/tunnel.mjs",
     "dev:web": "pnpm --filter sierra-estates-client-page dev",
     "dev:all": "turbo run dev",
-    "build": "node scripts/sync-inventory-snapshot.mjs && turbo run build",
+    "build": "node apps/sierra-estates-realty/scripts/ensure-snapshot.mjs && node scripts/sync-inventory-snapshot.mjs && turbo run build",
     "lint": "node scripts/check-no-compiled-twins.mjs && node scripts/check-legacy-runtime-boundary.mjs && turbo run lint",
     "check:twins": "node scripts/check-no-compiled-twins.mjs",
     "type-check": "turbo run type-check",
