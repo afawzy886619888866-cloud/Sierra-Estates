@@ -33,6 +33,7 @@ import {
   DeploymentPipelineView,
   ApiGatewayView,
   InventoryCommandView,
+  InvenTreeHubView,
   InventoryOsView,
   WorkflowStudioView,
   WorkflowOpsView,
@@ -158,6 +159,7 @@ function pageLabelFor(tab: string, T: TranslationFn): string {
     openclaw: isAr ? 'طرفية أوبن كلو' : 'OpenClaw Terminal',
     nexus: isAr ? 'نيكسوس المباشر' : 'Nexus Telemetry',
     memory_brain: isAr ? 'الذاكرة المركزية' : 'Memory Brain',
+    inventree_hub: isAr ? 'نظام إنفنتري والذاكرة' : 'InvenTree Hub & RAG',
     notebookllm: 'NotebookLM Studio',
     deep_insights: isAr ? 'الرؤى العميقة' : 'Deep Insights',
     reports: isAr ? 'التقارير التحليلية' : 'Reports',
@@ -2701,6 +2703,7 @@ function AdminApp() {
       case 'tasks':return <TasksPage T={T}/>;
       case 'automations':return <AutomationsPage T={T}/>;
       case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
+      case 'inventree_hub':return <InvenTreeHubView lang={langKey}/>;
       case 'inventory_os':return <InventoryOsView lang={langKey}/>;
       case 'masterplan_gis':
         return (

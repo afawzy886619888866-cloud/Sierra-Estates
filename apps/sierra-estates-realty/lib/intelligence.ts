@@ -8,6 +8,7 @@ import { memoryEngine } from '@sierra-estates/memory-engine';
 
 import { pfClient } from './property-finder-client';
 import { closerAgent } from '@sierra-estates/agents/src/closer-agent-enhanced';
+import { InvenTreeInventoryHub } from './inventory/InvenTreeInventoryHub';
 
 // ── Agent registrations ────────────────────────────────────────────
 const CORE_AGENTS = [
@@ -41,6 +42,22 @@ const CORE_SKILLS = [
     execute: async (context: any) => {
       return await closerAgent.generateIntelligentProposal(context);
     } 
+  },
+  {
+    id: 'inventree-rag-query',
+    name: 'InvenTree RAG Query',
+    description: 'Semantic vector-grounded search across hierarchical stock locations, units, and custom specs',
+    execute: async (params: { query: string; limit?: number }) => {
+      return await InvenTreeInventoryHub.queryRAG(params?.query || '', params?.limit || 5);
+    }
+  },
+  {
+    id: 'inventree-sync',
+    name: 'InvenTree Multi-Source Sync',
+    description: 'Sync local JSON, Google Sheets, and Supabase listings into InvenTree stock tree and RAG memory engine',
+    execute: async () => {
+      return await InvenTreeInventoryHub.syncAndIndexToRAG();
+    }
   },
   { id: 'whatsapp-send',   name: 'WhatsApp Send',   description: 'Send WhatsApp messages via Twilio',    execute: async (p: unknown) => p },
   { id: 'telegram-alert',  name: 'Telegram Alert',  description: 'Send Telegram notifications',          execute: async (p: unknown) => p },
