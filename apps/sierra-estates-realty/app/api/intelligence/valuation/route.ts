@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   computeFullMetrics,
   formatCompactEGP,
+  type UnitFinancials,
   type UnitIntelligenceFactors,
 } from "@sierra-estates/agents";
 
