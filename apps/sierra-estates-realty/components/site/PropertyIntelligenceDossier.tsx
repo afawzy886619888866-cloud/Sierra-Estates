@@ -2,17 +2,11 @@
 
 import React, { useState } from 'react';
 import {
-  calcPricePerSqm,
-  calcGrossYield,
-  calcNetYield,
-  calcPaybackPeriod,
-  calcAppraisedValue,
   computeFullMetrics,
   formatCompactEGP,
 } from '@sierra-estates/agents/financial-metrics-engine';
 import {
   assessLegalRisk,
-  generateLegalSummary,
   type PropertyLegalContext,
 } from '@sierra-estates/agents/legal-risk-engine';
 import {
@@ -22,13 +16,9 @@ import {
 import {
   ShieldCheck,
   TrendingUp,
-  FileCheck2,
-  Calculator,
   Scale,
   CheckCircle2,
-  AlertCircle,
   Clock,
-  Building,
   Coins,
 } from 'lucide-react';
 
@@ -169,9 +159,11 @@ export default function PropertyIntelligenceDossier({
               </span>
             </div>
             <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+              {[compound, propertyType].filter(Boolean).join(' · ')}
+              {compound || propertyType ? ' — ' : ''}
               {isAr
                 ? 'تحليل رياضي ومراجعة قانونية ومحاكاة للتملك معتمدة'
-                : 'Deterministic Financials, Legal Risk Audit & Acquisition Simulation'}
+                : 'Deterministic Financial Analytics, Legal Risk Audit & Acquisition Simulation'}
             </div>
           </div>
         </div>

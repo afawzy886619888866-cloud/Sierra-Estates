@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  calcPricePerSqm,
-  calcGrossYield,
-  calcNetYield,
-  calcCapitalAppreciation,
-  calcPaybackPeriod,
-  calcAppraisedValue,
   computeFullMetrics,
   formatCompactEGP,
   type UnitFinancials,
