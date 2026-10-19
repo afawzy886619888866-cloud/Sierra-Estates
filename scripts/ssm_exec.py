@@ -13,11 +13,16 @@ if 'AWS_ACCESS_KEY_ID' not in os.environ and 'AWS_PROFILE' not in os.environ:
     aws_base.extend(['--profile', 'sierra-estates'])
 aws_base.extend(['--region', region])
 
+import base64
+
+b64_payload = base64.b64encode(shell_command.encode('utf-8')).decode('ascii')
+wrapper_cmd = f"echo {b64_payload} | base64 -d | bash"
+
 cmd = aws_base + [
     'ssm', 'send-command',
     '--instance-ids', instance_id,
     '--document-name', 'AWS-RunShellScript',
-    '--parameters', json.dumps({'commands': [shell_command]}),
+    '--parameters', json.dumps({'commands': [wrapper_cmd]}),
     '--query', 'Command.CommandId', '--output', 'text'
 ]
 
