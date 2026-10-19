@@ -37,6 +37,16 @@
   "github-actions.workflows.validations.undefined.context": "off",
   "github-actions.workflows.validations.expression.validation": "off",
   "github-actions.workflows.validations.schema": false,
+  "github-actions.workflows.pinnedSecrets": [
+    "CRON_SECRET",
+    "VERCEL_TOKEN",
+    "VERCEL_AUTH_TOKEN",
+    "SUPABASE_ACCESS_TOKEN",
+    "SUPABASE_DB_URL",
+    "JIRA_BASE_URL",
+    "JIRA_USER_EMAIL",
+    "JIRA_API_TOKEN"
+  ],
   "yaml.validate": false,
   "yaml.schemas": {},
   "yaml.schemaStore.enable": false,
