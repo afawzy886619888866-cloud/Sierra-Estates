@@ -1,8 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- 20261019_031_domain_parity_and_code_immutability.sql
+-- 20261019_032_domain_parity_and_code_immutability.sql
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Origin: owner-approved Autonomous End-to-End Execution Mandate, baseline
--- audit 2026-10-19 (docs/BASELINE_AUDIT_2026-10-19.md). Three hardening items:
+-- audit 2026-10-19 (docs/BASELINE_AUDIT_2026-10-19.md). Runs AFTER
+-- 20261019_031_stable_listing_codes.sql (codes minted/backfilled/repaired
+-- there). Three hardening items:
 --
 --   1. DOMAIN-SERVICE PARITY — InventoryDomainService
 --      (lib/services/inventory/) persists a Firestore-shaped document
@@ -25,9 +27,12 @@
 --      identity: permanent DB id + immutable code + independent dedup
 --      fingerprint). generateSierraCode() embeds a price token, so any flow
 --      that re-derives a code after a price edit would silently break the
---      promise. A BEFORE UPDATE trigger now rejects code changes once a code
---      is assigned, with one explicit, auditable escape hatch: the session
---      GUC sierra.allow_code_change = 'true' (staff-initiated re-code only).
+--      promise. RECONCILED with 031: migration 031 installed its own freeze
+--      trigger (trg_listings_freeze_code, no escape hatch); this migration
+--      REPLACES it with a single unified BEFORE UPDATE trigger that keeps
+--      one explicit, auditable escape hatch — the session GUC
+--      sierra.allow_code_change = 'true' (staff-initiated re-code only).
+--      One trigger, one contract — not two stacked freeze triggers.
 --
 -- Design: 100% ADDITIVE & IDEMPOTENT — safe to re-run on production.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -57,21 +62,27 @@ UPDATE public.listings
  WHERE dupe_check_hash IS NULL
    AND id ~ '^[0-9a-f]{24}$';
 
--- ── 3. Listing-code immutability trigger ────────────────────────────────────
+-- ── 3. Listing-code immutability trigger (UNIFIED — replaces 031's) ─────────
 -- Rejects overwriting an assigned code. Escape hatch (deliberate staff
 -- re-code, e.g. merging duplicate units):
 --   SET sierra.allow_code_change = 'true';  -- in that transaction/session only
+-- Replaces 031's trg_listings_freeze_code so exactly ONE freeze trigger
+-- exists, with both the WHEN-clause precision and the escape hatch.
+DROP TRIGGER IF EXISTS trg_listings_freeze_code ON public.listings;
+
 CREATE OR REPLACE FUNCTION public.protect_listing_code()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
   IF OLD.code IS NOT NULL
+     AND TRIM(OLD.code) <> ''
      AND NEW.code IS DISTINCT FROM OLD.code
      AND COALESCE(current_setting('sierra.allow_code_change', true), 'false') <> 'true' THEN
     RAISE EXCEPTION
       'listing code is immutable: % -> % (listing id %). Re-deriving a code after a price/description change is forbidden (mandate 2026-10-19). For a deliberate staff re-code, SET sierra.allow_code_change = ''true'' for the transaction.',
-      OLD.code, NEW.code, OLD.id;
+      OLD.code, NEW.code, OLD.id
+      USING ERRCODE = 'integrity_constraint_violation';
   END IF;
   RETURN NEW;
 END;
@@ -79,8 +90,10 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_listings_code_immutable ON public.listings;
 CREATE TRIGGER trg_listings_code_immutable
-  BEFORE UPDATE ON public.listings
-  FOR EACH ROW EXECUTE FUNCTION public.protect_listing_code();
+  BEFORE UPDATE OF code ON public.listings
+  FOR EACH ROW
+  WHEN (OLD.code IS NOT NULL AND TRIM(OLD.code) <> '')
+  EXECUTE FUNCTION public.protect_listing_code();
 
 COMMENT ON FUNCTION public.protect_listing_code() IS
   'Enforces immutable human-readable listing codes once assigned. Escape hatch: session GUC sierra.allow_code_change=true (auditable staff action).';

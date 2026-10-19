@@ -75,26 +75,23 @@ export class MemoryBrainEngine {
 
     this.ecc = new EpisodicContextCache(storePath);
     this.obsidian = new ObsidianMemory(storePath);
-    // Goal precedence (2026-10-19, mandate persistence rule):
+    // Goal precedence (2026-10-19, mandate persistence rule — reconciled):
     //   1. explicit options.activeGoal (caller knows best)
-    //   2. the vault's Active Execution Plan marker — survives restarts and
-    //      context loss, so the owner-approved mandate keeps steering the
-    //      fleet without anyone re-setting it
-    //   3. the standing default
+    //   2. the vault's Active-Execution-Mandate note (Status: ACTIVE gated,
+    //      docs/obsidian-vault/Active-Execution-Mandate.md) — the canonical
+    //      mandate memory
+    //   3. the vault's Active Execution Plan note
+    //      (docs/obsidian-vault/Active Execution Plan.md) — legacy fallback
+    //   4. the standing default
+    // Both vault reads survive restarts and context loss, so the owner-approved
+    // mandate keeps steering the fleet without anyone re-setting it.
     this.activeGoal =
       options.activeGoal ||
+      this.resolveActiveGoalFromVault() ||
       this.resolveVaultGoal() ||
       'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
 
     this.scanVault();
-    // 2026-10-19 mandate: the active strategic goal must survive restarts
-    // and context loss — resolve it from the durable vault note when the
-    // caller did not pin an explicit goal. See
-    // docs/obsidian-vault/Active-Execution-Mandate.md.
-    if (!options.activeGoal) {
-      const resolved = this.resolveActiveGoalFromVault();
-      if (resolved) this.activeGoal = resolved;
-    }
   }
 
   /**
