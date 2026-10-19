@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   runClosingSimulation,
-  generateTimelineSummary,
   type PropertyLegalContext,
   type StakeholderProfile,
 } from '@sierra-estates/agents';
@@ -31,13 +30,12 @@ export async function POST(req: NextRequest) {
       paymentMethod: body.paymentMethod || 'cash',
     };
 
-    const simulation = runClosingSimulation(unit, stakeholder);
-    const timeline = generateTimelineSummary(simulation);
+    const simulation = runClosingSimulation(stakeholder, unit);
 
     return NextResponse.json({
       success: true,
       simulation,
-      timeline,
+      timeline: simulation.timeline,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
