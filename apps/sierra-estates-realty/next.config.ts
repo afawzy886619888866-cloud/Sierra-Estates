@@ -177,3 +177,8 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// cache-bust 2026-10-19: the f8ea737 Vercel build hit a poisoned FULL TURBO
+// remote-cache entry and failed at the "Deploying outputs" step on both
+// projects (local build of the same tree is green). This comment changes the
+// app's content hash so the next production build compiles from scratch.
