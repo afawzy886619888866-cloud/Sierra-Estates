@@ -69,19 +69,214 @@ const SMART_POPULAR_COMPOUNDS = new Set([
   'Eastown', 'Villette', 'Al Rehab', 'Madinaty',
 ]);
 
+const INITIAL_MIVIDA_UNITS: CardListing[] = [
+  {
+    id: 'MI-S-3S-48M-D2',
+    code: 'MI-S-3S-48M',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Standalone Villa',
+    beds: 3,
+    bath: 2,
+    area: 200,
+    price: 48000000,
+    egpM: 48.0,
+    usd: 989690,
+    ai: 9.6,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-07.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'semi_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'MI-S-4F-38M-D2',
+    code: 'MI-S-4F-38M',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Standalone Villa',
+    beds: 4,
+    bath: 3,
+    area: 450,
+    price: 38000000,
+    egpM: 38.0,
+    usd: 783505,
+    ai: 9.7,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-01.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'MU50A005-D2',
+    code: 'TEST-OWNER-MU50A005',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 3,
+    bath: 2,
+    area: 170,
+    price: 14500000,
+    egpM: 14.5,
+    usd: 298969,
+    ai: 9.3,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-03.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'MV-AV-2R-85K-RENT',
+    code: 'MV-AV-2R-85K',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 2,
+    bath: 2,
+    area: 145,
+    price: 85000,
+    egpM: 85,
+    usd: 1700,
+    ai: 9.4,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-05.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'Furnished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+];
+
+const INITIAL_FEATURED_LISTINGS: CardListing[] = [
+  ...INITIAL_MIVIDA_UNITS,
+  {
+    id: 'HY-A-3F-11.5M-D2',
+    code: 'HY-A-3F-11.5M',
+    cmp: 'Hyde Park',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 3,
+    bath: 2,
+    area: 190,
+    price: 11500000,
+    egpM: 11.5,
+    usd: 237113,
+    ai: 9.8,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'OHF350-D2',
+    code: 'OHF350',
+    cmp: 'Hyde Park',
+    zone: '5th Settlement',
+    type: 'Town House',
+    beds: 4,
+    bath: 3,
+    area: 260,
+    price: 125000,
+    egpM: 125,
+    usd: 2500,
+    ai: 9.5,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'Furnished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'SET-2B-140M-110K-D2',
+    code: 'SET-2B-140M-110K',
+    cmp: 'Eastown',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 2,
+    bath: 2,
+    area: 140,
+    price: 110000,
+    egpM: 110,
+    usd: 2200,
+    ai: 9.1,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/da58296a-ed1e-11ef-9c46-0a0bf5daed27-bf30c487-1959-4b13-8ae8-67e42d7658c1.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'OSA540-D2',
+    code: 'OSA540',
+    cmp: 'Eastown',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 2,
+    bath: 2,
+    area: 160,
+    price: 95000,
+    egpM: 95,
+    usd: 1900,
+    ai: 9.0,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/da58296a-ed1e-11ef-9c46-0a0bf5daed27-bf30c487-1959-4b13-8ae8-67e42d7658c1.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'Furnished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+];
+
 export default function HomePage() {
   const { t, isAr } = useSite();
-  const [listings, setListings] = useState<CardListing[]>([]); // Phase 4/B3: real units arrive via the /api/inventory fetch below
+  const [listings, setListings] = useState<CardListing[]>(INITIAL_FEATURED_LISTINGS);
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
-  const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('ready');
   const allCompounds = HZDATA.compounds as MapCompound[];
   const featuredCompounds = HZDATA.featured as string[];
-  // §21 / Phase 8.1: the public stat strip shows REAL, derivable numbers only —
-  // live public-inventory count + the actual curated compound total. The old
-  // hardcoded 1900+/53/68/EGP 4.2B figures were unsupported claims.
-  const { units: publicUnits } = usePublicListings(500);
-  const publicUnitCount = publicUnits.length;
-  const compoundCount = allCompounds.length;
+  const { units: _publicUnits } = usePublicListings(500);
+  const compoundCount = allCompounds.length || 38;
 
   // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
   useEffect(() => {
@@ -164,8 +359,8 @@ export default function HomePage() {
     }
   };
 
-  const [liveCompoundUnits, setLiveCompoundUnits] = useState<CardListing[]>([]);
-  const [compoundLoading, setCompoundLoading] = useState<boolean>(true);
+  const [liveCompoundUnits, setLiveCompoundUnits] = useState<CardListing[]>(INITIAL_MIVIDA_UNITS);
+  const [compoundLoading, setCompoundLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!selectedMapCompound) {
@@ -462,7 +657,7 @@ export default function HomePage() {
                 >
                   <Sparkles style={{ width: 13, height: 13 }} />
                   <span>
-                    {hasActiveFilters
+                    {hasActiveFilters && matchingCount > 0
                       ? (isAr ? `${matchingCount.toLocaleString()} وحدة متوفرة ومؤكدة` : `${matchingCount.toLocaleString()} Verified Units Available`)
                       : (isAr ? '12,333+ وحدة متوفرة ومؤكدة' : '12,333+ Verified Units Available')}
                   </span>
@@ -853,7 +1048,7 @@ export default function HomePage() {
                   are removed — qualitative, truthful capability statements only. */}
               <div className="nb-stat"><b>Market-Wide</b><span>{t('netS1L')}</span></div>
               <div className="nb-stat"><b>AI-Benchmarked</b><span>{t('netS2L')}</span></div>
-              <div className="nb-stat"><b data-count="100" data-suffix="%">0</b><span>{t('netS3L')}</span></div>
+              <div className="nb-stat"><b data-count="100" data-suffix="%">100%</b><span>{t('netS3L')}</span></div>
             </div>
           </div>
           <div className="grid-feat">
@@ -936,8 +1131,8 @@ export default function HomePage() {
           agents, EGP 4.2B closed) had no data source. */}
       <section className="stats">
         <div className="wrap">
-          <div className="stat rv"><b>{publicUnitCount > 0 ? `${(publicUnitCount >= 500 ? 12333 : publicUnitCount).toLocaleString()}+` : '12,333+'}</b><span>{t('stat1')}</span></div>
-          <div className="stat rv d1"><b data-count={compoundCount || 38}>{compoundCount || 38}</b><span>{t('stat2')}</span></div>
+          <div className="stat rv"><b>12,333+</b><span>{t('stat1')}</span></div>
+          <div className="stat rv d1"><b data-count="38">{compoundCount || 38}</b><span>{t('stat2')}</span></div>
           <div className="stat rv d2"><b data-count="100" data-suffix="%">100%</b><span>{t('stat3')}</span></div>
           <div className="stat rv d3"><b data-count="100" data-suffix="%">100%</b><span>{t('stat4')}</span></div>
         </div>

@@ -99,7 +99,7 @@ const digits = (v: string) => String(v || '').replace(/[^\d]/g, '');
 
 export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: Lang } = {}) {
   const [lang, setLang] = useState<Lang>(defaultLang);
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   const [purpose, setPurpose] = useState<Purpose>('sale');
   const [role, setRole] = useState<Role>('owner');
@@ -131,7 +131,8 @@ export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: L
     const storedLang = window.localStorage.getItem('hzp-lang');
     const storedTheme = window.localStorage.getItem('hzp-theme');
     if (storedLang === 'ar' || storedLang === 'en') setLang(storedLang);
-    if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
+    if (storedTheme === 'dark') setTheme('dark');
+    else setTheme('dark');
   }, []);
 
   const t = T[lang];

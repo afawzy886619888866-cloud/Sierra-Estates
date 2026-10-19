@@ -47,5 +47,5 @@ export const metadata: Metadata = {
 };
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
-  return <SiteProvider>{children}</SiteProvider>;
+  return <SiteProvider defaultTheme="dark">{children}</SiteProvider>;
 }
