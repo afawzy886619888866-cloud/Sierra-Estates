@@ -6,10 +6,11 @@
  *
  *   · sheet sync NEVER stamps provenance (verified_at / verified_by /
  *     source_verified_at) — human verification is the only source;
- *   · sheet availability NEVER decides publishability — inserts land as
- *     REVIEW_REQUIRED, updates never touch publish_status (PostgREST PATCH
- *     only mutates provided keys, so the base object must simply not carry
- *     them);
+ *   · sheet availability NEVER decides publishability — but since 025
+ *     dropped the publish_status column DEFAULT, fresh sheet rows land as
+ *     REVIEW_REQUIRED EXPLICITLY (never NULL/unclassified, never
+ *     PUBLISHABLE), and PATCHes strip publish_status entirely so sync can
+ *     never overwrite a human publish decision (see syncChunk);
  *   · the availability mapping itself is unchanged (status lifecycle only).
  */
 import { describe, it, expect } from 'vitest';
@@ -43,9 +44,14 @@ describe('08-units-sync — Phase 6 provenance rules', () => {
         expect(listing).not.toHaveProperty('source_verified_at');
     });
 
-    it('never carries publish_status — ingest does not decide publishability', () => {
+    it('lands fresh rows as REVIEW_REQUIRED explicitly (025 merged rule) — never PUBLISHABLE, never NULL', () => {
         const listing = rowToListing(SHEET_ROW);
-        expect(listing).not.toHaveProperty('publish_status');
+        // Migration 025 dropped the publish_status column DEFAULT, so an
+        // omitted key would land NULL/unclassified. Sheet ingest must enter
+        // the human review queue explicitly — the only two legal values for
+        // automated ingest are REVIEW_REQUIRED (fresh) and "absent on PATCH"
+        // (syncChunk strips it to protect human decisions).
+        expect(listing.publish_status).toBe('REVIEW_REQUIRED');
     });
 
     it('maps sheet availability to the status lifecycle only (unchanged behavior)', () => {
@@ -78,7 +84,13 @@ describe('08-units-sync — Phase 6 provenance rules', () => {
     it('does not stamp provenance even for unavailable rows', () => {
         const listing = rowToListing({ ...SHEET_ROW, Availablty: 'Not available' });
         expect(listing).not.toHaveProperty('verified_at');
-        expect(listing).not.toHaveProperty('publish_status');
+        expect(listing).not.toHaveProperty('verified_by');
+        expect(listing).not.toHaveProperty('source_verified_at');
+        // Availability never decides publishability: an off-market row is
+        // still REVIEW_REQUIRED (unclassified publishability is forbidden
+        // by the 025 merged rule), it is simply not publishable while off
+        // the market.
+        expect(listing.publish_status).toBe('REVIEW_REQUIRED');
         expect(listing.status).toBe('off-market');
     });
 });

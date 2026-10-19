@@ -3,6 +3,23 @@ import {
   AvailabilityVerificationService,
 } from '../apps/sierra-estates-realty/lib/services/AvailabilityVerificationService';
 import { sharedMemory } from '@sierra-estates/memory-engine';
+import snapshot from '../apps/sierra-estates-realty/lib/inventory/snapshot.json';
+
+/**
+ * Real-data unit selection (repo policy: never fixtures).
+ *
+ * The 2026-10-19 baseline audit found these tests pinned hardcoded unit ids
+ * (`INV-ABD03C2726AE`, `INV-MEM-0001`) that either carry NO whatsapp contact
+ * or no longer exist in the snapshot. Under §21 no-fabrication such units
+ * correctly land as `no_contact_on_file` (no inquiry dispatched to a dummy
+ * number), so the old expectations could never pass. Tests now select
+ * contact-bearing units from the REAL snapshot — robust to snapshot drift —
+ * and pin the §21 contract explicitly.
+ */
+const snapshotUnits: any[] = (snapshot as any)?.units || [];
+const withContact = snapshotUnits.filter((u) => u.whatsapp);
+const contactIds = withContact.slice(0, 3).map((u) => u.id);
+const contactlessId = snapshotUnits.find((u) => !u.whatsapp)?.id ?? '';
 
 describe('Listing Net & Autonomous WhatsApp Availability Verification Engine', () => {
   beforeEach(async () => {
@@ -35,12 +52,12 @@ describe('Listing Net & Autonomous WhatsApp Availability Verification Engine', (
     });
 
     it('should successfully create a verification session when <= 40 units are marked', async () => {
-      const validIds = ['INV-4F31AB8CB57C', 'INV-ABD03C2726AE', 'INV-MEM-0001'];
-
+      // §21-aware selection: three REAL snapshot units that carry a contact.
+      expect(contactIds.length).toBeGreaterThanOrEqual(3);
       const session = await AvailabilityVerificationService.createBatchRequest({
         clientName: 'Ahmed Mansour',
         clientPhone: '+201011223344',
-        unitIds: validIds,
+        unitIds: contactIds,
         notes: 'Interested in immediate cash deal',
       });
 
@@ -57,6 +74,19 @@ describe('Listing Net & Autonomous WhatsApp Availability Verification Engine', (
         expect(u.status).toBe('inquiry_sent');
         expect(u.expiresAt).toBe(session.expiresAt);
       }
+    });
+
+    it('marks a unit without any contact on file as no_contact_on_file (§21 no-fabrication)', async () => {
+      if (!contactlessId) return; // no contactless rows in this snapshot — nothing to pin
+      const session = await AvailabilityVerificationService.createBatchRequest({
+        clientName: 'Mona Safwat',
+        clientPhone: '+201012345699',
+        unitIds: [contactlessId],
+      });
+      // The inquiry is NOT dispatched to a fabricated placeholder number.
+      expect(session.units[0].status).toBe('no_contact_on_file');
+      expect(session.units[0].contactPhone).toBe('');
+      expect(session.units[0].refinedNotes).toContain('متابعة يدوية');
     });
   });
 
@@ -94,8 +124,11 @@ describe('Listing Net & Autonomous WhatsApp Availability Verification Engine', (
   });
 
   describe('Inbound Owner/Broker Reply & Gemini Refinement', () => {
-    it('should process owner confirmation, refine photos and details, and propose a viewing date to client', async () => {
-      const validIds = ['INV-4F31AB8CB57C'];
+    it('should process owner confirmation, refine photos and details, and propose a viewing date to client', { timeout: 20000 }, async () => {
+      // First run pays a one-off ~5s cost: handleOwnerReply dynamically
+      // imports ListingAvailabilitySyncService which loads the 12.5 MB
+      // consolidated-master-inventory.json. 20s keeps CI honest about that.
+      const validIds = [contactIds[0]];
 
       const session = await AvailabilityVerificationService.createBatchRequest({
         clientName: 'Nour El-Din',
@@ -125,7 +158,9 @@ describe('Listing Net & Autonomous WhatsApp Availability Verification Engine', (
     });
 
     it('should process owner reply when unit is sold/rented and notify client of unavailability', async () => {
-      const validIds = ['INV-ABD03C2726AE'];
+      // Contact-bearing unit: a contactless unit can never receive an owner
+      // reply (§21) and correctly returns null from handleOwnerReply.
+      const validIds = [contactIds[1] ?? contactIds[0]];
 
       const session = await AvailabilityVerificationService.createBatchRequest({
         clientName: 'Tarek Sherif',
@@ -152,7 +187,7 @@ describe('Listing Net & Autonomous WhatsApp Availability Verification Engine', (
 
   describe('Client Viewing Date Scheduling Proposal', () => {
     it('should register a site inspection viewing when client confirms inspection date', async () => {
-      const validIds = ['INV-MEM-0001'];
+      const validIds = [contactIds[2] ?? contactIds[0]];
 
       const session = await AvailabilityVerificationService.createBatchRequest({
         clientName: 'Hany Ramzy',

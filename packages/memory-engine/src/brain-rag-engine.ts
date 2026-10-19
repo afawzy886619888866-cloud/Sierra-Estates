@@ -75,9 +75,53 @@ export class MemoryBrainEngine {
 
     this.ecc = new EpisodicContextCache(storePath);
     this.obsidian = new ObsidianMemory(storePath);
-    this.activeGoal = options.activeGoal || 'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
+    // Goal precedence (2026-10-19, mandate persistence rule — reconciled):
+    //   1. explicit options.activeGoal (caller knows best)
+    //   2. the vault's Active-Execution-Mandate note (Status: ACTIVE gated,
+    //      docs/obsidian-vault/Active-Execution-Mandate.md) — the canonical
+    //      mandate memory
+    //   3. the vault's Active Execution Plan note
+    //      (docs/obsidian-vault/Active Execution Plan.md) — legacy fallback
+    //   4. the standing default
+    // Both vault reads survive restarts and context loss, so the owner-approved
+    // mandate keeps steering the fleet without anyone re-setting it.
+    this.activeGoal =
+      options.activeGoal ||
+      this.resolveActiveGoalFromVault() ||
+      this.resolveVaultGoal() ||
+      'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
 
     this.scanVault();
+  }
+
+  /**
+   * Resolve the fleet's active strategic goal from the durable vault note
+   * (docs/obsidian-vault/Active-Execution-Mandate.md). Returns null when no
+   * ACTIVE mandate note exists — the constructor default then stands.
+   *
+   * Format contract (see the note): a `**Issued:** ... **Status:** ACTIVE`
+   * marker line and a `## 🧭 Strategic Goal (recovers after any context
+   * loss)` section whose first paragraph is the goal text.
+   */
+  public resolveActiveGoalFromVault(): string | null {
+    this.scanVault();
+    const note = this.vaultCache.get('active-execution-mandate.md');
+    if (!note) return null;
+
+    // Only an ACTIVE mandate drives the fleet.
+    if (!/\*\*Status:\*\*\s*ACTIVE/i.test(note.content)) return null;
+
+    const section = note.content.match(
+      /##\s*🧭\s*Strategic Goal[^\n]*\n+([\s\S]*?)(?=\n## |\n---|$)/,
+    );
+    if (!section) return null;
+
+    // First non-empty, non-heading, non-blockquote line of the section.
+    const goalLine = section[1]
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#') && !l.startsWith('>'))[0];
+    return goalLine || null;
   }
 
   private resolveVaultDir(): string {
@@ -88,6 +132,26 @@ export class MemoryBrainEngine {
     if (fs.existsSync(relativeVault)) return relativeVault;
 
     return cwdVault;
+  }
+
+  /**
+   * Startup strategic-goal resolver (mandate 2026-10-19): reads the active
+   * goal from the vault's Active Execution Plan note so the owner-approved
+   * mandate survives process restarts and context loss. Marker format:
+   *   **Active Strategic Goal:** <goal text>
+   * Unreadable/missing marker → undefined (default applies). Never throws —
+   * a goal-lookup failure must not take the engine down.
+   */
+  private resolveVaultGoal(): string | undefined {
+    try {
+      const goalNote = path.join(this.vaultDir, 'Active Execution Plan.md');
+      if (!fs.existsSync(goalNote)) return undefined;
+      const content = fs.readFileSync(goalNote, 'utf8');
+      const match = content.match(/^\s*\*\*Active Strategic Goal:\*\*\s*(.+)$/m);
+      return match?.[1]?.trim() || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**

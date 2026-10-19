@@ -1,20 +1,22 @@
 name: CI
 
-# MANUAL FALLBACK ONLY — the primary CI gate now runs INSIDE the Vercel
-# production build (scripts/ci-preflight.sh, chained in vercel.json
-# buildCommand), after the GitHub Free-plan Actions minute quota was
-# exhausted. See docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md section 0.
-# Run this job on demand via the "Run workflow" button when Actions minutes
-# are available again.
-#
-# Scheduled scans, PR-size labels, and auto-assign remain removed.
+# PRIMARY GATE (2026-10-19 re-enabled): the repository is PUBLIC, so
+# GitHub-hosted standard runners cost zero Actions minutes — the push/PR
+# triggers removed during the quota outage (see section 0 of
+# docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md) are restored alongside the
+# in-Vercel ci-preflight gate (vercel.json buildCommand), which remains the
+# deploy-time authority. IF this repository ever becomes PRIVATE again,
+# revert to `workflow_dispatch`-only to avoid burning paid minutes.
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   PUPPETEER_SKIP_DOWNLOAD: "true"
@@ -79,6 +81,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
           SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
+
+      # 2026-10-19: the root vitest suite (76 files — workflows safety,
+      # deployment contracts, data hygiene, memory engine, infra, agents)
+      # had NO runner and silently drifted to 39 failing tests. It is now
+      # part of CI via the test:root script.
+      - name: Root vitest suite (workflows, contracts, hygiene, memory)
+        run: pnpm test:root
 
       - name: Build realty app
         run: pnpm --filter sierra-estates-client-page build

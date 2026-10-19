@@ -4,11 +4,14 @@ import cspellConfig from '../cspell.json';
 
 describe('Admin DB & Hero Regression Test Suite', () => {
   describe('1. Cinematic Hero Slider & Cairo Plaza Landmark Verification', () => {
-    it('should have 6 properly ordered slides with unique IDs 1 to 6', () => {
+    it('should have 8 properly ordered slides with unique IDs 1 to 8', () => {
+      // 2026-10-19: the cinematic slider grew from 6 to 8 slides (Swan Lake
+      // pivot-entry + Villette alfresco patios appended at ids 7-8). Cairo
+      // Plaza stays pinned at id 2 by the test below.
       const slides = HZDATA.slides;
-      expect(slides).toHaveLength(6);
+      expect(slides).toHaveLength(8);
       const ids = slides.map((s: any) => s.id);
-      expect(ids).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(ids).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     });
 
     it('should configure Slide #2 specifically for Cairo Plaza / Al-Mataria Metro Station', () => {
