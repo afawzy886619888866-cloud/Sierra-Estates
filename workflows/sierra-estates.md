@@ -52,7 +52,7 @@ apps/sierra-estates-realty/
     services/           ← Supabase CRUD helpers for all tables
     financial-engine.ts ← ROI, GrossYield, CommissionCalculator
     audit.ts            ← Audit log writer
-    config.ts           ← Centralised env/config constants
+    config.ts           ← Centralized env/config constants
 
 packages/
   memory-engine/        ← RAG Memory Engine & ECC (Episodic Context Cache)
