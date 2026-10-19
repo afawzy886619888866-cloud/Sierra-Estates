@@ -119,6 +119,21 @@ export default function DashboardView({
     newInquiries7d?: number;
     conversionRate?: number;
     recentActivity?: Array<{ id: string; type: string; message: string; at: string }>;
+    crmPipeline?: {
+      activeLeadsCount: number;
+      leadsNew7d: number;
+      leadSources: Record<string, number>;
+      dealsTotal: number;
+      dealsActive: number;
+      dealsClosed: number;
+      dealsClosedThisMonth: number;
+      pipelineValue: number;
+      weightedPipeline: number;
+      avgDealValue: number | null;
+      commissionPipeline: number;
+      eliteBrokers: number;
+      pipelineFunnel: Array<{ stage: string; count: number }>;
+    } | null;
   } | null>(null);
   // Real activity feed: events emitted by the server from actual inquiries
   // and leads (/api/admin/dashboard → recentActivity). Empty until real
@@ -392,12 +407,24 @@ export default function DashboardView({
     // Honest KPIs: every value comes from /api/admin/dashboard or renders '—'.
     // The previous fallbacks ('585' catalog, '283' leads, 'EGP 142M' volume,
     // invented growth %) were fabricated numbers shown to operators.
+    //
+    // Pipeline wiring: crmPipeline is the guarded leads+deals read on the
+    // same payload — activeLeadsCount is the real public.leads count and
+    // avgDealValue the real mean deal_value over public.deals (null when no
+    // deals exist → '—'). No card stays on a placeholder once the payload is
+    // in; if the guarded read fails the cards keep their honest '—'.
+    const crm = liveData?.crmPipeline ?? null;
+    const fmtEGP = (v: number) =>
+      v >= 1_000_000 ? `EGP ${(v / 1_000_000).toFixed(1)}M` : `EGP ${(v / 1_000).toFixed(0)}K`;
     const total = liveData?.totalListings !== undefined ? liveData.totalListings.toLocaleString() : '—';
-    const leadsCount = liveData?.newInquiries7d !== undefined ? liveData.newInquiries7d.toLocaleString() : '—';
-    const volume = '—'; // no closed-deal value source exists yet
-    const volumeGrowth = 'No closed-deal data';
+    const leadsCount = crm ? crm.activeLeadsCount.toLocaleString() : '—';
+    const leadsGrowth = crm ? `+${crm.leadsNew7d} new · 7d · live` : 'Awaiting CRM sync';
+    const volume = crm && crm.avgDealValue !== null ? fmtEGP(crm.avgDealValue) : '—';
+    const volumeGrowth = crm
+      ? `${crm.dealsTotal} deals · ${crm.dealsActive} open · avg deal_value`
+      : 'No deals on file';
 
-    return { catalog: total, catalogGrowth: 'DB listings count', leads: leadsCount, leadsGrowth: 'New inquiries · 7d', volume, volumeGrowth };
+    return { catalog: total, catalogGrowth: 'DB listings count', leads: leadsCount, leadsGrowth, volume, volumeGrowth };
   }, [liveData]);
 
   return (
