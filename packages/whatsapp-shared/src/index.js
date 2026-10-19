@@ -6,7 +6,7 @@
 
 const brochureManager = require('./brochure-manager');
 const propertyEvaluator = require('./property-evaluator');
-const firebaseService = require('./supabase-service');
+const supabaseService = require('./supabase-service');
 const emailService = require('./email-service');
 const propertyMatcher = require('./property-matcher');
 const memoryService = require('./memory-service');
@@ -20,7 +20,8 @@ const { ReportGenerator } = require('./report-generator');
 module.exports = {
   brochureManager,
   propertyEvaluator,
-  firebaseService,
+  supabaseService,
+  firebaseService: supabaseService,
   emailService,
   propertyMatcher,
   memoryService,
