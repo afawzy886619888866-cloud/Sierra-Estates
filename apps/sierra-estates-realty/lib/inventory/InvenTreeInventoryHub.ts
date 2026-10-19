@@ -237,7 +237,7 @@ class InvenTreeInventoryHubService {
         geo: {
           lat: resolvedGeo.lat,
           lng: resolvedGeo.lng,
-          approxLocation: resolvedGeo.approxLocation ?? false,
+          approxLocation: resolvedGeo.approx ?? false,
         },
         qrDeepLink,
         qrWhatsappLink,
@@ -431,13 +431,13 @@ class InvenTreeInventoryHubService {
           `GEOLOCATION: ${item.geo.lat}, ${item.geo.lng}`,
         ].filter(Boolean).join("\n");
 
-        // 2. Register entity profile in ECC Memory Engine
-        eccMemory.registerEntityProfile({
-          id: item.code,
-          name: item.title,
-          type: "property",
-          phone: "Verified Property Desk",
-          preferences: {
+        // 2. Register entity episode in ECC Memory Engine
+        eccMemory.recordEpisode({
+          type: "owner_listing_drop",
+          entityId: item.code,
+          actor: "InvenTree Inventory Hub",
+          summary: `Inventory unit cataloged: ${item.code} - ${item.compound} (${item.category}, ${formatEGP(item.parameters.totalPriceEgp)})`,
+          data: {
             compound: item.compound,
             district: item.district,
             category: item.category,
@@ -449,17 +449,18 @@ class InvenTreeInventoryHubService {
           },
         });
 
-        // 3. If unit is a hot deal or price adjusted, log episode in ECC
+        // 3. If unit is a hot deal or high yield, log price_drop episode in ECC
         if (item.parameters.rentalYieldPct && item.parameters.rentalYieldPct >= 8.5) {
           eccMemory.recordEpisode({
             type: "price_drop",
             entityId: item.code,
             actor: "InvenTree Automated Valuation",
             summary: `High rental yield verified for ${item.code} in ${item.compound}: ${item.parameters.rentalYieldPct}% yield at ${formatEGP(item.parameters.totalPriceEgp)}.`,
-            metadata: {
+            data: {
               yieldPct: item.parameters.rentalYieldPct,
               compound: item.compound,
               price: item.parameters.totalPriceEgp,
+              isHotDeal: true,
             },
           });
           episodesRecorded++;
@@ -560,7 +561,7 @@ class InvenTreeInventoryHubService {
       entityId: code,
       actor,
       summary: `Stock status transitioned from ${oldStatus.toUpperCase()} to ${newStatus.toUpperCase()}.${note ? ` Note: ${note}` : ""}`,
-      metadata: { oldStatus, newStatus, actor, note },
+      data: { oldStatus, newStatus, actor, note },
     });
 
     return true;
@@ -568,3 +569,4 @@ class InvenTreeInventoryHubService {
 }
 
 export const invenTreeHub = new InvenTreeInventoryHubService();
+export const InvenTreeInventoryHub = invenTreeHub;
