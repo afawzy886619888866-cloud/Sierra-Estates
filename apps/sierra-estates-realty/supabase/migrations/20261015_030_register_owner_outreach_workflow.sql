@@ -251,25 +251,16 @@ function saveDaily(d) {
 
 const TEMPLATE = `السلام عليكم ورحمة الله وبركاته
 
-مع حضرتك {_NAME_} — من فريق Sierra Estates للتسويق العقاري.
+مع حضرتك فريق Sierra Estates للتسويق العقاري بالتجمع الخامس.
 
-شاهدنا وحدتكم {_UNIT_} ونهتم بتسويقها لمحفظة عملائنا الحصرية بالقاهرة الجديدة.
-{_DETAILS_}
-هل حاضرين للتعاون معنا في التسويق؟
+بعتذر جداً لحضرتك على الإزعاج، كنا حابين نستفسر لو عند حضرتك وحدة معروضة للإيجار أو البيع {_LOCATION_}؟ وحابين نتأكد من التفاصيل الحالية من حضرتك مباشرة إذا مناسب نتعاون في تسويقها لعملائنا.
 
-إخلاء مسؤولية: هذه رسالة أعمال من Sierra Estates، وإذا لم ترغب في استقبال رسائل أخرى أرسل كلمة "إلغاء" وسنتوقف فوراً.`;
+لو الوحدة غير متاحة حالياً بنعتذر لحضرتك وشكراً لوقتك 🤝
+(لعدم استقبال رسائل أخرى أرسل كلمة "إلغاء")`;
 
 function buildMessage(r) {
-  const bits = [];
-  if (r.location) bits.push(`الموقع: ${r.location}`);
-  if (r.price) bits.push(`السعر التقديري: ${r.price} جنيه`);
-  if (r.bedrooms) bits.push(`الغرف: ${r.bedrooms}`);
-  if (r.type) bits.push(`النوع: ${r.type}`);
-  const unit = [r.code, r.propertyType].filter(Boolean).join(' — ') || 'المعلنة';
-  return TEMPLATE
-    .replace('{_NAME_}', r.name || 'سيادتكم')
-    .replace('{_UNIT_}', unit)
-    .replace('{_DETAILS_}', bits.length ? bits.join('\n') + '\n' : '');
+  const loc = r.location && r.location.trim() ? `في ${r.location.trim()}` : 'بالتجمع الخامس';
+  return TEMPLATE.replace('{_LOCATION_}', loc);
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
