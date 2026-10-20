@@ -89,6 +89,9 @@ jobs:
       # deployment contracts, data hygiene, memory engine, infra, agents)
       # had NO runner and silently drifted to 39 failing tests. It is now
       # part of CI via the test:root script.
+      - name: Install Cline CLI
+        run: npm install -g cline@3.0.73
+
       - name: Root vitest suite (workflows, contracts, hygiene, memory)
         run: pnpm test:root
 
