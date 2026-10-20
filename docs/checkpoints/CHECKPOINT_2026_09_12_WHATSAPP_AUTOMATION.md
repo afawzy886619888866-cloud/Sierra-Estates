@@ -1,7 +1,7 @@
 # Checkpoint: WhatsApp Automation & Owner Outreach Pipeline
 
 **Date**: September 12, 2026  
-**Git Tag**: [`checkpoint-whatsapp-automation`](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main/releases/tag/checkpoint-whatsapp-automation)  
+**Git Tag**: [`checkpoint-whatsapp-automation`](https://github.com/afawzy886619888866-cloud/Sierra-Estates/tree/checkpoint-whatsapp-automation)  
 **Commit**: `92afb7a361397ce42245e2ff262e194b070a0e24`  
 **Authoritative Backend**: Supabase PostgreSQL (`gaxfqcietzoonlmatiot.supabase.co`)  
 **Public Contact**: `+201092048333` (`https://wa.me/201092048333`)

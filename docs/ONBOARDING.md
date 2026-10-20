@@ -11,8 +11,8 @@ Quick start for anyone joining the monorepo.
 ## 2. Clone & Install
 
 ```bash
-git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
-cd SE-Vercel-deploy-main
+git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git
+cd Sierra-Estates
 pnpm install
 ```
 

@@ -2,7 +2,7 @@
 
 **تاريخ المراجعة:** أغسطس 2026  
 **الإصدار:** الإنتاجي النهائي (`6a49bab`)  
-**المنصة المستهدفة:** Vercel & GitHub Monorepo (`sierrablue8866-droid/SE-Vercel-deploy-main`)
+**المنصة المستهدفة:** Vercel & GitHub Monorepo (`afawzy886619888866-cloud/Sierra-Estates` — تم النقل من الحساب القديم 2026-10)
 
 ---
 

@@ -24,7 +24,7 @@ pipeline. This order is about the four remaining closure tasks.
 
 ## KEY FACTS (verified 2026-10-12)
 
-- **Repo**: `https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git`
+- **Repo**: `https://github.com/afawzy886619888866-cloud/Sierra-Estates.git`
   — **PUBLIC** (`"private": false`). Default branch `main`.
   Monorepo, pnpm workspaces, app at `apps/sierra-estates-realty`.
 - **Supabase** (sole backend): `https://gaxfqcietzoonlmatiot.supabase.co`,
