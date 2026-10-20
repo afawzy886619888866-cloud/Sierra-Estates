@@ -93,17 +93,17 @@ export function normalizeEgyptPhone(raw: string | null | undefined): string | nu
  * clause — it never claims a compound the record does not carry.
  */
 export function generateOwnerOutreachMessage(owner: OwnerInventoryItem): string {
-  const nameGreeting = owner.name && owner.name.trim().length > 1 ? `أستاذ/ة ${owner.name.trim()}` : 'فندم';
-  const dealStr = owner.dealType === 'rent' ? 'للإيجار' : 'للبيع';
-  const propStr = owner.propertyType || 'الوحدة';
-  const compoundStr = owner.compound ? `بكمبوند ${owner.compound}` : '';
+  const nameGreeting = owner.name && owner.name.trim().length > 1 && !owner.name.toLowerCase().includes('owner') && !owner.name.includes('المالك')
+    ? `أستاذ/ة ${owner.name.trim()}`
+    : 'يا فندم';
+  const locationStr = owner.compound ? `في كمبوند ${owner.compound}` : 'بالتجمع الخامس';
 
   return (
     `السلام عليكم ورحمة الله، مرحباً ${nameGreeting} 🌿\n\n` +
-    `مع حضرتك سارة من شركة سييرا إستيتس (Sierra Estates) للتسويق العقاري الفاخر بالتجمع الخامس.\n\n` +
-    `بخصوص معروضكم الكريم ${compoundStr} (${propStr} المعروضة ${dealStr})، هل الوحدة ما زالت متاحة لدى حضرتك؟\n\n` +
-    `لدينا حالياً عملاء VIP جاهزون للمعاينة والتنفيذ الفوري، ويسعدنا التنسيق مع حضرتك وتحديث تفاصيل السعر ونظام السداد.\n\n` +
-    `خالص الشكر والتقدير لحضرتك 🤝`
+    `مع حضرتك فريق شركة سييرا إستيتس (Sierra Estates) للتسويق العقاري بالتجمع الخامس.\n\n` +
+    `بعتذر لحضرتك على الإزعاج، كنا حابين نستفسر لو عند حضرتك وحدة معروضة للإيجار أو البيع ${locationStr}؟ وحابين نتأكد من التفاصيل الحالية من حضرتك مباشرة لو مناسب نتعاون في تسويقها لعملائنا.\n\n` +
+    `لو الوحدة غير متاحة حالياً بنعتذر جداً لحضرتك وشكراً لوقتك 🤝\n` +
+    `(لعدم استقبال رسائل أخرى أرسل كلمة "إلغاء")`
   );
 }
 

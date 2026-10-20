@@ -170,7 +170,7 @@ fingerprint (price is band-bucketed ±2.5%).
   all green (parallel sessions had added ~25 commits post-G1; none broke).
 - Queue #2 (ingest wiring) — executed in full, see G2 gate above.
 - Queue #4 (outreach audit) — executed in full (migration 033 + engine write
-  + 5 contract pins in `workflows/__tests__/outreach-audit-contract.test.ts`).
+  - 5 contract pins in `workflows/__tests__/outreach-audit-contract.test.ts`).
 - Queue #3 (workflows tests in CI) — verified already satisfied via
   `pnpm test:root` (root vitest includes `workflows/__tests__/**`);
   the parity mechanism differs from "a test script in workflows/package.json"

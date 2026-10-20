@@ -353,32 +353,25 @@ function saveDaily(d) {
 
 const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_SALUTATION_}
 
-مع حضرتك فريق Sierra Estates للتسويق العقاري.
+مع حضرتك فريق Sierra Estates للتسويق العقاري بالتجمع الخامس.
 
-شاهدنا وحدتكم {_UNIT_} ونهتم بتسويقها لمحفظة عملائنا الحصرية بالقاهرة الجديدة.
-{_DETAILS_}
-هل الوحدة ما زالت متاحة ومناسب لحضرتك التعاون معنا في تسويقها؟
+بعتذر جداً لحضرتك على الإزعاج، كنا حابين نستفسر لو متاح عند حضرتك وحدة معروضة للإيجار أو البيع {_LOCATION_}؟ وحابين نتأكد من التفاصيل الحالية من حضرتك مباشرة إذا مناسب نتعاون في تسويقها لعملائنا.
 
-إخلاء مسؤولية: هذه رسالة أعمال من Sierra Estates، وإذا لم ترغب في استقبال رسائل أخرى أرسل كلمة "إلغاء" وسنتوقف فوراً.`;
+لو الوحدة غير متاحة حالياً بنعتذر لحضرتك وشكراً جزيلاً لوقتك 🤝
+(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
 function buildMessage(r) {
-  const bits = [];
-  if (r.location) bits.push(`الموقع: ${r.location}`);
-  if (r.price) bits.push(`السعر التقديري: ${r.price} جنيه`);
-  if (r.bedrooms) bits.push(`الغرف: ${r.bedrooms}`);
-  if (r.type) bits.push(`النوع: ${r.type}`);
-  const unit = [r.code, r.propertyType].filter(Boolean).join(' — ') || 'المعلنة';
-  
   let salutation = 'يا فندم،';
-  if (r.name && r.name.trim()) {
+  if (r.name && r.name.trim() && !r.name.toLowerCase().includes('owner') && !r.name.includes('المالك')) {
     const cleanName = r.name.trim().replace(/^أ[\.\/]\s*/, '');
     salutation = `أ/ ${cleanName}،`;
   }
 
+  const loc = r.location && r.location.trim() ? `في ${r.location.trim()}` : 'بالتجمع الخامس';
+
   return TEMPLATE
     .replace('{_SALUTATION_}', salutation)
-    .replace('{_UNIT_}', unit)
-    .replace('{_DETAILS_}', bits.length ? bits.join('\n') + '\n' : '');
+    .replace('{_LOCATION_}', loc);
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
