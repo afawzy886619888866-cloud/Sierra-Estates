@@ -77,7 +77,7 @@ describe('stub prices never render as real prices on the public map', () => {
   it('price 999 (rent stub) renders as "Price on request", not "EGP 999"', async () => {
     listingsRowsRef.rows = [row({ price: 999 })];
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/inventory'));
     const json = await res.json();
 
     expect(json.source).toBe('supabase');
@@ -88,7 +88,7 @@ describe('stub prices never render as real prices on the public map', () => {
   it('price 5,000,000 (sale stub) renders as "Price on request"', async () => {
     listingsRowsRef.rows = [row({ price: 5_000_000, deal_type: 'sale' })];
 
-    const json = await (await GET()).json();
+    const json = await (await GET(new Request('http://localhost/api/inventory'))).json();
 
     expect(json.units[0].price).toBe(0);
     expect(json.units[0].priceLabel).toBe('Price on request');
@@ -101,7 +101,7 @@ describe('stub prices never render as real prices on the public map', () => {
       row({ id: 'c'.repeat(24), code: 'C3', price: 11_500_000, deal_type: 'sale' }),
     ];
 
-    const json = await (await GET()).json();
+    const json = await (await GET(new Request('http://localhost/api/inventory'))).json();
     const byCode = Object.fromEntries(json.units.map((u: any) => [u.code, u.price]));
 
     expect(byCode['A1']).toBe(125_000);
@@ -112,7 +112,7 @@ describe('stub prices never render as real prices on the public map', () => {
   it('a genuinely unpriced row still renders "Price on request" (absence stays honest)', async () => {
     listingsRowsRef.rows = [row({ price: null })];
 
-    const json = await (await GET()).json();
+    const json = await (await GET(new Request('http://localhost/api/inventory'))).json();
 
     expect(json.units[0].price).toBe(0);
     expect(json.units[0].priceLabel).toBe('Price on request');
