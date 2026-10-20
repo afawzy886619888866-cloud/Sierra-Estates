@@ -51,7 +51,7 @@ These are product content, so they were flagged only. Say the word and they get 
 | `apps/sierra-estates-realty/public/feeds/propertyfinder-owners-full.xml` | 15MB | Zero code references (same as above) | Same as above |
 | `apps/sierra-estates-realty/public/feeds/propertyfinder-photos-only.xml` | 34KB | Only consumed by `scripts/publish-all-owners-to-propertyfinder.mjs` | Low — regenerate anytime via that script |
 
-**Keep:** `propertyfinder-feed.xml` — it IS referenced at runtime: API fallback in `app/api/feeds/property-finder/route.ts` (both cwd and app-dir paths) and linked from `AdminPortal.tsx` ("Static XML").
+**Keep (relocated 2026-10-20):** `propertyfinder-feed.xml` — draft feeds moved from `public/feeds/` to `docs/drafts/propertyfinder/` (files under `public/` are publicly served; the old pre-generated branch in `app/api/feeds/property-finder/route.ts` was removed — the route now exports ONLY canonical publish-gated rows). Generators (`export-propertyfinder-feed.mjs`, `publish-propertyfinder-ads.mjs`) write to the drafts dir.
 
 > Alternative to deletion: move the three unreferenced XMLs (45MB) and the MP4 to external storage (Vercel Blob / R2) — git history stays slim and URLs keep working.
 
