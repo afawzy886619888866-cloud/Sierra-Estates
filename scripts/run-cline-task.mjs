@@ -147,7 +147,7 @@ function runCheck(execInfo) {
   const versionResult = spawnSync(versionCmd, versionArgs, {
     cwd: rootDir,
     encoding: 'utf8',
-    shell: isWindows,
+    shell: true,
   });
 
   if (versionResult.status === 0) {
