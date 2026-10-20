@@ -1,0 +1,1100 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Sierra Estates Homepage" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "Sierra Estates" [ref=e6]
+        - generic [ref=e7]:
+          - text: Sierra Estates
+          - generic [ref=e8]: Future of Real Estate
+      - generic [ref=e9]:
+        - link "Map & Radar" [ref=e10] [cursor=pointer]:
+          - /url: /net
+        - link "Compounds & Map" [ref=e11] [cursor=pointer]:
+          - /url: /compounds
+      - generic [ref=e12]:
+        - link "Add Listing Brokers & owners" [ref=e13] [cursor=pointer]:
+          - /url: /add-listing
+          - generic [ref=e14]: Add Listing
+          - generic [ref=e15]: Brokers & owners
+        - link "Request Now 25% off service" [ref=e16] [cursor=pointer]:
+          - /url: /#contact
+          - generic [ref=e17]: Request Now
+          - generic [ref=e18]: 25% off service
+        - button "Switch to light mode" [ref=e19] [cursor=pointer]:
+          - generic [ref=e26]: Light
+        - button "التبديل إلى العربية" [ref=e27] [cursor=pointer]:
+          - generic [ref=e32]: عربي
+          - generic [ref=e33]: AR
+  - banner [ref=e34]:
+    - generic [ref=e45]:
+      - generic [ref=e46]: ⚡ AI LASER RADAR · NEW CAIRO LUXURY
+      - generic [ref=e49]: FIRST & ONLY WEBSITE IN EGYPT DESIGNED FOR NEW CAIRO
+      - heading "The First Exclusive Destination for New Cairo Properties. Rent & Resale." [level=1] [ref=e50]
+      - paragraph [ref=e51]: The Only Specialized Network for Resale and Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab
+      - paragraph [ref=e52]: Powered by proprietary AI and a market-wide network of partner brokerages to surface East Cairo's most competitive opportunities at accurate pricing.
+      - generic [ref=e53]:
+        - generic [ref=e54]: Market-Wide Network
+        - generic [ref=e59]: Broker-Sourced Listings
+        - generic [ref=e64]: Proprietary AI Pricing
+    - link "Explore compounds on the map" [ref=e69] [cursor=pointer]:
+      - /url: /compounds
+    - generic [ref=e74]:
+      - button "Slide 1" [ref=e75] [cursor=pointer]
+      - button "Slide 2" [ref=e76] [cursor=pointer]
+      - button "Slide 3" [ref=e77] [cursor=pointer]
+      - button "Slide 4" [ref=e78] [cursor=pointer]
+      - button "Slide 5" [ref=e79] [cursor=pointer]
+      - button "Slide 6" [ref=e80] [cursor=pointer]
+      - button "Slide 7" [ref=e81] [cursor=pointer]
+      - button "Slide 8" [ref=e82] [cursor=pointer]
+    - generic [aria-hidden]:
+      - generic: SCROLL
+  - generic [ref=e85]:
+    - generic [ref=e86]:
+      - group "Search type" [ref=e87]:
+        - button "Resale" [ref=e88] [cursor=pointer]
+        - button "Rent" [ref=e89] [cursor=pointer]
+        - button "New Projects" [ref=e90] [cursor=pointer]
+      - generic [ref=e91]: 12,333+ Verified Units Available
+    - generic [ref=e97]:
+      - generic [ref=e98]:
+        - button "Compound / Area" [ref=e100] [cursor=pointer]
+        - button "Rooms" [ref=e108] [cursor=pointer]
+        - button "Budget" [ref=e116] [cursor=pointer]
+        - button "Unit Type" [ref=e124] [cursor=pointer]
+        - button "Condition" [ref=e133] [cursor=pointer]
+      - generic [ref=e141]:
+        - link "Search" [ref=e142] [cursor=pointer]:
+          - /url: /properties
+        - button "Map View" [ref=e147] [cursor=pointer]
+        - link "Listing Net" [ref=e151] [cursor=pointer]:
+          - /url: /net
+  - generic [ref=e161]:
+    - generic [ref=e162]: HYDE PARK AI SCORE 9.8
+    - generic [ref=e163]: VILLETTE YIELD 8.1%
+    - generic [ref=e164]: TAJ CITY DEMAND RISING
+    - generic [ref=e165]: MOUNTAIN VIEW ICITY +24%
+    - generic [ref=e166]: UPTOWN CAIRO +31%
+    - generic [ref=e167]: MIVIDA RENTALS FROM $1,700/MO
+    - generic [ref=e168]: PALM HILLS AI SCORE 9.2
+    - generic [ref=e169]: EASTOWN DEMAND SURGING
+    - generic [ref=e170]: AL BUROUJ CAPITAL GAIN +18%
+    - generic [ref=e171]: HYDE PARK AI SCORE 9.8
+    - generic [ref=e172]: VILLETTE YIELD 8.1%
+    - generic [ref=e173]: TAJ CITY DEMAND RISING
+    - generic [ref=e174]: MOUNTAIN VIEW ICITY +24%
+    - generic [ref=e175]: UPTOWN CAIRO +31%
+    - generic [ref=e176]: MIVIDA RENTALS FROM $1,700/MO
+    - generic [ref=e177]: PALM HILLS AI SCORE 9.2
+    - generic [ref=e178]: EASTOWN DEMAND SURGING
+    - generic [ref=e179]: AL BUROUJ CAPITAL GAIN +18%
+  - region [ref=e180]:
+    - generic [ref=e181]:
+      - generic [ref=e182]:
+        - generic [ref=e183]:
+          - generic [ref=e184]: Important Project
+          - heading "Cairo Plaza — commercial opportunity in Al-Mataria" [level=2] [ref=e185]
+          - paragraph [ref=e186]: A dedicated project page for investors and commercial operators, with current-site evidence, clearly labeled concepts, and direct request paths.
+        - link "Open Cairo Plaza page" [ref=e187] [cursor=pointer]:
+          - /url: /cairo-plaza
+      - link "Open Cairo Plaza page" [ref=e191] [cursor=pointer]:
+        - /url: /cairo-plaza
+        - generic [ref=e192]: "01"
+        - generic [ref=e193]: Cairo Plaza
+        - generic [ref=e194]: In front of Al-Mataria Metro Station
+  - generic [ref=e198]:
+    - generic [ref=e199]:
+      - generic [ref=e200]:
+        - heading "Discover the Best Opportunities" [level=2] [ref=e201]
+        - paragraph [ref=e202]: Explore all New Cairo compounds on the interactive map. Click any marker for details.
+      - link "All 50+ compounds" [ref=e203] [cursor=pointer]:
+        - /url: /compounds
+    - generic [ref=e208]:
+      - generic [ref=e210]:
+        - img "New Cairo Illustrated Masterplan (Dark Theme)"
+        - img "New Cairo Illustrated Masterplan (Light Theme)"
+        - generic [ref=e211] [cursor=pointer]:
+          - generic:
+            - generic: MI
+            - generic: Mivida
+        - generic [ref=e212] [cursor=pointer]
+        - generic [ref=e213] [cursor=pointer]
+        - generic [ref=e214] [cursor=pointer]
+        - generic [ref=e215] [cursor=pointer]
+        - generic [ref=e216] [cursor=pointer]
+        - generic [ref=e217] [cursor=pointer]
+        - generic [ref=e218] [cursor=pointer]
+        - generic [ref=e219] [cursor=pointer]
+        - generic [ref=e220] [cursor=pointer]
+        - generic [ref=e221] [cursor=pointer]
+        - generic [ref=e222] [cursor=pointer]
+        - generic [ref=e223] [cursor=pointer]
+        - generic [ref=e224] [cursor=pointer]
+        - generic [ref=e225] [cursor=pointer]
+        - generic [ref=e226] [cursor=pointer]
+        - generic [ref=e227] [cursor=pointer]
+        - generic [ref=e228] [cursor=pointer]
+        - generic [ref=e229] [cursor=pointer]
+        - generic [ref=e230] [cursor=pointer]
+        - generic [ref=e231] [cursor=pointer]
+      - generic [ref=e232]:
+        - generic [ref=e233]:
+          - generic [ref=e235]: SIERRA ESTATES
+          - generic [ref=e236]: ·
+          - generic [ref=e237]: GIS MASTERPLAN v4.2
+          - generic [ref=e238]: 30.0131° N, 31.4989° E
+        - button "Light Mode" [ref=e239] [cursor=pointer]
+      - generic [ref=e247]:
+        - button "Zoom in" [ref=e248] [cursor=pointer]
+        - generic [ref=e250]: 145%
+        - button "Zoom out" [ref=e251] [cursor=pointer]
+        - button "Reset view" [ref=e254] [cursor=pointer]
+      - button "Play" [ref=e259] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic: SIERRA ESTATES
+          - generic: ELEVATED LIVING
+    - status [ref=e263]: 4 units match your selections
+    - generic [ref=e264]:
+      - generic [ref=e265]:
+        - generic [ref=e266]:
+          - generic [ref=e267]: Verified Units Matching Selected Masterplan
+          - heading "Mivida — Active Inventory" [level=3] [ref=e272]
+        - generic [ref=e273]:
+          - link "Browse All in Mivida" [ref=e274] [cursor=pointer]:
+            - /url: /properties?compound=Mivida
+          - button "Clear Selection" [ref=e278] [cursor=pointer]
+      - generic [ref=e279]:
+        - article [ref=e280]:
+          - generic [ref=e281]:
+            - link [ref=e282] [cursor=pointer]:
+              - /url: /property/MI-S-3S-48M-D2
+              - img "Standalone Villa in Mivida" [ref=e283]
+            - generic [ref=e284]:
+              - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e285]: 📷 Representative
+              - generic [ref=e286]: Direct Owner
+              - generic [ref=e291]: Direct Owner
+              - generic [ref=e292]: Resale
+            - button "Save" [ref=e293] [cursor=pointer]
+            - generic [ref=e296]: 48,000,000 EGP
+            - 'generic "Sierra Intelligence Score: 9.6/10" [ref=e297]': AI 9.6
+          - generic [ref=e298]:
+            - generic [ref=e299]: MI-S-3S-48M · Standalone Villa
+            - heading [level=3] [ref=e301]:
+              - link "Standalone Villa in Mivida" [ref=e302] [cursor=pointer]:
+                - /url: /property/MI-S-3S-48M-D2
+            - button "Mivida, 5th Settlement" [ref=e303] [cursor=pointer]
+            - generic [ref=e308]:
+              - generic [ref=e309]:
+                - generic [ref=e313]: "3"
+                - generic [ref=e314]: Beds
+              - generic [ref=e315]:
+                - generic [ref=e319]: "2"
+                - generic [ref=e320]: Baths
+              - generic [ref=e321]:
+                - generic [ref=e327]: "200"
+                - generic [ref=e328]: m²
+              - generic "Estimated Price per Square Meter" [ref=e329]:
+                - generic [ref=e330]: 240,000
+                - generic [ref=e331]: EGP/m²
+            - generic [ref=e332]:
+              - generic [ref=e333]: semi_finished
+              - button "+ VIP Tour" [ref=e338]
+          - generic [ref=e340]:
+            - generic [ref=e341]:
+              - generic [ref=e342]: VDO
+              - generic [ref=e343]: Verified Direct Owner
+            - generic [ref=e345]:
+              - link "WhatsApp" [ref=e346] [cursor=pointer]:
+                - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BMI-S-3S-48M%5D%20in%20Mivida%20(48%2C000%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+              - button "Locate on Map" [ref=e349] [cursor=pointer]
+              - link "Open listing" [ref=e353] [cursor=pointer]:
+                - /url: /property/MI-S-3S-48M-D2
+        - article [ref=e358]:
+          - generic [ref=e359]:
+            - link [ref=e360] [cursor=pointer]:
+              - /url: /property/MI-S-4F-38M-D2
+              - img "Standalone Villa in Mivida" [ref=e361]
+            - generic [ref=e362]:
+              - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e363]: 📷 Representative
+              - generic [ref=e364]: Direct Owner
+              - generic [ref=e369]: Direct Owner
+              - generic [ref=e370]: Resale
+            - button "Save" [ref=e371] [cursor=pointer]
+            - generic [ref=e374]: 38,000,000 EGP
+            - 'generic "Sierra Intelligence Score: 9.7/10" [ref=e375]': AI 9.7
+          - generic [ref=e376]:
+            - generic [ref=e377]: MI-S-4F-38M · Standalone Villa
+            - heading [level=3] [ref=e379]:
+              - link "Standalone Villa in Mivida" [ref=e380] [cursor=pointer]:
+                - /url: /property/MI-S-4F-38M-D2
+            - button "Mivida, 5th Settlement" [ref=e381] [cursor=pointer]
+            - generic [ref=e386]:
+              - generic [ref=e387]:
+                - generic [ref=e391]: "4"
+                - generic [ref=e392]: Beds
+              - generic [ref=e393]:
+                - generic [ref=e397]: "3"
+                - generic [ref=e398]: Baths
+              - generic [ref=e399]:
+                - generic [ref=e405]: "450"
+                - generic [ref=e406]: m²
+              - generic "Estimated Price per Square Meter" [ref=e407]:
+                - generic [ref=e408]: 84,444
+                - generic [ref=e409]: EGP/m²
+            - generic [ref=e410]:
+              - generic [ref=e411]: fully_finished
+              - button "+ VIP Tour" [ref=e416]
+          - generic [ref=e418]:
+            - generic [ref=e419]:
+              - generic [ref=e420]: VDO
+              - generic [ref=e421]: Verified Direct Owner
+            - generic [ref=e423]:
+              - link "WhatsApp" [ref=e424] [cursor=pointer]:
+                - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BMI-S-4F-38M%5D%20in%20Mivida%20(38%2C000%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+              - button "Locate on Map" [ref=e427] [cursor=pointer]
+              - link "Open listing" [ref=e431] [cursor=pointer]:
+                - /url: /property/MI-S-4F-38M-D2
+        - article [ref=e436]:
+          - generic [ref=e437]:
+            - link [ref=e438] [cursor=pointer]:
+              - /url: /property/MU50A005-D2
+              - img "Apartment in Mivida" [ref=e439]
+            - generic [ref=e440]:
+              - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e441]: 📷 Representative
+              - generic [ref=e442]: Direct Owner
+              - generic [ref=e447]: Direct Owner
+              - generic [ref=e448]: Resale
+            - button "Save" [ref=e449] [cursor=pointer]
+            - generic [ref=e452]: 14,500,000 EGP
+            - 'generic "Sierra Intelligence Score: 9.3/10" [ref=e453]': AI 9.3
+          - generic [ref=e454]:
+            - generic [ref=e455]: TEST-OWNER-MU50A005 · Apartment
+            - heading [level=3] [ref=e457]:
+              - link "Apartment in Mivida" [ref=e458] [cursor=pointer]:
+                - /url: /property/MU50A005-D2
+            - button "Mivida, 5th Settlement" [ref=e459] [cursor=pointer]
+            - generic [ref=e464]:
+              - generic [ref=e465]:
+                - generic [ref=e469]: "3"
+                - generic [ref=e470]: Beds
+              - generic [ref=e471]:
+                - generic [ref=e475]: "2"
+                - generic [ref=e476]: Baths
+              - generic [ref=e477]:
+                - generic [ref=e483]: "170"
+                - generic [ref=e484]: m²
+              - generic "Estimated Price per Square Meter" [ref=e485]:
+                - generic [ref=e486]: 85,294
+                - generic [ref=e487]: EGP/m²
+            - generic [ref=e488]:
+              - generic [ref=e489]: fully_finished
+              - button "+ VIP Tour" [ref=e494]
+          - generic [ref=e496]:
+            - generic [ref=e497]:
+              - generic [ref=e498]: VDO
+              - generic [ref=e499]: Verified Direct Owner
+            - generic [ref=e501]:
+              - link "WhatsApp" [ref=e502] [cursor=pointer]:
+                - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BTEST-OWNER-MU50A005%5D%20in%20Mivida%20(14%2C500%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+              - button "Locate on Map" [ref=e505] [cursor=pointer]
+              - link "Open listing" [ref=e509] [cursor=pointer]:
+                - /url: /property/MU50A005-D2
+        - article [ref=e514]:
+          - generic [ref=e515]:
+            - link [ref=e516] [cursor=pointer]:
+              - /url: /property/MV-AV-2R-85K-RENT
+              - img "Apartment in Mivida" [ref=e517]
+            - generic [ref=e518]:
+              - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e519]: 📷 Representative
+              - generic [ref=e520]: Direct Owner
+              - generic [ref=e525]: Direct Owner
+              - generic [ref=e526]: Rent
+            - button "Save" [ref=e527] [cursor=pointer]
+            - generic [ref=e530]: 85,000 EGP/mo
+            - 'generic "Sierra Intelligence Score: 9.4/10" [ref=e531]': AI 9.4
+          - generic [ref=e532]:
+            - generic [ref=e533]: MV-AV-2R-85K · Apartment
+            - heading [level=3] [ref=e535]:
+              - link "Apartment in Mivida" [ref=e536] [cursor=pointer]:
+                - /url: /property/MV-AV-2R-85K-RENT
+            - button "Mivida, 5th Settlement" [ref=e537] [cursor=pointer]
+            - generic [ref=e542]:
+              - generic [ref=e543]:
+                - generic [ref=e547]: "2"
+                - generic [ref=e548]: Beds
+              - generic [ref=e549]:
+                - generic [ref=e553]: "2"
+                - generic [ref=e554]: Baths
+              - generic [ref=e555]:
+                - generic [ref=e561]: "145"
+                - generic [ref=e562]: m²
+              - generic "Estimated Price per Square Meter" [ref=e563]:
+                - generic [ref=e564]: "586"
+                - generic [ref=e565]: EGP/m²
+            - generic [ref=e566]:
+              - generic [ref=e567]: Furnished
+              - button "+ VIP Tour" [ref=e572]
+          - generic [ref=e574]:
+            - generic [ref=e575]:
+              - generic [ref=e576]: VDO
+              - generic [ref=e577]: Verified Direct Owner
+            - generic [ref=e579]:
+              - link "WhatsApp" [ref=e580] [cursor=pointer]:
+                - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BMV-AV-2R-85K%5D%20in%20Mivida%20(85%2C000%20EGP%2Fmo).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+              - button "Locate on Map" [ref=e583] [cursor=pointer]
+              - link "Open listing" [ref=e587] [cursor=pointer]:
+                - /url: /property/MV-AV-2R-85K-RENT
+  - generic [ref=e593]:
+    - generic [ref=e594]:
+      - generic [ref=e595]:
+        - generic [ref=e596]: AI-curated inventory
+        - heading "Featured Properties" [level=2] [ref=e597]
+        - paragraph [ref=e598]: The most sought-after homes on the market this week across New Cairo.
+        - generic [ref=e599]:
+          - generic [ref=e600]:
+            - generic [ref=e601]: "Filter Units:"
+            - button "All Listings" [ref=e602] [cursor=pointer]
+            - button "🛡️ Direct Owner" [ref=e603] [cursor=pointer]
+            - button "Resale" [ref=e604] [cursor=pointer]
+            - button "Rent" [ref=e605] [cursor=pointer]
+          - generic [ref=e606]:
+            - generic [ref=e607]: "Card Style:"
+            - button "Showcase" [ref=e608] [cursor=pointer]
+            - button "Financial Bento" [ref=e609] [cursor=pointer]
+            - button "Compact" [ref=e610] [cursor=pointer]
+            - button "Editorial" [ref=e611] [cursor=pointer]
+      - link "View all listings" [ref=e612] [cursor=pointer]:
+        - /url: /properties
+    - generic [ref=e616]:
+      - article [ref=e617]:
+        - generic [ref=e618]:
+          - link [ref=e619] [cursor=pointer]:
+            - /url: /property/HY-A-3F-11.5M-D2
+            - img "Apartment in Hyde Park" [ref=e620]
+          - generic [ref=e621]:
+            - generic [ref=e622]: Direct Owner
+            - generic [ref=e627]: Direct Owner
+            - generic [ref=e628]: Resale
+          - button "Save" [ref=e629] [cursor=pointer]
+          - generic [ref=e632]: 11,500,000 EGP
+          - 'generic "Sierra Intelligence Score: 9.8/10" [ref=e633]': AI 9.8
+        - generic [ref=e634]:
+          - generic [ref=e635]: HY-A-3F-11.5M · Apartment
+          - heading [level=3] [ref=e637]:
+            - link "Apartment in Hyde Park" [ref=e638] [cursor=pointer]:
+              - /url: /property/HY-A-3F-11.5M-D2
+          - button "Hyde Park, 5th Settlement" [ref=e639] [cursor=pointer]
+          - generic [ref=e644]:
+            - generic [ref=e645]:
+              - generic [ref=e649]: "3"
+              - generic [ref=e650]: Beds
+            - generic [ref=e651]:
+              - generic [ref=e655]: "2"
+              - generic [ref=e656]: Baths
+            - generic [ref=e657]:
+              - generic [ref=e663]: "190"
+              - generic [ref=e664]: m²
+            - generic "Estimated Price per Square Meter" [ref=e665]:
+              - generic [ref=e666]: 60,526
+              - generic [ref=e667]: EGP/m²
+          - generic [ref=e668]:
+            - generic [ref=e669]: fully_finished
+            - button "+ VIP Tour" [ref=e674]
+        - generic [ref=e676]:
+          - generic [ref=e677]:
+            - generic [ref=e678]: VDO
+            - generic [ref=e679]: Verified Direct Owner
+          - generic [ref=e681]:
+            - link "WhatsApp" [ref=e682] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BHY-A-3F-11.5M%5D%20in%20Hyde%20Park%20(11%2C500%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e685] [cursor=pointer]
+            - link "Open listing" [ref=e689] [cursor=pointer]:
+              - /url: /property/HY-A-3F-11.5M-D2
+      - article [ref=e694]:
+        - generic [ref=e695]:
+          - link [ref=e696] [cursor=pointer]:
+            - /url: /property/MI-S-4F-38M-D2
+            - img "Standalone Villa in Mivida" [ref=e697]
+          - generic [ref=e698]:
+            - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e699]: 📷 Representative
+            - generic [ref=e700]: Direct Owner
+            - generic [ref=e705]: Direct Owner
+            - generic [ref=e706]: Resale
+          - button "Save" [ref=e707] [cursor=pointer]
+          - generic [ref=e710]: 38,000,000 EGP
+          - 'generic "Sierra Intelligence Score: 9.7/10" [ref=e711]': AI 9.7
+        - generic [ref=e712]:
+          - generic [ref=e713]: MI-S-4F-38M · Standalone Villa
+          - heading [level=3] [ref=e715]:
+            - link "Standalone Villa in Mivida" [ref=e716] [cursor=pointer]:
+              - /url: /property/MI-S-4F-38M-D2
+          - button "Mivida, 5th Settlement" [ref=e717] [cursor=pointer]
+          - generic [ref=e722]:
+            - generic [ref=e723]:
+              - generic [ref=e727]: "4"
+              - generic [ref=e728]: Beds
+            - generic [ref=e729]:
+              - generic [ref=e733]: "3"
+              - generic [ref=e734]: Baths
+            - generic [ref=e735]:
+              - generic [ref=e741]: "450"
+              - generic [ref=e742]: m²
+            - generic "Estimated Price per Square Meter" [ref=e743]:
+              - generic [ref=e744]: 84,444
+              - generic [ref=e745]: EGP/m²
+          - generic [ref=e746]:
+            - generic [ref=e747]: fully_finished
+            - button "+ VIP Tour" [ref=e752]
+        - generic [ref=e754]:
+          - generic [ref=e755]:
+            - generic [ref=e756]: VDO
+            - generic [ref=e757]: Verified Direct Owner
+          - generic [ref=e759]:
+            - link "WhatsApp" [ref=e760] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BMI-S-4F-38M%5D%20in%20Mivida%20(38%2C000%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e763] [cursor=pointer]
+            - link "Open listing" [ref=e767] [cursor=pointer]:
+              - /url: /property/MI-S-4F-38M-D2
+      - article [ref=e772]:
+        - generic [ref=e773]:
+          - link [ref=e774] [cursor=pointer]:
+            - /url: /property/MI-S-3S-48M-D2
+            - img "Standalone Villa in Mivida" [ref=e775]
+          - generic [ref=e776]:
+            - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e777]: 📷 Representative
+            - generic [ref=e778]: Direct Owner
+            - generic [ref=e783]: Direct Owner
+            - generic [ref=e784]: Resale
+          - button "Save" [ref=e785] [cursor=pointer]
+          - generic [ref=e788]: 48,000,000 EGP
+          - 'generic "Sierra Intelligence Score: 9.6/10" [ref=e789]': AI 9.6
+        - generic [ref=e790]:
+          - generic [ref=e791]: MI-S-3S-48M · Standalone Villa
+          - heading [level=3] [ref=e793]:
+            - link "Standalone Villa in Mivida" [ref=e794] [cursor=pointer]:
+              - /url: /property/MI-S-3S-48M-D2
+          - button "Mivida, 5th Settlement" [ref=e795] [cursor=pointer]
+          - generic [ref=e800]:
+            - generic [ref=e801]:
+              - generic [ref=e805]: "3"
+              - generic [ref=e806]: Beds
+            - generic [ref=e807]:
+              - generic [ref=e811]: "2"
+              - generic [ref=e812]: Baths
+            - generic [ref=e813]:
+              - generic [ref=e819]: "200"
+              - generic [ref=e820]: m²
+            - generic "Estimated Price per Square Meter" [ref=e821]:
+              - generic [ref=e822]: 240,000
+              - generic [ref=e823]: EGP/m²
+          - generic [ref=e824]:
+            - generic [ref=e825]: semi_finished
+            - button "+ VIP Tour" [ref=e830]
+        - generic [ref=e832]:
+          - generic [ref=e833]:
+            - generic [ref=e834]: VDO
+            - generic [ref=e835]: Verified Direct Owner
+          - generic [ref=e837]:
+            - link "WhatsApp" [ref=e838] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BMI-S-3S-48M%5D%20in%20Mivida%20(48%2C000%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e841] [cursor=pointer]
+            - link "Open listing" [ref=e845] [cursor=pointer]:
+              - /url: /property/MI-S-3S-48M-D2
+      - article [ref=e850]:
+        - generic [ref=e851]:
+          - link [ref=e852] [cursor=pointer]:
+            - /url: /property/OHF350-D2
+            - img "Town House in Hyde Park" [ref=e853]
+          - generic [ref=e854]:
+            - generic [ref=e855]: Direct Owner
+            - generic [ref=e860]: Direct Owner
+            - generic [ref=e861]: Rent
+          - button "Save" [ref=e862] [cursor=pointer]
+          - generic [ref=e865]: 125,000 EGP/mo
+          - 'generic "Sierra Intelligence Score: 9.5/10" [ref=e866]': AI 9.5
+        - generic [ref=e867]:
+          - generic [ref=e868]: OHF350 · Town House
+          - heading [level=3] [ref=e870]:
+            - link "Town House in Hyde Park" [ref=e871] [cursor=pointer]:
+              - /url: /property/OHF350-D2
+          - button "Hyde Park, 5th Settlement" [ref=e872] [cursor=pointer]
+          - generic [ref=e877]:
+            - generic [ref=e878]:
+              - generic [ref=e882]: "4"
+              - generic [ref=e883]: Beds
+            - generic [ref=e884]:
+              - generic [ref=e888]: "3"
+              - generic [ref=e889]: Baths
+            - generic [ref=e890]:
+              - generic [ref=e896]: "260"
+              - generic [ref=e897]: m²
+            - generic "Estimated Price per Square Meter" [ref=e898]:
+              - generic [ref=e899]: "481"
+              - generic [ref=e900]: EGP/m²
+          - generic [ref=e901]:
+            - generic [ref=e902]: Furnished
+            - button "+ VIP Tour" [ref=e907]
+        - generic [ref=e909]:
+          - generic [ref=e910]:
+            - generic [ref=e911]: VDO
+            - generic [ref=e912]: Verified Direct Owner
+          - generic [ref=e914]:
+            - link "WhatsApp" [ref=e915] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BOHF350%5D%20in%20Hyde%20Park%20(125%2C000%20EGP%2Fmo).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e918] [cursor=pointer]
+            - link "Open listing" [ref=e922] [cursor=pointer]:
+              - /url: /property/OHF350-D2
+      - article [ref=e927]:
+        - generic [ref=e928]:
+          - link [ref=e929] [cursor=pointer]:
+            - /url: /property/MV-AV-2R-85K-RENT
+            - img "Apartment in Mivida" [ref=e930]
+          - generic [ref=e931]:
+            - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e932]: 📷 Representative
+            - generic [ref=e933]: Direct Owner
+            - generic [ref=e938]: Direct Owner
+            - generic [ref=e939]: Rent
+          - button "Save" [ref=e940] [cursor=pointer]
+          - generic [ref=e943]: 85,000 EGP/mo
+          - 'generic "Sierra Intelligence Score: 9.4/10" [ref=e944]': AI 9.4
+        - generic [ref=e945]:
+          - generic [ref=e946]: MV-AV-2R-85K · Apartment
+          - heading [level=3] [ref=e948]:
+            - link "Apartment in Mivida" [ref=e949] [cursor=pointer]:
+              - /url: /property/MV-AV-2R-85K-RENT
+          - button "Mivida, 5th Settlement" [ref=e950] [cursor=pointer]
+          - generic [ref=e955]:
+            - generic [ref=e956]:
+              - generic [ref=e960]: "2"
+              - generic [ref=e961]: Beds
+            - generic [ref=e962]:
+              - generic [ref=e966]: "2"
+              - generic [ref=e967]: Baths
+            - generic [ref=e968]:
+              - generic [ref=e974]: "145"
+              - generic [ref=e975]: m²
+            - generic "Estimated Price per Square Meter" [ref=e976]:
+              - generic [ref=e977]: "586"
+              - generic [ref=e978]: EGP/m²
+          - generic [ref=e979]:
+            - generic [ref=e980]: Furnished
+            - button "+ VIP Tour" [ref=e985]
+        - generic [ref=e987]:
+          - generic [ref=e988]:
+            - generic [ref=e989]: VDO
+            - generic [ref=e990]: Verified Direct Owner
+          - generic [ref=e992]:
+            - link "WhatsApp" [ref=e993] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BMV-AV-2R-85K%5D%20in%20Mivida%20(85%2C000%20EGP%2Fmo).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e996] [cursor=pointer]
+            - link "Open listing" [ref=e1000] [cursor=pointer]:
+              - /url: /property/MV-AV-2R-85K-RENT
+      - article [ref=e1005]:
+        - generic [ref=e1006]:
+          - link [ref=e1007] [cursor=pointer]:
+            - /url: /property/MU50A005-D2
+            - img "Apartment in Mivida" [ref=e1008]
+          - generic [ref=e1009]:
+            - generic "Representative catalog imagery — actual unit photos pending verification" [ref=e1010]: 📷 Representative
+            - generic [ref=e1011]: Direct Owner
+            - generic [ref=e1016]: Direct Owner
+            - generic [ref=e1017]: Resale
+          - button "Save" [ref=e1018] [cursor=pointer]
+          - generic [ref=e1021]: 14,500,000 EGP
+          - 'generic "Sierra Intelligence Score: 9.3/10" [ref=e1022]': AI 9.3
+        - generic [ref=e1023]:
+          - generic [ref=e1024]: TEST-OWNER-MU50A005 · Apartment
+          - heading [level=3] [ref=e1026]:
+            - link "Apartment in Mivida" [ref=e1027] [cursor=pointer]:
+              - /url: /property/MU50A005-D2
+          - button "Mivida, 5th Settlement" [ref=e1028] [cursor=pointer]
+          - generic [ref=e1033]:
+            - generic [ref=e1034]:
+              - generic [ref=e1038]: "3"
+              - generic [ref=e1039]: Beds
+            - generic [ref=e1040]:
+              - generic [ref=e1044]: "2"
+              - generic [ref=e1045]: Baths
+            - generic [ref=e1046]:
+              - generic [ref=e1052]: "170"
+              - generic [ref=e1053]: m²
+            - generic "Estimated Price per Square Meter" [ref=e1054]:
+              - generic [ref=e1055]: 85,294
+              - generic [ref=e1056]: EGP/m²
+          - generic [ref=e1057]:
+            - generic [ref=e1058]: fully_finished
+            - button "+ VIP Tour" [ref=e1063]
+        - generic [ref=e1065]:
+          - generic [ref=e1066]:
+            - generic [ref=e1067]: VDO
+            - generic [ref=e1068]: Verified Direct Owner
+          - generic [ref=e1070]:
+            - link "WhatsApp" [ref=e1071] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BTEST-OWNER-MU50A005%5D%20in%20Mivida%20(14%2C500%2C000%20EGP).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e1074] [cursor=pointer]
+            - link "Open listing" [ref=e1078] [cursor=pointer]:
+              - /url: /property/MU50A005-D2
+      - article [ref=e1083]:
+        - generic [ref=e1084]:
+          - link [ref=e1085] [cursor=pointer]:
+            - /url: /property/SET-2B-140M-110K-D2
+            - img "Apartment in Eastown" [ref=e1086]
+          - generic [ref=e1087]:
+            - generic [ref=e1088]: Direct Owner
+            - generic [ref=e1093]: Direct Owner
+            - generic [ref=e1094]: Rent
+          - button "Save" [ref=e1095] [cursor=pointer]
+          - generic [ref=e1098]: 110,000 EGP/mo
+          - 'generic "Sierra Intelligence Score: 9.1/10" [ref=e1099]': AI 9.1
+        - generic [ref=e1100]:
+          - generic [ref=e1101]: SET-2B-140M-110K · Apartment
+          - heading [level=3] [ref=e1103]:
+            - link "Apartment in Eastown" [ref=e1104] [cursor=pointer]:
+              - /url: /property/SET-2B-140M-110K-D2
+          - button "Eastown, 5th Settlement" [ref=e1105] [cursor=pointer]
+          - generic [ref=e1110]:
+            - generic [ref=e1111]:
+              - generic [ref=e1115]: "2"
+              - generic [ref=e1116]: Beds
+            - generic [ref=e1117]:
+              - generic [ref=e1121]: "2"
+              - generic [ref=e1122]: Baths
+            - generic [ref=e1123]:
+              - generic [ref=e1129]: "140"
+              - generic [ref=e1130]: m²
+            - generic "Estimated Price per Square Meter" [ref=e1131]:
+              - generic [ref=e1132]: "786"
+              - generic [ref=e1133]: EGP/m²
+          - generic [ref=e1134]:
+            - generic [ref=e1135]: fully_finished
+            - button "+ VIP Tour" [ref=e1140]
+        - generic [ref=e1142]:
+          - generic [ref=e1143]:
+            - generic [ref=e1144]: VDO
+            - generic [ref=e1145]: Verified Direct Owner
+          - generic [ref=e1147]:
+            - link "WhatsApp" [ref=e1148] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BSET-2B-140M-110K%5D%20in%20Eastown%20(110%2C000%20EGP%2Fmo).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e1151] [cursor=pointer]
+            - link "Open listing" [ref=e1155] [cursor=pointer]:
+              - /url: /property/SET-2B-140M-110K-D2
+      - article [ref=e1160]:
+        - generic [ref=e1161]:
+          - link [ref=e1162] [cursor=pointer]:
+            - /url: /property/OSA540-D2
+            - img "Apartment in Eastown" [ref=e1163]
+          - generic [ref=e1164]:
+            - generic [ref=e1165]: Direct Owner
+            - generic [ref=e1170]: Direct Owner
+            - generic [ref=e1171]: Rent
+          - button "Save" [ref=e1172] [cursor=pointer]
+          - generic [ref=e1175]: 95,000 EGP/mo
+          - 'generic "Sierra Intelligence Score: 9.0/10" [ref=e1176]': AI 9.0
+        - generic [ref=e1177]:
+          - generic [ref=e1178]: OSA540 · Apartment
+          - heading [level=3] [ref=e1180]:
+            - link "Apartment in Eastown" [ref=e1181] [cursor=pointer]:
+              - /url: /property/OSA540-D2
+          - button "Eastown, 5th Settlement" [ref=e1182] [cursor=pointer]
+          - generic [ref=e1187]:
+            - generic [ref=e1188]:
+              - generic [ref=e1192]: "2"
+              - generic [ref=e1193]: Beds
+            - generic [ref=e1194]:
+              - generic [ref=e1198]: "2"
+              - generic [ref=e1199]: Baths
+            - generic [ref=e1200]:
+              - generic [ref=e1206]: "160"
+              - generic [ref=e1207]: m²
+            - generic "Estimated Price per Square Meter" [ref=e1208]:
+              - generic [ref=e1209]: "594"
+              - generic [ref=e1210]: EGP/m²
+          - generic [ref=e1211]:
+            - generic [ref=e1212]: Furnished
+            - button "+ VIP Tour" [ref=e1217]
+        - generic [ref=e1219]:
+          - generic [ref=e1220]:
+            - generic [ref=e1221]: VDO
+            - generic [ref=e1222]: Verified Direct Owner
+          - generic [ref=e1224]:
+            - link "WhatsApp" [ref=e1225] [cursor=pointer]:
+              - /url: https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20would%20like%20to%20inquire%20about%20unit%20%5BOSA540%5D%20in%20Eastown%20(95%2C000%20EGP%2Fmo).%20Is%20it%20available%20for%20a%20private%20viewing%3F
+            - button "Locate on Map" [ref=e1228] [cursor=pointer]
+            - link "Open listing" [ref=e1232] [cursor=pointer]:
+              - /url: /property/OSA540-D2
+  - generic [ref=e1238]:
+    - generic [ref=e1240]:
+      - heading [level=2] [ref=e1241]:
+        - text: Why Sierra
+        - superscript [ref=e1242]: "1"
+        - text: Estates
+        - superscript [ref=e1243]: ™
+      - paragraph [ref=e1244]: Reviewed listings, live-market pricing, and a broker who knows the compound, powered by the widest deal network in New Cairo.
+    - generic [ref=e1245]:
+      - generic [ref=e1246]:
+        - heading "We don’t sell only our own units. We search the entire market for you" [level=3] [ref=e1247]
+        - paragraph [ref=e1248]: Sierra isn’t limited to its own inventory. We aggregate live listings from independent brokers and brokerage firms working New Cairo. Our AI gathers their offerings into one place and benchmarks every deal, so what reaches you is the single best option on the market, not just what we happen to hold.
+      - generic [ref=e1249]:
+        - generic [ref=e1250]:
+          - generic [ref=e1251]: Market-Wide
+          - generic [ref=e1252]: Broker & owner sources searched
+        - generic [ref=e1253]:
+          - generic [ref=e1254]: AI-Benchmarked
+          - generic [ref=e1255]: Every deal compared market-wide
+        - generic [ref=e1256]:
+          - generic [ref=e1257]: 100%
+          - generic [ref=e1258]: Focused on New Cairo
+    - generic [ref=e1259]:
+      - generic [ref=e1260]:
+        - heading "One market, one search" [level=4] [ref=e1269]
+        - paragraph [ref=e1270]: Aggregated inventory from market-wide sources, AI-scanned daily so the best deal surfaces first, wherever it sits.
+      - generic [ref=e1271]:
+        - heading "Precise AVM Pricing" [level=4] [ref=e1276]
+        - paragraph [ref=e1277]: Real-time valuation engine benchmarks every unit against New Cairo compounds. No overpaying.
+      - generic [ref=e1278]:
+        - heading "Human + AI Closing" [level=4] [ref=e1282]
+        - paragraph [ref=e1283]: AI-sourced opportunities paired with expert advisors from first match to signed contract.
+      - generic [ref=e1284]:
+        - heading "Reviewed Inventory" [level=4] [ref=e1289]
+        - paragraph [ref=e1290]: Every listing passes Sierra’s verification and review pipeline before appearing in your feed.
+  - generic [ref=e1292]:
+    - generic [ref=e1293]:
+      - generic [ref=e1294]:
+        - generic [ref=e1295]: Explore by area
+        - heading "Browse New Cairo Compounds" [level=2] [ref=e1296]
+        - paragraph [ref=e1297]: From gated family communities to waterfront lifestyle districts.
+      - link "All 50+ compounds" [ref=e1298] [cursor=pointer]:
+        - /url: /compounds
+    - generic [ref=e1302]:
+      - link "Hyde Park AI 9.8 · +22% Hyde Park 5th Settlement · EGP 28.5M avg" [ref=e1303] [cursor=pointer]:
+        - /url: /compounds
+        - img "Hyde Park" [ref=e1304]
+        - generic [ref=e1305]: AI 9.8 · +22%
+        - generic:
+          - heading "Hyde Park" [level=4]
+          - generic: 5th Settlement · EGP 28.5M avg
+      - link "Mivida AI 9.1 · +18% Mivida 5th Settlement · EGP 10.5M avg" [ref=e1306] [cursor=pointer]:
+        - /url: /compounds
+        - img "Mivida" [ref=e1307]
+        - generic [ref=e1308]: AI 9.1 · +18%
+        - generic:
+          - heading "Mivida" [level=4]
+          - generic: 5th Settlement · EGP 10.5M avg
+      - link "Mountain View iCity AI 9.6 · +24% Mountain View iCity 5th Settlement · EGP 22M avg" [ref=e1309] [cursor=pointer]:
+        - /url: /compounds
+        - img "Mountain View iCity" [ref=e1310]
+        - generic [ref=e1311]: AI 9.6 · +24%
+        - generic:
+          - heading "Mountain View iCity" [level=4]
+          - generic: 5th Settlement · EGP 22M avg
+      - link "Eastown AI 9.0 · +19% Eastown 5th Settlement · EGP 11.5M avg" [ref=e1312] [cursor=pointer]:
+        - /url: /compounds
+        - img "Eastown" [ref=e1313]
+        - generic [ref=e1314]: AI 9.0 · +19%
+        - generic:
+          - heading "Eastown" [level=4]
+          - generic: 5th Settlement · EGP 11.5M avg
+      - link "Villette AI 9.3 · +20% Villette 5th Settlement · EGP 24.5M avg" [ref=e1315] [cursor=pointer]:
+        - /url: /compounds
+        - img "Villette" [ref=e1316]
+        - generic [ref=e1317]: AI 9.3 · +20%
+        - generic:
+          - heading "Villette" [level=4]
+          - generic: 5th Settlement · EGP 24.5M avg
+      - link "Taj City AI 9.5 · +19% Taj City New Cairo · EGP 35M avg" [ref=e1318] [cursor=pointer]:
+        - /url: /compounds
+        - img "Taj City" [ref=e1319]
+        - generic [ref=e1320]: AI 9.5 · +19%
+        - generic:
+          - heading "Taj City" [level=4]
+          - generic: New Cairo · EGP 35M avg
+      - link "Al Rehab AI 9.2 · +14% Al Rehab Al Rehab · EGP 8.5M avg" [ref=e1321] [cursor=pointer]:
+        - /url: /compounds
+        - img "Al Rehab" [ref=e1322]
+        - generic [ref=e1323]: AI 9.2 · +14%
+        - generic:
+          - heading "Al Rehab" [level=4]
+          - generic: Al Rehab · EGP 8.5M avg
+      - link "Madinaty AI 9.3 · +15% Madinaty Madinaty · EGP 12M avg" [ref=e1324] [cursor=pointer]:
+        - /url: /compounds
+        - img "Madinaty" [ref=e1325]
+        - generic [ref=e1326]: AI 9.3 · +15%
+        - generic:
+          - heading "Madinaty" [level=4]
+          - generic: Madinaty · EGP 12M avg
+  - generic [ref=e1329]:
+    - generic [ref=e1330]:
+      - generic [ref=e1331]: This week’s edit
+      - heading "See the homes worth your time" [level=2] [ref=e1332]
+      - paragraph [ref=e1333]: A fast, cinematic pass through the strongest homes in the Sierra network.
+    - link "Browse all homes" [ref=e1334] [cursor=pointer]:
+      - /url: /properties
+  - generic [ref=e1339]:
+    - generic [ref=e1340]:
+      - generic [ref=e1341]:
+        - generic [ref=e1342]: Direct Live Walkthrough
+        - heading "Walk Through Your Next Home in Full 3D" [level=2] [ref=e1343]
+        - paragraph [ref=e1344]: Direct interactive 4K cinema experience to navigate room-by-room, inspect floor plans, and view finishes.
+      - link "Open full page" [ref=e1345] [cursor=pointer]:
+        - /url: /virtual-tour
+    - generic [ref=e1349]:
+      - generic [ref=e1350]:
+        - generic [ref=e1351]:
+          - generic [ref=e1352]: 4K HDR Cinema
+          - generic [ref=e1357]: Room-by-Room Walk
+          - generic [ref=e1362]: VR Compatible
+          - generic [ref=e1370]: Interactive Floor Plan
+        - generic [ref=e1374]:
+          - button "Reset" [ref=e1375] [cursor=pointer]
+          - link "Open in New Tab" [ref=e1380] [cursor=pointer]:
+            - /url: https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896
+      - generic [ref=e1386]:
+        - iframe [ref=e1387]:
+          - generic [ref=f1e5]:
+            - generic [ref=f1e6]: This Listing Has Been Archived
+            - generic [ref=f1e10]:
+              - paragraph [ref=f1e11]: "This property listing is no longer active and has been archived. This typically happens when:"
+              - list [ref=f1e12]:
+                - listitem [ref=f1e13]: The property was sold or rented
+                - listitem [ref=f1e14]: The agent manually archived the listing
+                - listitem [ref=f1e15]: The included 60-day marketing package has expired
+            - generic [ref=f1e16]:
+              - generic [ref=f1e17]: Real Estate Professionals
+              - paragraph [ref=f1e21]: Already have an account? Sign in to manage your listings
+              - generic [ref=f1e22]:
+                - button "Sign In" [ref=f1e23] [cursor=pointer]
+                - button "Contact Support" [ref=f1e24] [cursor=pointer]
+        - button "Enter fullscreen" [ref=e1388] [cursor=pointer]
+  - generic [ref=e1395]:
+    - generic [ref=e1396]:
+      - generic [ref=e1397]: 12,333+
+      - text: Listings Live Now
+    - generic [ref=e1398]:
+      - generic [ref=e1399]: "62"
+      - text: Compounds Covered
+    - generic [ref=e1400]:
+      - generic [ref=e1401]: 100%
+      - text: Reviewed Before Publishing
+    - generic [ref=e1402]:
+      - generic [ref=e1403]: 100%
+      - text: Focused on East Cairo
+  - generic [ref=e1405]:
+    - generic [ref=e1407]:
+      - generic [ref=e1408]: Client stories
+      - heading "What our clients say" [level=2] [ref=e1409]
+      - paragraph [ref=e1410]: Real moves, closed by Sierra advisors.
+    - generic [ref=e1411]:
+      - generic [ref=e1412]:
+        - paragraph [ref=e1424]: “Sierra’s AI match found our Hyde Park villa in two days, after three months of searching everywhere else.”
+        - generic [ref=e1425]:
+          - generic [ref=e1426]: A&
+          - generic [ref=e1427]:
+            - generic [ref=e1428]: Ahmed & Dina El-Shazly
+            - text: Bought in Hyde Park
+      - generic [ref=e1429]:
+        - paragraph [ref=e1441]: “The AVM pricing report saved us from overpaying by EGP 2M. Data first, pressure never.”
+        - generic [ref=e1442]:
+          - generic [ref=e1443]: ME
+          - generic [ref=e1444]:
+            - generic [ref=e1445]: Mohamed Ezz
+            - text: Bought in Mivida
+      - generic [ref=e1446]:
+        - paragraph [ref=e1458]: “Listed on Monday, three qualified viewings by Thursday, signed within the week.”
+        - generic [ref=e1459]:
+          - generic [ref=e1460]: SM
+          - generic [ref=e1461]:
+            - generic [ref=e1462]: Sara Mansour
+            - text: Rented out in Eastown
+  - generic [ref=e1465]:
+    - generic [ref=e1466]:
+      - heading "Sierra is the perfect choice" [level=2] [ref=e1467]
+      - paragraph [ref=e1468]: Three reasons New Cairo’s smartest buyers start here.
+      - generic [ref=e1469]:
+        - generic [ref=e1470]: "01"
+        - generic [ref=e1471]:
+          - heading "Largest verified inventory" [level=4] [ref=e1472]
+          - paragraph [ref=e1473]: 1,900+ rent & resale units across 50+ compounds, every one walked and photographed by our team.
+      - generic [ref=e1474]:
+        - generic [ref=e1475]: "02"
+        - generic [ref=e1476]:
+          - heading "Data you can act on" [level=4] [ref=e1477]
+          - paragraph [ref=e1478]: Live AVM valuations, growth benchmarks and AI scores on every unit, not broker guesswork.
+      - generic [ref=e1479]:
+        - generic [ref=e1480]: "03"
+        - generic [ref=e1481]:
+          - heading "Advisors, not salespeople" [level=4] [ref=e1482]
+          - paragraph [ref=e1483]: RERA-licensed compound specialists paid on your satisfaction, not just the close.
+    - generic [ref=e1484]:
+      - heading "Real-estate inquiry" [level=3] [ref=e1485]
+      - paragraph [ref=e1486]: Tell us what you need. An advisor replies within 2 hours.
+      - generic [ref=e1487]:
+        - button "Buy" [ref=e1488] [cursor=pointer]
+        - button "Rent" [ref=e1489] [cursor=pointer]
+        - button "Sell" [ref=e1490] [cursor=pointer]
+      - generic [ref=e1491]:
+        - generic [ref=e1492]:
+          - generic [ref=e1493]: Full name
+          - textbox "Full name" [ref=e1494]:
+            - /placeholder: Your Full Name
+        - generic [ref=e1495]:
+          - generic [ref=e1496]: Phone
+          - textbox "Phone" [ref=e1497]:
+            - /placeholder: +2 01XXXXXXXXX
+      - generic [ref=e1498]:
+        - generic [ref=e1499]:
+          - generic [ref=e1500]: Email
+          - textbox "Email" [ref=e1501]:
+            - /placeholder: you@example.com
+        - generic [ref=e1502]:
+          - generic [ref=e1503]: Preferred zone
+          - group "Preferred zone" [ref=e1504]:
+            - button "5th Settlement" [ref=e1505] [cursor=pointer]
+            - button "Katameya" [ref=e1506] [cursor=pointer]
+            - button "New Cairo Core" [ref=e1507] [cursor=pointer]
+            - button "Mostakbal City" [ref=e1508] [cursor=pointer]
+      - generic [ref=e1509]:
+        - generic [ref=e1510]:
+          - generic [ref=e1511]: Property type
+          - group "Property type" [ref=e1512]:
+            - button "Villas" [ref=e1513] [cursor=pointer]
+            - button "Apartments" [ref=e1514] [cursor=pointer]
+            - button "Twin & Townhouses" [ref=e1515] [cursor=pointer]
+            - button "Penthouses & Duplexes" [ref=e1516] [cursor=pointer]
+        - generic [ref=e1517]:
+          - generic [ref=e1518]: Budget (EGP)
+          - textbox "Budget (EGP)" [ref=e1519]:
+            - /placeholder: 10,000,000
+      - button "Send inquiry" [ref=e1520] [cursor=pointer]
+  - generic [ref=e1526]:
+    - generic [ref=e1527]: AI · 7 tools online
+    - heading [level=2] [ref=e1530]:
+      - text: Intelligence
+      - superscript [ref=e1531]: "1"
+      - text: Engine
+      - superscript [ref=e1532]: ™
+    - paragraph [ref=e1533]: Live AI tools for every step of your property journey.
+    - generic [ref=e1535]:
+      - link "Listing Net Radar Target up to 40 units on map radar with 1-hour WhatsApp verification. Live" [ref=e1536] [cursor=pointer]:
+        - /url: /net
+        - heading "Listing Net Radar" [level=4] [ref=e1544]
+        - paragraph [ref=e1545]: Target up to 40 units on map radar with 1-hour WhatsApp verification.
+        - generic [ref=e1546]: Live
+      - link "AI Engine 3.0 Real-time AVM pricing, ROI signals & Q2 2026 market data. Live" [ref=e1547] [cursor=pointer]:
+        - /url: /ai-engine
+        - heading "AI Engine 3.0" [level=4] [ref=e1554]
+        - paragraph [ref=e1555]: Real-time AVM pricing, ROI signals & Q2 2026 market data.
+        - generic [ref=e1556]: Live
+      - link [ref=e1557] [cursor=pointer]:
+        - /url: /matches
+        - heading "Smart Match" [level=4] [ref=e1563]
+        - paragraph [ref=e1564]: AI pairs your criteria to the perfect listing.
+      - link [ref=e1565] [cursor=pointer]:
+        - /url: /roi
+        - heading "ROI Analysis" [level=4] [ref=e1571]
+        - paragraph [ref=e1572]: Yield leaderboard, cap rate & cashflow.
+      - link [ref=e1573] [cursor=pointer]:
+        - /url: /pricing
+        - img [ref=e1575]:
+          - generic [ref=e1578]: $
+        - heading "Precise Pricing" [level=4] [ref=e1579]
+        - paragraph [ref=e1580]: AVM-calibrated fair-market price range.
+      - link [ref=e1581] [cursor=pointer]:
+        - /url: /advice
+        - heading "Dream Home Finder" [level=4] [ref=e1588]
+        - paragraph [ref=e1589]: 4 questions → your compound match.
+      - link [ref=e1590] [cursor=pointer]:
+        - /url: /compounds
+        - heading "Intelligence Map" [level=4] [ref=e1596]
+        - paragraph [ref=e1597]: Live compound map. Tap any pin to explore units.
+      - link [ref=e1598] [cursor=pointer]:
+        - /url: /virtual-tour
+        - heading "Virtual Tour" [level=4] [ref=e1605]
+        - paragraph [ref=e1606]: 360° immersive walkthrough of top units.
+  - generic [ref=e1609]:
+    - generic [ref=e1610]:
+      - heading "Have a property in New Cairo to sell or rent?" [level=2] [ref=e1611]
+      - paragraph [ref=e1612]: List with Sierra Estates and reach qualified buyers actively searching New Cairo.
+    - generic [ref=e1613]:
+      - link "List your property" [ref=e1614] [cursor=pointer]:
+        - /url: /add-listing
+      - link "+2 01092048333" [ref=e1617] [cursor=pointer]:
+        - /url: https://wa.me/201092048333
+    - link "info@Sierra-Estates.net" [ref=e1625] [cursor=pointer]:
+      - /url: mailto:info@Sierra-Estates.net
+  - generic [ref=e1627]:
+    - generic [ref=e1628]: Trusted developer partners
+    - generic [ref=e1629]:
+      - generic [ref=e1630]: EMAAR MISR
+      - generic [ref=e1631]: SODIC
+      - generic [ref=e1632]: MOUNTAIN VIEW
+      - generic [ref=e1633]: PALM HILLS
+      - generic [ref=e1634]: ORA
+      - generic [ref=e1635]: LA VISTA
+      - generic [ref=e1636]: HYDE PARK
+      - generic [ref=e1637]: MARAKEZ
+  - button "Open WhatsApp VIP Concierge" [ref=e1639] [cursor=pointer]
+  - contentinfo [ref=e1643]:
+    - generic [ref=e1644]:
+      - generic [ref=e1645]:
+        - generic [ref=e1646]:
+          - link "Sierra Estates Sierra Estates Future of Real Estate" [ref=e1647] [cursor=pointer]:
+            - /url: /
+            - img "Sierra Estates" [ref=e1649]
+            - generic [ref=e1650]:
+              - text: Sierra Estates
+              - generic [ref=e1651]: Future of Real Estate
+          - paragraph [ref=e1652]: Curated luxury rentals and resale across New Cairo’s premier compounds. Reviewed listings, real market data.
+          - generic [ref=e1653]:
+            - textbox "Get new listings by email" [ref=e1654]
+            - button "Get new listings by email" [ref=e1655] [cursor=pointer]
+        - generic [ref=e1658]:
+          - heading "Explore" [level=5] [ref=e1659]
+          - link "Properties (Buy & Rent)" [ref=e1660] [cursor=pointer]:
+            - /url: /properties
+          - link "Compounds" [ref=e1661] [cursor=pointer]:
+            - /url: /compounds
+          - link "🎯 Map & Radar Scanner" [ref=e1662] [cursor=pointer]:
+            - /url: /net
+          - link "➕ Add Property Listing" [ref=e1663] [cursor=pointer]:
+            - /url: /add-listing
+          - link "📝 Request Bespoke Unit" [ref=e1664] [cursor=pointer]:
+            - /url: /#contact
+        - generic [ref=e1665]:
+          - heading "Projects & Intelligence" [level=5] [ref=e1666]
+          - link "🏢 Cairo Plaza Projects" [ref=e1667] [cursor=pointer]:
+            - /url: /cairo-plaza
+          - link "🏦 New Cairo Info Bank" [ref=e1668] [cursor=pointer]:
+            - /url: /notebookllm
+          - link "💼 Careers & Opportunities" [ref=e1669] [cursor=pointer]:
+            - /url: /career
+          - link "Find an agent" [ref=e1670] [cursor=pointer]:
+            - /url: /#contact
+        - generic [ref=e1671]:
+          - heading "Discover" [level=5] [ref=e1672]
+          - link "5th Settlement" [ref=e1673] [cursor=pointer]:
+            - /url: /compounds
+          - link "Katameya" [ref=e1674] [cursor=pointer]:
+            - /url: /compounds
+          - link "New Cairo Core" [ref=e1675] [cursor=pointer]:
+            - /url: /compounds
+          - link "Mostakbal City" [ref=e1676] [cursor=pointer]:
+            - /url: /compounds
+        - generic [ref=e1677]:
+          - heading "Get in touch" [level=5] [ref=e1678]
+          - generic [ref=e1679]: Banafseg 2, Villa 402, New Cairo, Egypt
+          - generic [ref=e1684]: +2 01092048333
+          - generic [ref=e1688]: Info@sierra-estates.net
+      - generic [ref=e1693]:
+        - generic [ref=e1694]: © 2026 Sierra Estates. All rights reserved.
+        - generic [ref=e1695]:
+          - link "Facebook" [ref=e1696] [cursor=pointer]:
+            - /url: "#"
+          - link "Instagram" [ref=e1699] [cursor=pointer]:
+            - /url: "#"
+          - link "LinkedIn" [ref=e1703] [cursor=pointer]:
+            - /url: "#"
+          - link "Twitter" [ref=e1708] [cursor=pointer]:
+            - /url: "#"
+  - alert [ref=e1711]
