@@ -25,7 +25,7 @@ Because GitHub Actions enforces runner minute quotas and $0 spending limits on f
 
 ## 2. Launching on AWS EC2 (Automated Script)
 
-The repository includes an automated launch script at [scripts/launch-aws-ec2.sh](file:///h:/last/Main/SE-Vercel-deploy-main/.amazonq/SE-Vercel-deploy-main/scripts/launch-aws-ec2.sh).
+The repository includes an automated launch script at [scripts/launch-aws-ec2.sh](https://github.com/afawzy886619888866-cloud/Sierra-Estates/blob/main/scripts/launch-aws-ec2.sh).
 
 ### Prerequisites
 
@@ -61,8 +61,8 @@ On your AWS instance, Docker Compose manages the services:
 
 ```bash
 # Clone the repository
-git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
-cd SE-Vercel-deploy-main
+git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git
+cd Sierra-Estates
 
 # Copy environment variables
 cp .env.example .env

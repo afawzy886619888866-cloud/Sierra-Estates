@@ -1,4 +1,4 @@
-# Instincts generated from https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+# Instincts generated from https://github.com/afawzy886619888866-cloud/Sierra-Estates
 # Generated: 2026-08-12T11:36:10.476Z
 # Version: 2.0
 # NOTE: This file supplements (does not replace) any existing curated instincts.
@@ -10,7 +10,7 @@ trigger: "when writing a commit message"
 confidence: 0.85
 domain: git
 source: repo-analysis
-source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+source_repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
 ---
 
 # SE Vercel Deploy Main Commit Conventional
@@ -31,7 +31,7 @@ trigger: "when writing a commit message"
 confidence: 0.6
 domain: git
 source: repo-analysis
-source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+source_repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
 ---
 
 # SE Vercel Deploy Main Commit Length
@@ -51,7 +51,7 @@ trigger: "when creating a new file"
 confidence: 0.8
 domain: code-style
 source: repo-analysis
-source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+source_repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
 ---
 
 # SE Vercel Deploy Main Naming Files
@@ -71,7 +71,7 @@ trigger: "when importing modules"
 confidence: 0.85
 domain: code-style
 source: repo-analysis
-source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+source_repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
 ---
 
 # SE Vercel Deploy Main Import Alias
@@ -91,7 +91,7 @@ trigger: "when exporting from a module"
 confidence: 0.7
 domain: code-style
 source: repo-analysis
-source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+source_repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
 ---
 
 # SE Vercel Deploy Main Export Style
@@ -111,7 +111,7 @@ trigger: "when writing tests"
 confidence: 0.8
 domain: testing
 source: repo-analysis
-source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+source_repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
 ---
 
 # SE Vercel Deploy Main Test Separate

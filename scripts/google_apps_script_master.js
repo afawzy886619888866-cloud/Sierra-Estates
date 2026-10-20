@@ -137,7 +137,7 @@ function appendRowsDeduped(sheet, rowsToAppend) {
  */
 function importNewMasterRows() {
   const sheet = getOrCreateMasterSheet();
-  const csvUrl = "https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/data/Online_Sheet_New_Rows_Only.csv";
+  const csvUrl = "https://raw.githubusercontent.com/afawzy886619888866-cloud/Sierra-Estates/main/data/Online_Sheet_New_Rows_Only.csv";
   const response = UrlFetchApp.fetch(csvUrl);
   const csvData = Utilities.parseCsv(response.getContentText("UTF-8"));
 
