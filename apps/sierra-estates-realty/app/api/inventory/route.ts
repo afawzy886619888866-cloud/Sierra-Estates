@@ -155,7 +155,18 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
       const zone = matchedGeo?.zone || (rawLocation && !resolved.approx ? resolved.zone : "");
       const label: string = listing.compound || rawLocation;
 
-      const price = Number(listing.price) || 0;
+      // STUB-PRICE HONESTY (2026-10-20): the ingest pipelines historically
+      // wrote two placeholder price values — 999 (rent stub) and 5,000,000
+      // (sale stub). Showing "EGP 999" on the public map misrepresents the
+      // unit; production-smoke flags them as placeholder prices. Treat the
+      // two known stub values as "no price" so the row renders the honest
+      // "Price on request" label instead of a fabricated number. Real prices
+      // (including genuinely cheap ones) pass through untouched; the
+      // underlying data cleanup is a separate DB-side quarantine (see
+      // scripts/ops/supabase/quarantine-stub-priced-listings.mjs).
+      const rawPrice = Number(listing.price) || 0;
+      const STUB_PRICES = new Set([999, 5_000_000]);
+      const price = STUB_PRICES.has(rawPrice) ? 0 : rawPrice;
       // Mode honors the row's real deal_type first (§21: never relabel real
       // data). The price heuristic only disambiguates rows with no deal_type:
       // in this market a recorded EGP value under 1M is monthly-rent scale.

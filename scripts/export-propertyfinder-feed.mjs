@@ -93,7 +93,7 @@ async function exportPropertyFinderFeed() {
   if (error) throw new Error(`Supabase query failed: ${error.message}`);
   console.log(`Found ${listings.length} active listings for Property Finder syndication.`);
 
-  const outputDir = path.join(ROOT, 'apps', 'sierra-estates-realty', 'public', 'feeds');
+  const outputDir = path.join(ROOT, 'docs', 'drafts', 'propertyfinder');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }

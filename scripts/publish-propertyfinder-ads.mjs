@@ -29,7 +29,7 @@ const XLSX = require('xlsx');
 // Configuration paths
 const AIRTABLE_CSV_PATH = path.join(ROOT, 'apps', 'sierra-estates-realty', 'data', 'sierra-estates-airtable-import.csv');
 const MASTER_WORKBOOK   = path.join(ROOT, 'data', 'Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx');
-const FEEDS_DIR         = path.join(ROOT, 'apps', 'sierra-estates-realty', 'public', 'feeds');
+const FEEDS_DIR         = path.join(ROOT, 'docs', 'drafts', 'propertyfinder');
 
 if (!fs.existsSync(FEEDS_DIR)) {
   fs.mkdirSync(FEEDS_DIR, { recursive: true });
