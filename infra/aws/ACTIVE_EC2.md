@@ -50,7 +50,7 @@ Once logged in via SSH:
 
 ```bash
 # Download and execute the automated Amazon Linux 2023 setup
-curl -sSL https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/infra/aws/setup-al2023-ec2.sh | bash
+curl -sSL https://raw.githubusercontent.com/afawzy886619888866-cloud/Sierra-Estates/main/infra/aws/setup-al2023-ec2.sh | bash
 ```
 
 Or step-by-step:

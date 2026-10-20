@@ -51,7 +51,7 @@ JIRA_ISSUE_TYPE=Task
 ### A. Importing Workflow 04 into n8n
 
 1. In n8n, navigate to **Workflows** $\rightarrow$ **Add Workflow** $\rightarrow$ **Import from File**.
-2. Select [`infra/n8n-workflows/04-jira-lead-sync.json`](file:///h:/last/Main/SE-Vercel-deploy-main/infra/n8n-workflows/04-jira-lead-sync.json).
+2. Select [`infra/n8n-workflows/04-jira-lead-sync.json`](https://github.com/afawzy886619888866-cloud/Sierra-Estates/blob/main/infra/n8n-workflows/04-jira-lead-sync.json).
 3. In n8n **Credentials**, create a `Basic Auth` credential:
    - **User**: Your Atlassian email.
    - **Password**: Your Atlassian API token.
@@ -87,13 +87,13 @@ There are two complementary methods to connect GitHub with Jira:
 
 1. In Jira, go to **Apps** $\rightarrow$ **Find new apps** $\rightarrow$ Search for **GitHub for Jira** (by Atlassian).
 2. Click **Get app**, then click **Configure**.
-3. Link your GitHub account or organization (`sierrablue8866-droid`).
-4. Select repository `SE-Vercel-deploy-main`.
+3. Link your GitHub account or organization (`afawzy886619888866-cloud`).
+4. Select repository `Sierra-Estates`.
 5. Now, any commit, branch name, or PR containing your Jira issue key (e.g., `SE-101`) will automatically show inside the Jira issue's **Development** panel!
 
 ### Method B: Automated GitHub Actions Workflow
 
-This repository includes [`.github/workflows/jira-sync.yml`](file:///h:/last/Main/SE-Vercel-deploy-main/.github/workflows/jira-sync.yml).
+This repository includes [`.github/workflows/jira-sync.yml`](https://github.com/afawzy886619888866-cloud/Sierra-Estates/blob/main/.github/workflows/jira-sync.yml).
 
 To enable automated comment posting when PRs and commits are pushed:
 

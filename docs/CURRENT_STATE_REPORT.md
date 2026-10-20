@@ -1,7 +1,7 @@
 # CURRENT STATE REPORT — Sierra Blu / Sierra Estates Realty
 
 **Date:** 2026-09-29
-**Repo:** `sierrablue8866-droid/SE-Vercel-deploy-main` (main @ 6def83e)
+**Repo:** `afawzy886619888866-cloud/Sierra-Estates` (account-migrated 2026-10 from `sierrablue8866-droid/SE-Vercel-deploy-main`; main @ 6def83e at time of writing)
 **Audit method:** Full code inspection (3 parallel deep-dives + direct file inspection). README claims were verified against actual code — several are **not true in practice**.
 
 ---

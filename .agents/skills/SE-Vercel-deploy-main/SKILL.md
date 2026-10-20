@@ -5,7 +5,7 @@ description: Development conventions and patterns for SE-Vercel-deploy-main. Typ
 
 # Se Vercel Deploy Main Conventions
 
-> Generated from [sierrablue8866-droid/SE-Vercel-deploy-main](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main) on 2026-08-12
+> Generated from [afawzy886619888866-cloud/Sierra-Estates](https://github.com/afawzy886619888866-cloud/Sierra-Estates) on 2026-08-12
 
 ## Overview
 

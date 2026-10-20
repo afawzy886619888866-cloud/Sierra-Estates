@@ -31,7 +31,7 @@ every queued send lands on this gateway the moment the env vars below are set.
 ### Quick install (fresh Ubuntu 22.04/24.04 VPS — one command)
 
 ```bash
-git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git /opt/se
+git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git /opt/se
 bash /opt/se/services/openwa/bootstrap-vps.sh
 ```
 
@@ -42,7 +42,7 @@ ufw. Ends with the pairing / API-key / Vercel-env checklist.
 ### Manual install
 
 ```bash
-# on the gateway host, from a checkout of SE-Vercel-deploy-main:
+# on the gateway host, from a checkout of Sierra-Estates:
 bash services/openwa/setup.sh                       # installs into ./openwa
 # or elsewhere / pinned:
 OPENWA_DIR=/opt/openwa OPENWA_REF=v0.23.7 bash services/openwa/setup.sh
