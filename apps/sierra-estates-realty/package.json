@@ -8,7 +8,7 @@
     "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=6144 next build --webpack",
     "start": "next start",
     "lint": "eslint . && node scripts/validate-configs.mjs",
-    "type-check": "node scripts/ensure-snapshot.mjs && node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit",
+    "type-check": "node scripts/ensure-snapshot.mjs && node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
     "fix-build": "rimraf .next && npm run build",
     "check-node": "node scripts/diagnostic.mjs",
     "seed:admin": "node scripts/seed-admin.mjs",
