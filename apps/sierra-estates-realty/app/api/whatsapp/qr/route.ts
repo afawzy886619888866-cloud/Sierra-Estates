@@ -61,12 +61,26 @@ export async function GET() {
         headers: { 'X-API-Key': apiKey },
         cache: 'no-store',
       });
+      // Honesty first: a gateway that rejects our key is an AUTH problem, not
+      // "waiting for QR". The old fallback masked a stale OPENWA_ADMIN_API_KEY
+      // behind a benign "Session active, waiting for QR..." message while the
+      // session had been unpaired for 9 days (2026-10-11 → 10-20 outage).
+      if (sessionRes.status === 401 || sessionRes.status === 403) {
+        return NextResponse.json({
+          status: 'gateway_auth_error',
+          message: 'Gateway rejected OPENWA_ADMIN_API_KEY — update it (and WHATSAPP_API_TOKEN) to the box value.',
+          qrCode: null,
+          sessionId,
+        });
+      }
       const sessionData = sessionRes.ok ? await sessionRes.json() : {};
       return NextResponse.json({
         status: sessionData.status || 'unknown',
         message: sessionData.status === 'authenticated' || sessionData.status === 'connected'
           ? 'WhatsApp Connected!'
-          : 'Session active, waiting for QR...',
+          : sessionData.status
+            ? `Gateway session status: ${sessionData.status}`
+            : 'Session active, waiting for QR...',
         qrCode: null,
         sessionId,
       });
