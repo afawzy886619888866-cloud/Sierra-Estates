@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   FileSpreadsheet,
   Search,
@@ -11,17 +11,8 @@ import {
   Camera,
   Copy,
   Check,
-  Phone,
   MessageCircle,
-  Eye,
-  ChevronLeft,
-  ChevronRight,
   RotateCcw,
-  Sparkles,
-  Building2,
-  DollarSign,
-  BedDouble,
-  ShieldCheck,
   Send,
 } from "lucide-react";
 import type { InventoryUnit } from "@/lib/inventory/types";
