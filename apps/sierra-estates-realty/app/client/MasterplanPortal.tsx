@@ -2,8 +2,22 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Nav, Footer } from './ui';
+
+const SpatialMasterplanMap = dynamic(
+  () => import('@/components/Maps/SpatialMasterplanMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#061122] text-slate-400">
+        <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-mono uppercase text-cyan-300">Loading Ultra-HD 4K Engine…</span>
+      </div>
+    ),
+  }
+);
 import {
   Layers,
   MapPin,
@@ -324,6 +338,15 @@ const MAP_EDITIONS = [
     src: 'https://lh3.googleusercontent.com/aida/AEtjO1VFcm0Sz2wDJfcnK9kiAWGl4Y_GQuDa7R5Jsro8BH7u55BRoLXpnrq0DDlMyPyUXdbeFyFDX4IEJLFJFI2WcKFoWS1ymyLhThDMDBrtQ9wo26zeJvYwp4sKMx8nzJN_qsBcVPVNo4UtZvaHrOZGKsRO_LGIgoGbW3uqZBpyekjUoLrW7quB5TugBxuVkGvXHDL-UoGHtTKGH4i1o90AXl0tZuo9lcoSLtRd7RKY50374Nm0ZeLze_T_whg',
     alt: 'القاهرة الجديدة التجمع الخامس المخطط العام والخرائط المساحية الكادسترية',
   },
+  {
+    id: 5,
+    title: 'Ultra-HD 4K Engine (Retina @2x)',
+    tag: '4K GIS',
+    color: '#10b981',
+    bgBadge: 'bg-emerald-600',
+    src: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/3328/4890',
+    alt: 'Sierra Estates Ultra-HD 4K Leaflet GIS Engine',
+  },
 ];
 
 export default function MasterplanPortal() {
@@ -600,14 +623,20 @@ export default function MasterplanPortal() {
 
         {/* Interactive Map Stage & HUD Overlays */}
         <section className="relative w-full h-180 lg:h-205 overflow-hidden bg-[#171c20] select-none">
-          {/* Background Cadastral Base Maps (Stacked and Switched via JS) */}
-          <div
-            className="absolute inset-0 w-full h-full origin-center transition-transform duration-700 ease-out flex items-center justify-center"
-            style={{
-              transform: stageTransform,
-              transformStyle: 'preserve-3d',
-            }}
-          >
+          {mapEdition === 5 ? (
+            <div className="w-full h-full relative z-10">
+              <SpatialMasterplanMap />
+            </div>
+          ) : (
+            <>
+              {/* Background Cadastral Base Maps (Stacked and Switched via JS) */}
+              <div
+                className="absolute inset-0 w-full h-full origin-center transition-transform duration-700 ease-out flex items-center justify-center"
+                style={{
+                  transform: stageTransform,
+                  transformStyle: 'preserve-3d',
+                }}
+              >
             {MAP_EDITIONS.map((ed) => (
               <img
                 key={ed.id}
@@ -979,6 +1008,8 @@ export default function MasterplanPortal() {
               <Navigation className="w-4 h-4 text-[#094cb2] -rotate-45" />
             </div>
           </div>
+            </>
+          )}
         </section>
 
         {/* Bento Spatial Intelligence Grid (4 Strategic Insights) */}
