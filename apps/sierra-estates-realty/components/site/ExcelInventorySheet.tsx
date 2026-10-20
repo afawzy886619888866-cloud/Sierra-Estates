@@ -844,6 +844,19 @@ export default function ExcelInventorySheet({
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      {isAr ? "البريد الإلكتروني (اختياري)" : "Email Address (Optional)"}
+                    </label>
+                    <input
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      placeholder="client@example.com"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
                       {isAr ? "ملاحظات المعاينة (اختياري)" : "Inspection / Photos Note"}
                     </label>
                     <textarea
