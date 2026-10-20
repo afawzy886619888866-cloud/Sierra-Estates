@@ -15,8 +15,6 @@
  * /api/listings applies: unverified rows never reach a public surface, so
  * when nothing verified exists the honest answer is an empty <list>.
  */
-import fs from 'fs';
-import path from 'path';
 import { NextResponse } from 'next/server';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
 import { logger } from '@/lib/logger';
@@ -107,23 +105,14 @@ function deriveCity(compound: string, unitCity?: string | null): string {
 }
 
 export async function GET() {
-  // Check for pre-generated high-fidelity Property Finder XML feed with 1,762 rich ads
-  const candidatePaths = [
-    path.join(process.cwd(), 'public', 'feeds', 'propertyfinder-feed.xml'),
-    path.join(process.cwd(), 'apps', 'sierra-estates-realty', 'public', 'feeds', 'propertyfinder-feed.xml'),
-  ];
-  for (const p of candidatePaths) {
-    if (fs.existsSync(p)) {
-      const xml = fs.readFileSync(p, 'utf8');
-      return new NextResponse(xml, {
-        headers: {
-          'Content-Type': 'application/xml; charset=utf-8',
-          'Cache-Control': 'public, max-age=300, s-maxage=600',
-        },
-      });
-    }
-  }
-
+  // PUBLISH GATE (mandate 2026-10-20): the pre-generated-XML branch that used
+  // to live here was REMOVED — it served a stale committed snapshot
+  // (public/feeds/propertyfinder-feed.xml, last_update 2026-10-04, ~1,762
+  // owner-scraped OWNERS-AUG26-* ads incl. price-on-application rows) BEFORE
+  // the canonical query could run, so unverified units were advertised on a
+  // public third-party portal and the gate above was dead code in production.
+  // Draft XMLs now live in docs/drafts/propertyfinder/ (never auto-served);
+  // this route only ever exports canonical, publish-gated rows.
   const units = await loadUnits();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<list>\n`;

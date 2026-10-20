@@ -66,7 +66,15 @@ jobs:
       - name: Run Owner Outreach Workflow
         env:
           # Operational Parameters
-          WF_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          # LIVE-SEND OPT-IN (mandate 2026-10-20): scheduled runs default to
+          # DRY-RUN unless the repository variable WHATSAPP_LIVE_OUTREACH is
+          # explicitly set to 'true'. Manual workflow_dispatch runs keep their
+          # per-run dry_run input choice. Rationale: a standing 30-minute cron
+          # in live mode would begin real owner contact the moment the gateway
+          # session re-pairs, with no operator gate in between — the engine's
+          # own caps/ledger/opt-out still apply, but the campaign itself must
+          # be a deliberate operator decision, not a default.
+          WF_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || (vars.WHATSAPP_LIVE_OUTREACH == 'true' && 'false' || 'true') }}
           WF_SLOT_BATCH: ${{ inputs.batch_size || '25' }}
           WF_HOST_SIDE: ${{ inputs.host_side || 'split' }}
           
