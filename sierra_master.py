@@ -7,6 +7,9 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 
+# ==========================================
+# CONFIGURATION
+# ==========================================
 API_URL = "http://localhost:8080"
 API_KEY = "sierra_secret_key_2026"
 
@@ -21,19 +24,43 @@ SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU
 CHECKPOINT_FILE = "sierra_checkpoint.json"
 MASTER_DB_FILE = "Sierra_Estates_Master_Units.xlsx"
 
+COMPOUND_CODES = {
+    "mivida": "MIV",
+    "rehab": "REH",
+    "madinaty": "MAD",
+    "the square": "SQR",
+    "square": "SQR",
+    "lake view": "LKV",
+    "hyde park": "HYD",
+    "eastown": "EST",
+    "villette": "VIL",
+    "katameya heights": "KH",
+    "katameya dunes": "KD",
+    "palm hills": "PH",
+    "fifth square": "FSQ",
+    "cairo festival city": "CFC",
+    "gardenia": "GAR",
+    "5th settlement": "5TH",
+    "new cairo": "NC"
+}
+
+# Randomized outreach copy (Spintax variation)
 GREETINGS = [
-    "أهلاً بحضرتك يا فندم،",
-    "مساء الخير،",
-    "تحياتي لحضرتك،",
-    "السلام عليكم ورحمة الله،"
+    "Hello,",
+    "Good day,",
+    "Dear Property Owner,",
+    "Hi there,"
 ]
 
 MESSAGES = [
-    "معاك فريق إدارة وتسويق العقارات بسييرا، بخصوص وحدتكم المعروضة هل ما زالت متاحة للتسويق المباشر؟",
-    "بنتواصل مع حضرتك بخصوص تسويق العقار لقاعدة عملاء جاهزة للتنفيذ الفوري.",
-    "مع حضرتك سييرا لإدارة الأصول، حابين ننسق مع حضرتك بخصوص تفاصيل الوحدة لتسجيلها وعرضها."
+    "Reaching out from Sierra Estates Advisory. We have active qualified clients looking for units in your area. Is your property still available?",
+    "This is Sierra Asset Management regarding your listed property. We would like to coordinate direct marketing and viewings with our verified buyers/tenants.",
+    "Following up from Sierra PropTech. We are updating our inventory—could you confirm if your listed unit is currently available for rent or resale?"
 ]
 
+# ==========================================
+# TIME & SHIFT CONTROLS (10 AM - 9 PM)
+# ==========================================
 def is_day_shift():
     now = datetime.now()
     return 10 <= now.hour < 21
@@ -58,9 +85,12 @@ def fetch_sheet_data():
         df = pd.read_csv(SHEET_CSV_URL)
         return df
     except Exception as e:
-        print(f"[Sheet Sync] يتعذر تحميل الشيت حالياً: {e}")
+        print(f"[Sheet Sync] Unable to fetch Google Sheet at this moment: {e}")
         return None
 
+# ==========================================
+# CHECKPOINT & ANTI-DUPLICATION
+# ==========================================
 def load_checkpoint():
     if os.path.exists(CHECKPOINT_FILE):
         try:
@@ -79,7 +109,7 @@ def save_checkpoint(row, inst_idx, contacted):
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }, f, ensure_ascii=False, indent=2)
 
-def send_msg(instance, phone, text):
+def send_whatsapp_msg(instance, phone, text):
     url = f"{API_URL}/message/sendText/{instance}"
     headers = {"apikey": API_KEY, "Content-Type": "application/json"}
     payload = {"number": phone, "text": text, "delay": 1500}
@@ -89,9 +119,13 @@ def send_msg(instance, phone, text):
     except Exception:
         return False
 
+# ==========================================
+# NIGHT SHIFT: PARSING, CODING & PF DOSSIERS
+# ==========================================
 def process_night_shift(df):
-    print("\n🌙 [وردية الليل] فحص البيانات، التكويد الذكي، وإعداد إعلانات Property Finder...")
+    print("\n🌙 [Night Shift Active] Deduplicating, Smart Coding & Generating Property Finder Dossiers...")
     if df is None or df.empty:
+        print("No sheet data available for processing.")
         return
 
     df_master = pd.DataFrame()
@@ -101,52 +135,71 @@ def process_night_shift(df):
         except Exception:
             pass
 
-    new_rows = []
     phone_col = None
     for col in df.columns:
-        if any(k in str(col).lower() for k in ['phone', 'mobile', 'هاتف', 'موبايل']):
+        if any(k in str(col).lower() for k in ['phone', 'mobile', 'owner phone', 'هاتف', 'موبايل']):
             phone_col = col
             break
     if not phone_col:
         phone_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
 
+    new_rows = []
     for idx, row in df.iterrows():
         phone = clean_phone(row[phone_col])
         if not phone:
             continue
 
-        price = str(row.get('Monthly Rent (EGP)', row.get('Price', 'غير محدد')))
-        dedup_key = f"{phone}_{price}"
+        price_raw = str(row.get('Monthly Rent (EGP)', row.get('Price', 'Ask Price')))
+        dedup_key = f"{phone}_{price_raw}"
 
         if not df_master.empty and "Dedup Key" in df_master.columns and dedup_key in df_master["Dedup Key"].astype(str).values:
             continue
 
-        compound = str(row.get('Compound / Project', row.get('Compound', 'القاهرة الجديدة')))
-        prop_type = str(row.get('Property Type', 'شقة'))
+        compound = str(row.get('Compound / Project', row.get('Compound', 'New Cairo')))
+        prop_type = str(row.get('Property Type', 'Apartment'))
         beds = str(row.get('Beds', row.get('Bedrooms', '3')))
-        
+        area = str(row.get('Area (m²)', row.get('Area', 'Spacious layout')))
+        finishing = str(row.get('Finishing', 'Fully Finished'))
+
+        # Generate Sierra Smart Code
         c_code = "NC"
-        if "mivida" in compound.lower(): c_code = "MIV"
-        elif "rehab" in compound.lower(): c_code = "REH"
-        elif "madinaty" in compound.lower(): c_code = "MAD"
-        elif "square" in compound.lower(): c_code = "SQR"
-        elif "lake" in compound.lower(): c_code = "LKV"
+        for k, v in COMPOUND_CODES.items():
+            if k in compound.lower():
+                c_code = v
+                break
+        
+        t_code = "APT"
+        if "villa" in prop_type.lower(): t_code = "VIL"
+        elif "duplex" in prop_type.lower(): t_code = "DUP"
+        elif "townhouse" in prop_type.lower(): t_code = "TWN"
 
-        unit_code = f"{c_code}-APT-{beds}B-PF"
+        unit_code = f"{c_code}-{t_code}-{beds}B-PF"
 
-        pf_title_ar = f"{prop_type} للإيجار/البيع في {compound} | {beds} غرف | كود {unit_code}"
-        pf_desc_ar = f"متاح الآن {prop_type} راقية داخل {compound}.\nالتقسيم: {beds} غرف نوم.\nالقيمة: {price} ج.م.\nكود المعاينة: {unit_code}\nللحجز والتواصل المباشر مع إدارة سييرا."
+        # Property Finder SEO English Listing
+        pf_title_en = f"Luxury {beds}BR {prop_type} for Rent/Sale in {compound} | Ref: {unit_code}"
+        pf_desc_en = (
+            f"Exclusive property presented by Sierra Estates.\n\n"
+            f"Prime {prop_type} located in {compound}, New Cairo.\n"
+            f"- Layout: {beds} Bedrooms with modern distribution\n"
+            f"- Area: {area} SQM\n"
+            f"- Finishing: {finishing}\n"
+            f"- Asking Price: {price_raw}\n"
+            f"- Internal Reference: {unit_code}\n\n"
+            f"Schedule a viewing appointment today with our senior advisory team."
+        )
 
         new_rows.append({
             "Unit Code": unit_code,
             "Compound": compound,
             "Property Type": prop_type,
             "Bedrooms": beds,
-            "Price": price,
+            "Area (sqm)": area,
+            "Price": price_raw,
+            "Finishing": finishing,
             "Owner Phone": phone,
             "Dedup Key": dedup_key,
-            "PF Title AR": pf_title_ar,
-            "PF Desc AR": pf_desc_ar,
+            "PF Title EN": pf_title_en,
+            "PF Desc EN": pf_desc_en,
             "Processed At": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
 
@@ -154,12 +207,18 @@ def process_night_shift(df):
         df_new = pd.DataFrame(new_rows)
         df_final = pd.concat([df_master, df_new], ignore_index=True)
         df_final.to_excel(MASTER_DB_FILE, index=False)
-        print(f"✓ تم تكويد وتسجيل {len(new_rows)} وحدة جديدة وتوليد إعلاناتها في: {MASTER_DB_FILE}")
+        print(f"✓ Coded and saved {len(new_rows)} new listings with Property Finder dossiers to: {MASTER_DB_FILE}")
     else:
-        print("✓ لا توجد وحدات جديدة غير مسجلة.")
+        print("✓ All inventory in the Google Sheet is already fully coded and synchronized.")
 
+# ==========================================
+# MAIN 24/7 ORCHESTRATION LOOP
+# ==========================================
 def main():
-    print("=== بدء تشغيل سيرفر سييرا الذكي (24/7 Automation) ===")
+    print("==========================================================")
+    print("  SIERRA ESTATES 24/7 MULTI-NUMBER AUTOMATION ENGINE")
+    print("==========================================================")
+    
     while True:
         df = fetch_sheet_data()
         cp = load_checkpoint()
@@ -169,8 +228,8 @@ def main():
 
         if is_day_shift():
             active_inst = INSTANCES[inst_idx]
-            print(f"\n☀️ [وردية النهار] تشغيل الرقم: [{active_inst}]")
-            print(f"المستهدف: 30 رسالة خلال 30 دقيقة...")
+            print(f"\n☀️ [Day Shift] Operating Instance: [{active_inst}]")
+            print(f"Target: 30 messages over the next 30 minutes...")
 
             shift_start = time.time()
             sent_count = 0
@@ -178,50 +237,58 @@ def main():
             if df is not None:
                 phone_col = None
                 for col in df.columns:
-                    if any(k in str(col).lower() for k in ['phone', 'mobile', 'هاتف', 'موبايل']):
+                    if any(k in str(col).lower() for k in ['phone', 'mobile', 'owner phone', 'هاتف', 'موبايل']):
                         phone_col = col
                         break
                 if not phone_col:
                     phone_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
 
-                rows_total = len(df)
-                while sent_count < 30 and last_row < rows_total and is_day_shift():
+                total_rows = len(df)
+                while sent_count < 30 and last_row < total_rows and is_day_shift():
                     raw_val = df.iloc[last_row][phone_col]
                     phone = clean_phone(raw_val)
 
                     if phone and phone not in contacted:
-                        msg = f"{random.choice(GREETINGS)}\n{random.choice(MESSAGES)}"
-                        print(f"[{active_inst}] إرسال ({sent_count + 1}/30) إلى: {phone}")
-                        success = send_msg(active_inst, phone, msg)
+                        message_body = f"{random.choice(GREETINGS)}\n\n{random.choice(MESSAGES)}"
+                        print(f"[{active_inst}] Dispatching ({sent_count + 1}/30) to: {phone}")
+                        success = send_whatsapp_msg(active_inst, phone, message_body)
+
                         if success:
                             contacted.add(phone)
-                            print("  ✓ تم الإرسال")
+                            print("  ✓ Sent successfully")
                         else:
-                            print("  ✗ تعذر الإرسال")
+                            print("  ✗ Failed or unreachable")
 
                         sent_count += 1
                         last_row += 1
                         save_checkpoint(last_row, inst_idx, contacted)
+
+                        # Humanized safe delay between 45 and 65 seconds
                         time.sleep(random.randint(45, 65))
                     else:
                         last_row += 1
                         save_checkpoint(last_row, inst_idx, contacted)
 
+            # Enforce 30-minute shift interval before handing over to the next instance
             elapsed = time.time() - shift_start
-            rem = 1800 - elapsed
-            if rem > 0 and is_day_shift():
-                print(f"اكتملت حصة [{active_inst}]. راحة {int(rem/60)} دقيقة قبل تسليم الرقم التالي...")
-                time.sleep(rem)
+            remaining = 1800 - elapsed
+            if remaining > 0 and is_day_shift():
+                print(f"Quota completed for [{active_inst}]. Resting {int(remaining / 60)} minutes before rotation...")
+                time.sleep(remaining)
 
+            # Handover checkpoint to the next phone instance
             inst_idx = (inst_idx + 1) % len(INSTANCES)
             save_checkpoint(last_row, inst_idx, contacted)
+            print(f"-> Checkpoint updated. Handing shift over to: [{INSTANCES[inst_idx]}]")
+
         else:
+            # 9:00 PM to 10:00 AM: Quiet hours, execute data processing and Property Finder listing generation
             process_night_shift(df)
             now = datetime.now()
-            target = (now + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0) if now.hour >= 21 else now.replace(hour=10, minute=0, second=0, microsecond=0)
-            sleep_sec = int((target - now).total_seconds())
-            print(f"🌙 السيرفر في وضع المعالجة الليلي. استئناف الإرسال في 10:00 صباحاً (بعد {round(sleep_sec/3600, 1)} ساعة)...")
-            time.sleep(min(sleep_sec, 1800))
+            next_10am = (now + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0) if now.hour >= 21 else now.replace(hour=10, minute=0, second=0, microsecond=0)
+            sleep_duration = int((next_10am - now).total_seconds())
+            print(f"🌙 System in nocturnal mode. WhatsApp messaging resumes at 10:00 AM ({round(sleep_duration / 3600, 1)} hrs remaining)...")
+            time.sleep(min(sleep_duration, 1800))
 
 if __name__ == "__main__":
     main()

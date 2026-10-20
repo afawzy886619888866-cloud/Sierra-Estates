@@ -73,6 +73,9 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+*checkpoint.json
+sierra_checkpoint.json
+
 
 # Logs & Diagnostics
 *.log
