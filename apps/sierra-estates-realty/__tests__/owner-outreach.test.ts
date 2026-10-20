@@ -88,7 +88,7 @@ describe('OwnerOutreachService — Phone Normalization & Message Templating', ()
     const message = generateOwnerOutreachMessage(owner);
     expect(message).toContain('فندم');
     expect(message).toContain('Mivida');
-    expect(message).toContain('للبيع');
+    expect(message).toContain('البيع');
   });
 });
 
@@ -98,23 +98,27 @@ describe('OwnerOutreachService — Batch Enqueue & Schedule Scheduling', () => {
   });
 
   it('computes next hourly slot ISO string within expected boundaries', () => {
-    const slot0 = OwnerOutreachService.getNextHourlySlot(0);
-    const slot1 = OwnerOutreachService.getNextHourlySlot(1);
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-10-20T11:00:00Z')); // 13:00 / 14:00 Cairo time, comfortably inside window
+    try {
+      const slot0 = OwnerOutreachService.getNextHourlySlot(0);
+      const slot1 = OwnerOutreachService.getNextHourlySlot(1);
 
-    expect(typeof slot0).toBe('string');
-    expect(typeof slot1).toBe('string');
-    // 2026-10-19: slots are window-clamped — when "now" is outside the
-    // 12:00-20:00 Cairo window both offsets roll to the SAME 12:00 opening
-    // (diff 0); inside the window the offset spreads them ~1h apart.
-    const diff = Math.abs(new Date(slot1).getTime() - new Date(slot0).getTime());
-    expect(diff).toBeLessThanOrEqual(3600000 + 500);
-    const hourOf = (iso: string) =>
-      Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', hour12: false, hour: '2-digit' })
-        .format(new Date(iso))) % 24;
-    expect(hourOf(slot0)).toBeGreaterThanOrEqual(12);
-    expect(hourOf(slot0)).toBeLessThan(20);
-    expect(hourOf(slot1)).toBeGreaterThanOrEqual(12);
-    expect(hourOf(slot1)).toBeLessThan(20);
+      expect(typeof slot0).toBe('string');
+      expect(typeof slot1).toBe('string');
+      // Inside the window the offset spreads them ~1h apart.
+      const diff = Math.abs(new Date(slot1).getTime() - new Date(slot0).getTime());
+      expect(diff).toBeLessThanOrEqual(3600000 + 500);
+      const hourOf = (iso: string) =>
+        Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', hour12: false, hour: '2-digit' })
+          .format(new Date(iso))) % 24;
+      expect(hourOf(slot0)).toBeGreaterThanOrEqual(12);
+      expect(hourOf(slot0)).toBeLessThan(20);
+      expect(hourOf(slot1)).toBeGreaterThanOrEqual(12);
+      expect(hourOf(slot1)).toBeLessThan(20);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('enqueues batch capped at requested size (40)', async () => {
