@@ -129,6 +129,7 @@ Sierra_Estates_*.csv
 owner_media_matches.json
 obsidian-store.json
 !apps/sierra-estates-realty/data/online-sheet-units.json
+!apps/sierra-estates-realty/data/consolidated-master-inventory.json
 # NOTE: snapshot.json is deliberately COMMITTED — four routes statically import
 # it (inventory, listings, inventory/download, admin whatsapp scan) and the
 # public map serves it as the offline fallback, so a clean checkout must
