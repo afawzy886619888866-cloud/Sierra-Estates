@@ -616,8 +616,8 @@ export default function ExcelInventorySheet({
                     <th className="py-3 px-3">{isAr ? "النوع" : "Type"}</th>
                     <th className="py-3 px-3">{isAr ? "المساحة" : "Area"}</th>
                     <th className="py-3 px-3">{isAr ? "غرف / حمامات" : "Beds/Baths"}</th>
-                    <th className="py-3 px-3">{isAr ? "السعر (EGP)" : "Price (EGP)"</th>
-                    <th className="py-3 px-3">{isAr ? "السعر (USD)" : "Price (USD)"</th>
+                    <th className="py-3 px-3">{isAr ? "السعر (EGP)" : "Price (EGP)"}</th>
+                    <th className="py-3 px-3">{isAr ? "السعر (USD)" : "Price (USD)"}</th>
                     <th className="py-3 px-3">{isAr ? "التشطيب" : "Finishing"}</th>
                     <th className="py-3 px-3">{isAr ? "المعاملة" : "Category"}</th>
                     <th className="py-3 px-4 text-center">{isAr ? "الإجراءات" : "Actions"}</th>
