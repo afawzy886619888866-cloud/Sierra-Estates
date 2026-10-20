@@ -300,7 +300,7 @@ export default function ExcelInventorySheet({
       dir={isAr ? "rtl" : "ltr"}
       style={{ fontFamily: isAr ? "'Cairo', sans-serif" : "'Plus Jakarta Sans', sans-serif" }}
       className={`relative w-full ${
-        isEmbedded ? "h-[740px]" : "h-full min-h-[600px]"
+        isEmbedded ? "h-185" : "h-full min-h-150"
       } flex flex-col rounded-2xl bg-[#061122] text-slate-100 border border-slate-800/90 shadow-[0_25px_60px_rgba(0,0,0,0.85)] overflow-hidden select-none`}
     >
       {/* TOP COMMAND BAR */}
@@ -397,7 +397,7 @@ export default function ExcelInventorySheet({
           }}
           className={`shrink-0 border-e border-slate-800/90 transition-all duration-300 ease-in-out overflow-hidden flex flex-col z-20 shadow-2xl`}
         >
-          <div className="w-[300px] h-full flex flex-col p-4 space-y-4 overflow-y-auto no-scrollbar">
+          <div className="w-75 h-full flex flex-col p-4 space-y-4 overflow-y-auto no-scrollbar">
             {/* Sidebar Header & Reset */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2 text-amber-400 text-xs font-extrabold uppercase tracking-wider">
@@ -420,7 +420,7 @@ export default function ExcelInventorySheet({
                 {isAr ? "بحث فوري" : "Instant Search"}
               </label>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute top-2.5 start-2.5" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute top-2.5 inset-s-2.5" />
                 <input
                   type="text"
                   value={searchQuery}

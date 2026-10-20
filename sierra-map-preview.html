@@ -178,12 +178,21 @@
       z-index: 1000;
       padding: 16px;
       overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--gold) transparent;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
+    .controls-deck::-webkit-scrollbar {
+      width: 6px;
+    }
+    .controls-deck::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .controls-deck::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 4px;
+    }
+
     body[dir="rtl"] .controls-deck {
       left: auto;
       right: 16px;
@@ -269,11 +278,21 @@
       z-index: 1000;
       padding: 18px;
       overflow-y: auto;
-      scrollbar-width: thin;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
+    .property-hud::-webkit-scrollbar {
+      width: 6px;
+    }
+    .property-hud::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .property-hud::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 4px;
+    }
+
     body[dir="rtl"] .property-hud {
       right: auto;
       left: 16px;

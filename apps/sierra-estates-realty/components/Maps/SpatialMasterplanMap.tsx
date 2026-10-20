@@ -914,7 +914,7 @@ export default function SpatialMasterplanMap({
 
       marker.addTo(overlayGroup);
     });
-  }, [compounds, filteredUnits, selectedCompoundId, activeSubfeatures, selectedUnit, isAr]);
+  }, [compounds, filteredUnits, selectedCompoundId, activeSubfeatures, selectedUnit, isAr, onSelectUnit]);
 
   const handleSelectCompound = (id: string) => {
     setSelectedCompoundId(id);
@@ -951,12 +951,12 @@ export default function SpatialMasterplanMap({
     <div
       dir={isAr ? 'rtl' : 'ltr'}
       style={{ fontFamily: isAr ? "'Cairo', sans-serif" : "'Plus Jakarta Sans', sans-serif" }}
-      className="relative w-full h-[760px] rounded-3xl overflow-hidden border border-slate-800/90 shadow-[0_25px_70px_rgba(0,0,0,0.9)] bg-[#061122] text-white select-none"
+      className="relative w-full h-190 rounded-3xl overflow-hidden border border-slate-800/90 shadow-[0_25px_70px_rgba(0,0,0,0.9)] bg-[#061122] text-white select-none"
     >
       {/* TOP COMMAND BAR: Compound Pills, 4K Mode Toggle & Language Switcher */}
       <div
         style={{ background: 'rgba(6, 17, 34, 0.94)', backdropFilter: 'blur(20px)' }}
-        className="absolute top-4 left-4 right-4 z-[1000] rounded-2xl border border-slate-700/60 p-3 shadow-2xl flex flex-wrap items-center justify-between gap-3"
+        className="absolute top-4 left-4 right-4 z-1000 rounded-2xl border border-slate-700/60 p-3 shadow-2xl flex flex-wrap items-center justify-between gap-3"
       >
         {/* Flagship Compound Selector Pills */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
@@ -968,7 +968,7 @@ export default function SpatialMasterplanMap({
             onClick={() => handleSelectCompound('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
               selectedCompoundId === 'all'
-                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.45)]'
+                ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.45)]'
                 : 'bg-slate-900/80 text-white/85 hover:text-white border border-slate-800'
             }`}
           >
@@ -982,7 +982,7 @@ export default function SpatialMasterplanMap({
               onClick={() => handleSelectCompound(c.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                 selectedCompoundId === c.id
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.45)]'
+                  ? 'bg-linear-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.45)]'
                   : 'bg-slate-900/80 text-white/85 hover:text-white border border-slate-800'
               }`}
             >
@@ -1046,7 +1046,7 @@ export default function SpatialMasterplanMap({
       {/* SUBFEATURE VECTOR LAYERS (Lagoons, Green Spines, Golf, Clubhouses) */}
       <div
         style={{ background: 'rgba(11, 23, 42, 0.88)', backdropFilter: 'blur(16px)' }}
-        className="absolute top-20 left-4 z-[1000] rounded-2xl border border-slate-800/90 px-3 py-2 flex flex-wrap items-center gap-2 shadow-2xl"
+        className="absolute top-20 left-4 z-1000 rounded-2xl border border-slate-800/90 px-3 py-2 flex flex-wrap items-center gap-2 shadow-2xl"
       >
         <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#93c5fd]">
           {isAr ? 'الطبقات التفاعلية:' : 'Master Layers:'}
@@ -1081,7 +1081,7 @@ export default function SpatialMasterplanMap({
       {activeCompound && (
         <div
           style={{ background: 'rgba(6, 17, 34, 0.95)', backdropFilter: 'blur(22px)' }}
-          className="absolute top-36 left-4 z-[1000] w-80 rounded-2xl border border-amber-500/40 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.85)] space-y-2.5 animate-in fade-in duration-200"
+          className="absolute top-36 left-4 z-1000 w-80 rounded-2xl border border-amber-500/40 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.85)] space-y-2.5 animate-in fade-in duration-200"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-amber-400 uppercase tracking-wider px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
@@ -1158,7 +1158,7 @@ export default function SpatialMasterplanMap({
       {selectedUnit && (
         <div
           style={{ background: 'rgba(6, 17, 34, 0.95)', backdropFilter: 'blur(24px)' }}
-          className="absolute bottom-6 left-6 z-[1000] w-84 max-w-[calc(100%-3rem)] rounded-2xl border border-slate-700/80 overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.92)] animate-in slide-in-from-bottom-4 duration-200"
+          className="absolute bottom-6 left-6 z-1000 w-84 max-w-[calc(100%-3rem)] rounded-2xl border border-slate-700/80 overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.92)] animate-in slide-in-from-bottom-4 duration-200"
         >
           <div className="relative h-36 w-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1210,7 +1210,7 @@ export default function SpatialMasterplanMap({
             <div className="grid grid-cols-2 gap-2 pt-1.5">
               <a
                 href={`/property/${selectedUnit.id}`}
-                className="py-2 text-center rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-extrabold text-xs hover:opacity-95 transition shadow-[0_0_15px_rgba(56,189,248,0.35)]"
+                className="py-2 text-center rounded-xl bg-linear-to-r from-cyan-400 to-blue-500 text-slate-950 font-extrabold text-xs hover:opacity-95 transition shadow-[0_0_15px_rgba(56,189,248,0.35)]"
               >
                 {isAr ? 'عرض الوحدة' : 'View Unit'}
               </a>

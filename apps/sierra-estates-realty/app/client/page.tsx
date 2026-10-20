@@ -23,7 +23,7 @@ const SpatialMasterplanMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-[760px] rounded-3xl bg-[#061122] border border-slate-800 flex flex-col items-center justify-center gap-3 text-slate-400">
+      <div className="w-full h-190 rounded-3xl bg-[#061122] border border-slate-800 flex flex-col items-center justify-center gap-3 text-slate-400">
         <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-mono tracking-wider uppercase text-cyan-300">
           Initializing Ultra-HD 4K Canvas Map Engine…
@@ -39,7 +39,7 @@ const ExcelInventorySheet = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-[700px] rounded-3xl bg-[#061122] border border-slate-800 flex flex-col items-center justify-center gap-3 text-slate-400">
+      <div className="w-full h-175 rounded-3xl bg-[#061122] border border-slate-800 flex flex-col items-center justify-center gap-3 text-slate-400">
         <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-mono tracking-wider uppercase text-amber-300">
           Loading Supabase Live Inventory Grid…
@@ -108,7 +108,7 @@ export default function ClientPage() {
           {/* Brand & Live Sync Status */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.4)] group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.4)] group-hover:scale-105 transition-transform">
                 S
               </div>
               <div>
@@ -139,7 +139,7 @@ export default function ClientPage() {
               onClick={() => setViewMode('map')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
                 viewMode === 'map'
-                  ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.4)]'
+                  ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.4)]'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -152,7 +152,7 @@ export default function ClientPage() {
               onClick={() => setViewMode('sheet')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
                 viewMode === 'sheet'
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.4)]'
+                  ? 'bg-linear-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.4)]'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -223,7 +223,7 @@ export default function ClientPage() {
                 onClick={() => setSelectedCompound(c.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-2 border ${
                   selectedCompound === c.id
-                    ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 border-cyan-300 shadow-[0_0_12px_rgba(56,189,248,0.4)]'
+                    ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-slate-950 border-cyan-300 shadow-[0_0_12px_rgba(56,189,248,0.4)]'
                     : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
                 }`}
               >

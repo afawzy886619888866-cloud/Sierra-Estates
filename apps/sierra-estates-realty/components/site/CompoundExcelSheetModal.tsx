@@ -43,7 +43,7 @@ export default function CompoundExcelSheetModal({
       role="dialog"
       aria-modal="true"
       aria-label={`${compoundName} Inventory Sheet`}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
     >
       <div
         className="relative w-full max-w-7xl h-[92vh] max-h-[92vh] flex flex-col rounded-2xl border border-amber-500/30 bg-[#061122] shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_35px_rgba(223,173,58,0.15)] overflow-hidden"
