@@ -207,3 +207,73 @@ fingerprint (price is band-bucketed ±2.5%).
 
 *Last updated by the autonomous execution run of 2026-10-20. Append new entries
 below; never rewrite history.*
+
+### Session 4 — 2026-10-20 (P0 integrity pass: migration-truth reconciliation, fake-success retirement, PF gate restoration)
+
+**Dated reconciliation entry (append-only; supersedes nothing destructively):**
+
+1. **Migration truth 031/032/033 — RECONCILED.** This plan previously carried two
+   contradictory statements: §7.2 ("NOT yet applied", Session 2) vs §4-G2 +
+   Session 3 log ("applied + verified live"). Resolution from evidence, not
+   recency:
+   - Session 3's verification is the controlling record (named live objects:
+     `sierra_listing_code_seq`, `uq_listings_code`, `trg_listings_code_immutable`,
+     `trg_listings_assign_code`, `owner_outreach_log`, extended columns; ledger
+     rows `20261019031000/032000/033000`).
+   - Independent live corroboration this session: the public inventory API
+     serves rows whose codes carry `-D2`/`-D3` suffixes — the duplicate-
+     disambiguation signature produced ONLY by migration 031's repair block —
+     and the publish-gated app reads/writes fine (no PGRST204 behavior).
+   - §7.2's contrary claim is Session 2's stale snapshot, retained for history.
+   - Direct ledger re-read was attempted and is **credential-blocked** from the
+     agent sandbox (surviving env artifacts hold AGE-encrypted blobs, not keys;
+     Vercel env API access intentionally revoked 2026-10-20). Status:
+     **applied per recorded evidence + behavioral corroboration; independent
+     ledger re-verification BLOCKED pending a fresh operator credential.**
+
+2. **Fake-success senders RETIRED (P0-C).** Deleted `sierra_master.py`
+   (competing 4-instance rotation engine: hard-coded `sierra_secret_key_2026`
+   API key, phone+price dedup key, bedroom-derived unit codes, fabricated
+   defaults — beds '3', 'Fully Finished', 'Ask Price' — no opt-out, second
+   master inventory xlsx) and the dead `apps/automations/src/03-owner-contact/
+   index.ts` (commented-out API call but logged "sent", CRM row `status:'sent'`,
+   `success:true`). Canonical senders remain: `workflows/09-owner-outreach/
+   outreach.js` (health-gated lanes, caps, ledger, opt-out, audit) and
+   `workflows/03-owner-contact/contact.js` (pre-flight, dry-run, honest ERROR).
+
+3. **Property Finder publish gate RESTORED (P0-D).** The live production feed
+   was serving a stale pre-generated XML (last_update 2026-10-04, ~1,762
+   `OWNERS-AUG26-*` owner-scraped ads, price-on-application rows) via a
+   file-serving branch that shadowed the canonical gate, AND the same file was
+   directly downloadable at `/feeds/propertyfinder-feed.xml`. Fix: branch
+   removed from `route.ts`; all three draft XMLs moved out of `public/` to
+   `docs/drafts/propertyfinder/` (never auto-served); generator scripts
+   redirected; docs updated. **Live fix requires a production deploy (agent
+   has no Vercel credential by design) — until then the stale feed keeps
+   serving and this remains an OPEN production defect.**
+
+4. **Outreach workflow live-send now opt-in.** `.github/workflows/whatsapp-
+   outreach.yml` scheduled runs previously defaulted `WF_DRY_RUN=false` (LIVE)
+   — a standing 30-min cron that would begin real owner contact the moment
+   the gateway session re-pairs. Now: scheduled runs default to dry-run unless
+   repo variable `WHATSAPP_LIVE_OUTREACH='true'`; manual dispatch keeps its
+   per-run choice. Verified: all 7 prior Actions runs sent nothing (engine
+   exits 0 on no-ready-session, honest skip).
+
+5. **Production-smoke failure root-caused (P0-A).** `ci.yml` passing on
+   `06661aff`; both live sites healthy. The failing `production-smoke` badge =
+   2 data-quality checks (reproduced locally against production): 2,222/4,828
+   publishable+active rows unpriced; 257 stub-priced (999/5,000,000) + 735
+   suspicious sale (<100k) rows on the public map. Fixes: display-layer stub
+   normalization in `/api/inventory` (stubs render "Price on request"); DB-side
+   quarantine tooling delivered (`scripts/ops/supabase/quarantine-stub-priced-
+   listings.mjs`, dry-run default, service-key gated). Smoke stays honestly RED
+   until the operator runs the quarantine — by design, not fake-greened.
+   `deploy-supabase`/`automations`/`ec2-automations`/`agent-fleet` failures =
+   known credential/EC2 blockers failing loudly (honest), documented in §7.
+
+6. **Live inventory truth (E):** public map = 4,828 publishable+active units
+   (source `supabase`, 100% geocoded); `/api/health` `activeProperties` 20,252
+   counts all active rows incl. unverified; the "12,333 verified units" figure
+   in Session 3's log is a stale claim — 4,828 is the verified-publishable
+   number as of 2026-10-20 19:51 UTC.
