@@ -162,8 +162,7 @@ async function initSession(sessionId) {
       disableSpins: true,
       headless: process.env.HEADLESS !== 'false',
       sessionDataPath: AUTH_BASE_DIR,
-      useChrome: true,
-      ...(resolvedChrome ? { executablePath: resolvedChrome } : {}),
+      ...(resolvedChrome ? { executablePath: resolvedChrome } : { useChrome: true }),
       killProcessOnBrowserClose: false,
       popup: false,
       logConsole: false,
@@ -173,7 +172,12 @@ async function initSession(sessionId) {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--enable-local-storage',
+        '--unlimited-storage',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-site-isolation-trials',
+        '--allow-running-insecure-content'
       ],
       qrCallback: async (qrCode, asciiQR, urlCode) => {
         s.status = 'AWAITING_QR';

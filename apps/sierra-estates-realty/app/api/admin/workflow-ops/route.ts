@@ -25,8 +25,29 @@ export const maxDuration = 30;
 // baked a raw public IP into source (endpoint drift risk, cleartext HTTP,
 // and a stale address the moment the instance changes). Unset env now
 // yields an explicit configuration error instead of silently dialing an IP.
-const OPS_BASE = (process.env.WORKFLOW_OPS_URL
-  || (process.env.OPENWA_HOST ? `http://${process.env.OPENWA_HOST}:${process.env.RUNNER_PORT || '2786'}` : '')).replace(/\/+$/, '');
+function normalizeRunnerUrl(raw: string): string {
+  if (!raw) return '';
+  let url = raw.trim();
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `http://${url}`;
+  }
+  return url.replace(/\/+$/, '');
+}
+
+function getRunnerEndpoints(): string[] {
+  const list: string[] = [];
+  if (process.env.WORKFLOW_OPS_URL) {
+    list.push(normalizeRunnerUrl(process.env.WORKFLOW_OPS_URL));
+  }
+  // Local runner instance
+  list.push('http://127.0.0.1:2786');
+  if (process.env.OPENWA_HOST) {
+    const port = process.env.RUNNER_PORT || '2786';
+    list.push(normalizeRunnerUrl(`${process.env.OPENWA_HOST}:${port}`));
+  }
+  return Array.from(new Set(list.filter(Boolean)));
+}
+
 const OPS_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
 
 const actionSchema = z.discriminatedUnion('action', [
@@ -34,11 +55,11 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('request'), slug: z.string().min(1).max(64) }),
 ]);
 
-// P0 2.4: valid workflow-slug allowlist — mirrors the runner's SCRIPTS map.
-// An authenticated operator may trigger one of THESE workflows, nothing else.
+// Valid workflow-slug allowlist — mirrors runner's SCRIPTS map including whatsapp-dispatch
 const RUNNER_SLUGS = new Set([
   'whatsapp-scraper', 'owner-search', 'owner-contact', 'email-sender',
   'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach',
+  'whatsapp-dispatch',
 ]);
 
 function opsHeaders(): Record<string, string> {
@@ -46,30 +67,33 @@ function opsHeaders(): Record<string, string> {
 }
 
 async function proxy(pathname: string, init?: RequestInit): Promise<NextResponse> {
-  // PHASE 8/9: no configured runner endpoint → explicit 503 configuration
-  // error, never a silent dial to a baked-in IP.
-  if (!OPS_BASE) {
+  const endpoints = getRunnerEndpoints();
+  if (endpoints.length === 0) {
     return NextResponse.json(
       { ok: false, error: 'runner_not_configured', detail: 'Set WORKFLOW_OPS_URL or OPENWA_HOST (+ RUNNER_PORT) to reach the workflow runner.' },
       { status: 503 }
     );
   }
-  try {
-    const res = await fetch(`${OPS_BASE}${pathname}`, {
-      ...init,
-      headers: { ...opsHeaders(), ...(init?.headers || {}) },
-      signal: AbortSignal.timeout(8000),
-      cache: 'no-store',
-    });
-    const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
-  } catch (err: any) {
-    logger.error('workflow-ops proxy failed:', err?.message || err);
-    return NextResponse.json(
-      { ok: false, error: 'runner_unreachable', detail: err?.message || 'unknown' },
-      { status: 502 }
-    );
+  let lastErr = 'runner_unreachable';
+  for (const base of endpoints) {
+    try {
+      const res = await fetch(`${base}${pathname}`, {
+        ...init,
+        headers: { ...opsHeaders(), ...(init?.headers || {}) },
+        signal: AbortSignal.timeout(6000),
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => ({}));
+      return NextResponse.json(data, { status: res.status });
+    } catch (err: any) {
+      lastErr = err?.message || 'unknown';
+    }
   }
+  logger.error('workflow-ops proxy failed on all candidate endpoints:', lastErr);
+  return NextResponse.json(
+    { ok: false, error: 'runner_unreachable', detail: lastErr },
+    { status: 502 }
+  );
 }
 
 export async function GET(req: NextRequest) {
@@ -92,28 +116,45 @@ export async function GET(req: NextRequest) {
   //   - partially reachable (one probe answered) → 200 with the merged truth;
   //     `ok` mirrors the runner's own health verdict, never the proxy's mood.
   try {
-    if (!OPS_BASE) {
+    const endpoints = getRunnerEndpoints();
+    if (endpoints.length === 0) {
       return NextResponse.json(
         { ok: false, error: 'runner_not_configured', detail: 'Set WORKFLOW_OPS_URL or OPENWA_HOST (+ RUNNER_PORT) to reach the workflow runner.' },
         { status: 503 }
       );
     }
-    const [healthRes, wfRes] = await Promise.all([
-      fetch(`${OPS_BASE}/api/health`, {
-        headers: opsHeaders(), signal: AbortSignal.timeout(8000), cache: 'no-store',
-      }).catch(() => null),
-      fetch(`${OPS_BASE}/api/workflows`, {
-        headers: opsHeaders(), signal: AbortSignal.timeout(8000), cache: 'no-store',
-      }).catch(() => null),
-    ]);
-    if (!healthRes && !wfRes) {
+
+    let health: any = null;
+    let workflows: any[] = [];
+    let connected = false;
+
+    for (const base of endpoints) {
+      try {
+        const [healthRes, wfRes] = await Promise.all([
+          fetch(`${base}/api/health`, {
+            headers: opsHeaders(), signal: AbortSignal.timeout(4000), cache: 'no-store',
+          }).catch(() => null),
+          fetch(`${base}/api/workflows`, {
+            headers: opsHeaders(), signal: AbortSignal.timeout(4000), cache: 'no-store',
+          }).catch(() => null),
+        ]);
+
+        if (healthRes || wfRes) {
+          health = healthRes && healthRes.ok ? await healthRes.json().catch(() => null) : { ok: false };
+          workflows = wfRes && wfRes.ok ? (await wfRes.json().catch(() => ({})))?.workflows ?? [] : [];
+          connected = true;
+          break;
+        }
+      } catch (_) {}
+    }
+
+    if (!connected) {
       return NextResponse.json(
         { ok: false, error: 'runner_unreachable', health: { ok: false }, workflows: [] },
         { status: 502 }
       );
     }
-    const health = healthRes && healthRes.ok ? await healthRes.json().catch(() => null) : { ok: false };
-    const workflows = wfRes && wfRes.ok ? (await wfRes.json().catch(() => ({})))?.workflows ?? [] : [];
+
     return NextResponse.json({
       ok: Boolean(health?.ok),
       health,
