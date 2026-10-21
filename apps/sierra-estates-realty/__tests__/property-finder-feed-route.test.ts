@@ -126,7 +126,7 @@ describe('P0-D: the pre-generated XML fallback can never shadow the publish gate
   it('exports broker-attributed for-sale rows and never mislabels rent as for-sale', async () => {
     pages.push({
       data: [
-        row(),                                                    // exported (sale)
+        row(),                                                    // exported (sale, 11.5M)
         row({ id: 'r-2', code: 'SE-RS-001', deal_type: 'resale' }), // exported (resale is for-sale)
         row({ id: 'r-3', code: 'SE-RT-001', deal_type: 'rent' }),   // NEVER exported
         row({ id: 'r-4', code: 'SE-OW-001', source_channel: 'owner_direct' }), // owner channel: skipped
@@ -143,6 +143,26 @@ describe('P0-D: the pre-generated XML fallback can never shadow the publish gate
     expect(xml).not.toContain('SE-RT-001');
     expect(xml).not.toContain('SE-OW-001');
     expect(xml).not.toContain('SE-AM-001');
+  });
+
+  it('rent-scale prices are never advertised as for-sale (2M EGP plausibility floor)', async () => {
+    pages.push({
+      data: [
+        row({ id: 'r-f1', code: 'SE-FLOOR-OK', price: 2_500_000 }),  // exported (above floor)
+        row({ id: 'r-f2', code: 'SE-FLOOR-150K', price: 150_000 }),   // rent-scale: NEVER exported
+        row({ id: 'r-f3', code: 'SE-FLOOR-190K', price: 190_000 }),   // rent-scale: NEVER exported
+        row({ id: 'r-f4', code: 'SE-FLOOR-1M', price: 1_000_000 }),   // borderline: NEVER exported
+      ],
+      error: null,
+    });
+
+    const xml = await (await GET()).text();
+
+    expect((xml.match(/<property>/g) || []).length).toBe(1);
+    expect(xml).toContain('SE-FLOOR-OK');
+    expect(xml).not.toContain('SE-FLOOR-150K');
+    expect(xml).not.toContain('SE-FLOOR-190K');
+    expect(xml).not.toContain('SE-FLOOR-1M');
   });
 
   it('units missing required fields are skipped, not invented', async () => {

@@ -88,7 +88,10 @@ async function main() {
     const p = Number(r.price) || 0;
     if (stubSet.has(p)) defects.stubPriced.push(r);
     else if (p === 0) defects.unpriced.push(r);
-    else if (String(r.deal_type || '').toLowerCase() === 'sale' && p > 0 && p < 100_000) {
+    else if (['sale', 'resale'].includes(String(r.deal_type || '').toLowerCase()) && p > 0 && p < 100_000) {
+      // 2026-10-21: 'resale' joined the classification — the tool's first
+      // run quarantined 1,051 'sale' rows but missed 82 identically
+      // rent-scale 'resale' rows (same ingest mislabelling, different tag).
       defects.suspiciousSale.push(r);
     }
   }
