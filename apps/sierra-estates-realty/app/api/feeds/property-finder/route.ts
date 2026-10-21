@@ -151,7 +151,16 @@ async function loadUnits(): Promise<FeedUnit[]> {
       if (page.length < PAGE) break;
     }
     const units = all.filter((u) => Number(u.price) > 0);
-    return units;
+    // SALE-PRICE PLAUSIBILITY FLOOR (2026-10-21): the priced sale/resale
+    // population is bimodal — 1,206 rows under 1M EGP (the annual-rent scale
+    // of these same compounds, mis-labelled as sale by ingest) vs 432 rows
+    // at 5M+ EGP (real Greater Cairo master-community sale prices). Anything
+    // below 2M EGP advertised as FOR SALE would misrepresent the listing on
+    // a public portal (anti-fabrication §21); borderline rows stay private
+    // until a human re-verifies them. Operators may lower this floor after
+    // re-verification — it is an export guard, never a data mutation.
+    const SALE_PRICE_FLOOR_EGP = 2_000_000;
+    return units.filter((u) => Number(u.price) >= SALE_PRICE_FLOOR_EGP);
   } catch (err) {
     logger.warn('[feeds/property-finder] Supabase query failed:', err);
   }
