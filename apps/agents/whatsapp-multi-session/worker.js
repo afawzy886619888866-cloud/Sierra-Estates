@@ -129,12 +129,11 @@ async function initSession(sessionId) {
   try {
     waAutomate = require('@open-wa/wa-automate');
   } catch (err) {
-    console.error(`\n[ERROR] @open-wa/wa-automate is not installed in ${__dirname}`);
-    console.error(`Run 'npm install' inside apps/agents/whatsapp-multi-session\n`);
+    console.error(`\n[ERROR] Failed to load @open-wa/wa-automate in ${__dirname}:`, err.message);
     const s = sessions.get(sessionId);
     if (s) {
       s.status = 'ERROR';
-      s.error = '@open-wa/wa-automate missing';
+      s.error = `@open-wa/wa-automate load failure: ${err.message}`;
     }
     return;
   }
@@ -144,6 +143,15 @@ async function initSession(sessionId) {
   s.error = null;
 
   console.log(`[${sessionId}] Starting WhatsApp client instance...`);
+
+    const possibleChromePaths = [
+      process.env.CHROME_BIN,
+      process.env.PUPPETEER_EXECUTABLE_PATH,
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+    ].filter(Boolean);
+    const resolvedChrome = possibleChromePaths.find(p => fs.existsSync(p));
 
   try {
     const client = await waAutomate.create({
@@ -157,6 +165,7 @@ async function initSession(sessionId) {
       headless: process.env.HEADLESS !== 'false',
       sessionDataPath: AUTH_BASE_DIR,
       useChrome: true,
+      ...(resolvedChrome ? { executablePath: resolvedChrome } : {}),
       killProcessOnBrowserClose: false,
       popup: false,
       logConsole: false,
