@@ -79,7 +79,7 @@ jobs:
 
           # Production without override: require the latest ci.yml run on
           # this commit (or this ref) to be completed successfully.
-          CONCLUSION=$(gh run list --workflow=ci.yml --branch "${{ github.ref_name }}" --limit 1 --json status,conclusion,headSha --jq '.[0] | "\(.status) \(.conclusion) \(.headSha)"' || echo "unknown unknown unknown")
+          CONCLUSION=$(gh run list --workflow=ci.yml --repo "${{ github.repository }}" --branch "${{ github.ref_name }}" --limit 1 --json status,conclusion,headSha --jq '.[0] | "\(.status) \(.conclusion) \(.headSha)"' || echo "unknown unknown unknown")
           echo "Latest ci.yml run: $CONCLUSION"
           STATUS=$(echo "$CONCLUSION" | cut -d' ' -f1)
           RESULT=$(echo "$CONCLUSION" | cut -d' ' -f2)
@@ -92,6 +92,7 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
   deploy:
     name: Vercel deploy · ${{ matrix.role }}
