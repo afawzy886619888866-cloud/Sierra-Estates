@@ -154,11 +154,11 @@ async function initSession(sessionId) {
       cacheEnabled: false,
       blockCrashLogs: true,
       disableSpins: true,
-      headless: true,
+      headless: process.env.HEADLESS === 'true',
       sessionDataPath: AUTH_BASE_DIR,
       useChrome: true,
       killProcessOnBrowserClose: false,
-      popup: false,
+      popup: true,
       logConsole: false,
       qrTimeout: 0,
       qrCallback: async (qrCode, asciiQR, urlCode) => {
@@ -325,12 +325,17 @@ app.get('/api/sessions', (req, res) => {
   res.json(list);
 });
 
+function resolveSession(id) {
+  if (sessions.has(id)) return sessions.get(id);
+  return sessions.get('line-1') || Array.from(sessions.values())[0];
+}
+
 /**
  * GET /api/sessions/:sessionId — compatible with GatewayClient.status()
  */
 app.get('/api/sessions/:sessionId', (req, res) => {
-  const s = sessions.get(req.params.sessionId);
-  if (!s) return res.status(404).json({ error: `Session ${req.params.sessionId} not found` });
+  const s = resolveSession(req.params.sessionId);
+  if (!s) return res.status(404).json({ error: `Session not found` });
   res.json({
     id: s.id,
     name: s.name,
@@ -349,8 +354,8 @@ app.get('/api/sessions/:sessionId', (req, res) => {
  * POST /api/sessions/:sessionId/messages/send-text — GatewayClient sendText contract
  */
 app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
-  const s = sessions.get(req.params.sessionId);
-  if (!s) return res.status(404).json({ error: `Session ${req.params.sessionId} not found` });
+  const s = resolveSession(req.params.sessionId);
+  if (!s) return res.status(404).json({ error: `Session not found` });
   if (s.status !== 'READY' || !s.client) {
     return res.status(503).json({ error: `Session ${s.id} is not ready (status: ${s.status})` });
   }
@@ -879,7 +884,7 @@ function renderDashboardHtml() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Server Boot & Shutdown
 // ─────────────────────────────────────────────────────────────────────────────
-const server = app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, () => {
   console.log(`\n═══════════════════════════════════════════════════════════════`);
   console.log(`  Sierra Estates — 8-Line WhatsApp Gateway Active`);
   console.log(`  Dashboard URL: http://localhost:${PORT}`);
