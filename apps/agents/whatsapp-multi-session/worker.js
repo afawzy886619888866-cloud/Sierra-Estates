@@ -160,16 +160,7 @@ async function initSession(sessionId) {
       killProcessOnBrowserClose: false,
       popup: false,
       logConsole: false,
-      chromiumArgs: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-extensions'
-      ],
+      qrTimeout: 0,
       qrCallback: async (qrCode, asciiQR, urlCode) => {
         s.status = 'AWAITING_QR';
         s.qrAscii = asciiQR;
