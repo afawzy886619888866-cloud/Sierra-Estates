@@ -49,6 +49,7 @@ concurrency:
 env:
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+  TARGET_ENV: ${{ inputs.target_env || 'preview' }}
 
 jobs:
   gate:
@@ -141,6 +142,9 @@ jobs:
 
       - name: Deploy ${{ matrix.role }} project (${{ matrix.domain }})
         working-directory: apps/sierra-estates-realty
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
+          VERCEL_PROJECT_ID: ${{ matrix.projectId }}
         run: |
           set -euo pipefail
           VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_TOKEN }}"
