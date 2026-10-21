@@ -120,9 +120,16 @@ export class PFIntegrationService {
         baths = parseInt(listing.bathrooms as string) || 0;
       }
 
+      const locationName = listing.location?.name
+        || (listing.location?.path ? listing.location.path.split('/').pop()?.trim() : '')
+        || '';
+      const compoundName = locationName
+        || (listing.title?.en ? listing.title.en.split('-')[0]?.trim() : '')
+        || 'General';
+
       const payload: Partial<Unit> = {
-        title: listing.title?.en || '',
-        description: listing.description?.en || '',
+        title: listing.title?.en || listing.title?.ar || 'Property Finder Listing',
+        description: listing.description?.en || listing.description?.ar || '',
         price: priceVal,
         propertyType: listing.type as any,
         // FIX (Inventory OS v2): a rent OFFER is not a rented unit. The old
@@ -135,6 +142,8 @@ export class PFIntegrationService {
         bedrooms: beds,
         bathrooms: baths,
         area: listing.size || 0,
+        compound: compoundName,
+        location: locationName || undefined,
         pfReferenceNumber: ref,
         images: listing.media?.images?.map(i => i.original.url) || [],
       };
@@ -144,6 +153,8 @@ export class PFIntegrationService {
       if (existing.length === 0) {
         const insertPayload = {
           ...columnPayload,
+          compound: (columnPayload.compound as string) || compoundName,
+          title: (columnPayload.title as string) || payload.title || 'Property Finder Listing',
           publishStatus: 'REVIEW_REQUIRED',
         };
         const newUnit = await insertRecord<{ id: string }>(COLLECTIONS.units, insertPayload);
@@ -158,7 +169,7 @@ export class PFIntegrationService {
         });
       } else {
         // ANTI-OVERWRITE: Do not touch human verification fields on automated update
-        const { publishStatus, verifiedAt, verifiedBy, ...updatePayload } = columnPayload;
+        const { publishStatus: _publishStatus, verifiedAt: _verifiedAt, verifiedBy: _verifiedBy, ...updatePayload } = columnPayload;
         // LIFECYCLE GUARD: If transitioning from stored status to incoming status is illegal
         // (e.g. unit was archived or sold), retain stored status so the database trigger is not violated.
         const storedStatus = existing[0]?.status;

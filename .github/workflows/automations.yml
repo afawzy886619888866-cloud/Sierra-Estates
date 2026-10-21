@@ -35,6 +35,17 @@ on:
         required: false
         type: boolean
         default: false
+  schedule:
+    # Hourly whatsapp-dispatch
+    - cron: '10 * * * *'
+    # 3-hourly lead timers & SLA checks
+    - cron: '25 */3 * * *'
+    # Night window (02:10 UTC = 04:10 Cairo)
+    - cron: '10 2 * * *'
+    # Morning window (06:10 UTC = 08:10 Cairo)
+    - cron: '10 6 * * *'
+    # Daily sync leads (10:10 UTC = 12:10 Cairo)
+    - cron: '10 10 * * *'
   workflow_call:
     secrets:
       CRON_SECRET:
