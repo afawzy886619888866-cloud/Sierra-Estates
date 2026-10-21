@@ -60,9 +60,21 @@ async function main() {
   console.log(`quarantine-stub-priced-listings: mode=${APPLY ? 'APPLY (writes!)' : 'DRY RUN (report only)'}`);
 
   // Candidate set: rows currently visible on the public surface.
-  const rows = await rest(
-    'listings?select=id,code,price,deal_type,publish_status,status,status_history&status=eq.active&publish_status=eq.PUBLISHABLE&limit=5000',
-  );
+  // PAGINATION (2026-10-21): the project's PostgREST max-rows (default 1000)
+  // silently caps any single request, so `limit=5000` alone only ever scanned
+  // the first ~1000 rows (verified live: dry-run classified 77 defects while
+  // production-smoke's paginated scan found ~992). Page through with offset
+  // until exhausted — same fix /api/inventory applied on 2026-10-11.
+  const PAGE = 1000;
+  const HARD_CAP = 20_000;
+  const rows = [];
+  for (let offset = 0; offset < HARD_CAP; offset += PAGE) {
+    const page = await rest(
+      `listings?select=id,code,price,deal_type,publish_status,status,status_history&status=eq.active&publish_status=eq.PUBLISHABLE&order=id.asc&limit=${PAGE}&offset=${offset}`,
+    );
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
   console.log(`publishable+active rows scanned: ${rows.length}`);
 
   const defects = {
