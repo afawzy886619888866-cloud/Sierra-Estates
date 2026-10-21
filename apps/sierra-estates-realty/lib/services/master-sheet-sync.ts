@@ -385,6 +385,11 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
         logger.warn(
           `[MasterSheetSync] Deferred illegal transition ${stored} → ${item.sheetStatus} for ${item.docId} (parked in raw_data.sheet_status)`
         );
+      } else if (stored != null && normalizeStatus(stored) === normalizeStatus(item.sheetStatus)) {
+        // If stored and sheet normalize to the same canonical status (e.g. active vs available),
+        // retain stored status so the database trigger does not see a conflicting change.
+        finalStatus = stored as PropertyStatus;
+        item.columns.status = stored;
       } else {
         item.columns.status = item.sheetStatus;
       }
