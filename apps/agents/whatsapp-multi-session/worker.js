@@ -157,8 +157,6 @@ async function initSession(sessionId) {
     const client = await waAutomate.create({
       sessionId,
       multiDevice: true,
-      authTimeout: 0,
-      qrTimeout: 0,
       cacheEnabled: false,
       blockCrashLogs: true,
       disableSpins: true,
@@ -169,8 +167,14 @@ async function initSession(sessionId) {
       killProcessOnBrowserClose: false,
       popup: false,
       logConsole: false,
-      authTimeout: 120,
-      qrTimeout: 0,
+      authTimeout: 600,
+      qrTimeout: 600,
+      chromiumArgs: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu'
+      ],
       qrCallback: async (qrCode, asciiQR, urlCode) => {
         s.status = 'AWAITING_QR';
         s.qrAscii = asciiQR;
