@@ -178,10 +178,11 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
           showToast(isAr ? 'تم إرسال الرسالة التجريبية بنجاح!' : 'Test message sent successfully!');
           setTestBoxOpen(null);
         } else if (action === 'simulate_broker') {
+          const comp = json.result?.unit?.compound;
           showToast(
             isAr
-              ? `تم التقاط وحدة وسيط جديدة: ${json.result?.unit?.compound || 'القاهرة الجديدة'}`
-              : `Broker unit simulated: ${json.result?.unit?.compound || 'New Cairo'}`
+              ? (comp ? `تم التقاط وحدة وسيط جديدة: ${comp}` : 'تمت محاكاة رسالة الوسيط بنجاح')
+              : (comp ? `Broker unit simulated: ${comp}` : 'Broker message simulated successfully')
           );
         } else {
           showToast(isAr ? 'تم تنفيذ العملية بنجاح' : 'Action completed');
