@@ -15,7 +15,7 @@ import {
   PublishGateResult,
   PublishGateUnit,
 } from './publish-gate';
-import { canTransition } from './inventory/lifecycle';
+import { canTransition, normalizeListingStatus } from './inventory/lifecycle';
 import { EgyptListingValidator } from '../property-finder/validation';
 
 export interface PFLeadSyncSummary {
@@ -171,10 +171,16 @@ export class PFIntegrationService {
         // ANTI-OVERWRITE: Do not touch human verification fields on automated update
         const { publishStatus: _publishStatus, verifiedAt: _verifiedAt, verifiedBy: _verifiedBy, ...updatePayload } = columnPayload;
         // LIFECYCLE GUARD: If transitioning from stored status to incoming status is illegal
-        // (e.g. unit was archived or sold), retain stored status so the database trigger is not violated.
+        // (e.g. unit was archived or sold), or if both normalize to the same state (e.g. active vs available),
+        // retain stored status so the database trigger is not violated.
         const storedStatus = existing[0]?.status;
-        if (storedStatus && updatePayload.status && !canTransition(storedStatus, updatePayload.status as string)) {
-          delete (updatePayload as any).status;
+        if (storedStatus && updatePayload.status) {
+          if (
+            normalizeListingStatus(storedStatus) === normalizeListingStatus(updatePayload.status as string) ||
+            !canTransition(storedStatus, updatePayload.status as string)
+          ) {
+            delete (updatePayload as any).status;
+          }
         }
         await updateRecord(COLLECTIONS.units, existing[0].id, updatePayload);
         updated++;
