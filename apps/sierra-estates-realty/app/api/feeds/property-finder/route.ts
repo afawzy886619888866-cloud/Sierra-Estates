@@ -82,10 +82,12 @@ type ListingRow = {
 /** Explicit-evidence broker attribution, mirroring /api/inventory's
  * deriveSegment(): source_channel broker/agent/portal markers count as
  * broker-published inventory; owner channels and ambiguous channels do
- * not. The previous implementation filtered an `ownerType` field that no
- * canonical row ever carried, which (together with a status vocabulary
- * mismatch) zeroed the query — the defect the stale-XML branch masked. */
-const BROKER_CHANNEL_RE = /(broker|agent|property_finder|dubizzle)/;
+ * not. Hyphen-tolerant ('property-finder' and 'property_finder' are the
+ * same channel with different spellings in the canonical data). The
+ * previous implementation filtered an `ownerType` field that no canonical
+ * row ever carried, which (together with a status vocabulary mismatch)
+ * zeroed the query — the defect the stale-XML branch masked. */
+const BROKER_CHANNEL_RE = /(broker|agent|property[-_]finder|dubizzle)/;
 
 function isBrokerListed(row: ListingRow): boolean {
   return BROKER_CHANNEL_RE.test(String(row.source_channel || '').toLowerCase());
@@ -100,6 +102,17 @@ function isForSale(row: ListingRow): boolean {
   return dt === 'sale' || dt === 'resale';
 }
 
+/** SALE-PRICE PLAUSIBILITY FLOOR (2026-10-21): the priced sale/resale
+ * population is bimodal — 1,206 rows under 1M EGP (the annual-rent scale
+ * of these same compounds, mis-labelled as sale by ingest) vs 432 rows
+ * at 5M+ EGP (real Greater Cairo master-community sale prices). Anything
+ * below 2M EGP advertised as FOR SALE would misrepresent the listing on
+ * a public portal (anti-fabrication §21); borderline rows stay private
+ * until a human re-verifies them. Operators may lower this floor after
+ * re-verification — it is an export guard, never a data mutation.
+ * Enforced BOTH in-query (.gte) and in-memory (defense in depth). */
+const SALE_PRICE_FLOOR_EGP = 2_000_000;
+
 async function loadUnits(): Promise<FeedUnit[]> {
   // Canonical Supabase `listings` table — PUBLISH GATED (Phase D): only
   // verified PUBLISHABLE rows may be advertised on an external portal,
@@ -109,13 +122,20 @@ async function loadUnits(): Promise<FeedUnit[]> {
   // InventoryQueryService call asked for 'available', a value no row ever
   // carries, so the canonical query ALWAYS returned zero rows and the feed
   // was permanently empty (masked by the removed pre-generated-XML branch).
+  //
+  // FILTER PLACEMENT (2026-10-21): deal_type / price-floor / broker-channel
+  // predicates are pushed INTO the query — the first cut scanned the whole
+  // table client-side (HARD_CAP rows) and the newest-rows window could
+  // entirely miss the qualifying population (verified live: the newest
+  // 5,000 rows held 12 priced-for-sale broker rows, none §21-complete,
+  // while the 16 exportable units sat in the older 6,532 rows).
   try {
     const supabase = getSupabase();
     // PAGINATION: PostgREST max-rows silently caps single requests at 1000
     // rows — page through with .range() (same fix /api/inventory applied
     // 2026-10-11).
     const PAGE = 1000;
-    const HARD_CAP = 5000;
+    const HARD_CAP = 20_000;
     const all: FeedUnit[] = [];
     for (let from = 0; from < HARD_CAP; from += PAGE) {
       const { data, error } = await supabase
@@ -126,13 +146,22 @@ async function loadUnits(): Promise<FeedUnit[]> {
         .eq('status', 'active')
         // PUBLISH GATE (Phase D): verified rows only leave the database.
         .eq('publish_status', 'PUBLISHABLE')
+        // For-sale membership in-query: the XML renders "for sale".
+        .in('deal_type', ['sale', 'resale'])
+        // Sale-price plausibility floor in-query (see SALE_PRICE_FLOOR_EGP).
+        .gte('price', SALE_PRICE_FLOOR_EGP)
+        // Broker attribution in-query: explicit channel evidence only
+        // (hyphen-tolerant property[-_]finder spelling).
+        .or(
+          'source_channel.ilike.*broker*,source_channel.ilike.*agent*,source_channel.ilike.*property-finder*,source_channel.ilike.*property_finder*,source_channel.ilike.*dubizzle*',
+        )
         .order('updated_at', { ascending: false })
         .range(from, from + PAGE - 1);
       if (error) throw new Error(error.message);
       const page = (data ?? []) as ListingRow[];
       for (const row of page) {
-        if (!isBrokerListed(row)) continue; // explicit broker evidence only
-        if (!isForSale(row)) continue; // rent rows are never for-sale exports
+        if (!isBrokerListed(row)) continue; // defense in depth (query filters)
+        if (!isForSale(row)) continue; // defense in depth (query filters)
         all.push({
           code: row.code || row.ref_id || row.id,
           id: row.id,
@@ -150,17 +179,10 @@ async function loadUnits(): Promise<FeedUnit[]> {
       }
       if (page.length < PAGE) break;
     }
-    const units = all.filter((u) => Number(u.price) > 0);
-    // SALE-PRICE PLAUSIBILITY FLOOR (2026-10-21): the priced sale/resale
-    // population is bimodal — 1,206 rows under 1M EGP (the annual-rent scale
-    // of these same compounds, mis-labelled as sale by ingest) vs 432 rows
-    // at 5M+ EGP (real Greater Cairo master-community sale prices). Anything
-    // below 2M EGP advertised as FOR SALE would misrepresent the listing on
-    // a public portal (anti-fabrication §21); borderline rows stay private
-    // until a human re-verifies them. Operators may lower this floor after
-    // re-verification — it is an export guard, never a data mutation.
-    const SALE_PRICE_FLOOR_EGP = 2_000_000;
-    return units.filter((u) => Number(u.price) >= SALE_PRICE_FLOOR_EGP);
+    const units = all
+      .filter((u) => Number(u.price) > 0)
+      .filter((u) => Number(u.price) >= SALE_PRICE_FLOOR_EGP);
+    return units;
   } catch (err) {
     logger.warn('[feeds/property-finder] Supabase query failed:', err);
   }

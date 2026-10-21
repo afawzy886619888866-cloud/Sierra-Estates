@@ -20,12 +20,18 @@
 type Chain = {
   select: jest.Mock;
   eq: jest.Mock;
+  in: jest.Mock;
+  gte: jest.Mock;
+  or: jest.Mock;
   order: jest.Mock;
   range: jest.Mock;
 };
 
 const pages: Array<{ data: unknown[] | null; error: { message: string } | null }> = [];
 const eqCalls: Array<[string, unknown]> = [];
+const inCalls: Array<[string, unknown[]]> = [];
+const gteCalls: Array<[string, unknown]> = [];
+const orCalls: Array<string> = [];
 const rangeCalls: Array<[number, number]> = [];
 
 function makeChain(): Chain {
@@ -33,6 +39,18 @@ function makeChain(): Chain {
   chain.select = jest.fn().mockReturnThis();
   chain.eq = jest.fn((col: string, val: unknown) => {
     eqCalls.push([col, val]);
+    return chain;
+  });
+  chain.in = jest.fn((col: string, vals: unknown[]) => {
+    inCalls.push([col, vals]);
+    return chain;
+  });
+  chain.gte = jest.fn((col: string, val: unknown) => {
+    gteCalls.push([col, val]);
+    return chain;
+  });
+  chain.or = jest.fn((expr: string) => {
+    orCalls.push(expr);
     return chain;
   });
   chain.order = jest.fn().mockReturnThis();
@@ -121,6 +139,10 @@ describe('P0-D: the pre-generated XML fallback can never shadow the publish gate
     expect(eqCalls).toContainEqual(['publish_status', 'PUBLISHABLE']);
     // regression pin: the old vocabulary that permanently zeroed the feed
     expect(eqCalls).not.toContainEqual(['status', 'available']);
+    // for-sale membership + plausibility floor are enforced in-query
+    expect(inCalls).toContainEqual(['deal_type', ['sale', 'resale']]);
+    expect(gteCalls).toContainEqual(['price', 2_000_000]);
+    expect(orCalls[0] || '').toContain('source_channel');
   });
 
   it('exports broker-attributed for-sale rows and never mislabels rent as for-sale', async () => {
@@ -131,15 +153,17 @@ describe('P0-D: the pre-generated XML fallback can never shadow the publish gate
         row({ id: 'r-3', code: 'SE-RT-001', deal_type: 'rent' }),   // NEVER exported
         row({ id: 'r-4', code: 'SE-OW-001', source_channel: 'owner_direct' }), // owner channel: skipped
         row({ id: 'r-5', code: 'SE-AM-001', source_channel: '' }),  // ambiguous: skipped
+        row({ id: 'r-6', code: 'SE-PF-001', source_channel: 'property-finder' }), // hyphen spelling: broker
       ],
       error: null,
     });
 
     const xml = await (await GET()).text();
 
-    expect((xml.match(/<property>/g) || []).length).toBe(2);
+    expect((xml.match(/<property>/g) || []).length).toBe(3);
     expect(xml).toContain('SE-SL-HYD-0142');
     expect(xml).toContain('SE-RS-001');
+    expect(xml).toContain('SE-PF-001');
     expect(xml).not.toContain('SE-RT-001');
     expect(xml).not.toContain('SE-OW-001');
     expect(xml).not.toContain('SE-AM-001');
