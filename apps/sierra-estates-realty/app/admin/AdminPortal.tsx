@@ -58,6 +58,7 @@ import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import CommandPalette, { CommandItem } from '@/components/admin/CommandPalette';
 import SierraMasterOrchestrator from '@/components/admin/SierraMasterOrchestrator';
+import { HyouzPageTransition, AnimatePresence, HyouzBeacon } from '@/components/admin/HyouzMotion';
 import { LANG, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn, type NavItem } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
@@ -2727,7 +2728,10 @@ function AdminApp() {
               {theme==='dark'?<Ic.Sun/>:<Ic.Moon/>}
             </button>
             <a href="/" target="_blank" rel="noopener noreferrer" className="topbar-pill" style={{textDecoration:'none'}} title={isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal'}>↗ {T('livesite')}</a>
-            <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
+            <div className="topbar-pill on" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <HyouzBeacon color="#10B981" size={7} />
+              <span>3.0 AI</span>
+            </div>
             {/* AI Data Copilot — staff only (queries admin-only APIs) */}
             {!isPartner && (
             <button
@@ -2880,7 +2884,11 @@ function AdminApp() {
             );
           })()}
 
-          {renderPage()}
+          <AnimatePresence mode="wait">
+            <HyouzPageTransition transitionKey={tab}>
+              {renderPage()}
+            </HyouzPageTransition>
+          </AnimatePresence>
         </div>
         {!isPartner && (
         <AdminCopilotDrawer
