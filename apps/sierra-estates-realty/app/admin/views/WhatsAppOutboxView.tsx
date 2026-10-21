@@ -17,6 +17,7 @@
  */
 
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { HyouzCard, HyouzCounter, HyouzBeacon, HyouzMagneticButton } from '@/components/admin/HyouzMotion';
 
 interface GatewaySession {
   id: string;
@@ -282,12 +283,16 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
                   background: gw?.reachable ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
                   color: gw?.reachable ? '#34d399' : '#f87171',
                   border: `1px solid ${gw?.reachable ? 'rgba(52, 211, 153, 0.4)' : 'rgba(248, 113, 113, 0.4)'}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
+                <HyouzBeacon color={gw?.reachable ? '#34d399' : '#f87171'} size={7} />
                 {gw?.reachable
                   ? isAr
-                    ? `${gw.activeSessions || 0} من 8 خطوط جاهزة`
-                    : `${gw.activeSessions || 0} / 8 LINES ONLINE`
+                    ? <><HyouzCounter value={gw.activeSessions || 0} /> من 8 خطوط جاهزة</>
+                    : <><HyouzCounter value={gw.activeSessions || 0} /> / 8 LINES ONLINE</>
                   : isAr
                   ? 'البوابة متوقفة'
                   : 'GATEWAY OFFLINE'}
@@ -303,7 +308,7 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <button
+          <HyouzMagneticButton
             onClick={() => act('simulate_broker')}
             disabled={busy || simulating}
             style={{
@@ -311,20 +316,17 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
               fontSize: 11.5,
               fontWeight: 700,
               borderRadius: 10,
-              cursor: 'pointer',
               border: '1px solid rgba(212, 175, 55, 0.4)',
               background: 'rgba(212, 175, 55, 0.12)',
               color: '#f3e5ab',
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              transition: 'all 0.2s',
             }}
-            title={isAr ? 'محاكاة رسالة وسيط في مجموعة التجمع' : 'Simulate incoming broker message'}
           >
             <span>⚡</span>
             <span>{isAr ? 'محاكاة رسالة وسيط' : 'Simulate Broker Drop'}</span>
-          </button>
+          </HyouzMagneticButton>
 
           <a
             href="http://127.0.0.1:2785/map"
@@ -348,7 +350,7 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
             <span>{isAr ? 'محطة الخريطة الحية' : 'Live Map Station'}</span>
           </a>
 
-          <button
+          <HyouzMagneticButton
             onClick={() => act('drain')}
             disabled={busy}
             style={{
@@ -356,7 +358,6 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
               fontSize: 11.5,
               fontWeight: 800,
               borderRadius: 10,
-              cursor: 'pointer',
               border: '1px solid #10b981',
               background: 'rgba(16, 185, 129, 0.18)',
               color: '#34d399',
@@ -367,7 +368,7 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
           >
             <span>▶</span>
             <span>{isAr ? 'تصفية الصندوق الآن' : 'Drain Outbox Now'}</span>
-          </button>
+          </HyouzMagneticButton>
 
           <button
             onClick={load}
@@ -431,8 +432,9 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
             }
 
             return (
-              <div
+              <HyouzCard
                 key={session.id}
+                glowColor={isReady ? 'rgba(16, 185, 129, 0.16)' : 'rgba(212, 175, 55, 0.14)'}
                 style={{
                   background: 'var(--bg-e, #111827)',
                   border: isReady ? '1px solid rgba(16, 185, 129, 0.3)' : isScanQr ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid var(--bd, #1f293d)',
@@ -466,8 +468,12 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
                       background: badgeBg,
                       color: badgeColor,
                       letterSpacing: 0.5,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
                     }}
                   >
+                    <HyouzBeacon color={badgeColor} size={6} glow={isReady} />
                     {badgeText}
                   </span>
                 </div>
@@ -507,7 +513,7 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
                           display: 'inline-block',
                         }}
                       >
-                        {session.totalSent || 0} {isAr ? 'رسالة مُرسلة' : 'messages sent'}
+                        <HyouzCounter value={session.totalSent || 0} /> {isAr ? 'رسالة مُرسلة' : 'messages sent'}
                       </div>
                     </div>
                   ) : isScanQr ? (
@@ -687,7 +693,7 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
                     </button>
                   </div>
                 )}
-              </div>
+              </HyouzCard>
             );
           })}
         </div>

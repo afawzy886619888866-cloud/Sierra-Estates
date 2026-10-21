@@ -16,6 +16,7 @@
  */
 
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { HyouzCard, HyouzCounter, HyouzBeacon, HyouzMagneticButton } from '@/components/admin/HyouzMotion';
 
 type RunEntry = { at: string; exit: string; ms: number; trigger: string; summary: string };
 
@@ -337,8 +338,12 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
                   background: health?.ok ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
                   color: health?.ok ? '#34d399' : '#fbbf24',
                   border: `1px solid ${health?.ok ? 'rgba(52, 211, 153, 0.4)' : 'rgba(251, 191, 36, 0.4)'}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
+                <HyouzBeacon color={health?.ok ? '#34d399' : '#fbbf24'} size={7} />
                 {health?.ok ? (isAr ? 'المتحكم متصل' : 'RUNNER ONLINE') : isAr ? 'المتحكم خامل' : 'RUNNER IDLE'}
               </span>
             </div>
@@ -348,7 +353,7 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
 
         {/* Quick Operations Button */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
+          <HyouzMagneticButton
             onClick={() => runNow('whatsapp-dispatch')}
             disabled={busy === 'whatsapp-dispatch'}
             style={{
@@ -356,7 +361,6 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
               fontSize: 12,
               fontWeight: 800,
               borderRadius: 10,
-              cursor: 'pointer',
               border: 'none',
               background: 'linear-gradient(135deg, #d4af37, #997a15)',
               color: '#000',
@@ -368,7 +372,7 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
           >
             <span>🚀</span>
             <span>{busy === 'whatsapp-dispatch' ? t.running : t.quickDispatch}</span>
-          </button>
+          </HyouzMagneticButton>
 
           <button
             onClick={load}
@@ -423,8 +427,9 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
           const isBusyThis = busy === w.slug;
 
           return (
-            <div
+            <HyouzCard
               key={w.slug}
+              glowColor="rgba(212, 175, 55, 0.14)"
               style={{
                 background: 'var(--bg-e, #111827)',
                 border: '1px solid var(--bd, #1f293d)',
@@ -456,8 +461,12 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
                       borderRadius: 6,
                       background: w.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
                       color: w.status === 'active' ? '#34d399' : '#fbbf24',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
                     }}
                   >
+                    <HyouzBeacon color={w.status === 'active' ? '#34d399' : '#fbbf24'} size={6} glow={w.status === 'active'} />
                     {w.status}
                   </span>
                 </div>
@@ -481,7 +490,7 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
                 }}
               >
                 <div>
-                  {t.runs}: <b style={{ color: '#f8fafc' }}>{w.runs ?? 0}</b>
+                  {t.runs}: <b style={{ color: '#f8fafc' }}><HyouzCounter value={w.runs ?? 0} /></b>
                 </div>
                 <div>
                   {t.rate}: <b style={{ color: '#34d399' }}>{w.success_rate != null ? `${w.success_rate}%` : '100%'}</b>
@@ -565,7 +574,7 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
                   ))}
                 </div>
               )}
-            </div>
+            </HyouzCard>
           );
         })}
       </div>

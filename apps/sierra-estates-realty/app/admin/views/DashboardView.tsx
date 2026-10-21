@@ -2,6 +2,7 @@
 /* cspell:disable */
 
 import React, { useState, useMemo } from 'react';
+import { HyouzCard, HyouzBeacon, HyouzCounter } from '@/components/admin/HyouzMotion';
 import DataPipelineTelemetryCard from '@/components/admin/DataPipelineTelemetryCard';
 import DatabaseHealthCard from '@/components/admin/DatabaseHealthCard';
 import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossGuardModal';
@@ -455,15 +456,16 @@ export default function DashboardView({
           </div>
 
           <span
-            className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border ${
               liveHealth === 'healthy'
                 ? 'text-emerald-400 bg-emerald-950/60 border-emerald-800/80'
                 : 'text-amber-400 bg-amber-950/60 border-amber-800/80'
             }`}
             title={liveHealth === 'healthy' ? 'Live probe: /api/health — all subsystems operational' : 'Live probe: /api/health returned a degraded response'}
           >
-            ● {isAr ? 'النظام متصل ومتكامل' : 'Systems Operational'}
-            {liveHealth === 'healthy' && <span className="ml-1.5 text-[10px] font-mono text-emerald-500/80">LIVE ✓</span>}
+            <HyouzBeacon color={liveHealth === 'healthy' ? '#34d399' : '#fbbf24'} size={7} />
+            <span>{isAr ? 'النظام متصل ومتكامل' : 'Systems Operational'}</span>
+            {liveHealth === 'healthy' && <span className="ml-1 text-[10px] font-mono text-emerald-500/80">LIVE ✓</span>}
           </span>
         </div>
       </div>
@@ -508,8 +510,9 @@ export default function DashboardView({
             chip: 'bg-purple-950/90 border-purple-700/60 text-purple-300',
           },
         ].map((kpi) => (
-          <div
+          <HyouzCard
             key={kpi.label}
+            glowColor="rgba(212, 175, 55, 0.12)"
             className="clay-card p-5 group"
           >
             <div className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-linear-to-b ${kpi.rail} opacity-70 group-hover:opacity-100 transition-opacity`} />
@@ -522,7 +525,7 @@ export default function DashboardView({
               <span>●</span>
               <span>{kpi.growth}</span>
             </div>
-          </div>
+          </HyouzCard>
         ))}
       </div>
 
@@ -546,7 +549,7 @@ export default function DashboardView({
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 text-[11px] font-mono font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <HyouzBeacon color="#34d399" size={7} />
               5 Core Engines Operational
             </span>
           </div>
@@ -571,7 +574,7 @@ export default function DashboardView({
                     <Building2 className="w-5 h-5" />
                   </div>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 text-[10px] font-mono font-bold">
-                    12,088 Units
+                    <HyouzCounter value={12088} /> Units
                   </span>
                 </div>
                 <h4 className="text-base font-bold text-white font-mono group-hover:text-emerald-300 transition-colors">
@@ -585,11 +588,11 @@ export default function DashboardView({
                 <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
                   <div>
                     <span className="text-slate-500 block text-[9px] uppercase">Unique Units</span>
-                    <span className="text-white font-bold">8,486</span>
+                    <span className="text-white font-bold"><HyouzCounter value={8486} /></span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[9px] uppercase">Direct Rent</span>
-                    <span className="text-emerald-400 font-bold">1,831</span>
+                    <span className="text-emerald-400 font-bold"><HyouzCounter value={1831} /></span>
                   </div>
                 </div>
               </div>
