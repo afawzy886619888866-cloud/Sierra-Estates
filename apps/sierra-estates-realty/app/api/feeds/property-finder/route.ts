@@ -16,7 +16,7 @@
  * when nothing verified exists the honest answer is an empty <list>.
  */
 import { NextResponse } from 'next/server';
-import { InventoryQueryService } from '@/lib/services/inventory-query';
+import { getSupabase } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -42,7 +42,7 @@ type FeedUnit = {
   id?: string;
   compound?: string | null;
   location?: string;
-  city?: string;
+  city?: string | null;
   zone?: string;
   propertyType?: string | null;
   type?: string | null;
@@ -61,19 +61,97 @@ type FeedUnit = {
   segment?: string | null;
 };
 
+/** Raw `listings` row shape as selected by loadUnits (snake_case columns). */
+type ListingRow = {
+  id?: string;
+  code?: string | null;
+  ref_id?: string | null;
+  compound?: string | null;
+  location_area?: string | null;
+  city?: string | null;
+  property_type?: string | null;
+  deal_type?: string | null;
+  price?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area_sqm?: number | null;
+  images?: string[] | null;
+  source_channel?: string | null;
+};
+
+/** Explicit-evidence broker attribution, mirroring /api/inventory's
+ * deriveSegment(): source_channel broker/agent/portal markers count as
+ * broker-published inventory; owner channels and ambiguous channels do
+ * not. The previous implementation filtered an `ownerType` field that no
+ * canonical row ever carried, which (together with a status vocabulary
+ * mismatch) zeroed the query — the defect the stale-XML branch masked. */
+const BROKER_CHANNEL_RE = /(broker|agent|property_finder|dubizzle)/;
+
+function isBrokerListed(row: ListingRow): boolean {
+  return BROKER_CHANNEL_RE.test(String(row.source_channel || '').toLowerCase());
+}
+
+/** Sale-feed membership: the XML template renders "<type> for sale in …",
+ * so rent rows must NEVER be exported (mislabelling rent as for-sale would
+ * fabricate the listing's purpose). deal_type 'sale' (primary) and 'resale'
+ * (secondary) are both honest for-sale listings. */
+function isForSale(row: ListingRow): boolean {
+  const dt = String(row.deal_type || '').toLowerCase();
+  return dt === 'sale' || dt === 'resale';
+}
+
 async function loadUnits(): Promise<FeedUnit[]> {
-  // Canonical Supabase `units` collection (broker listings only) — PUBLISH
-  // GATED (Phase D): only verified PUBLISHABLE rows may be advertised on an
-  // external portal, enforced inside the query itself.
+  // Canonical Supabase `listings` table — PUBLISH GATED (Phase D): only
+  // verified PUBLISHABLE rows may be advertised on an external portal,
+  // enforced in the query itself. STATUS VOCABULARY (2026-10-21 fix): the
+  // canonical table carries status='active' (the public RLS policy's own
+  // vocabulary — "Public can view active listings"); the previous
+  // InventoryQueryService call asked for 'available', a value no row ever
+  // carries, so the canonical query ALWAYS returned zero rows and the feed
+  // was permanently empty (masked by the removed pre-generated-XML branch).
   try {
-    const rows = await InventoryQueryService.query({
-      status: 'available',
-      publishStatus: 'PUBLISHABLE',
-      ownerType: 'broker',
-      limit: 1000,
-    });
-    const units = (rows as unknown as FeedUnit[]).filter((u) => Number(u.price) > 0);
-    if (units.length > 0) return units;
+    const supabase = getSupabase();
+    // PAGINATION: PostgREST max-rows silently caps single requests at 1000
+    // rows — page through with .range() (same fix /api/inventory applied
+    // 2026-10-11).
+    const PAGE = 1000;
+    const HARD_CAP = 5000;
+    const all: FeedUnit[] = [];
+    for (let from = 0; from < HARD_CAP; from += PAGE) {
+      const { data, error } = await supabase
+        .from('listings')
+        .select(
+          'id, code, ref_id, compound, location_area, city, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, images, source_channel',
+        )
+        .eq('status', 'active')
+        // PUBLISH GATE (Phase D): verified rows only leave the database.
+        .eq('publish_status', 'PUBLISHABLE')
+        .order('updated_at', { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(error.message);
+      const page = (data ?? []) as ListingRow[];
+      for (const row of page) {
+        if (!isBrokerListed(row)) continue; // explicit broker evidence only
+        if (!isForSale(row)) continue; // rent rows are never for-sale exports
+        all.push({
+          code: row.code || row.ref_id || row.id,
+          id: row.id,
+          compound: row.compound,
+          location: row.location_area || undefined,
+          city: row.city,
+          propertyType: row.property_type,
+          bedrooms: row.bedrooms,
+          bath: row.bathrooms,
+          area: row.area_sqm,
+          price: Number(row.price) || 0,
+          images: Array.isArray(row.images) ? row.images : [],
+          dealType: row.deal_type,
+        });
+      }
+      if (page.length < PAGE) break;
+    }
+    const units = all.filter((u) => Number(u.price) > 0);
+    return units;
   } catch (err) {
     logger.warn('[feeds/property-finder] Supabase query failed:', err);
   }
