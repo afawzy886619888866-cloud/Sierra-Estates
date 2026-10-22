@@ -14,7 +14,7 @@ export async function GET() {
       memory: {
         eccEpisodes: eccStats.totalEpisodes,
         eccEntities: eccStats.totalEntities,
-        hotDeals: eccStats.hotDealsCount,
+        hotDeals: eccStats.totalHotDeals,
       },
       timestamp: new Date().toISOString(),
     });

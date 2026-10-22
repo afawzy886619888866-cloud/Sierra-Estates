@@ -1,4 +1,5 @@
 import pino from 'pino';
+import { deepseekReasoningEngine } from '@sierra-estates/deepseek-harness';
 import { WorkflowInstance, WorkflowStep, WorkflowResult } from './types.js';
 
 const logger = pino({ name: 'ai-workflow-runner' });
@@ -60,7 +61,53 @@ export class WorkflowRunner {
   }
 
   private async executeStep(step: WorkflowStep, context: Record<string, any>): Promise<Record<string, any>> {
-    // In production this delegates to agent SDK clients
+    if (step.assignedAgent === 'deepseek_reasoner') {
+      const task = step.inputs?.task || step.name;
+      const mode = step.inputs?.mode || 'reason';
+
+      if (mode === 'eval') {
+        const report = await deepseekReasoningEngine.runEvaluationSuite();
+        return {
+          agent: 'deepseek_reasoner',
+          stepId: step.id,
+          status: 'success',
+          mode: 'eval',
+          processedAt: new Date().toISOString(),
+          data: report,
+        };
+      }
+
+      if (mode === 'develop') {
+        const plan = await deepseekReasoningEngine.developProgram(task, {
+          ...context,
+          ...step.inputs,
+        });
+        return {
+          agent: 'deepseek_reasoner',
+          stepId: step.id,
+          status: 'success',
+          mode: 'develop',
+          processedAt: new Date().toISOString(),
+          data: plan,
+        };
+      }
+
+      const reasoningOutput = await deepseekReasoningEngine.reason(task, {
+        ...context,
+        ...step.inputs,
+      });
+
+      return {
+        agent: 'deepseek_reasoner',
+        stepId: step.id,
+        status: 'success',
+        mode: 'reason',
+        processedAt: new Date().toISOString(),
+        data: reasoningOutput,
+      };
+    }
+
+    // Default simulation/stub for standard worker agents
     return {
       agent: step.assignedAgent,
       stepId: step.id,

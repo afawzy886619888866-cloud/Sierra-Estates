@@ -7,7 +7,8 @@ export type AgentRole =
   | 'closer'
   | 'curator'
   | 'scribe'
-  | 'scraper';
+  | 'scraper'
+  | 'deepseek_reasoner';
 
 export type WorkflowStatus = 'pending' | 'running' | 'completed' | 'failed' | 'paused';
 
