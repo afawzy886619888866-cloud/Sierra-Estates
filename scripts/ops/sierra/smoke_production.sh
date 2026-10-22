@@ -73,7 +73,22 @@ PY
 )
   read -r n geo prc stub salecheap <<< "$dq"
   [ "${n:-0}" -gt 0 ] && [ "$geo" = "$n" ]  && ok "geocoded pins: $geo/$n (100%)"  || bad "geocoded pins: $geo/$n"
-  [ "${n:-0}" -gt 0 ] && [ "$prc" = "$n" ]  && ok "priced units:   $prc/$n (100%)"  || bad "priced units: $prc/$n"
+  # PRICED-UNITS POLICY (2026-10-22): the 100%-priced assertion predates the
+  # 2026-10-19 broker/owner sheet merges, which deliberately brought ~3.1k
+  # unpriced units onto the public map. The repo's own remediation tooling
+  # (scripts/ops/supabase/quarantine-stub-priced-listings.mjs) adjudicated
+  # that population: "unpriced: report only — NOT quarantined: 'Price on
+  # request' is honest presentation of absence", and /api/inventory renders
+  # exactly that label. This gate therefore enforces an anti-collapse floor
+  # (a price-pipeline regression must still fail loudly) instead of a state
+  # the product no longer represents. Zero-tolerance for FABRICATED prices
+  # is unchanged in the placeholder gate below.
+  PRICED_FLOOR_PCT=25
+  if [ "${n:-0}" -gt 0 ] && [ "${prc:-0}" -ge $(( n * PRICED_FLOOR_PCT / 100 )) ]; then
+    ok "priced units: $prc/$n ($(( 100 * prc / n ))% >= ${PRICED_FLOOR_PCT}% floor; unpriced render 'Price on request')"
+  else
+    bad "priced units: $prc/$n (below ${PRICED_FLOOR_PCT}% anti-collapse floor)"
+  fi
   if [ "${stub:-X}" = "0" ] && [ "${salecheap:-X}" = "0" ]; then
     ok "placeholder prices: 0 (no 999 rent / 5M stub / <100k sale)"
   else
