@@ -95,8 +95,34 @@ jobs:
       - name: Root vitest suite (workflows, contracts, hygiene, memory)
         run: pnpm test:root
 
-      - name: Build realty app
-        run: pnpm --filter sierra-estates-client-page build
+      - name: Build realty app (bounded retry — known next/font Google-fetch flake)
+        # 2026-10-22: next/font/google fetches font metadata from
+        # fonts.googleapis.com at build time; GitHub's Azure runner IPs are
+        # intermittently rate-limited by Google, making the loader crash
+        # ("Cannot read properties of null (reading '1')" in
+        # @next/font/dist/google/loader.js) on otherwise-identical trees —
+        # observed 3x on 2026-10-22 while the same commits built clean on
+        # Vercel and on CI re-runs. Bounded retry (3 attempts, 20s backoff)
+        # keeps the flake class from masking real regressions. The deployed
+        # artifact is always built by Vercel (unaffected network path), so
+        # this step is validation-only and a retry cannot ship a bad build.
+        run: |
+          set +e
+          attempt=1
+          while [ "$attempt" -le 3 ]; do
+            pnpm --filter sierra-estates-client-page build
+            code=$?
+            if [ "$code" -eq 0 ]; then
+              exit 0
+            fi
+            echo "::warning::build attempt ${attempt} failed (exit ${code}) — known next/font fonts.googleapis.com fetch flake on runner IPs; retrying after backoff"
+            if [ "$attempt" -eq 3 ]; then
+              exit "$code"
+            fi
+            sleep 20
+            attempt=$((attempt + 1))
+          done
+          exit 1
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
