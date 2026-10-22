@@ -541,6 +541,9 @@ importers:
       '@sierra-estates/agents-core':
         specifier: workspace:*
         version: link:../agents-core
+      '@sierra-estates/deepseek-harness':
+        specifier: workspace:*
+        version: link:../deepseek-harness
       '@sierra-estates/memory-engine':
         specifier: workspace:*
         version: link:../memory-engine
