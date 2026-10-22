@@ -1,6 +1,6 @@
-import { BENCHMARK_SCENARIOS } from './scenarios.js';
-import { HarnessEvaluator } from './evaluator.js';
-import { EvalScenario, EvalResult, HarnessSuiteReport } from './types.js';
+import { BENCHMARK_SCENARIOS } from './scenarios';
+import { HarnessEvaluator } from './evaluator';
+import { EvalScenario, EvalResult, HarnessSuiteReport } from './types';
 
 export interface HarnessConfig {
   apiKey?: string;
