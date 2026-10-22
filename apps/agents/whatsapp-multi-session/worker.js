@@ -40,6 +40,7 @@ try {
 }
 
 const { harvesterInstance } = require('./harvester');
+const appBridge = require('./app-bridge');
 
 // Load environment variables
 const envPaths = [
@@ -243,9 +244,12 @@ async function initSession(sessionId) {
       }
     });
 
-    // Listen for incoming messages (broker group harvesting + lastActive update)
+    // Listen for incoming messages (broker group harvesting + app inbound forwarding)
     client.onMessage((msg) => {
       s.lastActive = new Date().toISOString();
+      // Forward to the Sierra app webhook (fire-and-forget; the app decides
+      // DM auto-replies vs silent group handling). See app-bridge.js.
+      appBridge.forwardMessage(sessionId, msg);
       harvesterInstance.handleIncomingMessage(sessionId, msg).catch((err) => {
         console.error(`[harvester] Error processing message on ${sessionId}:`, err.message);
       });
@@ -908,7 +912,12 @@ const server = app.listen(PORT, () => {
   console.log(`  Dashboard URL: http://localhost:${PORT}`);
   console.log(`  Gateway REST:  http://127.0.0.1:${PORT}/api/sessions`);
   console.log(`  Active Pool:   ${SESSION_IDS.join(', ')}`);
+  console.log(`  App Bridge:    ${appBridge.status().enabled ? 'ON' : 'OFF'} → ${appBridge.status().webhookUrl}`);
   console.log(`═══════════════════════════════════════════════════════════════\n`);
+
+  // Pulse the app heartbeat while ≥1 line is READY (honest: no READY
+  // lines ⇒ no pulses ⇒ /api/whatsapp/health honestly reports stale).
+  appBridge.startHeartbeat(() => Array.from(sessions.values()).some((x) => x.status === 'READY'));
 
   startAllSessions();
 });
