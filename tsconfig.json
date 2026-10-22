@@ -36,6 +36,9 @@
       ],
       "@sierra-estates/db": [
         "./packages/db/lib/index.ts"
+      ],
+      "@sierra-estates/deepseek-harness": [
+        "./packages/deepseek-harness/src/index.ts"
       ]
     }
   },
