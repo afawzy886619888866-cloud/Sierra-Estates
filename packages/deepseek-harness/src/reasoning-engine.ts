@@ -6,10 +6,10 @@
  * and external memory (Episodic Context Cache - ECC, Supabase pgvector, and Obsidian).
  */
 
-import { HarnessEvaluator } from './evaluator.js';
-import { DeepSeekHarness, HarnessConfig } from './harness.js';
-import { BENCHMARK_SCENARIOS } from './scenarios.js';
-import { EvalResult, EvalScenario, HarnessSuiteReport } from './types.js';
+import { HarnessEvaluator } from './evaluator';
+import { DeepSeekHarness, HarnessConfig } from './harness';
+import { BENCHMARK_SCENARIOS } from './scenarios';
+import { EvalResult, EvalScenario, HarnessSuiteReport } from './types';
 
 export interface ReasoningStep {
   step: number;
