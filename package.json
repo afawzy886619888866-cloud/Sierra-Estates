@@ -43,6 +43,7 @@
     "openwa:8lines": "npm --prefix apps/agents/whatsapp-multi-session start",
     "rag:station": "npm --prefix apps/agents/whatsapp-multi-session start",
     "openclaw:task": "tsx scripts/openclaw-task-runner.ts",
+    "autoclaw": "node scripts/autoclaw.mjs",
     "run-harness": "tsx scripts/run-harness.ts",
     "harness:eval": "tsx scripts/run-harness.ts",
     "publish-recommendation": "tsx scripts/publish-recommendation.ts",
