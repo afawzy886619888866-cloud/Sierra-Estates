@@ -70,4 +70,50 @@ export class AIOrchestrator {
 
     return result;
   }
+
+  /**
+   * Orchestrate a full DeepSeek multi-step reasoning, plan synthesis, and verification cycle
+   */
+  public async orchestrateDeepSeekReasoningCycle(
+    task: string,
+    context: Record<string, any> = {}
+  ): Promise<WorkflowResult> {
+    const workflow: WorkflowInstance = {
+      id: `wf-deepseek-${Date.now()}`,
+      name: `DeepSeek Reasoning Cycle: ${task.slice(0, 40)}`,
+      triggerEvent: 'autonomous_reasoning_requested',
+      status: 'pending',
+      context,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      steps: [
+        {
+          id: 'step-1-deepseek-reason',
+          name: 'Multi-step Chain-of-Thought Reasoning',
+          assignedAgent: 'deepseek_reasoner',
+          inputs: { task, mode: 'reason' },
+          status: 'pending',
+          retryCount: 0,
+        },
+        {
+          id: 'step-2-program-synthesis',
+          name: 'Program Synthesis & Architectural Planning',
+          assignedAgent: 'deepseek_reasoner',
+          inputs: { task, mode: 'develop' },
+          status: 'pending',
+          retryCount: 0,
+        },
+        {
+          id: 'step-3-invariant-evaluation',
+          name: 'Evaluation Suite & Safety Verification',
+          assignedAgent: 'deepseek_reasoner',
+          inputs: { task, mode: 'eval' },
+          status: 'pending',
+          retryCount: 0,
+        },
+      ],
+    };
+
+    return await this.runner.executeWorkflow(workflow);
+  }
 }
