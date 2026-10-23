@@ -1,17 +1,9 @@
 {
   "servers": {
     "amphion-command-deck": {
-      "command": "python",
+      "command": "python3",
       "args": [
         ".amphion/command-deck/scripts/mcp-bridge.py"
-      ],
-      "env": {}
-    },
-    "sierra-estates": {
-      "command": "node",
-      "args": [
-        "node_modules/tsx/dist/cli.mjs",
-        "scripts/sierra-mcp-server.ts"
       ],
       "env": {}
     }

@@ -1,6 +1,6 @@
 ---
 name: execute
-description: "Run MCD EXECUTE command for Sierra"
+description: "Run MCD EXECUTE command for ierra"
 ---
 
 # EXECUTE

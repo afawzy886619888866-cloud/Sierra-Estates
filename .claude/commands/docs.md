@@ -1,6 +1,6 @@
 ---
 name: docs
-description: "Generate Project Strategy (Charter & PRD) from source documents for Sierra"
+description: "Generate Project Strategy (Charter & PRD) from source documents for ierra"
 ---
 
 # DOCS
