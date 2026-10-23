@@ -47,30 +47,68 @@ function sheetsClient() {
 
 const EMAIL_TEMPLATES = {
   welcome: {
-    subject: 'Welcome to Sierra Estates – Your Exclusive Real Estate Gateway',
+    subject: 'Welcome to Sierra Estates – Curated Luxury Real Estate in New Cairo',
     html: `
-      <h2>Welcome to Sierra Estates</h2>
-      <p>We're thrilled to have you on board!</p>
-      <p>Our curated portfolio of luxury properties in New Cairo awaits your exploration.</p>
-      <p><a href="https://sierra-estates.vercel.app/landing">View Exclusive Listings</a></p>
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0b1120; color: #f8fafc; border-radius: 12px; padding: 36px 32px; border: 1px solid #1e293b;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #38bdf8; font-size: 22px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px 0;">SIERRA ESTATES</h1>
+          <p style="color: #94a3b8; font-size: 13px; margin: 0;">Quiet Luxury & Verified Properties</p>
+        </div>
+        <div style="background: #0f172a; padding: 24px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 24px;">
+          <h2 style="color: #f1f5f9; font-size: 18px; margin-top: 0;">Welcome to Sierra Estates</h2>
+          <p style="color: #cbd5e1; line-height: 1.6; font-size: 14px;">We are honored to have you with us. Our private portfolio features vetted, high-value properties across New Cairo's most prestigious compounds.</p>
+          <div style="text-align: center; margin-top: 24px;">
+            <a href="https://sierra-estates.vercel.app/landing" style="background: #0284c7; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Explore Exclusive Portfolio</a>
+          </div>
+        </div>
+        <p style="color: #64748b; font-size: 12px; text-align: center; margin: 0;">Sierra Estates Realty · New Cairo, Cairo, Egypt</p>
+      </div>
     `,
   },
   property_alert: {
     subject: 'New Property Match: {{property_title}}',
     html: `
-      <h2>New Property Match for You</h2>
-      <p><strong>{{property_title}}</strong></p>
-      <p>Price: {{property_price}} EGP</p>
-      <p>Location: {{property_location}}</p>
-      <p><a href="https://sierra-estates.vercel.app/listings/{{property_id}}">View Details</a></p>
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0b1120; color: #f8fafc; border-radius: 12px; padding: 36px 32px; border: 1px solid #1e293b;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #38bdf8; font-size: 22px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px 0;">SIERRA ESTATES</h1>
+          <p style="color: #94a3b8; font-size: 13px; margin: 0;">Curated Matching Engine</p>
+        </div>
+        <div style="background: #0f172a; padding: 24px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 24px;">
+          <h2 style="color: #f1f5f9; font-size: 18px; margin-top: 0;">Curated Unit Matching Your Search</h2>
+          <p style="color: #38bdf8; font-size: 16px; font-weight: 600; margin-bottom: 12px;">{{property_title}}</p>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr><td style="color: #94a3b8; padding: 6px 0; font-size: 13px;">Location:</td><td style="color: #f8fafc; font-weight: 500; font-size: 13px;">{{property_location}}</td></tr>
+            <tr><td style="color: #94a3b8; padding: 6px 0; font-size: 13px;">Investment / Price:</td><td style="color: #34d399; font-weight: 600; font-size: 14px;">{{property_price}} EGP</td></tr>
+          </table>
+          <div style="text-align: center;">
+            <a href="https://sierra-estates.vercel.app/listings/{{property_id}}" style="background: #0284c7; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">View Verified Details</a>
+          </div>
+        </div>
+        <p style="color: #64748b; font-size: 12px; text-align: center; margin: 0;">Sierra Estates Realty · New Cairo, Cairo, Egypt</p>
+      </div>
     `,
   },
   viewing_reminder: {
-    subject: 'Your Viewing Appointment Reminder',
+    subject: 'Viewing Appointment Confirmed: {{viewing_date}} at {{viewing_time}}',
     html: `
-      <h2>Viewing Appointment Reminder</h2>
-      <p>Your scheduled viewing is coming up on {{viewing_date}} at {{viewing_time}}.</p>
-      <p><a href="https://sierra-estates.vercel.app/viewing-requests">Manage Appointment</a></p>
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0b1120; color: #f8fafc; border-radius: 12px; padding: 36px 32px; border: 1px solid #1e293b;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #38bdf8; font-size: 22px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px 0;">SIERRA ESTATES</h1>
+          <p style="color: #94a3b8; font-size: 13px; margin: 0;">Private Viewing Schedule</p>
+        </div>
+        <div style="background: #0f172a; padding: 24px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 24px;">
+          <h2 style="color: #f1f5f9; font-size: 18px; margin-top: 0;">Viewing Appointment Reminder</h2>
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">Your private viewing has been locked in our schedule:</p>
+          <div style="background: #1e293b; padding: 16px; border-radius: 6px; margin: 16px 0; text-align: center;">
+            <span style="color: #38bdf8; font-size: 16px; font-weight: 600;">📅 {{viewing_date}} at {{viewing_time}}</span>
+          </div>
+          <p style="color: #94a3b8; font-size: 13px; line-height: 1.5;">Our senior consultant will meet you at the compound gate. Gate pass and location details have been forwarded via WhatsApp.</p>
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="https://sierra-estates.vercel.app/viewing-requests" style="background: #0284c7; color: #ffffff; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Manage Appointment</a>
+          </div>
+        </div>
+        <p style="color: #64748b; font-size: 12px; text-align: center; margin: 0;">Sierra Estates Realty · New Cairo, Cairo, Egypt</p>
+      </div>
     `,
   },
 };

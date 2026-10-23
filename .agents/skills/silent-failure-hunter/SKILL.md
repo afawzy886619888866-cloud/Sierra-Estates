@@ -10,27 +10,33 @@ Zero tolerance for silent failures in Sierra Estates mission-critical real estat
 ## Hunt Targets
 
 ### 1. Empty or Swallowed Catch Blocks
+
 - `catch {}` or ignored exceptions.
 - Errors converted to `null` or empty arrays `[]` without logging or telemetry context.
 - `.catch(() => {})` in background promises.
 
 ### 2. Inadequate or Disconnected Logging
+
 - Logs without sufficient contextual identifiers (e.g. missing unit ID, lead ID, or compound name).
 - Log-and-forget handling where caller assumes success.
 - Swallowing Supabase RLS / Postgres error messages.
 
 ### 3. Dangerous Fallbacks
+
 - Default mock values that hide backend query failures.
 - Fallback arrays that mask failing database connections.
 - Graceful-looking paths that silently corrupt state or downstream data.
 
 ### 4. Error Propagation & Transaction Failures
+
 - Lost stack traces due to re-throwing generic errors.
 - Missing async error handling in Next.js Server Actions or Route Handlers.
 - Failed DB writes without transaction rollbacks.
 
 ## Output Format
+
 For every finding:
+
 1. File and line reference link
 2. Severity (`CRITICAL` | `HIGH` | `MEDIUM`)
 3. Root cause of the swallow

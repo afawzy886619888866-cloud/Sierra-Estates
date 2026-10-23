@@ -12,6 +12,10 @@
     "email-sender": "node 04-email-sender/send.js",
     "unit-adder": "node 05-unit-adder/add.js",
     "gateway-sentinel": "node 06-gateway-sentinel/sentinel.js",
+    "daily-digest": "node 07-daily-digest/digest.js",
+    "units-sync": "node 08-units-sync/sync.js",
+    "owner-outreach": "node 09-owner-outreach/outreach.js",
+    "whatsapp-dispatch": "node 10-whatsapp-dispatch/dispatch.js",
     "all": "npm run owner-search && npm run owner-contact && npm run email-sender && npm run unit-adder"
   },
   "dependencies": {

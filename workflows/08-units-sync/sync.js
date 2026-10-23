@@ -243,7 +243,9 @@ async function syncChunk(listings) {
     // ANTI-OVERWRITE (Task Follow-up): UPDATE path MUST NOT modify human-controlled
     // verification fields (publish_status, verified_at, verified_by). These fields
     // belong to human staff audits and must never be silently undone by automated syncs.
-    const { code, dupe_check_hash, publish_status, verified_at, verified_by, ...updatePayload } = l;
+    const { publish_status, verified_at, verified_by, ...updatePayload } = l;
+    delete updatePayload.code;
+    delete updatePayload.dupe_check_hash;
     const p = await requestJson(
       `${SB_URL}/rest/v1/listings?id=eq.${id}`,
       { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: updatePayload, timeoutMs: 20000 }
