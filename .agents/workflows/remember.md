@@ -1,6 +1,6 @@
 ---
 name: remember
-description: "Capture a compact memory checkpoint for Sierra without phase transition"
+description: "Capture a compact memory checkpoint for ierra without phase transition"
 ---
 
 # REMEMBER
@@ -8,7 +8,7 @@ description: "Capture a compact memory checkpoint for Sierra without phase trans
 This workflow invokes the canonical MCD REMEMBER command.
 
 1. Read the command instructions:
-[REMEMBER.md](../../.amphion/control-plane/mcd/REMEMBER.md)
+[REMEMBER.md](file:///${projectRoot}/.amphion/control-plane/mcd/REMEMBER.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

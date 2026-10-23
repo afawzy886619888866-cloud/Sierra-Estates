@@ -1,6 +1,6 @@
 ---
 name: contract
-description: "Run MCD CONTRACT command for Sierra"
+description: "Run MCD CONTRACT command for ierra"
 ---
 
 # CONTRACT
