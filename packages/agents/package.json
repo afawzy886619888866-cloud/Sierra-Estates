@@ -1,0 +1,29 @@
+{
+  "name": "@sierra-estates/agents",
+  "version": "1.0.0",
+  "description": "Multi-agent framework and orchestration",
+  "main": "src/index.ts",
+  "type": "module",
+  "types": "src/index.ts",
+  "private": true,
+  "dependencies": {
+    "@google/genai": "^2.27.0",
+    "@sierra-estates/agents-core": "workspace:*",
+    "@sierra-estates/db": "workspace:*",
+    "@sierra-estates/obsidian": "workspace:*",
+    "server-only": "^0.0.1",
+    "pino": "^10.4",
+    "react": "19.3.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "@types/react": "^19",
+    "typescript": "^6.0.3"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  }
+}

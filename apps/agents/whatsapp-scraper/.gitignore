@@ -1,0 +1,11 @@
+# WhatsApp session data (Chrome profile — binary, huge, user-specific)
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Env
+.env
+.env.local

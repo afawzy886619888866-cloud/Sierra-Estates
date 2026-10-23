@@ -1,0 +1,998 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sierra estates — Beyond Brokerage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --navy-deep: #050B14;
+    --navy-mid: #071422;
+    --navy-soft: #0D1E36;
+    --ivory: #F4F0E8;
+    --ivory-pale: #FAF7F1;
+    --gold: #C8961A;
+    --gold-light: #E9C176;
+    --gold-shimmer: #F5D78E;
+    --gold-deep: #987734;
+    --red: #E63946;
+    --red-deep: #B71C2C;
+    --sierra-estates: #1E88D9;
+  }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  html, body { background: var(--navy-deep); }
+  body { font-family: 'Inter', sans-serif; color: var(--ivory); }
+  .font-serif { font-family: 'Cormorant Garamond', serif; }
+  .font-sans { font-family: 'Inter', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-arabic { font-family: 'Cairo', sans-serif; }
+  [dir="rtl"] body { font-family: 'Cairo', sans-serif; }
+  [dir="rtl"] .font-serif { font-family: 'Cormorant Garamond', 'Cairo', serif; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--navy-mid); }
+  ::-webkit-scrollbar-thumb { background: rgba(200,150,26,0.3); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(200,150,26,0.6); }
+
+  .ease-silk { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+
+  @keyframes goldShimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+  .gold-text {
+    background: linear-gradient(90deg, #E9C176 0%, #C8961A 25%, #F5D78E 50%, #C8961A 75%, #E9C176 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: goldShimmer 6s linear infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(200,150,26,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(200,150,26,0); }
+  }
+  .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(230,57,70,0); }
+  }
+  .pulse-red { animation: pulse-red 2s ease-in-out infinite; }
+
+  .lift { transition: transform 400ms cubic-bezier(0.16,1,0.3,1), box-shadow 400ms ease, border-color 400ms ease; }
+  .lift:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(200,150,26,0.12); }
+
+  .map-dots {
+    background-image: radial-gradient(rgba(244,240,232,0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .gold-rule {
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+    height: 1px; background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 300ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .nav-link:hover::after { transform: scaleX(1); }
+  [dir="rtl"] .nav-link::after { transform-origin: right; }
+
+  .img-bloom { transition: transform 800ms cubic-bezier(0.16,1,0.3,1); }
+  .group:hover .img-bloom { transform: scale(1.06); }
+
+  /* Hero cityscape - Uptown Cairo aerial, heavily blurred so the logo reads */
+  .hero-bg {
+    position: relative;
+    isolation: isolate;
+  }
+  .hero-bg::before {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    z-index: -2;
+    background-image: url('https://images.unsplash.com/photo-1571841418516-37a8e9c2c0db?w=2400&q=85&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center 35%;
+    filter: blur(18px) saturate(1.15) brightness(0.55);
+    transform: scale(1.08);
+  }
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at center 35%, rgba(5,11,20,0.35) 0%, rgba(5,11,20,0.78) 55%, rgba(5,11,20,0.98) 100%),
+      linear-gradient(180deg, rgba(5,11,20,0.5) 0%, transparent 30%, transparent 70%, rgba(5,11,20,1) 100%);
+  }
+
+  /* Logo aura - puts a soft red+gold halo behind the hero shield */
+  .logo-aura {
+    position: relative;
+  }
+  .logo-aura::before {
+    content: '';
+    position: absolute;
+    inset: -60px;
+    background: radial-gradient(circle at center, rgba(230,57,70,0.25) 0%, rgba(200,150,26,0.08) 40%, transparent 70%);
+    z-index: -1;
+    animation: aura-pulse 4s ease-in-out infinite;
+  }
+  @keyframes aura-pulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* Filter chip */
+  .chip {
+    transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip.active {
+    background: linear-gradient(135deg, #C8961A 0%, #E9C176 100%);
+    color: #050B14;
+    border-color: #C8961A;
+    box-shadow: 0 4px 20px rgba(200,150,26,0.3);
+  }
+
+  /* Range slider */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(244,240,232,0.15);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #E9C176, #C8961A);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(200,150,26,0.4);
+    transition: transform 200ms ease;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+  /* Particle drift */
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, -30px); }
+  }
+
+  /* Red glow shadow for hero logo */
+  .red-glow {
+    filter: drop-shadow(0 4px 20px rgba(230,57,70,0.5)) drop-shadow(0 0 40px rgba(230,57,70,0.35)) drop-shadow(0 0 80px rgba(230,57,70,0.2));
+  }
+
+  /* Filter section ambient glow */
+  .filter-ambient {
+    position: relative;
+  }
+  .filter-ambient::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(135deg, rgba(200,150,26,0.3) 0%, transparent 30%, transparent 70%, rgba(230,57,70,0.2) 100%);
+    border-radius: 24px;
+    z-index: -1;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ─── ICONS ────────────────────────────────────────────────────────────
+const I = {
+  Search: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>),
+  Sliders: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>),
+  Sparkle: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>),
+  Pin: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>),
+  Bed: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>),
+  Bath: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4 8 6"/><path d="M17 19v2"/><path d="M2 12h20"/><path d="M7 19v2"/><path d="M9 5 7.621 3.621A2.121 2.121 0 0 0 4 5v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>),
+  Square: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>),
+  Arrow: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>),
+  Check: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>),
+  Brain: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/></svg>),
+  Zap: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>),
+  Map: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>),
+  X: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>),
+  Flame: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>),
+};
+
+// ─── DICTIONARY ────────────────────────────────────────────────────────
+const DICT = {
+  en: {
+    dir:'ltr', brand:'sierra estates', sub:'REALTY',
+    nav:['Properties','Smart Map','AI Features','Quick Request'],
+    cta:'Enter Portal',
+    heroBadge:'First & only platform in Egypt for New Cairo & Uptown',
+    heroTitle1:'Refined Decisions.',
+    heroTitle2:'Intelligence-Led.',
+    heroTitle3:'Beyond Brokerage.',
+    heroSubtag:'Smart Filter · Smart Map · AI-Driven Matching',
+    heroArabic:'التميز العقاري برؤية ذكية',
+    heroDesc:'Egypt\'s premier AI-powered property advisory. We curate the finest opportunities across New Cairo, Madinaty, Uptown, and El Shorouk, backed by an exclusive network of',
+    heroDescAccent:'1,500+ elite brokers',
+    heroDesc2:'and intelligent matching that responds in four seconds.',
+    quickFilters:{
+      type:'Property Type', compound:'Compound', beds:'Beds', furnish:'Furnishing',
+      budget:'Budget Range', amenities:'Amenities', notice:'Notice Period',
+      anyType:'Any Type', anyCompound:'Any Compound', any:'Any',
+    },
+    typeOptions:['Standalone','Duplex','Twin House','Townhouse','Apartment','Penthouse','Villa'],
+    compoundOptions:['Mivida','Eastown','Villette','Taj City','Hyde Park','Mountain View','Madinaty','Uptown Cairo','Mostakbal','El Shorouk'],
+    furnishOptions:[{k:'furnished',l:'Furnished'},{k:'semi',l:'Semi-Furnished'},{k:'empty',l:'Empty'}],
+    amenityOptions:[{k:'garden',l:'Private Garden'},{k:'pool',l:'Swimming Pool'},{k:'parking',l:'Covered Parking'},{k:'security',l:'24/7 Security'},{k:'gym',l:'Gym'},{k:'beach',l:'Beach Access'}],
+    noticeOptions:[{k:'immediate',l:'Immediate'},{k:'1m',l:'Within 1 Month'},{k:'3m',l:'1–3 Months'},{k:'flex',l:'Flexible'}],
+    purposeOptions:[{k:'ALL',l:'All'},{k:'RENT',l:'Rent'},{k:'RESALE',l:'Resale'}],
+    searchBtn:'Apply Smart Filter',
+    resetBtn:'Reset',
+    matchesFound:'matches found',
+    scroll:'Explore Catalog',
+    stats:[['1,500+','Elite Brokers'],['98%','Match Rate'],['8+','Compounds'],['4s','Response']],
+    secAI:'AI Features',
+    aiH:'Intelligence That Understands Property',
+    aiSub:'Egypt\'s first official AI real estate advisor',
+    aiF:[
+      {icon:I.Brain, t:'Smart Matching', d:'Our AI reads 200+ data signals per property and surfaces homes that fit your exact lifestyle, not just budget.'},
+      {icon:I.Map, t:'Smart Map Intelligence', d:'Live polygon overlays for school zones, noise levels, growth corridors, and off-market signals.'},
+      {icon:I.Sliders, t:'Smart Filter Engine', d:'Filter by compound, beds, furnish status, budget, amenities, and notice. Multi-select chips, instant results.'},
+      {icon:I.Zap, t:'4-Second Response', d:'Real human advisor backed by AI tools. Every inquiry answered before you finish a coffee sip.'},
+    ],
+    secMap:'Smart Map',
+    mapH:'New Cairo Investment Map',
+    secListings:'Exclusive Listings',
+    listingsH:'Properties worth your attention.',
+    cardView:'View Full Property',
+    secQuick:'Quick Request',
+    quickH:'A Sierra advisor reaches out in four seconds.',
+    quickSub:'Leave your details. Get matched with hand-picked properties before the day ends.',
+    formName:'Your name',
+    formPhone:'Mobile number',
+    formBudget:'Budget range',
+    formCompound:'Preferred compound',
+    formSubmit:'Send Quick Request',
+    formSuccess:'Thank you. A Sierra advisor will be in touch within four seconds.',
+    secWhy:'Why sierra estates',
+    whyH:'The sierra estates Standard',
+    why:[
+      {icon:'◆',title:'Curated by Hand',desc:'Each listing personally reviewed by senior advisors. No noise, no overpricing. Only properties that meet our exacting standard.'},
+      {icon:'◈',title:'Grounded in Data',desc:'AI-driven ROI modelling, live market comparisons, and growth corridor analysis. Conviction backed by evidence.'},
+      {icon:'◉',title:'Dedicated Advisory',desc:'From first inquiry to final signature, one advisor who knows your criteria and responds in four seconds.'},
+    ],
+    copyright:'© 2026 sierra estates Realty. All rights reserved.',
+    sysTag:'Node-Sync v12.4 · Online',
+    beds:'Beds', baths:'Baths', tagline:'PropTech Intelligence OS · 2026',
+  },
+  ar: {
+    dir:'rtl', brand:'سييرا بلو', sub:'للعقارات',
+    nav:['العقارات','الخريطة الذكية','مزايا الذكاء','طلب سريع'],
+    cta:'الدخول للبوابة',
+    heroBadge:'أول وحيد موقع في مصر للقاهرة الجديدة وأبتاون',
+    heroTitle1:'قرارات أرقى.',
+    heroTitle2:'مدعومة بالذكاء.',
+    heroTitle3:'أبعد من الوساطة.',
+    heroSubtag:'فلتر ذكي · خريطة ذكية · مطابقة بالذكاء الاصطناعي',
+    heroArabic:'Smart Filter · Smart Map · AI Excellence',
+    heroDesc:'استشارات عقارية مدعومة بالذكاء الاصطناعي. نختار أفضل الفرص في القاهرة الجديدة، مدينتي، أبتاون، والشروق، بدعم من شبكة حصرية من',
+    heroDescAccent:'١,٥٠٠+ وسيط نخبة',
+    heroDesc2:'ومطابقة ذكية تستجيب في أربع ثوانٍ.',
+    quickFilters:{
+      type:'نوع العقار', compound:'الكمباوند', beds:'الغرف', furnish:'حالة التشطيب',
+      budget:'الميزانية', amenities:'المرافق', notice:'مدة الإشعار',
+      anyType:'أي نوع', anyCompound:'أي كمباوند', any:'أي',
+    },
+    typeOptions:['مستقل','دوبلكس','توين هاوس','تاون هاوس','شقة','بنتهاوس','فيلا'],
+    compoundOptions:['ميفيدا','إيستاون','فيليت','تاج سيتي','هايد بارك','ماونتن فيو','مدينتي','أبتاون كايرو','مستقبل','الشروق'],
+    furnishOptions:[{k:'furnished',l:'مفروش'},{k:'semi',l:'نصف مفروش'},{k:'empty',l:'فارغ'}],
+    amenityOptions:[{k:'garden',l:'حديقة خاصة'},{k:'pool',l:'حمام سباحة'},{k:'parking',l:'جراج مغطى'},{k:'security',l:'أمن ٢٤/٧'},{k:'gym',l:'جيم'},{k:'beach',l:'إطلالة شاطئ'}],
+    noticeOptions:[{k:'immediate',l:'فوري'},{k:'1m',l:'خلال شهر'},{k:'3m',l:'١–٣ أشهر'},{k:'flex',l:'مرن'}],
+    purposeOptions:[{k:'ALL',l:'الكل'},{k:'RENT',l:'إيجار'},{k:'RESALE',l:'بيع'}],
+    searchBtn:'تطبيق الفلتر الذكي',
+    resetBtn:'إعادة ضبط',
+    matchesFound:'نتيجة مطابقة',
+    scroll:'استكشف الكتالوج',
+    stats:[['١٥٠٠+','وسيط نخبة'],['٩٨٪','دقة المطابقة'],['٨+','كمباوند'],['٤ث','الرد']],
+    secAI:'مزايا الذكاء',
+    aiH:'ذكاء يفهم العقار',
+    aiSub:'أول مستشار عقاري ذكي رسمي في مصر',
+    aiF:[
+      {icon:I.Brain, t:'مطابقة ذكية', d:'الذكاء الاصطناعي يقرأ ٢٠٠+ إشارة لكل عقار ويعرض ما يناسب أسلوب حياتك، ليس الميزانية فقط.'},
+      {icon:I.Map, t:'ذكاء الخريطة', d:'طبقات حية لمناطق المدارس ومستويات الضوضاء وممرات النمو والإشارات خارج السوق.'},
+      {icon:I.Sliders, t:'محرك الفلتر الذكي', d:'فلترة بالكمباوند والغرف والتشطيب والميزانية والمرافق. تحديد متعدد، نتائج فورية.'},
+      {icon:I.Zap, t:'استجابة في ٤ ثوانٍ', d:'مستشار حقيقي مدعوم بأدوات ذكية. كل استفسار يُجاب قبل أن تنتهي من رشفة قهوة.'},
+    ],
+    secMap:'الخريطة الذكية',
+    mapH:'خريطة استثمار القاهرة الجديدة',
+    secListings:'قوائم حصرية',
+    listingsH:'عقارات تستحق اهتمامك.',
+    cardView:'عرض الملف العقاري',
+    secQuick:'طلب سريع',
+    quickH:'مستشار سييرا يتواصل معك في أربع ثوانٍ.',
+    quickSub:'اترك بياناتك. ستحصل على عقارات مختارة يدوياً قبل نهاية اليوم.',
+    formName:'اسمك',
+    formPhone:'رقم الموبايل',
+    formBudget:'نطاق الميزانية',
+    formCompound:'الكمباوند المفضل',
+    formSubmit:'إرسال الطلب السريع',
+    formSuccess:'شكراً. مستشار سييرا سيتواصل معك خلال أربع ثوانٍ.',
+    secWhy:'لماذا سييرا بلو',
+    whyH:'معيار سييرا بلو',
+    why:[
+      {icon:'◆',title:'اختيار بعناية',desc:'كل قائمة يراجعها مستشارونا الكبار شخصياً. لا ضجيج، لا مبالغة، فقط عقارات تستوفي معاييرنا الصارمة.'},
+      {icon:'◈',title:'مبني على البيانات',desc:'نمذجة عائد الاستثمار بالذكاء الاصطناعي، مقارنات السوق الحية، وتحليل ممرات النمو.'},
+      {icon:'◉',title:'استشارة متخصصة',desc:'من أول استفسار لآخر توقيع، مستشار واحد يعرف معاييرك ويستجيب في أربع ثوانٍ.'},
+    ],
+    copyright:'© ٢٠٢٦ سييرا بلو للعقارات. جميع الحقوق محفوظة.',
+    sysTag:'حالة النظام: متصل',
+    beds:'غرف', baths:'حمامات', tagline:'برتك إنتليجنس · ٢٠٢٦',
+  }
+};
+
+// ─── INVENTORY ────────────────────────────────────────────────────────
+const INVENTORY = [
+  {id:1,code:'MVD-PD-01',compound:'Madinaty',compoundKey:'Madinaty',titleEn:'Aurora Penthouse',titleAr:'بنتهاوس أورورا',locEn:'Madinaty · New Cairo',locAr:'مدينتي · القاهرة الجديدة',priceEn:'EGP 8.5M',priceAr:'٨.٥م ج.م',price:8500000,purpose:'RESALE',type:'Penthouse',beds:4,baths:3,area:'320',furnish:'semi',amenities:['parking','security'],notice:'1m',badgeEn:'Hidden Gem',badgeAr:'فرصة نادرة',badgeColor:'#7C3AED',img:'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=80',lat:30.0972,lng:31.6314,ai:9.2},
+  {id:2,code:'MV-VL-02',compound:'Mountain View',compoundKey:'Mountain View',titleEn:'Villa Lumière',titleAr:'فيلا لوميير',locEn:'Mountain View · 5th Settlement',locAr:'ماونتن فيو · التجمع الخامس',priceEn:'EGP 14.2M',priceAr:'١٤.٢م ج.م',price:14200000,purpose:'RESALE',type:'Standalone',beds:5,baths:4,area:'480',furnish:'empty',amenities:['garden','pool','parking','security'],notice:'3m',badgeEn:'Featured Exclusive',badgeAr:'عرض حصري',badgeColor:'#C8961A',img:'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80',lat:30.0320,lng:31.4720,ai:9.6},
+  {id:3,code:'UTC-TH-03',compound:'Uptown Cairo',compoundKey:'Uptown Cairo',titleEn:'Uptown Twin House',titleAr:'توين هاوس أبتاون',locEn:'Uptown Cairo · Mokattam',locAr:'أبتاون كايرو · المقطم',priceEn:'EGP 12.8M',priceAr:'١٢.٨م ج.م',price:12800000,purpose:'RESALE',type:'Twin House',beds:4,baths:4,area:'400',furnish:'semi',amenities:['garden','pool','parking','security','gym'],notice:'immediate',badgeEn:'Gulf Views',badgeAr:'إطلالة',badgeColor:'#1E88D9',img:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&q=80',lat:30.0150,lng:31.3050,ai:9.4},
+  {id:4,code:'FTH-EC-04',compound:'Fifth Settlement',compoundKey:'Hyde Park',titleEn:'Emirates Crown Mansion',titleAr:'قصر إيميريتس كراون',locEn:'Hyde Park · 5th Settlement',locAr:'هايد بارك · التجمع الخامس',priceEn:'EGP 22M',priceAr:'٢٢م ج.م',price:22000000,purpose:'RESALE',type:'Villa',beds:6,baths:5,area:'650',furnish:'furnished',amenities:['garden','pool','parking','security','gym'],notice:'flex',badgeEn:'Off Market Elite',badgeAr:'خارج السوق',badgeColor:'#059669',img:'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',lat:30.0071,lng:31.4345,ai:9.8},
+  {id:5,code:'MVD-DX-05',compound:'Mivida',compoundKey:'Mivida',titleEn:'Mivida Duplex Suite',titleAr:'دوبلكس ميفيدا',locEn:'Mivida · 5th Settlement',locAr:'ميفيدا · التجمع الخامس',priceEn:'EGP 6.2M',priceAr:'٦.٢م ج.م',price:6200000,purpose:'RENT',type:'Duplex',beds:3,baths:3,area:'280',furnish:'furnished',amenities:['garden','parking','security'],notice:'1m',badgeEn:'Premium Rental',badgeAr:'إيجار مميز',badgeColor:'#E63946',img:'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80',lat:30.0150,lng:31.5050,ai:8.9},
+  {id:6,code:'ESH-TW-06',compound:'El Shorouk',compoundKey:'El Shorouk',titleEn:'Shorouk Townhouse',titleAr:'تاون هاوس الشروق',locEn:'El Shorouk · East Cairo',locAr:'الشروق · شرق القاهرة',priceEn:'EGP 4.8M',priceAr:'٤.٨م ج.م',price:4800000,purpose:'RENT',type:'Townhouse',beds:3,baths:2,area:'220',furnish:'empty',amenities:['garden','parking'],notice:'immediate',badgeEn:'New Listing',badgeAr:'مضاف حديثاً',badgeColor:'#1E88D9',img:'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900&q=80',lat:30.1400,lng:31.6400,ai:8.7},
+];
+
+// ─── HERO LOGO (red) ──────────────────────────────────────────────────
+function HeroLogo({size=140}) {
+  return (
+    <img
+      src="assets/logo-red.png"
+      alt="sierra estates Shield"
+      style={{width:size, height:'auto'}}
+      className="red-glow select-none pointer-events-none"
+      draggable="false"
+    />
+  );
+}
+
+// ─── FOOTER LOGO (gold) ───────────────────────────────────────────────
+function FooterLogo({size=120}) {
+  return (
+    <img
+      src="assets/logo-gold.png"
+      alt="sierra estates Heritage"
+      style={{width:size, height:'auto'}}
+      className="select-none pointer-events-none drop-shadow-[0_0_30px_rgba(200,150,26,0.3)]"
+      draggable="false"
+    />
+  );
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────
+function Nav({lang, setLang, t}) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(()=>{
+    const onS = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onS);
+    return () => window.removeEventListener('scroll', onS);
+  },[]);
+  return (
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-silk ${scrolled?'bg-[#050B14]/95 backdrop-blur-xl border-b border-white/8 py-3':'bg-[#050B14]/60 backdrop-blur-md py-4'}`}>
+      <div className="max-w-[1500px] mx-auto px-6 md:px-12 flex items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <img src="assets/logo-red.png" alt="sierra estates" className="w-10 h-10 object-contain" draggable="false"/>
+          <div className="flex flex-col leading-none">
+            <span className="font-serif text-xl font-semibold tracking-[0.12em] text-[#F4F0E8]">{t.brand}</span>
+            <span className="text-[8px] uppercase tracking-[0.36em] font-sans font-medium text-[#E63946]/80 mt-1">{t.sub}</span>
+          </div>
+        </div>
+
+        <div className="hidden lg:flex items-center gap-8 text-[#F4F0E8]/80">
+          {t.nav.map((n,i)=>(
+            <a key={i} href={['#listings','#smartmap','#aifeatures','#quickrequest'][i]} className="nav-link text-[11px] uppercase tracking-[0.18em] font-medium hover:text-[#C8961A] transition-colors duration-300">{n}</a>
+          ))}
+        </div>
+
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-glow"></span>
+          <span className="text-[9px] uppercase tracking-[0.25em] font-mono font-semibold text-[#F4F0E8]/50">{t.sysTag}</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button onClick={()=>setLang(lang==='en'?'ar':'en')} className="px-3 py-1.5 border border-white/15 hover:border-[#C8961A] rounded-md text-[10px] font-bold uppercase tracking-[0.18em] text-[#F4F0E8] hover:text-[#C8961A] transition-all duration-300">
+            {lang==='en'?'AR':'EN'}
+          </button>
+          <button className="hidden md:inline-flex px-5 py-2.5 bg-gradient-to-r from-[#E63946] to-[#B71C2C] hover:from-[#FF4D5A] hover:to-[#E63946] text-white rounded-md text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-[#E63946]/25 transition-all duration-300">{t.cta}</button>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// ─── HERO ─────────────────────────────────────────────────────────────
+function Hero({t, isAr, onApply}) {
+  const ref = useRef(null);
+  const [mouse, setMouse] = useState({x:0,y:0});
+
+  const onMove = (e) => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    setMouse({
+      x: ((e.clientX - r.left) / r.width - 0.5) * 2,
+      y: ((e.clientY - r.top) / r.height - 0.5) * 2,
+    });
+  };
+
+  return (
+    <section
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={()=>setMouse({x:0,y:0})}
+      className="relative min-h-screen w-full flex flex-col justify-center items-center text-center px-6 overflow-hidden hero-bg"
+    >
+      {/* Radial red light */}
+      <div className="absolute inset-0 z-0"
+        style={{
+          background: `radial-gradient(circle at ${50 + mouse.x*8}% ${30 + mouse.y*8}%, rgba(230,57,70,0.18) 0%, transparent 50%)`,
+          transition: 'background 600ms cubic-bezier(0.16,1,0.3,1)'
+        }}
+      />
+      {/* Hairline grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.05]"
+        style={{
+          backgroundImage:'linear-gradient(to right, #C8961A 1px, transparent 1px), linear-gradient(to bottom, #C8961A 1px, transparent 1px)',
+          backgroundSize:'5rem 5rem'
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 max-w-5xl w-full flex flex-col items-center space-y-8 pt-32 pb-16"
+        style={{
+          transform: `translate(${mouse.x*3}px, ${mouse.y*3}px)`,
+          transition: 'transform 800ms cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        {/* Big logo with aura */}
+        <div className="logo-aura mb-4"
+          style={{
+            transform: `translate(${mouse.x*-6}px, ${mouse.y*-4}px) rotate(${mouse.x*1.5}deg)`,
+            transition: 'transform 1000ms cubic-bezier(0.16,1,0.3,1)',
+          }}
+        >
+          <HeroLogo size={180}/>
+        </div>
+
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 bg-[#E63946]/8 border border-[#E63946]/30 backdrop-blur-md px-5 py-2 rounded-full">
+          <I.Flame className="w-3.5 h-3.5 text-[#E63946]" />
+          <span className="text-[#E63946] tracking-[0.22em] uppercase text-[10px] font-mono font-semibold">{t.heroBadge}</span>
+        </div>
+
+        {/* Headline */}
+        <h1 className="font-serif text-[#F4F0E8] leading-[1.04] tracking-tight font-light max-w-4xl">
+          <span className="block text-4xl sm:text-6xl md:text-7xl">{t.heroTitle1}</span>
+          <span className="block text-4xl sm:text-6xl md:text-7xl lg:text-[5rem] font-normal italic gold-text mt-1">
+            {t.heroTitle2}
+          </span>
+          <span className="block text-2xl sm:text-3xl md:text-4xl text-[#F4F0E8]/55 font-light mt-2">{t.heroTitle3}</span>
+        </h1>
+
+        {/* Sub identity rule */}
+        <div className="flex flex-col items-center space-y-3 pt-1">
+          <p className="text-[10px] uppercase tracking-[0.38em] text-[#C8961A]/90 font-mono font-semibold">{t.heroSubtag}</p>
+          <div className="flex justify-center items-center gap-3 w-full">
+            <span className="h-[1px] w-16 gold-rule"></span>
+            <p className="font-arabic text-lg text-[#F4F0E8]/70 font-light tracking-wide">{t.heroArabic}</p>
+            <span className="h-[1px] w-16 gold-rule"></span>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm md:text-base text-[#F4F0E8]/60 max-w-2xl mx-auto leading-relaxed font-light tracking-wide">
+          {t.heroDesc} <span className="text-[#C8961A] font-medium">{t.heroDescAccent}</span> {t.heroDesc2}
+        </p>
+
+        {/* CTA buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <button onClick={()=>document.getElementById('smartfilter')?.scrollIntoView({behavior:'smooth'})} className="px-8 py-4 bg-gradient-to-r from-[#C8961A] to-[#E9C176] text-[#071422] rounded-xl text-[11px] font-bold uppercase tracking-[0.22em] shadow-xl shadow-[#C8961A]/30 hover:shadow-[#C8961A]/50 transition-all duration-400 ease-silk flex items-center gap-2">
+            <I.Sliders className="w-4 h-4"/>
+            {isAr?'الفلتر الذكي':'Open Smart Filter'}
+          </button>
+          <button onClick={()=>document.getElementById('quickrequest')?.scrollIntoView({behavior:'smooth'})} className="px-8 py-4 bg-white/5 border border-white/15 hover:border-[#E63946] backdrop-blur-md text-white rounded-xl text-[11px] font-bold uppercase tracking-[0.22em] transition-all duration-400 ease-silk flex items-center gap-2">
+            <I.Zap className="w-4 h-4 text-[#E63946]"/>
+            {isAr?'طلب سريع':'Quick Request'}
+          </button>
+        </div>
+
+        {/* Stat strip */}
+        <div className="w-full max-w-3xl mx-auto pt-8 grid grid-cols-2 md:grid-cols-4 gap-0 bg-white/[0.04] border border-white/8 rounded-2xl overflow-hidden backdrop-blur-md">
+          {t.stats.map(([v,l],i)=>(
+            <div key={i} className={`text-center py-5 px-4 ${i<3?'md:border-r border-white/5':''} ${i%2===0?'border-r md:border-r':''} border-white/5`}>
+              <div className="font-mono text-2xl font-bold text-[#C8961A] leading-none">{v}</div>
+              <div className="text-[9px] font-sans uppercase tracking-[0.22em] text-[#F4F0E8]/40 mt-2">{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Scroll cue */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">
+        <p className="text-[9px] font-mono tracking-[0.3em] uppercase text-[#F4F0E8]/60">{t.scroll}</p>
+        <div className="w-px h-6 bg-gradient-to-b from-[#C8961A] to-transparent"></div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SMART FILTER ─────────────────────────────────────────────────────
+function SmartFilter({t, isAr, filters, setFilters, matchCount}) {
+  const toggle = (key, val) => {
+    const arr = filters[key] || [];
+    if (arr.includes(val)) setFilters({...filters, [key]: arr.filter(x=>x!==val)});
+    else setFilters({...filters, [key]: [...arr, val]});
+  };
+  const setOne = (key, val) => setFilters({...filters, [key]: val});
+  const reset = () => setFilters({purpose:'ALL', types:[], compounds:[], beds:0, furnish:[], budget:25000000, amenities:[], notice:[]});
+
+  return (
+    <section id="smartfilter" className="relative py-20 px-6 md:px-12 max-w-[1500px] mx-auto z-20">
+      <div className="text-center mb-10">
+        <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10">Smart Filter Engine</span>
+        <h2 className="font-serif text-3xl md:text-5xl text-[#F4F0E8] tracking-tight font-light mt-5">
+          {isAr?'فلترة دقيقة. ':'Filter Precisely. '}
+          <span className="italic gold-text">{isAr?'مطابقة فورية.':'Match Instantly.'}</span>
+        </h2>
+      </div>
+
+      <div className="bg-gradient-to-br from-[#071422] to-[#0D1E36] border border-[#C8961A]/15 rounded-3xl p-6 md:p-10 shadow-[0_30px_80px_rgba(0,0,0,0.4)] filter-ambient">
+        {/* PURPOSE */}
+        <div className="flex flex-wrap items-center gap-3 mb-8 pb-6 border-b border-white/8">
+          <span className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] mr-2">{isAr?'الغرض':'Purpose'}</span>
+          {t.purposeOptions.map(o=>(
+            <button key={o.k} onClick={()=>setOne('purpose',o.k)} className={`chip px-5 py-2 border rounded-full text-[10px] font-bold uppercase tracking-[0.18em] ${filters.purpose===o.k?'active':'bg-white/5 border-white/15 text-white/70 hover:border-white/40'}`}>{o.l}</button>
+          ))}
+          <div className="flex-1"></div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-emerald-400 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-glow"></span>
+            <span className="font-bold text-[#C8961A]">{matchCount}</span> {t.matchesFound}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+          {/* TYPE */}
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] block mb-3">{t.quickFilters.type}</label>
+            <div className="flex flex-wrap gap-2">
+              {t.typeOptions.map(o=>(
+                <button key={o} onClick={()=>toggle('types',o)} className={`chip px-3.5 py-1.5 border rounded-lg text-[10px] font-semibold ${filters.types.includes(o)?'active':'bg-white/5 border-white/12 text-white/65 hover:border-white/30'}`}>{o}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* COMPOUND */}
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] block mb-3">{t.quickFilters.compound}</label>
+            <div className="flex flex-wrap gap-2">
+              {t.compoundOptions.map(o=>(
+                <button key={o} onClick={()=>toggle('compounds',o)} className={`chip px-3.5 py-1.5 border rounded-lg text-[10px] font-semibold ${filters.compounds.includes(o)?'active':'bg-white/5 border-white/12 text-white/65 hover:border-white/30'}`}>{o}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* BEDS */}
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] block mb-3">{t.quickFilters.beds}</label>
+            <div className="flex flex-wrap gap-2">
+              {[0,1,2,3,4,5,6].map(n=>(
+                <button key={n} onClick={()=>setOne('beds',n)} className={`chip w-10 h-10 border rounded-lg text-xs font-bold flex items-center justify-center ${filters.beds===n?'active':'bg-white/5 border-white/12 text-white/65 hover:border-white/30'}`}>{n===0?(isAr?'أي':'Any'):n+(n===6?'+':'')}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* FURNISH */}
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] block mb-3">{t.quickFilters.furnish}</label>
+            <div className="flex flex-wrap gap-2">
+              {t.furnishOptions.map(o=>(
+                <button key={o.k} onClick={()=>toggle('furnish',o.k)} className={`chip px-3.5 py-1.5 border rounded-lg text-[10px] font-semibold ${filters.furnish.includes(o.k)?'active':'bg-white/5 border-white/12 text-white/65 hover:border-white/30'}`}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* BUDGET */}
+          <div className="md:col-span-2">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A]">{t.quickFilters.budget}</label>
+              <span className="text-sm font-mono font-bold text-white">{isAr?'حتى':'Up to'} <span className="text-[#C8961A]">EGP {(filters.budget/1000000).toFixed(1)}M</span></span>
+            </div>
+            <input type="range" min="1000000" max="50000000" step="500000" value={filters.budget} onChange={(e)=>setOne('budget',Number(e.target.value))}/>
+            <div className="flex justify-between text-[10px] font-mono text-white/40 mt-2">
+              <span>1M</span><span>10M</span><span>25M</span><span>50M+</span>
+            </div>
+          </div>
+
+          {/* AMENITIES */}
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] block mb-3">{t.quickFilters.amenities}</label>
+            <div className="flex flex-wrap gap-2">
+              {t.amenityOptions.map(o=>(
+                <button key={o.k} onClick={()=>toggle('amenities',o.k)} className={`chip px-3.5 py-1.5 border rounded-lg text-[10px] font-semibold ${filters.amenities.includes(o.k)?'active':'bg-white/5 border-white/12 text-white/65 hover:border-white/30'}`}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* NOTICE */}
+          <div>
+            <label className="text-[10px] uppercase tracking-[0.22em] font-mono font-bold text-[#C8961A] block mb-3">{t.quickFilters.notice}</label>
+            <div className="flex flex-wrap gap-2">
+              {t.noticeOptions.map(o=>(
+                <button key={o.k} onClick={()=>toggle('notice',o.k)} className={`chip px-3.5 py-1.5 border rounded-lg text-[10px] font-semibold ${filters.notice.includes(o.k)?'active':'bg-white/5 border-white/12 text-white/65 hover:border-white/30'}`}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-10 pt-6 border-t border-white/8">
+          <button onClick={()=>document.getElementById('listings')?.scrollIntoView({behavior:'smooth'})} className="flex-1 py-4 bg-gradient-to-r from-[#C8961A] to-[#E9C176] hover:from-[#E9C176] hover:to-[#C8961A] text-[#071422] rounded-xl text-[11px] font-bold uppercase tracking-[0.22em] shadow-lg shadow-[#C8961A]/30 transition-all duration-400 ease-silk flex items-center justify-center gap-2">
+            <I.Search className="w-4 h-4"/>
+            {t.searchBtn}
+          </button>
+          <button onClick={reset} className="px-8 py-4 bg-white/5 border border-white/15 hover:border-[#E63946] hover:text-[#E63946] text-white/70 rounded-xl text-[11px] font-bold uppercase tracking-[0.22em] transition-all duration-400 ease-silk flex items-center justify-center gap-2">
+            <I.X className="w-4 h-4"/>
+            {t.resetBtn}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SMART MAP ────────────────────────────────────────────────────────
+function SmartMap({t, isAr, list}) {
+  const [selected, setSelected] = useState(list[0] || INVENTORY[1]);
+  useEffect(()=>{ if (list.length && !list.find(p=>p.id===selected.id)) setSelected(list[0]); },[list]);
+
+  return (
+    <section id="smartmap" className="w-full bg-[#050B14] border-t border-white/5">
+      <div className="max-w-[1500px] mx-auto px-6 md:px-12 py-16">
+        <div className="text-center mb-10">
+          <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10">{t.secMap}</span>
+          <h2 className="font-serif text-3xl md:text-5xl text-[#F4F0E8] tracking-tight font-light mt-5">{t.mapH}</h2>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-0 rounded-3xl overflow-hidden border border-white/8 bg-[#071422] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+          <aside className="w-full lg:w-[380px] flex flex-col bg-[#071422] border-b lg:border-b-0 lg:border-r border-white/8">
+            <div className="p-6 border-b border-white/6">
+              <p className="text-[9px] uppercase tracking-[0.28em] font-mono font-bold text-[#C8961A]">Live Inventory</p>
+              <p className="font-serif text-base mt-1 text-[#F4F0E8]">{list.length} {isAr?'عقار مطابق':'matches'}</p>
+            </div>
+            <div className="flex-1 p-4 space-y-3 max-h-[560px] overflow-y-auto">
+              {list.length===0 ? (
+                <div className="text-center py-12 text-white/40 text-xs">{isAr?'لا توجد نتائج':'No matches. Adjust filters.'}</div>
+              ) : list.map(p=>{
+                const active = selected.id===p.id;
+                return (
+                  <button key={p.id} onClick={()=>setSelected(p)} className={`w-full text-left p-3 rounded-2xl border transition-all duration-400 ease-silk flex gap-4 ${active?'border-[#C8961A] bg-[#C8961A]/8':'border-white/8 hover:border-white/25 bg-white/3'}`}>
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#0A1628]">
+                      <img src={p.img} className="w-full h-full object-cover" alt="" />
+                    </div>
+                    <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+                      <div>
+                        <h4 className="text-sm font-bold font-serif text-[#F4F0E8] truncate">{isAr?p.priceAr:p.priceEn}</h4>
+                        <p className="text-[11px] text-white/45 font-medium truncate">{isAr?p.locAr:p.locEn}</p>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold tracking-[0.18em] uppercase text-[#C8961A]">{p.code}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          <div className="flex-1 min-h-[600px] bg-[#0D1E36] relative">
+            <div className="absolute inset-0 map-dots opacity-60"></div>
+            {/* Zones */}
+            <div className="absolute inset-0">
+              {[
+                {l:'Uptown Cairo',x:'25%',y:'40%',c:'#E63946'},
+                {l:'5th Settlement',x:'48%',y:'58%',c:'#7EA8B4'},
+                {l:'Madinaty',x:'70%',y:'30%',c:'#E9C176'},
+                {l:'Mountain View',x:'30%',y:'62%',c:'#4ECDC4'},
+                {l:'El Shorouk',x:'82%',y:'72%',c:'#C084FC'},
+              ].map((z,i)=>(
+                <div key={i} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{left:z.x, top:z.y}}>
+                  <div className="rounded-full" style={{width:120,height:120,background:`radial-gradient(circle, ${z.c}30 0%, transparent 70%)`}}></div>
+                  <span className="block -mt-16 text-[9px] uppercase tracking-[0.25em] font-mono font-bold" style={{color:z.c}}>{z.l}</span>
+                </div>
+              ))}
+            </div>
+            {list.map(p=>{
+              const x = 35 + ((p.lng - 31.3) * 90);
+              const y = 50 - ((p.lat - 30.0) * 110);
+              const active = selected && selected.id===p.id;
+              return (
+                <button key={p.id} onClick={()=>setSelected(p)} style={{left:`${Math.max(8,Math.min(92,x))}%`,top:`${Math.max(8,Math.min(92,y))}%`}}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-400 ease-silk">
+                  <div className={`px-3 py-1.5 rounded-full text-[11px] font-mono font-bold shadow-md flex items-center gap-1 transition-all duration-400 ease-silk border ${active?'bg-[#C8961A] text-[#071422] border-[#C8961A] scale-110':'bg-white/95 text-[#071422] border-white/20 hover:bg-[#C8961A] hover:text-[#071422]'}`}>
+                    <I.Pin className="w-3 h-3"/>
+                    <span>{(isAr?p.priceAr:p.priceEn).replace('EGP ','').replace('ج.م','')}</span>
+                  </div>
+                </button>
+              );
+            })}
+            {selected && (
+              <div className="absolute bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-80 bg-[#071422]/95 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-[#C8961A]/20 z-30">
+                <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-3 bg-[#0A1628]">
+                  <img src={selected.img} className="w-full h-full object-cover" alt=""/>
+                  <span className="absolute top-3 left-3 bg-[#071422]/95 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-mono font-bold text-[#C8961A]">{selected.code}</span>
+                  <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.18em] text-white" style={{background:selected.badgeColor}}>{isAr?selected.badgeAr:selected.badgeEn}</span>
+                </div>
+                <div className="flex justify-between items-start mb-3 px-1">
+                  <div className="min-w-0">
+                    <h4 className="font-serif text-base font-bold text-white truncate">{isAr?selected.priceAr:selected.priceEn}</h4>
+                    <p className="text-xs text-white/45 font-medium truncate">{selected.compound}</p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-1 bg-white/8 text-[#C8961A] rounded-full font-mono uppercase tracking-[0.16em] flex-shrink-0 border border-[#C8961A]/20">{selected.purpose}</span>
+                </div>
+                <button className="w-full py-3 bg-gradient-to-r from-[#C8961A] to-[#E9C176] hover:from-[#E9C176] hover:to-[#C8961A] text-[#071422] rounded-xl font-bold text-[10px] tracking-[0.2em] uppercase transition-colors shadow-sm">
+                  {isAr?'عرض ملف العقار':'View Property File'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── AI FEATURES ──────────────────────────────────────────────────────
+function AIFeatures({t}) {
+  return (
+    <section id="aifeatures" className="py-24 px-6 bg-[#050B14] relative overflow-hidden">
+      <div className="absolute inset-0 z-0 opacity-40"
+        style={{background:'radial-gradient(circle at 30% 50%, rgba(230,57,70,0.10) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(200,150,26,0.10) 0%, transparent 50%)'}}
+      />
+      <div className="max-w-[1500px] mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <span className="text-[#E63946] uppercase tracking-[0.28em] text-[10px] font-bold font-mono px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-[#E63946]/20">{t.secAI}</span>
+          <h2 className="font-serif text-3xl md:text-5xl text-[#F4F0E8] tracking-tight font-light mt-5">{t.aiH}</h2>
+          <p className="text-sm text-white/45 mt-3 font-light">{t.aiSub}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {t.aiF.map((f,i)=>{
+            const Icon = f.icon;
+            return (
+              <div key={i} className="group p-7 bg-gradient-to-br from-white/[0.04] to-transparent border border-white/8 hover:border-[#C8961A]/40 rounded-3xl lift backdrop-blur-md">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E63946]/20 to-[#C8961A]/20 border border-[#C8961A]/30 flex items-center justify-center mb-5 group-hover:from-[#C8961A]/30 group-hover:to-[#E9C176]/30 transition-all">
+                  <Icon className="w-5 h-5 text-[#C8961A]"/>
+                </div>
+                <h3 className="font-serif text-xl font-semibold text-[#F4F0E8] mb-2">{f.t}</h3>
+                <div className="w-8 h-[2px] bg-[#C8961A] mb-3"></div>
+                <p className="text-white/50 text-sm leading-relaxed font-light">{f.d}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── LISTINGS ─────────────────────────────────────────────────────────
+function Listings({t, isAr, list}) {
+  return (
+    <section id="listings" className="py-24 px-6 md:px-12 max-w-[1500px] mx-auto bg-[#071422]">
+      <div className="text-center mb-12">
+        <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono px-3 py-1 bg-white/5 rounded-full border border-white/10">{t.secListings}</span>
+        <h2 className="font-serif text-3xl md:text-5xl text-[#F4F0E8] tracking-tight font-light mt-5">{t.listingsH}</h2>
+        <p className="text-sm text-white/50 mt-3 font-mono"><span className="text-[#C8961A] font-bold">{list.length}</span> {t.matchesFound}</p>
+      </div>
+
+      {list.length===0 ? (
+        <div className="text-center py-24">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 border border-white/10 mb-4">
+            <I.Search className="w-6 h-6 text-white/40"/>
+          </div>
+          <p className="text-white/60 text-sm">{isAr?'لا توجد نتائج. عدّل الفلتر للحصول على مزيد من النتائج.':'No matches found. Adjust your smart filter to see more.'}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {list.map(p=>(
+            <article key={p.id} className="group bg-gradient-to-br from-white/[0.04] to-transparent rounded-[2rem] overflow-hidden border border-white/8 hover:border-[#C8961A]/40 lift cursor-pointer flex flex-col">
+              <div className="relative w-full h-[320px] overflow-hidden bg-[#0A1628]">
+                <img src={p.img} alt={p.compound} className="w-full h-full object-cover img-bloom"/>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#071422]/60 via-transparent to-transparent"></div>
+                <span className="absolute top-5 left-5 bg-[#071422]/85 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-mono font-bold text-[#C8961A] tracking-[0.18em] border border-[#C8961A]/20">{p.code}</span>
+                <span style={{background:p.badgeColor}} className="absolute top-5 right-5 text-white px-3 py-1 rounded-full text-[9px] font-sans font-bold tracking-[0.18em] uppercase">{isAr?p.badgeAr:p.badgeEn}</span>
+                <span className="absolute bottom-5 right-5 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl text-white border border-white/10 flex items-center gap-1.5 text-[11px] font-bold font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-glow"></span>
+                  AI {p.ai}
+                </span>
+              </div>
+              <div className="p-7 flex flex-col justify-between flex-1">
+                <div>
+                  <div className="flex justify-between items-start mb-2 gap-4">
+                    <h3 className="font-serif text-2xl lg:text-3xl font-semibold tracking-tight text-[#F4F0E8]">{isAr?p.priceAr:p.priceEn}</h3>
+                    <span className="text-white/40 text-xs font-light text-right whitespace-nowrap">{p.compound}</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-white/55 mb-5">{isAr?p.titleAr:p.titleEn}</h4>
+                  <div className="flex items-center gap-4 bg-white/[0.03] px-4 py-3 rounded-2xl border border-white/8">
+                    <div className="flex items-center gap-1.5"><I.Bed className="w-4 h-4 text-[#C8961A]"/><span className="text-xs font-bold text-white">{p.beds}</span><span className="text-[10px] text-white/40 uppercase tracking-wider hidden sm:inline">{t.beds}</span></div>
+                    <div className="w-px h-4 bg-white/10"></div>
+                    <div className="flex items-center gap-1.5"><I.Bath className="w-4 h-4 text-[#C8961A]"/><span className="text-xs font-bold text-white">{p.baths}</span><span className="text-[10px] text-white/40 uppercase tracking-wider hidden sm:inline">{t.baths}</span></div>
+                    <div className="w-px h-4 bg-white/10"></div>
+                    <div className="flex items-center gap-1.5"><I.Square className="w-4 h-4 text-[#C8961A]"/><span className="text-xs font-bold text-white">{p.area}m²</span></div>
+                    <div className="flex-1"></div>
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#E9C176]">{p.type}</span>
+                  </div>
+                </div>
+                <button className="w-full mt-5 py-4 bg-gradient-to-r from-[#C8961A] to-[#E9C176] hover:from-[#E9C176] hover:to-[#C8961A] text-[#071422] rounded-xl font-bold text-[10px] tracking-[0.22em] uppercase transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#C8961A]/20">
+                  {t.cardView}
+                  <I.Arrow className={`w-3.5 h-3.5 ${isAr?'rotate-180':''}`}/>
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── WHY ──────────────────────────────────────────────────────────────
+function Why({t}) {
+  return (
+    <section className="bg-[#050B14] py-24 px-6 border-t border-white/5">
+      <div className="max-w-[1500px] mx-auto">
+        <div className="text-center mb-16">
+          <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono">{t.secWhy}</span>
+          <h2 className="font-serif text-3xl md:text-5xl text-[#F4F0E8] font-light tracking-tight mt-3">{t.whyH}</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {t.why.map((it,i)=>(
+            <div key={i} className="p-8 bg-gradient-to-br from-white/[0.03] to-transparent border border-white/8 rounded-3xl lift">
+              <div className="text-3xl text-[#C8961A] mb-4">{it.icon}</div>
+              <h3 className="font-serif text-xl font-semibold text-[#F4F0E8] mb-3">{it.title}</h3>
+              <div className="w-8 h-[2px] bg-[#C8961A] mb-4"></div>
+              <p className="text-white/55 text-sm leading-relaxed font-light">{it.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── QUICK REQUEST ────────────────────────────────────────────────────
+function QuickRequest({t, isAr}) {
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({name:'', phone:'', budget:'', compound:''});
+
+  return (
+    <section id="quickrequest" className="py-24 px-6 bg-gradient-to-br from-[#071422] via-[#0A1628] to-[#0D1E36] relative overflow-hidden text-white border-t border-white/5">
+      <div className="absolute inset-0 z-0 opacity-40"
+        style={{background:'radial-gradient(circle at 50% 50%, rgba(230,57,70,0.12) 0%, transparent 60%)'}}
+      />
+      <div className="max-w-xl mx-auto relative z-10 text-center">
+        <span className="text-[#E63946] uppercase tracking-[0.28em] text-[10px] font-bold font-mono">{t.secQuick}</span>
+        <h2 className="font-serif text-3xl md:text-5xl font-light tracking-tight mt-3 mb-4">{t.quickH}</h2>
+        <p className="text-sm text-white/55 font-light mb-10 leading-relaxed">{t.quickSub}</p>
+
+        {submitted ? (
+          <div className="p-8 bg-white/5 border border-[#E63946]/30 rounded-2xl backdrop-blur-md">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#E63946]/20 flex items-center justify-center pulse-red">
+              <I.Check className="w-6 h-6 text-[#E63946]"/>
+            </div>
+            <p className="text-base font-serif text-[#E63946] mb-2">{isAr?'تم الإرسال':'Submission Received'}</p>
+            <p className="text-xs text-white/55 font-sans">{t.formSuccess}</p>
+          </div>
+        ) : (
+          <form onSubmit={(e)=>{e.preventDefault(); setSubmitted(true);}} className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input type="text" required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder={t.formName} className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-[#E63946] focus:bg-white/10 font-light text-sm transition-all text-white placeholder-white/30"/>
+              <input type="tel" required value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder={t.formPhone} className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-[#E63946] focus:bg-white/10 font-light text-sm transition-all text-white placeholder-white/30"/>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input type="text" value={form.budget} onChange={e=>setForm({...form,budget:e.target.value})} placeholder={t.formBudget} className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-[#E63946] focus:bg-white/10 font-light text-sm transition-all text-white placeholder-white/30"/>
+              <input type="text" value={form.compound} onChange={e=>setForm({...form,compound:e.target.value})} placeholder={t.formCompound} className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-[#E63946] focus:bg-white/10 font-light text-sm transition-all text-white placeholder-white/30"/>
+            </div>
+            <button type="submit" className="w-full py-4 bg-gradient-to-r from-[#E63946] to-[#B71C2C] hover:from-[#FF4D5A] hover:to-[#E63946] text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.22em] transition-all duration-400 ease-silk shadow-xl shadow-[#E63946]/30 active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
+              <I.Zap className="w-4 h-4"/>
+              {t.formSubmit}
+            </button>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── FOOTER ───────────────────────────────────────────────────────────
+function Footer({t}) {
+  return (
+    <footer className="bg-[#040E1C] text-white/50 py-20 px-6 text-center border-t border-[#C8961A]/15 relative overflow-hidden">
+      <div className="absolute inset-0 z-0 opacity-20"
+        style={{background:'radial-gradient(circle at 50% 100%, rgba(200,150,26,0.25) 0%, transparent 60%)'}}
+      />
+      <div className="max-w-[1500px] mx-auto flex flex-col items-center relative z-10">
+        <FooterLogo size={130}/>
+        <h2 className="font-serif text-3xl text-[#F4F0E8] font-light tracking-[0.18em] mt-6 gold-text">{t.brand}</h2>
+        <p className="text-[10px] tracking-[0.42em] uppercase text-[#C8961A] mt-2 mb-8 font-mono font-semibold">{t.tagline}</p>
+        <div className="w-full max-w-md h-px gold-rule opacity-40 mb-6"></div>
+        <p className="text-[10px] font-mono text-white/30 tracking-[0.18em] mb-2">{t.copyright}</p>
+        <p className="text-[9px] font-arabic text-[#C8961A]/60 tracking-wide">التميز العقاري برؤية ذكية</p>
+      </div>
+    </footer>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────
+function App() {
+  const [lang, setLang] = useState('en');
+  const isAr = lang === 'ar';
+  const t = DICT[lang];
+
+  const [filters, setFilters] = useState({
+    purpose:'ALL', types:[], compounds:[], beds:0, furnish:[],
+    budget:25000000, amenities:[], notice:[],
+  });
+
+  const filtered = useMemo(()=>{
+    return INVENTORY.filter(p=>{
+      if (filters.purpose!=='ALL' && p.purpose!==filters.purpose) return false;
+      if (filters.types.length && !filters.types.includes(p.type)) return false;
+      if (filters.compounds.length && !filters.compounds.includes(p.compoundKey)) return false;
+      if (filters.beds && p.beds < filters.beds) return false;
+      if (filters.furnish.length && !filters.furnish.includes(p.furnish)) return false;
+      if (p.price > filters.budget) return false;
+      if (filters.amenities.length && !filters.amenities.every(a=>p.amenities.includes(a))) return false;
+      if (filters.notice.length && !filters.notice.includes(p.notice)) return false;
+      return true;
+    });
+  },[filters]);
+
+  useEffect(()=>{
+    document.documentElement.dir = t.dir;
+    document.documentElement.lang = lang;
+  },[lang]);
+
+  return (
+    <div dir={t.dir} className="min-h-screen bg-[#050B14] text-[#F4F0E8] antialiased">
+      <Nav lang={lang} setLang={setLang} t={t}/>
+      <Hero t={t} isAr={isAr}/>
+      <SmartFilter t={t} isAr={isAr} filters={filters} setFilters={setFilters} matchCount={filtered.length}/>
+      <SmartMap t={t} isAr={isAr} list={filtered}/>
+      <AIFeatures t={t}/>
+      <Listings t={t} isAr={isAr} list={filtered}/>
+      <Why t={t}/>
+      <QuickRequest t={t} isAr={isAr}/>
+      <Footer t={t}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

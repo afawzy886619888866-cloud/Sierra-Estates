@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sierra estates Realty — Beyond Brokerage</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Jost:wght@200;300;400;500;600;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#071422}
+::-webkit-scrollbar-thumb{background:#C8961A;border-radius:2px}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulseRing{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(2);opacity:0}}
+@keyframes shimmerLine{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes goldShimmer{0%{background-position:0% center}100%{background-position:200% center}}
+@keyframes particleFloat{0%{opacity:0;transform:translateY(100px) scale(0)}10%{opacity:.7}90%{opacity:.3}100%{opacity:0;transform:translateY(-30px) scale(1.5)}}
+
+.gold-text{
+  background:linear-gradient(135deg,#E9C176 0%,#C8961A 40%,#F5D78E 70%,#987734 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;animation:goldShimmer 4s linear infinite;
+}
+.navlink{font-size:11px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;transition:color .25s;text-decoration:none}
+.diff-card{border-radius:14px;padding:32px 26px;transition:all .3s;cursor:default}
+.diff-card:hover{transform:translateY(-5px)}
+.zone-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:10px;cursor:pointer;transition:all .2s}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.1s}.reveal-d2{transition-delay:.2s}.reveal-d3{transition-delay:.3s}
+.card-img{overflow:hidden}
+.card-img img{transition:transform .6s cubic-bezier(.16,1,.3,1)}
+.prop-card:hover .card-img img{transform:scale(1.07)!important}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ════════════════════════════════════════
+   DESIGN TOKENS V2.0
+   ════════════════════════════════════════ */
+const G  = "#E9C176";   /* gold standard */
+const G2 = "#C8961A";   /* gold deep */
+const GR = "#D4821A";   /* gold warm-red edge */
+const GB = "#A89C50";   /* gold cool blue-tint */
+const NAVY = "#060D2E";
+
+const THEMES = {
+  dark:{
+    bg:"#060D2E", bg2:"#0A1547", bgAlt:"#040924",
+    surface:"rgba(255,255,255,0.04)", surfaceHover:"rgba(233,193,118,0.09)",
+    card:"#0C1A50", cardBorder:"rgba(233,193,118,0.12)",
+    border:"rgba(100,150,255,0.18)", borderHover:"rgba(233,193,118,0.45)",
+    text:"#EEF2FF", textSub:"rgba(220,228,255,0.65)", textMuted:"rgba(200,215,255,0.32)",
+    navBg:"rgba(6,13,46,0.97)", footerBg:"#030820",
+    heroBg:"#040924",
+  },
+  light:{
+    bg:"#E8F2FA", bg2:"#FFFFFF", bgAlt:"#D0E6F5",
+    surface:"rgba(6,13,46,0.04)", surfaceHover:"rgba(200,150,26,0.09)",
+    card:"#FFFFFF", cardBorder:"rgba(6,13,46,0.08)",
+    border:"rgba(6,13,46,0.10)", borderHover:"rgba(200,150,26,0.45)",
+    text:"#060D2E", textSub:"rgba(6,13,46,0.62)", textMuted:"rgba(6,13,46,0.36)",
+    navBg:"rgba(232,242,250,0.97)", footerBg:"#030820",
+    heroBg:"#D0E6F5",
+  }
+};
+
+/* ════════════════════════════════════════
+   TRANSLATIONS
+   ════════════════════════════════════════ */
+const COPY = {
+  en:{
+    dir:"ltr",brand:"sierra estates",sub:"REALTY",
+    tagline:"FIRST AI-POWERED ARABIC REAL ESTATE PLATFORM · FIFTH SETTLEMENT SPECIALISTS",
+    nav:["Properties","Intelligence","About","Contact"],
+    cta:"Enter Portal",
+    heroTag:"Beyond Brokerage",
+    heroH1:["Smarter","Decisions."],
+    heroItalic:"AI‑Driven.",
+    heroSub:"The Real in Real Estate",
+    heroDesc:"Exceptional homes, intelligently matched. We connect discerning investors with Egypt's finest properties — curated by humans, powered by AI.",
+    btnDiscover:"Explore Properties",
+    btnView:"Meet Sierra AI",
+    stats:[["1,200+","Properties"],["98%","Match Accuracy"],["8+","Compounds"],["4s","Avg. Response"]],
+    scroll:"Scroll",
+    secListings:"Exclusive Listings",
+    h2Listings:"Homes worth knowing.",
+    viewAll:"View All →",
+    searchType:"Property Type",
+    searchCompound:"Compound",
+    searchBudget:"Budget",
+    searchBtn:"Search Now",
+    pfBadge:"Property Finder",
+    beds:"bed",baths:"bath",
+    secWhy:"Why sierra estates",
+    h2Why:"The sierra estates Difference",
+    why:[
+      {icon:"◆",title:"Curated Selection",desc:"Every listing is personally vetted by our senior advisors. No overpriced inventory — only properties worth your attention."},
+      {icon:"◈",title:"Smart Investment",desc:"AI-driven ROI analysis, market comparison, and growth corridor mapping. Decisions backed by data, not guesswork."},
+      {icon:"◉",title:"Trusted Guidance",desc:"From first inquiry to final signature, a dedicated advisor who knows your goals and answers in 4 seconds."},
+    ],
+    bannerH:"Exceptional Homes, Intelligent Matching",
+    bannerSub:"منازل استثنائية، مطابقة ذكية",
+    bannerBtn:"View Properties",
+    secMap:"Market Intelligence",
+    mapH1:"New Cairo",mapH2:"Investment Map",
+    mapDesc:"Real-time data across New Cairo's premium zones. Track growth corridors, rental yields, and exclusive off-market signals.",
+    zones:[
+      {area:"Fifth Settlement",stat:"Growth +12%",color:"#4ECDC4"},
+      {area:"Madinaty",stat:"High Demand",color:G},
+      {area:"Mountain View",stat:"Yield 8%",color:"#7EA8B4"},
+      {area:"Mostakbal City",stat:"Off‑Market",color:"#C084FC"},
+    ],
+    mapBtn:"Explore AI Insights →",
+    secAI:"Meet Sierra",
+    aiH:"Your AI Real Estate Consultant",
+    aiSub:"First Official AI Real Estate Bot Consultant in Egypt",
+    aiDesc:"Sierra is always on — analyzing market data, answering your questions, and matching you with properties that fit your exact criteria. Start a conversation and see the difference intelligence makes.",
+    aiCTA:"Start on Telegram →",
+    aiFeatures:["Instant property matching","Market analytics & ROI","Arabic & English support","24/7 availability"],
+    aiChat:[
+      {from:"user",text:"Looking for a 4‑bed villa under 15M EGP in Fifth Settlement"},
+      {from:"bot",text:"Found 7 matching properties. Top pick: Villa Lumière — 5 beds, 480 m², EGP 14.2M. ROI: 8.3% annual yield. Shall I send the full report?"},
+    ],
+    secTesti:"Client Stories",
+    h2Testi:"What our clients say",
+    testimonials:[
+      {q:"Sierra matched me with a villa I hadn't even considered. The AI understood my investment criteria better than I explained them.",name:"Ahmed Fawzy",role:"Investor · Cairo",i:"AF"},
+      {q:"A question at 2am, answered in seconds. That's not service — that's a different category.",name:"Layla Hassan",role:"Buyer · Dubai",i:"LH"},
+      {q:"We found our compound home in 48 hours. The filtering, the data, the advisor — everything worked like it was built for us.",name:"Omar Mansour",role:"Family Buyer · Fifth Settlement",i:"OM"},
+    ],
+    ctaTag:"Find Your Place",
+    ctaH:"Find Your Place in New Cairo",
+    ctaSub:"Leave your details — a Sierra advisor reaches out within 4 seconds.",
+    formName:"Your name",formPhone:"Mobile number",formSubmit:"Get in Touch",
+    formSuccess:"Thank you! A Sierra advisor will reach out within 4 seconds.",
+    footDesc:"Beyond Brokerage. AI-powered real estate intelligence for discerning investors in New Cairo and beyond.",
+    footNav:"Navigation",footNavLinks:["Properties","Intelligence","About Us","Careers","Contact"],
+    footMarkets:"Markets",footMarketLinks:["New Cairo","Fifth Settlement","Madinaty","Mostakbal City","Mountain View"],
+    footContact:"Contact",
+    copyright:"© 2026 sierra estates Realty. All rights reserved.",
+    legal:["Privacy Policy","Terms of Service","Cookies"],
+  },
+  ar:{
+    dir:"rtl",brand:"سييرا بلو",sub:"للعقارات",
+    tagline:"أول منصة عقارية عربية مدعومة بالـ AI · متخصصة في بيع وإيجار التجمع الخامس",
+    nav:["العقارات","الذكاء","عنّا","اتصل"],
+    cta:"الدخول للبوابة",
+    heroTag:"أبعد من الوساطة",
+    heroH1:["قرارات","أذكى."],
+    heroItalic:"مدعومة بالـ AI.",
+    heroSub:"الحقيقي في العقارات",
+    heroDesc:"منازل استثنائية، مطابقة ذكية. نربط المستثمرين بأفخر عقارات مصر — منتقاة بشرياً، مدعومة بالذكاء الاصطناعي.",
+    btnDiscover:"اكتشف العقارات",
+    btnView:"تعرّف على سييرا",
+    stats:[["١٢٠٠+","عقار"],["٩٨٪","دقة المطابقة"],["٨+","كمباوند"],["٤ث","متوسط الرد"]],
+    scroll:"اسحب",
+    secListings:"قوائم حصرية",
+    h2Listings:"منازل تستحق الاهتمام.",
+    viewAll:"← عرض الكل",
+    searchType:"نوع العقار",
+    searchCompound:"الكمباوند",
+    searchBudget:"الميزانية",
+    searchBtn:"ابحث الآن",
+    pfBadge:"Property Finder",
+    beds:"غرف",baths:"حمامات",
+    secWhy:"لماذا سييرا بلو",
+    h2Why:"الفارق في سييرا بلو",
+    why:[
+      {icon:"◆",title:"اختيار منتقى",desc:"كل قائمة يراجعها مستشارونا الكبار شخصياً. لا مخزون مبالغ في سعره — فقط عقارات تستحق اهتمامك."},
+      {icon:"◈",title:"استثمار ذكي",desc:"تحليل عائد الاستثمار بالذكاء الاصطناعي، ومقارنة السوق، وخرائط ممرات النمو. قرارات مدعومة بالبيانات."},
+      {icon:"◉",title:"توجيه موثوق",desc:"من أول استفسار لآخر توقيع، مستشار مخصص يعرف أهدافك ويجيب خلال ٤ ثوانٍ."},
+    ],
+    bannerH:"منازل استثنائية، مطابقة ذكية",
+    bannerSub:"Exceptional Homes, Intelligent Matching",
+    bannerBtn:"عرض العقارات",
+    secMap:"ذكاء السوق",
+    mapH1:"القاهرة الجديدة",mapH2:"خريطة الاستثمار",
+    mapDesc:"بيانات فورية عبر مناطق الاستثمار المميزة في القاهرة الجديدة. تتبع ممرات النمو وعوائد الإيجار.",
+    zones:[
+      {area:"التجمع الخامس",stat:"نمو +١٢٪",color:"#4ECDC4"},
+      {area:"مدينتي",stat:"طلب مرتفع",color:G},
+      {area:"ماونتن فيو",stat:"عائد ٨٪",color:"#7EA8B4"},
+      {area:"مستقبل سيتي",stat:"خارج السوق",color:"#C084FC"},
+    ],
+    mapBtn:"← استكشف رؤى الذكاء الاصطناعي",
+    secAI:"تعرّف على سييرا",
+    aiH:"مستشارتك العقارية الذكية",
+    aiSub:"أول بوت استشاري عقاري رسمي بالذكاء الاصطناعي في مصر",
+    aiDesc:"سييرا تعمل على مدار الساعة — تحلل بيانات السوق، تجيب أسئلتك، وتطابقك مع عقارات تناسب معاييرك بالضبط.",
+    aiCTA:"ابدأ على تيليجرام ←",
+    aiFeatures:["مطابقة فورية للعقارات","تحليلات السوق وعائد الاستثمار","دعم عربي وإنجليزي","متاح ٢٤/٧"],
+    aiChat:[
+      {from:"user",text:"بدور على فيلا ٤ غرف أقل من ١٥م في التجمع الخامس"},
+      {from:"bot",text:"وجدت ٧ عقارات تطابق معاييرك. أفضل خيار: فيلا لوميير — ٥ غرف، ٤٨٠م²، ١٤.٢م ج.م. عائد: ٨.٣٪ سنوياً. أرسل لك التقرير الكامل؟"},
+    ],
+    secTesti:"قصص عملائنا",
+    h2Testi:"ماذا يقول عملاؤنا",
+    testimonials:[
+      {q:"سييرا طابقتني مع فيلا لم أكن لأفكر فيها. الذكاء الاصطناعي فهم معايير استثماري أفضل مما شرحتها.",name:"أحمد فوزي",role:"مستثمر · القاهرة",i:"AF"},
+      {q:"سؤال الساعة ٢ صباحاً، والرد في ثوانٍ. هذه ليست خدمة — هذه فئة مختلفة.",name:"ليلى حسن",role:"مشترية · دبي",i:"LH"},
+      {q:"وجدنا منزل الكمباوند في ٤٨ ساعة. التصفية، البيانات، المستشار — كل شيء عمل كأنه بُني لنا.",name:"عمر منصور",role:"مشتري عائلي · التجمع الخامس",i:"OM"},
+    ],
+    ctaTag:"ابحث عن مكانك",
+    ctaH:"ابحث عن مكانك في القاهرة الجديدة",
+    ctaSub:"اترك بياناتك — مستشار سييرا سيتواصل معك خلال ٤ ثوانٍ.",
+    formName:"اسمك",formPhone:"رقم الموبايل",formSubmit:"تواصل معنا",
+    formSuccess:"شكراً! مستشار سييرا سيتواصل معك خلال ٤ ثوانٍ.",
+    footDesc:"أبعد من الوساطة. ذكاء عقاري مدعوم بالذكاء الاصطناعي للمستثمرين في القاهرة الجديدة.",
+    footNav:"روابط التنقل",footNavLinks:["العقارات","الذكاء","عنّا","الوظائف","اتصل"],
+    footMarkets:"الأسواق",footMarketLinks:["القاهرة الجديدة","التجمع الخامس","مدينتي","مستقبل سيتي","ماونتن فيو"],
+    footContact:"تواصل معنا",
+    copyright:"© ٢٠٢٦ سييرا بلو للعقارات. جميع الحقوق محفوظة.",
+    legal:["سياسة الخصوصية","شروط الخدمة","ملفات الارتباط"],
+  }
+};
+
+/* ════════════════════════════════════════
+   PROPERTY DATA  (PF Integration ready)
+   ════════════════════════════════════════ */
+const LISTINGS = [
+  {id:1,title:"Aurora Penthouse",titleAr:"بنتهاوس أورورا",location:"Madinaty · New Cairo",locationAr:"مدينتي · القاهرة الجديدة",price:"EGP 8,500,000",beds:4,baths:3,sqft:"320 m²",badge:"Hidden Gem",badgeColor:"#7C3AED",pfId:"PF-10234",img:"https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=700&q=80"},
+  {id:2,title:"Villa Lumière",titleAr:"فيلا لوميير",location:"Mountain View · 5th Settlement",locationAr:"ماونتن فيو · التجمع الخامس",price:"EGP 14,200,000",beds:5,baths:4,sqft:"480 m²",badge:"Featured",badgeColor:"#C8961A",pfId:"PF-10235",img:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=700&q=80"},
+  {id:3,title:"The Boulevard",titleAr:"ذا بوليفار",location:"Mostakbal City · Future",locationAr:"مستقبل سيتي · المستقبل",price:"EGP 3,800,000",beds:3,baths:2,sqft:"185 m²",badge:"New",badgeColor:"#1B6CA8",pfId:"PF-10236",img:"https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=700&q=80"},
+  {id:4,title:"Emirates Crown",titleAr:"إيمارتس كراون",location:"Fifth Settlement · Cairo",locationAr:"التجمع الخامس · القاهرة",price:"EGP 22,000,000",beds:6,baths:5,sqft:"650 m²",badge:"Off Market",badgeColor:"#059669",pfId:"PF-10237",img:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=700&q=80"},
+  {id:5,title:"Palm Residences",titleAr:"بالم ريزيدنسز",location:"Madinaty · Block 7",locationAr:"مدينتي · بلوك ٧",price:"EGP 5,900,000",beds:3,baths:3,sqft:"240 m²",badge:"High ROI",badgeColor:"#DC2626",pfId:"PF-10238",img:"https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=700&q=80"},
+  {id:6,title:"Sky Tower Penthouse",titleAr:"بنتهاوس سكاي تاور",location:"Downtown New Cairo",locationAr:"وسط القاهرة الجديدة",price:"EGP 11,500,000",beds:4,baths:4,sqft:"380 m²",badge:"Price Reduced",badgeColor:"#D97706",pfId:"PF-10239",img:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=700&q=80"},
+];
+
+/* ════════════════════════════════════════
+   SHIELD LOGO SVG
+   ════════════════════════════════════════ */
+/* Real logo image — uses shield-only mark for nav/footer */
+function LogoMark({size=44,mode='light'}){
+  return(
+    <div style={{width:size,height:size,borderRadius:6,overflow:'hidden',flexShrink:0,background:mode==='dark'?'rgba(255,255,255,0.08)':'transparent',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <img src="assets/logo-main.png" alt="sierra estates" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>
+    </div>
+  );
+}
+
+function ShieldLogo({size=44}){
+  return(
+    <svg width={size} height={size*1.15} viewBox="0 0 120 138" fill="none">
+      <defs>
+        <linearGradient id="sbl-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#F5E070"/><stop offset="40%" stopColor="#D4AF37"/><stop offset="100%" stopColor="#A07820"/>
+        </linearGradient>
+        <linearGradient id="sbl-navy" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0A2545"/><stop offset="100%" stopColor="#000A20"/>
+        </linearGradient>
+        <linearGradient id="sbl-bldg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#D4AF37"/><stop offset="100%" stopColor="#8B6914"/>
+        </linearGradient>
+        <linearGradient id="sbl-ribbon" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stopColor="#D4AF37"/><stop offset="50%" stopColor="#F0D060"/><stop offset="100%" stopColor="#B8941A"/>
+        </linearGradient>
+        <clipPath id="sbl-clip"><path d="M60 8L106 25V78Q106 114 60 130Q14 114 14 78V25Z"/></clipPath>
+      </defs>
+      <path d="M60 2L112 21V79Q112 122 60 138Q8 122 8 79V21Z" fill="url(#sbl-gold)"/>
+      <path d="M60 8L106 25V78Q106 114 60 130Q14 114 14 78V25Z" fill="url(#sbl-navy)"/>
+      <g clipPath="url(#sbl-clip)">
+        <rect x="28" y="42" width="14" height="40" fill="rgba(255,255,255,0.2)" rx="1"/>
+        <rect x="78" y="46" width="14" height="36" fill="rgba(255,255,255,0.15)" rx="1"/>
+        <rect x="50" y="22" width="20" height="58" fill="url(#sbl-bldg)" rx="1"/>
+        <rect x="50" y="22" width="10" height="58" fill="rgba(255,255,255,0.15)" rx="1"/>
+        <rect x="53" y="28" width="5" height="6" fill="#071422" opacity="0.8" rx="0.5"/>
+        <rect x="62" y="28" width="5" height="6" fill="#E9C176" opacity="0.6" rx="0.5"/>
+        <rect x="53" y="37" width="5" height="6" fill="#071422" opacity="0.8" rx="0.5"/>
+        <rect x="62" y="37" width="5" height="6" fill="#E9C176" opacity="0.5" rx="0.5"/>
+        <rect x="53" y="46" width="5" height="6" fill="#071422" opacity="0.8" rx="0.5"/>
+      </g>
+      <path d="M14 100 Q35 84 58 72 Q80 58 108 46" stroke="url(#sbl-ribbon)" strokeWidth="9" fill="none" strokeLinecap="round" opacity="0.9"/>
+      <path d="M14 100 Q35 84 58 72 Q80 58 108 46" stroke="rgba(255,255,255,0.35)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      <path d="M103 40L111 46L103 52" stroke="url(#sbl-ribbon)" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M60 2L112 21V79Q112 122 60 138Q8 122 8 79V21Z" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
+    </svg>
+  );
+}
+
+/* ════════════════════════════════════════
+   PARTICLE CANVAS
+   ════════════════════════════════════════ */
+function ParticleCanvas(){
+  const ref=useRef();
+  useEffect(()=>{
+    const c=ref.current; if(!c)return;
+    const ctx=c.getContext('2d');
+    let W=c.width=c.offsetWidth,H=c.height=c.offsetHeight;
+    const pts=Array.from({length:60},()=>({x:Math.random()*W,y:H+Math.random()*H,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:-Math.random()*.6-.2,a:Math.random()*.5+.1}));
+    let raf;
+    const draw=()=>{
+      ctx.clearRect(0,0,W,H);
+      pts.forEach(p=>{
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(233,193,118,${p.a})`;ctx.fill();
+        p.x+=p.vx;p.y+=p.vy;
+        if(p.y<-10){p.y=H+10;p.x=Math.random()*W;}
+        if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      });
+      raf=requestAnimationFrame(draw);
+    };
+    draw();
+    const resize=()=>{W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;};
+    window.addEventListener('resize',resize);
+    return()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);};
+  },[]);
+  return <canvas ref={ref} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:1}}/>;
+}
+
+/* ════════════════════════════════════════
+   PROPERTY CARD
+   ════════════════════════════════════════ */
+function PropCard({p,T,th,delay=0}){
+  const [hov,setHov]=useState(false);
+  const isAr=T.dir==='rtl';
+  return(
+    <div className="prop-card reveal" style={{background:th.card,border:`1px solid ${hov?'rgba(233,193,118,0.35)':th.cardBorder}`,borderRadius:14,overflow:'hidden',cursor:'pointer',boxShadow:hov?`0 24px 56px rgba(0,0,0,0.35),0 0 30px rgba(233,193,118,0.12)`:`0 4px 24px rgba(0,0,0,0.15)`,transform:hov?'translateY(-6px)':'translateY(0)',transition:'all .3s cubic-bezier(.16,1,.3,1)',transitionDelay:`${delay}s`}}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}>
+      <div className="card-img" style={{height:200,position:'relative',background:'#0A1E35'}}>
+        <img src={p.img} alt={p.title} style={{width:'100%',height:'100%',objectFit:'cover',transform:hov?'scale(1.07)':'scale(1)'}}/>
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(transparent 40%,rgba(0,0,0,0.55))'}}/>
+        <span style={{position:'absolute',top:12,[isAr?'right':'left']:12,background:p.badgeColor,color:'#fff',fontSize:9,fontWeight:700,letterSpacing:'.08em',padding:'4px 10px',borderRadius:50,fontFamily:"'Jost',sans-serif",textTransform:'uppercase'}}>{p.badge}</span>
+        {p.pfId&&<span style={{position:'absolute',top:12,[isAr?'left':'right']:12,background:'rgba(0,48,135,0.85)',color:'#E9C176',fontSize:8,fontWeight:600,letterSpacing:'.06em',padding:'3px 8px',borderRadius:4,fontFamily:"'Jost',sans-serif",backdropFilter:'blur(4px)'}}>PF</span>}
+      </div>
+      <div style={{padding:'16px 18px 20px'}}>
+        <div style={{fontSize:9,fontWeight:500,letterSpacing:'.16em',textTransform:'uppercase',color:G,marginBottom:4,fontFamily:"'Jost',sans-serif"}}>{isAr?p.locationAr:p.location}</div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:600,color:th.text,lineHeight:1.2,marginBottom:8,textAlign:isAr?'right':'left'}}>{isAr?p.titleAr:p.title}</div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:G,marginBottom:10}}>{p.price}</div>
+        <div style={{display:'flex',gap:14,fontSize:11,color:th.textSub,fontFamily:"'Jost',sans-serif",paddingTop:12,borderTop:`1px solid ${th.border}`,flexDirection:isAr?'row-reverse':'row'}}>
+          <span>🛏 {p.beds} {T.beds}</span><span>🚿 {p.baths} {T.baths}</span><span>📐 {p.sqft}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   MAIN APP
+   ════════════════════════════════════════ */
+function App(){
+  const [mode,setMode]=useState('light');
+  const [lang,setLang]=useState('en');
+  const [scrolled,setScrolled]=useState(false);
+  const [loaded,setLoaded]=useState(false);
+  const [formData,setFormData]=useState({name:'',phone:''});
+  const [submitted,setSubmitted]=useState(false);
+  const [activeZone,setActiveZone]=useState(null);
+
+  const th=THEMES[mode];
+  const T=COPY[lang];
+  const isAr=lang==='ar';
+
+  useEffect(()=>{
+    document.documentElement.setAttribute('dir',T.dir);
+    document.documentElement.setAttribute('lang',lang);
+    document.body.style.background=th.bg;
+    document.body.style.color=th.text;
+    document.body.style.fontFamily=isAr?"'Cairo','Jost',sans-serif":"'Jost','Cairo',sans-serif";
+  },[mode,lang,th,T,isAr]);
+
+  useEffect(()=>{
+    const t=setTimeout(()=>setLoaded(true),80);
+    const onScroll=()=>setScrolled(window.scrollY>55);
+    window.addEventListener('scroll',onScroll);
+    return()=>{clearTimeout(t);window.removeEventListener('scroll',onScroll);};
+  },[]);
+
+  useEffect(()=>{
+    const obs=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+    },{threshold:.08});
+    document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+    return()=>obs.disconnect();
+  },[lang,mode]);
+
+  const sec={maxWidth:1280,margin:'0 auto',padding:'0 48px'};
+
+  /* ─ Gold divider ─ */
+  const GoldRule=()=><div style={{width:40,height:2,background:`linear-gradient(90deg,${G2},${G})`,borderRadius:1,margin:'14px 0'}}/>;
+
+  /* ─ Section label ─ */
+  const Label=({children})=><div style={{fontSize:10,fontWeight:500,letterSpacing:'.24em',textTransform:'uppercase',color:G,marginBottom:10,fontFamily:"'Jost',sans-serif"}}>{children}</div>;
+
+  /* ─ Btn gold ─ */
+  const BtnGold=({children,style,onClick})=>{
+    const [h,setH]=useState(false);
+    return <button onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{display:'inline-flex',alignItems:'center',gap:8,background:`linear-gradient(135deg,${G2},${G})`,color:'#071422',border:'none',cursor:'pointer',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",fontSize:11,fontWeight:700,letterSpacing:isAr?'.02em':'.14em',textTransform:'uppercase',padding:'12px 26px',borderRadius:4,boxShadow:h?`0 12px 36px rgba(233,193,118,0.40)`:`0 4px 20px rgba(233,193,118,0.25)`,transform:h?'translateY(-1px)':'none',transition:'all .22s',...style}}>{children}</button>;
+  };
+
+  /* ─ Btn ghost ─ */
+  const BtnGhost=({children,style})=>{
+    const [h,setH]=useState(false);
+    return <button onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{display:'inline-flex',alignItems:'center',gap:8,background:h?`rgba(233,193,118,0.08)`:'transparent',color:h?G:th.text,border:`1px solid ${h?G:th.border}`,cursor:'pointer',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",fontSize:11,fontWeight:500,letterSpacing:isAr?'.02em':'.14em',textTransform:'uppercase',padding:'11px 26px',borderRadius:4,transition:'all .22s',...style}}>{children}</button>;
+  };
+
+  return(
+    <div style={{minHeight:'100vh',background:th.bg,color:th.text,transition:'background .5s,color .5s'}}>
+
+      {/* ══ NAV ══ */}
+      <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:300,height:68,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 48px',background:scrolled?th.navBg:'transparent',backdropFilter:scrolled?'blur(20px)':'none',borderBottom:scrolled?`1px solid ${th.border}`:'1px solid transparent',transition:'all .4s cubic-bezier(.16,1,.3,1)'}}>
+        {/* Logo */}
+        <div style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
+          <LogoMark size={42} mode={mode}/>
+          <div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:isAr?16:18,fontWeight:600,letterSpacing:isAr?'.06em':'.2em',color:G,lineHeight:1}}>{T.brand}</div>
+            <div style={{fontFamily:"'Jost',sans-serif",fontSize:8,letterSpacing:'.38em',color:th.textSub,marginTop:2}}>{T.sub}</div>
+          </div>
+        </div>
+        {/* Links */}
+        <div style={{display:'flex',gap:32,alignItems:'center'}}>
+          {T.nav.map(n=>(
+            <span key={n} className="navlink" style={{color:th.textSub,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}
+              onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color=th.textSub}>{n}</span>
+          ))}
+        </div>
+        {/* Controls */}
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <button onClick={()=>setLang(l=>l==='en'?'ar':'en')} style={{background:th.surface,border:`1px solid ${th.border}`,color:G,padding:'6px 14px',borderRadius:4,fontSize:11,fontWeight:600,letterSpacing:'.1em',cursor:'pointer',fontFamily:"'Jost',sans-serif",transition:'all .2s'}}
+            onMouseOver={e=>{e.currentTarget.style.borderColor=G;}} onMouseOut={e=>{e.currentTarget.style.borderColor=th.border;}}
+          >{lang==='en'?'AR':'EN'}</button>
+          <button onClick={()=>setMode(m=>m==='dark'?'light':'dark')} style={{background:th.surface,border:`1px solid ${th.border}`,color:th.textSub,width:34,height:34,borderRadius:'50%',cursor:'pointer',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .2s'}}
+            onMouseOver={e=>e.currentTarget.style.borderColor=G} onMouseOut={e=>e.currentTarget.style.borderColor=th.border}
+          >{mode==='dark'?'☀':'🌙'}</button>
+          <BtnGhost style={{padding:'8px 18px',fontSize:10}}>{T.cta}</BtnGhost>
+        </div>
+      </nav>
+
+      {/* ══ HERO ══ */}
+      <section style={{position:'relative',minHeight:'100vh',display:'flex',alignItems:'center',overflow:'hidden',background:th.heroBg}}>
+        <div style={{position:'absolute',inset:0,backgroundImage:"url('https://images.unsplash.com/photo-1602941525421-8f8b81d3edbb?w=1800&q=80')",backgroundSize:'cover',backgroundPosition:'center 40%',transform:loaded?'scale(1)':'scale(1.06)',transition:'transform 2s cubic-bezier(.16,1,.3,1)',opacity:mode==='dark'?.55:.15}}/>
+        <div style={{position:'absolute',inset:0,background:mode==='dark'?'linear-gradient(105deg,rgba(5,11,20,.97) 0%,rgba(7,20,34,.85) 45%,rgba(5,11,20,.4) 100%)':'linear-gradient(105deg,rgba(240,245,252,.98) 0%,rgba(226,237,248,.95) 50%,rgba(240,245,252,.7) 100%)'}}/>
+        <ParticleCanvas/>
+        {/* Decorative rings */}
+        {[500,750,1000].map((sz,i)=>(
+          <div key={i} style={{position:'absolute',top:'50%',left:'50%',width:sz,height:sz,borderRadius:'50%',border:`1px solid rgba(233,193,118,${.06-i*.015})`,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:0}}/>
+        ))}
+
+        <div style={{...sec,position:'relative',zIndex:2,paddingTop:120,paddingBottom:80,width:'100%'}}>
+          <div style={{display:'grid',gridTemplateColumns:isAr?'45% 55%':'55% 45%',gap:56,alignItems:'center'}}>
+
+            {/* Content */}
+            <div style={{order:isAr?2:1}}>
+              <div style={{display:'inline-flex',alignItems:'center',gap:10,flexDirection:isAr?'row-reverse':'row',animation:loaded?'fadeUp .6s ease .1s both':'none'}}>
+                <div style={{width:28,height:1,background:G}}/>
+                <span style={{fontSize:10,letterSpacing:isAr?'.04em':'.28em',color:G,fontWeight:500,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{T.tagline}</span>
+              </div>
+
+              <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(44px,5.5vw,80px)',fontWeight:300,color:th.text,lineHeight:1.05,letterSpacing:'-0.02em',margin:'20px 0 16px',textAlign:isAr?'right':'left',animation:loaded?'fadeUp .7s ease .2s both':'none'}}>
+                {T.heroH1[0]}<br/>{T.heroH1[1]}<br/>
+                <em className="gold-text" style={{fontStyle:'italic'}}>{T.heroItalic}</em>
+              </h1>
+
+              <div style={{fontSize:isAr?14:13,letterSpacing:isAr?'.04em':'.18em',textTransform:'uppercase',color:G,fontWeight:500,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",marginBottom:18,animation:loaded?'fadeUp .7s ease .3s both':'none'}}>{T.heroSub}</div>
+
+              <p style={{fontSize:15,fontWeight:300,lineHeight:1.75,color:th.textSub,maxWidth:500,textAlign:isAr?'right':'left',marginBottom:32,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",animation:loaded?'fadeUp .7s ease .38s both':'none'}}>{T.heroDesc}</p>
+
+              <div style={{display:'flex',gap:12,flexDirection:isAr?'row-reverse':'row',marginBottom:48,animation:loaded?'fadeUp .7s ease .46s both':'none'}}>
+                <BtnGold>{T.btnDiscover}</BtnGold>
+                <BtnGhost>{T.btnView}</BtnGhost>
+              </div>
+
+              {/* Stats */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,background:mode==='dark'?'rgba(255,255,255,0.04)':'rgba(27,108,168,0.06)',border:`1px solid ${th.border}`,borderRadius:8,overflow:'hidden',backdropFilter:'blur(12px)',animation:loaded?'fadeUp .7s ease .56s both':'none'}}>
+                {T.stats.map(([val,lbl],i)=>(
+                  <div key={i} style={{textAlign:'center',padding:'18px 12px',borderRight:i<T.stats.length-1?`1px solid ${th.border}`:'none'}}>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:34,fontWeight:700,color:G,lineHeight:1}}>{val}</div>
+                    <div style={{fontSize:10,fontWeight:400,letterSpacing:isAr?'.02em':'.12em',textTransform:'uppercase',color:th.textMuted,marginTop:5,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{lbl}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Feature card stack */}
+            <div style={{order:isAr?1:2,position:'relative',height:520,animation:loaded?'fadeUp .9s ease .45s both':'none'}}>
+              <div style={{position:'absolute',top:0,right:0,left:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div style={{opacity:mode==='dark'?.03:.025,animation:'floatY 6s ease-in-out infinite',pointerEvents:'none'}}>
+                  <ShieldLogo size={340}/>
+                </div>
+              </div>
+              {/* Stacked cards */}
+              {[{off:2,op:.4},{off:1,op:.65},{off:0}].map(({off,op},idx)=>(
+                <div key={idx} style={{position:'absolute',top:off*20,left:off*20,right:-(off*20),bottom:-(off*20),background:off===0?th.card:th.surface,borderRadius:18,overflow:off===0?'hidden':'none',border:off>0?`1px solid ${th.border}`:undefined,opacity:op||1,boxShadow:off===0?`0 40px 80px rgba(0,0,0,.4)`:undefined,zIndex:3-off}}>
+                  {off===0&&<>
+                    <img src={LISTINGS[1].img} alt="" style={{width:'100%',height:'62%',objectFit:'cover'}}/>
+                    <div style={{position:'absolute',top:12,left:12,background:G2,color:'#fff',fontSize:9,fontWeight:700,letterSpacing:'.08em',padding:'4px 10px',borderRadius:50,fontFamily:"'Jost',sans-serif",textTransform:'uppercase'}}>{LISTINGS[1].badge}</div>
+                    <div style={{padding:'18px 22px'}}>
+                      <div style={{fontSize:10,fontWeight:500,letterSpacing:'.14em',textTransform:'uppercase',color:G,marginBottom:4,fontFamily:"'Jost',sans-serif"}}>{isAr?LISTINGS[1].locationAr:LISTINGS[1].location}</div>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:600,color:th.text,marginBottom:8}}>{isAr?LISTINGS[1].titleAr:LISTINGS[1].title}</div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:700,color:G}}>{LISTINGS[1].price}</span>
+                        <span style={{fontSize:11,color:th.textMuted,fontFamily:"'Jost',sans-serif"}}>{LISTINGS[1].beds} {T.beds} · {LISTINGS[1].baths} {T.baths}</span>
+                      </div>
+                    </div>
+                  </>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll hint */}
+        <div style={{position:'absolute',bottom:28,left:'50%',transform:'translateX(-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:6,opacity:.4,zIndex:2}}>
+          <span style={{fontSize:9,letterSpacing:'.24em',textTransform:'uppercase',color:th.textMuted,fontFamily:"'Jost',sans-serif"}}>{T.scroll}</span>
+          <div style={{width:1,height:32,background:`linear-gradient(180deg,${G},transparent)`,animation:'shimmerLine 2s infinite'}}/>
+        </div>
+      </section>
+
+      {/* ══ SEARCH + LISTINGS ══ */}
+      <section style={{background:mode==='dark'?'#050B14':'#F8FAFF',padding:'80px 0'}}>
+        <div style={sec}>
+          <div className="reveal" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:40,flexWrap:'wrap',gap:16,flexDirection:isAr?'row-reverse':'row'}}>
+            <div style={{textAlign:isAr?'right':'left'}}>
+              <Label>{T.secListings}</Label>
+              <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,4vw,52px)',fontWeight:300,lineHeight:1.1,letterSpacing:'-0.02em',color:th.text}}>{T.h2Listings}</h2>
+            </div>
+            <BtnGhost style={{padding:'9px 20px',fontSize:10}}>{T.viewAll}</BtnGhost>
+          </div>
+
+          {/* Search bar */}
+          <div className="reveal reveal-d1" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:0,background:mode==='dark'?'#0A1E35':'#FFFFFF',border:`1px solid ${th.border}`,borderRadius:8,overflow:'hidden',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',marginBottom:40}}>
+            {[{label:T.searchType,opts:isAr?['شقة','فيلا','دوبلكس','بنتهاوس']:['Apartment','Villa','Duplex','Penthouse']},{label:T.searchCompound,opts:isAr?['التجمع الخامس','مدينتي','ماونتن فيو','مستقبل']:['Fifth Settlement','Madinaty','Mountain View','Mostakbal']},{label:T.searchBudget,opts:isAr?['أقل من ٥م','٥م–١٠م','١٠م–٢٠م','أكثر من ٢٠م']:['Under 5M EGP','5–10M EGP','10–20M EGP','20M+ EGP']}].map((seg,i)=>(
+              <div key={i} style={{padding:'14px 18px',borderRight:`1px solid ${th.border}`}}>
+                <div style={{fontSize:9,fontWeight:500,letterSpacing:'.16em',textTransform:'uppercase',color:th.textMuted,marginBottom:3,fontFamily:"'Jost',sans-serif"}}>{seg.label}</div>
+                <select style={{background:'transparent',border:'none',outline:'none',color:th.text,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",fontSize:13,fontWeight:300,width:'100%',cursor:'pointer'}}>
+                  {seg.opts.map(o=><option key={o}>{o}</option>)}
+                </select>
+              </div>
+            ))}
+            <BtnGold style={{borderRadius:0,padding:'0 28px',margin:0,fontSize:11}}>{T.searchBtn}</BtnGold>
+          </div>
+
+          {/* Listings grid */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:22}}>
+            {LISTINGS.map((p,i)=><PropCard key={p.id} p={p} T={T} th={th} delay={i*.08}/>)}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ WHY sierra estates ══ */}
+      <section style={{background:th.bg,padding:'96px 0',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',opacity:mode==='dark'?.025:.02,pointerEvents:'none'}}>
+          <ShieldLogo size={600}/>
+        </div>
+        <div style={{...sec,position:'relative',zIndex:2}}>
+          <div className="reveal" style={{textAlign:'center',marginBottom:60}}>
+            <Label>{T.secWhy}</Label>
+            <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,4vw,52px)',fontWeight:300,lineHeight:1.1,letterSpacing:'-0.02em',color:th.text}}>{T.h2Why}</h2>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:22}}>
+            {T.why.map((w,i)=>(
+              <div key={i} className={`diff-card reveal reveal-d${i+1}`} style={{background:th.surface,border:`1px solid ${th.border}`,textAlign:isAr?'right':'left'}}>
+                <div style={{fontSize:28,color:G,marginBottom:16,fontFamily:"'Cormorant Garamond',serif"}}>{w.icon}</div>
+                <h3 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:500,color:th.text,marginBottom:10}}>{w.title}</h3>
+                <div style={{width:36,height:2,background:`linear-gradient(90deg,${G2},${G})`,borderRadius:1,marginBottom:14,marginLeft:isAr?'auto':0}}/>
+                <p style={{fontSize:13,fontWeight:300,lineHeight:1.8,color:th.textSub,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{w.desc}</p>
+              </div>
+            ))}
+          </div>
+          {/* Banner */}
+          <div className="reveal reveal-d3" style={{marginTop:56,padding:'30px 40px',background:`linear-gradient(130deg,rgba(233,193,118,0.10),rgba(233,193,118,0.04))`,border:`1px solid rgba(233,193,118,0.22)`,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'space-between',flexDirection:isAr?'row-reverse':'row',flexWrap:'wrap',gap:20}}>
+            <div style={{textAlign:isAr?'right':'left'}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:400,color:th.text,marginBottom:4}}>{T.bannerH}</div>
+              <div style={{fontSize:12,color:`rgba(233,193,118,0.7)`,fontFamily:isAr?"'Jost',sans-serif":"'Cairo',sans-serif"}}>{T.bannerSub}</div>
+            </div>
+            <BtnGold>{T.bannerBtn}</BtnGold>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ INTELLIGENCE MAP ══ */}
+      <section style={{background:mode==='dark'?'#040E1C':'#D8E8F6',padding:'96px 0'}}>
+        <div style={sec}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:72,alignItems:'center'}}>
+            <div style={{order:isAr?2:1}}>
+              <div className="reveal" style={{textAlign:isAr?'right':'left'}}>
+                <Label>{T.secMap}</Label>
+                <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,3.5vw,48px)',fontWeight:300,lineHeight:1.15,letterSpacing:'-0.02em',color:th.text,marginBottom:10}}>
+                  {T.mapH1}<br/><em className="gold-text" style={{fontStyle:'italic'}}>{T.mapH2}</em>
+                </h2>
+                <GoldRule/>
+                <p style={{fontSize:14,fontWeight:300,lineHeight:1.8,color:th.textSub,marginBottom:24,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{T.mapDesc}</p>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {T.zones.map((z,i)=>(
+                  <div key={i} className={`zone-row reveal reveal-d${i+1}`} style={{background:activeZone===i?th.surfaceHover:th.surface,border:`1px solid ${activeZone===i?z.color+'44':th.border}`,flexDirection:isAr?'row-reverse':'row',transition:'all .2s'}} onClick={()=>setActiveZone(activeZone===i?null:i)}>
+                    <div style={{width:8,height:8,borderRadius:'50%',background:z.color,flexShrink:0,boxShadow:`0 0 8px ${z.color}88`}}/>
+                    <div style={{flex:1,fontSize:13,fontWeight:500,color:th.text,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",textAlign:isAr?'right':'left'}}>{z.area}</div>
+                    <span style={{fontSize:11,fontWeight:600,color:z.color,background:`${z.color}18`,padding:'3px 10px',borderRadius:50,fontFamily:"'Jost',sans-serif",whiteSpace:'nowrap'}}>{z.stat}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="reveal reveal-d3" style={{marginTop:24}}>
+                <BtnGhost style={{width:'100%',justifyContent:'center'}}>{T.mapBtn}</BtnGhost>
+              </div>
+            </div>
+            {/* Map visual */}
+            <div className="reveal reveal-d2" style={{order:isAr?1:2}}>
+              <div style={{position:'relative',background:mode==='dark'?'rgba(4,14,28,.9)':'rgba(239,248,247,.9)',border:`1px solid rgba(233,193,118,0.2)`,borderRadius:16,overflow:'hidden',boxShadow:`0 32px 80px rgba(0,0,0,.4)`,aspectRatio:'1.05'}}>
+                <svg viewBox="0 0 500 476" style={{width:'100%',height:'100%'}}>
+                  <defs>
+                    <pattern id="mg2" width="28" height="28" patternUnits="userSpaceOnUse">
+                      <path d="M28 0L0 0 0 28" fill="none" stroke={G} strokeWidth=".25" opacity=".2"/>
+                    </pattern>
+                    <radialGradient id="mgr2" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor={G} stopOpacity=".06"/>
+                      <stop offset="100%" stopColor={G} stopOpacity="0"/>
+                    </radialGradient>
+                    <filter id="pin-glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  </defs>
+                  <rect width="500" height="476" fill="url(#mg2)"/>
+                  <rect width="500" height="476" fill="url(#mgr2)"/>
+                  {[[190,20,190,456],[70,160,430,160],[70,250,430,250],[290,40,290,430]].map(([x1,y1,x2,y2],i)=>(
+                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={`rgba(233,193,118,0.15)`} strokeWidth="1"/>
+                  ))}
+                  {[{cx:150,cy:180,name:'Fifth Settlement',stat:'Growth +12%'},{cx:310,cy:140,name:'Madinaty',stat:'High Demand'},{cx:225,cy:265,name:'Mountain View',stat:'Yield 8%'},{cx:375,cy:240,name:'Mostakbal City',stat:'Off‑Market'}].map((pin,i)=>(
+                    <g key={i} style={{cursor:'pointer'}}>
+                      <circle cx={pin.cx} cy={pin.cy} r="18" fill="none" stroke={G} strokeWidth="1" opacity=".25" style={{animation:`pulseRing 2.5s ${i*.5}s infinite`}}/>
+                      <circle cx={pin.cx} cy={pin.cy} r="7" fill={G} filter="url(#pin-glow)"/>
+                      <circle cx={pin.cx} cy={pin.cy} r="3" fill="#fff"/>
+                      <rect x={pin.cx-52} y={pin.cy-50} width="104" height="36" rx="6" fill={mode==='dark'?'rgba(4,14,28,.92)':'rgba(239,248,247,.95)'} stroke={`rgba(233,193,118,0.4)`} strokeWidth="1"/>
+                      <text x={pin.cx} y={pin.cy-33} textAnchor="middle" fill={th.text} fontSize="9" fontFamily="'Jost',sans-serif" fontWeight="600">{pin.name}</text>
+                      <text x={pin.cx} y={pin.cy-20} textAnchor="middle" fill={G} fontSize="8.5" fontFamily="'Jost',sans-serif">{pin.stat}</text>
+                    </g>
+                  ))}
+                  <text x="250" y="462" textAnchor="middle" fill={`rgba(233,193,118,0.2)`} fontSize="9" fontFamily="'Jost',sans-serif" letterSpacing="4">sierra estates INTELLIGENCE</text>
+                </svg>
+                {/* Corner brackets */}
+                {[{top:12,left:12},{top:12,right:12},{bottom:12,left:12},{bottom:12,right:12}].map((pos,i)=>(
+                  <div key={i} style={{position:'absolute',width:18,height:18,...pos,borderTop:i<2?`2px solid rgba(233,193,118,0.5)`:undefined,borderBottom:i>=2?`2px solid rgba(233,193,118,0.5)`:undefined,borderLeft:i%2===0?`2px solid rgba(233,193,118,0.5)`:undefined,borderRight:i%2!==0?`2px solid rgba(233,193,118,0.5)`:undefined}}/>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SIERRA AI ══ */}
+      <section style={{padding:'96px 0',background:mode==='dark'?`linear-gradient(135deg,#050B14 0%,#071422 50%,#0D2444 100%)`:`linear-gradient(135deg,#E2EDF8 0%,#F0F5FC 50%,#F8FAFF 100%)`,borderTop:`1px solid ${th.border}`,borderBottom:`1px solid ${th.border}`}}>
+        <div style={sec}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:80,alignItems:'center'}}>
+            <div className="reveal" style={{textAlign:isAr?'right':'left',order:isAr?2:1}}>
+              <Label>{T.secAI}</Label>
+              <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,4vw,48px)',fontWeight:300,lineHeight:1.1,letterSpacing:'-0.02em',color:th.text,marginBottom:10}}>{T.aiH}</h2>
+              <div style={{fontSize:11,fontWeight:500,letterSpacing:'.1em',color:'#1B6CA8',textTransform:'uppercase',marginBottom:16,fontFamily:"'Jost',sans-serif"}}>{T.aiSub}</div>
+              <GoldRule/>
+              <p style={{fontSize:14,fontWeight:300,lineHeight:1.8,color:th.textSub,margin:'16px 0 24px',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{T.aiDesc}</p>
+              <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:28}}>
+                {T.aiFeatures.map((f,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:10,fontSize:13,color:th.textSub,flexDirection:isAr?'row-reverse':'row',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>
+                    <div style={{width:6,height:6,borderRadius:'50%',background:G,flexShrink:0}}/>
+                    {f}
+                  </div>
+                ))}
+              </div>
+              <BtnGold>{T.aiCTA}</BtnGold>
+            </div>
+
+            {/* Bot card */}
+            <div className="reveal reveal-d2" style={{order:isAr?1:2}}>
+              <div style={{background:mode==='dark'?'rgba(255,255,255,0.04)':'rgba(27,108,168,0.05)',border:`1px solid rgba(233,193,118,0.25)`,borderRadius:16,padding:28,backdropFilter:'blur(12px)',boxShadow:`0 0 40px rgba(233,193,118,0.12)`}}>
+                <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:22}}>
+                  <div style={{width:50,height:50,borderRadius:'50%',background:`linear-gradient(135deg,${G2},${G})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
+                    ◈
+                    <div style={{position:'absolute',inset:-4,borderRadius:'50%',border:`1px solid ${G}`,animation:'pulseRing 2s infinite'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:500,color:th.text}}>Sierra</div>
+                    <div style={{fontSize:11,color:'#4ADE80',marginTop:2,fontFamily:"'Jost',sans-serif"}}>● Online · 4s avg. response</div>
+                  </div>
+                </div>
+                {T.aiChat.map((msg,i)=>(
+                  <div key={i} style={{display:'flex',justifyContent:msg.from==='user'?'flex-end':'flex-start',marginBottom:10}}>
+                    <div style={{maxWidth:'80%',padding:'10px 14px',borderRadius:12,fontSize:13,fontWeight:300,lineHeight:1.55,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",background:msg.from==='user'?`linear-gradient(135deg,${G2},${G})`:'var(--surface, rgba(255,255,255,0.06))',color:msg.from==='user'?'#071422':th.text,border:msg.from==='user'?'none':`1px solid ${th.border}`}}>{msg.text}</div>
+                  </div>
+                ))}
+                <div style={{textAlign:'center',marginTop:16,fontSize:11,color:th.textMuted,fontFamily:"'Jost',sans-serif"}}>
+                  🤖 AI-powered · 24/7 · Arabic & English
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ TESTIMONIALS ══ */}
+      <section style={{background:th.bg,padding:'96px 0'}}>
+        <div style={sec}>
+          <div className="reveal" style={{textAlign:'center',marginBottom:52}}>
+            <Label>{T.secTesti}</Label>
+            <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,4vw,48px)',fontWeight:300,lineHeight:1.1,letterSpacing:'-0.02em',color:th.text}}>{T.h2Testi}</h2>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:22}}>
+            {T.testimonials.map((t,i)=>(
+              <div key={i} className={`reveal reveal-d${i+1}`} style={{padding:28,background:th.card,border:`1px solid ${th.cardBorder}`,borderRadius:14,boxShadow:'0 4px 24px rgba(0,0,0,0.1)'}}>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:48,color:G,lineHeight:.7,marginBottom:16}}>"</div>
+                <p style={{fontSize:14,fontWeight:300,lineHeight:1.8,color:th.textSub,marginBottom:20,fontStyle:'italic',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{t.q}</p>
+                <div style={{display:'flex',alignItems:'center',gap:12,flexDirection:isAr?'row-reverse':'row'}}>
+                  <div style={{width:40,height:40,borderRadius:'50%',background:`linear-gradient(135deg,${G2},${G})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'#071422',flexShrink:0}}>{t.i}</div>
+                  <div style={{textAlign:isAr?'right':'left'}}>
+                    <div style={{fontSize:14,fontWeight:500,color:th.text,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{t.name}</div>
+                    <div style={{fontSize:11,color:th.textMuted,fontFamily:"'Jost',sans-serif"}}>{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ CTA FORM ══ */}
+      <section style={{padding:'96px 0',background:mode==='dark'?'linear-gradient(135deg,#050B14,#071422)':'linear-gradient(135deg,#F0F5FC,#E2EDF8)',borderTop:`1px solid ${th.border}`}}>
+        <div style={{...sec,maxWidth:600}}>
+          <div className="reveal" style={{textAlign:'center',marginBottom:40}}>
+            <Label>{T.ctaTag}</Label>
+            <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,4vw,48px)',fontWeight:300,lineHeight:1.15,letterSpacing:'-0.02em',color:th.text,marginBottom:12}}>{T.ctaH}</h2>
+            <p style={{fontSize:14,fontWeight:300,color:th.textSub,lineHeight:1.7,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{T.ctaSub}</p>
+          </div>
+          <div className="reveal reveal-d1">
+            {submitted?(
+              <div style={{textAlign:'center',padding:40,background:mode==='dark'?'rgba(233,193,118,0.08)':'rgba(233,193,118,0.14)',border:`1px solid rgba(233,193,118,0.3)`,borderRadius:12}}>
+                <div style={{fontSize:40,marginBottom:12}}>✓</div>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,color:G,marginBottom:8}}>{lang==='en'?'Thank you!':'شكراً!'}</div>
+                <p style={{fontSize:14,color:th.textSub,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{T.formSuccess}</p>
+              </div>
+            ):(
+              <form onSubmit={e=>{e.preventDefault();setSubmitted(true);}} style={{display:'flex',flexDirection:'column',gap:14}}>
+                {[{key:'name',label:T.formName,type:'text'},{key:'phone',label:T.formPhone,type:'tel'}].map(f=>(
+                  <input key={f.key} type={f.type} required placeholder={f.label} value={formData[f.key]} onChange={e=>setFormData({...formData,[f.key]:e.target.value})} style={{background:th.card,border:`1px solid ${th.border}`,borderRadius:6,padding:'13px 16px',color:th.text,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",fontSize:14,fontWeight:300,outline:'none',transition:'border-color .2s',textAlign:isAr?'right':'left'}}
+                    onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=th.border}/>
+                ))}
+                <BtnGold style={{justifyContent:'center',padding:'14px'}}>{T.formSubmit}</BtnGold>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ FOOTER ══ */}
+      <footer style={{background:mode==='dark'?'#040E1C':'#040E1C',color:'#EFF8F7',padding:'72px 0 36px',borderTop:`1px solid rgba(233,193,118,0.12)`}}>
+        <div style={sec}>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:60,marginBottom:48}}>
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16,flexDirection:isAr?'row-reverse':'row'}}>
+                <LogoMark size={42} mode='dark'/>
+                <div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:isAr?16:19,fontWeight:600,letterSpacing:isAr?'.06em':'.2em',color:G}}>{T.brand}</div>
+                  <div style={{fontSize:8,letterSpacing:'.38em',color:'rgba(239,248,247,0.4)',fontFamily:"'Jost',sans-serif"}}>{T.sub}</div>
+                </div>
+              </div>
+              <p style={{fontSize:13,fontWeight:300,lineHeight:1.8,color:'rgba(239,248,247,0.4)',maxWidth:280,fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif",textAlign:isAr?'right':'left'}}>{T.footDesc}</p>
+            </div>
+            {[{title:T.footNav,links:T.footNavLinks},{title:T.footMarkets,links:T.footMarketLinks}].map(col=>(
+              <div key={col.title} style={{textAlign:isAr?'right':'left'}}>
+                <div style={{fontSize:9,fontWeight:500,letterSpacing:'.22em',color:G,marginBottom:16,fontFamily:"'Jost',sans-serif"}}>{col.title}</div>
+                {col.links.map(l=>(
+                  <div key={l} style={{fontSize:12,fontWeight:300,color:'rgba(239,248,247,0.4)',marginBottom:10,cursor:'pointer',transition:'color .2s',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}
+                    onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color='rgba(239,248,247,0.4)'}>{l}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div style={{borderTop:'1px solid rgba(239,248,247,0.06)',paddingTop:24,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,flexDirection:isAr?'row-reverse':'row'}}>
+            <div style={{fontSize:11,fontWeight:300,color:'rgba(239,248,247,0.25)',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}>{T.copyright}</div>
+            <div style={{display:'flex',gap:20}}>
+              {T.legal.map(l=>(
+                <span key={l} style={{fontSize:11,fontWeight:300,color:'rgba(239,248,247,0.25)',cursor:'pointer',transition:'color .2s',fontFamily:isAr?"'Cairo',sans-serif":"'Jost',sans-serif"}}
+                  onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color='rgba(239,248,247,0.25)'}>{l}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

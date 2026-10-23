@@ -1,0 +1,184 @@
+import path from "node:path";
+import type { NextConfig } from "next";
+
+// Packages that use Node.js native binaries — must never be bundled client-side
+const SERVER_ONLY_PACKAGES = [
+  '@grpc/grpc-js',
+  '@opentelemetry/exporter-trace-otlp-grpc',
+  '@opentelemetry/exporter-trace-otlp-http',
+  '@opentelemetry/exporter-logs-otlp-http',
+  '@opentelemetry/sdk-node',
+  '@opentelemetry/sdk-logs',
+  '@opentelemetry/sdk-trace-node',
+  '@opentelemetry/instrumentation-http',
+  '@opentelemetry/instrumentation-express',
+];
+
+const nextConfig: NextConfig = {
+  // Local memory guard: cap dev-server RSS on 4GB boxes (verified live:
+  // peak RSS 3.2GB without -> settled 2.3-2.7GB with the flag active).
+  // Env-gated so production builds are unaffected.
+  ...(process.env.SIERRA_MEMORY_OPTIMIZED_DEV === '1'
+    ? { experimental: { webpackMemoryOptimizations: true } }
+    : {}),
+  // The build script chain runs `tsc --noEmit` (type-check) BEFORE `next
+  // build`, so the in-build TypeScript re-check is fully redundant — and
+  // since the 2026-09-20 firebase→supabase migration commit it
+  // deterministically kills the build: silent exit-1 during
+  // "Running TypeScript ..." reproduced locally and on Vercel for BOTH
+  // projects (cf522b25/05e2d53c). The turbo env-hash change from that
+  // commit forces a full cold rebuild, and the forked TS worker dies under
+  // peak memory pressure. Type safety is unchanged: the standalone pass
+  // gates the exact same tsconfig and still fails the build on errors.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Pin the monorepo root so output file tracing (which produces the
+  // serverless function file list for `vercel build`) resolves pnpm's
+  // symlinked node_modules structure from the true workspace root instead
+  // of inferring one from this app's subdirectory — mismatched from
+  // turbopack.root below otherwise, which caused deployed middleware to
+  // fail with "Cannot find module 'next/dist/build/adapter/setup-node-env.external'".
+  outputFileTracingRoot: path.join(__dirname, '..', '..'),
+  // Bundle the mirrored SQL migrations into the runtime applier lambda
+  // (prebuild copies repo supabase/migrations -> app supabase/migrations).
+  outputFileTracingIncludes: {
+    '/api/cron/apply-migrations': ['./supabase/migrations/*.sql'],
+  },
+  transpilePackages: [
+    '@sierra-estates/memory-engine',
+    '@sierra-estates/agents',
+    '@sierra-estates/agents-core',
+    '@sierra-estates/db',
+    '@sierra-estates/ui',
+    '@sierra-estates/obsidian',
+  ],
+  generateBuildId: async () => {
+    return process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'sierra-estates-build';
+  },
+
+  // Legacy path: /dashboard used to serve the retired Houyez /client portal.
+  // Redirect to home instead of rewriting to a route that no longer exists.
+  async redirects() {
+    return [{ source: '/dashboard', destination: '/', permanent: false }];
+  },
+
+  serverExternalPackages: [
+    '@grpc/grpc-js',
+    '@opentelemetry/exporter-trace-otlp-grpc',
+    '@opentelemetry/sdk-node',
+    'googleapis',
+    'twilio',
+  ],
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.googleusercontent.com' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: '**.picsum.photos' },
+      { protocol: 'https', hostname: 'media.istockphoto.com' },
+      // Sierra's own Property Finder listing photography (canonical image source)
+      { protocol: 'https', hostname: 'static.shared.propertyfinder.eg' },
+      { protocol: 'https', hostname: '**.propertyfinder.eg' },
+    ],
+  },
+  reactStrictMode: true,
+  poweredByHeader: false,
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Route admin subdomain or admin-mode deployments to /admin
+        ...(process.env.NEXT_PUBLIC_SITE_MODE === 'admin'
+          ? [
+              {
+                source: '/',
+                destination: '/admin',
+              },
+              {
+                source: '/login',
+                destination: '/admin/login',
+              },
+              {
+                source: '/signin',
+                destination: '/admin/login',
+              },
+            ]
+          : [
+              {
+                source: '/',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin',
+              },
+              {
+                source: '/login',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin/login',
+              },
+              {
+                source: '/signin',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin/login',
+              },
+            ]),
+
+        // RFC 5785 rewrites: Map .well-known endpoints to /api/well-known to ensure clean Vercel deployments
+        {
+          source: '/.well-known/oauth-authorization-server',
+          destination: '/api/well-known/oauth-authorization-server',
+        },
+        {
+          source: '/.well-known/oauth-protected-resource',
+          destination: '/api/well-known/oauth-protected-resource',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
+      },
+    ];
+  },
+  turbopack: {
+    // Pin the monorepo root so Turbopack never infers a different checkout's
+    // lockfile as the workspace root (breaks module resolution in git worktrees)
+    root: path.join(__dirname, '..', '..'),
+    resolveAlias: {
+      '@grpc/grpc-js': './lib/stubs/empty.js',
+      '@opentelemetry/exporter-trace-otlp-grpc': './lib/stubs/empty.js',
+      '@opentelemetry/exporter-trace-otlp-http': './lib/stubs/empty.js',
+      '@opentelemetry/exporter-logs-otlp-http': './lib/stubs/empty.js',
+      '@opentelemetry/sdk-node': './lib/stubs/empty.js',
+      '@opentelemetry/sdk-logs': './lib/stubs/empty.js',
+      '@opentelemetry/sdk-trace-node': './lib/stubs/empty.js',
+      '@opentelemetry/instrumentation-http': './lib/stubs/empty.js',
+      '@opentelemetry/instrumentation-express': './lib/stubs/empty.js',
+    }
+  },
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      // Stub all server-only packages to empty modules in the browser bundle
+      SERVER_ONLY_PACKAGES.forEach(pkg => {
+        config.resolve.alias[pkg] = false;
+      });
+    }
+    return config;
+  },
+};
+
+export default nextConfig;
+
+// cache-bust 2026-10-19: the f8ea737 Vercel build hit a poisoned FULL TURBO
+// remote-cache entry and failed at the "Deploying outputs" step on both
+// projects (local build of the same tree is green). This comment changes the
+// app's content hash so the next production build compiles from scratch.

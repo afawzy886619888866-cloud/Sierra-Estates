@@ -1,0 +1,9 @@
+﻿hubspot-api-client
+twilio
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+mixpanel
+python-dotenv
+requests

@@ -1,0 +1,257 @@
+/* Cairo Plaza — weekly meeting agenda document page (Arabic, RTL) */
+
+.cpag {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f6f3ec 0%, #efe9dd 100%);
+  color: #14263a;
+  font-family: var(--font, "Segoe UI", Tahoma, Arial, sans-serif);
+  padding-bottom: 64px;
+}
+
+.cpag-header {
+  background: rgba(11, 27, 43, 0.96);
+  border-bottom: 2px solid rgba(201, 162, 75, 0.55);
+}
+
+.cpag-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cpag-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #f2e8d5;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.cpag-brand img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+}
+
+.cpag-back {
+  color: #e9c176;
+  text-decoration: none;
+  font-size: 14px;
+  border: 1px solid rgba(233, 193, 118, 0.45);
+  border-radius: 8px;
+  padding: 8px 14px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.cpag-back:hover,
+.cpag-back:focus-visible {
+  background: rgba(233, 193, 118, 0.16);
+}
+
+.cpag-paper {
+  max-width: 880px;
+  margin: 34px auto 0;
+  background: #fffdf8;
+  border: 1px solid #e2d9c6;
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(19, 38, 59, 0.14);
+  padding: clamp(26px, 5vw, 56px);
+}
+
+.cpag-bismillah {
+  text-align: center;
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 800;
+  margin: 0 0 10px;
+  color: #14263a;
+}
+
+.cpag-verse {
+  text-align: center;
+  font-size: clamp(17px, 2.6vw, 22px);
+  color: #6b5a2e;
+  margin: 0 auto 30px;
+  max-width: 640px;
+  line-height: 2;
+}
+
+.cpag-title {
+  text-align: center;
+  font-size: clamp(22px, 3.6vw, 30px);
+  margin: 0 0 6px;
+  color: #0b1b2b;
+}
+
+.cpag-subtitle {
+  text-align: center;
+  font-size: clamp(17px, 2.4vw, 21px);
+  font-weight: 700;
+  color: #8a6d1f;
+  margin: 0 0 26px;
+}
+
+.cpag-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 22px;
+  border: 1px dashed #cbbd9c;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 0 0 30px;
+  background: #faf6ec;
+}
+
+.cpag-meta div {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.cpag-meta dt {
+  font-weight: 700;
+  color: #4c5b6b;
+  white-space: nowrap;
+}
+
+.cpag-meta dd {
+  margin: 0;
+  color: #14263a;
+}
+
+.cpag-h2 {
+  font-size: clamp(19px, 2.6vw, 23px);
+  color: #0b1b2b;
+  border-inline-start: 4px solid #c9a24b;
+  padding-inline-start: 12px;
+  margin: 34px 0 12px;
+}
+
+.cpag-p {
+  line-height: 1.95;
+  font-size: 16px;
+  color: #22364a;
+  margin: 0 0 8px;
+}
+
+.cpag-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2d9c6;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.cpag-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+.cpag-table th,
+.cpag-table td {
+  padding: 12px 14px;
+  text-align: right;
+  vertical-align: top;
+  line-height: 1.8;
+  border-bottom: 1px solid #efe7d4;
+  font-size: 15px;
+}
+
+.cpag-table thead th {
+  background: #0b1b2b;
+  color: #f2e8d5;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.cpag-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cpag-table tbody tr:nth-child(even) {
+  background: #faf6ec;
+}
+
+.cpag-time {
+  white-space: nowrap;
+  font-weight: 700;
+  color: #8a6d1f;
+}
+
+.cpag-item {
+  font-weight: 700;
+  color: #14263a;
+}
+
+.cpag-decisions {
+  margin: 0;
+  padding-inline-start: 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.cpag-decisions li {
+  line-height: 1.9;
+  font-size: 16px;
+  color: #22364a;
+  padding-inline-start: 6px;
+}
+
+.cpag-decisions li::marker {
+  color: #c9a24b;
+  font-weight: 800;
+}
+
+.cpag-signatures {
+  margin-top: 30px;
+}
+
+.cpag-note {
+  margin: 26px 0 0;
+  border: 1px solid rgba(178, 58, 58, 0.35);
+  background: rgba(178, 58, 58, 0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #7a2e2e;
+}
+
+@media (max-width: 640px) {
+  .cpag-paper {
+    margin: 20px 14px 0;
+    padding: 22px 18px;
+  }
+
+  .cpag-header-inner {
+    padding: 12px 14px;
+  }
+
+  .cpag-brand span {
+    font-size: 13px;
+  }
+}
+
+@media print {
+  .cpag {
+    background: #fff;
+    padding-bottom: 0;
+  }
+
+  .cpag-header {
+    display: none;
+  }
+
+  .cpag-paper {
+    box-shadow: none;
+    border: none;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+}

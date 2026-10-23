@@ -1,0 +1,167 @@
+version: '3.8'
+
+# Sierra Estates — Dify Multi-Agent Orchestration & Workflow Engine
+# Integrated with:
+#  - Supabase PostgreSQL (gaxfqcietzoonlmatiot.supabase.co)
+#  - DeepSeek Reasoning Harness
+#  - Episodic Context Cache (ECC) & Obsidian Memory Engine
+#  - WhatsApp Ingestion Pipeline (Port 3000 / EC2)
+
+services:
+  dify-api:
+    image: langgenius/dify-api:latest
+    container_name: sierra-dify-api
+    restart: unless-stopped
+    environment:
+      - MODE=api
+      - DEBUG=false
+      - SECRET_KEY=${DIFY_SECRET_KEY:-sierra-estates-dify-secure-secret-2026}
+      - DB_USERNAME=${DIFY_DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DIFY_DB_PASSWORD:-sierra_postgres_pass}
+      - DB_HOST=${DIFY_DB_HOST:-dify-db}
+      - DB_PORT=5432
+      - DB_DATABASE=${DIFY_DB_NAME:-dify}
+      - REDIS_HOST=dify-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_DB=0
+      - CELERY_BROKER_URL=redis://dify-redis:6379/1
+      - STORAGE_TYPE=opendal
+      - OPENDAL_SCHEME=fs
+      - OPENDAL_FS_ROOT=/app/api/storage
+      - VECTOR_STORE=weaviate
+      - WEAVIATE_ENDPOINT=http://dify-weaviate:8080
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_GENAI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SIERRA_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://gaxfqcietzoonlmatiot.supabase.co}
+      - SIERRA_SUPABASE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      - dify-db
+      - dify-redis
+      - dify-weaviate
+    volumes:
+      - dify-storage:/app/api/storage
+    networks:
+      - sierra-dify-net
+
+  dify-worker:
+    image: langgenius/dify-api:latest
+    container_name: sierra-dify-worker
+    restart: unless-stopped
+    environment:
+      - MODE=worker
+      - DEBUG=false
+      - SECRET_KEY=${DIFY_SECRET_KEY:-sierra-estates-dify-secure-secret-2026}
+      - DB_USERNAME=${DIFY_DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DIFY_DB_PASSWORD:-sierra_postgres_pass}
+      - DB_HOST=${DIFY_DB_HOST:-dify-db}
+      - DB_PORT=5432
+      - DB_DATABASE=${DIFY_DB_NAME:-dify}
+      - REDIS_HOST=dify-redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://dify-redis:6379/1
+      - STORAGE_TYPE=opendal
+      - OPENDAL_SCHEME=fs
+      - OPENDAL_FS_ROOT=/app/api/storage
+      - VECTOR_STORE=weaviate
+      - WEAVIATE_ENDPOINT=http://dify-weaviate:8080
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_GENAI_API_KEY}
+    depends_on:
+      - dify-db
+      - dify-redis
+      - dify-weaviate
+    volumes:
+      - dify-storage:/app/api/storage
+    networks:
+      - sierra-dify-net
+
+  dify-web:
+    image: langgenius/dify-web:latest
+    container_name: sierra-dify-web
+    restart: unless-stopped
+    environment:
+      - CONSOLE_API_URL=http://localhost:5001
+      - APP_API_URL=http://localhost:5001
+    ports:
+      - "3001:3000"
+    depends_on:
+      - dify-api
+    networks:
+      - sierra-dify-net
+
+  dify-db:
+    image: postgres:15-alpine
+    container_name: sierra-dify-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DIFY_DB_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${DIFY_DB_PASSWORD:-sierra_postgres_pass}
+      - POSTGRES_DB=${DIFY_DB_NAME:-dify}
+    volumes:
+      - dify-pgdata:/var/lib/postgresql/data
+    networks:
+      - sierra-dify-net
+
+  dify-redis:
+    image: redis:7-alpine
+    container_name: sierra-dify-redis
+    restart: unless-stopped
+    volumes:
+      - dify-redisdata:/data
+    networks:
+      - sierra-dify-net
+
+  dify-weaviate:
+    image: semitechnologies/weaviate:1.24.8
+    container_name: sierra-dify-weaviate
+    restart: unless-stopped
+    environment:
+      - QUERY_DEFAULTS_LIMIT=25
+      - AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
+      - PERSISTENCE_DATA_PATH=/var/lib/weaviate
+      - DEFAULT_VECTORIZER_MODULE=none
+      - ENABLE_MODULES=
+      - CLUSTER_HOSTNAME=node1
+    volumes:
+      - dify-weaviatedata:/var/lib/weaviate
+    networks:
+      - sierra-dify-net
+
+  dify-sandbox:
+    image: langgenius/dify-sandbox:latest
+    container_name: sierra-dify-sandbox
+    restart: unless-stopped
+    environment:
+      - API_KEY=${DIFY_SANDBOX_API_KEY:-sierra-sandbox-key}
+    networks:
+      - sierra-dify-net
+
+  sierra-agent-bridge:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: sierra-agent-bridge
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DIFY_API_URL=http://dify-api:5001
+      - DIFY_API_KEY=${DIFY_API_KEY:-}
+      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://gaxfqcietzoonlmatiot.supabase.co}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    depends_on:
+      - dify-api
+    networks:
+      - sierra-dify-net
+
+networks:
+  sierra-dify-net:
+    driver: bridge
+
+volumes:
+  dify-pgdata:
+  dify-redisdata:
+  dify-weaviatedata:
+  dify-storage:

@@ -1,0 +1,190 @@
+{
+  "timestamp": "20260917_021537",
+  "total": 30,
+  "passed": 28,
+  "failed": 0,
+  "warnings": 2,
+  "skipped": 0,
+  "results": [
+    {
+      "test": "openai-agents SDK",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 5439.4
+    },
+    {
+      "test": "supabase-py",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 960.2
+    },
+    {
+      "test": "python-dotenv",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "subprocess (stdlib)",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "json (stdlib)",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "python-dotenv load_dotenv",
+      "status": "PASS",
+      "detail": "loaded",
+      "duration_ms": 0
+    },
+    {
+      "test": "NEXT_PUBLIC_SUPABASE_URL",
+      "status": "PASS",
+      "detail": "length=40, starts=https://gaxfqcietzoo...",
+      "duration_ms": 0
+    },
+    {
+      "test": "SUPABASE_SERVICE_ROLE_KEY",
+      "status": "PASS",
+      "detail": "length=219",
+      "duration_ms": 0
+    },
+    {
+      "test": "OPENAI_API_KEY",
+      "status": "WARN",
+      "detail": "Not set or still placeholder — live LLM calls will fail",
+      "duration_ms": 0
+    },
+    {
+      "test": "Supabase client init",
+      "status": "PASS",
+      "detail": "project=gaxfqcietzoonlmatiot",
+      "duration_ms": 222.8
+    },
+    {
+      "test": "listings table query",
+      "status": "PASS",
+      "detail": "3 rows returned",
+      "duration_ms": 1073.1
+    },
+    {
+      "test": "viewings table query",
+      "status": "PASS",
+      "detail": "table accessible",
+      "duration_ms": 181.1
+    },
+    {
+      "test": "sierra-mcp-server.ts exists",
+      "status": "PASS",
+      "detail": "11023 bytes",
+      "duration_ms": 0
+    },
+    {
+      "test": "npx available",
+      "status": "PASS",
+      "detail": "11.16.0",
+      "duration_ms": 0
+    },
+    {
+      "test": "MCP tools/list",
+      "status": "WARN",
+      "detail": "tools=[], missing={'ingest_whatsapp_listing', 'calculate_valuation_score', 'search_project_memory', 'get_inventory', 'execute_openclaw_task'}",
+      "duration_ms": 3242.2
+    },
+    {
+      "test": "MCP calculate_valuation_score",
+      "status": "PASS",
+      "detail": "tool returned result",
+      "duration_ms": 2225.8
+    },
+    {
+      "test": "openai-agent-sierra.py exists",
+      "status": "PASS",
+      "detail": "22754 bytes",
+      "duration_ms": 0
+    },
+    {
+      "test": "agent module import",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "test": "search_inventory tool",
+      "status": "PASS",
+      "detail": "[None] Mountain View | Apartment 3BR | 145.0 sqm | 5,000,000.0 EGP (sale) | 34,4",
+      "duration_ms": 436.0
+    },
+    {
+      "test": "triage_agent defined",
+      "status": "PASS",
+      "detail": "handoffs=['Sierra Valuation Analyst', 'Sierra Viewing Coordinator']",
+      "duration_ms": 0
+    },
+    {
+      "test": "valuation_agent defined",
+      "status": "PASS",
+      "detail": "tools=5",
+      "duration_ms": 0
+    },
+    {
+      "test": "viewing_scheduler_agent defined",
+      "status": "PASS",
+      "detail": "tools=2",
+      "duration_ms": 0
+    },
+    {
+      "test": "length_guardrail defined",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "test": "get_distressed_deals tool",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "test": "search_memory_palace tool",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "test": "query_brain_rag tool",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0
+    },
+    {
+      "test": ".mcp.json exists",
+      "status": "PASS",
+      "detail": ".mcp.json",
+      "duration_ms": 0
+    },
+    {
+      "test": "mcp_config.json exists",
+      "status": "PASS",
+      "detail": ".agents\\mcp_config.json",
+      "duration_ms": 0
+    },
+    {
+      "test": "mcp_config.json completeness",
+      "status": "PASS",
+      "detail": "both have: ['amphion-command-deck', 'ruflo', 'sierra-estates', 'supabase']",
+      "duration_ms": 0
+    },
+    {
+      "test": "supabase entry in .agents/mcp_config.json",
+      "status": "PASS",
+      "detail": "",
+      "duration_ms": 0
+    }
+  ]
+}

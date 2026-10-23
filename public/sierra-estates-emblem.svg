@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 440" fill="none">
+  <defs>
+    <!-- Gold gradient matching brand token #D4AF37 → #F1D38E -->
+    <linearGradient id="goldStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="45%" stop-color="#F1D38E"/>
+      <stop offset="100%" stop-color="#C9A84C"/>
+    </linearGradient>
+    <!-- Gold fill for circuit traces -->
+    <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F1D38E" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#D4AF37" stop-opacity="0.6"/>
+    </linearGradient>
+    <!-- Subtle glow filter -->
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Outer shield glow -->
+    <filter id="shieldGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- OUTER SHIELD (main crest outline)     -->
+  <!-- ══════════════════════════════════════ -->
+  <!-- Outer glow layer -->
+  <path d="M200 18 L360 80 L360 230 C360 320 280 390 200 422 C120 390 40 320 40 230 L40 80 Z"
+    stroke="url(#goldStroke)" stroke-width="3" fill="none" opacity="0.25" filter="url(#shieldGlow)"/>
+  <!-- Main shield border -->
+  <path d="M200 22 L356 82 L356 228 C356 316 278 386 200 418 C122 386 44 316 44 228 L44 82 Z"
+    stroke="url(#goldStroke)" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+  <!-- Inner shield inset -->
+  <path d="M200 42 L336 94 L336 224 C336 300 268 364 200 394 C132 364 64 300 64 224 L64 94 Z"
+    stroke="url(#goldStroke)" stroke-width="1.2" fill="none" stroke-linejoin="round" opacity="0.55"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- CITY SKYLINE (top section)            -->
+  <!-- ══════════════════════════════════════ -->
+  <!-- Tower 1 — tallest center -->
+  <rect x="186" y="68" width="28" height="90" rx="1" stroke="url(#goldStroke)" stroke-width="2" fill="none" filter="url(#goldGlow)"/>
+  <rect x="191" y="75" width="7" height="9" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="202" y="75" width="7" height="9" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="191" y="90" width="7" height="9" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="202" y="90" width="7" height="9" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="191" y="105" width="7" height="9" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="202" y="105" width="7" height="9" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <!-- Tower antenna -->
+  <line x1="200" y1="58" x2="200" y2="68" stroke="url(#goldStroke)" stroke-width="1.5"/>
+  <circle cx="200" cy="56" r="3" fill="#D4AF37" opacity="0.8"/>
+
+  <!-- Tower 2 — left mid height -->
+  <rect x="140" y="88" width="22" height="70" rx="1" stroke="url(#goldStroke)" stroke-width="1.8" fill="none"/>
+  <rect x="145" y="95" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="153" y="95" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="145" y="108" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="153" y="108" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="145" y="121" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="153" y="121" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+
+  <!-- Tower 3 — right mid height -->
+  <rect x="238" y="88" width="22" height="70" rx="1" stroke="url(#goldStroke)" stroke-width="1.8" fill="none"/>
+  <rect x="243" y="95" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="251" y="95" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="243" y="108" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="251" y="108" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="243" y="121" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+  <rect x="251" y="121" width="5" height="7" rx="0.5" stroke="url(#goldStroke)" stroke-width="1" fill="none"/>
+
+  <!-- Tower 4 — far left (short) -->
+  <rect x="100" y="110" width="16" height="48" rx="1" stroke="url(#goldStroke)" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <rect x="104" y="116" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <rect x="110" y="116" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <rect x="104" y="126" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <rect x="110" y="126" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+
+  <!-- Tower 5 — far right (short) -->
+  <rect x="284" y="110" width="16" height="48" rx="1" stroke="url(#goldStroke)" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <rect x="288" y="116" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <rect x="294" y="116" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <rect x="288" y="126" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <rect x="294" y="126" width="4" height="5" rx="0.5" stroke="url(#goldStroke)" stroke-width="0.8" fill="none" opacity="0.7"/>
+
+  <!-- Ground line between skyline and house -->
+  <line x1="88" y1="158" x2="312" y2="158" stroke="url(#goldStroke)" stroke-width="1" opacity="0.4"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- HOUSE / RESIDENTIAL (center section)  -->
+  <!-- ══════════════════════════════════════ -->
+  <!-- House body -->
+  <rect x="158" y="185" width="84" height="60" rx="1" stroke="url(#goldStroke)" stroke-width="2" fill="none"/>
+  <!-- Roof (pitched) -->
+  <polyline points="148,185 200,148 252,185" stroke="url(#goldStroke)" stroke-width="2.2" fill="none" stroke-linejoin="round"/>
+  <!-- Door -->
+  <rect x="188" y="215" width="24" height="30" rx="1" stroke="url(#goldStroke)" stroke-width="1.5" fill="none"/>
+  <!-- Windows -->
+  <rect x="163" y="195" width="16" height="14" rx="0.8" stroke="url(#goldStroke)" stroke-width="1.2" fill="none"/>
+  <rect x="221" y="195" width="16" height="14" rx="0.8" stroke="url(#goldStroke)" stroke-width="1.2" fill="none"/>
+  <!-- Window cross bars -->
+  <line x1="171" y1="195" x2="171" y2="209" stroke="url(#goldStroke)" stroke-width="0.8" opacity="0.6"/>
+  <line x1="163" y1="202" x2="179" y2="202" stroke="url(#goldStroke)" stroke-width="0.8" opacity="0.6"/>
+  <line x1="229" y1="195" x2="229" y2="209" stroke="url(#goldStroke)" stroke-width="0.8" opacity="0.6"/>
+  <line x1="221" y1="202" x2="237" y2="202" stroke="url(#goldStroke)" stroke-width="0.8" opacity="0.6"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- ARROW / GROWTH SWOOSH                 -->
+  <!-- ══════════════════════════════════════ -->
+  <!-- Swoosh band crossing the shield -->
+  <path d="M68 220 Q120 190 200 210 Q280 228 332 180"
+    stroke="url(#goldStroke)" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.12"/>
+  <path d="M68 220 Q120 190 200 210 Q280 228 332 180"
+    stroke="url(#goldStroke)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Arrow head -->
+  <polyline points="320,168 332,180 318,188" stroke="url(#goldStroke)" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- CIRCUIT BOARD TRACES (bottom)         -->
+  <!-- ══════════════════════════════════════ -->
+  <!-- Horizontal base rail -->
+  <line x1="90" y1="295" x2="310" y2="295" stroke="url(#goldStroke)" stroke-width="1.5" opacity="0.6"/>
+  <!-- Vertical drops from rail -->
+  <line x1="120" y1="295" x2="120" y2="320" stroke="url(#goldStroke)" stroke-width="1.2" opacity="0.55"/>
+  <circle cx="120" cy="322" r="3" stroke="url(#goldStroke)" stroke-width="1.2" fill="none" opacity="0.55"/>
+  <line x1="160" y1="295" x2="160" y2="316" stroke="url(#goldStroke)" stroke-width="1.2" opacity="0.55"/>
+  <circle cx="160" cy="318" r="3" stroke="url(#goldStroke)" stroke-width="1.2" fill="none" opacity="0.55"/>
+  <line x1="200" y1="295" x2="200" y2="325" stroke="url(#goldStroke)" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="200" cy="328" r="4" stroke="url(#goldStroke)" stroke-width="1.5" fill="#D4AF37" fill-opacity="0.3" opacity="0.7"/>
+  <line x1="240" y1="295" x2="240" y2="316" stroke="url(#goldStroke)" stroke-width="1.2" opacity="0.55"/>
+  <circle cx="240" cy="318" r="3" stroke="url(#goldStroke)" stroke-width="1.2" fill="none" opacity="0.55"/>
+  <line x1="280" y1="295" x2="280" y2="320" stroke="url(#goldStroke)" stroke-width="1.2" opacity="0.55"/>
+  <circle cx="280" cy="322" r="3" stroke="url(#goldStroke)" stroke-width="1.2" fill="none" opacity="0.55"/>
+  <!-- Secondary horizontal trace -->
+  <line x1="110" y1="310" x2="175" y2="310" stroke="url(#goldStroke)" stroke-width="1" opacity="0.35"/>
+  <line x1="225" y1="310" x2="290" y2="310" stroke="url(#goldStroke)" stroke-width="1" opacity="0.35"/>
+  <!-- Angled trace detail -->
+  <path d="M130 320 L145 310 L165 310" stroke="url(#goldStroke)" stroke-width="0.9" fill="none" opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M270 320 L255 310 L235 310" stroke="url(#goldStroke)" stroke-width="0.9" fill="none" opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- 4-POINTED STAR (brand mark)           -->
+  <!-- ══════════════════════════════════════ -->
+  <path d="M200 356 L203 368 L215 368 L205.5 375 L209 387 L200 380 L191 387 L194.5 375 L185 368 L197 368 Z"
+    stroke="url(#goldStroke)" stroke-width="1.2" fill="#D4AF37" fill-opacity="0.25" stroke-linejoin="round" filter="url(#goldGlow)"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- NODE DOTS at shield intersection pts  -->
+  <!-- ══════════════════════════════════════ -->
+  <circle cx="200" cy="22" r="2.5" fill="#D4AF37" opacity="0.7"/>
+  <circle cx="44" cy="82" r="2" fill="#D4AF37" opacity="0.5"/>
+  <circle cx="356" cy="82" r="2" fill="#D4AF37" opacity="0.5"/>
+</svg>

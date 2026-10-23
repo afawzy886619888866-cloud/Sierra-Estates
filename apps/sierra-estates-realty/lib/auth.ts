@@ -1,0 +1,350 @@
+/**
+ * Auth helpers — server-side session cookie (JWT-like, signed via HMAC).
+ * No external JWT lib required: small HS256 impl. The session is stored
+ * in the `sierra_sess` httpOnly cookie. Supabase Admin verifies the Supabase
+ * access token at sign-in time, then we mint our own session cookie.
+ *
+ * For dev / sandbox, we accept an env-configured bootstrap password so the
+ * admin portal is reachable without live auth credentials.
+ */
+import { isAdminPortalRole } from "./types";
+import type { Session, Role } from "./types";
+import { findPartnerAccount } from "./server/partner-scope";
+
+const COOKIE_NAME = "sierra_sess";
+const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12h
+
+const IS_PROD = process.env.NODE_ENV === "production";
+
+/**
+ * Bootstrap admin. There is deliberately NO default password: a committed
+ * credential is a published credential. The account exists only when
+ * ADMIN_BOOTSTRAP_PASSWORD is explicitly set, so production fails closed
+ * unless an operator opts in.
+ *
+ * Both values are read on every call (not captured at module load) so operators
+ * can rotate credentials and tests can configure them without a re-import.
+ */
+function bootstrapAdminEmail(): string {
+  return (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net")
+    .trim()
+    .toLowerCase();
+}
+
+function bootstrapAdminPassword(): string {
+  return process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+}
+
+/** Dev-only fallback signing key. Never reachable in production — see getKey(). */
+const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
+
+function getKey(): string {
+  const secret =
+    process.env.SESSION_SECRET ||
+    process.env.ADMIN_SESSION_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.SBR_SECRET_KEY;
+
+  // FIREBASE_PROJECT_ID used to sit at the end of this chain, ahead of the dev
+  // fallback. It is not a secret — it is also published as
+  // NEXT_PUBLIC_FIREBASE_PROJECT_ID and is visible in every client bundle — so
+  // anyone could mint a `sierra_sess` cookie with role "admin". Same for the
+  // committed DEV_FALLBACK_KEY. Production must fail closed and loud instead.
+  if (!secret) {
+    if (IS_PROD) {
+      throw new Error(
+        "SESSION_SECRET is not configured — refusing to sign or verify admin sessions with a public or committed fallback key.",
+      );
+    }
+    return DEV_FALLBACK_KEY;
+  }
+
+  return secret;
+}
+
+async function hmacSha256(data: string, key: string): Promise<string> {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
+  return Buffer.from(new Uint8Array(sig)).toString("base64url");
+}
+
+export async function signSession(s: Omit<Session, "exp">): Promise<string> {
+  const exp = Date.now() + SESSION_TTL_MS;
+  const payload = { ...s, exp };
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = await hmacSha256(body, getKey());
+  return `${body}.${sig}`;
+}
+
+export async function verifySession(token: string | null | undefined): Promise<Session | null> {
+  if (!token) return null;
+  const [body, sig] = token.split(".");
+  if (!body || !sig) return null;
+  const expectedSig = await hmacSha256(body, getKey());
+  if (sig !== expectedSig) return null;
+  try {
+    const s = JSON.parse(Buffer.from(body, "base64url").toString("utf-8")) as Session;
+    if (s.exp < Date.now()) return null;
+    return s;
+  } catch {
+    return null;
+  }
+}
+
+export const SESSION_COOKIE = COOKIE_NAME;
+
+export function cookieOpts(reqHost?: string) {
+  const host = (reqHost || "").toLowerCase();
+  const isLocal =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("::1") ||
+    host.includes("0.0.0.0") ||
+    !IS_PROD;
+  const configuredDomain = process.env.COOKIE_DOMAIN?.trim();
+  const domain = isLocal || !configuredDomain ? undefined : configuredDomain;
+
+  return {
+    httpOnly: true,
+    secure: IS_PROD && !isLocal,
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: SESSION_TTL_MS / 1000,
+    ...(domain ? { domain } : {}),
+  };
+}
+
+/**
+ * Helper to identify whether an email belongs to an authorized admin or staff.
+ *
+ * Production allowlist (strict):
+ *   - BOOTSTRAP_ADMIN_EMAIL
+ *   - ADMIN_EMAILS env (comma-separated; supports "@domain.tld" wildcards for
+ *     domains you OWN)
+ *   - "@sierra-estates.net" (the owned domain)
+ * The legacy hardcoded Gmail allowlist applies ONLY outside production so
+ * local development keeps working; on Vercel, set ADMIN_EMAILS with the
+ * operator's real addresses.
+ */
+export function isAdminEmail(email: string): boolean {
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+
+  // Explicitly configured admin emails via env
+  const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const bootstrapEmail = bootstrapAdminEmail();
+
+  const envMatch =
+    clean === bootstrapEmail ||
+    configuredAdminEmails.some((entry) =>
+      entry.startsWith("@") ? clean.endsWith(entry) : clean === entry
+    ) ||
+    clean.endsWith("@sierra-estates.net");
+
+  if (envMatch) return true;
+
+  if (process.env.NODE_ENV !== "production") {
+    // Legacy dev-only list (never active on Vercel/production).
+    const legacyDevEmails = [
+      "admin@sierra-estates.net",
+      "sierra@sierra-estates.net",
+      "owner@sierra-estates.net",
+      "developer@sierra-estates.net",
+      "admin",
+      "a.fawzy8866@gmail.com",
+      "sierrablue8866@gmail.com",
+      "sierrablue8866-droid@gmail.com",
+      "a.fawzy@sierra-estates.net",
+    ];
+    return legacyDevEmails.includes(clean);
+  }
+
+  return false;
+}
+
+/**
+ * Bootstrap & Staff Admin Login
+ * Provides resilient access for approved staff and administrators.
+ */
+export function tryDemoLogin(email: string, password: string): Session | null {
+  const cleanEmail = (email || "").trim().toLowerCase();
+  const cleanPass = (password || "").trim();
+
+  // This path previously accepted a hardcoded list of passwords — including
+  // "admin", "password", "123456" and "12345678" — and its final condition was
+  // `... || isKnownStaffPass`, which made the email check irrelevant. The route
+  // calling it (app/api/auth/route.ts, Path C) has no environment gate, so any
+  // POST /api/auth with any email and one of those passwords was issued a signed
+  // session cookie with role "admin" in production. The list is gone.
+  //
+  // What remains: a single operator-configured password, compared in constant
+  // time, and only for an address that is already an admin email. With no
+  // password configured this path is closed — which is the correct default.
+  const configuredPass =
+    process.env.ADMIN_BOOTSTRAP_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    process.env.ADMIN_SECRET;
+
+  if (!configuredPass) return null;
+  if (!cleanEmail || !cleanPass) return null;
+  if (!isAdminEmail(cleanEmail)) return null;
+  if (!safeEqual(cleanPass, configuredPass)) return null;
+
+  return {
+    uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
+    email: cleanEmail,
+    name: "Sierra Estates Executive Admin",
+    role: "admin" as Role,
+    exp: Date.now() + SESSION_TTL_MS,
+  };
+}
+
+/** Constant-time string comparison. */
+export function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** True when a bootstrap admin account is available to sign in with. */
+export function bootstrapLoginAvailable(): boolean {
+  return Boolean(bootstrapAdminPassword());
+}
+
+/**
+ * Partner Account Login (PARTNER_ACCOUNTS env — see lib/server/partner-scope.ts
+ * for the format). Merged-in property accounts authenticate with email +
+ * password against the operator-configured list, the same doctrine as
+ * tryDemoLogin: no committed default, constant-time compare, values read
+ * per-call so credentials can rotate without a re-import. An unset or
+ * malformed PARTNER_ACCOUNTS provisions ZERO accounts — this path is closed.
+ */
+export function tryPartnerLogin(email: string, password: string): Session | null {
+  const account = findPartnerAccount(email, password);
+  if (!account) return null;
+  return {
+    uid: `partner-${account.email.replace(/[^a-z0-9]/g, "-")}`,
+    email: account.email,
+    name: account.name,
+    role: "partner" as Role,
+    scope: account.scope,
+    exp: Date.now() + SESSION_TTL_MS,
+  };
+}
+
+/** Parse cookie header into a map. */
+export function parseCookies(header: string | null): Record<string, string> {
+  if (!header) return {};
+  const out: Record<string, string> = {};
+  for (const pair of header.split(";")) {
+    const idx = pair.indexOf("=");
+    if (idx === -1) continue;
+    const k = pair.slice(0, idx).trim();
+    const v = pair.slice(idx + 1).trim();
+    try {
+      out[k] = decodeURIComponent(v);
+    } catch {
+      // Malformed URI/percent-encoding must fail closed gracefully without throwing.
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+/** Read session from a Next.js Request. */
+export async function getSessionFromRequest(req: Request): Promise<Session | null> {
+  const cookies = parseCookies(req.headers.get("cookie"));
+  return verifySession(cookies[COOKIE_NAME]);
+}
+
+/**
+ * PHASE 7 — session revocation for suspended/deleted accounts.
+ *
+ * A signed 12h cookie is proof of a PAST authentication, not proof that the
+ * account is still entitled to access. Every protected admin path now
+ * re-checks the live profiles.status: suspended/deleted (and pending)
+ * accounts are rejected even while their cookie is technically unexpired.
+ * Fail-open is NOT an option in production — a lookup failure rejects the
+ * request (fail-closed).
+ */
+export async function enforceSessionAccountStatus(
+  sess: Session | null
+): Promise<{ ok: true } | { ok: false; reason: string; status: number }> {
+  if (!sess) return { ok: false, reason: "no session", status: 401 };
+
+  // Env-configured staff/partner logins carry synthetic uids (`staff-…` /
+  // `partner-…`) with no profiles row — they are governed by their env
+  // secrets, not by profile status.
+  if (sess.uid?.startsWith("staff-") || sess.uid?.startsWith("partner-")) {
+    return { ok: true };
+  }
+
+  const { listRecords } = await import("@sierra-estates/db");
+  try {
+    const rows = await listRecords<{ status: string | null }>("profiles", {
+      where: [{ column: "id", value: sess.uid }],
+      select: "status",
+      limit: 1,
+    });
+    const profileStatus = rows[0]?.status ?? null;
+    // Provisioned accounts are 'active' unless explicitly changed; a NULL
+    // status on a provisioned row predates the status column and is treated
+    // as active (migration 020b deliberately added no fabricated default).
+    if (profileStatus === "suspended" || profileStatus === "deleted") {
+      return { ok: false, reason: `account ${profileStatus}`, status: 403 };
+    }
+    if (profileStatus === "pending") {
+      return { ok: false, reason: "access request pending approval", status: 403 };
+    }
+    return { ok: true };
+  } catch (err) {
+    if (process.env.NODE_ENV === "production") {
+      // Fail closed: we cannot prove the account is still entitled.
+      return { ok: false, reason: "account status could not be verified", status: 403 };
+    }
+    console.warn("[auth] profile status check skipped (dev):", (err as Error)?.message);
+    return { ok: true };
+  }
+}
+
+/** Throws 401 if no session, 403 if role insufficient. */
+export async function requireRole(req: Request, min: Role): Promise<Session> {
+  const sess = await getSessionFromRequest(req);
+  if (!sess) {
+    throw new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  // PHASE 7: the ladder now ranks the canonical vocabulary. The new
+  // manager-family roles sit between agent and admin; auditor/partner sit
+  // below agent (read-mostly scopes enforced per-permission elsewhere).
+  const order: Role[] = [
+    "viewer", "client", "partner", "auditor", "owner", "broker",
+    "agent", "sales_agent", "sales_manager", "marketing_manager",
+    "inventory_manager", "operations_manager", "manager", "admin", "superadmin",
+  ];
+  const roleIndex = order.indexOf(sess.role);
+  const requiredIndex = order.indexOf(min);
+  if (!isAdminPortalRole(sess.role) && sess.role !== "viewer") {
+    throw new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  if (roleIndex === -1 || requiredIndex === -1 || roleIndex < requiredIndex) {
+    throw new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  return sess;
+}

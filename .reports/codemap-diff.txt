@@ -1,0 +1,17 @@
+# Codemap Scan Report
+Generated: 2026-08-02
+
+## Summary
+- Files scanned: ~300
+- New dependencies detected: Property Finder API integration, Meta WhatsApp API.
+- Architecture changes:
+  - Integration of `hooks/sierra-estates/pf.ts` for frontend PF syncing.
+  - Integration of Property Finder backend routes (`apps/admin-dashboard/app/api/pf-webhook/route.ts`).
+  - Added new Next.js Admin Dashboard logic.
+
+## Changes
+- Initial generation of complete system architecture codemaps.
+- Split mapping into Architecture, Backend, Frontend, Data, and Dependencies.
+
+## Warnings
+- No stale documentation warnings detected. All docs appear to be up to date with the recent monorepo restructuring.

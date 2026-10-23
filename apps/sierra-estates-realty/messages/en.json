@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "Home",
+    "listings": "Listings",
+    "admin": "Admin",
+    "agents": "Agents",
+    "portfolio": "Portfolio",
+    "crm": "CRM",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "EGYPT’S #1 AI-DRIVEN REAL ESTATE ECOSYSTEM",
+    "subtitle": "The Only Specialized Network for Resale and Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab",
+    "punchline": "Powered by proprietary AI and a robust alliance of 500+ real estate firms and 1,500+ certified brokers to guarantee East Cairo's most competitive opportunities at accurate pricing.",
+    "badges": {
+      "agencies": "500+ Partner Agencies",
+      "brokers": "1,500+ Certified Brokers",
+      "pricing": "Proprietary AI Pricing"
+    },
+    "cta": "Explore East Cairo"
+  },
+  "features": {
+    "intelligence": "AI Intelligence",
+    "listings": "Smart Listings",
+    "analytics": "Portfolio Analytics",
+    "crm": "CRM System"
+  },
+  "footer": {
+    "copyright": "© 2026 Sierra Estates. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

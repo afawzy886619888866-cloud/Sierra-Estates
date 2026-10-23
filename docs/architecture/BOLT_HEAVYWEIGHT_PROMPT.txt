@@ -1,0 +1,38 @@
+# Sierra Estates V12.0 — MASTER SYSTEM BLUEPRINT
+
+## 1. DESIGN SYSTEM (GLOBALS.CSS)
+```css
+:root {
+  --navy-absolute: #030712;
+  --gold-sunset: #C9A24D;
+  --ivory-soft: #F4F0E8;
+  --radius-luxury: 0px; 
+}
+/* CUSTOM UTILS */
+.cinematic-surface { @apply bg-[#0e131f]/60 backdrop-blur-2xl border border-[var(--premium-border)]; }
+.luxury-gradient-text { background: linear-gradient(135deg, #fff 0%, var(--gold-sunset) 50%, #fff 100%); -webkit-background-clip: text; }
+```
+
+## 2. AI PERSONA (LEILA V2.1)
+```typescript
+export const LEILA_PROMPT = {
+  system: `You are "Leila", a Senior Concierge Advisor for SIERRA ESTATES REALTY. Tone: "Quiet Luxury". Dialect: Elegant Levantine Arabic (Syrian/Lebanese professional). Extract 3 Core Filters: Status, Budget, Timeline. Trigger [VIP_ALERT_TRIGGER] for elite leads.`
+};
+```
+
+## 3. ENGINE: SBR PROTOCOL
+- Currency: < 10k ? USD : EGP.
+- Code: [Compound]-[Rooms][FurnishedCode]-[Price].
+- Valuation: < 30% average ? ⭐ High Value.
+
+## 4. THE 10-STAGE PIPELINE
+- S1: Intake -> S4: Review -> S7: Match -> S10: Feedback.
+
+## 5. FULL PAGE MAP
+1. /landing (Bilingual stack, Parallax)
+2. /inventory (SBR Code Filtering)
+3. /proposals/[id] (AI Match Presentation)
+4. /select/[leadId] (Client Swipe UI)
+5. /portal (Dashboard/Kanban)
+6. /agent (AI Chat Ops)
+7. /admin (Auth/Admin)

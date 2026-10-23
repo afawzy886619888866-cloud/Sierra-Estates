@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sierra-estates-realty",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "sierra-estates-client-page", "dev"],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

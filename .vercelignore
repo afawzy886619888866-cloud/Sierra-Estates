@@ -1,0 +1,165 @@
+!**/.well-known/**
+.agent
+.agents
+.git
+.github/*
+!.github/workflows
+.next
+.turbo
+.venv
+.vercel
+**/.vercel/**
+node_modules
+**/node_modules/**
+**/.next/**
+**/.turbo/**
+**/dist/**
+**/coverage/**
+**/.venv/**
+tmp
+*.log
+*.pyc
+__pycache__
+
+# Non-web applications and backend tools
+apps/api/**
+infra/**
+workflows/**
+tools/**
+notebooks/**
+.pytest_cache
+**/.pytest_cache
+ops/**
+scripts/test-results/**
+docs/**
+
+# Large data archives not needed for cloud web deployment
+data/**
+**/data/master-inventory-9k.json
+**/data/*.xlsx
+**/data/*.csv
+*.xlsx
+*.zip
+*.tar.gz
+*.csv
+*.mp4
+apps/sierra-estates-realty/public/cairo-plaza/ai-concept-*.png
+apps/sierra-estates-realty/public/cairo-plaza/*.mp4
+apps/sierra-estates-realty/public/cairo-plaza/cairo-plaza-arabic-brochure.html
+apps/sierra-estates-realty/public/feeds/*.xml
+!apps/sierra-estates-realty/public/feeds/propertyfinder-feed.xml
+apps/sierra-estates-realty/public/feeds/*.csv
+!apps/sierra-estates-realty/public/downloads/owners-*.csv
+!apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv
+# snapshot.json must NOT be ignored: the app statically imports it
+# (lib/site/data.ts, AvailabilityVerificationService), it is tracked in git as
+# a seed stub, and excluding it broke turbo-cached builds whose replayed trace
+# lstats the file (ENOENT) even though prebuild would create it on a cold build.
+packages/whatsapp-agent/wa_sessions
+packages/whatsapp-agent/*.sw_col.json
+
+# ============================================================================
+# 2026-10-21 cleanup — orphaned assets with zero code references (audited)
+# ============================================================================
+
+# Large cairo-plaza PNGs with no source references (ai-concept-* already excluded above).
+# The real-*-ai-enhanced.jpg files ARE used by CairoPlazaScene / CairoPlazaExperience — kept.
+apps/sierra-estates-realty/public/cairo-plaza/real-entrance-enhanced.png
+apps/sierra-estates-realty/public/cairo-plaza/real-frontage-enhanced.png
+apps/sierra-estates-realty/public/cairo-plaza/real-tower-enhanced.png
+apps/sierra-estates-realty/public/cairo-plaza/tower-frontage-detail.png
+
+# Root dev-preview HTML files — no app code references them
+sierra-map-preview.html
+
+# Orphaned public/ standalone files (whatsapp_qr.html + whatsapp_qr.png are USED by AdminPortal)
+apps/sierra-estates-realty/public/hero-banner-showcase.html
+apps/sierra-estates-realty/public/whatsapp_qr_active.png
+
+# Redundant downloads — no code references; kept: owners-all/rent/resale.csv (API routes),
+# Sierra_Estates_Owners_Rent_Master.xlsx (ListingsView.tsx download link)
+apps/sierra-estates-realty/public/downloads/owners_rent_with_photos.csv
+apps/sierra-estates-realty/public/downloads/owners_rent.xlsx
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_All_Owners_Units.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_All_Owners_Units.xlsx
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Rent.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Rent_Master.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Resale.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Sale.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Units_Rent_and_Resale.xlsx
+apps/sierra-estates-realty/public/downloads/whatsapp_garden_owners_campaign.csv
+apps/sierra-estates-realty/public/downloads/whatsapp_garden_owners_campaign.xlsx
+
+# Tool artifacts and redundant local clones
+.amazonq
+.amazonq/**
+SE-Vercel-deploy-main*
+SE-Vercel-deploy-main*/**
+.reports/**
+libArchive/**
+stubArchive/**
+.amphion/**
+.claude-flow/**
+.factory/**
+.qwen/**
+.zencoder/**
+graphify-out/**
+*.tsbuildinfo
+
+# ============================================================================
+# 2026-09-29 audit additions (merged on top of the original rules above)
+# ============================================================================
+
+# Legacy root public/ (10.9MB design assets) — app serves
+# apps/sierra-estates-realty/public; nothing reads the root copy at build.
+/public/
+
+# Editor configs & AI-assistant artifacts not covered above
+.vscode/
+.claude/
+.clinerules
+62daec16-d1ed-444d-8d6a-d654c5b84b3e/
+83de526d-6350-4890-b9b3-39794dff3894/
+FUTURE_PLAN
+
+# One-off data exports & ops leftovers
+*.tsv
+deploy/
+docker-compose*.yml
+
+# Jest suites: the realty app suite now RUNS inside the Vercel build
+# (scripts/ci-preflight.sh gate 8), so the app's __tests__ must upload.
+# Root /__tests__/ stays local-only (repo-hygiene suites, not part of the
+# web build); other packages' test dirs stay excluded too.
+# NOTE: negations must come AFTER the catch-all __tests__/ rule — the last
+# matching pattern wins.
+/__tests__/
+__tests__/
+!apps/sierra-estates-realty/__tests__
+!apps/sierra-estates-realty/__tests__/**
+
+# CI gate inputs: the Phase-1 pipeline sources must reach the Vercel build
+# (ci-preflight gate 0 regenerates data/MASTER_INVENTORY_V1.csv from them).
+# The generated CSV itself stays excluded (data/**, *.csv above).
+!data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx
+!owners_rent_tab_separated.tsv
+!owners_rent_with_photos.tsv
+
+# ============================================================================
+# 2026-10-15 gate-8 contract inputs (fixes sierra-estates-static-portal ERRORs)
+# ============================================================================
+# The realty jest suite runs INSIDE the Vercel build (ci-preflight gate 8) and
+# asserts these repo-root inputs, so they must upload past the catch-all
+# .agents / .vscode/ exclusions above:
+#   - __tests__/mcd-workflow-extended.test.ts    -> .agents/workflows/*.md
+#   - __tests__/regression-hardening.test.ts     -> .vscode/*.json
+# gitignore semantics: a re-included file needs every excluded parent
+# negated first, then the sibling children are re-excluded to keep the
+# upload minimal (.agents/workflows is 36KB of .md contract files; the rest
+# of .agents stays local-only, as do non-JSON .vscode artifacts).
+!.agents
+.agents/*
+!.agents/workflows
+!.agents/workflows/**
+!.vscode
+!.vscode/*.json

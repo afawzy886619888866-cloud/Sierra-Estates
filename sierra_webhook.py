@@ -1,188 +1,127 @@
+"""
+Sierra PropTech — Inbound Webhook & Core Intelligence Engine (Evolution API)
+Hardened edition (2026-10-23). English codebase.
+
+WHAT THIS IS
+    FastAPI server that receives Evolution API (WhatsApp) webhooks and:
+      1. Auto-replies to rejected calls (with optional direct-management line)
+      2. Handles [owner_outreach] campaign replies
+      3. Detects inbound leads vs scraped ads
+      4. Extracts + normalizes listing data (compound, price, area, beds, baths,
+         finishing, source type) with dedup
+
+SECURITY MODEL (differs from the original draft on purpose)
+    - NO credentials, phone numbers, or sheet IDs are hardcoded. Everything
+      comes from environment variables. This file lives in a PUBLIC repo.
+    - Optional shared-secret guard (WEBHOOK_SECRET) for the /webhook route,
+      because an unauthenticated webhook endpoint lets anyone inject fake
+      leads / trigger outbound messages from your WhatsApp line.
+    - Every outbound attempt is logged with its true result. No fake success.
+
+ENVIRONMENT
+    EVOLUTION_API_URL           Evolution API base (default http://localhost:8080)
+    EVOLUTION_API_KEY           REQUIRED for outbound sends (no default)
+    EVOLUTION_DEFAULT_INSTANCE  fallback instance name for webhook payloads
+                                that omit one
+    DIRECT_MGMT_PHONE           optional; appended to call-reject replies
+    WEBHOOK_SECRET              optional; if set, requests must send header
+                                X-Webhook-Secret: <value> (configure the same
+                                value as a custom header in Evolution's
+                                webhook settings)
+    WEBHOOK_PORT                listen port (default 5000)
+
+RUN
+    python sierra_webhook.py
+    # or: uvicorn sierra_webhook:app --host 0.0.0.0 --port 5000
+"""
+
 import os
 import re
-import json
-import time
 import random
+import logging
+from datetime import datetime, timezone
+
 import requests
-import pandas as pd
-from datetime import datetime, timedelta
+from fastapi import FastAPI, Request
+import uvicorn
 
+# --- configuration: environment only, no credential defaults ---------------
 API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8080")
-API_KEY = os.getenv("EVOLUTION_API_KEY", "sierra_secret_key_2026")
-IS_CI = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI_SINGLE_RUN") == "true"
+API_KEY = os.getenv("EVOLUTION_API_KEY", "")
+DIRECT_MGMT_PHONE = os.getenv("DIRECT_MGMT_PHONE", "")
+DEFAULT_INSTANCE = os.getenv("EVOLUTION_DEFAULT_INSTANCE", "")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+PORT = int(os.getenv("WEBHOOK_PORT", "5000"))
 
-INSTANCES = [
-    "sierra_01032206443",
-    "sierra_01092048333",
-    "sierra_01031622600",
-    "sierra_01061399688"
-]
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("sierra-webhook")
 
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/export?format=csv"
-CHECKPOINT_FILE = "sierra_checkpoint.json"
-MASTER_DB_FILE = "Sierra_Estates_Master_Units.xlsx"
+app = FastAPI(title="Sierra PropTech Core Intelligence Engine")
 
-GREETINGS = [
-    "Hello,",
-    "Good day,",
-    "Greetings from Sierra Estates,",
-    "Hi there,"
-]
+COMPOUNDS = ["New Cairo", "Mivida", "Al Rehab", "Madinaty", "The Square",
+             "Lake View", "Hyde Park", "Mountain View", "Palm Hills", "Zayed"]
+PROPERTY_TYPES = ["Apartment", "Duplex", "Villa", "Townhouse", "Twinhouse",
+                  "Penthouse", "Studio", "Chalet", "Office"]
 
-MESSAGES = [
-    "This is the property management and marketing team at Sierra PropTech. Is your listed property still available for direct marketing to our verified clients?",
-    "We are reaching out from Sierra Estates regarding your property listing—we have qualified clients ready for immediate viewing and closing.",
-    "This is Sierra Asset Management. We would love to confirm the latest details of your unit so we can feature it to our active buyer/tenant network."
-]
+# In-memory dedup for this process only. Durable dedup lives in the master
+# orchestrator's Excel ledger (Dedup Key column). A restart clears this set —
+# that is an accepted, documented trade-off for the desktop lane.
+seen_dedup_keys = set()
 
-def get_cairo_time():
-    return datetime.utcnow() + timedelta(hours=2)
 
-def is_day_shift():
-    now = get_cairo_time()
-    return 10 <= now.hour < 21
-
-def clean_phone(raw):
-    if pd.isna(raw):
+def normalize_phone(raw_phone: str):
+    """Normalize Egyptian/international phone formats to plain digits."""
+    if not raw_phone:
         return None
-    raw_str = str(raw).split('.')[0].strip()
-    digits = re.sub(r'\D', '', raw_str)
-    if digits.startswith('201') and len(digits) == 12:
+    digits = re.sub(r"\D", "", str(raw_phone).split("@")[0])
+    if digits.startswith("00"):
+        digits = digits[2:]
+    if digits.startswith("201") and len(digits) == 12:
         return digits
-    elif digits.startswith('01') and len(digits) == 11:
-        return '2' + digits
-    elif digits.startswith('1') and len(digits) == 10:
-        return '20' + digits
-    elif len(digits) >= 10:
-        return digits
-    return None
+    if digits.startswith("01") and len(digits) == 11:
+        return "2" + digits
+    if digits.startswith("1") and len(digits) == 10:
+        return "20" + digits
+    return digits if len(digits) >= 10 else None
 
-def detect_phone_col(df):
-    for col in df.columns:
-        if any(k in str(col).lower() for k in ['phone', 'mobile', 'contact', 'tel', 'number']):
-            return col
-    return df.columns[1] if len(df.columns) > 1 else df.columns[0]
 
-def fetch_sheet_data(retries=3):
-    for attempt in range(retries):
-        try:
-            return pd.read_csv(SHEET_CSV_URL)
-        except Exception as e:
-            print(f"[Sheet Sync] Attempt ({attempt + 1}/{retries}) failed to download Google Sheet: {e}")
-            time.sleep(5 * (attempt + 1))
-    return None
-
-def load_checkpoint():
-    if os.path.exists(CHECKPOINT_FILE):
-        try:
-            with open(CHECKPOINT_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {"last_row": 0, "instance_idx": 0, "contacted": [], "failed_dead_letter": []}
-
-def save_checkpoint(row, inst_idx, contacted, failed_dlq=None):
-    tmp_file = f"{CHECKPOINT_FILE}.tmp"
-    payload = {
-        "last_row": row,
-        "instance_idx": inst_idx,
-        "contacted": list(contacted),
-        "failed_dead_letter": list(failed_dlq) if failed_dlq is not None else [],
-        "updated_at": get_cairo_time().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    with open(tmp_file, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    os.replace(tmp_file, CHECKPOINT_FILE)
-
-def is_instance_connected(instance):
-    url = f"{API_URL}/instance/connectionState/{instance}"
-    headers = {"apikey": API_KEY}
-    try:
-        res = requests.get(url, headers=headers, timeout=8)
-        if res.status_code == 200:
-            data = res.json()
-            state = data.get("instance", {}).get("state") or data.get("state")
-            return state == "open"
-    except Exception:
-        pass
-    return False
-
-def send_msg(instance, phone, text, retries=2):
+def send_whatsapp_message(instance: str, number: str, text: str):
+    """Send via Evolution API. Returns the honest boolean result; logs everything."""
+    if not API_KEY:
+        log.error("EVOLUTION_API_KEY is not set — outbound send skipped (no fake success)")
+        return False
     url = f"{API_URL}/message/sendText/{instance}"
     headers = {"apikey": API_KEY, "Content-Type": "application/json"}
-    payload = {"number": phone, "text": text, "delay": 1500}
-    for attempt in range(retries):
-        try:
-            res = requests.post(url, json=payload, headers=headers, timeout=20)
-            if res.status_code in [200, 201]:
-                return True
-        except Exception:
-            time.sleep(3 * (attempt + 1))
-    return False
+    payload = {"number": number, "text": text, "delay": 1200}
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=15)
+        log.info("sendText instance=%s to=%s -> HTTP %s", instance, number, res.status_code)
+        return res.status_code in [200, 201]
+    except Exception as exc:
+        log.error("sendText instance=%s to=%s failed: %s", instance, number, exc)
+        return False
 
-def process_inventory_coding(df):
-    print("\n[Inventory Engine] Auditing sheet data, generating unit codes, and building Property Finder listings...")
-    if df is None or df.empty:
-        print("[Inventory Engine] Sheet is empty or unreachable.")
-        return
 
-    df_master = pd.DataFrame()
-    if os.path.exists(MASTER_DB_FILE):
-        try:
-            df_master = pd.read_excel(MASTER_DB_FILE)
-        except Exception:
-            pass
+def analyze_payload(event_type: str, text: str, sender_phone: str):
+    """Classify an inbound event and produce the action + reply payload."""
+    phone = normalize_phone(sender_phone)
+    lower_text = (text or "").lower()
 
-    new_rows = []
-    phone_col = detect_phone_col(df)
-
-    for idx, row in df.iterrows():
-        phone = clean_phone(row[phone_col])
-        if not phone:
-            continue
-
-        price = str(row.get('Monthly Rent (EGP)', row.get('Price', 'TBD')))
-        dedup_key = f"{phone}_{price}"
-
-        if not df_master.empty and "Dedup Key" in df_master.columns and dedup_key in df_master["Dedup Key"].astype(str).values:
-            continue
-
-        compound = str(row.get('Compound / Project', row.get('Compound', 'New Cairo')))
-        prop_type = str(row.get('Property Type', 'Apartment'))
-        beds = str(row.get('Beds', row.get('Bedrooms', '3')))
-
-        c_code = "NC"
-        c_lower = compound.lower()
-        if "mivida" in c_lower: c_code = "MIV"
-        elif "rehab" in c_lower: c_code = "REH"
-        elif "madinaty" in c_lower: c_code = "MAD"
-        elif "square" in c_lower: c_code = "SQR"
-        elif "lake" in c_lower: c_code = "LKV"
-
-        unit_code = f"{c_code}-APT-{beds}B-PF"
-        pf_title_en = f"{prop_type} for Rent/Sale in {compound} | {beds} Bedrooms | Ref {unit_code}"
-        pf_desc_en = (
-            f"Prime {prop_type} available now in {compound}.\n"
-            f"Layout: {beds} Bedrooms.\n"
-            f"Asking Price: {price} EGP.\n"
-            f"Reference Code: {unit_code}\n"
-            f"Contact Sierra Estates Management directly to schedule a private viewing."
-        )
-
-        new_rows.append({
-            "Unit Code": unit_code,
-            "Compound": compound,
-            "Property Type": prop_type,TED" or "call" in event_type.lower():
+    # 1. [CALL_REJECTED]
+    if event_type == "CALL_REJECTED" or "call" in event_type.lower():
         fallback_msg = (
-            f"Hello! This line is dedicated to automated inquiries and viewing reservations. "
-            f"Your number has been logged, and an advisor will reach out shortly. "
-            f"If your inquiry is urgent or you need to book an immediate viewing, please reply with your requirements here "
-            f"or call direct management at: {DIRECT_MGMT_PHONE}."
+            "Hello! This line is dedicated to automated inquiries and viewing reservations. "
+            "Your number has been logged, and an advisor will reach out shortly. "
+            "If your inquiry is urgent or you need to book an immediate viewing, please reply with your requirements here"
         )
+        if DIRECT_MGMT_PHONE:
+            fallback_msg += f" or call direct management at: {DIRECT_MGMT_PHONE}."
+        else:
+            fallback_msg += "."
         return {
             "action": "REJECT_CALL_REPLY",
             "data": {"caller_phone": phone},
-            "outgoing_message": fallback_msg
+            "outgoing_message": fallback_msg,
         }
 
     # 2. [OWNER_OUTREACH]
@@ -191,18 +130,22 @@ def process_inventory_coding(df):
         pitch = random.choice([
             "we have verified clients actively looking for properties in your area and would love to match them with your unit via our registered platform.",
             "our team at Sierra PropTech can connect your property directly with pre-qualified buyers and tenants with zero hassle.",
-            "would you be open to featuring your property to our vetted client network for an immediate viewing?"
+            "would you be open to featuring your property to our vetted client network for an immediate viewing?",
         ])
-        outreach_msg = f"{greeting}! Are you still offering your property on the market? At Sierra Estates, {pitch} Reply YES and we will handle the rest."
+        outreach_msg = (f"{greeting}! Are you still offering your property on the market? "
+                        f"At Sierra Estates, {pitch} Reply YES and we will handle the rest.")
         return {
             "action": "SEND_MESSAGE",
             "data": {"target_phone": phone, "campaign": "OWNER_OUTREACH"},
-            "outgoing_message": outreach_msg
+            "outgoing_message": outreach_msg,
         }
 
     # 3. [INBOUND_LEAD] vs [SCRAPED_AD]
-    is_inquiry = any(w in lower_text for w in ["interested", "viewing", "visit", "available?", "details", "how much", "looking for", "book"])
-    if is_inquiry and not any(w in lower_text for w in ["for sale", "for rent", "sqm", "bedrooms"]):
+    is_inquiry = any(w in lower_text for w in
+                     ["interested", "viewing", "visit", "available?", "details",
+                      "how much", "looking for", "book"])
+    if is_inquiry and not any(w in lower_text for w in
+                              ["for sale", "for rent", "sqm", "bedrooms"]):
         reply_msg = (
             "Welcome to Sierra PropTech! Thank you for reaching out. "
             "This unit features a prime location inside the compound and a spacious, modern layout with premium finishing. "
@@ -211,15 +154,15 @@ def process_inventory_coding(df):
         return {
             "action": "SEND_MESSAGE",
             "data": {"lead_phone": phone, "intent": "INBOUND_LEAD"},
-            "outgoing_message": reply_msg
+            "outgoing_message": reply_msg,
         }
 
-    # 4. [SCRAPED_AD] Extraction & Normalization
-    compound = next((c for c in COMPOUNDS if c.lower() in lower_text), "New Cairo")
+    # 4. [SCRAPED_AD] extraction & normalization
+    compound = next((c for c in COMPOUNDS if c.lower() in lower_text), None)
     deal_type = "Rent" if any(w in lower_text for w in ["rent", "monthly", "lease"]) else "Resale"
     prop_type = next((p for p in PROPERTY_TYPES if p.lower() in lower_text), "Apartment")
 
-    area_match = re.search(r"(\d{2,4})\s*(?:sqm|m2|m²|meter)", lower_text)
+    area_match = re.search(r"(\d{2,4})\s*(?:sqm|m2|m\u00b2|meter)", lower_text)
     area_sqm = int(area_match.group(1)) if area_match else None
 
     beds_match = re.search(r"(\d+)\s*(?:bed|br|bedroom|rooms)", lower_text)
@@ -243,11 +186,13 @@ def process_inventory_coding(df):
     elif "core" in lower_text or "shell" in lower_text:
         finishing = "Core & Shell"
 
-    source_type = "Broker" if any(w in lower_text for w in ["broker", "commission", "agency", "real estate"]) else "Direct Owner"
+    source_type = ("Broker" if any(w in lower_text for w in
+                   ["broker", "commission", "agency", "real estate"])
+                   else "Direct Owner")
     dedup_key = f"{phone}_{price_egp}"
 
     extracted = {
-        "compound": compound,
+        "compound": compound or "Unclassified",
         "deal_type": deal_type,
         "property_type": prop_type,
         "area_sqm": area_sqm,
@@ -257,27 +202,38 @@ def process_inventory_coding(df):
         "finishing": finishing,
         "contact_phone": phone,
         "source_type": source_type,
-        "dedup_key": dedup_key
+        "dedup_key": dedup_key,
+        "extracted_at": datetime.now(timezone.utc).isoformat(),
     }
 
     if dedup_key in seen_dedup_keys:
+        log.info("duplicate scraped ad skipped: %s", dedup_key)
         return {"action": "SKIP_DUPLICATE", "data": extracted, "outgoing_message": None}
 
     seen_dedup_keys.add(dedup_key)
     return {"action": "SAVE_INVENTORY", "data": extracted, "outgoing_message": None}
 
+
 @app.post("/webhook")
 async def evolution_webhook(request: Request):
+    # Optional shared-secret guard (Evolution sends it as a custom header).
+    if WEBHOOK_SECRET:
+        supplied = request.headers.get("X-Webhook-Secret", "")
+        if supplied != WEBHOOK_SECRET:
+            return {"action": "UNAUTHORIZED", "data": None, "outgoing_message": None}
+
     body = await request.json()
     event = body.get("event", "")
-    instance = body.get("instance", "sierra_01032206443")
+    instance = body.get("instance") or DEFAULT_INSTANCE
     data = body.get("data", {})
 
     if "call" in event.lower():
         caller = data.get("from") or data.get("remoteJid", "")
         result = analyze_payload("CALL_REJECTED", "", caller)
-        if result["outgoing_message"] and result["data"]["caller_phone"]:
+        if result["outgoing_message"] and result["data"]["caller_phone"] and instance:
             send_whatsapp_message(instance, result["data"]["caller_phone"], result["outgoing_message"])
+        elif not instance:
+            log.error("call-reject reply skipped: no instance in payload and no EVOLUTION_DEFAULT_INSTANCE")
         return result
 
     key = data.get("key", {})
@@ -289,9 +245,13 @@ async def evolution_webhook(request: Request):
     text = msg_obj.get("conversation") or msg_obj.get("extendedTextMessage", {}).get("text") or ""
 
     result = analyze_payload("MESSAGE", text, sender)
-    if result["outgoing_message"] and normalize_phone(sender):
+    if result["outgoing_message"] and normalize_phone(sender) and instance:
         send_whatsapp_message(instance, normalize_phone(sender), result["outgoing_message"])
     return result
 
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    if not API_KEY:
+        log.warning("EVOLUTION_API_KEY not set — inbound classification will work, "
+                    "but outbound replies will be skipped honestly (no fake success)")
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

@@ -1,12 +1,33 @@
-name: Sierra Estates Automation
+# Sierra Estates Evolution Engine — manual-dispatch CI lane
+#
+# WHY THIS SHAPE (differs from the original draft on purpose):
+#   1. NO cron schedule. The Evolution API runs on the owner's machine
+#      (localhost:8080 or a private tunnel) which GitHub-hosted runners cannot
+#      reach. A 30-minute cron would burn Actions minutes for zero delivered
+#      messages. The 24/7 schedule is the local `python sierra_master.py`
+#      while-true loop on the owner's box.
+#   2. NO secret defaults. The original draft embedded
+#      `secrets.X || '<literal key>'` which would publish the API key in this
+#      public repository. Secrets must be configured as repository secrets;
+#      the run fails loudly when they are missing (repo convention: honest,
+#      visible BLOCKED state — never a fake green).
+#   3. NO git commit/push of the Excel ledger or checkpoint. Committing a
+#      growing binary to main on every run (48x/day on the original 30-min
+#      cron) bloats the repo and floods main. Run outputs are uploaded as
+#      workflow artifacts instead (7-day retention).
+#   4. Read-only permissions + concurrency guard.
+
+name: Sierra Evolution Engine
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/30 * * * *'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: sierra-evolution
+  cancel-in-progress: true
 
 jobs:
   run-sierra-engine:
@@ -21,22 +42,52 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Verify required secrets (loud failure — repo convention)
+        env:
+          EVOLUTION_API_URL: ${{ secrets.EVOLUTION_API_URL }}
+          EVOLUTION_API_KEY: ${{ secrets.EVOLUTION_API_KEY }}
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+          SIERRA_INSTANCES: ${{ secrets.SIERRA_INSTANCES }}
+        run: |
+          missing=0
+          for v in EVOLUTION_API_URL EVOLUTION_API_KEY SHEET_CSV_URL SIERRA_INSTANCES; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Repository secret $v is not configured."
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo "Configure these four secrets under Settings > Secrets and variables > Actions, then re-run this workflow."
+            echo "EVOLUTION_API_URL   e.g. https://<your-tunnel-to-the-box>   (GitHub runners cannot reach localhost)"
+            echo "EVOLUTION_API_KEY   the Evolution API AUTHENTICATION_API_KEY"
+            echo "SHEET_CSV_URL       the Google Sheet CSV export URL"
+            echo "SIERRA_INSTANCES    comma-separated Evolution instance names"
+            exit 1
+          fi
+          echo "All required secrets present."
+
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests pandas openpyxl
+          pip install requests pandas openpyxl tzdata
 
       - name: Run Sierra Master Orchestrator (Single Cycle)
         env:
           CI_SINGLE_RUN: "true"
-          EVOLUTION_API_URL: ${{ secrets.EVOLUTION_API_URL || 'http://localhost:8080' }}
-          EVOLUTION_API_KEY: ${{ secrets.EVOLUTION_API_KEY || 'sierra_secret_key_2026' }}
+          EVOLUTION_API_URL: ${{ secrets.EVOLUTION_API_URL }}
+          EVOLUTION_API_KEY: ${{ secrets.EVOLUTION_API_KEY }}
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+          SIERRA_INSTANCES: ${{ secrets.SIERRA_INSTANCES }}
         run: |
           python sierra_master.py
 
-      - name: Commit and Push Updated Inventory & Checkpoint
-        run: |
-          git config --global user.name "Sierra Automation Bot"
-          git config --global user.email "actions@github.com"
-          git add Sierra_Estates_Master_Units.xlsx sierra_checkpoint.json || true
-          git diff --staged --quiet || (git commit -m "chore: update master units and checkpoint [skip ci]" && git push)
+      - name: Upload run outputs as artifacts (never committed to git)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sierra-run-${{ github.run_id }}
+          retention-days: 7
+          path: |
+            Sierra_Estates_Master_Units.xlsx
+            sierra_checkpoint.json
+          if-no-files-found: ignore
