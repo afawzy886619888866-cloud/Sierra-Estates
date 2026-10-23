@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gravity-memory"
+version = "1.0.0"
+description = "GravityMemory adapter on top of OpenMemory"
+dependencies = [
+    "openmemory-py",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["gravity_memory"]

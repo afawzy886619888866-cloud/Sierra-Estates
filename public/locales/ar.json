@@ -1,0 +1,53 @@
+{
+  "dashboard": {
+    "greeting": "مرحباً بعودتك",
+    "morning": "صباح الخير",
+    "afternoon": "مساء الخير",
+    "evening": "مساء الخير",
+    "institutionalIntelligence": "الذكاء المؤسسي",
+    "neuralLinkActive": "الارتباط العصبي نشط",
+    "marketIntelligence": "ذكاء السوق",
+    "incorporateAsset": "إضافة أصل",
+    "operationalVelocity": "السرعة التشغيلية",
+    "globalRegistry": "السجل العالمي",
+    "securityNodeStatus": "حالة عقدة الأمان",
+    "neuralCore": "النواة العصبية",
+    "optimal": "مثالي",
+    "syncGateway": "بوابة المزامنة",
+    "stable": "مستقر",
+    "dataPersistence": "استمرارية البيانات",
+    "precisionMotto": "الدقة هي مهندس التميز.",
+    "upcomingMilestone": "المرحلة القادمة",
+    "quarterlyReview": "المراجعة الربع سنوية",
+    "portfolioAssets": "أصول المحفظة",
+    "liveInventory": "المخزون المباشر",
+    "activeStakeholders": "أصحاب المصلحة النشطون",
+    "priority": "أولوية",
+    "capitalTransacted": "رأس المال المتداول",
+    "executivePartners": "الشركاء التنفيذيون",
+    "secured": "مؤمن"
+  },
+  "ai": {
+    "title": "بوابة الذكاء الاستراتيجي",
+    "analyzing": "تحليل إشارات السوق...",
+    "active": "النواة العصبية نشطة",
+    "sync": "مزامنة",
+    "reconstructing": "إعادة بناء النماذج",
+    "ledger": "سجل التنسيق العملياتي (V4.0)",
+    "synchronized": "10 مراحل متزامنة",
+    "signal": "إشارة",
+    "critical": "بروتوكول حرج",
+    "fallbackOppText": "الطلب الهيكلي على الأصول الساحلية الفاخرة في ممر الساحل الشمالي مستمر في التسارع.",
+    "fallbackOppAction": "تحليل المحفظة",
+    "fallbackWarnText": "أصحاب المصلحة ذوو الكثافة العالية يتطلبون استشارة تنفيذية فورية للحفاظ على سرعة دورة الحياة.",
+    "fallbackWarnAction": "خط القيادة"
+  },
+  "activity": {
+    "title": "السرعة التشغيلية",
+    "liveFeed": "البث المباشر",
+    "noSignals": "لم يتم اكتشاف إشارات عمليات في النافذة الحالية.",
+    "justNow": "الآن",
+    "minutesAgo": "د",
+    "hoursAgo": "س"
+  }
+}

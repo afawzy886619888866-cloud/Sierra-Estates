@@ -1,0 +1,624 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sierra estates — Luxury Property Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700&family=Inter:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --navy: #071422;
+    --ivory: #F4F0E8;
+    --gold: #C8961A;
+    --gold-light: #E9C176;
+    --red: #E63946;
+    --red-deep: #B71C2C;
+  }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  html, body { background: #FAF8F3; }
+  body { font-family: 'Inter', sans-serif; color: #1a1a1a; }
+  .font-serif { font-family: 'Cormorant Garamond', serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #f0ede5; }
+  ::-webkit-scrollbar-thumb { background: rgba(7,20,34,0.2); border-radius: 5px; }
+
+  .ease-silk { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+
+  /* Hero background — refined, soft & elegant */
+  .hero-bg {
+    background:
+      linear-gradient(180deg, rgba(250,248,243,0.4) 0%, rgba(250,248,243,0.85) 70%, rgba(250,248,243,1) 100%),
+      radial-gradient(ellipse at top, rgba(200,150,26,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(230,57,70,0.05) 0%, transparent 50%),
+      url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=2400&q=85&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: scroll;
+  }
+
+  /* Logo aura */
+  @keyframes aura-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  .logo-aura {
+    position: relative;
+  }
+  .logo-aura::before {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    background: radial-gradient(circle, rgba(230,57,70,0.2) 0%, rgba(200,150,26,0.1) 40%, transparent 70%);
+    z-index: -1;
+    animation: aura-pulse 4s ease-in-out infinite;
+  }
+
+  /* Filter bar dropdown */
+  .pf-dropdown {
+    position: relative;
+  }
+  .pf-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 280px;
+    background: white;
+    border: 1px solid rgba(7,20,34,0.12);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    padding: 16px;
+    z-index: 50;
+    animation: slideDown 200ms cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Listing card hover */
+  .listing-card {
+    transition: all 400ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .listing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px rgba(7,20,34,0.12);
+  }
+
+  /* Pulse live */
+  @keyframes pulse-live {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+    50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  }
+  .pulse-live { animation: pulse-live 2s ease-in-out infinite; }
+
+  /* Stagger reveal */
+  .stagger-child {
+    opacity: 0;
+    animation: reveal-up 600ms cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+  @keyframes reveal-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Custom range slider */
+  input[type=range].pf-range {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, #C8961A 0%, #C8961A var(--val), #e5e5e5 var(--val), #e5e5e5 100%);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range].pf-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #C8961A;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(200,150,26,0.4);
+  }
+
+  /* Detail page slide in */
+  @keyframes detail-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .detail-page { animation: detail-in 500ms cubic-bezier(0.16,1,0.3,1); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+// ─── ICONS ────────────────────────────────────────────────────────────
+const I = {
+  Search: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>),
+  ChevronDown: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>),
+  ChevronLeft: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>),
+  Bed: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>),
+  Bath: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4 8 6"/><path d="M17 19v2"/><path d="M2 12h20"/><path d="M7 19v2"/><path d="M9 5 7.621 3.621A2.121 2.121 0 0 0 4 5v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>),
+  Square: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>),
+  Pin: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>),
+  Video: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>),
+  Heart: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>),
+  Phone: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>),
+  Mail: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>),
+  Share: (p) => (<svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>),
+};
+
+// ─── INVENTORY ────────────────────────────────────────────────────────
+const PROPERTIES = [
+  {id:1,title:'The Glass Horizon Villa',compound:'New Cairo · Madinaty',price:8450000,priceLabel:'EGP 8.45M',beds:5,baths:6,area:'7,800',type:'villa',purpose:'resale',img:'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=85',gallery:['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=85','https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85','https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=85','https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=85'],status:'verified',badge:'PREMIUM',pf_id:'PF-4921083',desc:'Premium standalone villa with panoramic golf views and meticulous architecture. Features 5 bedrooms, private pool, expansive garden, and modern open-plan living spaces. Located in the prestigious Madinaty community.',amenities:['Private Garden','Swimming Pool','Covered Parking','24/7 Security','Gym','Smart Home'],agent:'Tarek Hassan',agentPhone:'+20 100 999 1234'},
+  {id:2,title:'Minimalist Waterfront Penthouse',compound:'Uptown Cairo · Mokattam',price:3120000,priceLabel:'EGP 3.12M',beds:3,baths:4,area:'3,400',type:'penthouse',purpose:'rent',img:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85',gallery:['https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85','https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=85','https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=85'],status:'owner',badge:'NEW',pf_id:'PF-4921085',desc:'Stunning minimalist penthouse with breathtaking Uptown Cairo views. Open-plan living space, floor-to-ceiling windows, premium finishes throughout. 3 spacious bedrooms with en-suite bathrooms.',amenities:['Sky Lounge','Private Terrace','Designer Kitchen','Maid Room','Smart Home','Concierge'],agent:'Layla Mahmoud',agentPhone:'+20 100 888 5678'},
+  {id:3,title:'Obsidian High-Rise Studio',compound:'Mostakbal City',price:1250000,priceLabel:'EGP 1.25M',beds:1,baths:2,area:'1,150',type:'apartment',purpose:'rent',img:'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=85',gallery:['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=85','https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=85'],status:'verified',badge:'FEATURED',pf_id:'PF-4921086',desc:'Sleek modern studio in vibrant Mostakbal City. Perfect for young professionals. Walking distance to dining, shopping, and metro stations.',amenities:['Concierge','24/7 Security','Covered Parking','Rooftop Pool'],agent:'Karim Mostafa',agentPhone:'+20 100 777 9012'},
+  {id:4,title:'Elysian Modern Estate',compound:'Mountain View · 5th Settlement',price:5600000,priceLabel:'EGP 5.60M',beds:4,baths:5,area:'5,200',type:'villa',purpose:'resale',img:'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=85',gallery:['https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=85','https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=85'],status:'owner',badge:'HOT',pf_id:'PF-4921087',desc:'Architectural masterpiece in Mountain View. Expansive interiors, private outdoor space, premium finishes. 4 bedrooms, 5 bathrooms, double garage.',amenities:['Garden','Pool','Garage','Security','Smart Home'],agent:'Salma Ahmed',agentPhone:'+20 100 666 3456'},
+  {id:5,title:'Twin House at Mivida',compound:'Mivida · 5th Settlement',price:4200000,priceLabel:'EGP 4.20M',beds:4,baths:3,area:'4,100',type:'twin',purpose:'resale',img:'https://images.unsplash.com/photo-1585399572663-f2a1f35f4137?w=1200&q=85',gallery:['https://images.unsplash.com/photo-1585399572663-f2a1f35f4137?w=1200&q=85','https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=85'],status:'verified',badge:'NEW',pf_id:'PF-4921088',desc:'Elegant twin house in award-winning Mivida community. Private garden, covered parking, designer finishes throughout.',amenities:['Garden','Parking','Security','Community Pool','Tennis Courts'],agent:'Omar Salah',agentPhone:'+20 100 555 7890'},
+  {id:6,title:'Tower Suite Apartment',compound:'Eastown · 5th Settlement',price:2890000,priceLabel:'EGP 2.89M',beds:3,baths:3,area:'2,400',type:'apartment',purpose:'rent',img:'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=85',gallery:['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=85'],status:'owner',badge:'TRENDING',pf_id:'PF-4921089',desc:'Luxurious tower suite with skyline views in Eastown. Open-plan living, premium kitchen, large balcony.',amenities:['Concierge','Pool','Gym','Parking','Security'],agent:'Nour Khalil',agentPhone:'+20 100 444 1234'},
+];
+
+// ─── PF-STYLE DROPDOWN COMPONENT ──────────────────────────────────────
+function PFDropdown({label, value, children, onClose, isOpen, onClick}) {
+  const ref = useRef(null);
+  useEffect(()=>{
+    if(!isOpen) return;
+    const handle = (e) => { if(ref.current && !ref.current.contains(e.target)) onClose(); };
+    setTimeout(()=>document.addEventListener('click', handle), 0);
+    return () => document.removeEventListener('click', handle);
+  },[isOpen, onClose]);
+  return (
+    <div className="pf-dropdown" ref={ref}>
+      <button onClick={onClick} className="flex items-center justify-between gap-3 px-4 py-3 bg-white border border-[#071422]/15 hover:border-[#C8961A]/60 rounded-xl text-sm font-medium text-[#071422] transition-all min-w-[140px]">
+        <span>{value || label}</span>
+        <I.ChevronDown className={`w-4 h-4 text-[#C8961A] transition-transform ${isOpen?'rotate-180':''}`}/>
+      </button>
+      {isOpen && <div className="pf-dropdown-panel">{children}</div>}
+    </div>
+  );
+}
+
+// ─── PROPERTY FINDER STYLE FILTER BAR ─────────────────────────────────
+function PFFilterBar({filters, setFilters, onSearch}) {
+  const [openDropdown, setOpenDropdown] = useState(null);
+  
+  const toggle = (key) => setOpenDropdown(openDropdown===key?null:key);
+  const close = () => setOpenDropdown(null);
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-2xl shadow-xl border border-[#071422]/8 max-w-5xl mx-auto">
+      {/* Search input */}
+      <div className="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 bg-[#F4F0E8]/30 border border-[#071422]/8 rounded-xl">
+        <I.Search className="w-4 h-4 text-[#071422]/40"/>
+        <input type="text" placeholder="City, compound, or building" value={filters.search} onChange={(e)=>setFilters({...filters, search: e.target.value})} className="flex-1 bg-transparent outline-none text-sm text-[#071422] placeholder-[#071422]/40"/>
+      </div>
+
+      {/* Purpose: Rent | Resale */}
+      <PFDropdown label="Purpose" value={filters.purpose==='all'?'Any':filters.purpose==='rent'?'Rent':'Resale'} onClose={close} isOpen={openDropdown==='purpose'} onClick={()=>toggle('purpose')}>
+        <div className="space-y-1 min-w-[200px]">
+          {[{k:'all',l:'Any'},{k:'rent',l:'Rent'},{k:'resale',l:'Resale'}].map(o=>(
+            <button key={o.k} onClick={()=>{setFilters({...filters, purpose:o.k}); close();}} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${filters.purpose===o.k?'bg-[#C8961A] text-white font-semibold':'text-[#071422] hover:bg-[#F4F0E8]/50'}`}>{o.l}</button>
+          ))}
+        </div>
+      </PFDropdown>
+
+      {/* Type */}
+      <PFDropdown label="Type" value={filters.type==='all'?'Any':filters.type} onClose={close} isOpen={openDropdown==='type'} onClick={()=>toggle('type')}>
+        <div className="space-y-1 min-w-[200px]">
+          {['all','apartment','villa','penthouse','twin','townhouse','duplex'].map(t=>(
+            <button key={t} onClick={()=>{setFilters({...filters, type:t}); close();}} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all capitalize ${filters.type===t?'bg-[#C8961A] text-white font-semibold':'text-[#071422] hover:bg-[#F4F0E8]/50'}`}>{t==='all'?'Any Type':t}</button>
+          ))}
+        </div>
+      </PFDropdown>
+
+      {/* Beds */}
+      <PFDropdown label="Beds & Baths" value={filters.beds===0?'Any':`${filters.beds}+ Beds`} onClose={close} isOpen={openDropdown==='beds'} onClick={()=>toggle('beds')}>
+        <div className="min-w-[240px]">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#071422]/60 mb-3">Bedrooms</p>
+          <div className="flex flex-wrap gap-2">
+            {[0,1,2,3,4,5,6].map(b=>(
+              <button key={b} onClick={()=>setFilters({...filters, beds:b})} className={`w-12 h-10 rounded-lg text-xs font-bold transition-all ${filters.beds===b?'bg-[#C8961A] text-white':'bg-[#F4F0E8]/50 text-[#071422] hover:bg-[#C8961A]/15'}`}>
+                {b===0?'Any':b+(b===6?'+':'')}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#071422]/60 mt-4 mb-2">Bathrooms</p>
+          <div className="flex flex-wrap gap-2">
+            {[0,1,2,3,4,5].map(b=>(
+              <button key={b} onClick={()=>setFilters({...filters, baths:b})} className={`w-12 h-10 rounded-lg text-xs font-bold transition-all ${filters.baths===b?'bg-[#C8961A] text-white':'bg-[#F4F0E8]/50 text-[#071422] hover:bg-[#C8961A]/15'}`}>
+                {b===0?'Any':b+(b===5?'+':'')}
+              </button>
+            ))}
+          </div>
+        </div>
+      </PFDropdown>
+
+      {/* Price */}
+      <PFDropdown label="Price" value={filters.maxPrice<10000000?`EGP ${(filters.maxPrice/1000000).toFixed(1)}M`:'Any'} onClose={close} isOpen={openDropdown==='price'} onClick={()=>toggle('price')}>
+        <div className="min-w-[260px]">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#071422]/60 mb-3">Maximum Price</p>
+          <input type="range" min="1000000" max="20000000" step="500000" value={filters.maxPrice} onChange={(e)=>setFilters({...filters, maxPrice:Number(e.target.value)})} className="pf-range w-full" style={{'--val': `${((filters.maxPrice-1000000)/(20000000-1000000))*100}%`}}/>
+          <div className="flex justify-between mt-2 text-[10px] font-mono text-[#071422]/50">
+            <span>1M</span><span className="font-bold text-[#C8961A]">EGP {(filters.maxPrice/1000000).toFixed(1)}M</span><span>20M+</span>
+          </div>
+        </div>
+      </PFDropdown>
+
+      {/* More Filters */}
+      <PFDropdown label="More" value="More Filters" onClose={close} isOpen={openDropdown==='more'} onClick={()=>toggle('more')}>
+        <div className="min-w-[280px]">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#071422]/60 mb-3">Furnishing</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {['Furnished','Semi','Empty'].map(f=>(
+              <button key={f} onClick={()=>{
+                const arr = filters.furnish;
+                setFilters({...filters, furnish: arr.includes(f)?arr.filter(x=>x!==f):[...arr,f]});
+              }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filters.furnish.includes(f)?'bg-[#C8961A] text-white':'bg-[#F4F0E8]/50 text-[#071422] hover:bg-[#C8961A]/15'}`}>{f}</button>
+            ))}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#071422]/60 mb-3">Amenities</p>
+          <div className="flex flex-wrap gap-2">
+            {['Garden','Pool','Parking','Security','Gym'].map(a=>(
+              <button key={a} onClick={()=>{
+                const arr = filters.amenities;
+                setFilters({...filters, amenities: arr.includes(a)?arr.filter(x=>x!==a):[...arr,a]});
+              }} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filters.amenities.includes(a)?'bg-[#C8961A] text-white':'bg-[#F4F0E8]/50 text-[#071422] hover:bg-[#C8961A]/15'}`}>{a}</button>
+            ))}
+          </div>
+        </div>
+      </PFDropdown>
+
+      {/* Find button */}
+      <button onClick={onSearch} className="px-8 py-3 bg-gradient-to-r from-[#E63946] to-[#B71C2C] hover:from-[#FF4D5A] hover:to-[#E63946] text-white rounded-xl text-sm font-bold uppercase tracking-[0.18em] shadow-lg shadow-[#E63946]/30 transition-all">
+        Find
+      </button>
+    </div>
+  );
+}
+
+// ─── PROPERTY CARD ─────────────────────────────────────────────────────
+function PropertyCard({p, i, onClick}) {
+  return (
+    <div className="stagger-child" style={{animationDelay:`${i*80}ms`}}>
+      <div onClick={onClick} className="listing-card bg-white border border-[#071422]/8 rounded-2xl overflow-hidden cursor-pointer group">
+        <div className="relative h-56 overflow-hidden bg-[#f0ede5]">
+          <img src={p.img} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-silk"/>
+          {/* Badge */}
+          <span className="absolute top-3 left-3 bg-[#C8961A] text-white px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-[0.15em]">{p.badge}</span>
+          {/* Purpose badge */}
+          <span className={`absolute top-3 right-3 px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-[0.15em] backdrop-blur-md ${p.purpose==='rent'?'bg-blue-500/85 text-white':'bg-green-600/85 text-white'}`}>
+            {p.purpose==='rent'?'For Rent':'For Resale'}
+          </span>
+          {/* Live indicator */}
+          {p.status==='owner' && (
+            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 pulse-live"></span>
+              <span className="text-[9px] font-mono font-bold text-green-600 uppercase">Live</span>
+            </div>
+          )}
+          {/* Heart */}
+          <button className="absolute bottom-3 right-3 w-8 h-8 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-[#E63946] hover:text-white transition-all">
+            <I.Heart className="w-4 h-4"/>
+          </button>
+        </div>
+        <div className="p-5">
+          <p className="text-xs text-[#071422]/50 font-medium mb-1">{p.compound}</p>
+          <h3 className="font-serif text-xl text-[#071422] font-semibold mb-2 leading-tight">{p.title}</h3>
+          <p className="text-2xl font-bold text-[#C8961A] mb-3">{p.priceLabel} {p.purpose==='rent' && <span className="text-xs text-[#071422]/50 font-normal">/year</span>}</p>
+          <div className="flex gap-4 text-xs text-[#071422]/60 pt-3 border-t border-[#071422]/8">
+            <span className="flex items-center gap-1.5"><I.Bed className="w-4 h-4 text-[#C8961A]"/> {p.beds} bd</span>
+            <span className="flex items-center gap-1.5"><I.Bath className="w-4 h-4 text-[#C8961A]"/> {p.baths} ba</span>
+            <span className="flex items-center gap-1.5"><I.Square className="w-4 h-4 text-[#C8961A]"/> {p.area} sqft</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LISTING DETAIL PAGE ───────────────────────────────────────────────
+function ListingDetail({property, onBack}) {
+  const [activeImg, setActiveImg] = useState(0);
+  const [showTour, setShowTour] = useState(false);
+  return (
+    <div className="detail-page min-h-screen bg-[#FAF8F3]">
+      {/* Top nav */}
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#071422]/8">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-4 flex items-center justify-between">
+          <button onClick={onBack} className="flex items-center gap-2 text-sm text-[#071422] hover:text-[#C8961A] transition-colors">
+            <I.ChevronLeft className="w-5 h-5"/>
+            Back to results
+          </button>
+          <div className="flex items-center gap-3">
+            <button className="p-2 hover:bg-[#F4F0E8]/50 rounded-lg transition-colors"><I.Share className="w-4 h-4"/></button>
+            <button className="p-2 hover:bg-[#F4F0E8]/50 rounded-lg transition-colors"><I.Heart className="w-4 h-4"/></button>
+            <button className="px-5 py-2 bg-[#C8961A] hover:bg-[#E9C176] text-[#071422] rounded-lg text-xs font-bold uppercase tracking-[0.15em] transition-all">Contact Agent</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs text-[#071422]/50 mb-6">
+          <span>Home</span><span>›</span><span>{property.compound}</span><span>›</span><span className="text-[#071422]">{property.title}</span>
+        </div>
+
+        {/* Gallery */}
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3 mb-8">
+          <div className="relative h-[480px] rounded-2xl overflow-hidden bg-[#f0ede5]">
+            <img src={property.gallery[activeImg]} alt="" className="w-full h-full object-cover"/>
+            <button onClick={()=>setShowTour(true)} className="absolute bottom-4 right-4 bg-[#071422]/85 backdrop-blur-md text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-[0.15em] flex items-center gap-2 hover:bg-[#C8961A] hover:text-[#071422] transition-all">
+              <I.Video className="w-4 h-4"/>
+              Virtual Tour
+            </button>
+            <span className="absolute top-4 left-4 bg-[#C8961A] text-white px-3 py-1.5 rounded text-xs font-bold uppercase tracking-[0.15em]">{property.badge}</span>
+          </div>
+          <div className="grid grid-rows-2 gap-3 h-[480px]">
+            {property.gallery.slice(1,3).map((img,i)=>(
+              <div key={i} onClick={()=>setActiveImg(i+1)} className="rounded-2xl overflow-hidden cursor-pointer bg-[#f0ede5] hover:opacity-90 transition-opacity">
+                <img src={img} alt="" className="w-full h-full object-cover"/>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content grid */}
+        <div className="grid md:grid-cols-[1fr_380px] gap-12">
+          {/* Main info */}
+          <div>
+            <div className="mb-2">
+              <span className={`inline-block px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-[0.15em] ${property.purpose==='rent'?'bg-blue-100 text-blue-700':'bg-green-100 text-green-700'}`}>
+                {property.purpose==='rent'?'For Rent':'For Resale'}
+              </span>
+              <span className="ml-2 text-xs font-mono text-[#071422]/50">{property.pf_id}</span>
+            </div>
+            <h1 className="font-serif text-4xl md:text-5xl font-light text-[#071422] mb-2">{property.title}</h1>
+            <p className="flex items-center gap-1.5 text-sm text-[#071422]/60 mb-6">
+              <I.Pin className="w-4 h-4 text-[#C8961A]"/>
+              {property.compound}
+            </p>
+            <p className="text-3xl font-bold text-[#C8961A] mb-6">{property.priceLabel}{property.purpose==='rent' && <span className="text-base text-[#071422]/50 font-normal"> /year</span>}</p>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-8 p-5 bg-[#F4F0E8]/30 border border-[#071422]/8 rounded-2xl">
+              <div className="text-center">
+                <I.Bed className="w-5 h-5 text-[#C8961A] mx-auto mb-1"/>
+                <p className="text-xl font-bold text-[#071422]">{property.beds}</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Bedrooms</p>
+              </div>
+              <div className="text-center border-x border-[#071422]/8">
+                <I.Bath className="w-5 h-5 text-[#C8961A] mx-auto mb-1"/>
+                <p className="text-xl font-bold text-[#071422]">{property.baths}</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Bathrooms</p>
+              </div>
+              <div className="text-center">
+                <I.Square className="w-5 h-5 text-[#C8961A] mx-auto mb-1"/>
+                <p className="text-xl font-bold text-[#071422]">{property.area}</p>
+                <p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Sqft</p>
+              </div>
+            </div>
+
+            {/* Description */}
+            <h3 className="font-serif text-2xl text-[#071422] mb-3">Description</h3>
+            <p className="text-sm text-[#071422]/70 leading-relaxed mb-8">{property.desc}</p>
+
+            {/* Amenities */}
+            <h3 className="font-serif text-2xl text-[#071422] mb-4">Amenities</h3>
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              {property.amenities.map(a=>(
+                <div key={a} className="flex items-center gap-2 p-3 bg-[#F4F0E8]/30 border border-[#071422]/8 rounded-lg">
+                  <span className="w-2 h-2 rounded-full bg-[#C8961A]"></span>
+                  <span className="text-sm text-[#071422]">{a}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar — Agent contact */}
+          <aside className="md:sticky md:top-24 h-fit">
+            <div className="bg-white border border-[#071422]/8 rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8961A] to-[#E9C176] flex items-center justify-center text-white font-bold text-lg">{property.agent[0]}</div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.15em] text-[#071422]/50">Listing Agent</p>
+                  <p className="font-bold text-[#071422]">{property.agent}</p>
+                </div>
+              </div>
+              <div className="space-y-2 mb-4">
+                <button className="w-full flex items-center justify-center gap-2 py-3 bg-[#C8961A] hover:bg-[#E9C176] text-[#071422] rounded-xl text-sm font-bold uppercase tracking-[0.15em] transition-all">
+                  <I.Phone className="w-4 h-4"/>
+                  Call Agent
+                </button>
+                <button className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-[#C8961A] hover:bg-[#C8961A] hover:text-white text-[#C8961A] rounded-xl text-sm font-bold uppercase tracking-[0.15em] transition-all">
+                  <I.Mail className="w-4 h-4"/>
+                  Email Agent
+                </button>
+              </div>
+              <p className="text-[10px] text-center text-[#071422]/50 font-mono">{property.agentPhone}</p>
+              
+              {/* Quick request form */}
+              <div className="mt-6 pt-6 border-t border-[#071422]/8">
+                <p className="text-xs uppercase tracking-[0.15em] text-[#071422]/60 font-bold mb-3">Quick Inquiry</p>
+                <input type="text" placeholder="Your name" className="w-full px-3 py-2.5 bg-[#F4F0E8]/30 border border-[#071422]/10 rounded-lg text-sm mb-2 outline-none focus:border-[#C8961A]"/>
+                <input type="tel" placeholder="Phone number" className="w-full px-3 py-2.5 bg-[#F4F0E8]/30 border border-[#071422]/10 rounded-lg text-sm mb-2 outline-none focus:border-[#C8961A]"/>
+                <textarea placeholder="I'm interested in this property..." rows="3" className="w-full px-3 py-2.5 bg-[#F4F0E8]/30 border border-[#071422]/10 rounded-lg text-sm mb-3 outline-none focus:border-[#C8961A] resize-none"></textarea>
+                <button className="w-full py-3 bg-gradient-to-r from-[#E63946] to-[#B71C2C] hover:from-[#FF4D5A] hover:to-[#E63946] text-white rounded-xl text-xs font-bold uppercase tracking-[0.15em] transition-all">
+                  Send Inquiry · 4s Response
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      {/* Virtual tour modal */}
+      {showTour && (
+        <div onClick={()=>setShowTour(false)} className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div onClick={(e)=>e.stopPropagation()} className="bg-white rounded-2xl max-w-3xl w-full p-8">
+            <h3 className="font-serif text-3xl text-[#071422] mb-2">Virtual Tour</h3>
+            <p className="text-sm text-[#071422]/60 mb-6">{property.title}</p>
+            <div className="w-full h-96 bg-gradient-to-br from-[#C8961A]/20 to-[#E63946]/10 rounded-xl flex items-center justify-center mb-6">
+              <div className="text-center">
+                <I.Video className="w-20 h-20 text-[#C8961A]/40 mx-auto mb-3"/>
+                <p className="text-sm text-[#071422]/50">Interactive 360° tour</p>
+              </div>
+            </div>
+            <button onClick={()=>setShowTour(false)} className="w-full py-3 bg-[#071422] hover:bg-[#C8961A] hover:text-[#071422] text-white rounded-lg font-semibold transition-all">Close Tour</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── HEADER / NAV ───────────────────────────────────────────────────────
+function Nav({onHome}) {
+  return (
+    <nav className="absolute top-0 left-0 right-0 z-40 py-5 px-6 md:px-12">
+      <div className="max-w-[1500px] mx-auto flex items-center justify-between">
+        <button onClick={onHome} className="flex items-center gap-3">
+          <img src="assets/logo-red.png" alt="sierra estates" className="w-10 h-10 object-contain"/>
+          <div className="text-left">
+            <p className="font-serif text-lg font-semibold text-[#071422] tracking-[0.12em]">sierra estates</p>
+            <p className="text-[8px] uppercase tracking-[0.36em] text-[#E63946]/80 font-bold">REALTY</p>
+          </div>
+        </button>
+        <div className="hidden md:flex items-center gap-8 text-[#071422]/80">
+          {['Buy','Rent','New Projects','Find Agent'].map(n=>(
+            <a key={n} href="#" className="text-xs uppercase tracking-[0.18em] font-medium hover:text-[#C8961A] transition-colors">{n}</a>
+          ))}
+        </div>
+        <button className="px-5 py-2 bg-[#071422] hover:bg-[#C8961A] hover:text-[#071422] text-white rounded-lg text-xs font-bold uppercase tracking-[0.18em] transition-all">Log In</button>
+      </div>
+    </nav>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState('home');
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [filters, setFilters] = useState({
+    search:'', purpose:'all', type:'all', beds:0, baths:0, maxPrice:20000000, furnish:[], amenities:[]
+  });
+
+  const filtered = useMemo(()=>{
+    return PROPERTIES.filter(p=>{
+      if(filters.search && !p.compound.toLowerCase().includes(filters.search.toLowerCase()) && !p.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
+      if(filters.purpose!=='all' && p.purpose!==filters.purpose) return false;
+      if(filters.type!=='all' && p.type!==filters.type) return false;
+      if(filters.beds && p.beds<filters.beds) return false;
+      if(filters.baths && p.baths<filters.baths) return false;
+      if(p.price>filters.maxPrice) return false;
+      return true;
+    });
+  },[filters]);
+
+  const goHome = () => { setPage('home'); setSelectedProperty(null); window.scrollTo({top:0, behavior:'smooth'}); };
+
+  if (page==='detail' && selectedProperty) {
+    return <ListingDetail property={selectedProperty} onBack={goHome}/>;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FAF8F3]">
+      <Nav onHome={goHome}/>
+
+      {/* HERO */}
+      <section className="relative min-h-[95vh] flex flex-col items-center justify-center px-6 hero-bg pt-32 pb-20 overflow-hidden">
+        <div className="relative z-10 max-w-5xl w-full text-center">
+          {/* Logo with aura */}
+          <div className="logo-aura inline-block mb-6">
+            <img src="assets/logo-red.png" alt="" style={{width:'120px'}} className="drop-shadow-[0_4px_24px_rgba(230,57,70,0.35)] mx-auto"/>
+          </div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md border border-[#C8961A]/30 px-5 py-2 rounded-full mb-6 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-green-500 pulse-live"></span>
+            <span className="text-[#071422] tracking-[0.2em] uppercase text-[10px] font-mono font-semibold">Egypt's Premier Property Intelligence</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl text-[#071422] leading-[1.05] font-light tracking-tight mb-4">
+            Find Your Place in <br/>
+            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-[#C8961A] via-[#E9C176] to-[#C8961A]">New Cairo.</span>
+          </h1>
+
+          {/* Subheading */}
+          <p className="text-base md:text-lg text-[#071422]/65 max-w-2xl mx-auto leading-relaxed mb-10 font-light">
+            From premium villas to luxury apartments. <span className="font-semibold text-[#C8961A]">1,500+ elite brokers</span>, AI-driven matching, and replies within <span className="font-semibold text-[#E63946]">4 seconds</span>.
+          </p>
+
+          {/* PF-style filter bar */}
+          <PFFilterBar filters={filters} setFilters={setFilters} onSearch={()=>document.getElementById('results')?.scrollIntoView({behavior:'smooth'})}/>
+
+          {/* Quick stats */}
+          <div className="mt-10 flex justify-center gap-8 md:gap-12 text-center">
+            <div><p className="text-3xl font-bold text-[#C8961A]">1,500+</p><p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Brokers</p></div>
+            <div><p className="text-3xl font-bold text-[#C8961A]">{PROPERTIES.length}</p><p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Properties</p></div>
+            <div><p className="text-3xl font-bold text-[#C8961A]">4s</p><p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Response</p></div>
+            <div><p className="text-3xl font-bold text-[#C8961A]">98%</p><p className="text-[10px] uppercase tracking-[0.15em] text-[#071422]/50">Match Rate</p></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Results section (Property Finder style) */}
+      <section id="results" className="py-12 px-6 md:px-12 max-w-[1500px] mx-auto">
+        <div className="mb-8">
+          <h2 className="font-serif text-3xl md:text-4xl font-light text-[#071422] mb-1">
+            Properties {filters.purpose==='rent'?'for Rent':filters.purpose==='resale'?'for Resale':'Available'} in Egypt
+          </h2>
+          <p className="text-sm text-[#071422]/60"><span className="font-bold text-[#C8961A]">{filtered.length}</span> properties match your criteria</p>
+        </div>
+
+        {/* Quick location chips */}
+        <div className="bg-white border border-[#071422]/8 rounded-2xl p-5 mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            {l:'New Cairo', c:28688}, {l:'Madinaty', c:7731}, {l:'Mountain View', c:2186}, {l:'Mostakbal', c:1024},
+            {l:'Uptown Cairo', c:856}, {l:'Mivida', c:548}, {l:'El Shorouk', c:312}, {l:'Eastown', c:267},
+          ].slice(0,4).map(c=>(
+            <button key={c.l} className="text-left text-sm text-[#071422] hover:text-[#C8961A] transition-colors">
+              <span className="font-medium">{c.l}</span> <span className="text-[#071422]/40">({c.c.toLocaleString()})</span>
+            </button>
+          ))}
+        </div>
+
+        {filtered.length===0 ? (
+          <div className="text-center py-16">
+            <p className="text-[#071422]/40 text-sm">No matches found. Adjust your filters.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((p,i)=>(
+              <PropertyCard key={p.id} p={p} i={i} onClick={()=>{
+                setSelectedProperty(p);
+                setPage('detail');
+                window.scrollTo({top:0, behavior:'instant'});
+              }}/>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#071422] text-white/50 py-16 text-center border-t border-[#C8961A]/20 mt-16">
+        <img src="assets/logo-gold.png" alt="" className="w-20 h-20 mx-auto mb-4 object-contain"/>
+        <h2 className="font-serif text-3xl text-[#F4F0E8] font-light tracking-[0.18em] mb-1">sierra estates</h2>
+        <p className="text-[10px] uppercase tracking-[0.42em] text-[#C8961A] mb-6 font-mono font-semibold">PropTech Intelligence · 2026</p>
+        <div className="max-w-md mx-auto h-px bg-gradient-to-r from-transparent via-[#C8961A] to-transparent opacity-40 mb-4"></div>
+        <p className="text-[10px] font-mono tracking-[0.18em] uppercase">© 2026 sierra estates Realty. All rights reserved.</p>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

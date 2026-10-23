@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "buildCommand": "bash scripts/vercel-build.sh",
+  "devCommand": "pnpm --filter sierra-estates-client-page dev",
+  "installCommand": "pnpm install",
+  "git": {
+    "deploymentEnabled": true
+  },
+  "regions": ["fra1"],
+  "crons": [
+    {
+      "path": "/api/cron/dispatch/morning",
+      "schedule": "45 6 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/night",
+      "schedule": "45 2 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-transform"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/old-landing",
+      "destination": "/",
+      "permanent": true
+    }
+  ]
+}

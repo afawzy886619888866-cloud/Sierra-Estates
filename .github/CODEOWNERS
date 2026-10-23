@@ -1,0 +1,36 @@
+# Code owners — GitHub requests a review from the owner on any PR touching
+# these paths. On its own this is advisory; it becomes enforcement once
+# "Require review from Code Owners" is enabled in branch protection for main
+# (Settings → Branches → main → Require a pull request before merging).
+#
+# Why these paths: the deploy pipeline and security rules have each been
+# silently overwritten by unrelated work in this repo, reintroducing bugs that
+# fail quietly in production — a Vercel env upsert that 400s behind a warning,
+# an ungated admin endpoint, a lockfile that breaks CI install.
+
+# Default owner for everything not matched below.
+*                               @afawzy886619888866-cloud
+
+# Deploy pipeline and CI gates. Changes here decide what reaches production
+# and whether anything is checked before it does.
+/.github/workflows/             @afawzy886619888866-cloud
+/vercel.json                    @afawzy886619888866-cloud
+/turbo.json                     @afawzy886619888866-cloud
+
+# Security rules. Supabase RLS policies live in the database; the previous
+# Firebase rules files (firestore.rules, storage.rules, firestore.indexes.json,
+# firebase.json) were removed on 2026-09-20 as part of the Firebase → Supabase
+# migration. See /supabase/migrations/ for the current RLS schema.
+
+# Server-side auth: session signing, admin guards, cron and webhook secrets.
+/apps/sierra-estates-realty/lib/auth.ts             @afawzy886619888866-cloud
+/apps/sierra-estates-realty/lib/server/auth-guard.ts @afawzy886619888866-cloud
+/apps/sierra-estates-realty/lib/server/cron-auth.ts  @afawzy886619888866-cloud
+/apps/sierra-estates-realty/lib/server/cors.ts       @afawzy886619888866-cloud
+/apps/sierra-estates-realty/proxy.ts                 @afawzy886619888866-cloud
+
+# Dependency resolution — an out-of-sync lockfile fails `--frozen-lockfile`,
+# which is what CI and the Vercel build both run.
+/pnpm-lock.yaml                 @afawzy886619888866-cloud
+/pnpm-workspace.yaml            @afawzy886619888866-cloud
+/package.json                   @afawzy886619888866-cloud

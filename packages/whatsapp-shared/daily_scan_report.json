@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-09-24T00:34:33.029Z",
+  "targetGroup": "Owners August 2026",
+  "filesScanned": 44,
+  "totalMessagesParsed": 158207,
+  "realEstateListingsFound": 77278,
+  "directOwnersListings": 0,
+  "duplicatesRemoved": 0,
+  "readyUnitsAdded": 0,
+  "incompleteUnitsFlagged": 100,
+  "outreachDraftsGenerated": 100,
+  "durationMs": 14689
+}

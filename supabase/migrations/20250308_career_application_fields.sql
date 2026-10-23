@@ -1,0 +1,4 @@
+ALTER TABLE public.career_applications
+    ADD COLUMN IF NOT EXISTS has_vehicle BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS biggest_achievements TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS expected_salary TEXT NOT NULL DEFAULT '';

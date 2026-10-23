@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sierra-ai-orchestrator
+  namespace: sierra-estates
+  labels:
+    app: ai-orchestrator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-orchestrator
+  template:
+    metadata:
+      labels:
+        app: ai-orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: sierra-estates/ai-orchestrator:latest
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sierra-ai-orchestrator-svc
+  namespace: sierra-estates
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-orchestrator
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

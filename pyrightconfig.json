@@ -1,0 +1,22 @@
+{
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Windows",
+  "venvPath": "C:/Users/sierr/AppData/Local/Programs/Python/Python312",
+  "include": [
+    "apps/agents/sierra-estates-bot",
+    "apps/agents/stage-9-closer",
+    "apps/agents/whatsapp-bot",
+    "apps/agents/whatsapp-scraper"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "dist",
+    "_archive",
+    "graphify-out",
+    "scripts/consolidation"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none"
+}

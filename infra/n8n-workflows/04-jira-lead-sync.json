@@ -1,0 +1,103 @@
+{
+  "name": "Sierra Estates — Jira Lead Ticket Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "jira-lead-sync",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Jira Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "sierra-jira-lead-sync"
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.phone) {\n  throw new Error('Missing required phone number for lead ticket creation');\n}\n\nconst phone = String(body.phone).trim();\nconst name = body.name || 'WhatsApp Client';\nconst intent = body.intent || 'property_inquiry';\nconst propertyCode = body.propertyCode || body.listing_ref || '';\nconst budget = body.budget || 'Not specified';\nconst urgency = body.urgency || 'medium';\nconst message = body.message || '';\nconst notes = body.notes || '';\n\nconst priorityMap = {\n  critical: 'Highest',\n  high: 'High',\n  medium: 'Medium',\n  low: 'Low'\n};\n\nconst summary = `[Lead] ${name} (${phone}) · ${intent.toUpperCase()}${propertyCode ? ' · ' + propertyCode : ''}`;\n\nconst adfDescription = {\n  type: 'doc',\n  version: 1,\n  content: [\n    {\n      type: 'paragraph',\n      content: [\n        { type: 'text', text: 'Sierra Estates Lead Intake via n8n', marks: [{ type: 'strong' }] }\n      ]\n    },\n    {\n      type: 'bulletList',\n      content: [\n        {\n          type: 'listItem',\n          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Phone: ', marks: [{ type: 'strong' }] }, { type: 'text', text: phone }] }]\n        },\n        {\n          type: 'listItem',\n          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Name: ', marks: [{ type: 'strong' }] }, { type: 'text', text: name }] }]\n        },\n        {\n          type: 'listItem',\n          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Intent: ', marks: [{ type: 'strong' }] }, { type: 'text', text: intent }] }]\n        },\n        {\n          type: 'listItem',\n          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Property Code: ', marks: [{ type: 'strong' }] }, { type: 'text', text: propertyCode || 'N/A' }] }]\n        },\n        {\n          type: 'listItem',\n          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Budget: ', marks: [{ type: 'strong' }] }, { type: 'text', text: budget }] }]\n        }\n      ]\n    },\n    {\n      type: 'paragraph',\n      content: [{ type: 'text', text: 'Client Inquiry:', marks: [{ type: 'strong' }] }]\n    },\n    {\n      type: 'blockquote',\n      content: [{ type: 'paragraph', content: [{ type: 'text', text: message || 'No message text provided' }] }]\n    }\n  ]\n};\n\nreturn [{\n  json: {\n    summary,\n    projectKey: body.projectKey || process.env.JIRA_PROJECT_KEY || 'SE',\n    issueType: body.issueType || process.env.JIRA_ISSUE_TYPE || 'Task',\n    priority: priorityMap[urgency] || 'Medium',\n    labels: ['sierra-estates', 'lead-sync', 'n8n-workflow', intent.replace(/[^a-zA-Z0-9_-]/g, '-')],\n    description: adfDescription,\n    raw: body\n  }\n}];"
+      },
+      "id": "prepare-jira-payload",
+      "name": "Prepare Jira Payload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "url": "={{ $env.JIRA_HOST || 'https://example.atlassian.net' }}/rest/api/3/issue",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": []
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"project\": { \"key\": \"{{ $json.projectKey }}\" },\n    \"summary\": \"{{ $json.summary }}\",\n    \"issuetype\": { \"name\": \"{{ $json.issueType }}\" },\n    \"priority\": { \"name\": \"{{ $json.priority }}\" },\n    \"labels\": {{ JSON.stringify($json.labels) }},\n    \"description\": {{ JSON.stringify($json.description) }}\n  }\n}"
+      },
+      "id": "create-jira-issue",
+      "name": "Create Jira Issue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Jira issue dispatched successfully\",\n  \"ticket_key\": \"{{ $json.key || 'MOCK-KEY' }}\",\n  \"ticket_id\": \"{{ $json.id || 'MOCK-ID' }}\"\n}"
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Jira Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Jira Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Jira Payload": {
+      "main": [
+        [
+          {
+            "node": "Create Jira Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Jira Issue": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "sierra-estates"
+    }
+  ]
+}

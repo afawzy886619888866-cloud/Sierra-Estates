@@ -1,0 +1,10 @@
+{
+  "name": "@sierra-estates/whatsapp-shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "description": "Shared WhatsApp agent utilities backed by Supabase",
+  "dependencies": {
+"@supabase/supabase-js": "^2.117.1"
+  }
+}

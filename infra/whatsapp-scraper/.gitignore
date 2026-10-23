@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Baileys auth session (contains sensitive WhatsApp creds)
+auth/
+*.json.gz
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

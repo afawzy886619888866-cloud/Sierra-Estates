@@ -1,0 +1,139 @@
+{
+  "name": "📅 Sierra Estates — Viewing Booking & SMS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "viewing-booking-request",
+        "options": {}
+      },
+      "id": "119e0758-c0b8-4d57-b08e-17482811a001",
+      "name": "Booking Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "calendarId": "a.fawzy8866@gmail.com",
+        "start": "={{ $json.body.appointment_start_time }}",
+        "end": "={{ $json.body.appointment_end_time }}",
+        "summary": "=🏠 Viewing: {{ $json.body.property_title }} - {{ $json.body.client_name }}",
+        "description": "=Client Name: {{ $json.body.client_name }}\nClient Phone: {{ $json.body.client_phone }}\nProperty Details: {{ $json.body.property_details }}\nAgent: {{ $json.body.assigned_agent_name }}",
+        "attendees": [
+          "a.fawzy8866@gmail.com",
+          "={{ $json.body.client_email }}"
+        ],
+        "options": {}
+      },
+      "id": "219e0758-c0b8-4d57-b08e-17482811a002",
+      "name": "Google Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "6",
+          "name": "Google Calendar OAuth Access"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_PHONE_NUMBER }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $('Booking Request Webhook').item.json.body.client_phone }}"
+            },
+            {
+              "name": "Body",
+              "value": "=Dear {{ $('Booking Request Webhook').item.json.body.client_name }}, your property viewing for {{ $('Booking Request Webhook').item.json.body.property_title }} has been scheduled on {{ $('Booking Request Webhook').item.json.body.appointment_start_time }}. A Google Calendar invite has been sent to your email. We look forward to meeting you! - Sierra Estates"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "319e0758-c0b8-4d57-b08e-17482811a003",
+      "name": "Send Confirmation SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        700,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "7",
+          "name": "Twilio Basic Authentication"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=-1001928374",
+        "text": "=📅 *Viewing Appointment Scheduled!* \n\n🏠 *Property:* {{ $json.summary }}\n👤 *Client:* {{ $('Booking Request Webhook').item.json.body.client_name }}\n📱 *Phone:* {{ $('Booking Request Webhook').item.json.body.client_phone }}\n⏰ *Time:* {{ $json.start.dateTime }}\n\nCalendar invite has been sent to client and admin a.fawzy8866@gmail.com."
+      },
+      "id": "419e0758-c0b8-4d57-b08e-17482811a004",
+      "name": "Telegram Alert to Agents",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        700,
+        400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "5",
+          "name": "Telegram Bot Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Booking Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation SMS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram Alert to Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

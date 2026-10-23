@@ -1,0 +1,83 @@
+/**
+ * Sierra Estates — Listing status lifecycle.
+ * Pure logic, no I/O. Enforces every legal transition in one place so the
+ * "1,900+ verified listings" claim is backed by a real state machine.
+ */
+import type { ListingStatus } from './types';
+
+const TRANSITIONS: Record<ListingStatus, ListingStatus[]> = {
+  draft: ['pending_verification', 'verified', 'archived'],
+  pending_verification: ['verified', 'draft', 'archived'],
+  verified: ['published', 'pending_verification', 'archived'],
+  published: ['reserved', 'expired', 'pending_verification', 'archived'],
+  reserved: ['sold', 'rented', 'published', 'archived'],
+  sold: [],
+  rented: ['published'], // rental cycle can relist
+  expired: ['pending_verification', 'archived'],
+  archived: [],
+};
+
+/** Canonical internal statuses — identity-mapped, never re-mapped. */
+const CANONICAL_STATUSES: readonly ListingStatus[] = [
+  'draft', 'pending_verification', 'verified', 'published',
+  'reserved', 'sold', 'rented', 'expired', 'archived',
+];
+
+export function normalizeListingStatus(raw?: string | null): ListingStatus {
+  const s = String(raw ?? '').trim().toLowerCase();
+  // Canonical internal statuses must pass through UNCHANGED. Re-mapping them
+  // corrupts the state machine (the 2026-10-15 regression: 'verified' →
+  // 'published' made pending_verification → verified illegal, and the missing
+  // 'published' case fell through to 'draft', making rented → published
+  // illegal while legalizing draft → published as a self-transition).
+  if ((CANONICAL_STATUSES as readonly string[]).includes(s)) {
+    return s as ListingStatus;
+  }
+  if (s === '') return 'draft';
+  // External feed labels (Property Finder / sheets) map onto internal states.
+  if (['available', 'active'].includes(s)) return 'published';
+  if (['pending', 'pending review', 'pending_review'].includes(s)) return 'pending_verification';
+  if (s === 'off-market' || s === 'off_market') return 'archived';
+  return 'draft';
+}
+
+export function canTransition(from: string | ListingStatus, to: string | ListingStatus): boolean {
+  const f = normalizeListingStatus(from);
+  const t = normalizeListingStatus(to);
+  if (f === t) return true;
+  return TRANSITIONS[f]?.includes(t) ?? false;
+}
+
+export interface VerificationMetadata {
+  ownershipDocRef?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  note?: string;
+  reservationRef?: string;
+}
+
+export function assertTransition(from: ListingStatus, to: ListingStatus, metadata?: VerificationMetadata): void {
+  if (!canTransition(from, to)) {
+    throw new Error(`Illegal listing transition: ${from} → ${to}`);
+  }
+  if (to === 'verified' && metadata) {
+    if (!metadata.ownershipDocRef && !metadata.verifiedBy) {
+      throw new Error('Verification requires document reference (ownershipDocRef) or verifiedBy (per 2026-08-17 compliance note)');
+    }
+  }
+}
+
+/** States visible on the public site. */
+export const PUBLIC_STATUSES: ListingStatus[] = ['published', 'reserved'];
+
+/** States that count toward the "verified listings" figure. */
+export const VERIFIED_STATUSES: ListingStatus[] = ['verified', 'published', 'reserved'];
+
+/** Days without re-verification before a published listing is swept to expired. */
+export const FRESHNESS_SLA_DAYS = 30;
+
+export function isStale(verifiedAt: string | undefined, now: Date = new Date()): boolean {
+  if (!verifiedAt) return true;
+  const ageMs = now.getTime() - new Date(verifiedAt).getTime();
+  return ageMs > FRESHNESS_SLA_DAYS * 24 * 60 * 60 * 1000;
+}

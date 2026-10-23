@@ -1,0 +1,22 @@
+[Unit]
+Description=Sierra Estates Workflow Runner (scheduler + control API)
+After=network-online.target openwa.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/se/workflows
+ExecStart=/usr/bin/node /opt/se/workflows/runner.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=TZ=Africa/Cairo
+# Secrets live in workflows.env (chmod 600):
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+#   WHATSAPP_API_URL, WHATSAPP_API_TOKEN, OPENWA_ADMIN_API_KEY, OPENWA_SESSION_ID,
+#   RUNNER_API_KEY, RUNNER_BIND, RUNNER_PORT
+EnvironmentFile=/opt/se/workflows/workflows.env
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

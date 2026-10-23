@@ -1,0 +1,2366 @@
+[
+  {
+    "compound": "New Cairo",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 4992,
+    "rentListings": 2753,
+    "saleListings": 2239,
+    "averageRentEgp": 85715,
+    "averageSaleEgp": 1353855,
+    "propertyTypes": {
+      "Apartment": 2898,
+      "Villa": 4,
+      "Floor With Garden": 1,
+      "rent": 49,
+      "اتباعت": 3,
+      "Property Tybe": 1,
+      "لا يوجد وحدات": 3,
+      "admin": 1,
+      "Studio": 275,
+      "Twin House": 127,
+      "Penthouse": 92,
+      "Duplex": 198,
+      "Standalone Villa": 767,
+      "Townhouse": 202,
+      "Chalet": 161,
+      "Duplex + garden": 1,
+      "villa": 3,
+      "Furnished": 1,
+      "Semi finished": 2,
+      "roof": 1,
+      "apartment": 10,
+      "penthouse": 1,
+      "duplex": 2,
+      "bulk-sale-unit": 2,
+      "office-space": 1,
+      "Ground Apartment": 4,
+      "Twinhouse": 2,
+      "Half Furnished": 3,
+      "Commercial / Office": 174,
+      "Basement": 1,
+      "دوبلكس سكنية": 1,
+      "Roof": 1
+    }
+  },
+  {
+    "compound": "Mivida",
+    "coords": [
+      30.007,
+      31.589
+    ],
+    "totalListings": 1147,
+    "rentListings": 685,
+    "saleListings": 462,
+    "averageRentEgp": 119829,
+    "averageSaleEgp": 1765120,
+    "propertyTypes": {
+      "Floor With Garden": 1,
+      "rent": 1,
+      "Apartment": 655,
+      "Twin House": 103,
+      "Townhouse": 135,
+      "Ground with Garden": 1,
+      "Villa": 3,
+      "Standalone Villa": 130,
+      "Commercial / Office": 33,
+      "Studio": 76,
+      "شقة أرضي بجاردن": 1,
+      "وحدة بجاردن (Ground Unit with Garden)": 8
+    }
+  },
+  {
+    "compound": "Al Rehab",
+    "coords": [
+      30.058,
+      31.514
+    ],
+    "totalListings": 881,
+    "rentListings": 393,
+    "saleListings": 488,
+    "averageRentEgp": 62819,
+    "averageSaleEgp": 5432586,
+    "propertyTypes": {
+      "Apartment": 754,
+      "Standalone Villa": 79,
+      "Duplex": 6,
+      "Studio": 25,
+      "Villa": 3,
+      "Twin House": 1,
+      "Ground Apartment": 1,
+      "Commercial / Office": 4,
+      "Townhouse": 7,
+      "Furnished sale": 1
+    }
+  },
+  {
+    "compound": "Madinaty",
+    "coords": [
+      30.101,
+      31.664
+    ],
+    "totalListings": 793,
+    "rentListings": 346,
+    "saleListings": 447,
+    "averageRentEgp": 51359,
+    "averageSaleEgp": 4447593,
+    "propertyTypes": {
+      "Villa": 2,
+      "Town House": 1,
+      "Apartment": 671,
+      "Studio": 39,
+      "Standalone Villa": 65,
+      "Townhouse": 11,
+      "Commercial / Office": 4
+    }
+  },
+  {
+    "compound": "Eastown",
+    "coords": [
+      30.018,
+      31.587
+    ],
+    "totalListings": 709,
+    "rentListings": 467,
+    "saleListings": 242,
+    "averageRentEgp": 104446,
+    "averageSaleEgp": 997387,
+    "propertyTypes": {
+      "Apartment": 396,
+      "rent": 1,
+      "Townhouse": 144,
+      "Twin House": 7,
+      "Studio": 29,
+      "Duplex": 107,
+      "Penthouse": 17,
+      "Standalone Villa": 3,
+      "Commercial / Office": 2,
+      "Studio (Rooftop)": 2,
+      "Triplex with Roof": 1
+    }
+  },
+  {
+    "compound": "Hyde Park",
+    "coords": [
+      30.008,
+      31.645
+    ],
+    "totalListings": 694,
+    "rentListings": 387,
+    "saleListings": 307,
+    "averageRentEgp": 84357,
+    "averageSaleEgp": 1875771,
+    "propertyTypes": {
+      "Town House": 1,
+      "rent": 2,
+      "Studio": 67,
+      "Apartment": 356,
+      "Duplex": 52,
+      "Half Furnished": 1,
+      "core & shell": 2,
+      "fully finished": 1,
+      "Ground Apartment": 1,
+      "Townhouse": 74,
+      "Penthouse": 5,
+      "Standalone Villa": 74,
+      "Twin House": 13,
+      "Commercial / Office": 42,
+      "Villa": 1,
+      "وحدة بجاردن (Ground Unit with Garden)": 2
+    }
+  },
+  {
+    "compound": "5th Settlement",
+    "coords": [
+      30.02,
+      31.52
+    ],
+    "totalListings": 360,
+    "rentListings": 213,
+    "saleListings": 147,
+    "averageRentEgp": 71802,
+    "averageSaleEgp": 244353,
+    "propertyTypes": {
+      "Townhouse": 20,
+      "Apartment": 164,
+      "Duplex": 20,
+      "Commercial / Office": 34,
+      "Villa": 1,
+      "Standalone Villa": 102,
+      "Studio": 16,
+      "Penthouse": 2,
+      "فيلا مستقلة": 1
+    }
+  },
+  {
+    "compound": "Lake View Residence",
+    "coords": [
+      30.022,
+      31.532
+    ],
+    "totalListings": 340,
+    "rentListings": 236,
+    "saleListings": 104,
+    "averageRentEgp": 112356,
+    "averageSaleEgp": 286562,
+    "propertyTypes": {
+      "rent": 3,
+      "Apartment": 250,
+      "Furnished": 3,
+      "Standalone Villa": 21,
+      "Penthouse": 45,
+      "Twin House": 6,
+      "Duplex": 2,
+      "Studio": 2,
+      "Townhouse": 5,
+      "Commercial / Office": 1,
+      "شقة أرضي بجاردن": 1,
+      "شقة دور ثانٍ": 1
+    }
+  },
+  {
+    "compound": "Villette",
+    "coords": [
+      30.053,
+      31.598
+    ],
+    "totalListings": 323,
+    "rentListings": 225,
+    "saleListings": 98,
+    "averageRentEgp": 91713,
+    "averageSaleEgp": 718292,
+    "propertyTypes": {
+      "Apartment": 216,
+      "Twin House": 7,
+      "Studio": 34,
+      "Penthouse": 11,
+      "Duplex": 31,
+      "Standalone Villa": 3,
+      "Townhouse": 15,
+      "وحدة بجاردن (Ground Unit with Garden)": 4,
+      "Studio with Roof": 2
+    }
+  },
+  {
+    "compound": "Unknown",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 294,
+    "rentListings": 294,
+    "saleListings": 0,
+    "averageRentEgp": 89104,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 290,
+      "Studio": 2,
+      "Twin House": 1,
+      "Villa": 1
+    }
+  },
+  {
+    "compound": "Mountain View iCity",
+    "coords": [
+      30.014,
+      31.618
+    ],
+    "totalListings": 273,
+    "rentListings": 160,
+    "saleListings": 113,
+    "averageRentEgp": 74836,
+    "averageSaleEgp": 261496,
+    "propertyTypes": {
+      "Apartment": 98,
+      "Furnished": 3,
+      "Standalone Villa": 117,
+      "Penthouse": 20,
+      "Duplex": 7,
+      "Townhouse": 6,
+      "Twin House": 7,
+      "Chalet": 7,
+      "Studio": 2,
+      "وحدة بجاردن (Ground Unit with Garden)": 6
+    }
+  },
+  {
+    "compound": "Fifth Square",
+    "coords": [
+      30.025,
+      31.578
+    ],
+    "totalListings": 218,
+    "rentListings": 141,
+    "saleListings": 77,
+    "averageRentEgp": 89789,
+    "averageSaleEgp": 983191,
+    "propertyTypes": {
+      "Apartment": 120,
+      "Villa": 1,
+      "Ground with Garden": 1,
+      "Penthouse": 38,
+      "Studio": 18,
+      "Standalone Villa": 14,
+      "Twin House": 12,
+      "Duplex": 2,
+      "Townhouse": 4,
+      "وحدة بجاردن (Ground Unit with Garden)": 6,
+      "Studio with Garden": 2
+    }
+  },
+  {
+    "compound": "Cairo Festival City",
+    "coords": [
+      30.016,
+      31.469
+    ],
+    "totalListings": 199,
+    "rentListings": 115,
+    "saleListings": 84,
+    "averageRentEgp": 105151,
+    "averageSaleEgp": 7957190,
+    "propertyTypes": {
+      "Apartment": 131,
+      "Villa": 6,
+      "rent": 1,
+      "Furnished": 1,
+      "core & shell": 1,
+      "Standalone Villa": 29,
+      "apartment": 2,
+      "villa": 1,
+      "Commercial / Office": 8,
+      "Twin House": 13,
+      "Townhouse": 4,
+      "Penthouse": 2
+    }
+  },
+  {
+    "compound": "Uptown Cairo",
+    "coords": [
+      30.011,
+      31.297
+    ],
+    "totalListings": 170,
+    "rentListings": 58,
+    "saleListings": 112,
+    "averageRentEgp": 80579,
+    "averageSaleEgp": 3551214,
+    "propertyTypes": {
+      "Apartment": 130,
+      "Town House": 1,
+      "rent": 1,
+      "Duplex + garden": 2,
+      "Duplex": 6,
+      "Villa": 1,
+      "Half Furnished": 1,
+      "Townhouse": 1,
+      "Twin House": 9,
+      "Studio": 2,
+      "Standalone Villa": 14,
+      "وحدة بجاردن (Ground Unit with Garden)": 2
+    }
+  },
+  {
+    "compound": "SODIC East",
+    "coords": [
+      30.018,
+      31.587
+    ],
+    "totalListings": 146,
+    "rentListings": 79,
+    "saleListings": 67,
+    "averageRentEgp": 135551,
+    "averageSaleEgp": 322316,
+    "propertyTypes": {
+      "Villa": 1,
+      "Apartment": 68,
+      "Twin House": 12,
+      "Standalone Villa": 10,
+      "Townhouse": 24,
+      "Duplex": 13,
+      "Studio": 8,
+      "Commercial / Office": 7,
+      "Chalet": 3
+    }
+  },
+  {
+    "compound": "Galleria Moon Valley",
+    "coords": [
+      30.02,
+      31.55
+    ],
+    "totalListings": 105,
+    "rentListings": 51,
+    "saleListings": 54,
+    "averageRentEgp": 61137,
+    "averageSaleEgp": 4345970,
+    "propertyTypes": {
+      "Apartment": 65,
+      "Not Furnished": 4,
+      "Half Furnished": 1,
+      "Penthouse": 24,
+      "Ground Apartment": 1,
+      "Duplex": 4,
+      "Standalone Villa": 4,
+      "Studio": 2
+    }
+  },
+  {
+    "compound": "90 Avenue",
+    "coords": [
+      30.028,
+      31.572
+    ],
+    "totalListings": 73,
+    "rentListings": 59,
+    "saleListings": 14,
+    "averageRentEgp": 75825,
+    "averageSaleEgp": 665889,
+    "propertyTypes": {
+      "Apartment": 58,
+      "Townhouse": 3,
+      "Duplex": 4,
+      "Studio": 8
+    }
+  },
+  {
+    "compound": "Katameya Heights",
+    "coords": [
+      29.99,
+      31.48
+    ],
+    "totalListings": 67,
+    "rentListings": 38,
+    "saleListings": 29,
+    "averageRentEgp": 73629,
+    "averageSaleEgp": 155395,
+    "propertyTypes": {
+      "Apartment": 33,
+      "Standalone Villa": 28,
+      "Townhouse": 2,
+      "Duplex": 2,
+      "Commercial / Office": 1,
+      "Twin House": 1
+    }
+  },
+  {
+    "compound": "Oriana",
+    "coords": [
+      30.033,
+      31.492
+    ],
+    "totalListings": 57,
+    "rentListings": 27,
+    "saleListings": 30,
+    "averageRentEgp": 82068,
+    "averageSaleEgp": 137409,
+    "propertyTypes": {
+      "Villa": 1,
+      "Standalone Villa": 31,
+      "Twin House": 12,
+      "Apartment": 11,
+      "Commercial / Office": 2
+    }
+  },
+  {
+    "compound": "new-cairo",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 54,
+    "rentListings": 0,
+    "saleListings": 54,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 7777671,
+    "propertyTypes": {
+      "Apartment": 47,
+      "Duplex": 1,
+      "Townhouse": 1,
+      "roof": 1,
+      "Penthouse": 1,
+      "Standalone Villa": 1,
+      "Twin House": 2
+    }
+  },
+  {
+    "compound": "The Waterway",
+    "coords": [
+      30.028,
+      31.612
+    ],
+    "totalListings": 43,
+    "rentListings": 19,
+    "saleListings": 24,
+    "averageRentEgp": 83409,
+    "averageSaleEgp": 3259455,
+    "propertyTypes": {
+      "rent": 1,
+      "Apartment": 29,
+      "Duplex": 3,
+      "Commercial / Office": 6,
+      "Standalone Villa": 3,
+      "شقة سكنية": 1
+    }
+  },
+  {
+    "compound": "Katameya Dunes",
+    "coords": [
+      29.985,
+      31.492
+    ],
+    "totalListings": 43,
+    "rentListings": 17,
+    "saleListings": 26,
+    "averageRentEgp": 38417,
+    "averageSaleEgp": 177100,
+    "propertyTypes": {
+      "Twin House": 6,
+      "Apartment": 11,
+      "Standalone Villa": 13,
+      "Duplex": 10,
+      "Townhouse": 2,
+      "شقة سكنية": 1
+    }
+  },
+  {
+    "compound": "Sheikh Zayed",
+    "coords": [
+      30.06,
+      30.98
+    ],
+    "totalListings": 41,
+    "rentListings": 12,
+    "saleListings": 29,
+    "averageRentEgp": 50958,
+    "averageSaleEgp": 2506400,
+    "propertyTypes": {
+      "Apartment": 26,
+      "Office": 1,
+      "Twinhouse": 1,
+      "Vills": 5,
+      "Studio": 3,
+      "Hotel Suite": 1,
+      "Duplex": 1,
+      "Commercial / Office": 1,
+      "Twin House": 1,
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "El Shorouk City",
+    "coords": [
+      30.121,
+      31.616
+    ],
+    "totalListings": 28,
+    "rentListings": 10,
+    "saleListings": 18,
+    "averageRentEgp": 70563,
+    "averageSaleEgp": 2248500,
+    "propertyTypes": {
+      "clinic": 1,
+      "Apartment": 18,
+      "Townhouse": 5,
+      "Standalone Villa": 3,
+      "Commercial / Office": 1
+    }
+  },
+  {
+    "compound": "Swan Lake Residence",
+    "coords": [
+      30.045,
+      31.635
+    ],
+    "totalListings": 28,
+    "rentListings": 0,
+    "saleListings": 28,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 17000000,
+    "propertyTypes": {
+      "fully finished": 4,
+      "Apartment": 22,
+      "Twin House": 2
+    }
+  },
+  {
+    "compound": "Mokattam",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 26,
+    "rentListings": 26,
+    "saleListings": 0,
+    "averageRentEgp": 60000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 26
+    }
+  },
+  {
+    "compound": "Midtown",
+    "coords": [
+      30.015,
+      31.515
+    ],
+    "totalListings": 21,
+    "rentListings": 18,
+    "saleListings": 3,
+    "averageRentEgp": 82000,
+    "averageSaleEgp": 122000,
+    "propertyTypes": {
+      "Apartment": 17,
+      "Townhouse": 2,
+      "Penthouse": 2
+    }
+  },
+  {
+    "compound": "Al Narges",
+    "coords": [
+      30.052,
+      31.47
+    ],
+    "totalListings": 19,
+    "rentListings": 5,
+    "saleListings": 14,
+    "averageRentEgp": 49401,
+    "averageSaleEgp": 1029000,
+    "propertyTypes": {
+      "Apartment": 10,
+      "Admin Apartment": 1,
+      "Half Roof (License)": 2,
+      "Standalone Villa": 4,
+      "Duplex": 2
+    }
+  },
+  {
+    "compound": "Al Banafsaj",
+    "coords": [
+      30.045,
+      31.485
+    ],
+    "totalListings": 18,
+    "rentListings": 2,
+    "saleListings": 16,
+    "averageRentEgp": 40000,
+    "averageSaleEgp": 77143,
+    "propertyTypes": {
+      "studio": 1,
+      "Apartment": 10,
+      "Duplex": 6,
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "new-capital",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 17,
+    "rentListings": 5,
+    "saleListings": 12,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 15,
+      "Townhouse": 2
+    }
+  },
+  {
+    "compound": "6th of October",
+    "coords": [
+      29.97,
+      30.94
+    ],
+    "totalListings": 17,
+    "rentListings": 2,
+    "saleListings": 15,
+    "averageRentEgp": 55000,
+    "averageSaleEgp": 4087143,
+    "propertyTypes": {
+      "Apartment": 13,
+      "Townhouse": 1,
+      "Duplex": 1,
+      "Studio + Roof": 1,
+      "Shop": 1
+    }
+  },
+  {
+    "compound": "Palm Hills New Cairo",
+    "coords": [
+      30.002,
+      31.608
+    ],
+    "totalListings": 14,
+    "rentListings": 6,
+    "saleListings": 8,
+    "averageRentEgp": 62866,
+    "averageSaleEgp": 6415000,
+    "propertyTypes": {
+      "Townhouse": 3,
+      "Apartment": 6,
+      "Standalone Villa": 5
+    }
+  },
+  {
+    "compound": "South Academy",
+    "coords": [
+      30.005,
+      31.44
+    ],
+    "totalListings": 10,
+    "rentListings": 1,
+    "saleListings": 9,
+    "averageRentEgp": 42000,
+    "averageSaleEgp": 3760500,
+    "propertyTypes": {
+      "rent": 1,
+      "Apartment": 5,
+      "Roof Apartment": 1,
+      "Villa (Complete)": 1,
+      "Standalone Villa": 2
+    }
+  },
+  {
+    "compound": "Al Andalus",
+    "coords": [
+      30.052,
+      31.49
+    ],
+    "totalListings": 10,
+    "rentListings": 1,
+    "saleListings": 9,
+    "averageRentEgp": 20000,
+    "averageSaleEgp": 3340000,
+    "propertyTypes": {
+      "Apartment": 7,
+      "Duplex": 3
+    }
+  },
+  {
+    "compound": "The Square",
+    "coords": [
+      30.033,
+      31.542
+    ],
+    "totalListings": 8,
+    "rentListings": 4,
+    "saleListings": 4,
+    "averageRentEgp": 30500,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 8
+    }
+  },
+  {
+    "compound": "The Address East",
+    "coords": [
+      30.045,
+      31.565
+    ],
+    "totalListings": 7,
+    "rentListings": 5,
+    "saleListings": 2,
+    "averageRentEgp": 45200,
+    "averageSaleEgp": 51000,
+    "propertyTypes": {
+      "Twin House": 3,
+      "وحدة بجاردن (Ground Unit with Garden)": 2,
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Capital way by Water way",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 6,
+    "rentListings": 0,
+    "saleListings": 6,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "fully finished": 1,
+      "Apartment": 5
+    }
+  },
+  {
+    "compound": "Arbela",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 6,
+    "rentListings": 4,
+    "saleListings": 2,
+    "averageRentEgp": 8200000,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment with garden": 5,
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Mostasmerin Gnobeya",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 6,
+    "rentListings": 0,
+    "saleListings": 6,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 3,
+      "Duplex": 2,
+      "Studio": 1
+    }
+  },
+  {
+    "compound": "North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 5,
+    "rentListings": 5,
+    "saleListings": 0,
+    "averageRentEgp": 133800,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 5
+    }
+  },
+  {
+    "compound": "El Patio Oro",
+    "coords": [
+      30.029,
+      31.56
+    ],
+    "totalListings": 5,
+    "rentListings": 1,
+    "saleListings": 4,
+    "averageRentEgp": 75000,
+    "averageSaleEgp": 75000,
+    "propertyTypes": {
+      "Townhouse": 2,
+      "Penthouse": 2,
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Hacienda Bay, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 5,
+    "rentListings": 0,
+    "saleListings": 5,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Standalone Villa": 3,
+      "Ground Chalet": 1,
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "Second District Villas",
+    "coords": [
+      30.022,
+      31.442
+    ],
+    "totalListings": 5,
+    "rentListings": 0,
+    "saleListings": 5,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment (2nd Floor)": 1,
+      "Apartment": 4
+    }
+  },
+  {
+    "compound": "[Broker / وسيط عقاري] - Amorada",
+    "coords": [
+      30.025,
+      31.595
+    ],
+    "totalListings": 4,
+    "rentListings": 0,
+    "saleListings": 4,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 4
+    }
+  },
+  {
+    "compound": "Top view",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 4,
+    "rentListings": 4,
+    "saleListings": 0,
+    "averageRentEgp": 4000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Twin House": 4
+    }
+  },
+  {
+    "compound": "North 90th",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 1,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "rent": 1,
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "eypet hose elkurfenl",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 2,
+    "saleListings": 1,
+    "averageRentEgp": 42500,
+    "averageSaleEgp": 35000,
+    "propertyTypes": {
+      "Apartment": 3
+    }
+  },
+  {
+    "compound": "Unresolved",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 3,
+    "saleListings": 0,
+    "averageRentEgp": 1200,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 3
+    }
+  },
+  {
+    "compound": "Trio Gardens",
+    "coords": [
+      30.065,
+      31.625
+    ],
+    "totalListings": 3,
+    "rentListings": 1,
+    "saleListings": 2,
+    "averageRentEgp": 60000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2,
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "2026-04-14 00:00",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 0,
+    "saleListings": 3,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 3
+    }
+  },
+  {
+    "compound": "Amwaj, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 3,
+    "rentListings": 0,
+    "saleListings": 3,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Chalet with Roof": 1,
+      "Standalone Villa": 1,
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "El-Garanfol Villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 0,
+    "saleListings": 3,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment (Half Villa)": 1,
+      "Standalone Villa": 1,
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "El-Yasmine 4 Villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 0,
+    "saleListings": 3,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment (3rd Floor)": 1,
+      "Apartment": 1,
+      "Penthouse": 1
+    }
+  },
+  {
+    "compound": "La Mirada",
+    "coords": [
+      30.058,
+      31.685
+    ],
+    "totalListings": 3,
+    "rentListings": 1,
+    "saleListings": 2,
+    "averageRentEgp": 28000,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 3
+    }
+  },
+  {
+    "compound": "Front of AUC",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 0,
+    "saleListings": 3,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2,
+      "Penthouse": 1
+    }
+  },
+  {
+    "compound": "5th Square Al Marasem",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 3,
+    "rentListings": 3,
+    "saleListings": 0,
+    "averageRentEgp": 38333,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "وحدة بجاردن (Ground Unit with Garden)": 1,
+      "Penthouse": 1,
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Gardenia City",
+    "coords": [
+      30.082,
+      31.412
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 35000,
+    "averageSaleEgp": 35000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Ahmed Adel",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 2,
+    "saleListings": 0,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Golf Bay, Ain Sokhna",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 20000,
+    "averageSaleEgp": 20000,
+    "propertyTypes": {
+      "Apartment": 1,
+      "Studio": 1
+    }
+  },
+  {
+    "compound": "Arabia",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Beit Al-Watan Hay 7",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "City Gate",
+    "coords": [
+      30.015,
+      31.545
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Fouka Bay, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Serviced Apartment": 1,
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Hurghada Airport, Red Sea",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "IL Monte Galala, Ain Sokhna",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Townhouse Corner": 1,
+      "Townhouse": 1
+    }
+  },
+  {
+    "compound": "Koun Ras El Hekma",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Chalet": 2
+    }
+  },
+  {
+    "compound": "Leya Marassi, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Chalet": 2
+    }
+  },
+  {
+    "compound": "Maadi Corniche, Cairo",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Land": 2
+    }
+  },
+  {
+    "compound": "Promenade Wadi Degla",
+    "coords": [
+      30.038,
+      31.525
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Ramblas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Sarai",
+    "coords": [
+      30.005,
+      31.66
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Standalone in Compound",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Villa": 1,
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "Standalone in Tagamoa",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Villa": 1,
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "Typical Apartment",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Venus 2, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Chalet": 2
+    }
+  },
+  {
+    "compound": "[Broker / وسيط عقاري] - Front of AUC, Lake Residence Al Marasem",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 5000000,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "New Capital",
+    "coords": [
+      30.005,
+      31.74
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Amorada",
+    "coords": [
+      30.025,
+      31.595
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "El-Defaa El-Watany",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1,
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "El-Yasmine 5 Villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 50000,
+    "propertyTypes": {
+      "Apartment": 1,
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "El-Yasmine 7 Villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Duplex": 2
+    }
+  },
+  {
+    "compound": "First District Villas",
+    "coords": [
+      30.015,
+      31.435
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Penthouse": 1,
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "Hacienda White, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Standalone Villa": 1,
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "Jayd",
+    "coords": [
+      30.045,
+      31.665
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 40000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Marassi Marina 2, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Chalet": 2
+    }
+  },
+  {
+    "compound": "Stone Residence",
+    "coords": [
+      30.028,
+      31.557
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 46000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 2
+    }
+  },
+  {
+    "compound": "Telal Sokhna",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 0,
+    "saleListings": 2,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Standalone Villa": 1,
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "The Avenues",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 90000,
+    "averageSaleEgp": 90000,
+    "propertyTypes": {
+      "Townhouse": 2
+    }
+  },
+  {
+    "compound": "Top View",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 50000,
+    "averageSaleEgp": 50000,
+    "propertyTypes": {
+      "Duplex": 2
+    }
+  },
+  {
+    "compound": "اللوتس",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 25000,
+    "averageSaleEgp": 25000,
+    "propertyTypes": {
+      "Duplex": 2
+    }
+  },
+  {
+    "compound": "فيلات جنوب الاكاديميه",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 2,
+    "rentListings": 1,
+    "saleListings": 1,
+    "averageRentEgp": 35000,
+    "averageSaleEgp": 35000,
+    "propertyTypes": {
+      "Duplex": 2
+    }
+  },
+  {
+    "compound": "14 cairo vetsveal -altgmoo alkames",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Bussiness Center Tower A-Dubi -Media City-Floor No.20-Apart No.2007-Business Bay",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "9 El Shikh Salama El Rady St-Moharam Bek",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "3 beds",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 50001,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Abd655",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 70000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Ahm244",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 35000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Nasr City, 8th District",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 35000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "SAM834",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 50000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Villa",
+    "coords": [
+      29.988,
+      31.484
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "apartment",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 5363,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "احمد 632",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 50000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "14-Apr-26",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "1116669190": 1
+    }
+  },
+  {
+    "compound": "AUC housing district",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Acacia",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Arabia, Mostasmerin Gnobeya",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Azha Sokhna, Akamara",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "Azha Sokhna, Pavo 2",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "Badya",
+    "coords": [
+      29.93,
+      30.95
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 14200000,
+    "propertyTypes": {
+      "Townhouse": 1
+    }
+  },
+  {
+    "compound": "Choueifat Villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Dar Masr El-Qaranfel",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Direction White, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "District 5",
+    "coords": [
+      30.012,
+      31.5
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "El-Qaranfel villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "El-Yasmine 6 Villas",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 50000,
+    "propertyTypes": {
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "Fifth District Villas",
+    "coords": [
+      30.028,
+      31.455
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 90000,
+    "propertyTypes": {
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "First District - Area 6",
+    "coords": [
+      30.015,
+      31.435
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "Golden Square",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 30000,
+    "propertyTypes": {
+      "ستوديو (Studio)": 1
+    }
+  },
+  {
+    "compound": "La Vista 6, Ain Sokhna",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "La Vista Topaz, Ain Sokhna",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Townhouse": 1
+    }
+  },
+  {
+    "compound": "Lake Residence Al Marasem",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Lotus Northern",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "Marassi, North Coast",
+    "coords": [
+      30.92,
+      28.85
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 13000,
+    "propertyTypes": {
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "Mossadeq St, Mohandessin",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Second District - Area 4",
+    "coords": [
+      30.022,
+      31.442
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Standalone Villa": 1
+    }
+  },
+  {
+    "compound": "Taj City",
+    "coords": [
+      30.065,
+      31.531
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Solay",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Stella Di Mare 1, Ain Sokhna",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Chalet": 1
+    }
+  },
+  {
+    "compound": "Tagamoa 5th",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "The Icon Residence",
+    "coords": [
+      30.042,
+      31.535
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Village Gate",
+    "coords": [
+      30.022,
+      31.505
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Duplex": 1
+    }
+  },
+  {
+    "compound": "Yasmeen 4",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "Zed East",
+    "coords": [
+      30.095,
+      31.61
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "[Broker / وسيط عقاري] - City Gate",
+    "coords": [
+      30.015,
+      31.545
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "الهضبة الوسطي, المقطم",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "School": 1
+    }
+  },
+  {
+    "compound": "عمارات الشركة السعودية, مدينة نصر",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 0,
+    "saleListings": 1,
+    "averageRentEgp": 0,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "التجمع الأول",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 18000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "V Residence",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 75000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "الميراج جاردن",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 50000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment": 1
+    }
+  },
+  {
+    "compound": "فاميلي المستثمرين",
+    "coords": [
+      30.03,
+      31.47
+    ],
+    "totalListings": 1,
+    "rentListings": 1,
+    "saleListings": 0,
+    "averageRentEgp": 55000,
+    "averageSaleEgp": 0,
+    "propertyTypes": {
+      "Apartment (Rooftop)": 1
+    }
+  }
+]

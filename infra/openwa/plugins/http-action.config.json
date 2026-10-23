@@ -1,0 +1,30 @@
+﻿{
+  "plugin": "http-action",
+  "description": "Forwards Sierra Estates commands from WhatsApp to the backend API",
+  "config": {
+    "actions": [
+      {
+        "trigger": "!status",
+        "method": "GET",
+        "url": "${SE_API_URL}/api/whatsapp/heartbeat",
+        "headers": { "x-sbr-secret-key": "${SBR_SECRET_KEY}" },
+        "replyTemplate": "Sierra Estates Bot: Online ✅ — {{response.status}}"
+      },
+      {
+        "trigger": "!listings",
+        "method": "GET",
+        "url": "${SE_API_URL}/api/listings?limit=5&format=brief",
+        "headers": { "x-sbr-secret-key": "${SBR_SECRET_KEY}" },
+        "replyTemplate": "📋 Latest listings:\n{{response.summary}}"
+      },
+      {
+        "trigger": "!price",
+        "method": "POST",
+        "url": "${SE_API_URL}/api/valuation/quick",
+        "headers": { "x-sbr-secret-key": "${SBR_SECRET_KEY}", "Content-Type": "application/json" },
+        "bodyTemplate": { "query": "{{args}}", "channel": "whatsapp" },
+        "replyTemplate": "💰 Valuation: {{response.result}}"
+      }
+    ]
+  }
+}

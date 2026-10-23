@@ -1,0 +1,35 @@
+﻿{
+  "plugin": "faq-bot",
+  "description": "Auto-reply to common Arabic/English real estate questions",
+  "config": {
+    "rules": [
+      {
+        "pattern": "(?i)(price|سعر|تمن|كام)",
+        "reply": "💰 للاستفسار عن الأسعار، يرجى إرسال:\nاسم الكمبوند + المساحة + نوع العقار\n\nFor pricing, please send:\nCompound name + Area (m²) + Unit type"
+      },
+      {
+        "pattern": "(?i)(rehab|الرحاب)",
+        "reply": "🏘️ الرحاب: شقق 90-350م² | أسعار من 2.8M EGP\nتواصل مع فريقنا للعروض المتاحة."
+      },
+      {
+        "pattern": "(?i)(madinaty|مدينتي)",
+        "reply": "🏘️ مدينتي: شقق وفيلات | 110-500م²\nأسعار متنوعة حسب الفيز والموقع.\nتواصل معنا للتفاصيل."
+      },
+      {
+        "pattern": "(?i)(mivida|ميفيدا)",
+        "reply": "🌿 ميفيدا: مشروع راقٍ من إعمار مصر\n120-400م² | أسعار من 4.5M EGP\nتواصل معنا لجولة معاينة."
+      },
+      {
+        "pattern": "(?i)(viewing|معاينة|زيارة|visit)",
+        "reply": "📅 لحجز معاينة، أرسل:\n• اسمك الكريم\n• الكمبوند المفضل\n• الوقت المناسب\n\nسيتواصل معك وكيلنا خلال ساعة ✅"
+      },
+      {
+        "pattern": "(?i)(rent|إيجار|ايجار)",
+        "reply": "🔑 للإيجار: شقق في الرحاب، مدينتي، القاهرة الجديدة\nابتداءً من 8,000 EGP/شهر\nأرسل: المساحة + الميزانية + المنطقة"
+      }
+    ],
+    "defaultReply": null,
+    "caseSensitive": false,
+    "replyToGroups": false
+  }
+}

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Sierra Estates — Enterprise GIS Masterplan</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&amp;family=Public+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"error":"#ba1a1a","secondary-fixed":"#dfe3e8","tertiary-fixed-dim":"#dcc661","on-secondary-container":"#606569","on-surface":"#1b1c1d","tertiary":"#6d5e00","primary-container":"#3366cc","on-tertiary":"#ffffff","error-container":"#ffdad6","on-background":"#1b1c1d","on-secondary-fixed-variant":"#42474b","on-primary-container":"#e7ebff","on-secondary-fixed":"#171c20","on-tertiary-fixed-variant":"#524600","secondary-container":"#dfe3e8","surface-container-highest":"#e3e2e3","surface-container":"#efedee","inverse-on-surface":"#f2f0f1","on-primary-fixed":"#001946","tertiary-fixed":"#f9e37a","secondary":"#5a5f63","secondary-fixed-dim":"#c2c7cc","tertiary-container":"#bfab49","on-error-container":"#93000a","surface-container-high":"#e9e8e9","outline":"#737784","primary-fixed-dim":"#b1c5ff","surface-variant":"#e3e2e3","primary":"#094cb2","surface-container-lowest":"#ffffff","on-primary":"#ffffff","on-surface-variant":"#434653","surface-tint":"#2259bf","primary-fixed":"#d9e2ff","surface-bright":"#faf9fa","outline-variant":"#c3c6d5","on-primary-fixed-variant":"#00419d","background":"#faf9fa","on-error":"#ffffff","inverse-primary":"#b1c5ff","surface-dim":"#dbdadb","on-tertiary-container":"#4a3f00","on-secondary":"#ffffff","inverse-surface":"#303031","on-tertiary-fixed":"#211b00","surface-container-low":"#f5f3f4","surface":"#faf9fa"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{},"fontFamily":{"headline":["Noto Serif"],"display":["Noto Serif"],"body":["Inter"],"label":["Public Sans"]},"fontSize":{}}}}</script></head><body class="bg-surface font-body text-on-surface min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-6 lg:px-10 flex items-center justify-between gap-6"><div class="flex items-center gap-8 shrink-0"><div class="flex flex-col"><span class="font-headline font-semibold tracking-[0.2em] text-lg text-on-surface uppercase">Sierra Estates</span><span class="font-label text-[10px] tracking-[0.16em] uppercase text-tertiary font-semibold">Enterprise GIS Masterplan</span></div><div class="hidden xl:flex items-center gap-3 bg-surface-container-low px-3 py-1.5 rounded-full"><div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span><span class="font-label text-[11px] text-on-surface-variant font-medium tracking-tight"><strong class="text-on-surface font-semibold">11,017</strong> Synced Units</span></div><span class="text-outline-variant text-[12px]">/</span><div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span><span class="font-label text-[11px] text-on-surface-variant font-medium tracking-tight"><strong class="text-on-surface font-semibold">9,534</strong> Active</span></div></div></div><nav class="hidden lg:flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-sm"><a class="px-3.5 py-1.5 text-xs font-label tracking-wide uppercase text-on-surface-variant hover:text-on-surface transition-all" data-path="spatial-masterplan" href="#">Spatial Masterplan</a><a class="px-3.5 py-1.5 text-xs font-label tracking-wide uppercase text-on-surface-variant hover:text-on-surface transition-all" data-path="inventory-catalog" href="#">Inventory Catalog</a><a class="px-3.5 py-1.5 text-xs font-label tracking-wide uppercase text-on-surface-variant hover:text-on-surface transition-all" data-path="3d-flythrough" href="#">3D Flythrough</a><a class="px-3.5 py-1.5 text-xs font-label tracking-wide uppercase text-on-surface-variant hover:text-on-surface transition-all" data-path="valuation-ai" href="#">Valuation AI</a><a class="px-3.5 py-1.5 text-xs font-label tracking-wide uppercase text-on-surface-variant hover:text-on-surface transition-all" data-path="github-repo-deployment" href="#">GitHub Repo / Deployment</a></nav><div class="flex items-center gap-4 shrink-0"><div class="flex items-center bg-surface-container-low p-0.5 rounded-lg font-label text-xs font-semibold"><button class="px-2.5 py-1 rounded-DEFAULT bg-surface-container-lowest text-primary shadow-sm">EGP</button><button class="px-2.5 py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors">USD</button></div><div class="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[18px]">light_mode</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ring-2 ring-surface-container-low"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-5rem)]"><div class="flex flex-col w-full">
+<!-- Top Spatial Masterplan Control Bar -->
+<div class="w-full bg-surface-container-lowest px-6 lg:px-10 py-3.5 shadow-sm">
+<div class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+<!-- Left: Masterplan Switcher Tabs -->
+<div class="flex flex-wrap items-center gap-2">
+<span class="font-label text-[11px] uppercase tracking-wider text-on-surface-variant font-semibold mr-1">Edition:</span>
+<button class="edition-btn px-3.5 py-1.5 rounded-lg font-label text-xs tracking-tight font-semibold transition-all bg-primary text-on-primary shadow-sm flex items-center gap-2" id="btn-edition-1" onclick="switchMapEdition(1)">
+<span class="w-2 h-2 rounded-full bg-primary-fixed"></span>
+<span>Bilingual Light (AR/EN)</span>
+<span class="text-[10px] bg-white/20 px-1.5 py-0.2 rounded font-mono">v4.2</span>
+</button>
+<button class="edition-btn px-3.5 py-1.5 rounded-lg font-label text-xs tracking-tight font-medium transition-all bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center gap-2" id="btn-edition-2" onclick="switchMapEdition(2)">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Light High-Fidelity Realm</span>
+</button>
+<button class="edition-btn px-3.5 py-1.5 rounded-lg font-label text-xs tracking-tight font-medium transition-all bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center gap-2" id="btn-edition-3" onclick="switchMapEdition(3)">
+<span class="w-2 h-2 rounded-full bg-surface-tint"></span>
+<span>Dark Nocturnal (3D Proximity)</span>
+<span class="text-[9px] bg-primary-fixed text-primary px-1 rounded uppercase font-bold">L4 3D</span>
+</button>
+<button class="edition-btn px-3.5 py-1.5 rounded-lg font-label text-xs tracking-tight font-medium transition-all bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center gap-2 font-headline" id="btn-edition-4" onclick="switchMapEdition(4)">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+<span>المخطط العام الكادستري (عربي)</span>
+</button>
+</div>
+<!-- Right: Viewport Modes & System Telemetry -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- CRS & Vercel Pulse -->
+<div class="hidden sm:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="font-label text-[11px] text-on-surface-variant font-medium">Vercel Edge Synced</span>
+<span class="text-outline-variant text-[11px]">•</span>
+<span class="font-mono text-[11px] text-on-surface font-semibold">EPSG:32636</span>
+</div>
+<!-- 3D Perspective Tilt Toggle -->
+<div class="flex items-center bg-surface-container-low p-0.5 rounded-lg font-label text-xs">
+<button class="tilt-btn px-2.5 py-1 rounded-DEFAULT bg-surface-container-lowest text-primary font-semibold shadow-sm" id="tilt-2d" onclick="setPitch('2d')">2D Ortho</button>
+<button class="tilt-btn px-2.5 py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-medium transition-colors" id="tilt-3d" onclick="setPitch('3d')">3D 55°</button>
+<button class="tilt-btn px-2.5 py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-medium transition-colors" id="tilt-vol" onclick="setPitch('vol')">Volumetric</button>
+</div>
+<!-- Map Zoom Controls -->
+<div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg">
+<button class="w-7 h-7 flex items-center justify-center rounded-DEFAULT bg-surface-container-lowest text-on-surface hover:text-primary transition-all shadow-sm" onclick="adjustZoom(0.1)" title="Zoom In">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded-DEFAULT bg-surface-container-lowest text-on-surface hover:text-primary transition-all shadow-sm" onclick="adjustZoom(-0.1)" title="Zoom Out">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded-DEFAULT bg-surface-container-lowest text-on-surface hover:text-primary transition-all shadow-sm" onclick="resetZoom()" title="Reset Extent">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded-DEFAULT bg-surface-container-lowest text-on-surface hover:text-primary transition-all shadow-sm" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Map Canvas & HUD Overlays -->
+<section class="relative w-full h-[760px] lg:h-[840px] overflow-hidden bg-surface-container-highest select-none" id="viewport-container">
+<!-- Background Cadastral Base Maps (Stacked and Switched via JS) -->
+<div class="absolute inset-0 w-full h-full origin-center transition-transform duration-700 ease-out flex items-center justify-center" id="map-plane">
+<!-- Masterplan Layer 1 (Bilingual Light - Default) -->
+<img alt="New Cairo City Master Registry - Bilingual Light Editorial Edition" class="map-layer absolute w-full h-full object-cover transition-opacity duration-500 opacity-100" id="map-img-1" src="https://lh3.googleusercontent.com/aida/AEtjO1XiC0T7C7Bke6s3Gd-GM87jUjB6GUh45-ESmgsg55rkB5kaC7AhBiMK2NAttMEPkZxKgyblJn57kC4_lDAfeeuJWoiv2pCyvzvlGZJ3fVaycGEGHs3o2xif--SD6yZB1RkykJFOGQOCCZJvx955fXmDbdzZzk7OPKxSXHib7FI81bw-OOqvpWKji82lDeygwsARq3_T4YPOQjYlNvJS05Asg4Nm1APsCKiGG2QJVOuWF11IM56APvzgag"/>
+<!-- Masterplan Layer 2 (Light Expanded Realm) -->
+<img alt="New Cairo City &amp; Eastern Extensions - Light Alexandria High Fidelity" class="map-layer absolute w-full h-full object-cover transition-opacity duration-500 opacity-0 pointer-events-none" id="map-img-2" src="https://lh3.googleusercontent.com/aida/AEtjO1UbnLYfdUPDC9aSFDEdmCK3FaRVezLo8arMCQm25lwzjBAyiefOMR9jj3Vh2IyPsICyXNNnnk_NKUHao-Ww7v_bWtGc7lU7nfLwDmaIDA5SPvnDKo3mVULjTWqXADneUxGShRRSdxkRKy0TdxzktqIOVYgz_9XkmBhRH5vdvwtAAyhT1ceBG8I8eIEO1SgS6mNoLYW0vtB9GODpSR_2PEaVLG6JDHdRLYyzOQ3yKRNy2Nq6_UH-hMg10w"/>
+<!-- Masterplan Layer 3 (Dark Nocturnal Proximity 3D) -->
+<img alt="New Cairo City Interactive 3D Spatial Masterplan Nocturnal Edition" class="map-layer absolute w-full h-full object-cover transition-opacity duration-500 opacity-0 pointer-events-none" id="map-img-3" src="https://lh3.googleusercontent.com/aida/AEtjO1XSazqs_89CpZ6VEFiCPnvkj6gBL-bSC1P4qJtmtKOVPFa1iFI1EJcw_y056k4bbNzcB8MfDdVm2MkU7ipCR9ysXevxt8oQlu3Pk1wq5PIK1bNxIeQaD_gPrAnydSmWH7NhbpgFlk1g341F2ZF3zJmEhdNUVf_usyRCLtdh6v_xwll_wxHAM3L3RQwNufw9-QcQHkhH_2VPRICRk_OUaX8tDkel_n7xB-FYPYLANQghkzFoZUijeCBzWIc"/>
+<!-- Masterplan Layer 4 (Dark Nocturnal Arabic Cadastral) -->
+<img alt="القاهرة الجديدة التجمع الخامس المخطط العام والخرائط المساحية الكادسترية" class="map-layer absolute w-full h-full object-cover transition-opacity duration-500 opacity-0 pointer-events-none" id="map-img-4" src="https://lh3.googleusercontent.com/aida/AEtjO1VFcm0Sz2wDJfcnK9kiAWGl4Y_GQuDa7R5Jsro8BH7u55BRoLXpnrq0DDlMyPyUXdbeFyFDX4IEJLFJFI2WcKFoWS1ymyLhThDMDBrtQ9wo26zeJvYwp4sKMx8nzJN_qsBcVPVNo4UtZvaHrOZGKsRO_LGIgoGbW3uqZBpyekjUoLrW7quB5TugBxuVkGvXHDL-UoGHtTKGH4i1o90AXl0tZuo9lcoSLtRd7RKY50374Nm0ZeLze_T_whg"/>
+<!-- Interactive SVG Hotspots Overlay -->
+<svg class="absolute inset-0 w-full h-full z-10 pointer-events-none" preserveaspectratio="xMidYMid slice" viewbox="0 0 1600 900">
+<defs>
+<filter height="140%" id="gold-glow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="6"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+</defs>
+<!-- Hotspot Ring 1: AUC Central Hub -->
+<circle class="animate-spin origin-center" cx="800" cy="450" fill="none" r="48" stroke="#f9e37a" stroke-dasharray="4 4" stroke-width="2" style="transform-origin: 800px 450px; animation-duration: 35s;"></circle>
+<circle cx="800" cy="450" fill="rgba(249, 227, 122, 0.12)" r="36" stroke="#bfab49" stroke-width="1.5"></circle>
+<!-- Hotspot Sector Polygon: SODIC Villette (Interactive Click Target) -->
+<g class="pointer-events-auto cursor-pointer group" onclick="selectCompound('sodic-villette')">
+<path class="group-hover:fill-primary/40 group-hover:stroke-primary-fixed transition-all" d="M 880 430 L 980 435 L 970 590 L 870 570 Z" fill="rgba(51, 102, 204, 0.18)" filter="url(#gold-glow)" stroke="#3366cc" stroke-width="2"></path>
+<circle class="animate-pulse" cx="925" cy="505" fill="#bfab49" r="7"></circle>
+<text class="font-label text-[12px] font-bold tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none" fill="#ffffff" text-anchor="middle" x="925" y="490">SODIC VILLETTE</text>
+</g>
+<!-- Hotspot Sector: Mivida Emaar -->
+<g class="pointer-events-auto cursor-pointer group" onclick="selectCompound('mivida')">
+<path class="group-hover:fill-tertiary-container/40 transition-all" d="M 865 370 L 965 375 L 975 425 L 875 420 Z" fill="rgba(109, 94, 0, 0.15)" stroke="#bfab49" stroke-width="1.5"></path>
+<circle cx="920" cy="398" fill="#f9e37a" r="5"></circle>
+<text class="font-label text-[11px] font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none" fill="#ffffff" text-anchor="middle" x="920" y="390">MIVIDA</text>
+</g>
+<!-- Hotspot Sector: Mountain View Hyde Park -->
+<g class="pointer-events-auto cursor-pointer group" onclick="selectCompound('mountain-view-hyde')">
+<circle class="animate-ping" cx="710" cy="580" fill="#3366cc" r="6" style="animation-duration: 3s;"></circle>
+<circle cx="710" cy="580" fill="#094cb2" r="5"></circle>
+<text class="font-label text-[11px] font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none" fill="#ffffff" text-anchor="middle" x="710" y="565">HYDE PARK</text>
+</g>
+<!-- Hotspot Sector: Cairo Festival City -->
+<g class="pointer-events-auto cursor-pointer group" onclick="selectCompound('cfc')">
+<circle cx="530" cy="380" fill="#3366cc" r="5"></circle>
+<text class="font-label text-[11px] font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none" fill="#ffffff" text-anchor="middle" x="530" y="365">CFC NORTH 90</text>
+</g>
+<!-- Hotspot Sector: Katameya Dunes & Heights -->
+<g class="pointer-events-auto cursor-pointer group" onclick="selectCompound('katameya')">
+<circle cx="1060" cy="740" fill="#bfab49" r="5"></circle>
+<text class="font-label text-[11px] font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none" fill="#ffffff" text-anchor="middle" x="1060" y="725">KATAMEYA DUNES</text>
+</g>
+</svg>
+</div>
+<!-- Floating Masterplan Cadastral Header HUD (Top Left) -->
+<div class="absolute top-6 left-6 lg:left-10 z-20 max-w-md bg-surface-container-lowest/90 backdrop-blur-xl p-5 rounded-xl shadow-lg border-l-4 border-primary">
+<div class="flex items-center gap-3 mb-2">
+<img alt="Sierra Estates Masterplan Official Architectural Crest Emblem" class="w-10 h-10 object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XrueMgQPHH8t8tSwIeCbme0XDtyru3yzr_rn15Xjwkd-7-R1999-Iap9c7T7oa0R4gKACQ6LLnEKJiCMSDL6-QTYGHo6mDdUDlfeLan3mXJMbOMII3c-nRv5tWRFK4b3sCUb-Dh3HGmaT-PeM93UGz0MprDIq5k1i8pOz_-ALrwljH377lbDeJ3qmn0jJyzBF5Jx4iYeeZgKMK08GfnQcb_74RywWePV9d-RClx48t8rWqOPw3oKQOmfA"/>
+<div>
+<span class="font-label text-[10px] tracking-[0.2em] uppercase text-tertiary font-bold block">Cadastral Intelligence Masterplan</span>
+<h1 class="font-headline text-lg lg:text-xl font-bold text-on-surface leading-tight">Fifth Settlement &amp; Golden Square</h1>
+</div>
+</div>
+<p class="font-body text-xs text-on-surface-variant leading-relaxed">
+        Ultra-high-definition interactive GIS cadastral matrix anchored at American University in Cairo (AUC) core hub. Real-time availability synced with New Cairo land registry.
+      </p>
+<div class="mt-4 pt-3 flex items-center justify-between font-label text-[11px] text-on-surface-variant bg-surface-container-low px-3 py-2 rounded-lg">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[16px]">location_on</span>
+<span>Golden Square Corridor</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-[16px]">layers</span>
+<span>18 Compound Sectors</span>
+</div>
+</div>
+</div>
+<!-- Live Compound Floating Inventory Card (Pinned on Right) -->
+<aside class="absolute top-6 right-6 lg:right-10 z-20 w-80 lg:w-96 bg-surface-container-lowest/95 backdrop-blur-2xl p-5 rounded-xl shadow-2xl transition-all duration-300" id="inventory-card">
+<!-- Compound Header with Live Pulse -->
+<div class="flex items-start justify-between gap-2 mb-3">
+<div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="font-label text-[10px] tracking-wider uppercase font-bold text-tertiary" id="card-sector">GOLDEN SQUARE • LIVE</span>
+</div>
+<h2 class="font-headline text-xl font-bold text-on-surface mt-0.5" id="card-title">SODIC Villette</h2>
+<span class="font-headline text-xs text-on-surface-variant font-medium" id="card-subtitle-ar">سوديك فيليت — التجمع الخامس</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-mono text-[10px] font-bold">18 Units</span>
+</div>
+<!-- Quick Metrics Bar -->
+<div class="grid grid-cols-3 gap-2 bg-surface-container-low p-2.5 rounded-lg mb-4 text-center">
+<div>
+<span class="font-label text-[9px] uppercase tracking-wider text-on-surface-variant block">Avg Price/m²</span>
+<span class="font-label text-xs font-bold text-on-surface" id="metric-psqm">EGP 105,000</span>
+</div>
+<div>
+<span class="font-label text-[9px] uppercase tracking-wider text-on-surface-variant block">Delivery</span>
+<span class="font-label text-xs font-bold text-primary" id="metric-delivery">Immediate / Q3</span>
+</div>
+<div>
+<span class="font-label text-[9px] uppercase tracking-wider text-on-surface-variant block">Cadastral ID</span>
+<span class="font-mono text-xs font-bold text-on-surface" id="metric-cadastral">EG-NC-704</span>
+</div>
+</div>
+<!-- Live Inventory Listing Table -->
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label text-xs font-semibold text-on-surface uppercase tracking-wider">Available Prime Units</span>
+<span class="font-label text-[10px] text-tertiary font-medium">Synced 4m ago</span>
+</div>
+<div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+<!-- Unit 1 -->
+<div class="p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs font-bold text-primary group-hover:underline">VLT-VL-014</span>
+<span class="font-label text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Available</span>
+</div>
+<div class="flex items-center justify-between mt-1 text-xs text-on-surface-variant">
+<span>Standalone Villa</span>
+<span class="font-medium text-on-surface">BUA: 450 m² • Plot: 620 m²</span>
+</div>
+<div class="flex items-center justify-between mt-1.5 pt-1 text-xs">
+<span class="font-bold text-on-surface">EGP 32,800,000</span>
+<span class="font-mono text-on-surface-variant text-[11px]">$670,000 USD</span>
+</div>
+</div>
+<!-- Unit 2 -->
+<div class="p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs font-bold text-primary group-hover:underline">VLT-TH-203</span>
+<span class="font-label text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Reserved</span>
+</div>
+<div class="flex items-center justify-between mt-1 text-xs text-on-surface-variant">
+<span>Townhouse Corner</span>
+<span class="font-medium text-on-surface">BUA: 280 m² • Plot: 310 m²</span>
+</div>
+<div class="flex items-center justify-between mt-1.5 pt-1 text-xs">
+<span class="font-bold text-on-surface">EGP 19,800,000</span>
+<span class="font-mono text-on-surface-variant text-[11px]">$410,000 USD</span>
+</div>
+</div>
+<!-- Unit 3 -->
+<div class="p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs font-bold text-primary group-hover:underline">VLT-SK-108</span>
+<span class="font-label text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Available</span>
+</div>
+<div class="flex items-center justify-between mt-1 text-xs text-on-surface-variant">
+<span>Sky Penthouse + Roof Terrace</span>
+<span class="font-medium text-on-surface">BUA: 320 m²</span>
+</div>
+<div class="flex items-center justify-between mt-1.5 pt-1 text-xs">
+<span class="font-bold text-on-surface">EGP 24,200,000</span>
+<span class="font-mono text-on-surface-variant text-[11px]">$505,000 USD</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Action CTAs -->
+<div class="space-y-2">
+<a class="w-full py-2.5 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm" href="https://wa.me/201092048333?text=Inquiry%20regarding%20SODIC%20Villette%20masterplan%20cadastral%20inventory" target="_blank">
+<span class="material-symbols-outlined text-[16px]">chat</span>
+<span>WhatsApp VIP Private Broker</span>
+</a>
+<div class="flex items-center gap-2">
+<button class="flex-1 py-2 px-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors" onclick="triggerInspectionModal()">
+<span class="material-symbols-outlined text-[15px] text-tertiary">360</span>
+<span>360° Inspection</span>
+</button>
+<button class="flex-1 py-2 px-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors" onclick="downloadCadastralPDF()">
+<span class="material-symbols-outlined text-[15px] text-primary">download</span>
+<span>CAD / GIS Spec</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Floating Map Scale & Compass Watermark (Bottom Left) -->
+<div class="absolute bottom-6 left-6 lg:left-10 z-20 flex items-end gap-6 bg-surface-container-lowest/80 backdrop-blur-md p-3.5 rounded-xl shadow-md pointer-events-none">
+<div class="flex flex-col">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="font-label text-[10px] uppercase font-bold tracking-widest text-on-surface">Scale 1:25,000</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="h-1.5 w-12 bg-on-surface"></div>
+<div class="h-1.5 w-12 bg-outline-variant"></div>
+<span class="font-mono text-[9px] text-on-surface ml-1 font-semibold">3.0 KM</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-mono text-[10px] text-on-surface-variant block">30.0121° N, 31.4889° E</span>
+<span class="font-label text-[9px] uppercase tracking-wider text-tertiary font-bold">New Cairo Central Meridian</span>
+</div>
+</div>
+<!-- Map Playback & Layer Controls (Bottom Center) -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-surface-container-lowest/90 backdrop-blur-xl px-4 py-2 rounded-full shadow-lg">
+<button class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-on-primary font-label text-xs font-semibold hover:bg-primary-container transition-all" onclick="startMapTour()">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+<span>Guided Masterplan Tour</span>
+</button>
+<div class="h-4 w-[1px] bg-outline-variant mx-1"></div>
+<button class="text-xs font-label px-2.5 py-1 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-medium" onclick="filterSector('all')">All Compounds</button>
+<button class="text-xs font-label px-2.5 py-1 rounded-full text-on-surface-variant hover:text-on-surface transition-colors font-medium" onclick="filterSector('golden')">Golden Sq</button>
+<button class="text-xs font-label px-2.5 py-1 rounded-full text-on-surface-variant hover:text-on-surface transition-colors font-medium" onclick="filterSector('north')">North 90</button>
+<button class="text-xs font-label px-2.5 py-1 rounded-full text-on-surface-variant hover:text-on-surface transition-colors font-medium" onclick="filterSector('south')">South 90</button>
+</div>
+</section>
+<!-- Compound Dossier & Spatial Analytics Bento Matrix -->
+<section class="w-full px-6 lg:px-10 py-12 bg-surface">
+<div class="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4 mb-8">
+<div>
+<span class="font-label text-xs uppercase tracking-widest text-tertiary font-bold">Comprehensive Masterplan Informatics</span>
+<h2 class="font-headline text-2xl lg:text-3xl font-bold text-on-surface mt-1">Spatial Density &amp; Valuation Registry</h2>
+</div>
+<p class="font-body text-xs text-on-surface-variant max-w-md">
+        Cadastral benchmark metrics aggregated across New Cairo Fifth Settlement developments, indexed against land elevation, road arterial proximity, and developer ROI yield.
+      </p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Bento Card 1: Master Developer Seal & Cadastral Authority -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-label text-[10px] tracking-widest uppercase text-tertiary font-bold">Cadastral Seal</span>
+<span class="material-symbols-outlined text-primary text-[20px]">verified</span>
+</div>
+<div class="w-20 h-20 mb-4">
+<img alt="Sierra Estates 3D Architectural Masterplan Seal" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WzkmfWuY96IxfLje82-kKoXaSosZUyXOHjOZOj9DESOclL8vVZi5mRuuFKPtw-wNuxNRYzJEtx1nIR2BhQuKnled9btiG2Hz4TWzY1TUpDj5g_UiNDItn__-pwiTFaURQ3tHk7_5peFC9wiVcVsyE5dERRyg2r0k8iQLsRqd-U9MbY1K1g9gWCFECNq6tI8eALcvZiJqsWadfcmrcf_o3IsI9OYAK_8BYVcwhKNLBSKKXqHd8wHwRTMZA"/>
+</div>
+<h3 class="font-headline text-lg font-bold text-on-surface">Sierra Advisory Registered</h3>
+<p class="font-body text-xs text-on-surface-variant mt-2 leading-relaxed">
+            Every polygon demarcated on the interactive masterplan holds verified cadastral title deeds, construction permits, and escrow verification.
+          </p>
+</div>
+<div class="mt-6 pt-4 bg-surface-container-low p-3 rounded-lg flex items-center justify-between">
+<span class="font-mono text-[11px] text-on-surface font-semibold">100% Verified Escrow</span>
+<span class="font-label text-[10px] text-tertiary font-bold uppercase">L4 Tier</span>
+</div>
+</div>
+<!-- Bento Card 2: Strategic Proximity Index -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label text-[10px] tracking-widest uppercase text-on-surface-variant font-bold">Arterial Connectivity</span>
+<span class="font-mono text-xs text-primary font-bold">120 km/h</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-on-surface">Arterial Road Network</h3>
+<p class="font-body text-xs text-on-surface-variant mt-1.5">Direct interchange access times from AUC Central Master Hub:</p>
+<div class="space-y-3 mt-4">
+<div>
+<div class="flex justify-between font-label text-xs mb-1">
+<span class="text-on-surface">North &amp; South 90th Street</span>
+<span class="font-bold text-primary">0.0 km (Direct)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label text-xs mb-1">
+<span class="text-on-surface">Cairo Ring Road Interchange</span>
+<span class="font-bold text-on-surface">4.2 km (6 mins)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full w-4/5"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label text-xs mb-1">
+<span class="text-on-surface">Middle Ring Road (Al-Awsati)</span>
+<span class="font-bold text-on-surface">5.8 km (8 mins)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container rounded-full w-3/5"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label text-xs mb-1">
+<span class="text-on-surface">Suez Desert Highway</span>
+<span class="font-bold text-on-surface">9.1 km (12 mins)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline-variant rounded-full w-2/5"></div>
+</div>
+</div>
+</div>
+</div>
+<span class="font-label text-[10px] text-on-surface-variant block mt-4">Calculated via real-time telemetry sensor array</span>
+</div>
+<!-- Bento Card 3: Price Appreciation Sparkline -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label text-[10px] tracking-widest uppercase text-tertiary font-bold">5-Year Capital Gain</span>
+<span class="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">+184.2%</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-on-surface">Golden Square ROI Index</h3>
+<p class="font-body text-xs text-on-surface-variant mt-1">Capital valuation trajectory per square meter (EGP / m²):</p>
+<!-- Inline SVG Sparkline -->
+<div class="mt-4 w-full h-28 bg-surface-container-low rounded-lg p-2 flex flex-col justify-end">
+<svg class="w-full h-20 overflow-visible" viewbox="0 0 300 80">
+<path d="M 0 70 Q 50 65, 80 55 T 160 40 T 220 25 T 300 6" fill="none" stroke="#094cb2" stroke-linecap="round" stroke-width="3"></path>
+<path d="M 0 70 Q 50 65, 80 55 T 160 40 T 220 25 T 300 6 L 300 80 L 0 80 Z" fill="rgba(9, 76, 178, 0.08)"></path>
+<circle cx="300" cy="6" fill="#6d5e00" r="4"></circle>
+</svg>
+<div class="flex justify-between font-mono text-[9px] text-on-surface-variant mt-1">
+<span>2020: 36k</span>
+<span>2022: 54k</span>
+<span>2024: 85k</span>
+<span class="text-primary font-bold">2025: 105k+</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-xs font-label">
+<span class="text-on-surface-variant">Annualized Yield:</span>
+<span class="font-bold text-on-surface">24.6% Compound</span>
+</div>
+</div>
+<!-- Bento Card 4: Master Developer Consortium Status -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label text-[10px] tracking-widest uppercase text-on-surface-variant font-bold">Consortium</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]">apartment</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-on-surface">Ecosystem Developers</h3>
+<p class="font-body text-xs text-on-surface-variant mt-1">Tier-1 master developers represented in New Cairo masterplan registry:</p>
+<div class="space-y-2 mt-4">
+<div class="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg text-xs">
+<span class="font-semibold text-on-surface">SODIC (Aldar Group)</span>
+<span class="font-mono text-primary font-bold">Villette / EDNC</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg text-xs">
+<span class="font-semibold text-on-surface">Emaar Misr</span>
+<span class="font-mono text-primary font-bold">Mivida / Uptown</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg text-xs">
+<span class="font-semibold text-on-surface">Mountain View (DMG)</span>
+<span class="font-mono text-primary font-bold">iCity / Hyde Park</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg text-xs">
+<span class="font-semibold text-on-surface">Palm Hills Dev.</span>
+<span class="font-mono text-primary font-bold">Palm Hills New Cairo</span>
+</div>
+</div>
+</div>
+<a class="mt-4 text-xs font-label font-bold text-primary hover:underline flex items-center gap-1" href="#inventory-catalog">
+<span>Explore Developer Directory</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- GitHub Repo & Vercel Deployment Integration Bar -->
+<section class="w-full bg-surface-container-low px-6 lg:px-10 py-8">
+<div class="bg-surface-container-lowest p-6 lg:p-8 rounded-xl shadow-sm">
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+<!-- Deployment Metadata -->
+<div class="space-y-2">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono text-[10px] font-bold uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              Vercel Production: Ready
+            </span>
+<span class="text-outline-variant text-xs">•</span>
+<span class="font-mono text-xs text-on-surface-variant font-medium">apps/sierra-estates-realty</span>
+</div>
+<h3 class="font-headline text-lg font-bold text-on-surface">
+            Component: <code class="font-mono text-sm bg-surface-container px-2 py-0.5 rounded text-primary">ExclusiveNewCairoMap.tsx</code>
+</h3>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-on-surface-variant">
+<span>Repo: <strong class="text-on-surface">afawzy886619888866-cloud/Sierra-Estates</strong></span>
+<span>Commit: <strong class="text-on-surface">a8f79d1 (master)</strong></span>
+<span>Build Routes: <strong class="text-on-surface">105/105 Passed</strong></span>
+</div>
+</div>
+<!-- Developer Direct Action Buttons -->
+<div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+<button class="px-4 py-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label text-xs font-semibold flex items-center gap-2 transition-all shadow-sm" id="copy-btn" onclick="copyComponentCode()">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span id="copy-text">Copy Component JSX</span>
+</button>
+<button class="px-4 py-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label text-xs font-semibold flex items-center gap-2 transition-all shadow-sm" onclick="exportGeoJsonLayers()">
+<span class="material-symbols-outlined text-[16px]">map</span>
+<span>Export GIS EPSG GeoJSON</span>
+</button>
+<a class="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label text-xs font-semibold flex items-center gap-2 transition-all shadow-sm" href="https://github.com/afawzy886619888866-cloud/Sierra-Estates" target="_blank">
+<span class="material-symbols-outlined text-[16px]">rocket_launch</span>
+<span>Trigger Vercel Deploy Hook</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Modal for 360 Inspection Preview -->
+<div class="fixed inset-0 z-50 bg-on-surface/60 backdrop-blur-md hidden items-center justify-center p-4" id="inspection-modal">
+<div class="bg-surface-container-lowest max-w-2xl w-full rounded-2xl shadow-2xl overflow-hidden p-6 relative">
+<button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" onclick="closeInspectionModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary">360</span>
+<span class="font-label text-xs uppercase tracking-widest text-tertiary font-bold">Interactive Cadastral Inspection</span>
+</div>
+<h3 class="font-headline text-xl font-bold text-on-surface">SODIC Villette — Golden Square Drone Mesh</h3>
+<p class="font-body text-xs text-on-surface-variant mt-1 mb-4">
+        Cadastral inspection viewpoint high-resolution aerial vantage overlooking Central AUC axis and Club S recreation cluster.
+      </p>
+<div class="relative w-full h-80 rounded-xl overflow-hidden bg-surface-container-high">
+<img alt="SODIC Villette 3D Orthographic Inspection Mesh" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XSazqs_89CpZ6VEFiCPnvkj6gBL-bSC1P4qJtmtKOVPFa1iFI1EJcw_y056k4bbNzcB8MfDdVm2MkU7ipCR9ysXevxt8oQlu3Pk1wq5PIK1bNxIeQaD_gPrAnydSmWH7NhbpgFlk1g341F2ZF3zJmEhdNUVf_usyRCLtdh6v_xwll_wxHAM3L3RQwNufw9-QcQHkhH_2VPRICRk_OUaX8tDkel_n7xB-FYPYLANQghkzFoZUijeCBzWIc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-5">
+<div class="text-white">
+<span class="font-label text-[10px] uppercase tracking-wider bg-primary px-2 py-0.5 rounded font-bold">Cadastral Viewpoint Alpha</span>
+<h4 class="font-headline text-base font-bold mt-1">Zone 4: Standalone Luxury Villas Cluster</h4>
+<span class="font-mono text-xs opacity-80">Coordinates: 30.0142° N, 31.4921° E • Elev: 280m ASL</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2 flex items-center justify-between">
+<span class="font-label text-xs text-on-surface-variant">Live telemetry synced via Sierra Enterprise API</span>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-label text-xs font-semibold" onclick="closeInspectionModal()">Done Viewing</button>
+</div>
+</div>
+</div>
+<!-- Client-Side Micro-Interactions Script -->
+<script>
+    let currentZoom = 1;
+    let currentEdition = 1;
+
+    // Switch between 4 masterplan editions
+    function switchMapEdition(editionNum) {
+      currentEdition = editionNum;
+      
+      // Update map layers opacity
+      for (let i = 1; i <= 4; i++) {
+        const img = document.getElementById('map-img-' + i);
+        const btn = document.getElementById('btn-edition-' + i);
+        if (img && btn) {
+          if (i === editionNum) {
+            img.style.opacity = '1';
+            img.style.pointerEvents = 'auto';
+            btn.className = 'edition-btn px-3.5 py-1.5 rounded-lg font-label text-xs tracking-tight font-semibold transition-all bg-primary text-on-primary shadow-sm flex items-center gap-2';
+          } else {
+            img.style.opacity = '0';
+            img.style.pointerEvents = 'none';
+            btn.className = 'edition-btn px-3.5 py-1.5 rounded-lg font-label text-xs tracking-tight font-medium transition-all bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center gap-2';
+          }
+        }
+      }
+    }
+
+    // 3D Perspective Pitch Toggle
+    function setPitch(mode) {
+      const plane = document.getElementById('map-plane');
+      const b2d = document.getElementById('tilt-2d');
+      const b3d = document.getElementById('tilt-3d');
+      const bvol = document.getElementById('tilt-vol');
+
+      [b2d, b3d, bvol].forEach(btn => {
+        btn.className = 'tilt-btn px-2.5 py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-medium transition-colors';
+      });
+
+      if (mode === '2d') {
+        plane.style.transform = `scale(${currentZoom}) rotateX(0deg)`;
+        b2d.className = 'tilt-btn px-2.5 py-1 rounded-DEFAULT bg-surface-container-lowest text-primary font-semibold shadow-sm';
+      } else if (mode === '3d') {
+        plane.style.transform = `scale(${currentZoom * 1.1}) rotateX(32deg) rotateZ(-2deg)`;
+        b3d.className = 'tilt-btn px-2.5 py-1 rounded-DEFAULT bg-surface-container-lowest text-primary font-semibold shadow-sm';
+      } else if (mode === 'vol') {
+        plane.style.transform = `scale(${currentZoom * 1.25}) rotateX(48deg) rotateZ(-4deg)`;
+        bvol.className = 'tilt-btn px-2.5 py-1 rounded-DEFAULT bg-surface-container-lowest text-primary font-semibold shadow-sm';
+      }
+    }
+
+    // Zoom Controls
+    function adjustZoom(delta) {
+      currentZoom = Math.min(Math.max(currentZoom + delta, 0.8), 2.2);
+      const plane = document.getElementById('map-plane');
+      plane.style.transform = `scale(${currentZoom})`;
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      const plane = document.getElementById('map-plane');
+      plane.style.transform = `scale(1) rotateX(0deg)`;
+      setPitch('2d');
+    }
+
+    function toggleFullscreen() {
+      const container = document.getElementById('viewport-container');
+      if (!document.fullscreenElement) {
+        container.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // Compound Selection & HUD Update
+    const compoundData = {
+      'sodic-villette': {
+        title: 'SODIC Villette',
+        titleAr: 'سوديك فيليت — التجمع الخامس',
+        sector: 'GOLDEN SQUARE • LIVE',
+        psqm: 'EGP 105,000',
+        delivery: 'Immediate / Q3',
+        cadastral: 'EG-NC-704'
+      },
+      'mivida': {
+        title: 'Mivida by Emaar',
+        titleAr: 'ميفيدا إعمار — المربع الذهبي',
+        sector: 'CENTRAL 90 • READY',
+        psqm: 'EGP 115,000',
+        delivery: 'Ready to Move',
+        cadastral: 'EG-NC-512'
+      },
+      'mountain-view-hyde': {
+        title: 'Mountain View Hyde Park',
+        titleAr: 'ماونتن فيو هايد بارك',
+        sector: 'SOUTH 90 CORRIDOR',
+        psqm: 'EGP 88,000',
+        delivery: '2025 Handover',
+        cadastral: 'EG-NC-339'
+      },
+      'cfc': {
+        title: 'Cairo Festival City',
+        titleAr: 'كايرو فيستيفال سيتي',
+        sector: 'NORTH 90 RING ROAD',
+        psqm: 'EGP 130,000',
+        delivery: 'Established',
+        cadastral: 'EG-NC-101'
+      },
+      'katameya': {
+        title: 'Katameya Dunes Golf Resort',
+        titleAr: 'قطامية ديونز ريزورت',
+        sector: 'GOLF DISTRICT SOUTH',
+        psqm: 'EGP 145,000',
+        delivery: 'Private Luxury Resale',
+        cadastral: 'EG-NC-880'
+      }
+    };
+
+    function selectCompound(key) {
+      const data = compoundData[key];
+      if (!data) return;
+
+      document.getElementById('card-title').innerText = data.title;
+      document.getElementById('card-subtitle-ar').innerText = data.titleAr;
+      document.getElementById('card-sector').innerText = data.sector;
+      document.getElementById('metric-psqm').innerText = data.psqm;
+      document.getElementById('metric-delivery').innerText = data.delivery;
+      document.getElementById('metric-cadastral').innerText = data.cadastral;
+
+      const card = document.getElementById('inventory-card');
+      card.classList.add('ring-2', 'ring-primary');
+      setTimeout(() => card.classList.remove('ring-2', 'ring-primary'), 1000);
+    }
+
+    // Modal Triggers
+    function triggerInspectionModal() {
+      const modal = document.getElementById('inspection-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeInspectionModal() {
+      const modal = document.getElementById('inspection-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function downloadCadastralPDF() {
+      alert('Generating high-precision GIS Cadastral Vector PDF for SODIC Villette (CRS: EPSG 32636)... Download initiated.');
+    }
+
+    function copyComponentCode() {
+      const text = 'import ExclusiveNewCairoMap from "@/components/map/ExclusiveNewCairoMap";';
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById('copy-text');
+        btnText.innerText = 'Copied to Clipboard!';
+        setTimeout(() => {
+          btnText.innerText = 'Copy Component JSX';
+        }, 2000);
+      });
+    }
+
+    function exportGeoJsonLayers() {
+      alert('Exporting New Cairo Cadastral Layers: 18 Polygons, 11,017 Live Inventory Units in GeoJSON standard format.');
+    }
+
+    function startMapTour() {
+      const compounds = ['sodic-villette', 'mivida', 'mountain-view-hyde', 'cfc', 'katameya'];
+      let idx = 0;
+      const interval = setInterval(() => {
+        selectCompound(compounds[idx]);
+        adjustZoom(0.05);
+        idx++;
+        if (idx >= compounds.length) {
+          clearInterval(interval);
+          resetZoom();
+        }
+      }, 1500);
+    }
+
+    function filterSector(sector) {
+      if (sector === 'golden') {
+        selectCompound('sodic-villette');
+      } else if (sector === 'north') {
+        selectCompound('cfc');
+      } else if (sector === 'south') {
+        selectCompound('katameya');
+      } else {
+        selectCompound('sodic-villette');
+      }
+    }
+  </script>
+</div></main><footer class="w-full bg-surface-container-low py-10"><div class="w-full px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-4 font-label text-xs text-on-surface-variant"><div class="flex items-center gap-2"><span class="font-headline font-semibold text-on-surface">SIERRA ESTATES</span><span class="text-outline-variant">—</span><span>Archival Cadastral Register &amp; Spatial Intelligence</span></div><div class="flex items-center gap-6"><span>Cadastral Precision L4</span><span>Coordinate CRS: EPSG 32636</span><span>© 2025 Sierra Estates Advisory</span></div></div></footer></body></html>
