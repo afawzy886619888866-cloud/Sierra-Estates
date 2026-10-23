@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import * as XLSX from 'xlsx';
 import {
   getMasterExcelPath,
@@ -9,6 +10,14 @@ import {
   EXCEL_COLUMNS,
 } from '../apps/sierra-estates-realty/lib/services/ExcelInventoryService';
 
+// ⚠ Data-path hazard (documented 2026-10-19): getMasterExcelPath() prefers a
+// repo-root Inventory_with_Photos.xlsx (the local RUNTIME master synced from
+// Supabase Storage) over the committed structural seed at
+// apps/sierra-estates-realty/data/. CI runners and fresh clones have no root
+// artifact, so the seed is what these assertions pin. A leftover root
+// artifact from an earlier append-test run used to shadow the seed and flip
+// this suite red — the append test below now writes to a throwaway temp copy
+// and never creates a root artifact.
 describe('Excel Master Inventory & Real Data Integration Suite', () => {
   const masterPath = getMasterExcelPath();
   const loadWorkbook = (p: string) => XLSX.read(fs.readFileSync(p), { type: 'buffer' });
@@ -78,34 +87,54 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
 
   it('appendToExcelInventory appends new unit to correct sheet and updates workbook', async () => {
     const testRecordId = `TEST-OWNER-${Date.now().toString(36).toUpperCase()}`;
-    const result = await appendToExcelInventory({
-      recordId: testRecordId,
-      compound: 'Mivida',
-      location: 'New Cairo',
-      price: 14500000,
-      operation: 'Sale',
-      propertyType: 'Apartment',
-      bedrooms: 3,
-      bathrooms: 2,
-      areaSqm: 170,
-      description: 'Automated Vitest Verification Unit',
-      sourceType: 'owner',
-      photoUrls: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9'],
-    });
+    // Test isolation: append to a throwaway copy of the resolved master so
+    // the run never mutates the real workbook and never leaves a root-level
+    // runtime artifact behind (which would shadow the structural seed for
+    // every later run — see the hazard note above).
+    const tmpPath = path.join(
+      os.tmpdir(),
+      `sierra-excel-append-${process.pid}-${Date.now()}.xlsx`,
+    );
+    fs.copyFileSync(masterPath, tmpPath);
+    try {
+      const result = await appendToExcelInventory(
+        {
+          recordId: testRecordId,
+          compound: 'Mivida',
+          location: 'New Cairo',
+          price: 14500000,
+          operation: 'Sale',
+          propertyType: 'Apartment',
+          bedrooms: 3,
+          bathrooms: 2,
+          areaSqm: 170,
+          description: 'Automated Vitest Verification Unit',
+          sourceType: 'owner',
+          photoUrls: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9'],
+        },
+        tmpPath,
+      );
 
-    expect(result.success).toBe(true);
-    expect(result.recordId).toBe(testRecordId);
-    expect(result.sheetName).toBe('Owners Buy');
+      expect(result.success).toBe(true);
+      expect(result.recordId).toBe(testRecordId);
+      expect(result.sheetName).toBe('Owners Buy');
 
-    // Verify row was written to the sheet
-    const wb = loadWorkbook(result.filePath);
-    const ws = wb.Sheets['Owners Buy'];
-    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
-    const found = rows.find((r) => r.RecordID === testRecordId);
-    expect(found).toBeDefined();
-    expect(found?.Compound).toBe('Mivida');
-    expect(found?.['Price (EGP)']).toBe(14500000);
-    expect(found?.['Photo URLs']).toContain('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9');
+      // Verify row was written to the temp copy's sheet
+      const wb = loadWorkbook(result.filePath);
+      const ws = wb.Sheets['Owners Buy'];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
+      const found = rows.find((r) => r.RecordID === testRecordId);
+      expect(found).toBeDefined();
+      expect(found?.Compound).toBe('Mivida');
+      expect(found?.['Price (EGP)']).toBe(14500000);
+      expect(found?.['Photo URLs']).toContain('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9');
+    } finally {
+      try {
+        fs.unlinkSync(tmpPath);
+      } catch {
+        /* best-effort cleanup */
+      }
+    }
   }, 30000);
 
   it('handles multi-criteria filtering accurately on real and normalized listings', () => {

@@ -15,10 +15,8 @@
  * /api/listings applies: unverified rows never reach a public surface, so
  * when nothing verified exists the honest answer is an empty <list>.
  */
-import fs from 'fs';
-import path from 'path';
 import { NextResponse } from 'next/server';
-import { InventoryQueryService } from '@/lib/services/inventory-query';
+import { getSupabase } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -44,7 +42,7 @@ type FeedUnit = {
   id?: string;
   compound?: string | null;
   location?: string;
-  city?: string;
+  city?: string | null;
   zone?: string;
   propertyType?: string | null;
   type?: string | null;
@@ -63,19 +61,128 @@ type FeedUnit = {
   segment?: string | null;
 };
 
+/** Raw `listings` row shape as selected by loadUnits (snake_case columns). */
+type ListingRow = {
+  id?: string;
+  code?: string | null;
+  ref_id?: string | null;
+  compound?: string | null;
+  location_area?: string | null;
+  city?: string | null;
+  property_type?: string | null;
+  deal_type?: string | null;
+  price?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area_sqm?: number | null;
+  images?: string[] | null;
+  source_channel?: string | null;
+};
+
+/** Explicit-evidence broker attribution, mirroring /api/inventory's
+ * deriveSegment(): source_channel broker/agent/portal markers count as
+ * broker-published inventory; owner channels and ambiguous channels do
+ * not. Hyphen-tolerant ('property-finder' and 'property_finder' are the
+ * same channel with different spellings in the canonical data). The
+ * previous implementation filtered an `ownerType` field that no canonical
+ * row ever carried, which (together with a status vocabulary mismatch)
+ * zeroed the query — the defect the stale-XML branch masked. */
+const BROKER_CHANNEL_RE = /(broker|agent|property[-_]finder|dubizzle)/;
+
+function isBrokerListed(row: ListingRow): boolean {
+  return BROKER_CHANNEL_RE.test(String(row.source_channel || '').toLowerCase());
+}
+
+/** Sale-feed membership: the XML template renders "<type> for sale in …",
+ * so rent rows must NEVER be exported (mislabelling rent as for-sale would
+ * fabricate the listing's purpose). deal_type 'sale' (primary) and 'resale'
+ * (secondary) are both honest for-sale listings. */
+function isForSale(row: ListingRow): boolean {
+  const dt = String(row.deal_type || '').toLowerCase();
+  return dt === 'sale' || dt === 'resale';
+}
+
+/** SALE-PRICE PLAUSIBILITY FLOOR (2026-10-21): the priced sale/resale
+ * population is bimodal — 1,206 rows under 1M EGP (the annual-rent scale
+ * of these same compounds, mis-labelled as sale by ingest) vs 432 rows
+ * at 5M+ EGP (real Greater Cairo master-community sale prices). Anything
+ * below 2M EGP advertised as FOR SALE would misrepresent the listing on
+ * a public portal (anti-fabrication §21); borderline rows stay private
+ * until a human re-verifies them. Operators may lower this floor after
+ * re-verification — it is an export guard, never a data mutation.
+ * Enforced BOTH in-query (.gte) and in-memory (defense in depth). */
+const SALE_PRICE_FLOOR_EGP = 2_000_000;
+
 async function loadUnits(): Promise<FeedUnit[]> {
-  // Canonical Supabase `units` collection (broker listings only) — PUBLISH
-  // GATED (Phase D): only verified PUBLISHABLE rows may be advertised on an
-  // external portal, enforced inside the query itself.
+  // Canonical Supabase `listings` table — PUBLISH GATED (Phase D): only
+  // verified PUBLISHABLE rows may be advertised on an external portal,
+  // enforced in the query itself. STATUS VOCABULARY (2026-10-21 fix): the
+  // canonical table carries status='active' (the public RLS policy's own
+  // vocabulary — "Public can view active listings"); the previous
+  // InventoryQueryService call asked for 'available', a value no row ever
+  // carries, so the canonical query ALWAYS returned zero rows and the feed
+  // was permanently empty (masked by the removed pre-generated-XML branch).
+  //
+  // FILTER PLACEMENT (2026-10-21): deal_type / price-floor / broker-channel
+  // predicates are pushed INTO the query — the first cut scanned the whole
+  // table client-side (HARD_CAP rows) and the newest-rows window could
+  // entirely miss the qualifying population (verified live: the newest
+  // 5,000 rows held 12 priced-for-sale broker rows, none §21-complete,
+  // while the 16 exportable units sat in the older 6,532 rows).
   try {
-    const rows = await InventoryQueryService.query({
-      status: 'available',
-      publishStatus: 'PUBLISHABLE',
-      ownerType: 'broker',
-      limit: 1000,
-    });
-    const units = (rows as unknown as FeedUnit[]).filter((u) => Number(u.price) > 0);
-    if (units.length > 0) return units;
+    const supabase = getSupabase();
+    // PAGINATION: PostgREST max-rows silently caps single requests at 1000
+    // rows — page through with .range() (same fix /api/inventory applied
+    // 2026-10-11).
+    const PAGE = 1000;
+    const HARD_CAP = 20_000;
+    const all: FeedUnit[] = [];
+    for (let from = 0; from < HARD_CAP; from += PAGE) {
+      const { data, error } = await supabase
+        .from('listings')
+        .select(
+          'id, code, ref_id, compound, location_area, city, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, images, source_channel',
+        )
+        .eq('status', 'active')
+        // PUBLISH GATE (Phase D): verified rows only leave the database.
+        .eq('publish_status', 'PUBLISHABLE')
+        // For-sale membership in-query: the XML renders "for sale".
+        .in('deal_type', ['sale', 'resale'])
+        // Sale-price plausibility floor in-query (see SALE_PRICE_FLOOR_EGP).
+        .gte('price', SALE_PRICE_FLOOR_EGP)
+        // Broker attribution in-query: explicit channel evidence only
+        // (hyphen-tolerant property[-_]finder spelling).
+        .or(
+          'source_channel.ilike.*broker*,source_channel.ilike.*agent*,source_channel.ilike.*property-finder*,source_channel.ilike.*property_finder*,source_channel.ilike.*dubizzle*',
+        )
+        .order('updated_at', { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(error.message);
+      const page = (data ?? []) as ListingRow[];
+      for (const row of page) {
+        if (!isBrokerListed(row)) continue; // defense in depth (query filters)
+        if (!isForSale(row)) continue; // defense in depth (query filters)
+        all.push({
+          code: row.code || row.ref_id || row.id,
+          id: row.id,
+          compound: row.compound,
+          location: row.location_area || undefined,
+          city: row.city,
+          propertyType: row.property_type,
+          bedrooms: row.bedrooms,
+          bath: row.bathrooms,
+          area: row.area_sqm,
+          price: Number(row.price) || 0,
+          images: Array.isArray(row.images) ? row.images : [],
+          dealType: row.deal_type,
+        });
+      }
+      if (page.length < PAGE) break;
+    }
+    const units = all
+      .filter((u) => Number(u.price) > 0)
+      .filter((u) => Number(u.price) >= SALE_PRICE_FLOOR_EGP);
+    return units;
   } catch (err) {
     logger.warn('[feeds/property-finder] Supabase query failed:', err);
   }
@@ -107,23 +214,14 @@ function deriveCity(compound: string, unitCity?: string | null): string {
 }
 
 export async function GET() {
-  // Check for pre-generated high-fidelity Property Finder XML feed with 1,762 rich ads
-  const candidatePaths = [
-    path.join(process.cwd(), 'public', 'feeds', 'propertyfinder-feed.xml'),
-    path.join(process.cwd(), 'apps', 'sierra-estates-realty', 'public', 'feeds', 'propertyfinder-feed.xml'),
-  ];
-  for (const p of candidatePaths) {
-    if (fs.existsSync(p)) {
-      const xml = fs.readFileSync(p, 'utf8');
-      return new NextResponse(xml, {
-        headers: {
-          'Content-Type': 'application/xml; charset=utf-8',
-          'Cache-Control': 'public, max-age=300, s-maxage=600',
-        },
-      });
-    }
-  }
-
+  // PUBLISH GATE (mandate 2026-10-20): the pre-generated-XML branch that used
+  // to live here was REMOVED — it served a stale committed snapshot
+  // (public/feeds/propertyfinder-feed.xml, last_update 2026-10-04, ~1,762
+  // owner-scraped OWNERS-AUG26-* ads incl. price-on-application rows) BEFORE
+  // the canonical query could run, so unverified units were advertised on a
+  // public third-party portal and the gate above was dead code in production.
+  // Draft XMLs now live in docs/drafts/propertyfinder/ (never auto-served);
+  // this route only ever exports canonical, publish-gated rows.
   const units = await loadUnits();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<list>\n`;

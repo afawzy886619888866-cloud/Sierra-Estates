@@ -17,8 +17,8 @@ To keep this deploy repo lean (clones + Vercel builds), **14 unreferenced asset 
 ## What was intentionally kept (actively used)
 
 - **The Cairo Plaza microsite media** — 81 files (~87 MB) referenced by `CairoPlazaExperience.tsx`, `CairoPlazaScene.tsx`, admin views, and the `/cairo-plaza` + `/ar/cairo-plaza` routes. Removing these would break live pages.
-- **`public/feeds/propertyfinder-feed.xml`** — primary data source read by `/api/feeds/property-finder` (with DB generation fallback) and linked as "Static XML" in the Admin Portal.
-- **`public/feeds/propertyfinder-photos-only.xml`** — small (36 KB), harmless.
+- **`docs/drafts/propertyfinder/propertyfinder-feed.xml`** — DRAFT ONLY since 2026-10-20: the runtime fallback branch in `/api/feeds/property-finder` was REMOVED (it served this stale, unverified snapshot as the live production feed, bypassing the publication gate). The route now generates exclusively from canonical publish-gated rows; this file is operator-review material, never auto-served.
+- **`docs/drafts/propertyfinder/propertyfinder-photos-only.xml`** — draft, same status.
 
 ## Restoring an archived file
 

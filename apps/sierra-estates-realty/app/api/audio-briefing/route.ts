@@ -95,18 +95,22 @@ export async function POST(req: NextRequest) {
     if (body.propertyId && (!body.compound || !body.price)) {
       try {
         const supabase = getSupabaseAdmin();
+        // Real inventory lives in public.listings (adapter's canonical table
+        // for the properties collection); unit type is property_type there and
+        // area is area_sqm. The old lookup hit a phantom `properties` table
+        // and never resolved anything.
         const { data } = await supabase
-          .from('properties')
-          .select('id, title, compound, unit_type, price, area')
+          .from('listings')
+          .select('id, title, compound, property_type, price, area_sqm')
           .eq('id', body.propertyId)
           .maybeSingle();
 
         if (data) {
           resolved.sierraCode = data.id;
           resolved.compound = resolved.compound || data.compound || null;
-          resolved.unitType = resolved.unitType || data.unit_type || null;
+          resolved.unitType = resolved.unitType || data.property_type || null;
           resolved.priceEGP = resolved.priceEGP || (Number(data.price) || null);
-          resolved.areaSqm = resolved.areaSqm || (Number(data.area) || null);
+          resolved.areaSqm = resolved.areaSqm || (Number(data.area_sqm) || null);
         }
       } catch {
         // Lookup failure surfaces through the missing-fields gate below.

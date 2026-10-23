@@ -21,7 +21,7 @@ class ReportGenerator {
       dateStyle: 'full',
     });
 
-    // In production: pull real data from Firebase/DB
+    // In production: pull real data from Supabase DB
     return `📊 *Sierra Estates — Daily Report*
 🗓 ${now}
 
@@ -63,9 +63,9 @@ _Sierra AI Agent — Powered by Gemini_`;
 • Deals closed: tracked
 
 🏆 *Top Performing Compounds*
-1. (data from Firebase)
-2. (data from Firebase)
-3. (data from Firebase)
+1. (data from Supabase)
+2. (data from Supabase)
+3. (data from Supabase)
 
 💡 *AI Insights*
 Most asked about: pricing, payment plans, delivery dates

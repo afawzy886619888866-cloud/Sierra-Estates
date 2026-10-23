@@ -1,0 +1,71 @@
+name: Deploy Supabase (schema + migrations)
+
+# Canonical backend deployment: applies supabase/schema.sql plus the ordered
+# migration chain to the Supabase project. Pinned by
+# __tests__/extensions-and-tooling.test.ts (explicit permissions block with
+# contents: read) and __tests__/deployment.test.ts (deploy-supabase.yml must
+# exist; Firebase deployment paths must stay retired).
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Validate migration chain without applying'
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-supabase
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Apply schema + migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Verify Supabase credentials (fail loudly)
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_URL }}" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN and SUPABASE_DB_URL are required to apply the canonical backend schema. Never run destructive schema work unauthenticated."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Apply schema and migrations
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run — validating migration chain only."
+            pnpm deploy:check
+          else
+            pnpm deploy:supabase
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}

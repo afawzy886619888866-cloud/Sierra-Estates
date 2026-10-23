@@ -46,7 +46,7 @@ export interface SBRAsset {
   assetType: "villa" | "apartment" | "penthouse" | "duplex" | "townhouse";
   allocationType: "sale" | "rent";
   interiorStandard: "furnished" | "semi_furnished" | "unfurnished";
-  visuals: string[];              // Firebase Storage download URLs
+  visuals: string[];              // Supabase Storage download URLs
   amenities: string[];
   coordinates: { lat: number; lng: number };
   neuralMatchScore: number;       // 0-10

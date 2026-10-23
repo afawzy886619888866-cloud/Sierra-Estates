@@ -614,14 +614,20 @@ describe('POST /api/easy-listing', () => {
     });
 
     it('degrades to parse-only (persisted null) in sandbox when the DB write fails', async () => {
-        mockInsertRecord.mockRejectedValueOnce(new Error('supabase not configured'));
+        const prevEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'test';
+        try {
+            mockInsertRecord.mockRejectedValueOnce(new Error('supabase not configured'));
 
-        const res = await post(AGENT_EXAMPLE);
-        expect(res.status).toBe(200);
-        const body = await res.json();
-        expect(body.ok).toBe(true);
-        expect(body.internal_code).toBe('NC-MIV-APT-F2-175M');
-        expect(body.persisted).toBeNull();
+            const res = await post(AGENT_EXAMPLE);
+            expect(res.status).toBe(200);
+            const body = await res.json();
+            expect(body.ok).toBe(true);
+            expect(body.internal_code).toBe('NC-MIV-APT-F2-175M');
+            expect(body.persisted).toBeNull();
+        } finally {
+            process.env.NODE_ENV = prevEnv;
+        }
     });
 
     it('surfaces a 502 in production when the listings write fails', async () => {

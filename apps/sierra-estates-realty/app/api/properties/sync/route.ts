@@ -7,6 +7,10 @@ import {
   type PropertyFinderListing,
 } from '@/lib/propertyFinder-service';
 import { fingerprint } from '@/lib/services/inventory/dedupe';
+import {
+  buildCanonicalPayloadFromPfRow,
+  upsertCanonicalListing,
+} from '@/lib/services/inventory/ingest-bridge';
 
 /**
  * Property Finder city sync → public.listings.
@@ -199,10 +203,48 @@ export async function POST(request: NextRequest) {
     // already written in place instead of rolling the chunk back. That matches
     // the per-row failure accounting this route already reported (failedCount),
     // and the upsert is keyed on the listing id so a re-run converges.
+    //
+    // G2 wiring (2026-10-19): complete units (area/bedrooms/price genuinely
+    // present) go through InventoryDomainService — fingerprint identity,
+    // lifecycle status `pending_verification` (trusted feed), sources
+    // provenance, DB-minted SE- code (migration 031), and graceful merge when
+    // another path already owns the fingerprint. Rich PF columns ride along
+    // as extraColumns. §21-incomplete properties keep the legacy rich upsert
+    // so no PF data is lost — they simply stay unfingerprinted.
+    let mergedCount = 0;
     for (const [index, property] of properties.entries()) {
       try {
         const documentId = getListingId(property, index);
-        await upsertRecord('listings', { id: documentId, ...mapProperty(property) });
+        const row = mapProperty(property);
+        const canonicalPayload = buildCanonicalPayloadFromPfRow({
+          compound: row.compound,
+          propertyType: row.propertyType,
+          offerType: row.offerType,
+          bedrooms: row.bedrooms,
+          areaSqm: row.areaSqm ?? null,
+          price: row.price,
+          title: row.title,
+        });
+
+        if (canonicalPayload) {
+          const {
+            // Identity/dedup keys are owned by the domain service; the display
+            // `code` would block the DB-minted SE- code (migration 031).
+            code: pfReference,
+            dupeCheckHash: _droppedHash,
+            ...richColumns
+          } = row;
+          void _droppedHash;
+          const result = await upsertCanonicalListing('property_finder', canonicalPayload, {
+            extraColumns: {
+              ...richColumns,
+              pfReferenceNumber: pfReference || undefined,
+            },
+          });
+          if (result.action === 'duplicate_merged') mergedCount += 1;
+        } else {
+          await upsertRecord('listings', { id: documentId, ...row });
+        }
         syncedCount += 1;
       } catch (_error) {
         failedCount += 1;
@@ -214,6 +256,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         syncedCount,
+        mergedCount,
         failedCount,
         message: `Synced ${syncedCount} Portfolio Assets from Property Finder`,
       },

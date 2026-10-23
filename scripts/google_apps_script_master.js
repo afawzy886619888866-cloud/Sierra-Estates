@@ -27,7 +27,8 @@
  * 6. Copy the new Web App URL and provide it to Antigravity / paste into .env (WF_SHEET_WRITE_URL)
  */
 
-const EXPECTED_SECRET = "SE_OUTREACH_SECRET_2026_CAIRO";
+const EXPECTED_SECRET = PropertiesService.getScriptProperties().getProperty('SIERRA_SHEET_WRITE_SECRET');
+if (!EXPECTED_SECRET) throw new Error('SIERRA_SHEET_WRITE_SECRET is not configured');
 const MASTER_TAB_NAME = "Master_Inventory";
 const DATE_COL_NAME = "تاريخ اخر تواصل";
 
@@ -136,7 +137,7 @@ function appendRowsDeduped(sheet, rowsToAppend) {
  */
 function importNewMasterRows() {
   const sheet = getOrCreateMasterSheet();
-  const csvUrl = "https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/data/Online_Sheet_New_Rows_Only.csv";
+  const csvUrl = "https://raw.githubusercontent.com/afawzy886619888866-cloud/Sierra-Estates/main/data/Online_Sheet_New_Rows_Only.csv";
   const response = UrlFetchApp.fetch(csvUrl);
   const csvData = Utilities.parseCsv(response.getContentText("UTF-8"));
 

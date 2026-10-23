@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
-import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
+import { listRecords, insertRecord, getRecord, type RecordData } from '@sierra-estates/db';
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { listingInScope } from '@/lib/server/partner-scope';
 import { fingerprint } from '@/lib/services/inventory/dedupe';
 import { logger } from '@/lib/logger';
+import { upsertCanonicalListing } from '@/lib/services/inventory/ingest-bridge';
 
 // Validates the SPA listing shape; passthrough keeps extra fields the mapper reads.
 const listingCreateSchema = z
@@ -113,11 +114,63 @@ export async function POST(req: NextRequest) {
     // 2. New manual listings enter the lifecycle at 'pending_verification'
     //    (the Egypt 2023 listing-transparency queue) unless an explicit legacy
     //    status is provided.
+    //
+    // G2 wiring (2026-10-19): when the §21 mandatory field set is complete,
+    // the create goes through InventoryDomainService — fingerprint identity,
+    // sources provenance, DB-minted SE- code (migration 031), and a duplicate
+    // unit MERGES into the existing row instead of failing with a raw unique
+    // constraint 500. Incomplete payloads keep the legacy direct insert
+    // (unfingerprinted, as before).
     const offerType: 'sale' | 'rent' =
       (patch.offerType as 'sale' | 'rent') ??
       parsed.data.offerType ??
       parsed.data.offer ??
       'sale';
+
+    const hasMandatoryFieldSet =
+      typeof patch.bedrooms === 'number' &&
+      typeof patch.area === 'number' &&
+      typeof patch.price === 'number' &&
+      (patch.area as number) > 0 &&
+      (patch.price as number) > 0;
+
+    if (hasMandatoryFieldSet && patch.compound && patch.propertyType) {
+      const spaColumns = toListingColumns({
+        ...listingPatchToColumns(patch),
+        status: patch.status || 'pending_verification',
+        category: 'residential',
+        ownerType: 'internal',
+        dealType: offerType,
+        offerType,
+      });
+
+      const result = await upsertCanonicalListing(
+        'admin_manual',
+        {
+          title: `${patch.compound} · ${patch.propertyType}`,
+          compound: patch.compound,
+          propertyType: patch.propertyType,
+          offerType,
+          bedrooms: patch.bedrooms as number,
+          area: patch.area as number,
+          price: patch.price as number,
+        },
+        {
+          extraColumns: {
+            ...spaColumns,
+            syncSource: 'manual',
+            ...(patch.status ? { status: patch.status } : {}),
+          },
+        },
+      );
+
+      const row = await getRecord<RecordData>('listings', result.id);
+      return NextResponse.json({
+        success: true,
+        duplicate: result.action === 'duplicate_merged',
+        listing: mapListingToSpa(result.id, rowToListingDoc(row ?? ({} as RecordData))),
+      });
+    }
 
     const inventoryFields: RecordData = {
       syncSource: 'manual',

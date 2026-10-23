@@ -64,8 +64,13 @@ function parseArgs(argv) {
   return opts;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL). Refusing to fall back to a hardcoded project URL — set it in .env.local.');
+  process.exit(1);
+}
 
 if (!supabaseKey) {
   console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY. Cannot seed admin user without service role privileges.');

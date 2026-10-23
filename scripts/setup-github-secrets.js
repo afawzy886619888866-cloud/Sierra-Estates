@@ -26,7 +26,7 @@ if (process.platform === 'win32') {
   process.env.PATH = 'C:\\Program Files\\GitHub CLI;' + process.env.PATH;
 }
 
-const REPO = process.env.GITHUB_REPOSITORY || 'sierrablue8866-droid/SE-Vercel-deploy-main';
+const REPO = process.env.GITHUB_REPOSITORY || 'afawzy886619888866-cloud/Sierra-Estates';
 
 const VARIABLES = [
   'MAINTAINER_EMAIL',

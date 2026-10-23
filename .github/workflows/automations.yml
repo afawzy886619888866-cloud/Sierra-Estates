@@ -1,33 +1,14 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Automations
-
 # GCP migration — AFTER infra/google-cloud is deployed this workflow is the
-# MANUAL EMERGENCY trigger (plus CI for the dispatcher contract). GCP Cloud
-# Scheduler is the canonical scheduler (5 jobs → the se-automation-dispatch
-# Workflow → the same dispatcher). Run this workflow from the Actions tab
-# whenever GCP scheduling is paused, broken, or you need a one-off forced
-# run (e.g. after fixing a failed job).
-#
-# The schedule→target map in the "Resolve target" step documents the GCP cron
-# expressions so the two schedulers stay aligned, and keeps the mapping ready
-# if `schedule:` is ever re-enabled on this workflow.
-#
-# Why overlapping schedulers can fire the same job safely:
-#   every dispatch records an automation_runs row, and the dispatcher skips a
-#   job whose last success is fresher than its dedupe window (e.g. 20h for the
-#   daily syncs). Overlaps therefore collapse into one real execution plus one
-#   honest "skipped (recent_success)" ledger entry — never a double run.
-#
-# Failure handling: the dispatcher answers HTTP 500 when ANY job failed, so
-#   · curl --retry re-runs the dispatch, and
-#   · the dedupe guard makes that retry execute ONLY the failed jobs,
-#   · failures also land in the failed_orchestrations DLQ (pipeline
-#     "cron:<job>") and a later success resolves them.
+# MANUAL EMERGENCY trigger. GCP Cloud Scheduler is the canonical scheduler,
+# so this workflow intentionally has no GitHub schedule to avoid duplicate
+# dispatcher calls and unnecessary operational cost. Use workflow_dispatch for
+# one-off runs when GCP scheduling is paused or broken.
 #
 # Required repository secret: CRON_SECRET (same value as the Vercel env var
 # and the GCP Secret Manager `cron_secret` entry). Without it the manual runs
 # fail auth and the workflow exits non-zero — visible, not silent.
-
 on:
   workflow_dispatch:
     inputs:
@@ -54,6 +35,22 @@ on:
         required: false
         type: boolean
         default: false
+  schedule:
+    # Hourly whatsapp-dispatch
+    - cron: '10 * * * *'
+    # 3-hourly lead timers & SLA checks
+    - cron: '25 */3 * * *'
+    # Night window (02:10 UTC = 04:10 Cairo)
+    - cron: '10 2 * * *'
+    # Morning window (06:10 UTC = 08:10 Cairo)
+    - cron: '10 6 * * *'
+    # Daily sync leads (10:10 UTC = 12:10 Cairo)
+    - cron: '10 10 * * *'
+  workflow_call:
+    secrets:
+      CRON_SECRET:
+        description: Bearer token for /api/cron/dispatch authentication
+        required: false
 
 concurrency:
   group: automations

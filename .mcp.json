@@ -1,32 +1,9 @@
 {
   "mcpServers": {
     "amphion-command-deck": {
-      "command": "python",
+      "command": "python3",
       "args": [
         ".amphion/command-deck/scripts/mcp-bridge.py"
-      ],
-      "env": {}
-    },
-    "sierra-estates": {
-      "command": "npx",
-      "args": [
-        "tsx",
-        "scripts/sierra-mcp-server.ts"
-      ],
-      "env": {}
-    },
-    "supabase": {
-      "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=gaxfqcietzoonlmatiot&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching",
-      "serverUrl": "https://mcp.supabase.com/mcp?project_ref=gaxfqcietzoonlmatiot&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
-    },
-    "ruflo": {
-      "command": "cmd.exe",
-      "args": [
-        "/c",
-        "ruflo",
-        "mcp",
-        "start"
       ],
       "env": {}
     }

@@ -37,7 +37,12 @@ export const currencySchema = z.enum(['EGP', 'USD', 'EUR', 'AED', 'SAR']);
 
 export const leadCreateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(120),
-  email: emailSchema,
+  // The website home form ships an email box that visitors often leave
+  // blank. The schema used to require a syntactically valid address, so
+  // every blank-email submission 422'd — and the form still told the
+  // visitor "received" (silently dropping the lead). Blank/missing email
+  // is accepted; a FILLED one must still be valid.
+  email: emailSchema.optional().or(z.literal('')),
   phone: phoneSchema.optional(),
   message: z.string().max(2000).optional(),
   locale: localeSchema,

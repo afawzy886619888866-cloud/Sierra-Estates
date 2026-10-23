@@ -1,4 +1,4 @@
-# Antigravity Project Guidelines · Sierra Estates (`SE-Vercel-deploy-main`)
+# Antigravity Project Guidelines · Sierra Estates (`Sierra-Estates`)
 
 ## 1. Authoritative Backend & Architecture
 
@@ -20,7 +20,7 @@
 
 ## 4. Installed Local & Global Skills
 
-For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`](file:///H:/last/Main/SE-Vercel-deploy-main/docs/SKILLS_REGISTRY.md). Key active skills include:
+For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`](docs/SKILLS_REGISTRY.md). Key active skills include:
 
 - **Real Estate Intelligence & Automation**: `sierra-closer-agent`, `concierge-lead-agent`, `whatsapp-inventory-harvester`, `real-estate-valuation-analyzer`, `ecc-memory-engine`, `excel-archive-processor`, `inventory-csv-merger`.
 - **UI/UX & Design (Anti-Slop)**: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend` (`taste-skill`), `high-end-visual-design` (`soft-skill`), `stitch-design-taste`, `minimalist-ui`, `industrial-brutalist-ui`, `gpt-taste`.

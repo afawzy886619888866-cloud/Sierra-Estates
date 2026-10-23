@@ -41,6 +41,7 @@ TypeScript 7.0.2 (root catalog) / 5.8.3 (client app), Python 3.12.14
 | `turbo run build` (committed snapshot) | **PASS — 11/11 tasks, exit 0** | `sierra-estates-client-page`: Next.js 16.3.3 (webpack), compiled successfully in 55 s, 117 static pages generated, built-in type-check passed. 10/11 tasks turbo-cached on re-run. |
 
 Notes:
+
 - One transient failure occurred on the first turbo attempt (worker died during
   page-data collection with zero error output); reproduced clean twice after.
 - `apps/.../scripts/apply-pending-migrations.mjs` correctly self-skips without
@@ -261,6 +262,7 @@ NEXT:       Human verification of the 50-unit pilot (data/PILOT_50_WORKSHEET.xls
 ```
 
 ### Root Cause & Corrective Actions
+
 1. **Root Cause of 9,435 Anon-Visible Units**: An unledgered `DEFAULT 'PUBLISHABLE'` constraint on `public.listings.publish_status` automatically backfilled pre-existing rows upon creation and was omitted from the 022 defaults-drop migration.
 2. **Migration 025**: Dropped `publish_status` default constraint and demoted unverified rows to `REVIEW_REQUIRED`. Ledgered on live production at `2026-10-04T21:49:08Z`.
 3. **Workflow 08 Ingestion (+177 / +240 Rows)**: Identified `workflows/08-units-sync/sync.js` as the source of rows from Google Sheets (gid=1127958606) executed `2026-10-04T15:07:29-32Z`. Baseline 15,754 grew to 15,932 (+177 observed mid-run) and completed at 15,994 (+240 net additions). All 240 rows share `sync_source: 'sheets-units'`, `source_channel: 'sheets'`, `ref_id: null`, and SBR sheet codes. Patched in commit `871299e87` to hardcode `listing.publish_status = 'REVIEW_REQUIRED'` (never `PUBLISHABLE` without photos and staff verification).

@@ -9,7 +9,7 @@ async function seedOpenClawMemory() {
       value: {
         title: 'Sierra Estates Platform Architecture',
         description: 'Multi-tenant real estate platform with Client Portal (sierra-estates-client-page), Admin Dashboard (sierra-estates-admin-page), WhatsApp agents (OpenClaw, Liela, Hermes, Sierra, Closer), and Google Vertex AI integration.',
-        techStack: 'Next.js 16 App Router, React 19, Tailwind CSS v4, Google GenAI / Vertex AI, Firebase / Firestore, pnpm workspace monorepo.',
+        techStack: 'Next.js 16 App Router, React 19, Tailwind CSS v4, Google GenAI / Vertex AI, Supabase PostgreSQL / pgvector, pnpm workspace monorepo.',
         primaryDomain: 'sierra-estates.net',
         adminDomain: 'admin.sierra-estates.net',
       },

@@ -40,12 +40,23 @@ function fileSizeMB(relPath: string): number {
 describe('Data Hygiene & Git Weight', () => {
 
   test('no tracked file exceeds 5 MB', () => {
+    // Documented exception (2026-10-19 resolution): the inventory snapshot is
+    // the ONE sanctioned tracked data file — four routes statically import it
+    // and the public map serves it as the offline fallback on clean checkouts
+    // (see the NOTE in .gitignore). It is capped at 8 MB instead of 5 MB so
+    // bloat is still caught. Everything else must stay under 5 MB.
+    const SNAPSHOT_ALLOWLIST = ['apps/sierra-estates-realty/lib/inventory/snapshot.json'];
+    const SNAPSHOT_CAP_MB = 8;
     const allFiles = gitLsFiles();
     const oversized = allFiles
       // Exclude static public assets (images/fonts served by Next.js)
       .filter(f => !/^apps\/[^/]+\/public\//.test(f))
       .map(f => ({ file: f, sizeMB: fileSizeMB(f) }))
-      .filter(f => f.sizeMB > 5);
+      .filter(f =>
+        SNAPSHOT_ALLOWLIST.includes(f.file)
+          ? f.sizeMB > SNAPSHOT_CAP_MB
+          : f.sizeMB > 5
+      );
 
     if (oversized.length > 0) {
       const report = oversized
@@ -53,11 +64,11 @@ describe('Data Hygiene & Git Weight', () => {
         .map(f => `  ${f.sizeMB.toFixed(1)} MB  ${f.file}`)
         .join('\n');
       expect.fail(
-        `Found ${oversized.length} tracked file(s) exceeding 5 MB:\n${report}\n` +
+        `Found ${oversized.length} tracked file(s) exceeding their size limit:\n${report}\n` +
         'Move large data to Supabase Storage and add to .gitignore.'
       );
     }
-  });
+  }, 30000);
 
   test('no root-level spreadsheets tracked in git', () => {
     const rootXlsx = gitLsFiles().filter(
@@ -78,11 +89,19 @@ describe('Data Hygiene & Git Weight', () => {
     expect(dataFiles).toEqual([]);
   });
 
-  test('snapshot.json is not tracked in git', () => {
+  test('snapshot.json IS tracked as the documented offline-fallback exception', () => {
+    // 2026-10-19: the same e07c047 commit added BOTH this file's old
+    // "not tracked" assertion AND the .gitignore NOTE declaring it
+    // deliberately committed — an internal contradiction, resolved four days
+    // later by f0fca73 actually committing the snapshot (the site requires it
+    // on clean checkouts). This pin codifies the CURRENT, documented policy:
+    // the snapshot is tracked, stays under the 8 MB bloat cap, and is the
+    // ONLY sanctioned tracked data file.
     const snapshot = gitLsFiles(
       'apps/sierra-estates-realty/lib/inventory/snapshot.json'
     );
-    expect(snapshot).toEqual([]);
+    expect(snapshot).toEqual(['apps/sierra-estates-realty/lib/inventory/snapshot.json']);
+    expect(fileSizeMB(snapshot[0])).toBeLessThanOrEqual(8);
   });
 
   test('no root hooks/ directory shadowing app hooks', () => {

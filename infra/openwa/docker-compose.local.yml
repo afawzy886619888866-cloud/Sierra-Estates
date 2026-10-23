@@ -1,0 +1,37 @@
+version: '3.9'
+
+# Sierra Estates — Local OpenWA Docker Compose (Free Local Gateway)
+# Run locally on your Windows PC with:
+#   docker compose -f infra/openwa/docker-compose.local.yml up -d
+
+services:
+  openwa-local:
+    image: ghcr.io/rmyndharis/openwa:latest
+    container_name: sierra-openwa-local
+    restart: unless-stopped
+    ports:
+      - "2785:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - TZ=Africa/Cairo
+      - DATABASE_TYPE=sqlite
+      - DATABASE_PATH=/data/openwa.db
+      - ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY}
+      - DEFAULT_OPERATOR_KEY=${OPENWA_OPERATOR_KEY:-change-me-operator-key}
+      - DEFAULT_ENGINE=wwebjs
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_MESSAGES=40
+      - STORAGE_BACKEND=local
+      - STORAGE_LOCAL_PATH=/data/media
+      - SUPABASE_URL=https://gaxfqcietzoonlmatiot.supabase.co
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+    volumes:
+      - ./openwa-data:/data
+      - ./whatsapp-auth:/home/node/.wwebjs_auth
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/health | grep -q ok || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s

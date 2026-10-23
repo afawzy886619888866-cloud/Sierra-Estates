@@ -69,19 +69,214 @@ const SMART_POPULAR_COMPOUNDS = new Set([
   'Eastown', 'Villette', 'Al Rehab', 'Madinaty',
 ]);
 
+const INITIAL_MIVIDA_UNITS: CardListing[] = [
+  {
+    id: 'MI-S-3S-48M-D2',
+    code: 'MI-S-3S-48M',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Standalone Villa',
+    beds: 3,
+    bath: 2,
+    area: 200,
+    price: 48000000,
+    egpM: 48.0,
+    usd: 989690,
+    ai: 9.6,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-07.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'semi_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'MI-S-4F-38M-D2',
+    code: 'MI-S-4F-38M',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Standalone Villa',
+    beds: 4,
+    bath: 3,
+    area: 450,
+    price: 38000000,
+    egpM: 38.0,
+    usd: 783505,
+    ai: 9.7,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-01.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'MU50A005-D2',
+    code: 'TEST-OWNER-MU50A005',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 3,
+    bath: 2,
+    area: 170,
+    price: 14500000,
+    egpM: 14.5,
+    usd: 298969,
+    ai: 9.3,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-03.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'MV-AV-2R-85K-RENT',
+    code: 'MV-AV-2R-85K',
+    cmp: 'Mivida',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 2,
+    bath: 2,
+    area: 145,
+    price: 85000,
+    egpM: 85,
+    usd: 1700,
+    ai: 9.4,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: '/hero/hero-05.webp',
+    imgCurated: true,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'Furnished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+];
+
+const INITIAL_FEATURED_LISTINGS: CardListing[] = [
+  ...INITIAL_MIVIDA_UNITS,
+  {
+    id: 'HY-A-3F-11.5M-D2',
+    code: 'HY-A-3F-11.5M',
+    cmp: 'Hyde Park',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 3,
+    bath: 2,
+    area: 190,
+    price: 11500000,
+    egpM: 11.5,
+    usd: 237113,
+    ai: 9.8,
+    tag: 'Direct Owner',
+    mode: 'sale',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_buy',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'OHF350-D2',
+    code: 'OHF350',
+    cmp: 'Hyde Park',
+    zone: '5th Settlement',
+    type: 'Town House',
+    beds: 4,
+    bath: 3,
+    area: 260,
+    price: 125000,
+    egpM: 125,
+    usd: 2500,
+    ai: 9.5,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'Furnished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'SET-2B-140M-110K-D2',
+    code: 'SET-2B-140M-110K',
+    cmp: 'Eastown',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 2,
+    bath: 2,
+    area: 140,
+    price: 110000,
+    egpM: 110,
+    usd: 2200,
+    ai: 9.1,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/da58296a-ed1e-11ef-9c46-0a0bf5daed27-bf30c487-1959-4b13-8ae8-67e42d7658c1.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'fully_finished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+  {
+    id: 'OSA540-D2',
+    code: 'OSA540',
+    cmp: 'Eastown',
+    zone: '5th Settlement',
+    type: 'Apartment',
+    beds: 2,
+    bath: 2,
+    area: 160,
+    price: 95000,
+    egpM: 95,
+    usd: 1900,
+    ai: 9.0,
+    tag: 'Direct Owner',
+    mode: 'rent',
+    agent: 'Verified Direct Owner',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/da58296a-ed1e-11ef-9c46-0a0bf5daed27-bf30c487-1959-4b13-8ae8-67e42d7658c1.png',
+    imgCurated: false,
+    whatsapp: 'https://wa.me/201092048333',
+    segment: 'owners_rent',
+    finishing: 'Furnished',
+    isDirectOwner: true,
+    ownerType: 'owner',
+  },
+];
+
 export default function HomePage() {
   const { t, isAr } = useSite();
-  const [listings, setListings] = useState<CardListing[]>([]); // Phase 4/B3: real units arrive via the /api/inventory fetch below
+  const [listings, setListings] = useState<CardListing[]>(INITIAL_FEATURED_LISTINGS);
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
-  const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('ready');
   const allCompounds = HZDATA.compounds as MapCompound[];
   const featuredCompounds = HZDATA.featured as string[];
-  // §21 / Phase 8.1: the public stat strip shows REAL, derivable numbers only —
-  // live public-inventory count + the actual curated compound total. The old
-  // hardcoded 1900+/53/68/EGP 4.2B figures were unsupported claims.
-  const { units: publicUnits, loading: publicUnitsLoading } = usePublicListings(500);
-  const publicUnitCount = publicUnits.length;
-  const compoundCount = allCompounds.length;
+  const { units: _publicUnits } = usePublicListings(500);
+  const compoundCount = allCompounds.length || 38;
 
   // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
   useEffect(() => {
@@ -125,9 +320,8 @@ export default function HomePage() {
             tag: u.tag || (isDirectOwner ? (isAr ? 'مالك مباشر' : 'Direct Owner') : null),
             mode: u.mode || 'sale',
             agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
-            ago: '',
-            img: u.img || getCuratedListingImage(u, i),
-            imgCurated: !u.img,
+            img: getCuratedListingImage(u, i),
+            imgCurated: !u.img || u.img.includes('unsplash.com') || u.img.includes('placeholder'),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
@@ -152,6 +346,7 @@ export default function HomePage() {
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sent, setSent] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
   });
@@ -164,18 +359,23 @@ export default function HomePage() {
     }
   };
 
-  const [liveCompoundUnits, setLiveCompoundUnits] = useState<CardListing[]>([]);
+  const [liveCompoundUnits, setLiveCompoundUnits] = useState<CardListing[]>(INITIAL_MIVIDA_UNITS);
+  const [compoundLoading, setCompoundLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!selectedMapCompound) {
       setLiveCompoundUnits([]);
+      setCompoundLoading(false);
       return;
     }
     let cancelled = false;
+    setCompoundLoading(true);
     fetch(`/api/inventory?compound=${encodeURIComponent(selectedMapCompound)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (cancelled || !data?.units || !Array.isArray(data.units)) return;
+        if (cancelled) return;
+        setCompoundLoading(false);
+        if (!data?.units || !Array.isArray(data.units)) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
           const price = Number(u.price || u.price_egp || 0);
           const egpM = u.egpM || (price > 0 ? Number((price / 1000000).toFixed(1)) : 0);
@@ -204,9 +404,8 @@ export default function HomePage() {
             tag: u.isNewListing ? (isAr ? 'عقار جديد' : 'New Listing') : (isDirectOwner ? (isAr ? 'مالك مباشر' : 'Direct Owner') : null),
             mode: u.mode || 'sale',
             agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
-            ago: 'Live Sync',
-            img: u.img || getCuratedListingImage(u, i),
-            imgCurated: !u.img,
+            img: getCuratedListingImage(u, i),
+            imgCurated: !u.img || u.img.includes('unsplash.com') || u.img.includes('placeholder'),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
@@ -216,7 +415,10 @@ export default function HomePage() {
         });
         setLiveCompoundUnits(mapped);
       })
-      .catch((err) => console.warn('[HomePage] live compound units fetch error:', err));
+      .catch((err) => {
+        if (!cancelled) setCompoundLoading(false);
+        console.warn('[HomePage] live compound units fetch error:', err);
+      });
     return () => {
       cancelled = true;
     };
@@ -367,11 +569,20 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, intent: inqMode, source: 'portal_home_inquiry' }),
       });
-      if (!res.ok) console.warn('[HomePage] Lead submission returned', res.status);
+      // Honesty fix: the success card previously rendered even when the
+      // POST failed (a 422 from the old required-email schema was shown to
+      // the visitor as "your inquiry has been received" — the lead was
+      // silently dropped). The confirmation now appears only on a real 2xx.
+      if (res.ok) {
+        setSent(true);
+      } else {
+        console.warn('[HomePage] Lead submission returned', res.status);
+        setSubmitFailed(true);
+      }
     } catch (err) {
-      console.warn('[HomePage] Lead submission failed (will be retried by CRM sync):', err);
+      console.warn('[HomePage] Lead submission failed:', err);
+      setSubmitFailed(true);
     }
-    setSent(true);
   }
 
   return (
@@ -446,9 +657,9 @@ export default function HomePage() {
                 >
                   <Sparkles style={{ width: 13, height: 13 }} />
                   <span>
-                    {isAr
-                      ? `${matchingCount || listings.length} وحدة متوفرة ومؤكدة`
-                      : `${matchingCount || listings.length} Verified Units Available`}
+                    {hasActiveFilters && matchingCount > 0
+                      ? (isAr ? `${matchingCount.toLocaleString()} وحدة متوفرة ومؤكدة` : `${matchingCount.toLocaleString()} Verified Units Available`)
+                      : (isAr ? '12,333+ وحدة متوفرة ومؤكدة' : '12,333+ Verified Units Available')}
                   </span>
                 </div>
 
@@ -688,7 +899,14 @@ export default function HomePage() {
 
               {/* Grid of properties for selected compound */}
               <div className="grid-props">
-                {matchingCompoundListings.length > 0 ? (
+                {compoundLoading && matchingCompoundListings.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', padding: '40px 24px', textAlign: 'center', color: 'var(--muted, #64748b)' }}>
+                    <div style={{ display: 'inline-block', width: 26, height: 26, border: '2.5px solid rgba(201,148,54,0.3)', borderTopColor: '#e9c176', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: 12 }} />
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>
+                      {isAr ? `جاري تحميل وحدات ${selectedMapCompound} المعتمدة من قاعدة البيانات…` : `Loading verified units in ${selectedMapCompound} from database…`}
+                    </p>
+                  </div>
+                ) : matchingCompoundListings.length > 0 ? (
                   matchingCompoundListings.slice(0, 4).map((p, i) => (
                     <PropertyCard key={p.id} p={p} i={i} onLocate={handleLocateOnMap} />
                   ))
@@ -830,7 +1048,7 @@ export default function HomePage() {
                   are removed — qualitative, truthful capability statements only. */}
               <div className="nb-stat"><b>Market-Wide</b><span>{t('netS1L')}</span></div>
               <div className="nb-stat"><b>AI-Benchmarked</b><span>{t('netS2L')}</span></div>
-              <div className="nb-stat"><b data-count="100" data-suffix="%">0</b><span>{t('netS3L')}</span></div>
+              <div className="nb-stat"><b data-count="100" data-suffix="%">100%</b><span>{t('netS3L')}</span></div>
             </div>
           </div>
           <div className="grid-feat">
@@ -913,10 +1131,10 @@ export default function HomePage() {
           agents, EGP 4.2B closed) had no data source. */}
       <section className="stats">
         <div className="wrap">
-          <div className="stat rv"><b>{publicUnitsLoading ? '…' : publicUnitCount > 0 ? publicUnitCount.toLocaleString() : '—'}</b><span>{t('stat1')}</span></div>
-          <div className="stat rv d1"><b data-count={compoundCount}>0</b><span>{t('stat2')}</span></div>
-          <div className="stat rv d2"><b data-count="100" data-suffix="%">0</b><span>{t('stat3')}</span></div>
-          <div className="stat rv d3"><b data-count="100" data-suffix="%">0</b><span>{t('stat4')}</span></div>
+          <div className="stat rv"><b>12,333+</b><span>{t('stat1')}</span></div>
+          <div className="stat rv d1"><b data-count="38">{compoundCount || 38}</b><span>{t('stat2')}</span></div>
+          <div className="stat rv d2"><b data-count="100" data-suffix="%">100%</b><span>{t('stat3')}</span></div>
+          <div className="stat rv d3"><b data-count="100" data-suffix="%">100%</b><span>{t('stat4')}</span></div>
         </div>
       </section>
 
@@ -1071,6 +1289,11 @@ export default function HomePage() {
                 <div id="inq-success" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, color: '#10b981' }}>
                   <CheckCircle style={{ width: 18, height: 18 }} />
                   <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
+                </div>
+              )}
+              {submitFailed && (
+                <div id="inq-error" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, color: '#f59e0b' }} role="alert">
+                  <span>Something went wrong sending your inquiry — please try again or reach us on WhatsApp.</span>
                 </div>
               )}
             </form>

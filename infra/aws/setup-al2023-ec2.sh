@@ -40,7 +40,7 @@ sudo mkdir -p /opt
 sudo chown -R ec2-user:ec2-user /opt
 
 if [ ! -d "$TARGET_DIR/.git" ]; then
-  git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git "$TARGET_DIR"
+  git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git "$TARGET_DIR"
 else
   cd "$TARGET_DIR"
   git pull origin main

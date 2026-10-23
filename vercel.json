@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "bash scripts/ci-preflight.sh && NODE_OPTIONS=--max-old-space-size=7168 pnpm --filter sierra-estates-client-page build",
+  "buildCommand": "bash scripts/vercel-build.sh",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "git": {

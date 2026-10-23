@@ -50,6 +50,47 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 - **`image-to-code-skill`**: Screenshot-to-code conversion for UI replication and design-system alignment.
 - **`SE-Vercel-deploy-main`**: Project conventions, TypeScript patterns, and conventional commits reference for this monorepo.
 
+### ⚡ Addy Osmani Engineering Skills (`addyosmani/agent-skills`)
+
+- **`performance-optimization`**: Core Web Vitals (LCP, INP, CLS), Next.js bundle splitting, image optimization, dynamic imports, and memory profiling.
+- **`code-simplification`**: Anti-slop engineering, clarity over cleverness, reducing cyclomatic complexity, and eliminating dead abstraction layers.
+- **`browser-testing-with-devtools`**: Automated verification and layout debugging via Chrome DevTools MCP.
+- **`spec-driven-development`**: Defining rigorous API contracts, type models, and acceptance criteria prior to implementation.
+- **`constraint-driven-development`**: Enforcing architectural invariants, boundary validation, and defensive programming against data corruption.
+- **`doubt-driven-development`**: Adversarial self-critique, auditing assumptions, and eliminating silent errors before merge.
+- **`context-engineering`**: Session context budgeting, structured handoffs, and prevention of long-session drift.
+- **`interview-me`**: Structured interactive requirements elicitation when specs or user requests are ambiguous.
+- **`security-and-hardening`**: Defense-in-depth, input sanitization, token handling, SSRF/CSRF/SQLi prevention, and App Check security.
+- **`debugging-and-error-recovery`**: Systematic root-cause debugging, error isolation, and bisection workflows.
+- **`test-driven-development`**: Strict red-green-refactor loop enforcement for mission-critical real estate pipelines.
+- **`shipping-and-launch`**: Pre-launch checklists, staged rollout strategies, and rollback verification.
+- **`git-workflow-and-versioning`**: Atomic commit structuring, branch management, and semantic release hygiene.
+
+### 🛠️ Curated Full-Stack & AI Skills (`wshobson/agents`)
+
+- **`nextjs-app-router-patterns`**: Next.js 15+ App Router, Server Components streaming, parallel routes, and cache management.
+- **`react-state-management`**: Modern React state architectures with Zustand, React Query, and Jotai.
+- **`typescript-advanced-types`**: Advanced TypeScript type gymnastics, conditional types, mapped types, and branded validation.
+- **`nodejs-backend-patterns`**: Scalable Node.js backend patterns, middleware pipelines, and error handling.
+- **`auth-implementation-patterns`**: JWT, OAuth2, session management, and RBAC security.
+- **`e2e-testing-patterns`**: Playwright and Cypress test automation and visual regression testing.
+- **`error-handling-patterns`**: Resilient Result types, error propagation, and graceful degradation.
+- **`sql-optimization-patterns`**: PostgreSQL query optimization, EXPLAIN analysis, and index tuning.
+- **`postgresql-table-design`**: Relational database modeling, foreign key constraints, and indexing architecture.
+- **`rag-implementation`**: Retrieval-Augmented Generation architectures with vector stores and semantic search.
+- **`hybrid-search-implementation`**: Combining dense vector embeddings with BM25 keyword search.
+- **`vector-index-tuning`**: HNSW parameter tuning, recall optimization, and vector search latency reduction.
+- **`session-guard`**: Context corruption and amnesia prevention for long-running agent workflows.
+- **`ai-debt-detector`**: Automated audit for AI-generated code smells, brittle logic, and swallowed errors.
+- **`visual-edit-precision`**: Precise DOM and visual coordinate alignment for UI/frontend components.
+- **`async-python-patterns`**: Python asyncio, task concurrency, and non-blocking I/O patterns.
+- **`python-resilience`**: Exponential backoff, fault-tolerant decorators, and circuit breaker patterns.
+
+### 🧠 Prompt Engineering & Architecture (`asgeirtj/system_prompts_leaks`)
+
+- **`prompt-engineering-mastery`**: Elite prompt engineering, reasoning architecture, and agent alignment distilled from frontier system prompts (Google Antigravity, Claude Code, Cursor, OpenAI Deep Research).
+- **Curated Prompt Reference Library (`docs/reference/system-prompts/`)**: Canonical reference collection preserving Google Antigravity CLI, NotebookLM, Claude Code, Claude Design, Cursor, and OpenAI Deep Research system specifications.
+
 ---
 
 ## 2. Removed Skills (Historical Reference)

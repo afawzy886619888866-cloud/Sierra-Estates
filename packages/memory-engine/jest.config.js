@@ -3,7 +3,7 @@
  * realty app's jest config — scoped to its own root — never executed them.
  * This makes the memory engine's suite actually run in CI.
  */
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
