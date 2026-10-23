@@ -1,3 +1,4 @@
+try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
 /**
  * Workflow 05: Unit Adder — Supabase authoritative  (fixed 2026-10)
  * ─────────────────────────────────────────

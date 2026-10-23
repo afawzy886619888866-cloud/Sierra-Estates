@@ -97,9 +97,8 @@ npm run unit-adder
 
 **Required env vars:**
 
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_PRIVATE_KEY`
-- `FIREBASE_CLIENT_EMAIL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `BROKER_INBOX_SHEET_ID`
 - `GOOGLE_SERVICE_ACCOUNT_KEY`
 
@@ -158,7 +157,7 @@ jobs:
           PROPERTY_FINDER_JWT_TOKEN: ${{ secrets.PF_JWT }}
           WHATSAPP_API_TOKEN: ${{ secrets.WA_TOKEN }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_KEY }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SA }}
           BROKER_INBOX_SHEET_ID: ${{ secrets.SHEET_ID }}
 ```

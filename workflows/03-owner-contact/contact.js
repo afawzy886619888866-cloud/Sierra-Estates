@@ -1,3 +1,4 @@
+try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
 /**
  * Workflow 03: Owner Contact  (rewired 2026-10)
  * ─────────────────────────────────────────
