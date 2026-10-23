@@ -63,7 +63,7 @@
             },
             {
               "name": "Body",
-              "value": "=Dear {{ $('Booking Request Webhook').item.json.body.client_name }}, your property viewing for {{ $('Booking Request Webhook').item.json.body.property_title }} has been scheduled on {{ $('Booking Request Webhook').item.json.body.appointment_start_time }}. A Google Calendar invite has been sent to your email. We look forward to meeting you! - Sierra Estates"
+              "value": "=أهلاً بحضرتك أ/ {{ $('Booking Request Webhook').item.json.body.client_name }}، تم تأكيد موعد معاينة {{ $('Booking Request Webhook').item.json.body.property_title }} في {{ $('Booking Request Webhook').item.json.body.appointment_start_time }}. تم إرسال تفاصيل الموعد لبريدكم الإلكتروني. نتطلع للقائكم! — Sierra Estates"
             }
           ]
         },

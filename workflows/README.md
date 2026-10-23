@@ -1,6 +1,6 @@
 # Sierra Estates External Workflows
 
-External automation scripts that sync data between Google Sheets, WhatsApp, Property Finder, and Firestore.
+External automation scripts that sync data between Google Sheets, WhatsApp, Property Finder, and Supabase.
 
 ## Setup
 
@@ -104,6 +104,106 @@ npm run unit-adder
 
 ---
 
+### 06. Gateway Sentinel
+
+Health probe for the OpenWA WhatsApp gateway. Runs on a 5-minute cron from the workflow runner and monitors reachable status, engine load, and phone readiness. Automatically escalates downtime alerts to SendGrid email and logs recovery to WhatsApp.
+
+```bash
+npm run gateway-sentinel
+```
+
+**Schedule:** Every 5 minutes (cron: `*/5 * * * *`)
+
+**Required env vars:**
+
+- `WHATSAPP_API_URL`
+- `WHATSAPP_API_TOKEN`
+- `WF_ALERT_FAIL_THRESHOLD` (optional, default 2)
+- `WF_ALERT_EMAIL_TO` (optional)
+- `SENDGRID_API_KEY` (optional)
+
+---
+
+### 07. Daily Ops Digest
+
+Sends an executive Arabic WhatsApp operations digest every morning summarizing WhatsApp gateway status, workflow health and success rates, and 24-hour lead & unit influx from Supabase.
+
+```bash
+npm run daily-digest
+```
+
+**Schedule:** Daily at 08:00 Cairo (cron: `0 8 * * *`)
+
+**Required env vars:**
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `WHATSAPP_API_URL`
+- `WHATSAPP_API_TOKEN`
+- `WF_DIGEST_TO` or `LEAD_NOTIFY_WHATSAPP_NUMBER`
+
+---
+
+### 08. Units Sheet Sync
+
+Reads the master property inventory Google Sheet via public CSV/gviz or service credentials and synchronizes units into Supabase `public.listings`. Strictly protects human staff audits by stripping `publish_status`, `verified_at`, and `verified_by` during updates, ensuring fresh units land in `REVIEW_REQUIRED`.
+
+```bash
+npm run units-sync
+```
+
+**Schedule:** Every 2 hours (cron: `23 */2 * * *`)
+
+**Required env vars:**
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `UNITS_SHEET_ID`
+- `UNITS_SHEET_GID`
+
+---
+
+### 09. Owner WhatsApp Outreach
+
+Direct-owner outreach engine for Property Finder and direct leads. Uses buyer-anchored, non-apologetic sales scripts, Chris Voss tactical empathy, and Dean Jackson 9-word re-engagement triggers. Enforces strict Cairo hours (10:00-20:00), daily batch caps (`BATCH_CAP=15`), and mandatory Arabic opt-out disclaimers.
+
+```bash
+npm run owner-outreach
+```
+
+**Schedule:** Hourly window check (10:00-20:00 Cairo) or via GitHub Actions
+
+**Required env vars:**
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `WHATSAPP_API_URL`
+- `WHATSAPP_API_TOKEN`
+- `OPENWA_SESSION_ID`
+- `WF_OUTREACH_BATCH_CAP` (default: 15)
+
+---
+
+### 10. WhatsApp Dispatch
+
+Drains pending and queued messages from Supabase `public.whatsapp_queue` through the active OpenWA gateway pool. Features automatic 3-second spacing to prevent rate limits, maximum 3-attempt backoff, scheduled time deferrals, and operating hour gating.
+
+```bash
+npm run whatsapp-dispatch
+```
+
+**Schedule:** Every 5 minutes (cron: `*/5 * * * *`)
+
+**Required env vars:**
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `WHATSAPP_API_URL`
+- `WHATSAPP_API_TOKEN`
+- `WHATSAPP_DISPATCH_BATCH` (default: 40)
+
+---
+
 ## Run All (Except Scraper)
 
 ```bash
@@ -182,22 +282,27 @@ For production, integrate with:
 Upgrades shipped with this revision (deployed via `install.sh` / pushdir to `/opt/se/workflows`, runner restart required):
 
 ### Runner
+
 - **Honest telemetry** — `last_run_label` now carries the exit kind: `ec2-runner:ok`, `:error`, `:timeout`, `:unconfigured`. The Workflow Studio can no longer dress up a blocked run as a healthy one.
 - **Inbound webhook receiver** — `POST /api/inbound` (X-API-Key guarded) is the delivery target for the gateway's `message.received` webhook; raw deliveries land in `.state/inbox.jsonl` (rotating) and, when Sheets creds are configured, broker-group chatter flows to the `raw_messages` tab — the safe replacement for the banned second-session scraper (workflow 01). Inspect with `GET /api/inbound/preview`.
 - **Runner body cap** 256 KB per inbound delivery.
 
 ### Scheduler
+
 - `lib/crone.js` upgraded from minute/hour-only to **full 5-field cron** (dom/month/dow with `* , - /`, month names JAN-DEC, day names SUN-SAT, `7 == 0 == Sunday`, POSIX dom/dow OR-semantics). Any cron typed in the Studio now behaves exactly as written, in Africa/Cairo time.
 
 ### Workflows
+
 - **06-gateway-sentinel** — escalation path: after `WF_ALERT_FAIL_THRESHOLD` (default 2 ≈ 10 min) consecutive failed probes it writes `.state/alerts.jsonl` and emails `WF_ALERT_EMAIL_TO` via SendGrid when available. On recovery it sends a WhatsApp confirmation to `WF_ALERT_TO` (fallback: the session's own number, "message yourself").
 - **07-daily-digest (new)** — 08:00 Cairo Arabic WhatsApp digest: gateway health, per-workflow last exit + success rate, new leads and new units in the last 24 h. Target: `WF_DIGEST_TO` → `LEAD_NOTIFY_WHATSAPP_NUMBER` → session self-chat. Internal ops content — no Cairo Plaza notice per `lib/notice.js` decision table.
 
 ### One-time operator actions (2026-10)
+
 - `whatsapp-scraper` row set to **paused** in the workflows registry: it is designed NOT to run on the gateway SIM (second-session ban risk). Its long-term replacement is the inbound webhook → `lib/inbox.js` path above.
 - Gateway webhook subscription created for `message.received` → `http://127.0.0.1:2786/api/inbound` with the runner API key as `X-API-Key` header.
 
 ### New env vars (see .env.example)
+
 `WF_DIGEST_TO`, `WF_ALERT_TO`, `WF_ALERT_EMAIL_TO`, `WF_ALERT_FAIL_THRESHOLD`, `SCRAPER_GROUP_CHATIDS`
 
 ## 2026-10 (later) — Workflow 08: Units Sheet Sync (owner inventory → Supabase)
@@ -224,6 +329,7 @@ Upgrades shipped with this revision (deployed via `install.sh` / pushdir to `/op
   2 updated, 0 errors** (60 rows had no Code; 22 duplicate codes collapsed).
 
 ### New env vars
+
 `UNITS_SHEET_ID` (default = owner's sheet), `UNITS_SHEET_GID` (default =
 inventory tab). Uses existing `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
 
