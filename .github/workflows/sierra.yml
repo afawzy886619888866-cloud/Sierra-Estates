@@ -1,0 +1,42 @@
+name: Sierra Estates Automation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  run-sierra-engine:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas openpyxl
+
+      - name: Run Sierra Master Orchestrator (Single Cycle)
+        env:
+          CI_SINGLE_RUN: "true"
+          EVOLUTION_API_URL: ${{ secrets.EVOLUTION_API_URL || 'http://localhost:8080' }}
+          EVOLUTION_API_KEY: ${{ secrets.EVOLUTION_API_KEY || 'sierra_secret_key_2026' }}
+        run: |
+          python sierra_master.py
+
+      - name: Commit and Push Updated Inventory & Checkpoint
+        run: |
+          git config --global user.name "Sierra Automation Bot"
+          git config --global user.email "actions@github.com"
+          git add Sierra_Estates_Master_Units.xlsx sierra_checkpoint.json || true
+          git diff --staged --quiet || (git commit -m "chore: update master units and checkpoint [skip ci]" && git push)
