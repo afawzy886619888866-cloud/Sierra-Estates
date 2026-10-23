@@ -5,8 +5,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%26%20pgvector-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/afawzy886619888866-cloud/Sierra-Estates)
-[![Inventory](https://img.shields.io/badge/Inventory-12%2C443%20Units%20(12%2C333%20Synced)-3ECF8E)](https://sierra-estates.net)
-[![Production](https://img.shields.io/badge/Status-100%25%20Production%20Ready-gold.svg)](https://sierra-estates.net)
+[![Inventory](https://img.shields.io/badge/Published-28%20verified%20(verification%20campaign%20live)-3ECF8E)](docs/VERIFICATION_CAMPAIGN_RUNBOOK.md)
+[![Production](https://img.shields.io/badge/Status-Production%20Live%20%28sites%20%2B%20CI%20green%29-gold.svg)](https://sierra-estates.net)
 [![Deploy](https://img.shields.io/badge/Deploy%20Gates-9%2F9%20Passed-brightgreen)](https://sierra-estates.net)
 <!-- markdownlint-disable-next-line MD051 -->
 [![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainers)
@@ -20,7 +20,7 @@
 The platform operates as a high-performance **Turborepo** monorepo featuring a dual-domain Next.js 16 deployment backed by Supabase PostgreSQL & pgvector:
 
 - **Client Web Portal ([`https://sierra-estates.net`](https://sierra-estates.net)):** High-polish luxury buyer experience featuring deep obsidian glassmorphism, high-contrast Plus Jakarta Sans typography, interactive Leaflet spatial masterplan map with GPS polygon boundaries, 3D virtual tours, real-time ROI/installment calculators, AI investment teasers, multilingual search (Arabic/English), and Easy Listing intake.
-- **Admin Intelligence OS ([`https://admin.sierra-estates.net`](https://admin.sierra-estates.net)):** Full-featured operational command deck with RBAC session guards, live master inventory governance (**12,443 verified listings — 12,333 unique units synced to Supabase & Map**), owner negotiation tracking, CRM pipelines, agent hubs, and automated WhatsApp outreach queues.
+- **Admin Intelligence OS ([`https://admin.sierra-estates.net`](https://admin.sierra-estates.net)):** Full-featured operational command deck with RBAC session guards, live master inventory governance, owner negotiation tracking, CRM pipelines, agent hubs, and automated WhatsApp outreach queues. Inventory truth is tracked honestly: ~20,000 raw active records in the database, **28 units currently pass the Property Finder publishing gate** — the [Owner Verification Campaign](docs/VERIFICATION_CAMPAIGN_RUNBOOK.md) exists to close that gap.
 
 ```mermaid
 flowchart TD
