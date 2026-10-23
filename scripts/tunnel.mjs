@@ -28,7 +28,7 @@ if (!binary) {
 
 console.log(`\x1b[36m[Tunnel]\x1b[0m Starting Cloudflare quick tunnel for http://localhost:${port}...`);
 
-const child = spawn(binary, ['tunnel', '--url', `http://localhost:${port}`], {
+const child = spawn(binary, ['tunnel', '--url', `http://127.0.0.1:${port}`], {
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 

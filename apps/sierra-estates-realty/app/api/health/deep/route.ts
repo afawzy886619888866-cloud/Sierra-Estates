@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { brainRAG } from '@sierra-estates/memory-engine';
+import { resolveTableName } from '@sierra-estates/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,11 @@ export async function GET() {
   const dbStart = Date.now();
   try {
     const supabase = getSupabaseAdmin();
+    // Same phantom-table fix as /api/health: probe the table the adapter
+    // actually maps the properties collection to (public.listings), not the
+    // literal `properties` relation missing from the live schema.
     const { count, error } = await supabase
-      .from('properties')
+      .from(resolveTableName('properties'))
       .select('id', { count: 'exact', head: true });
 
     const dbLatency = Date.now() - dbStart;

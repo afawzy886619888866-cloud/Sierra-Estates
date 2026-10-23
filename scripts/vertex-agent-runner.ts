@@ -11,7 +11,7 @@ async function main() {
   const prompt = process.argv.slice(2).join(' ') || 'Analyze luxury real estate trends for penthouses in New Cairo.';
 
   console.log('🤖 [Vertex AI Agent Runner] Initializing Titan...');
-  console.log(`📌 Project: ${process.env.GOOGLE_CLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-estates-core'}`);
+  console.log(`📌 Project: ${process.env.GOOGLE_CLOUD_PROJECT || 'sierra-estates-core'}`);
   console.log(`📍 Location: ${process.env.GOOGLE_CLOUD_LOCATION || 'us-central1'}`);
   console.log(`💬 Prompt: "${prompt}"\n`);
 

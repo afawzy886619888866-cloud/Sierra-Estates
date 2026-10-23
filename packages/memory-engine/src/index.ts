@@ -71,4 +71,16 @@ export {
   type WorkingMemorySession,
 } from '../../../packages/agents/tools/eccMemoryEngine'
 
+/* ECC Memory Vault Safety & Credential Protection */
+export {
+  SECRET_PATTERNS,
+  findPotentialSecrets,
+  hasUnsafeControlCharacters,
+  validateMemorySafety,
+  type MemoryKind,
+  type MemoryScope,
+  type SecretPattern,
+} from './vault-sanitizer'
+
+
 

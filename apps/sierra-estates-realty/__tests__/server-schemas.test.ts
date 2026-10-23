@@ -109,8 +109,8 @@ describe('leadCreateSchema', () => {
     expect(leadCreateSchema.safeParse({ name: '', email: 'a@b.com' }).success).toBe(false);
   });
 
-  it('requires an email', () => {
-    expect(leadCreateSchema.safeParse({ name: 'Ahmed' }).success).toBe(false);
+  it('rejects an invalid email format', () => {
+    expect(leadCreateSchema.safeParse({ name: 'Ahmed', email: 'invalid-email' }).success).toBe(false);
   });
 
   it('rejects an over-long message', () => {

@@ -47,6 +47,10 @@ export async function GET(req: NextRequest) {
     const leadId = searchParams.get('leadId');
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
+    // Queue UI pages through the whole open backlog (465+ rows in practice):
+    // caller-supplied limit, clamped to a sane 500 ceiling, default 200.
+    const parsedLimit = parseInt(searchParams.get('limit') || '200', 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 500) : 200;
 
     const where: WhereClause[] = [];
 
@@ -66,7 +70,7 @@ export async function GET(req: NextRequest) {
     const followups = await listRecords('followups', {
       where,
       orderBy: { column: 'dueAt', ascending: true },
-      limit: 200,
+      limit,
     });
 
     return NextResponse.json({ success: true, followups, count: followups.length });

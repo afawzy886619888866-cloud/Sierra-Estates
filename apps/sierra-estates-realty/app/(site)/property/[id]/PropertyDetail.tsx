@@ -14,6 +14,7 @@ import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { CurrencyGoldSelector } from '@/components/site/CurrencyGoldSelector';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import PropertyIntelligenceDossier from '@/components/site/PropertyIntelligenceDossier';
 
 export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
@@ -54,7 +55,8 @@ export default function PropertyDetail({ id }: { id: string }) {
           mode,
           agent: 'Sierra Advisor Desk',
           ago: u.ago || 'Live sync',
-          img: u.img || (Array.isArray(u.images) && u.images[0]) || '',
+          img: (u.img && !u.img.includes('unsplash.com')) ? u.img : (Array.isArray(u.images) && u.images[0] && !u.images[0].includes('unsplash.com')) ? u.images[0] : '',
+          images: Array.isArray(u.images) ? u.images.filter((x: unknown) => typeof x === 'string' && String(x).startsWith('http') && !String(x).includes('unsplash.com') && !String(x).includes('placeholder')) : [],
           tags: Array.isArray(u.tags) ? u.tags : [],
         });
       })
@@ -71,7 +73,6 @@ export default function PropertyDetail({ id }: { id: string }) {
     ((HZDATA as any).findListing?.(id) ||
       listings.find((x) => String(x.id) === String(id) || String(x.code).toLowerCase() === String(id).toLowerCase()));
 
-  const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -170,9 +171,13 @@ export default function PropertyDetail({ id }: { id: string }) {
     );
   }
 
-  const heroImg = p.img || getCuratedListingImage({ code: p.code, compound: p.cmp, type: p.type }, 0);
+  const heroImg = (p.img && !p.img.includes('unsplash.com')) ? p.img : getCuratedListingImage({ code: p.code, compound: p.cmp, type: p.type }, 0);
   const hero = photo || heroImg;
-  const thumbs = [heroImg, ...gallery].slice(0, 6);
+  const unitImages = Array.isArray(p.images) && p.images.length > 0 ? p.images : [];
+  const gallery = unitImages.length > 1
+    ? unitImages
+    : [0, 1, 2, 3, 4].map((idx) => getCuratedListingImage({ code: p.code, compound: p.cmp, type: p.type }, idx));
+  const thumbs = Array.from(new Set([heroImg, ...gallery])).slice(0, 6);
   const similar = listings.filter((x) => x.id !== p.id && x.cmp === p.cmp).slice(0, 3);
   const fallback = listings.filter((x) => x.id !== p.id).slice(0, 3);
   const related = similar.length ? similar : fallback;
@@ -514,6 +519,17 @@ export default function PropertyDetail({ id }: { id: string }) {
                     );
                   })()}
                 </div>
+
+                {/* Institutional Real Estate Intelligence, Legal Due Diligence & Closing Simulation */}
+                <PropertyIntelligenceDossier
+                  priceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 0)}
+                  areaSqm={p.area || 0}
+                  compound={p.cmp || ''}
+                  propertyType={p.type || ''}
+                  isRent={p.mode === 'rent'}
+                  isAr={isAr}
+                  code={p.code}
+                />
               </Reveal>
             </div>
 

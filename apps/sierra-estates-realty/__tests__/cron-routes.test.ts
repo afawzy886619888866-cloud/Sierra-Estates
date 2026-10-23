@@ -51,6 +51,10 @@ jest.mock('@/lib/services/master-sheet-sync', () => ({
 jest.mock('@sierra-estates/db', () => ({
   // The cron routes log an activity row after each run.
   insertRecord: (...a: unknown[]) => activitiesAdd(...a),
+  // G2 wiring (2026-10-19): /api/cron/maintenance also reads published
+  // listings for the canonical 30-day freshness sweep. Default: none → the
+  // sweep is a no-op and the legacy flagging assertions stay unchanged.
+  listRecords: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('@/lib/logger', () => ({

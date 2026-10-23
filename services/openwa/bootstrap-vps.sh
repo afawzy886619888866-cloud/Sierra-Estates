@@ -7,7 +7,7 @@
 #   systemd unit (auto-restart, enabled on boot) → firewall.
 #
 # Usage (as root, on the VPS):
-#   git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git /opt/se
+#   git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git /opt/se
 #   bash /opt/se/services/openwa/bootstrap-vps.sh
 #
 # After it finishes:
@@ -21,7 +21,7 @@ set -euo pipefail
 
 SE_DIR="${SE_DIR:-/opt/se}"
 OPENWA_DIR="${OPENWA_DIR:-/opt/openwa}"
-REPO_URL="${REPO_URL:-https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git}"
+REPO_URL="${REPO_URL:-https://github.com/afawzy886619888866-cloud/Sierra-Estates.git}"
 
 [ "$(id -u)" = "0" ] || { echo "ERROR: run as root"; exit 1; }
 . /etc/os-release

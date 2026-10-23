@@ -8,6 +8,11 @@ import { OrchestratorService } from '@/lib/services/orchestrator';
 import { GoogleSheetsSync } from '@/lib/services/sheets-sync';
 import { logger } from '@/lib/logger';
 import { verifyCronRequest } from '@/lib/server/cron-auth';
+import {
+  buildCanonicalPayloadFromParsed,
+  upsertCanonicalListing,
+  type UpsertResult,
+} from '@/lib/services/inventory/ingest-bridge';
 
 /**
  * sierra estates — CRON: INGEST FROM GOOGLE SHEETS BUFFER
@@ -170,6 +175,23 @@ export async function GET(req: NextRequest) {
 
       try {
         const parsed = await WhatsAppParserService.parseMessage(rawMessage);
+
+        // ── Canonical inventory (G2 wiring, 2026-10-19) ───────────────────────
+        // §21-gated: only complete parsed listings enter canonical inventory;
+        // a failure here marks the row FAILED (retried by re-posting the row)
+        // instead of silently missing canonical inventory.
+        let canonical: UpsertResult | null = null;
+        if (parsed?.isListing === true) {
+          const payload = buildCanonicalPayloadFromParsed(
+            parsed,
+            rawMessage,
+            `sheets:${groupName || 'unknown'}:${from || 'unknown'}`,
+          );
+          if (payload) {
+            canonical = await upsertCanonicalListing('sheets_sync', payload);
+          }
+        }
+
         const listing = buildListingDocument(rawMessage, from || 'Unknown', groupName || 'Unknown', parsed);
         const docRef = await insertRecord<{ id: string }>('broker_listings', listing);
 
@@ -197,7 +219,10 @@ export async function GET(req: NextRequest) {
         });
 
         results.processed++;
-        logger.info(`[CRON:ingest-from-sheets] ✅ Row ${rowIndex} → ${docRef.id}`);
+        logger.info(
+          `[CRON:ingest-from-sheets] ✅ Row ${rowIndex} → ${docRef.id}` +
+            (canonical ? ` (canonical ${canonical.action}: ${canonical.fingerprint})` : ''),
+        );
       } catch (rowErr: any) {
         logger.error(`[CRON:ingest-from-sheets] ❌ Row ${rowIndex} failed:`, rowErr.message);
 

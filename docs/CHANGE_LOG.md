@@ -157,7 +157,7 @@ The following changes remove every code path that could present invented propert
 
 - **Change:** `v12-quiet-luxury.test.ts` PropertyDetail case now asserts the honest pre-fetch state (renders "Loading listing", contains NO fabricated compound/spec data) instead of asserting the deleted static-catalog fallback.
 - **Reason:** The old assertion required the fabrication path to keep working.
-- **Files:** __tests__/v12-quiet-luxury.test.ts.
+- **Files:** `__tests__/v12-quiet-luxury.test.ts`.
 - **Verification:** tsc 0 errors (needs --max-old-space-size=6144; default heap OOMs); Jest 106/106 suites, 1,126/1,126 tests.
 
 ---
@@ -172,7 +172,6 @@ The following changes remove every code path that could present invented propert
 - **DB impact:** none at merge time. Next deploy applies exactly one new migration: `20260929_013_master_inventory_activation.sql` (idempotent, additive: listings +source_verified_at/availability/publish_status, uq_listings_dupe_check_hash partial unique, broker_sessions TO service_role — see Phase 3 entry).
 - **Risk:** low — verified post-merge: app==root content identity for all 6 migration files (blob-level), tsc 0 errors, Jest 106/106 suites 1,126/1,126 tests.
 - **Rollback:** git revert of the merge commit.
-
 
 ---
 
@@ -209,7 +208,7 @@ The following changes remove every code path that could present invented propert
 ### Change 5 — tests updated to the honest contract
 
 - **Change:** `admin-views.test.tsx` + `admin-views-enhanced.test.tsx` previously asserted the fabrications ('585', '98.4%', '19 Channels Live') — updated to assert Conversion Rate card, honest '—'/empty states, and the registry-derived 15-channel count.
-- **Files:** __tests__/admin-views.test.tsx, __tests__/admin-views-enhanced.test.tsx.
+- **Files:** `__tests__/admin-views.test.tsx`, `__tests__/admin-views-enhanced.test.tsx`.
 - **Verification:** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 106/106 suites, 1,126/1,126 tests (--maxWorkers=2).
 
 ---
@@ -239,7 +238,7 @@ The following changes remove every code path that could present invented propert
 ### Change 4 — Phase 7 first real client test (personas A–E)
 
 - **Change:** new suite `__tests__/client-journey-personas.test.ts` runs the five scripted personas (exact / vague / international-EN / no-match / contradictory 4BR-villa-Madinaty-≤50k) through the REAL engine against the REAL 8,486-unit master inventory CSV — zero invented fixtures. Asserts: compliant results satisfy budget cap + bedroom floor; violators only ever appear flagged; the client-facing set (PUBLISHABLE = 0 today) is represented honestly. Findings + acceptance recorded in `docs/CLIENT_TEST_REPORT.md` and `tests/client-journey/README.md`.
-- **Files:** __tests__/client-journey-personas.test.ts (new), __tests__/match-scoring.test.ts (new, 8 tests), docs/CLIENT_TEST_REPORT.md (new), tests/client-journey/README.md (new).
+- **Files:** `__tests__/client-journey-personas.test.ts` (new), `__tests__/match-scoring.test.ts` (new, 8 tests), docs/CLIENT_TEST_REPORT.md (new), tests/client-journey/README.md (new).
 - **DB impact:** none. **Risk:** none (tests). **Rollback:** delete files.
 - **Verification:** tsc 0 errors; Jest 108/108 suites, 1,143/1,143 tests.
 
@@ -261,7 +260,7 @@ The following changes remove every code path that could present invented propert
 - **Reason:** Master-spec journey stage VIEWING had no entry point: the property page could not create a DB record at all, and the only public viewing route required an existing leadId (concierge-only).
 - **Files:** app/api/viewing-requests/route.ts (rewritten), app/(site)/property/[id]/PropertyDetail.tsx.
 - **DB impact:** new rows in `viewings` + `leads` only. **Risk:** low. **Rollback:** git revert.
-- **Verification:** __tests__/viewing-request-public.test.ts 7/7 (lead upsert, canonical row, real-date links, existing-lead reuse, past-date/name/phone validation, lookup-failure resilience, admin GET guard). tsc 0 errors; Jest 109/109 suites, 1,150/1,150 tests.
+- **Verification:** `__tests__/viewing-request-public.test.ts` 7/7 (lead upsert, canonical row, real-date links, existing-lead reuse, past-date/name/phone validation, lookup-failure resilience, admin GET guard). tsc 0 errors; Jest 109/109 suites, 1,150/1,150 tests.
 
 ---
 
@@ -301,7 +300,7 @@ The following changes remove every code path that could present invented propert
 ### Change 2 — canonical writers + actor-context audit
 
 - **Change:** all 3 writers of the legacy value (`/api/viewing-requests`, `/api/leads/request-viewing` ×2) now write `'viewing_scheduled'`. Lead PATCH handler records `lead.stage_change` in audit_logs with the ACTING ADMIN as actor (complements the DB trigger's row-level record with actor context). `WhatsAppMessagePurpose` extended with 'viewing-followup'.
-- **Files:** app/api/viewing-requests/route.ts, app/api/leads/request-viewing/route.ts, app/api/admin/leads/[id]/route.ts, lib/models/schema.ts, __tests__/viewing-request-public.test.ts (assertion updated to the canonical contract).
+- **Files:** app/api/viewing-requests/route.ts, app/api/leads/request-viewing/route.ts, app/api/admin/leads/[id]/route.ts, lib/models/schema.ts, `__tests__/viewing-request-public.test.ts` (assertion updated to the canonical contract).
 - **DB impact:** none (values). **Risk:** low. **Rollback:** git revert.
 
 ### Change 3 — lead automation timers (cron)
@@ -369,7 +368,7 @@ The following changes remove every code path that could present invented propert
 
 - **Change:** `phase13-data-qa.test.ts` runs the Phase 1 pipeline's own invariants against the REAL master inventory CSV: 12,088 rows = 8,486 unique + 3,602 duplicates (audit contract pinned), globally unique unit_ids, 0 self-referencing / 0 dangling duplicate_of chains, PUBLISHABLE honestly zero, price-validity share in the audit's ~36% band (3,081/8,486 = 0.363 via the pipeline's own price_validity column). Bot QA matrix at contract level (Gemini E2E remains blocked on the API key — documented): hard/soft split, no-invention rule, all 5 Phase 5 gap-fill fields present in the extraction prompt; lead mapping preserves unknowns as null (`?? null`, no invented defaults) — AR/EN/mixed/vague/contradictory inputs all flow through this same contract. `phase13-security-sweep.test.ts`: B12 regression scans, sync-pf proxy behavior (401 / in-process auth propagation / 502 upstream), HMAC matrix (forged 403, unverifiable 403, correct 200, unsigned allowed), service-role least-privilege pin (public /api/inventory stays on the anon client under RLS), and a secrets scan (no credential-shaped literals — sk-/ghp_/AKIA/AIza/xoxb-/Supabase-JWT — in committed source, fixtures excluded).
 - **Reason:** Roadmap Phase 13 "Data QA suite, bot QA matrix, matching QA (covered by Phase 6 suites + personas), integration QA (113 existing suites), security sweep".
-- **Files:** __tests__/phase13-data-qa.test.ts, __tests__/phase13-security-sweep.test.ts (new).
+- **Files:** `__tests__/phase13-data-qa.test.ts`, `__tests__/phase13-security-sweep.test.ts` (new).
 - **DB impact:** none. **Risk:** low. **Rollback:** git revert / delete files.
 
 - **Verification (Phase 13):** tsc 0 errors; Jest 115/115 suites, 1,239/1,239 tests (+22). Two real defects found and fixed while building the suites: the secrets-scan walk initially passed a string where the walker expects an array (iterated path characters → walked the whole filesystem → hang; fixed + guarded with a comment), and the CSV parser transcription had dropped the character-accumulate branch (all columns parsed empty; fixed to match the personas suite's parser).
@@ -391,7 +390,7 @@ The following changes remove every code path that could present invented propert
 - **Change:** New endpoint implementing the Easy Listing system: takes `{ role, name, phone, details }` (role accepts AGENT/OWNER/BROKER or موظف/مالك/وسيط), parses the free Arabic/English text (region, compound, unit type, floor, area, beds, baths, price, rent/sale — Eastern numerals + Egyptian dialect + غرفتين/حمامين duals), mints the internal code `[REGION]-[COMPOUND]-[UNIT_TYPE]-[FLOOR]-[AREA]M` (e.g. NC-MIV-APT-F2-175M), and routes by role. AGENT/OWNER → MAIN_INVENTORY: inserted into `public.listings` staged `'Pending Review'` (same moderation gate as /api/listings/submit — never a publish) with generated Facebook + PropertyFinder ad copy. BROKER → MAP_SHEET: new `public.map_sheet_entries` staging table (migration 018), NO ads, and an Arabic WhatsApp photo request enqueued to the broker via `whatsapp_queue` (drained by the Phase 11 dispatcher), with a `photo_request_status` lifecycle (not_requested → requested → received → completed). Response carries the exact promised JSON payload contract (`uploader_role`, `internal_code`, `routing_destination`, `property_details`, `automation_flags`) plus `summary_ar`, `ads`, `parse_warnings`, `persisted`.
 - **Reason:** The Easy Listing workflow existed only as chat-side instructions; the ask was a real programmatic endpoint in-repo, wired to Supabase, following the same routing rules.
 - **Honesty contract (deliberate divergence from the older /api/listings/easy-parse):** the parser NEVER substitutes defaults — unknown fields return null with a parse warning (price → ads say "السعر عند الطلب"/"on request"), the code uses UNK/FX segments for unrecognized region/compound/floor instead of invented values, a latin compound fallback codes a REAL word from the text (unit-type/region/filler words excluded), and a missing AREA is a hard 400 because the code format requires it. Phone numbers are validated as real Egyptian mobiles (01/+/0020 forms) — a mistyped number fails loudly.
-- **Files:** apps/sierra-estates-realty/lib/server/easy-listing.ts (new, pure module), apps/sierra-estates-realty/app/api/easy-listing/route.ts (new), supabase/migrations/20261002_018_easy_listing_map_sheet.sql (new, add-both mirrored), apps/sierra-estates-realty/__tests__/easy-listing.test.ts (new, 28 tests), docs/PRODUCTION_READINESS_REPORT.md (counts refreshed).
+- **Files:** apps/sierra-estates-realty/lib/server/easy-listing.ts (new, pure module), apps/sierra-estates-realty/app/api/easy-listing/route.ts (new), supabase/migrations/20261002_018_easy_listing_map_sheet.sql (new, add-both mirrored), `apps/sierra-estates-realty/__tests__/easy-listing.test.ts` (new, 28 tests), docs/PRODUCTION_READINESS_REPORT.md (counts refreshed).
 - **DB impact:** migration 018 — additive only: new `map_sheet_entries` table + indexes + staff-only RLS (`public.is_staff()`), updated_at trigger; listings inserts reuse existing columns. **Risk:** low. **Rollback:** git revert + drop table.
 
 - **Verification:** tsc 0 errors; Jest 116/116 suites, 1,267/1,267 tests (+28: the spec's worked example NC-MIV-APT-F2-175M, Eastern numerals, floor matrix F0/F1–F10/RF/PH/MZ/FX, region matrix NC/NCA/NCS/ZYD/OCT, rent detection, honesty matrix — nulls + on-request ads + مليون-vs-متر guard, latin fallback, dual forms, phone forms, role normalization, payload contract, AGENT/OWNER/BROKER route paths incl. Pending Review staging + photo-request enqueue + non-fatal queue failure, 400s, sandbox degradation, production 502).
@@ -429,7 +428,7 @@ The following changes remove every code path that could present invented propert
 
 - **Change:** `/api/easy-listing` previously required `phone` as a structured field — a WhatsApp-channel caller forwarding raw conversation text (the number embedded as «رقمه 01012345678») was rejected 400 unless it pre-extracted the number itself. `phone` is now optional at the zod layer, and `parseEasyListing` falls back to `extractPhoneFromText(details)`, which scans the text's digit runs and returns the FIRST strictly-valid Egyptian mobile (local, `+20`/`20` international and `0020` forms, spaced «0111 234 5678» and dashed runs all normalize through the existing validator). The honesty contract is preserved end to end: a structured phone that is present but mistyped still fails loudly (no text rescue — the fallback engages only when the field is entirely absent), prices/areas/reference codes never masquerade as phones (they fail `normalizeEgyptianPhone`), and when no valid mobile exists anywhere the endpoint keeps returning the same 400 with the `uploader_phone` message. `EasyListingInput.phone` is now optional, the route header/GET contract docs describe the fallback.
 - **Reason:** The user's channel scenario is «اليتسقبل المحادثة» — the bot receives free conversation text where the phone is part of the message body, not a separate form field.
-- **Files:** apps/sierra-estates-realty/lib/server/easy-listing.ts (extractPhoneFromText + fallback in parseEasyListing + optional phone), apps/sierra-estates-realty/app/api/easy-listing/route.ts (schema + docs), apps/sierra-estates-realty/__tests__/easy-listing.test.ts (+9 tests).
+- **Files:** apps/sierra-estates-realty/lib/server/easy-listing.ts (extractPhoneFromText + fallback in parseEasyListing + optional phone), apps/sierra-estates-realty/app/api/easy-listing/route.ts (schema + docs), `apps/sierra-estates-realty/__tests__/easy-listing.test.ts` (+9 tests).
 - **DB impact:** none. **Risk:** low — purely additive input handling; existing required-phone behavior unchanged when the field is provided. **Rollback:** git revert.
 - **Verification:** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 124/124 suites, 1,354/1,354 tests (+9: extraction of Arabic-embedded/spaced/international phones at unit level, price/area/code never misread, absent-phone + valid-in-text at route level incl. persisted uploader_phone, absent-phone + none-in-text still 400, mistyped structured phone never rescued). Fresh-clone note: the 2 data-dependent suites (phase13-data-qa, client-journey-personas) require `data/MASTER_INVENTORY_V1.csv` regenerated via `scripts/data-audit/build_master_inventory.py` — reproduced here exactly (12,088 rows = 8,486 unique + 3,602 duplicates).
 
@@ -459,7 +458,7 @@ The following changes remove every code path that could present invented propert
 
 - **Change:** `sanitize_for_csv()` flattens CR/LF inside every string field before CSV emit — 5 WhatsApp-forwarded `contact_name` dumps carried 63 raw CR/LF that split one record across multiple physical lines (13,107 lines for 13,043 records), breaking the phase13 line-based parser; now 13,044 lines = header + 13,043 records. phase13-data-qa pins realigned to the actual regenerated shape: 13,043 rows = 8,835 unique + 4,208 duplicates (was stale 12,088 = 8,486 + 3,602 from an older source snapshot the CSV could never regenerate to). Pipeline docstring counts corrected (xlsx 12,443 rows, tsv2 302; tsv1 298 unchanged). `scripts/_phase1_data.json` stash (16MB, regenerated by every pipeline run) gitignored.
 - **Reason:** The second red suite (phase13-data-qa) pinned numbers the current sources cannot produce, and the newline bug made the CSV's line/record semantics unstable for any consumer.
-- **Files:** scripts/data-audit/build_master_inventory.py, apps/sierra-estates-realty/__tests__/phase13-data-qa.test.ts, .gitignore.
+- **Files:** scripts/data-audit/build_master_inventory.py, `apps/sierra-estates-realty/__tests__/phase13-data-qa.test.ts`, .gitignore.
 - **DB impact:** none. **Risk:** low. **Rollback:** git revert.
 - **Verification:** pipeline run → 13,043/8,835/4,208 with 0 embedded CR, 13,044 physical lines; jest phase13-data-qa 10/10 (was red).
 

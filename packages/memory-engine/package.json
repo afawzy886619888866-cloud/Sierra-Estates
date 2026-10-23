@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Central intelligence system connecting all agents, bots, and skills",
   "main": "src/index.ts",
+  "type": "module",
   "types": "src/index.ts",
   "scripts": {
     "lint": "eslint .",

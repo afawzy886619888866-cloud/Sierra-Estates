@@ -2,16 +2,49 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
 import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
+import { createClient as createSupabaseMiddlewareClient } from '@/utils/supabase/middleware';
 
 /**
  * Edge proxy (proxy.ts).
  * Next.js 16 file convention update.
  * Concerns:
- * 0. Host split & RBAC Session Protection for /admin routes.
- * 1. CORS for /api routes.
- * 2. Shared-secret gate for internal automation routes (/api/orchestrate).
+ * 0. Supabase SSR session refresh (fail-soft; skipped when env is missing).
+ * 1. Host split & RBAC Session Protection for /admin routes.
+ * 2. CORS for /api routes.
+ * 3. Shared-secret gate for internal automation routes (/api/orchestrate).
  */
 export async function proxy(request: NextRequest) {
+  // Supabase SSR session refresh: when the public env vars are configured,
+  // refresh the auth session cookies and forward them onto the final
+  // response. Any failure here is logged and skipped — it must never break
+  // the CORS/security-gating logic below.
+  let supabaseSessionResponse: NextResponse | null = null;
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  ) {
+    try {
+      supabaseSessionResponse = await createSupabaseMiddlewareClient(request);
+    } catch (err) {
+      console.warn(
+        '[Proxy] Supabase session refresh skipped:',
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+
+  const response = await handleProxy(request);
+
+  if (supabaseSessionResponse) {
+    supabaseSessionResponse.headers
+      .getSetCookie()
+      .forEach((cookie) => response.headers.append('set-cookie', cookie));
+  }
+
+  return response;
+}
+
+async function handleProxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
     const adminHost = process.env.ADMIN_HOST;

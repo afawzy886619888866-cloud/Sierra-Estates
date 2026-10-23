@@ -260,7 +260,11 @@ describe('Action Routing & Deployment Dispatch Test Suite', () => {
       const content = fs.readFileSync(syncScriptPath, 'utf-8');
 
       expect(content).toContain('prj_ieVcIcoeTtHndspXMzlE0cwLl89c'); // Client
-      expect(content).toContain('prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA'); // Admin
+      // 2026-10-19: the REAL admin project is prj_inhTu8kppYhQv2NZZV3GTUdU8uBi
+      // per docs/REPO_CLEANUP_NOTICE.md and docs/CHANGE_LOG.md (the old
+      // prj_W2gY... literal here drifted from a foreign repo — flagged
+      // already in docs/ACTIVATION_BASELINE.md line 88).
+      expect(content).toContain('prj_inhTu8kppYhQv2NZZV3GTUdU8uBi'); // Admin
       expect(content).toContain('SUPABASE_PROPERTY_MEDIA_BUCKET');
       expect(content).toContain('SUPABASE_MEDIA_BUCKET');
     });

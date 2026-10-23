@@ -1,6 +1,6 @@
 ---
 name: evaluate
-description: "Run MCD EVALUATE command for Sierra"
+description: "Run MCD EVALUATE command for ierra"
 ---
 
 # EVALUATE

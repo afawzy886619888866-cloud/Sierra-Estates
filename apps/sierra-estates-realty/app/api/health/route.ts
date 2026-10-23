@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { brainRAG } from '@sierra-estates/memory-engine';
+import { resolveTableName } from '@sierra-estates/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,13 @@ export async function GET() {
   let supabaseError: string | null = null;
   try {
     const supabase = getSupabaseAdmin();
+    // The site reads the "properties" collection through the supabase adapter
+    // (which resolves it to public.listings) — probing the literal table name
+    // `properties` hit a relation that does not exist in the live schema and
+    // kept this endpoint permanently degraded. Resolve the same way the app
+    // reads, so the probe measures the real database the site runs on.
     const { count, error } = await supabase
-      .from('properties')
+      .from(resolveTableName('properties'))
       .select('id', { count: 'exact', head: true });
 
     supabaseLatencyMs = Date.now() - dbStart;

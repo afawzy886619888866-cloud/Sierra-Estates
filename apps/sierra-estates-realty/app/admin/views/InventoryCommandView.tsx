@@ -54,6 +54,7 @@ import {
   type DrawerUnit,
 } from "./InventoryPaymentLab";
 import type { MapUnitPin } from "@/components/Maps/LiveMap";
+import InvenTreeHubView from "./InvenTreeHubView";
 
 const LiveMap = dynamic(() => import("@/components/Maps/LiveMap"), {
   ssr: false,
@@ -279,7 +280,8 @@ export type ViewTab =
   | "rent_sale"
   | "insights"
   | "workflow"
-  | "map";
+  | "map"
+  | "inventree";
 
 export default function InventoryCommandView({
   lang = "en",
@@ -820,6 +822,11 @@ export default function InventoryCommandView({
       icon: <MessageSquare className="w-3.5 h-3.5" />,
     },
     { id: "map", label: "Live Map", icon: <MapIcon className="w-3.5 h-3.5" /> },
+    {
+      id: "inventree",
+      label: isAr ? "نظام إنفنتري والذاكرة" : "InvenTree Hub & RAG",
+      icon: <Layers className="w-3.5 h-3.5" />,
+    },
   ];
 
   /* ── Render ── */
@@ -2186,6 +2193,11 @@ export default function InventoryCommandView({
             maxPins={250}
           />
         </div>
+      )}
+
+      {/* ── INVENTREE HUB & MEMORY ENGINE RAG TAB ── */}
+      {tab === "inventree" && (
+        <InvenTreeHubView lang={lang} />
       )}
 
       {/* Drawer */}

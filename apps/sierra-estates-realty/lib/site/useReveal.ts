@@ -51,7 +51,12 @@ export function useCounters(deps: unknown[] = []) {
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce || !('IntersectionObserver' in window)) {
-      els.forEach((el) => { el.textContent = el.getAttribute('data-count') || ''; });
+      els.forEach((el) => {
+        const prefix = el.getAttribute('data-prefix') || '';
+        const suffix = el.getAttribute('data-suffix') || '';
+        const raw = el.getAttribute('data-count') || '';
+        el.textContent = `${prefix}${raw}${suffix}`;
+      });
       return;
     }
 
@@ -61,6 +66,8 @@ export function useCounters(deps: unknown[] = []) {
         const el = e.target as HTMLElement;
         io.unobserve(el);
         const target = parseFloat(el.getAttribute('data-count') || '0');
+        const prefix = el.getAttribute('data-prefix') || '';
+        const suffix = el.getAttribute('data-suffix') || '';
         const dur = 1400;
         let start = 0;
         const step = (ts: number) => {
@@ -68,7 +75,8 @@ export function useCounters(deps: unknown[] = []) {
           const k = Math.min(1, (ts - start) / dur);
           const eased = 1 - Math.pow(1 - k, 3);
           const val = target * eased;
-          el.textContent = target % 1 ? val.toFixed(1) : Math.round(val).toLocaleString();
+          const formatted = target % 1 ? val.toFixed(1) : Math.round(val).toLocaleString();
+          el.textContent = `${prefix}${formatted}${suffix}`;
           if (k < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);

@@ -27,7 +27,10 @@
       "@sierra-estates/obsidian": ["../../packages/obsidian/src/index.ts"],
       "@sierra-estates/obsidian/*": ["../../packages/obsidian/src/*"],
       "@sierra-estates/memory-engine": ["../../packages/memory-engine/src/index.ts"],
-      "@sierra-estates/ui": ["../../packages/ui/src/index.ts"]
+      "@sierra-estates/agents": ["../../packages/agents/src/index.ts"],
+      "@sierra-estates/agents/*": ["../../packages/agents/src/*"],
+      "@sierra-estates/ui": ["../../packages/ui/src/index.ts"],
+      "@sierra-estates/deepseek-harness": ["../../packages/deepseek-harness/src/index.ts"]
     }
   },
   "include": [

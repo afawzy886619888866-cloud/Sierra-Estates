@@ -322,6 +322,33 @@ export interface DashboardKPIs {
     }>;
     openDeadLetterQueue: number;
   } | null;
+  /* ── CRM pipeline KPIs (leads + deals + funnel — guarded read) ── */
+  crmPipeline?: {
+    /* leads count minus archived rows */
+    activeLeadsCount: number;
+    /* leads created in the last 7 days */
+    leadsNew7d: number;
+    /* per-source mix, e.g. { 'property-finder': 547, website: 3 } */
+    leadSources: Record<string, number>;
+    dealsTotal: number;
+    /* deals not in a closed stage */
+    dealsActive: number;
+    dealsClosed: number;
+    dealsLost: number;
+    dealsClosedThisMonth: number;
+    /* Σ deal_value of open deals (EGP) */
+    pipelineValue: number;
+    /* Σ deal_value × closing_probability / 100 (EGP) */
+    weightedPipeline: number;
+    /* avg deal_value over all deals; null when there are no deals */
+    avgDealValue: number | null;
+    /* Σ commission_amount of open deals (EGP) */
+    commissionPipeline: number;
+    /* live rows in agents_registry (the AI agent fleet) */
+    eliteBrokers: number;
+    /* S1→S10 lead funnel — counts per canonical PipelineStage */
+    pipelineFunnel: Array<{ stage: string; count: number }>;
+  } | null;
 }
 
 /* Reports aggregation */

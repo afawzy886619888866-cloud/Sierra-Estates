@@ -66,6 +66,20 @@ export class AgentCoordinator {
         maxConcurrentTasks: 15,
         currentTasksCount: 0,
       },
+      {
+        role: 'deepseek_reasoner',
+        name: 'DeepSeek Reasoning & Evaluation Engine',
+        version: '3.0.0',
+        status: 'online',
+        capabilities: [
+          'chain_of_thought_reasoning',
+          'program_synthesis',
+          'multi_scenario_evaluation',
+          'ecc_memory_integration',
+        ],
+        maxConcurrentTasks: 10,
+        currentTasksCount: 0,
+      },
     ];
 
     for (const a of defaultAgents) {

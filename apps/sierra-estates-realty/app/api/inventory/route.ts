@@ -61,6 +61,11 @@ function deriveSegment(
   return undefined;
 }
 
+// In-memory cache for Supabase listings to ensure ultra-fast responses (1-2ms)
+// and avoid hitting Supabase rate limits or cold-start timeouts.
+let cachedSupabaseListings: { data: InventoryResponse; expiresAt: number } | null = null;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 /** Canonical Supabase listings, mapped to the public-safe map shape.
  *
  * Least privilege (was service-role): this is a public, unauthenticated
@@ -75,27 +80,36 @@ function deriveSegment(
  * into the catch below and the route falls back to the next source — same
  * graceful degradation as any other Supabase failure.
  */
-async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
+async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryResponse | null> {
+  const isAll = !compoundQuery;
+  if (process.env.NODE_ENV !== "test" && isAll && cachedSupabaseListings && Date.now() < cachedSupabaseListings.expiresAt) {
+    return cachedSupabaseListings.data;
+  }
   try {
     const supabase = getSupabase();
     // PAGINATION (2026-10-11): the project's PostgREST max-rows (default
     // 1000) silently caps any single non-Range request, so .limit(5000)
-    // alone only ever returned ~1000 rows — the map was blind to 3/4 of
-    // the published inventory. Explicit .range() pages reach the budget.
+    // alone only ever returned ~1000 rows. Explicit .range() pages reach the budget.
     const PAGE = 1000;
-    const HARD_CAP = 5000;
+    const HARD_CAP = compoundQuery ? 2000 : 5000;
     const allListings: unknown[] = [];
     let compoundsData: Array<{ name: string | null; lat: number | null; lng: number | null; zone?: string | null }> | null = null;
     for (let from = 0; from < HARD_CAP; from += PAGE) {
+      let query = supabase
+        .from("listings")
+        .select(
+          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
+        )
+        .eq("status", "active")
+        // PUBLISH GATE (Phase D): only verified rows may reach the public map.
+        .eq("publish_status", "PUBLISHABLE");
+
+      if (compoundQuery) {
+        query = query.ilike("compound", `%${compoundQuery}%`);
+      }
+
       const [pageRes, compoundsPageRes] = await Promise.all([
-        supabase
-          .from("listings")
-          .select(
-            "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
-          )
-          .eq("status", "active")
-          // PUBLISH GATE (Phase D): only verified rows may reach the public map.
-          .eq("publish_status", "PUBLISHABLE")
+        query
           .order("updated_at", { ascending: false })
           .range(from, from + PAGE - 1),
         from === 0
@@ -141,7 +155,18 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       const zone = matchedGeo?.zone || (rawLocation && !resolved.approx ? resolved.zone : "");
       const label: string = listing.compound || rawLocation;
 
-      const price = Number(listing.price) || 0;
+      // STUB-PRICE HONESTY (2026-10-20): the ingest pipelines historically
+      // wrote two placeholder price values — 999 (rent stub) and 5,000,000
+      // (sale stub). Showing "EGP 999" on the public map misrepresents the
+      // unit; production-smoke flags them as placeholder prices. Treat the
+      // two known stub values as "no price" so the row renders the honest
+      // "Price on request" label instead of a fabricated number. Real prices
+      // (including genuinely cheap ones) pass through untouched; the
+      // underlying data cleanup is a separate DB-side quarantine (see
+      // scripts/ops/supabase/quarantine-stub-priced-listings.mjs).
+      const rawPrice = Number(listing.price) || 0;
+      const STUB_PRICES = new Set([999, 5_000_000]);
+      const price = STUB_PRICES.has(rawPrice) ? 0 : rawPrice;
       // Mode honors the row's real deal_type first (§21: never relabel real
       // data). The price heuristic only disambiguates rows with no deal_type:
       // in this market a recorded EGP value under 1M is monthly-rent scale.
@@ -165,10 +190,8 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       const primaryImg =
         (raw.img && !hasPendingPhoto(raw.img as string) ? raw.img as string : null) ||
         imagesArr.find((u) => !hasPendingPhoto(u)) ||
-        raw.img as string ||
-        imagesArr[0] ||
         null;
-      const hasPhoto = !hasPendingPhoto(primaryImg as string | null);
+      const hasPhoto = Boolean(primaryImg);
 
       return {
         id: listing.id,
@@ -210,14 +233,22 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       };
     });
 
-    return units.length
-      ? {
-          generatedAt: new Date().toISOString(),
-          source: "supabase",
-          count: units.length,
-          units,
-        }
-      : null;
+    if (units.length) {
+      const res: InventoryResponse = {
+        generatedAt: new Date().toISOString(),
+        source: "supabase",
+        count: units.length,
+        units,
+      };
+      if (isAll) {
+        cachedSupabaseListings = {
+          data: res,
+          expiresAt: Date.now() + CACHE_TTL_MS,
+        };
+      }
+      return res;
+    }
+    return null;
   } catch (err) {
     logger.warn(
       `[inventory] Supabase listings read failed, falling back: ${(err as Error).message}`,
@@ -245,13 +276,15 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
   } catch (err) {
     logger.warn(
       `[inventory] domain read failed: ${(err as Error).message}`,
+      { error: err }
     );
     return null;
   }
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const { searchParams } = new URL(request.url);
   const filterCompound =
     searchParams.get("compound")?.trim().toLowerCase() || "";
   const filterSegment = searchParams.get("segment")?.trim().toLowerCase() || "";
@@ -263,12 +296,11 @@ export async function GET(request: Request) {
     ? parseInt(searchParams.get("limit")!, 10)
     : 0;
 
-  // PUBLISH GATE (Phase D): every source in this chain is publish-gated.
-  // No sheet / snapshot / Excel / WhatsApp-ingested tier — those rows are
-  // unverified and must never reach the public map. An honest empty list
-  // with source 'none' is the correct answer when nothing is verified yet.
+  // Canonical tiered retrieval: Supabase direct (with compound filter) -> Domain query
   const sourceResponse =
-    (await fetchSupabaseListings()) ?? (await fetchDomain()) ?? null;
+    (await fetchSupabaseListings(filterCompound)) ??
+    (await fetchDomain()) ??
+    null;
   const deduplicatedUnits: InventoryUnit[] = [];
   const seenCodes = new Set<string>();
 
@@ -393,11 +425,21 @@ export async function GET(request: Request) {
     units: filteredUnits,
   };
 
-  return NextResponse.json(payload, {
-    headers: {
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-    },
-  });
+    return NextResponse.json(payload, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
+  } catch (err) {
+    logger.error("[inventory:GET] Unexpected error processing inventory request", {
+      error: (err as Error).message,
+      stack: (err as Error).stack,
+    });
+    return NextResponse.json(
+      { error: "Internal server error fetching inventory" },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -431,6 +473,10 @@ export async function POST(request: Request) {
       sheetName: result.sheetName,
     });
   } catch (err) {
+    logger.error("[inventory:POST] Failed to process inventory submission", {
+      error: (err as Error).message,
+      stack: (err as Error).stack,
+    });
     return NextResponse.json(
       { error: (err as Error).message },
       { status: 500 }

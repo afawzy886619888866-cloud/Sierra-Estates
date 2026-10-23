@@ -1,0 +1,88 @@
+name: Production agent fleet
+
+# On-demand execution of the production agent fleet (daily briefing +
+# openclaw ingest + Property Finder sync + vertex agent + harness eval +
+# operational thresholds). Pinned by
+# __tests__/actions-and-workflows.test.ts:
+#   • must validate the canonical backend before any fleet task runs,
+#   • tasks are selected EXPLICITLY (no blanket "run everything"),
+#   • a fleet run is never cancelled mid-flight (cancel-in-progress: false).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: 'Fleet tasks to run (comma-separated from the fleet:run-all chain)'
+        required: false
+        default: 'briefing:daily'
+        type: string
+  schedule:
+    # 06:45 UTC = 08:45 Cairo — ahead of the 09:00 Cairo morning dispatch.
+    - cron: '45 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-fleet
+  cancel-in-progress: false
+
+jobs:
+  fleet:
+    name: Run selected agent fleet tasks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false  # repo has no active submodules; prevents ghost-submodule fetch failures
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Validate canonical backend before any fleet task
+        run: |
+          pnpm check:backend
+          pnpm check:legacy-runtime
+
+      - name: Run explicitly selected fleet tasks
+        env:
+          CLINE_API_KEY: ${{ secrets.CLINE_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          TASKS="${{ inputs.tasks || 'briefing:daily' }}"
+          echo "Fleet tasks requested: $TASKS"
+          case "$TASKS" in
+            *fleet:run-all*)
+              # The full chain — only on explicit request.
+              pnpm fleet:run-all
+              ;;
+            *)
+              IFS=',' read -ra task_list <<< "$TASKS"
+              for task in "${task_list[@]}"; do
+                task=$(echo "$task" | xargs)
+                case "$task" in
+                  briefing:daily|sync-propertyfinder|vertex-agent|run-harness|deepseek:reason|deepseek:eval|deepseek:develop|check-thresholds|openclaw:task|cline:audit|cline:hygiene|cline:docs-sync|cline:check)
+                    echo "→ pnpm $task"
+                    pnpm "$task"
+                    ;;
+                  *)
+                    echo "::error::Unknown fleet task '$task' — tasks must be selected explicitly from the fleet:run-all chain."
+                    exit 1
+                    ;;
+                esac
+              done
+              ;;
+          esac

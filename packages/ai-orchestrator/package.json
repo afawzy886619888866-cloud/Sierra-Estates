@@ -14,11 +14,12 @@
   "dependencies": {
     "@google-cloud/pubsub": "^6.2.0",
     "@sierra-estates/agents-core": "workspace:*",
+    "@sierra-estates/deepseek-harness": "workspace:*",
     "@sierra-estates/memory-engine": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
     "dotenv": "^18.0.5",
     "ioredis": "^6.0.0",
-    "pino": "^10.3.1",
+    "pino": "^10.4.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

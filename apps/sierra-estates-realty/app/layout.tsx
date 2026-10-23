@@ -83,7 +83,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="light"
+      data-theme="dark"
       dir="ltr"
       className={[
         jakarta.variable,
@@ -95,6 +95,13 @@ export default function RootLayout({
       ].join(' ')}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('hzp-theme')!=='dark'){localStorage.setItem('hzp-theme','dark');}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>
         {children}
         <SpeedInsights />

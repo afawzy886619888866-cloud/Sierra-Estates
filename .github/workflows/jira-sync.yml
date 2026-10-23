@@ -26,10 +26,15 @@ jobs:
       - name: Extract Jira Issue Key
         id: jira_key
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           SEARCH_TEXT=""
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            SEARCH_TEXT="${{ github.head_ref }} ${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            SEARCH_TEXT="$HEAD_REF $PR_TITLE $PR_BODY"
           else
             SEARCH_TEXT="$(git log -1 --pretty=%B) $(git branch --show-current)"
           fi

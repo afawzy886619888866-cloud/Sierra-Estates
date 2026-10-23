@@ -78,7 +78,13 @@ jest.mock('@sierra-estates/db', () => {
       if (listingsInsertShouldFail) {
         throw new Error('simulated listings insert failure (transient)');
       }
+      // Simulate migration 20261019_031: the BEFORE INSERT trigger mints a
+      // sequence-backed canonical code when the caller provides none.
       const row = { id: `unit-${tables.listings.length + 1}`, ...values };
+      if (!row.code) {
+        const token = String(row.dealType ?? row.deal_type ?? 'sale').toLowerCase().includes('rent') ? 'RNT' : 'SL';
+        row.code = `SE-${token}-MVD-${String(1000 + tables.listings.length + 1).padStart(4, '0')}`;
+      }
       tables.listings.push(row);
       return row;
     }
@@ -122,6 +128,7 @@ jest.mock('@/lib/services/AugustOwnersAgentService', () => ({
 
 import { OwnerListingIntakeService } from '../lib/services/OwnerListingIntakeService';
 import { WhatsAppParserService } from '../lib/services/WhatsAppParserService';
+import { resolveUnitCode } from '../lib/server/unit-codes';
 import * as DBModule from '@sierra-estates/db';
 
 const { tables, setListingsInsertFailure } = DBModule as any;
@@ -480,12 +487,25 @@ describe('P0 3E/3D/3F — fingerprints, defaults, codes', () => {
     const outcome = await OwnerListingIntakeService.processOwnerMessage(
       msg({ messageId: 'code-1', text: 'فيلا ميفيدا 12.5 مليون' }));
     expect(outcome.action).toBe('unit_recorded');
-    // The canonical listing code follows the Sierra display scheme
-    // (location-rooms-furnishing-price), NOT the intake reference code.
+    // The canonical listing code follows the STABLE Sierra unit scheme
+    // (SE-{RNT|SL}-{AREA}-{SERIAL}, lib/server/unit-codes.ts + migration 031)
+    // — derived from identity only, NOT the intake reference code and NOT the
+    // price. The legacy price-embedded MV-4U-12.5M format was a stability
+    // defect: every price edit minted a new code (mandate §4).
     const listing = tables.listings[0];
-    expect(String(listing.code)).toMatch(/^MV-4U-12\.5M$/);
+    expect(String(listing.code)).toMatch(/^SE-SL-MVD-\d{4,6}$/);
     expect(tables.owner_listing_intakes[0].listingCode).toBe(listing.code);
     // The intake code (durable owner reference) remains distinct.
     expect(tables.owner_listing_intakes[0].intakeCode).not.toBe(listing.code);
+    // STABILITY (mandate §4): the code is minted from IDENTITY, not price —
+    // resolveUnitCode re-derivation is price-independent, and a different
+    // price yields the SAME code for the same seed. The DB-minted code above
+    // carries the same guarantee (sequence serial, freeze trigger).
+    const rederived = resolveUnitCode({ compound: 'Mivida', dealType: 'sale', seed: tables.owner_listing_intakes[0].id, code: null });
+    expect(rederived.code).toMatch(/^SE-SL-MVD-\d{4,6}$/);
+    const priceChanged = resolveUnitCode({ compound: 'Mivida', dealType: 'sale', seed: tables.owner_listing_intakes[0].id, code: null, price: 99_000_000 });
+    expect(priceChanged.code).toBe(rederived.code);
+    const noPrice = resolveUnitCode({ compound: 'Mivida', dealType: 'sale', seed: tables.owner_listing_intakes[0].id, code: null });
+    expect(noPrice.code).toBe(rederived.code);
   });
 });

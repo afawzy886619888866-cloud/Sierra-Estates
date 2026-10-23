@@ -17,6 +17,16 @@ export async function POST(req: Request) {
 
     const { name, email, phone, message, locale, zone, type, budget, intent, source } = parseResult.data;
 
+    // Canonical CRM source: the site's home hero form submits the attribution
+    // token 'portal_home_inquiry'. Every web-flavored token folds into
+    // 'website' so the CRM's Website source pill/filters group them, while
+    // the raw token survives in origin_channel for attribution reporting.
+    const WEBSITE_SOURCE_TOKENS = ['website', 'web', 'portal_home_inquiry', 'portal-home-inquiry', 'site'];
+    const rawSource = (source || '').trim();
+    const normalizedSource = WEBSITE_SOURCE_TOKENS.includes(rawSource.toLowerCase())
+      ? 'website'
+      : rawSource || 'website';
+
     // Construct structured summary notes
     const structuredPrefix = [
       intent ? `[Intent: ${intent.toUpperCase()}]` : null,
@@ -43,7 +53,8 @@ export async function POST(req: Request) {
       // raw attribution string in `source`.
       channel: 'web',
       mode: intent === 'rent' ? 'rent' : 'sale',
-      source: source || 'website',
+      source: normalizedSource,
+      originChannel: rawSource && rawSource !== normalizedSource ? rawSource : undefined,
       zone: zone || locale || undefined,
       phase: 'acquisition',
       priority: 'warm',

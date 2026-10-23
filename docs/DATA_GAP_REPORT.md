@@ -10,34 +10,34 @@ The master spec requires a canonical model with `unit_id, public_code, compound,
 
 Current "All Master Listings" sheet has only 15 columns:
 
-| Canonical field | XLSX column | Coverage |
-|---|---|---|
-| unit_id / public_code | Identifier / Code | ~full (mixed formats: `MT-B14-3U-8.34M`, `ONN170`, `OSA445`) |
-| owner_or_broker | Segment / Channel | full (Direct Owner / Broker / Team) — **not present in DB** |
-| deal_type | Deal Type | full (Rent/Resale/Sale) — mixed with 'Resale' as both deal & channel |
-| compound | Compound | full (unnormalized AR/EN: "Sodic", "New Cairo", Arabic values) |
-| property_type | Property Type | partial (many blanks, mixed AR/EN) |
-| price | Price (EGP) | present but **unvalidated** (see §2) |
-| area_sqm | Area (sqm) | sparse |
-| bedrooms / bathrooms | Beds / Baths | sparse (baths mostly empty) |
-| furnishing/finishing | Furnishing / Finishing | mixed AR/EN free text |
-| owner contact | Contact Name / Phone / WhatsApp | present, **malformed** (see §2) |
-| availability | Status / Availability | free text: "Available", "No answer", "Available for Rent", "Pending" |
-| source | Source Heritage | partial ("20-7-2026 Sheet") |
-| **MISSING:** district, view, floor, currency, photos*, lat/lng*, last_verified_at, quality_score, source_url (WA link only) | — | lat/lng only via the import script's 80-entry hardcoded compound table; photos only in the 332-row TSV |
+| Canonical field                                                                                                             | XLSX column                     | Coverage                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| unit_id / public_code                                                                                                       | Identifier / Code               | ~full (mixed formats: `MT-B14-3U-8.34M`, `ONN170`, `OSA445`)                                           |
+| owner_or_broker                                                                                                             | Segment / Channel               | full (Direct Owner / Broker / Team) — **not present in DB**                                            |
+| deal_type                                                                                                                   | Deal Type                       | full (Rent/Resale/Sale) — mixed with 'Resale' as both deal & channel                                   |
+| compound                                                                                                                    | Compound                        | full (unnormalized AR/EN: "Sodic", "New Cairo", Arabic values)                                         |
+| property_type                                                                                                               | Property Type                   | partial (many blanks, mixed AR/EN)                                                                     |
+| price                                                                                                                       | Price (EGP)                     | present but **invalidate** (see §2)                                                                    |
+| area_sqm                                                                                                                    | Area (sqm)                      | sparse                                                                                                 |
+| bedrooms / bathrooms                                                                                                        | Beds / Baths                    | sparse (baths mostly empty)                                                                            |
+| furnishing/finishing                                                                                                        | Furnishing / Finishing          | mixed AR/EN free text                                                                                  |
+| owner contact                                                                                                               | Contact Name / Phone / WhatsApp | present, **malformed** (see §2)                                                                        |
+| availability                                                                                                                | Status / Availability           | free text: "Available", "No answer", "Available for Rent", "Pending"                                   |
+| source                                                                                                                      | Source Heritage                 | partial ("20-7-2026 Sheet")                                                                            |
+| **MISSING:** district, view, floor, currency, photos*, lat/lng*, last_verified_at, quality_score, source_url (WA link only) | —                               | lat/lng only via the import script's 80-entry hardcoded compound table; photos only in the 332-row TSV |
 
 ## 2. Data quality defects found (direct inspection)
 
-| Defect | Example | Count (est.) | Impact |
-|---|---|---|---|
-| **Deal-type/price mismatch** — Rent rows carrying sale-scale prices | Row 1: `Madinaty, Rent, 8,500,000 EGP` | To be quantified in Phase 1 | Bot would present absurd rents |
-| **Phone numbers stored as floats** | `1022844661.0` | Most rows | Unusable for dial/WhatsApp |
-| **Malformed WhatsApp URLs** | `https://wa.me/228446610` (missing `20` country code) | Many rows | Broken CTA links |
-| **Mixed AR/EN** in compound, furnishing, notes | `تشطيبات شركه` | Widespread | Search/filter misses |
-| Missing area/beds/baths | Row 2/3 have None | Majority of broker sheets | Weak matching |
-| **No verification date** on any row | — | 100% | No freshness possible |
-| Contradictory embed — notes field contains a different deal type | Row 1 notes: `property_type: SALE` while Deal Type = Rent | To quantify | Trust |
-| snapshot.json (11,017) ≠ XLSX (11,488) | −471 delta | — | Drift between DB and source |
+| Defect                                                              | Example                                                   | Count (est.)                | Impact                         |
+| ------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------- | ------------------------------ |
+| **Deal-type/price mismatch** — Rent rows carrying sale-scale prices | Row 1: `Madinaty, Rent, 8,500,000 EGP`                    | To be quantified in Phase 1 | Bot would present absurd rents |
+| **Phone numbers stored as floats**                                  | `1022844661.0`                                            | Most rows                   | Unusable for dial/WhatsApp     |
+| **Malformed WhatsApp URLs**                                         | `https://wa.me/228446610` (missing `20` country code)     | Many rows                   | Broken CTA links               |
+| **Mixed AR/EN** in compound, furnishing, notes                      | `تشطيبات شركه`                                            | Widespread                  | Search/filter misses           |
+| Missing area/beds/baths                                             | Row 2/3 have None                                         | Majority of broker sheets   | Weak matching                  |
+| **No verification date** on any row                                 | —                                                         | 100%                        | No freshness possible          |
+| Contradictory embed — notes field contains a different deal type    | Row 1 notes: `property_type: SALE` while Deal Type = Rent | To quantify                 | Trust                          |
+| snapshot.json (11,017) ≠ XLSX (11,488)                              | −471 delta                                                | —                           | Drift between DB and source    |
 
 ## 3. Gaps blocking the Definition of Done
 
@@ -58,4 +58,4 @@ Current "All Master Listings" sheet has only 15 columns:
 - freshness impossible now → set `last_verified_at` = import date + flag all as "Verification Required" initially
 - owner/broker split and how much owner-direct inventory exists (the strategic differentiator)
 
-*This report feeds directly into `DATA_QUALITY_REPORT.md` which will contain the full quantified audit.*
+_This report feeds directly into `DATA_QUALITY_REPORT.md` which will contain the full quantified audit._
