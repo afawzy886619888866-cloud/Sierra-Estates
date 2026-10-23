@@ -1,6 +1,6 @@
 ---
 name: closeout
-description: "Run MCD CLOSEOUT command for Sierra"
+description: "Run MCD CLOSEOUT command for ierra"
 ---
 
 # CLOSEOUT

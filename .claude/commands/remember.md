@@ -1,6 +1,6 @@
 ---
 name: remember
-description: "Capture a compact memory checkpoint for Sierra without phase transition"
+description: "Capture a compact memory checkpoint for ierra without phase transition"
 ---
 
 # REMEMBER

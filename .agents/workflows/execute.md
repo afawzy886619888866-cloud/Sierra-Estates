@@ -1,6 +1,6 @@
 ---
 name: execute
-description: "Run MCD EXECUTE command for Sierra"
+description: "Run MCD EXECUTE command for ierra"
 ---
 
 # EXECUTE
@@ -8,7 +8,7 @@ description: "Run MCD EXECUTE command for Sierra"
 This workflow invokes the canonical MCD EXECUTE command.
 
 1. Read the command instructions:
-[EXECUTE.md](../../.amphion/control-plane/mcd/EXECUTE.md)
+[EXECUTE.md](file:///${projectRoot}/.amphion/control-plane/mcd/EXECUTE.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 
