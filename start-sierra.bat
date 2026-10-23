@@ -1,10 +1,10 @@
 @echo off
-title Sierra Estates - Host B (BOTTOM side, lines 3-4)
+title Sierra Estates - Local Control Plane & 4-Line Parallel Outreach
 echo ========================================================
-echo Sierra Estates - TWO-HOST PARALLEL OUTREACH
-echo This host : WF_HOST_SIDE=bottom (walks the sheet BACK to FRONT)
-echo Lines    : line-3, line-4  ("the other side")
-echo Pairing  : EC2 host A walks the TOP half with lines 1-2
+echo Sierra Estates - 100%% LOCAL CONTROL PLANE (ZERO AWS EC2)
+echo Mode     : WF_HOST_SIDE=split (2 lines top + 2 lines bottom)
+echo Lines    : line-1, line-2, line-3, line-4 (Local Gateway :2785)
+echo Engine   : Dispatches ALL active workflows (02..10)
 echo Window   : 10:00-20:00 Cairo, 30-min slots, batch 30, 23-min
 echo            graceful deadline (never killed mid-send)
 echo ========================================================
@@ -13,46 +13,40 @@ cd /d "%~dp0"
 set WF_DRY_RUN=0
 
 REM ────────────────────────────────────────────────────────────────
-REM GATEWAY: the EC2 box hosts the OpenWA gateway + the 4-line pool.
-REM Windows sends through it over the public URL. Only switch to
-REM http://127.0.0.1:2785 if you run a LOCAL gateway on this PC
-REM (then also start it below).
+REM GATEWAY: Local OpenWA / Multi-Session Gateway on port 2785.
+REM Credentials default to workflows\.env unless overridden via SIERRA_*
 REM ────────────────────────────────────────────────────────────────
-set WHATSAPP_API_URL=http://54.89.162.250:2785
-set WHATSAPP_API_TOKEN=dev-admin-key
-set OPENWA_ADMIN_API_KEY=dev-admin-key
-set RUNNER_API_KEY=dev-admin-key
+set WHATSAPP_API_URL=http://127.0.0.1:2785
+if defined SIERRA_WHATSAPP_API_TOKEN set WHATSAPP_API_TOKEN=%SIERRA_WHATSAPP_API_TOKEN%
+if defined SIERRA_OPENWA_ADMIN_API_KEY set OPENWA_ADMIN_API_KEY=%SIERRA_OPENWA_ADMIN_API_KEY%
+if defined SIERRA_RUNNER_API_KEY set RUNNER_API_KEY=%SIERRA_RUNNER_API_KEY%
 set RUNNER_PORT=2786
 
 REM ────────────────────────────────────────────────────────────────
-REM HOST ROLE: this box dispatches ONLY owner-outreach. Sentinel,
-REM digest and units-sync keep running on the EC2 host — nothing is
-REM ever double-dispatched across the two runners.
+REM HOST ROLE: Single-host all-local mode — RUNNER_WORKFLOWS is unset
+REM so this PC dispatches ALL active workflows (sentinel, digest,
+REM units-sync, owner-outreach, whatsapp-dispatch, etc.).
 REM ────────────────────────────────────────────────────────────────
-set RUNNER_WORKFLOWS=owner-outreach
+set RUNNER_WORKFLOWS=
 
 REM ────────────────────────────────────────────────────────────────
-REM THE OTHER SIDE: 2 lines walking the sheet bottom-up. Replace
-REM line-3,line-4 with your real gateway session names if different
-REM (list them: curl http://54.89.162.250:2785/api/sessions -H
-REM  "X-API-Key: dev-admin-key").
+REM 4-LINE SPLIT WALK: 2 lines walk top-down, 2 lines walk bottom-up
 REM ────────────────────────────────────────────────────────────────
-set WF_HOST_SIDE=bottom
-set WF_PARALLEL_LINES=2
-set OPENWA_SESSION_IDS=line-3,line-4
+set WF_HOST_SIDE=split
+set WF_PARALLEL_LINES=4
+set OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4
 set WF_SLOT_BATCH=30
 set WF_SLOT_DEADLINE_MS=1380000
-set WF_OWNER_CONTACT_DAILY_CAP=600
+set WF_OWNER_CONTACT_DAILY_CAP=160
 set WF_OUTREACH_ACTIVE_HOURS=10-20
 set UNITS_SHEET_ID=1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk
 set UNITS_SHEET_GID=1127958606
 
-REM Sheet contact-date write-back — REQUIRED on BOTH hosts: this is
-REM what makes each host skip owners the other host already texted.
-set WF_SHEET_WRITE_URL=https://script.google.com/macros/s/AKfycbzsP2fwASxIVu_r0_rHVyzfVfGii3zHJaEtc29-l3K_IvBG7bmTdWaLngCmyLTG2GnY/exec
-set WF_SHEET_WRITE_SECRET=SE_OUTREACH_SECRET_2026_CAIRO
+REM Sheet contact-date write-back (loaded from workflows\.env or SIERRA_*)
+if defined SIERRA_SHEET_WRITE_URL set WF_SHEET_WRITE_URL=%SIERRA_SHEET_WRITE_URL%
+if defined SIERRA_SHEET_WRITE_SECRET set WF_SHEET_WRITE_SECRET=%SIERRA_SHEET_WRITE_SECRET%
 
-REM Legacy knobs (kept for reference — not read by outreach.js)
+REM Legacy knobs (kept for reference)
 set WF_OUTREACH_SLOTS=10,11,12,13,14,15,16,17,18,19,20
 set WF_PRIMARY_LINE_PHONE=201092048333
 set WF_OPERATOR_WHATSAPP=201061399688
@@ -67,16 +61,35 @@ if not exist "workflows\.env" (
   findstr /B /C:"SUPABASE_SERVICE_ROLE_KEY" "workflows\.env" >nul 2>&1 || echo [WARN] workflows\.env has no SUPABASE_SERVICE_ROLE_KEY - scheduler stays idle ^(fail-closed^)
 )
 
-REM ── OPTIONAL: local gateway mode ────────────────────────────────
-REM Uncomment the next two lines ONLY if the WhatsApp gateway should
-REM run on this PC instead of the EC2 box (then set WHATSAPP_API_URL
-REM to http://127.0.0.1:2785 above):
-REM start "Sierra Gateway" /d "%~dp0infra\whatsapp-scraper" cmd /k "npm start"
+REM ── Step 1: Ensure Local WhatsApp Gateway (:2785) is running ─────
+curl -s --connect-timeout 2 http://127.0.0.1:2785/api/health >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  if exist "apps\agents\whatsapp-multi-session\worker.js" (
+    echo [1/4] Starting Local Multi-Session WhatsApp Gateway on :2785...
+    start "Sierra WhatsApp Gateway (:2785)" /min cmd /k "cd /d %~dp0apps\agents\whatsapp-multi-session && node worker.js"
+  ) else (
+    echo [1/4] Starting Local WhatsApp Gateway on :2785...
+    start "Sierra WhatsApp Gateway (:2785)" /min cmd /k "cd /d %~dp0infra\whatsapp-scraper && npm start"
+  )
+) else (
+  echo [1/4] Local WhatsApp Gateway already listening on :2785.
+)
 
-echo [1/1] Starting Workflow Engine - outreach-only role, BOTTOM side...
-start "Sierra Engine B" /min cmd /k "cd /d %~dp0workflows && node runner.js"
+REM ── Step 2: Start Read-Only Admin Bridge (:2790) ─────────────────
+curl -s --connect-timeout 2 http://127.0.0.1:2790/admin/api/status >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo [2/4] Starting Sierra Admin Bridge on http://127.0.0.1:2790/admin...
+  start "Sierra Admin Bridge (:2790)" /min cmd /k "cd /d %~dp0workflows && node sierra-admin-bridge.mjs"
+) else (
+  echo [2/4] Sierra Admin Bridge already listening on :2790.
+)
 
-echo Done. This host texts the BOTTOM half of the sheet every 30-min
-echo slot (10:00-20:00 Cairo). EC2 host A walks the TOP half - the two
-echo sides meet in the middle; the sheet contact-date column keeps
-echo them from ever double-texting an owner.
+REM ── Step 3: Start Cloudflare Tunnel for Gateway (:2785) ──────────
+echo [3/4] Starting Cloudflare Tunnel for http://127.0.0.1:2785...
+start "Sierra Cloudflare Tunnel" /min cmd /k "cd /d %~dp0 && node scripts\tunnel.mjs 2785"
+
+REM ── Step 4: Start Workflow Runner Control Plane (:2786) ──────────
+echo [4/4] Starting Workflow Engine (ALL workflows, 4-line split mode)...
+start "Sierra Workflow Engine (:2786)" /min cmd /k "cd /d %~dp0workflows && node runner.js"
+
+echo Done. All services are running 100%% locally (Gateway :2785, Runner :2786, Admin Bridge :2790, Cloudflare Tunnel).

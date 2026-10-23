@@ -1,3 +1,4 @@
+try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
 /**
  * Workflow 04: Email Sender  (hardened 2026-10)
  * ─────────────────────────────────────────

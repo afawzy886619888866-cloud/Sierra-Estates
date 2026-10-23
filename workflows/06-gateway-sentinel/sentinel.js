@@ -1,3 +1,4 @@
+try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
 /**
  * Workflow 06: Gateway Sentinel  (new 2026-10 · escalated 2026-10)
  * ───────────────────────────────────────────────────────────────

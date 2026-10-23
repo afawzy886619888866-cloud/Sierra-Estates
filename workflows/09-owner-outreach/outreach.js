@@ -114,6 +114,75 @@ async function writeSheetDate(phone, rawMobile, dateStr) {
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
 const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
+
+// ── Supabase audit trail (G2 queue item 4, 2026-10-19) ─────────────────────
+// One row per REAL send in public.owner_outreach_log (migration 033) — the
+// canonical, queryable record for compliance + analytics. Fail-open by
+// design: the operational dedupe stays in the JSONL ledger + sheet column
+// and a send is NEVER blocked or retried because the audit DB is unhealthy.
+// DRY-RUN sends never write audit rows (§21 no-fabrication).
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabaseAuditClient = null;
+let auditDisabledNoted = false;
+function getAuditClient() {
+  if (supabaseAuditClient) return supabaseAuditClient;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    if (!auditDisabledNoted) {
+      auditDisabledNoted = true;
+      console.log('[outreach] Supabase audit DISABLED: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing (ledger + sheet remain the record)');
+    }
+    return null;
+  }
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    supabaseAuditClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  } catch (err) {
+    console.error(`[outreach] Supabase audit client init failed: ${err.message}`);
+    return null;
+  }
+  return supabaseAuditClient;
+}
+
+/**
+ * Fire-and-forget audit write. Owns its own failure accounting
+ * (summary.auditFailed) — never throws into the send path.
+ */
+function auditContact(entry) {
+  const db = getAuditClient();
+  if (!db) { summary.auditSkipped++; return Promise.resolve(false); }
+  return db
+    .from('owner_outreach_log')
+    .insert({
+      phone: entry.phone,
+      listing_code: entry.code || null,
+      session_name: entry.session || null,
+      direction: entry.direction || null,
+      host_side: HOST_SIDE,
+      sheet_row_idx: typeof entry.idx === 'number' ? entry.idx : null,
+      availability: entry.avail || null,
+      message_text: entry.text || null,
+      dry_run: false, // callers only invoke this for REAL sends
+      sent_at: entry.at || new Date().toISOString(),
+    })
+    .then(({ error }) => {
+      if (error) {
+        summary.auditFailed++;
+        console.error(`[outreach] Supabase audit INSERT failed for ${entry.phone}: ${error.message}`);
+        return false;
+      }
+      summary.auditWritten++;
+      return true;
+    })
+    .catch((err) => {
+      summary.auditFailed++;
+      console.error(`[outreach] Supabase audit write failed for ${entry.phone}: ${err.message}`);
+      return false;
+    });
+}
+
 const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
 // Pool-aware: recomputed in main() as per-line × pool unless the operator set
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
@@ -137,7 +206,7 @@ const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || A
 const HOST_SIDE_RAW = String(process.env.WF_HOST_SIDE || 'split').trim().toLowerCase();
 const HOST_SIDE = (HOST_SIDE_RAW === 'bottom' || HOST_SIDE_RAW === 'b' || HOST_SIDE_RAW === 'other') ? 'bottom'
   : (HOST_SIDE_RAW === 'top' || HOST_SIDE_RAW === 'a') ? 'top' : 'split';
-const PARALLEL_LINES = Math.max(1, parseInt(process.env.WF_PARALLEL_LINES || '4', 10));
+const PARALLEL_LINES = Math.max(1, parseInt(process.env.WF_PARALLEL_LINES || '2', 10));
 
 const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
 const LEDGER = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
@@ -159,6 +228,9 @@ const summary = {
   lanes: 0,
   slotDeadline: false,
   skippedDupRow: 0,
+  auditWritten: 0,
+  auditFailed: 0,
+  auditSkipped: 0,
 };
 
 /**
@@ -229,9 +301,13 @@ function parseCsv(text) {
   return rows;
 }
 
+function toWesternDigits(str) {
+  return String(str || '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+
 /** Egyptian mobile → 201XXXXXXXXX; null when not a plausible mobile. */
 function normalizePhone(raw) {
-  let d = String(raw || '').replace(/[^\d]/g, '');
+  let d = toWesternDigits(raw).replace(/[^\d]/g, '');
   if (!d) return null;
   if (d.startsWith('0020')) d = d.slice(4);
   else if (d.startsWith('20')) d = d.slice(2);
@@ -275,27 +351,27 @@ function saveDaily(d) {
   fs.writeFileSync(DAILY, JSON.stringify(d));
 }
 
-const TEMPLATE = `السلام عليكم ورحمة الله وبركاته
+const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_SALUTATION_}
 
-مع حضرتك {_NAME_} — من فريق Sierra Estates للتسويق العقاري.
+مع حضرتك فريق Sierra Estates للتسويق العقاري بالتجمع الخامس.
 
-شاهدنا وحدتكم {_UNIT_} ونهتم بتسويقها لمحفظة عملائنا الحصرية بالقاهرة الجديدة.
-{_DETAILS_}
-هل حاضرين للتعاون معنا في التسويق؟
+بعتذر جداً لحضرتك على الإزعاج، كنا حابين نستفسر لو متاح عند حضرتك وحدة معروضة للإيجار أو البيع {_LOCATION_}؟ وحابين نتأكد من التفاصيل الحالية من حضرتك مباشرة إذا مناسب نتعاون في تسويقها لعملائنا.
 
-إخلاء مسؤولية: هذه رسالة أعمال من Sierra Estates، وإذا لم ترغب في استقبال رسائل أخرى أرسل كلمة "إلغاء" وسنتوقف فوراً.`;
+لو الوحدة غير متاحة حالياً بنعتذر لحضرتك وشكراً جزيلاً لوقتك 🤝
+(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
 function buildMessage(r) {
-  const bits = [];
-  if (r.location) bits.push(`الموقع: ${r.location}`);
-  if (r.price) bits.push(`السعر التقديري: ${r.price} جنيه`);
-  if (r.bedrooms) bits.push(`الغرف: ${r.bedrooms}`);
-  if (r.type) bits.push(`النوع: ${r.type}`);
-  const unit = [r.code, r.propertyType].filter(Boolean).join(' — ') || 'المعلنة';
+  let salutation = 'يا فندم،';
+  if (r.name && r.name.trim() && !r.name.toLowerCase().includes('owner') && !r.name.includes('المالك')) {
+    const cleanName = r.name.trim().replace(/^أ[\.\/]\s*/, '');
+    salutation = `أ/ ${cleanName}،`;
+  }
+
+  const loc = r.location && r.location.trim() ? `في ${r.location.trim()}` : 'بالتجمع الخامس';
+
   return TEMPLATE
-    .replace('{_NAME_}', r.name || 'سيادتكم')
-    .replace('{_UNIT_}', unit)
-    .replace('{_DETAILS_}', bits.length ? bits.join('\n') + '\n' : '');
+    .replace('{_SALUTATION_}', salutation)
+    .replace('{_LOCATION_}', loc);
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -621,6 +697,9 @@ async function main() {
             daily.sent++;
             saveDaily(daily);
             appendLedger({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction });
+            // Canonical audit row (migration 033) — fire-and-forget, REAL
+            // sends only (dry-run never fabricates contact records, §21).
+            void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
             console.log(`sent [${lane.direction}][#${idx}] → ${phone} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
             await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
           } catch (err) {
@@ -678,7 +757,11 @@ async function main() {
   return;
 }
 
-main().catch((err) => {
-  console.error(`owner-outreach FAILED: ${err.message}`);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`owner-outreach FAILED: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = { main, buildMessage, normalizePhone, toWesternDigits };
