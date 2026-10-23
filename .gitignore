@@ -209,3 +209,16 @@ scripts/_phase1_data.json
 # Sales-kit PDFs >5MB live in the Supabase 'sales-kits' public bucket —
 # see docs/sales-kits/README.md for the URL manifest (2026-10-22).
 docs/sales-kits/*.pdf
+
+# ============================================================================
+# Sierra Evolution desktop engine — LOCAL runtime state (never commit).
+# The webhook/orchestrator run on the owner's machine; their working files
+# contain owner phone numbers and checkpoint state, and the Excel ledger is a
+# growing binary (repo-bloat + PII). CI uploads them as workflow artifacts
+# instead of committing them. See docs/EVOLUTION_WHATSAPP_RUNBOOK.md.
+# ============================================================================
+sierra_checkpoint.json
+sierra_checkpoint.json.tmp
+Sierra_Estates_Master_Units.xlsx
+.env.sierra*
+pair_*.html
