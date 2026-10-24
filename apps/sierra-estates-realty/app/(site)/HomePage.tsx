@@ -35,6 +35,8 @@ import type { MapCompound } from '@/components/site/CompoundsMap';
 const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
   ssr: false,
 });
+import { UnitDetailModal } from '@/components/MasterRegistryMap/UnitDetailModal';
+import type { UnitListing as CadastralUnitListing } from '@/components/MasterRegistryMap/registryData';
 
 const CartographicMap = dynamic(() => import('@/components/site/CartographicMap'), {
   ssr: false,
@@ -362,6 +364,7 @@ export default function HomePage() {
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sheetModalOpen, setSheetModalOpen] = useState(false);
+  const [inspectedMapUnit, setInspectedMapUnit] = useState<CadastralUnitListing | null>(null);
   const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
   const [homepageMapTheme, setHomepageMapTheme] = useState<'light' | 'dark'>('light');
   const [sent, setSent] = useState(false);
@@ -927,8 +930,7 @@ export default function HomePage() {
               }}
               onSelectUnit={(unit) => {
                 setSelectedMapCompound(unit.compoundNameEn);
-                setSheetModalCompound(unit.compoundNameEn);
-                setSheetModalOpen(true);
+                setInspectedMapUnit(unit);
               }}
             />
           </div>
@@ -1469,6 +1471,21 @@ export default function HomePage() {
         compoundName={sheetModalCompound}
         isAr={isAr}
       />
+
+      {inspectedMapUnit && (
+        <UnitDetailModal
+          unit={inspectedMapUnit}
+          onClose={() => setInspectedMapUnit(null)}
+          lang={isAr ? 'ar' : 'en'}
+          isDarkMode={homepageMapTheme === 'dark'}
+          onBookViewing={(u) => {
+            const msg = encodeURIComponent(
+              `Hello Sierra Estates, I would like to book a viewing / inquire about unit ${u.unitCode} in ${u.compoundNameEn}.`
+            );
+            window.open(`https://wa.me/201092048333?text=${msg}`, '_blank', 'noopener,noreferrer');
+          }}
+        />
+      )}
     </SiteShell>
   );
 }

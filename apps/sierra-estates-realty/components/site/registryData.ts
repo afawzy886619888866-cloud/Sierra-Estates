@@ -1,0 +1,1376 @@
+export interface Compound {
+  id: string;
+  code: string;
+  indexNumber: number;
+  nameEn: string;
+  nameAr: string;
+  developerEn: string;
+  developerAr: string;
+  zoneEn: string;
+  zoneAr: string;
+  xPct: number; // percentage X position on map (0-100)
+  yPct: number; // percentage Y position on map (0-100)
+  boundaryRadiusX: number; // in SVG coordinate units
+  boundaryRadiusY: number;
+  areaHa: number;
+  startingPriceEgp: number;
+  startingRentEgp: number;
+  resaleDemandIndex: 'Very High' | 'High' | 'Prime Elite';
+  rentalYieldRange: string;
+  deliveryStatusEn: string;
+  deliveryStatusAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  featured: boolean;
+  driveTimeToAucMin: number;
+  driveTimeToNewCapitalMin: number;
+  driveTimeToAirportMin: number;
+  unitsCount: number;
+}
+
+export interface UnitListing {
+  id: string;
+  unitCode: string;
+  compoundId: string;
+  compoundNameEn: string;
+  compoundNameAr: string;
+  typeEn: string;
+  typeAr: string;
+  buaM2: number;
+  landM2: number;
+  bedrooms: number;
+  bathrooms: number;
+  purpose: 'Resale' | 'Rent' | 'Both';
+  purposeAr: 'إعادة بيع' | 'إيجار' | 'إيجار وإعادة بيع';
+  resalePriceEgp: number;
+  resalePriceUsd: number;
+  monthlyRentEgp: number;
+  monthlyRentUsd: number;
+  rentalYieldPct: number;
+  statusEn: 'Available' | 'Under Offer' | 'Reserved';
+  statusAr: 'متاح' | 'تحت التفاوض' | 'محجوز';
+  deliveryYear: number;
+  finishingEn: 'Fully Finished' | 'Semi-Finished' | 'Core & Shell' | 'Ultra Super Lux';
+  finishingAr: 'تشطيب كامل' | 'نصف تشطيب' | 'محارة وحلوق' | 'ألترا سوبر لوكس';
+  downPaymentPct: number;
+  installmentsYears: number;
+  phaseEn: string;
+  phaseAr: string;
+  zoneEn: string;
+  zoneAr: string;
+  gardenM2?: number;
+  roofM2?: number;
+  parkingSlots: number;
+}
+
+export const ARTERY_ROADS = [
+  { id: 'ring-road', nameEn: 'Cairo Ring Road', nameAr: 'الطريق الدائري', direction: 'North & West Ring' },
+  { id: 'suez-road', nameEn: 'Suez-Cairo Desert Road', nameAr: 'طريق السويس - القاهرة الصحراوي', direction: 'Northern Axis to New Capital & Airport' },
+  { id: 'middle-ring', nameEn: 'Middle Ring Road', nameAr: 'الطريق الدائري الأوسطي', direction: 'Central Connector Axis' },
+  { id: 'sokhna-road', nameEn: 'Ain Sokhna Road', nameAr: 'طريق العين السخنة', direction: 'Southern Axis to Red Sea' },
+  { id: 'north-90', nameEn: 'North 90th Street', nameAr: 'شارع التسعين الشمالي', direction: 'Commercial & Financial Spine' },
+  { id: 'south-90', nameEn: 'South 90th Street', nameAr: 'شارع التسعين الجنوبي', direction: 'Institutional & Golden Square Spine' },
+];
+
+export const COMPOUNDS: Compound[] = [
+  {
+    id: 'sodic-villette',
+    code: 'SV',
+    indexNumber: 1,
+    nameEn: 'SODIC VILLETTE',
+    nameAr: 'سوديك فيليت',
+    developerEn: 'SODIC',
+    developerAr: 'سوديك العقارية',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    xPct: 56.8,
+    yPct: 34.5,
+    boundaryRadiusX: 42,
+    boundaryRadiusY: 34,
+    areaHa: 301,
+    startingPriceEgp: 19800000,
+    startingRentEgp: 75000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '8.4% - 9.8%',
+    deliveryStatusEn: 'Delivering / Ready to Move',
+    deliveryStatusAr: 'تسليم فوري ومراحل جارية',
+    descriptionEn: 'Flagship luxury enclave in Golden Square New Cairo featuring signature villas, pocket parks, clubhouse, and modern minimalist architecture.',
+    descriptionAr: 'أرقى مشروعات المربع الذهبي في القاهرة الجديدة، يتميز بالفيلات الراقية، المتنزهات المفتوحة، النادي الاجتماعي، والتصميم المعماري العصري.',
+    featured: true,
+    driveTimeToAucMin: 7,
+    driveTimeToNewCapitalMin: 15,
+    driveTimeToAirportMin: 22,
+    unitsCount: 14,
+  },
+  {
+    id: 'mivida',
+    code: 'MVD',
+    indexNumber: 2,
+    nameEn: 'MIVIDA',
+    nameAr: 'ميفيدا',
+    developerEn: 'Emaar Misr',
+    developerAr: 'إعمار مصر',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    xPct: 57.5,
+    yPct: 49.0,
+    boundaryRadiusX: 44,
+    boundaryRadiusY: 36,
+    areaHa: 380,
+    startingPriceEgp: 23400000,
+    startingRentEgp: 85000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '8.8% - 10.2%',
+    deliveryStatusEn: 'Fully Operational / Resale & Primary',
+    deliveryStatusAr: 'مجتمع متكامل قائم / إعادة بيع ومباشر',
+    descriptionEn: 'Eco-sustainable Spanish-inspired community with world-class international schools, medical district, and Lake District.',
+    descriptionAr: 'مجتمع مستدام بطابع أندلسي راقٍ يضم مدارس دولية، مجمع طبي متكامل، ومنطقة بحيرات ساحرة.',
+    featured: true,
+    driveTimeToAucMin: 5,
+    driveTimeToNewCapitalMin: 18,
+    driveTimeToAirportMin: 24,
+    unitsCount: 10,
+  },
+  {
+    id: 'palm-hills-nc',
+    code: 'PH',
+    indexNumber: 3,
+    nameEn: 'PALM HILLS NEW CAIRO',
+    nameAr: 'بالم هيلز القاهرة الجديدة',
+    developerEn: 'Palm Hills Developments',
+    developerAr: 'بالم هيلز للتعمير',
+    zoneEn: 'Eastern Expansions',
+    zoneAr: 'التوسعات الشرقية',
+    xPct: 65.5,
+    yPct: 55.0,
+    boundaryRadiusX: 46,
+    boundaryRadiusY: 38,
+    areaHa: 500,
+    startingPriceEgp: 15800000,
+    startingRentEgp: 65000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '8.1% - 9.4%',
+    deliveryStatusEn: 'Phased Handover',
+    deliveryStatusAr: 'تسليم مراحل متعددة',
+    descriptionEn: 'Comprehensive integrated smart city spanning 500 acres with golf facilities, botanical gardens, and mixed-use commercial nodes.',
+    descriptionAr: 'مدينة ذكية متكاملة على مساحة 500 فدان تضم ملاعب جولف، حدائق نباتية، ومراكز تجارية عالمية.',
+    featured: true,
+    driveTimeToAucMin: 12,
+    driveTimeToNewCapitalMin: 12,
+    driveTimeToAirportMin: 25,
+    unitsCount: 11,
+  },
+  {
+    id: 'madinaty',
+    code: 'MDN',
+    indexNumber: 4,
+    nameEn: 'MADINATY',
+    nameAr: 'مدينتي',
+    developerEn: 'Talaat Moustafa Group (TMG)',
+    developerAr: 'مجموعة طلعت مصطفى',
+    zoneEn: 'Suez Road Axis',
+    zoneAr: 'محور طريق السويس',
+    xPct: 75.8,
+    yPct: 39.5,
+    boundaryRadiusX: 52,
+    boundaryRadiusY: 42,
+    areaHa: 3200,
+    startingPriceEgp: 8900000,
+    startingRentEgp: 38000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '7.8% - 9.1%',
+    deliveryStatusEn: 'Established Mega City',
+    deliveryStatusAr: 'مدينة متكاملة قائمة',
+    descriptionEn: 'World-class mega masterplan offering standalone golf villas, townhomes, South Park, open-air mall, and international golf club.',
+    descriptionAr: 'أكبر مشروع سكني متكامل في الشرق الأوسط يضم فيلات الجولف، ساوث بارك، أوبن إير مول، ونادي مدينتي للجولف.',
+    featured: false,
+    driveTimeToAucMin: 20,
+    driveTimeToNewCapitalMin: 16,
+    driveTimeToAirportMin: 20,
+    unitsCount: 15,
+  },
+  {
+    id: 'el-rehab',
+    code: 'RHB',
+    indexNumber: 5,
+    nameEn: 'EL REHAB CITY',
+    nameAr: 'مدينة الرحاب',
+    developerEn: 'Talaat Moustafa Group (TMG)',
+    developerAr: 'مجموعة طلعت مصطفى',
+    zoneEn: 'Suez Road Corridor',
+    zoneAr: 'محور السويس الغربي',
+    xPct: 25.5,
+    yPct: 44.0,
+    boundaryRadiusX: 45,
+    boundaryRadiusY: 36,
+    areaHa: 1000,
+    startingPriceEgp: 7800000,
+    startingRentEgp: 35000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '8.5% - 10.0%',
+    deliveryStatusEn: 'Fully Established',
+    deliveryStatusAr: 'مكتملة ومأهولة بالكامل',
+    descriptionEn: 'The first fully serviced master-planned residential city by private sector in Egypt with lush greenery, markets, and metro bus connection.',
+    descriptionAr: 'أول مدينة سكنية متكاملة الخدمات يطورها القطاع الخاص في مصر، تتميز بالحدائق، الأسواق المفتوحة والخدمات الشاملة.',
+    featured: false,
+    driveTimeToAucMin: 14,
+    driveTimeToNewCapitalMin: 24,
+    driveTimeToAirportMin: 12,
+    unitsCount: 8,
+  },
+  {
+    id: 'cfc',
+    code: 'CFC',
+    indexNumber: 6,
+    nameEn: 'CAIRO FESTIVAL CITY',
+    nameAr: 'كايرو فيستيفال سيتي',
+    developerEn: 'Al-Futtaim Group',
+    developerAr: 'مجموعة الفطيم',
+    zoneEn: 'Ring Road Gateway',
+    zoneAr: 'مدخل الدائري',
+    xPct: 34.0,
+    yPct: 36.5,
+    boundaryRadiusX: 42,
+    boundaryRadiusY: 34,
+    areaHa: 285,
+    startingPriceEgp: 22000000,
+    startingRentEgp: 90000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '9.0% - 11.2%',
+    deliveryStatusEn: 'Ready to Move',
+    deliveryStatusAr: 'جاهز للاستلام والسكن',
+    descriptionEn: 'Premier self-contained community anchored by Cairo Festival City Mall, business district, Orion villas, and Festival Living apartments.',
+    descriptionAr: 'مجتمع راقٍ يتمحور حول مول كايرو فيستيفال سيتي، مجمع الأعمال، فيلات أوريون وشقق فيستيفال ليفينج.',
+    featured: true,
+    driveTimeToAucMin: 12,
+    driveTimeToNewCapitalMin: 28,
+    driveTimeToAirportMin: 15,
+    unitsCount: 7,
+  },
+  {
+    id: 'lake-view',
+    code: 'LKV',
+    indexNumber: 7,
+    nameEn: 'LAKE VIEW',
+    nameAr: 'ليك فيو',
+    developerEn: 'El Hazek Construction',
+    developerAr: 'شركة الحاذق للمقاولات',
+    zoneEn: 'South 90th Spine',
+    zoneAr: 'محور التسعين الجنوبي',
+    xPct: 28.5,
+    yPct: 52.5,
+    boundaryRadiusX: 38,
+    boundaryRadiusY: 30,
+    areaHa: 125,
+    startingPriceEgp: 27500000,
+    startingRentEgp: 110000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '8.2% - 9.5%',
+    deliveryStatusEn: 'Completed Luxury Compound',
+    deliveryStatusAr: 'مكتمل وفاخر بالكامل',
+    descriptionEn: 'High-end lakeside living featuring signature standalone villas, Dusit Thani LakeView hotel, and lush scenic waterways.',
+    descriptionAr: 'حياة الرفاهية المطلة على البحيرات مع فندق دوسيت ثاني، وفيلات مستقلة راقية بين المسطحات المائية.',
+    featured: false,
+    driveTimeToAucMin: 8,
+    driveTimeToNewCapitalMin: 22,
+    driveTimeToAirportMin: 22,
+    unitsCount: 6,
+  },
+  {
+    id: 'katameya-heights',
+    code: 'KH',
+    indexNumber: 8,
+    nameEn: 'KATAMEYA HEIGHTS',
+    nameAr: 'قطامية هايتس',
+    developerEn: 'Starlight Developments',
+    developerAr: 'ستارلايت للتطوير العقاري',
+    zoneEn: 'Ring Road / South 90th',
+    zoneAr: 'الدائري / التسعين الجنوبي',
+    xPct: 33.5,
+    yPct: 54.5,
+    boundaryRadiusX: 44,
+    boundaryRadiusY: 36,
+    areaHa: 250,
+    startingPriceEgp: 45000000,
+    startingRentEgp: 180000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '7.5% - 8.8%',
+    deliveryStatusEn: 'Ultra-Prime Established',
+    deliveryStatusAr: 'مجتمع نخبوي فائق الفخامة',
+    descriptionEn: 'Egypt\'s pinnacle ultra-luxury golf community featuring championship 27-hole course, palatial private residences, and clubhouse.',
+    descriptionAr: 'أيقونة الفخامة والنخبوية في مصر بملاعب جولف عالمية 27 حفرة وقصور خاصة متفردة.',
+    featured: true,
+    driveTimeToAucMin: 10,
+    driveTimeToNewCapitalMin: 25,
+    driveTimeToAirportMin: 18,
+    unitsCount: 5,
+  },
+  {
+    id: 'katameya-dunes',
+    code: 'KD',
+    indexNumber: 9,
+    nameEn: 'KATAMEYA DUNES',
+    nameAr: 'قطامية ديونز',
+    developerEn: 'New Cairo Real Estate',
+    developerAr: 'نيو كايرو للتطوير',
+    zoneEn: 'South 90th Extension',
+    zoneAr: 'امتداد التسعين الجنوبي',
+    xPct: 30.5,
+    yPct: 67.5,
+    boundaryRadiusX: 42,
+    boundaryRadiusY: 34,
+    areaHa: 170,
+    startingPriceEgp: 38000000,
+    startingRentEgp: 140000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '7.9% - 9.0%',
+    deliveryStatusEn: 'Delivered Luxury Golf Estate',
+    deliveryStatusAr: 'مجتمع جولف راقٍ مكتمل',
+    descriptionEn: 'Prestigious golf resort home to The Westin Cairo Golf Resort & Spa, Sir Nick Faldo golf course, and bespoke luxury estates.',
+    descriptionAr: 'منتجع جولف عالمي يضم فندق ويستن كايرو، ملعب نيك فالدو، وفيلات راقية محاطة بالمسطحات الخضراء.',
+    featured: false,
+    driveTimeToAucMin: 9,
+    driveTimeToNewCapitalMin: 20,
+    driveTimeToAirportMin: 25,
+    unitsCount: 6,
+  },
+  {
+    id: 'taj-city',
+    code: 'TC',
+    indexNumber: 10,
+    nameEn: 'TAJ CITY',
+    nameAr: 'تاج سيتي',
+    developerEn: 'Madinet Masr (MNHD)',
+    developerAr: 'مدينة مصر للإسكان والتعمير',
+    zoneEn: 'Suez Road / Ring Road',
+    zoneAr: 'تقاطع طريق السويس والدائري',
+    xPct: 41.5,
+    yPct: 26.5,
+    boundaryRadiusX: 40,
+    boundaryRadiusY: 32,
+    areaHa: 350,
+    startingPriceEgp: 9200000,
+    startingRentEgp: 42000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '8.6% - 10.4%',
+    deliveryStatusEn: 'Active Construction & Handover',
+    deliveryStatusAr: 'تسليم مراحل جارية',
+    descriptionEn: 'Strategic mixed-use development positioned directly on Suez Road opposite Cairo International Airport with cultural hubs.',
+    descriptionAr: 'مشروع استراتيجي مباشر على طريق السويس أمام مطار القاهرة الدولي يضم مناطق سكنية وتجارية وثقافية.',
+    featured: false,
+    driveTimeToAucMin: 16,
+    driveTimeToNewCapitalMin: 22,
+    driveTimeToAirportMin: 6,
+    unitsCount: 10,
+  },
+  {
+    id: 'swan-lake',
+    code: 'SLR',
+    indexNumber: 11,
+    nameEn: 'SWAN LAKE RESIDENCES',
+    nameAr: 'سوان ليك ريزيدنسز',
+    developerEn: 'Hassan Allam Properties',
+    developerAr: 'حسن علام العقارية',
+    zoneEn: 'First Settlement / North Axis',
+    zoneAr: 'التجمع الأول / المحور الشمالي',
+    xPct: 47.5,
+    yPct: 23.5,
+    boundaryRadiusX: 42,
+    boundaryRadiusY: 34,
+    areaHa: 180,
+    startingPriceEgp: 26000000,
+    startingRentEgp: 105000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '8.5% - 9.7%',
+    deliveryStatusEn: 'Delivering / Premium Living',
+    deliveryStatusAr: 'تسليم مراحل راقية',
+    descriptionEn: 'Refined architectural elegance by Hassan Allam, offering private lakes, boutique commercial boulevard, and manicured parklands.',
+    descriptionAr: 'إبداع معماري راقٍ من حسن علام، يضم بحيرات كريستالية خاصة، بوليفارد تجاري راقٍ، وحدائق واسعة.',
+    featured: true,
+    driveTimeToAucMin: 11,
+    driveTimeToNewCapitalMin: 20,
+    driveTimeToAirportMin: 14,
+    unitsCount: 8,
+  },
+  {
+    id: 'choueifat',
+    code: 'CHF',
+    indexNumber: 12,
+    nameEn: 'CHOUEIFAT',
+    nameAr: 'حي الشويفات',
+    developerEn: 'Private Elite Consortia',
+    developerAr: 'تطوير راقٍ خاص',
+    zoneEn: 'Fifth Settlement Central',
+    zoneAr: 'قلب التجمع الخامس',
+    xPct: 44.8,
+    yPct: 33.2,
+    boundaryRadiusX: 36,
+    boundaryRadiusY: 30,
+    areaHa: 120,
+    startingPriceEgp: 18000000,
+    startingRentEgp: 70000,
+    resaleDemandIndex: 'High',
+    rentalYieldRange: '8.0% - 9.2%',
+    deliveryStatusEn: 'Fully Inhabited Elite District',
+    deliveryStatusAr: 'حي أرستقراطي مكتمل بالكامل',
+    descriptionEn: 'Prestigious residential district surrounding the International Choueifat School, famous for classic private palaces and quiet boulevards.',
+    descriptionAr: 'أحد أرقى أحياء التجمع الخامس المحيطة بمدرسة الشويفات الدولية، يشتهر بالقصور والفيلات المستقلة الهادئة.',
+    featured: false,
+    driveTimeToAucMin: 8,
+    driveTimeToNewCapitalMin: 26,
+    driveTimeToAirportMin: 20,
+    unitsCount: 5,
+  },
+  {
+    id: 'mv-icity',
+    code: 'MVI',
+    indexNumber: 13,
+    nameEn: 'MOUNTAIN VIEW ICITY',
+    nameAr: 'ماونتن فيو آي سيتي',
+    developerEn: 'Mountain View (DMG)',
+    developerAr: 'ماونتن فيو للتنمية والاستثمار',
+    zoneEn: 'Eastern Expansions',
+    zoneAr: 'التوسعات الشرقية',
+    xPct: 40.2,
+    yPct: 53.8,
+    boundaryRadiusX: 44,
+    boundaryRadiusY: 36,
+    areaHa: 210,
+    startingPriceEgp: 11500000,
+    startingRentEgp: 50000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '8.7% - 10.5%',
+    deliveryStatusEn: 'Active Handover',
+    deliveryStatusAr: 'تسليم مستمر لمراحل المشروع',
+    descriptionEn: 'Innovative 4-dimensional living with elevated smart transport loops, Royal Lagoon beach, and European-inspired architecture.',
+    descriptionAr: 'مدينة مبتكرة رباعية الأبعاد بشبكة تنقل ذكية معلقة، لاجون شاطئي ملكي، وتصاميم أوروبية أنيقة.',
+    featured: false,
+    driveTimeToAucMin: 12,
+    driveTimeToNewCapitalMin: 14,
+    driveTimeToAirportMin: 22,
+    unitsCount: 12,
+  },
+  {
+    id: 'mv-hyde-park',
+    code: 'MVH',
+    indexNumber: 14,
+    nameEn: 'MOUNTAIN VIEW HYDE PARK',
+    nameAr: 'ماونتن فيو هايد بارك',
+    developerEn: 'Mountain View (DMG)',
+    developerAr: 'ماونتن فيو',
+    zoneEn: 'Golden Square Adjacent',
+    zoneAr: 'محاذاة المربع الذهبي',
+    xPct: 44.0,
+    yPct: 64.8,
+    boundaryRadiusX: 42,
+    boundaryRadiusY: 34,
+    areaHa: 190,
+    startingPriceEgp: 13800000,
+    startingRentEgp: 60000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '8.4% - 9.8%',
+    deliveryStatusEn: 'Established & Inhabited',
+    deliveryStatusAr: 'مكتمل ومأهول',
+    descriptionEn: 'Directly overlooking Hyde Park\'s vast central parklands, featuring classic American-Victorian style townhouses and i-Villas.',
+    descriptionAr: 'إطلالة مباشرة على الحدائق الشاسعة في هايد بارك، بتصاميم فيكتورية أمريكية وأي فيلا مميزة.',
+    featured: false,
+    driveTimeToAucMin: 6,
+    driveTimeToNewCapitalMin: 16,
+    driveTimeToAirportMin: 24,
+    unitsCount: 8,
+  },
+  {
+    id: 'sarai',
+    code: 'SRI',
+    indexNumber: 15,
+    nameEn: 'SARAI',
+    nameAr: 'سراي',
+    developerEn: 'Madinet Masr (MNHD)',
+    developerAr: 'مدينة مصر للإسكان والتعمير',
+    zoneEn: 'Suez Road / Mostakbal Edge',
+    zoneAr: 'طريق السويس ومشارف المستقبل',
+    xPct: 64.5,
+    yPct: 49.0,
+    boundaryRadiusX: 44,
+    boundaryRadiusY: 36,
+    areaHa: 450,
+    startingPriceEgp: 8200000,
+    startingRentEgp: 36000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '8.9% - 10.8%',
+    deliveryStatusEn: 'Phased Delivery',
+    deliveryStatusAr: 'تسليم مراحل متعاقبة',
+    descriptionEn: 'Expansive water-front master community featuring the largest swimmable crystal lagoon in New Cairo, equestrian club, and boutique hotels.',
+    descriptionAr: 'مشروع مائي ضخم يضم أكبر كريستال لاجون صالح للسباحة بالقاهرة الجديدة، ونادي فروسية وفنادق بوتيكية.',
+    featured: false,
+    driveTimeToAucMin: 14,
+    driveTimeToNewCapitalMin: 10,
+    driveTimeToAirportMin: 22,
+    unitsCount: 9,
+  },
+  {
+    id: 'mostakbal-city',
+    code: 'MST',
+    indexNumber: 16,
+    nameEn: 'MOSTAKBAL CITY',
+    nameAr: 'مدينة المستقبل',
+    developerEn: 'El Mostakbal Urban Development',
+    developerAr: 'المستقبل للتنمية العمرانية',
+    zoneEn: 'Eastern Growth Corridor',
+    zoneAr: 'محور الامتداد الشرقي',
+    xPct: 71.8,
+    yPct: 63.5,
+    boundaryRadiusX: 52,
+    boundaryRadiusY: 42,
+    areaHa: 4400,
+    startingPriceEgp: 7900000,
+    startingRentEgp: 34000,
+    resaleDemandIndex: 'Very High',
+    rentalYieldRange: '9.2% - 11.5%',
+    deliveryStatusEn: 'Under Rapid Urbanization',
+    deliveryStatusAr: 'تطور عمراني متسارع',
+    descriptionEn: 'The modern bridge city between New Cairo and the New Administrative Capital, planned with green ribbons and smart utilities.',
+    descriptionAr: 'المدينة الذكية الرابطة بين القاهرة الجديدة والعاصمة الإدارية الجديدة بمساحات خضراء هائلة وتخطيط عصري متقدم.',
+    featured: false,
+    driveTimeToAucMin: 16,
+    driveTimeToNewCapitalMin: 8,
+    driveTimeToAirportMin: 24,
+    unitsCount: 14,
+  },
+  {
+    id: 'el-marasem',
+    code: 'EMF',
+    indexNumber: 17,
+    nameEn: 'EL MARASEM FIFTH SQUARE',
+    nameAr: 'المراسم فيفث سكوير',
+    developerEn: 'El Marasem International',
+    developerAr: 'المراسم الدولية للتطوير',
+    zoneEn: 'Golden Square North',
+    zoneAr: 'المربع الذهبي - التسعين الشمالي',
+    xPct: 64.5,
+    yPct: 72.5,
+    boundaryRadiusX: 42,
+    boundaryRadiusY: 34,
+    areaHa: 158,
+    startingPriceEgp: 14500000,
+    startingRentEgp: 65000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '9.0% - 10.6%',
+    deliveryStatusEn: 'Ready to Move / Luxury Finished',
+    deliveryStatusAr: 'استلام فوري وتشطيب فندقي فاخر',
+    descriptionEn: 'Signature Golden Square address offering fully-finished hotel-grade residences, solar power integration, and expansive retail spine.',
+    descriptionAr: 'عنوان الفخامة في المربع الذهبي بوحدات كاملة التشطيب الفندقي الفاخر، وطاقة شمسية ومول تجاري ضخم.',
+    featured: true,
+    driveTimeToAucMin: 7,
+    driveTimeToNewCapitalMin: 16,
+    driveTimeToAirportMin: 24,
+    unitsCount: 8,
+  },
+  {
+    id: 'sierra-residences',
+    code: 'SR',
+    indexNumber: 18,
+    nameEn: 'SIERRA RESIDENCES',
+    nameAr: 'سيرّا ريزيدنسز',
+    developerEn: 'Sierra Estates',
+    developerAr: 'سيرّا للتطوير العقاري',
+    zoneEn: 'Ain Sokhna Axis / Southern Hub',
+    zoneAr: 'محور السخنة / التجمع الجنوبي',
+    xPct: 55.5,
+    yPct: 84.5,
+    boundaryRadiusX: 46,
+    boundaryRadiusY: 36,
+    areaHa: 140,
+    startingPriceEgp: 21000000,
+    startingRentEgp: 85000,
+    resaleDemandIndex: 'Prime Elite',
+    rentalYieldRange: '9.4% - 11.0%',
+    deliveryStatusEn: 'Private Signature Phase',
+    deliveryStatusAr: 'المرحلة الحصرية الخاصة',
+    descriptionEn: 'Bespoke architectural collection curated by Sierra Estates with panoramic ridge views, private botanical sanctuaries, and limited signature villas.',
+    descriptionAr: 'مجموعة معمارية حصرية بتوقيع سيرّا العقارية بإطلالات مرتفعة، حدائق نباتية خاصة، وفيلات نخبوية محدودة العدد.',
+    featured: true,
+    driveTimeToAucMin: 10,
+    driveTimeToNewCapitalMin: 14,
+    driveTimeToAirportMin: 28,
+    unitsCount: 7,
+  },
+];
+
+export const UNIT_LISTINGS: UnitListing[] = [
+  // SODIC VILLETTE Units
+  {
+    id: 'sv-302-a',
+    unitCode: 'SV-302',
+    compoundId: 'sodic-villette',
+    compoundNameEn: 'SODIC VILLETTE',
+    compoundNameAr: 'سوديك فيليت',
+    typeEn: 'Standalone Villa',
+    typeAr: 'فيلا مستقلة',
+    buaM2: 310,
+    landM2: 450,
+    bedrooms: 4,
+    bathrooms: 5,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 24500000,
+    resalePriceUsd: 510000,
+    monthlyRentEgp: 95000,
+    monthlyRentUsd: 1980,
+    rentalYieldPct: 9.3,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Semi-Finished',
+    finishingAr: 'نصف تشطيب',
+    downPaymentPct: 10,
+    installmentsYears: 7,
+    phaseEn: 'V-Residence Phase 2',
+    phaseAr: 'في ريزيدنس المرحلة الثانية',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 240,
+    roofM2: 85,
+    parkingSlots: 2,
+  },
+  {
+    id: 'sv-302-b',
+    unitCode: 'SV-302-B',
+    compoundId: 'sodic-villette',
+    compoundNameEn: 'SODIC VILLETTE',
+    compoundNameAr: 'سوديك فيليت',
+    typeEn: 'Standalone Villa',
+    typeAr: 'فيلا مستقلة',
+    buaM2: 310,
+    landM2: 450,
+    bedrooms: 4,
+    bathrooms: 4,
+    purpose: 'Resale',
+    purposeAr: 'إعادة بيع',
+    resalePriceEgp: 25200000,
+    resalePriceUsd: 525000,
+    monthlyRentEgp: 98000,
+    monthlyRentUsd: 2040,
+    rentalYieldPct: 9.1,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Core & Shell',
+    finishingAr: 'محارة وحلوق',
+    downPaymentPct: 10,
+    installmentsYears: 7,
+    phaseEn: 'The Pocket Parks',
+    phaseAr: 'بوكيت باركس',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 260,
+    roofM2: 85,
+    parkingSlots: 2,
+  },
+  {
+    id: 'sv-303',
+    unitCode: 'SV-303',
+    compoundId: 'sodic-villette',
+    compoundNameEn: 'SODIC VILLETTE',
+    compoundNameAr: 'سوديك فيليت',
+    typeEn: 'Signature Villa',
+    typeAr: 'فيلا مستقلة فاخرة',
+    buaM2: 450,
+    landM2: 580,
+    bedrooms: 5,
+    bathrooms: 6,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 38900000,
+    resalePriceUsd: 810000,
+    monthlyRentEgp: 155000,
+    monthlyRentUsd: 3230,
+    rentalYieldPct: 9.5,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2027,
+    finishingEn: 'Core & Shell',
+    finishingAr: 'محارة وحلوق',
+    downPaymentPct: 15,
+    installmentsYears: 8,
+    phaseEn: 'Skyline Reserve',
+    phaseAr: 'سكاي لاين ريزيرف',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 320,
+    roofM2: 120,
+    parkingSlots: 3,
+  },
+  {
+    id: 'sv-304',
+    unitCode: 'SV-304',
+    compoundId: 'sodic-villette',
+    compoundNameEn: 'SODIC VILLETTE',
+    compoundNameAr: 'سوديك فيليت',
+    typeEn: 'Standalone Villa',
+    typeAr: 'فيلا مستقلة',
+    buaM2: 310,
+    landM2: 430,
+    bedrooms: 4,
+    bathrooms: 4,
+    purpose: 'Rent',
+    purposeAr: 'إيجار',
+    resalePriceEgp: 24500000,
+    resalePriceUsd: 510000,
+    monthlyRentEgp: 95000,
+    monthlyRentUsd: 1980,
+    rentalYieldPct: 9.3,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Fully Finished',
+    finishingAr: 'تشطيب كامل',
+    downPaymentPct: 10,
+    installmentsYears: 7,
+    phaseEn: 'Club Vista',
+    phaseAr: 'كلوب فيستا',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 230,
+    roofM2: 80,
+    parkingSlots: 2,
+  },
+  {
+    id: 'sv-305',
+    unitCode: 'SV-305',
+    compoundId: 'sodic-villette',
+    compoundNameEn: 'SODIC VILLETTE',
+    compoundNameAr: 'سوديك فيليت',
+    typeEn: 'Grand Estate Villa',
+    typeAr: 'فيلا جراند إستيت',
+    buaM2: 520,
+    landM2: 710,
+    bedrooms: 6,
+    bathrooms: 7,
+    purpose: 'Resale',
+    purposeAr: 'إعادة بيع',
+    resalePriceEgp: 47000000,
+    resalePriceUsd: 979000,
+    monthlyRentEgp: 190000,
+    monthlyRentUsd: 3950,
+    rentalYieldPct: 9.7,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2027,
+    finishingEn: 'Semi-Finished',
+    finishingAr: 'نصف تشطيب',
+    downPaymentPct: 15,
+    installmentsYears: 8,
+    phaseEn: 'V-Gardens Signature',
+    phaseAr: 'حدائق فيليت الحصرية',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 420,
+    roofM2: 140,
+    parkingSlots: 4,
+  },
+  {
+    id: 'sv-308',
+    unitCode: 'SV-308',
+    compoundId: 'sodic-villette',
+    compoundNameEn: 'SODIC VILLETTE',
+    compoundNameAr: 'سوديك فيليت',
+    typeEn: 'Twin House',
+    typeAr: 'توين هاوس',
+    buaM2: 275,
+    landM2: 340,
+    bedrooms: 3,
+    bathrooms: 4,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 19800000,
+    resalePriceUsd: 412500,
+    monthlyRentEgp: 78000,
+    monthlyRentUsd: 1625,
+    rentalYieldPct: 9.4,
+    statusEn: 'Under Offer',
+    statusAr: 'تحت التفاوض',
+    deliveryYear: 2026,
+    finishingEn: 'Semi-Finished',
+    finishingAr: 'نصف تشطيب',
+    downPaymentPct: 10,
+    installmentsYears: 7,
+    phaseEn: 'Courtyard Homes',
+    phaseAr: 'كورت يارد هومز',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 180,
+    roofM2: 65,
+    parkingSlots: 2,
+  },
+
+  // MIVIDA (Emaar)
+  {
+    id: 'mvd-201',
+    unitCode: 'MVD-201',
+    compoundId: 'mivida',
+    compoundNameEn: 'MIVIDA',
+    compoundNameAr: 'ميفيدا',
+    typeEn: 'Standalone Villa',
+    typeAr: 'فيلا مستقلة',
+    buaM2: 356,
+    landM2: 520,
+    bedrooms: 4,
+    bathrooms: 5,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 31500000,
+    resalePriceUsd: 656000,
+    monthlyRentEgp: 125000,
+    monthlyRentUsd: 2600,
+    rentalYieldPct: 9.5,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Fully Finished',
+    finishingAr: 'تشطيب كامل',
+    downPaymentPct: 20,
+    installmentsYears: 6,
+    phaseEn: 'The Greens',
+    phaseAr: 'ذا جرينز',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 300,
+    roofM2: 90,
+    parkingSlots: 2,
+  },
+  {
+    id: 'mvd-204',
+    unitCode: 'MVD-204',
+    compoundId: 'mivida',
+    compoundNameEn: 'MIVIDA',
+    compoundNameAr: 'ميفيدا',
+    typeEn: 'Twin House',
+    typeAr: 'توين هاوس',
+    buaM2: 285,
+    landM2: 380,
+    bedrooms: 3,
+    bathrooms: 4,
+    purpose: 'Rent',
+    purposeAr: 'إيجار',
+    resalePriceEgp: 23400000,
+    resalePriceUsd: 487500,
+    monthlyRentEgp: 88000,
+    monthlyRentUsd: 1830,
+    rentalYieldPct: 9.0,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Ultra Super Lux',
+    finishingAr: 'ألترا سوبر لوكس',
+    downPaymentPct: 15,
+    installmentsYears: 6,
+    phaseEn: 'Lake District',
+    phaseAr: 'منطقة البحيرات',
+    zoneEn: 'Golden Square',
+    zoneAr: 'المربع الذهبي',
+    gardenM2: 190,
+    roofM2: 70,
+    parkingSlots: 2,
+  },
+
+  // PALM HILLS NEW CAIRO
+  {
+    id: 'ph-102',
+    unitCode: 'PH-102',
+    compoundId: 'palm-hills-nc',
+    compoundNameEn: 'PALM HILLS NEW CAIRO',
+    compoundNameAr: 'بالم هيلز القاهرة الجديدة',
+    typeEn: 'Standalone Villa',
+    typeAr: 'فيلا مستقلة',
+    buaM2: 388,
+    landM2: 600,
+    bedrooms: 5,
+    bathrooms: 6,
+    purpose: 'Resale',
+    purposeAr: 'إعادة بيع',
+    resalePriceEgp: 28900000,
+    resalePriceUsd: 602000,
+    monthlyRentEgp: 110000,
+    monthlyRentUsd: 2290,
+    rentalYieldPct: 9.1,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2027,
+    finishingEn: 'Core & Shell',
+    finishingAr: 'محارة وحلوق',
+    downPaymentPct: 10,
+    installmentsYears: 8,
+    phaseEn: 'Phase 3 Palm Crown',
+    phaseAr: 'المرحلة الثالثة بالم كراون',
+    zoneEn: 'Eastern Expansions',
+    zoneAr: 'التوسعات الشرقية',
+    gardenM2: 340,
+    roofM2: 100,
+    parkingSlots: 3,
+  },
+  {
+    id: 'ph-108',
+    unitCode: 'PH-108',
+    compoundId: 'palm-hills-nc',
+    compoundNameEn: 'PALM HILLS NEW CAIRO',
+    compoundNameAr: 'بالم هيلز القاهرة الجديدة',
+    typeEn: 'Townhouse Corner',
+    typeAr: 'تاون هاوس كورنر',
+    buaM2: 220,
+    landM2: 290,
+    bedrooms: 3,
+    bathrooms: 4,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 15800000,
+    resalePriceUsd: 329000,
+    monthlyRentEgp: 65000,
+    monthlyRentUsd: 1350,
+    rentalYieldPct: 9.8,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Semi-Finished',
+    finishingAr: 'نصف تشطيب',
+    downPaymentPct: 10,
+    installmentsYears: 8,
+    phaseEn: 'Boulevard Townhomes',
+    phaseAr: 'بوليفارد تاون هومز',
+    zoneEn: 'Eastern Expansions',
+    zoneAr: 'التوسعات الشرقية',
+    gardenM2: 140,
+    roofM2: 55,
+    parkingSlots: 2,
+  },
+
+  // SIERRA RESIDENCES
+  {
+    id: 'sr-001',
+    unitCode: 'SR-001',
+    compoundId: 'sierra-residences',
+    compoundNameEn: 'SIERRA RESIDENCES',
+    compoundNameAr: 'سيرّا ريزيدنسز',
+    typeEn: 'Palatial Signature Villa',
+    typeAr: 'قصر سيجنتشر فاخر',
+    buaM2: 650,
+    landM2: 920,
+    bedrooms: 6,
+    bathrooms: 8,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 62000000,
+    resalePriceUsd: 1290000,
+    monthlyRentEgp: 260000,
+    monthlyRentUsd: 5410,
+    rentalYieldPct: 10.1,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2027,
+    finishingEn: 'Ultra Super Lux',
+    finishingAr: 'ألترا سوبر لوكس',
+    downPaymentPct: 15,
+    installmentsYears: 8,
+    phaseEn: 'The Ridge Sanctuary',
+    phaseAr: 'محمية التلال',
+    zoneEn: 'Ain Sokhna Axis',
+    zoneAr: 'محور السخنة',
+    gardenM2: 550,
+    roofM2: 180,
+    parkingSlots: 4,
+  },
+  {
+    id: 'sr-004',
+    unitCode: 'SR-004',
+    compoundId: 'sierra-residences',
+    compoundNameEn: 'SIERRA RESIDENCES',
+    compoundNameAr: 'سيرّا ريزيدنسز',
+    typeEn: 'Standalone Villa',
+    typeAr: 'فيلا مستقلة',
+    buaM2: 360,
+    landM2: 500,
+    bedrooms: 4,
+    bathrooms: 5,
+    purpose: 'Resale',
+    purposeAr: 'إعادة بيع',
+    resalePriceEgp: 29500000,
+    resalePriceUsd: 614000,
+    monthlyRentEgp: 115000,
+    monthlyRentUsd: 2390,
+    rentalYieldPct: 9.3,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Fully Finished',
+    finishingAr: 'تشطيب كامل',
+    downPaymentPct: 10,
+    installmentsYears: 8,
+    phaseEn: 'Botanica Enclave',
+    phaseAr: 'بوتانيكا إنكليف',
+    zoneEn: 'Ain Sokhna Axis',
+    zoneAr: 'محور السخنة',
+    gardenM2: 280,
+    roofM2: 95,
+    parkingSlots: 2,
+  },
+
+  // KATAMEYA HEIGHTS
+  {
+    id: 'kh-99',
+    unitCode: 'KH-099',
+    compoundId: 'katameya-heights',
+    compoundNameEn: 'KATAMEYA HEIGHTS',
+    compoundNameAr: 'قطامية هايتس',
+    typeEn: 'Championship Golf Mansion',
+    typeAr: 'قصر مطل على الجولف',
+    buaM2: 950,
+    landM2: 1850,
+    bedrooms: 7,
+    bathrooms: 9,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 95000000,
+    resalePriceUsd: 1980000,
+    monthlyRentEgp: 380000,
+    monthlyRentUsd: 7910,
+    rentalYieldPct: 8.8,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Ultra Super Lux',
+    finishingAr: 'ألترا سوبر لوكس',
+    downPaymentPct: 30,
+    installmentsYears: 3,
+    phaseEn: 'Fairway Elite Line',
+    phaseAr: 'صف الجولف النخبوي',
+    zoneEn: 'South 90th / Ring Road',
+    zoneAr: 'التسعين الجنوبي / الدائري',
+    gardenM2: 1200,
+    roofM2: 250,
+    parkingSlots: 6,
+  },
+
+  // MADINATY
+  {
+    id: 'mdn-801',
+    unitCode: 'MDN-801',
+    compoundId: 'madinaty',
+    compoundNameEn: 'MADINATY',
+    compoundNameAr: 'مدينتي',
+    typeEn: 'Four Seasons Golf Villa',
+    typeAr: 'فيلا فورسيزونز جولف',
+    buaM2: 440,
+    landM2: 680,
+    bedrooms: 5,
+    bathrooms: 6,
+    purpose: 'Resale',
+    purposeAr: 'إعادة بيع',
+    resalePriceEgp: 32000000,
+    resalePriceUsd: 666000,
+    monthlyRentEgp: 110000,
+    monthlyRentUsd: 2290,
+    rentalYieldPct: 8.2,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Fully Finished',
+    finishingAr: 'تشطيب كامل',
+    downPaymentPct: 20,
+    installmentsYears: 7,
+    phaseEn: 'Golf Valley Phase 2',
+    phaseAr: 'وادي الجولف المرحلة الثانية',
+    zoneEn: 'Suez Road Axis',
+    zoneAr: 'محور طريق السويس',
+    gardenM2: 420,
+    roofM2: 110,
+    parkingSlots: 3,
+  },
+
+  // EL MARASEM FIFTH SQUARE
+  {
+    id: 'emf-401',
+    unitCode: 'EMF-401',
+    compoundId: 'el-marasem',
+    compoundNameEn: 'EL MARASEM FIFTH SQUARE',
+    compoundNameAr: 'المراسم فيفث سكوير',
+    typeEn: 'Sky Penthouse',
+    typeAr: 'بنتهاوس بانورامي',
+    buaM2: 240,
+    landM2: 130,
+    bedrooms: 4,
+    bathrooms: 4,
+    purpose: 'Rent',
+    purposeAr: 'إيجار',
+    resalePriceEgp: 18400000,
+    resalePriceUsd: 383000,
+    monthlyRentEgp: 78000,
+    monthlyRentUsd: 1625,
+    rentalYieldPct: 10.2,
+    statusEn: 'Available',
+    statusAr: 'متاح',
+    deliveryYear: 2026,
+    finishingEn: 'Ultra Super Lux',
+    finishingAr: 'ألترا سوبر لوكس',
+    downPaymentPct: 10,
+    installmentsYears: 8,
+    phaseEn: 'Sky Residences',
+    phaseAr: 'سكاي ريزيدنسز',
+    zoneEn: 'Golden Square North',
+    zoneAr: 'المربع الذهبي - التسعين الشمالي',
+    roofM2: 130,
+    parkingSlots: 2,
+  },
+
+  // SWAN LAKE RESIDENCES
+  {
+    id: 'slr-501',
+    unitCode: 'SLR-501',
+    compoundId: 'swan-lake',
+    compoundNameEn: 'SWAN LAKE RESIDENCES',
+    compoundNameAr: 'سوان ليك ريزيدنسز',
+    typeEn: 'Lake View Villa',
+    typeAr: 'فيلا مطلة على البحيرة',
+    buaM2: 420,
+    landM2: 590,
+    bedrooms: 5,
+    bathrooms: 6,
+    purpose: 'Both',
+    purposeAr: 'إيجار وإعادة بيع',
+    resalePriceEgp: 36500000,
+    resalePriceUsd: 760000,
+    monthlyRentEgp: 145000,
+    monthlyRentUsd: 3020,
+    rentalYieldPct: 9.5,
+    statusEn: 'Reserved',
+    statusAr: 'محجوز',
+    deliveryYear: 2026,
+    finishingEn: 'Core & Shell',
+    finishingAr: 'محارة وحلوق',
+    downPaymentPct: 15,
+    installmentsYears: 7,
+    phaseEn: 'The Phoenix',
+    phaseAr: 'ذا فينيكس',
+    zoneEn: 'First Settlement',
+    zoneAr: 'التجمع الأول',
+    gardenM2: 320,
+    roofM2: 105,
+    parkingSlots: 3,
+  },
+];
+
+export const REGISTRY_STATS = {
+  totalCompoundsMapped: 18,
+  goldenSquareCoverage: '100%',
+  totalInventoryUnits: 148,
+  medianGoldenSquarePriceEgp: 24500000,
+  averageRentalYield: '9.4% Annualized',
+  aucCentralHubLatLong: '30.0197° N, 31.4988° E',
+  surveyDate: '2026 Edition · Rent & Resale',
+};
+
+/**
+ * Matches a live compound/location string from `/api/inventory` to one of the 18
+ * canonical Cadastral Registry compounds.
+ */
+export function resolveCompoundFromInventoryName(rawName?: string | null): Compound {
+  const n = (rawName || '').toLowerCase().trim();
+  if (!n) return COMPOUNDS[0];
+
+  const direct = COMPOUNDS.find(
+    c =>
+      c.id.toLowerCase() === n ||
+      c.nameEn.toLowerCase() === n ||
+      c.nameAr === n ||
+      c.nameEn.toLowerCase().includes(n) ||
+      n.includes(c.nameEn.toLowerCase())
+  );
+  if (direct) return direct;
+
+  if (n.includes('mivida') || n.includes('ميفيدا')) return COMPOUNDS.find(c => c.id === 'mivida') || COMPOUNDS[0];
+  if (n.includes('villette') || n.includes('eastown') || n.includes('sodic') || n.includes('فيليت'))
+    return COMPOUNDS.find(c => c.id === 'sodic-villette') || COMPOUNDS[0];
+  if (n.includes('palm hills') || n.includes('بالم هيلز'))
+    return COMPOUNDS.find(c => c.id === 'palm-hills-nc') || COMPOUNDS[0];
+  if (n.includes('madinaty') || n.includes('مدينتي'))
+    return COMPOUNDS.find(c => c.id === 'madinaty') || COMPOUNDS[0];
+  if (n.includes('rehab') || n.includes('الرحاب'))
+    return COMPOUNDS.find(c => c.id === 'el-rehab') || COMPOUNDS[0];
+  if (n.includes('festival') || n.includes('cfc') || n.includes('كايرو فيستيفال'))
+    return COMPOUNDS.find(c => c.id === 'cfc') || COMPOUNDS[0];
+  if (n.includes('lake view') || n.includes('waterway') || n.includes('ليك فيو'))
+    return COMPOUNDS.find(c => c.id === 'lake-view') || COMPOUNDS[0];
+  if (n.includes('katameya heights') || n.includes('قطامية هايتس'))
+    return COMPOUNDS.find(c => c.id === 'katameya-heights') || COMPOUNDS[0];
+  if (n.includes('katameya dunes') || n.includes('قطامية ديونز'))
+    return COMPOUNDS.find(c => c.id === 'katameya-dunes') || COMPOUNDS[0];
+  if (n.includes('taj') || n.includes('تاج'))
+    return COMPOUNDS.find(c => c.id === 'taj-city') || COMPOUNDS[0];
+  if (n.includes('swan') || n.includes('سوان'))
+    return COMPOUNDS.find(c => c.id === 'swan-lake') || COMPOUNDS[0];
+  if (n.includes('choueifat') || n.includes('stone') || n.includes('الشويفات'))
+    return COMPOUNDS.find(c => c.id === 'choueifat') || COMPOUNDS[0];
+  if (n.includes('icity') || n.includes('آي سيتي'))
+    return COMPOUNDS.find(c => c.id === 'mv-icity') || COMPOUNDS[0];
+  if (n.includes('hyde park') || n.includes('mountain view') || n.includes('هايد بارك'))
+    return COMPOUNDS.find(c => c.id === 'mv-hyde-park') || COMPOUNDS[0];
+  if (n.includes('sarai') || n.includes('سراي'))
+    return COMPOUNDS.find(c => c.id === 'sarai') || COMPOUNDS[0];
+  if (n.includes('mostakbal') || n.includes('bloomfields') || n.includes('burouj') || n.includes('المستقبل'))
+    return COMPOUNDS.find(c => c.id === 'mostakbal-city') || COMPOUNDS[0];
+  if (n.includes('marasem') || n.includes('fifth square') || n.includes('المراسم'))
+    return COMPOUNDS.find(c => c.id === 'el-marasem') || COMPOUNDS[0];
+
+  return COMPOUNDS.find(c => c.id === 'sierra-residences') || COMPOUNDS[0];
+}
+
+/**
+ * Converts a live `/api/inventory` unit into a canonical `UnitListing`.
+ */
+export function convertInventoryUnitToRegistryListing(raw: any, index: number): UnitListing {
+  const compound = resolveCompoundFromInventoryName(raw.compound || raw.location || raw.cmp);
+  const isRent = raw.mode === 'rent' || raw.dealType === 'rent' || raw.dealType === 'furnished_rent';
+  const rawPrice = Number(raw.price || (raw.egpM ? raw.egpM * 1_000_000 : 0) || 0);
+
+  const resalePriceEgp = isRent
+    ? rawPrice > 0
+      ? Math.round((rawPrice * 12) / 0.092)
+      : compound.startingPriceEgp
+    : rawPrice > 0
+    ? rawPrice
+    : compound.startingPriceEgp;
+
+  const monthlyRentEgp = isRent
+    ? rawPrice > 0
+      ? rawPrice
+      : compound.startingRentEgp
+    : Math.round((resalePriceEgp * 0.092) / 12);
+
+  const buaM2 = Number(raw.area || 240);
+  const bedrooms = Number(raw.beds || 3);
+  const bathrooms = Number(raw.bath || Math.max(2, bedrooms));
+  const rawType = String(raw.propertyType || raw.type || 'Standalone Villa');
+  const typeLower = rawType.toLowerCase();
+  const typeAr = typeLower.includes('twin')
+    ? 'توين هاوس'
+    : typeLower.includes('town')
+    ? 'تاون هاوس'
+    : typeLower.includes('penthouse')
+    ? 'بنتهاوس بانورامي'
+    : typeLower.includes('apt') || typeLower.includes('apart')
+    ? 'شقة فاخرة'
+    : 'فيلا مستقلة';
+
+  const finRaw = String(raw.finishingQuality || raw.finishing || raw.furnished || '').toLowerCase();
+  const finishingEn: UnitListing['finishingEn'] = finRaw.includes('ultra') || finRaw.includes('furnished')
+    ? 'Ultra Super Lux'
+    : finRaw.includes('semi')
+    ? 'Semi-Finished'
+    : finRaw.includes('core') || finRaw.includes('shell')
+    ? 'Core & Shell'
+    : 'Fully Finished';
+
+  const finishingAr: UnitListing['finishingAr'] =
+    finishingEn === 'Ultra Super Lux'
+      ? 'ألترا سوبر لوكس'
+      : finishingEn === 'Semi-Finished'
+      ? 'نصف تشطيب'
+      : finishingEn === 'Core & Shell'
+      ? 'محارة وحلوق'
+      : 'تشطيب كامل';
+
+  const statusRaw = String(raw.status || '').toLowerCase();
+  const statusEn: UnitListing['statusEn'] =
+    statusRaw === 'follow_up'
+      ? 'Under Offer'
+      : statusRaw === 'unavailable'
+      ? 'Reserved'
+      : 'Available';
+  const statusAr: UnitListing['statusAr'] =
+    statusEn === 'Under Offer' ? 'تحت التفاوض' : statusEn === 'Reserved' ? 'محجوز' : 'متاح';
+
+  const unitCode = String(raw.code || raw.id || `${compound.code}-LIVE-${index + 1}`);
+  const rentalYieldPct = Number(
+    Math.min(13.5, Math.max(7.2, ((monthlyRentEgp * 12) / Math.max(1, resalePriceEgp)) * 100)).toFixed(1)
+  );
+
+  return {
+    id: String(raw.id || unitCode),
+    unitCode,
+    compoundId: compound.id,
+    compoundNameEn: compound.nameEn,
+    compoundNameAr: compound.nameAr,
+    typeEn: rawType,
+    typeAr,
+    buaM2,
+    landM2: Number(raw.garden ? buaM2 + Number(raw.garden) : Math.round(buaM2 * 1.35)),
+    bedrooms,
+    bathrooms,
+    purpose: isRent ? 'Rent' : 'Resale',
+    purposeAr: isRent ? 'إيجار' : 'إعادة بيع',
+    resalePriceEgp,
+    resalePriceUsd: Math.round(resalePriceEgp / 48.5),
+    monthlyRentEgp,
+    monthlyRentUsd: Math.round(monthlyRentEgp / 48.5),
+    rentalYieldPct,
+    statusEn,
+    statusAr,
+    deliveryYear: 2026,
+    finishingEn,
+    finishingAr,
+    downPaymentPct: 10,
+    installmentsYears: isRent ? 1 : 7,
+    phaseEn: raw.zone || 'Verified Live Inventory',
+    phaseAr: 'مخزون حي معتمد',
+    zoneEn: compound.zoneEn,
+    zoneAr: compound.zoneAr,
+    gardenM2: raw.garden ? Number(raw.garden) : Math.round(buaM2 * 0.45),
+    roofM2: Math.round(buaM2 * 0.25),
+    parkingSlots: bedrooms >= 4 ? 3 : 2,
+  };
+}
+
+/**
+ * Hydrates `UNIT_LISTINGS` and `COMPOUNDS` with live units from `/api/inventory`
+ * so all map pins, Excel sheets, global search, PDF dossiers, and unit detail modals
+ * reflect live inventory alongside curated benchmark units.
+ */
+export function hydrateRegistryWithLiveInventory(
+  liveUnits: any[],
+  compoundCounts?: Record<string, number>
+): { compounds: Compound[]; unitListings: UnitListing[] } {
+  if (!Array.isArray(liveUnits) || liveUnits.length === 0) {
+    return { compounds: COMPOUNDS, unitListings: UNIT_LISTINGS };
+  }
+
+  const existingCodes = new Set(UNIT_LISTINGS.map(u => u.unitCode.toLowerCase()));
+  const converted: UnitListing[] = [];
+
+  liveUnits.slice(0, 350).forEach((raw, idx) => {
+    const item = convertInventoryUnitToRegistryListing(raw, idx);
+    if (!existingCodes.has(item.unitCode.toLowerCase())) {
+      existingCodes.add(item.unitCode.toLowerCase());
+      converted.push(item);
+    }
+  });
+
+  if (converted.length > 0) {
+    UNIT_LISTINGS.splice(0, 0, ...converted);
+  }
+
+  // Recompute per-compound unit counts
+  COMPOUNDS.forEach(c => {
+    const matchedCount = UNIT_LISTINGS.filter(u => u.compoundId === c.id).length;
+    const apiCount =
+      compoundCounts?.[c.nameEn] ||
+      Object.entries(compoundCounts || {}).find(
+        ([k]) => k.toLowerCase().includes(c.nameEn.toLowerCase()) || c.nameEn.toLowerCase().includes(k.toLowerCase())
+      )?.[1] ||
+      0;
+    c.unitsCount = Math.max(c.unitsCount, matchedCount, apiCount);
+  });
+
+  REGISTRY_STATS.totalInventoryUnits = Math.max(REGISTRY_STATS.totalInventoryUnits, UNIT_LISTINGS.length);
+
+  return { compounds: [...COMPOUNDS], unitListings: [...UNIT_LISTINGS] };
+}
+

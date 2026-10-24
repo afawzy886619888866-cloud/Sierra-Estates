@@ -1167,3 +1167,210 @@ export const REGISTRY_STATS = {
   aucCentralHubLatLong: '30.0197° N, 31.4988° E',
   surveyDate: '2026 Edition · Rent & Resale',
 };
+
+/**
+ * Matches a live compound/location string from `/api/inventory` to one of the 18
+ * canonical Cadastral Registry compounds.
+ */
+export function resolveCompoundFromInventoryName(rawName?: string | null): Compound {
+  const n = (rawName || '').toLowerCase().trim();
+  if (!n) return COMPOUNDS[0];
+
+  const direct = COMPOUNDS.find(
+    c =>
+      c.id.toLowerCase() === n ||
+      c.nameEn.toLowerCase() === n ||
+      c.nameAr === n ||
+      c.nameEn.toLowerCase().includes(n) ||
+      n.includes(c.nameEn.toLowerCase())
+  );
+  if (direct) return direct;
+
+  if (n.includes('mivida') || n.includes('ميفيدا')) return COMPOUNDS.find(c => c.id === 'mivida') || COMPOUNDS[0];
+  if (n.includes('villette') || n.includes('eastown') || n.includes('sodic') || n.includes('فيليت'))
+    return COMPOUNDS.find(c => c.id === 'sodic-villette') || COMPOUNDS[0];
+  if (n.includes('palm hills') || n.includes('بالم هيلز'))
+    return COMPOUNDS.find(c => c.id === 'palm-hills-nc') || COMPOUNDS[0];
+  if (n.includes('madinaty') || n.includes('مدينتي'))
+    return COMPOUNDS.find(c => c.id === 'madinaty') || COMPOUNDS[0];
+  if (n.includes('rehab') || n.includes('الرحاب'))
+    return COMPOUNDS.find(c => c.id === 'el-rehab') || COMPOUNDS[0];
+  if (n.includes('festival') || n.includes('cfc') || n.includes('كايرو فيستيفال'))
+    return COMPOUNDS.find(c => c.id === 'cfc') || COMPOUNDS[0];
+  if (n.includes('lake view') || n.includes('waterway') || n.includes('ليك فيو'))
+    return COMPOUNDS.find(c => c.id === 'lake-view') || COMPOUNDS[0];
+  if (n.includes('katameya heights') || n.includes('قطامية هايتس'))
+    return COMPOUNDS.find(c => c.id === 'katameya-heights') || COMPOUNDS[0];
+  if (n.includes('katameya dunes') || n.includes('قطامية ديونز'))
+    return COMPOUNDS.find(c => c.id === 'katameya-dunes') || COMPOUNDS[0];
+  if (n.includes('taj') || n.includes('تاج'))
+    return COMPOUNDS.find(c => c.id === 'taj-city') || COMPOUNDS[0];
+  if (n.includes('swan') || n.includes('سوان'))
+    return COMPOUNDS.find(c => c.id === 'swan-lake') || COMPOUNDS[0];
+  if (n.includes('choueifat') || n.includes('stone') || n.includes('الشويفات'))
+    return COMPOUNDS.find(c => c.id === 'choueifat') || COMPOUNDS[0];
+  if (n.includes('icity') || n.includes('آي سيتي'))
+    return COMPOUNDS.find(c => c.id === 'mv-icity') || COMPOUNDS[0];
+  if (n.includes('hyde park') || n.includes('mountain view') || n.includes('هايد بارك'))
+    return COMPOUNDS.find(c => c.id === 'mv-hyde-park') || COMPOUNDS[0];
+  if (n.includes('sarai') || n.includes('سراي'))
+    return COMPOUNDS.find(c => c.id === 'sarai') || COMPOUNDS[0];
+  if (n.includes('mostakbal') || n.includes('bloomfields') || n.includes('burouj') || n.includes('المستقبل'))
+    return COMPOUNDS.find(c => c.id === 'mostakbal-city') || COMPOUNDS[0];
+  if (n.includes('marasem') || n.includes('fifth square') || n.includes('المراسم'))
+    return COMPOUNDS.find(c => c.id === 'el-marasem') || COMPOUNDS[0];
+
+  return COMPOUNDS.find(c => c.id === 'sierra-residences') || COMPOUNDS[0];
+}
+
+/**
+ * Converts a live `/api/inventory` unit into a canonical `UnitListing`.
+ */
+export function convertInventoryUnitToRegistryListing(raw: any, index: number): UnitListing {
+  const compound = resolveCompoundFromInventoryName(raw.compound || raw.location || raw.cmp);
+  const isRent = raw.mode === 'rent' || raw.dealType === 'rent' || raw.dealType === 'furnished_rent';
+  const rawPrice = Number(raw.price || (raw.egpM ? raw.egpM * 1_000_000 : 0) || 0);
+
+  const resalePriceEgp = isRent
+    ? rawPrice > 0
+      ? Math.round((rawPrice * 12) / 0.092)
+      : compound.startingPriceEgp
+    : rawPrice > 0
+    ? rawPrice
+    : compound.startingPriceEgp;
+
+  const monthlyRentEgp = isRent
+    ? rawPrice > 0
+      ? rawPrice
+      : compound.startingRentEgp
+    : Math.round((resalePriceEgp * 0.092) / 12);
+
+  const buaM2 = Number(raw.area || 240);
+  const bedrooms = Number(raw.beds || 3);
+  const bathrooms = Number(raw.bath || Math.max(2, bedrooms));
+  const rawType = String(raw.propertyType || raw.type || 'Standalone Villa');
+  const typeLower = rawType.toLowerCase();
+  const typeAr = typeLower.includes('twin')
+    ? 'توين هاوس'
+    : typeLower.includes('town')
+    ? 'تاون هاوس'
+    : typeLower.includes('penthouse')
+    ? 'بنتهاوس بانورامي'
+    : typeLower.includes('apt') || typeLower.includes('apart')
+    ? 'شقة فاخرة'
+    : 'فيلا مستقلة';
+
+  const finRaw = String(raw.finishingQuality || raw.finishing || raw.furnished || '').toLowerCase();
+  const finishingEn: UnitListing['finishingEn'] = finRaw.includes('ultra') || finRaw.includes('furnished')
+    ? 'Ultra Super Lux'
+    : finRaw.includes('semi')
+    ? 'Semi-Finished'
+    : finRaw.includes('core') || finRaw.includes('shell')
+    ? 'Core & Shell'
+    : 'Fully Finished';
+
+  const finishingAr: UnitListing['finishingAr'] =
+    finishingEn === 'Ultra Super Lux'
+      ? 'ألترا سوبر لوكس'
+      : finishingEn === 'Semi-Finished'
+      ? 'نصف تشطيب'
+      : finishingEn === 'Core & Shell'
+      ? 'محارة وحلوق'
+      : 'تشطيب كامل';
+
+  const statusRaw = String(raw.status || '').toLowerCase();
+  const statusEn: UnitListing['statusEn'] =
+    statusRaw === 'follow_up'
+      ? 'Under Offer'
+      : statusRaw === 'unavailable'
+      ? 'Reserved'
+      : 'Available';
+  const statusAr: UnitListing['statusAr'] =
+    statusEn === 'Under Offer' ? 'تحت التفاوض' : statusEn === 'Reserved' ? 'محجوز' : 'متاح';
+
+  const unitCode = String(raw.code || raw.id || `${compound.code}-LIVE-${index + 1}`);
+  const rentalYieldPct = Number(
+    Math.min(13.5, Math.max(7.2, ((monthlyRentEgp * 12) / Math.max(1, resalePriceEgp)) * 100)).toFixed(1)
+  );
+
+  return {
+    id: String(raw.id || unitCode),
+    unitCode,
+    compoundId: compound.id,
+    compoundNameEn: compound.nameEn,
+    compoundNameAr: compound.nameAr,
+    typeEn: rawType,
+    typeAr,
+    buaM2,
+    landM2: Number(raw.garden ? buaM2 + Number(raw.garden) : Math.round(buaM2 * 1.35)),
+    bedrooms,
+    bathrooms,
+    purpose: isRent ? 'Rent' : 'Resale',
+    purposeAr: isRent ? 'إيجار' : 'إعادة بيع',
+    resalePriceEgp,
+    resalePriceUsd: Math.round(resalePriceEgp / 48.5),
+    monthlyRentEgp,
+    monthlyRentUsd: Math.round(monthlyRentEgp / 48.5),
+    rentalYieldPct,
+    statusEn,
+    statusAr,
+    deliveryYear: 2026,
+    finishingEn,
+    finishingAr,
+    downPaymentPct: 10,
+    installmentsYears: isRent ? 1 : 7,
+    phaseEn: raw.zone || 'Verified Live Inventory',
+    phaseAr: 'مخزون حي معتمد',
+    zoneEn: compound.zoneEn,
+    zoneAr: compound.zoneAr,
+    gardenM2: raw.garden ? Number(raw.garden) : Math.round(buaM2 * 0.45),
+    roofM2: Math.round(buaM2 * 0.25),
+    parkingSlots: bedrooms >= 4 ? 3 : 2,
+  };
+}
+
+/**
+ * Hydrates `UNIT_LISTINGS` and `COMPOUNDS` with live units from `/api/inventory`
+ * so all map pins, Excel sheets, global search, PDF dossiers, and unit detail modals
+ * reflect live inventory alongside curated benchmark units.
+ */
+export function hydrateRegistryWithLiveInventory(
+  liveUnits: any[],
+  compoundCounts?: Record<string, number>
+): { compounds: Compound[]; unitListings: UnitListing[] } {
+  if (!Array.isArray(liveUnits) || liveUnits.length === 0) {
+    return { compounds: COMPOUNDS, unitListings: UNIT_LISTINGS };
+  }
+
+  const existingCodes = new Set(UNIT_LISTINGS.map(u => u.unitCode.toLowerCase()));
+  const converted: UnitListing[] = [];
+
+  liveUnits.slice(0, 350).forEach((raw, idx) => {
+    const item = convertInventoryUnitToRegistryListing(raw, idx);
+    if (!existingCodes.has(item.unitCode.toLowerCase())) {
+      existingCodes.add(item.unitCode.toLowerCase());
+      converted.push(item);
+    }
+  });
+
+  if (converted.length > 0) {
+    UNIT_LISTINGS.splice(0, 0, ...converted);
+  }
+
+  // Recompute per-compound unit counts
+  COMPOUNDS.forEach(c => {
+    const matchedCount = UNIT_LISTINGS.filter(u => u.compoundId === c.id).length;
+    const apiCount =
+      compoundCounts?.[c.nameEn] ||
+      Object.entries(compoundCounts || {}).find(
+        ([k]) => k.toLowerCase().includes(c.nameEn.toLowerCase()) || c.nameEn.toLowerCase().includes(k.toLowerCase())
+      )?.[1] ||
+      0;
+    c.unitsCount = Math.max(c.unitsCount, matchedCount, apiCount);
+  });
+
+  REGISTRY_STATS.totalInventoryUnits = Math.max(REGISTRY_STATS.totalInventoryUnits, UNIT_LISTINGS.length);
+
+  return { compounds: [...COMPOUNDS], unitListings: [...UNIT_LISTINGS] };
+}
+

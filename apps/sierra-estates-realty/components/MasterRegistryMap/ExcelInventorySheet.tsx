@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useMemo } from 'react';
-import { UnitListing, Compound, UNIT_LISTINGS, COMPOUNDS } from './registryData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { UnitListing, Compound, UNIT_LISTINGS, COMPOUNDS, hydrateRegistryWithLiveInventory } from './registryData';
 import { UnitComparisonModal } from './UnitComparisonModal';
 import { InventoryPdfDossierModal } from './InventoryPdfDossierModal';
 import { 
@@ -51,6 +51,22 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
   // Compare Units State (up to 3 units)
   const [compareUnits, setCompareUnits] = useState<UnitListing[]>([]);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState<boolean>(false);
+  const [liveSyncRevision, setLiveSyncRevision] = useState<number>(0);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/inventory?limit=500')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!active || !data || !Array.isArray(data.units)) return;
+        hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
+        setLiveSyncRevision(prev => prev + 1);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Active compound ID filter
   const currentCompoundId = showAllCompoundsMode ? 'all' : (selectedCompound ? selectedCompound.id : 'all');
@@ -113,7 +129,7 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
       }
       return a.unitCode.localeCompare(b.unitCode);
     });
-  }, [currentCompoundId, activePurpose, searchQuery, sortBy]);
+  }, [currentCompoundId, activePurpose, searchQuery, sortBy, liveSyncRevision]);
 
   // Aggregate statistics for formula bar and status bar
   const stats = useMemo(() => {
