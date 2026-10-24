@@ -36,6 +36,15 @@ const CompoundExcelSheetModal = dynamic(() => import('@/components/site/Compound
   ssr: false,
 });
 
+const CartographicMap = dynamic(() => import('@/components/site/CartographicMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
+      Loading Cartographic Masterplan…
+    </div>
+  ),
+});
+
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ssr: false,
   loading: () => (
@@ -904,31 +913,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Interactive Map Canvas */}
-          <div className="map-workspace rv">
-            <CompoundsMap
-              compounds={allCompounds}
-              featured={featuredCompounds}
-              selectedName={selectedMapCompound}
-              onSelectAction={(name) => {
-                setSelectedMapCompound(name);
-                setSearch((prev) => ({ ...prev, compound: name }));
-                setSheetModalCompound(name);
+          {/* Interactive Master Cartographic Map Canvas */}
+          <div className="map-workspace rv" style={{ borderRadius: 16, overflow: 'hidden' }}>
+            <CartographicMap
+              lang={isAr ? 'ar' : 'en'}
+              isDarkMode={homepageMapTheme === 'dark'}
+              onToggleTheme={() => setHomepageMapTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+              onSelectCompoundToExcel={(compound) => {
+                setSelectedMapCompound(compound.nameEn);
+                setSearch((prev) => ({ ...prev, compound: compound.nameEn }));
+                setSheetModalCompound(compound.nameEn);
                 setSheetModalOpen(true);
               }}
-              onOpenSheet={(name) => {
-                setSelectedMapCompound(name);
-                setSheetModalCompound(name);
+              onSelectUnit={(unit) => {
+                setSelectedMapCompound(unit.compoundNameEn);
+                setSheetModalCompound(unit.compoundNameEn);
                 setSheetModalOpen(true);
               }}
-              showControls={true}
-              filterCompound={search.compound}
-              filterPrice={search.price}
-              filterType={search.type}
-              filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
-              isAr={isAr}
-              theme={homepageMapTheme}
-              onThemeChange={setHomepageMapTheme}
             />
           </div>
           <div className="map-status" role="status" aria-live="polite">
