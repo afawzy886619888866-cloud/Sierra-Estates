@@ -543,6 +543,112 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
           </div>
         )}
 
+        {/* 4.5 Dedicated 'Compare Units' (Up to 3 Units Side-by-Side) Interactive Bar */}
+        <div className={`px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-3 text-xs ${
+          isDarkMode
+            ? 'bg-[#091426] border-cyan-500/30 text-stone-200'
+            : 'bg-[#EEF6F8] border-cyan-600/30 text-stone-800'
+        }`}>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 font-mono font-extrabold text-cyan-700 dark:text-cyan-300">
+              <Scale className="w-4 h-4 text-cyan-500 shrink-0" />
+              <span>
+                {isAr ? 'مقارنة الوحدات (اختر حتى ٣ وحدات):' : 'COMPARE UNITS (UP TO 3 SIDE-BY-SIDE):'}
+              </span>
+            </div>
+
+            {/* 3 Visual Comparison Slots */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[0, 1, 2].map((slotIdx) => {
+                const slotUnit = compareUnits[slotIdx];
+                return slotUnit ? (
+                  <div
+                    key={slotUnit.id}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-600 text-white font-mono text-[11px] font-bold shadow-xs"
+                  >
+                    <span className="px-1 rounded bg-black/25 text-[9px]">#{slotIdx + 1}</span>
+                    <span>{slotUnit.unitCode}</span>
+                    <span className="opacity-80 text-[10px]">({slotUnit.buaM2}m²)</span>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCompare(slotUnit.id)}
+                      className="hover:text-rose-200 ml-0.5 cursor-pointer font-extrabold"
+                      title={isAr ? 'إزالة الوحدة' : 'Remove unit'}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    key={`empty-slot-${slotIdx}`}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-dashed font-mono text-[10px] ${
+                      isDarkMode
+                        ? 'border-stone-700 text-stone-400 bg-stone-900/40'
+                        : 'border-stone-300 text-stone-500 bg-white/60'
+                    }`}
+                  >
+                    <span>#{slotIdx + 1}</span>
+                    <span>{isAr ? 'اختر من الجدول' : 'Select below'}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Quick Auto-Compare Top 3 Best Price/m² */}
+            <button
+              type="button"
+              onClick={() => {
+                const sortedByPpm = [...units]
+                  .filter(u => u.buaM2 > 0)
+                  .sort((a, b) => a.resalePriceEgp / a.buaM2 - b.resalePriceEgp / b.buaM2)
+                  .slice(0, 3);
+                if (sortedByPpm.length > 0) {
+                  setCompareUnits(sortedByPpm);
+                  setIsCompareModalOpen(true);
+                }
+              }}
+              className={`px-2.5 py-1 rounded-md font-mono text-[11px] font-semibold border transition-colors cursor-pointer ${
+                isDarkMode
+                  ? 'border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300'
+                  : 'border-cyan-600/30 bg-white hover:bg-cyan-50 text-cyan-800'
+              }`}
+              title={isAr ? 'اختيار ومقارنة أفضل ٣ وحدات من حيث سعر المتر تلقائياً' : 'Auto-select and compare top 3 lowest price/m² units'}
+            >
+              {isAr ? '⚡ مقارنة أفضل ٣ بسعر المتر' : '⚡ Top 3 Best Value/m²'}
+            </button>
+
+            {compareUnits.length > 0 && (
+              <button
+                type="button"
+                onClick={clearCompare}
+                className="px-2.5 py-1 rounded-md font-mono text-[11px] text-stone-500 hover:text-rose-500 transition-colors cursor-pointer"
+              >
+                {isAr ? 'مسح' : 'Clear'}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (compareUnits.length === 0 && units.length > 0) {
+                  setCompareUnits(units.slice(0, Math.min(units.length, 3)));
+                }
+                setIsCompareModalOpen(true);
+              }}
+              className="px-3.5 py-1.5 rounded-md bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <Scale className="w-3.5 h-3.5" />
+              <span>
+                {compareUnits.length > 0
+                  ? (isAr ? `عرض جدول المقارنة (${compareUnits.length}/3)` : `Compare Selected Units (${compareUnits.length}/3)`)
+                  : (isAr ? 'فتح مقارنة الوحدات (3)' : 'Compare Units (Up to 3)')}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* 5. Authentic Excel Data Table Grid */}
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto font-mono text-xs">
           <table className="w-full text-left border-collapse select-none">
@@ -620,7 +726,8 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
               {units.map((unit, index) => {
                 const rowNum = index + 1;
                 const isSelectedRow = selectedCell.row === rowNum;
-                const isCheckedForCompare = compareUnits.some(u => u.id === unit.id);
+                const compareSlotIdx = compareUnits.findIndex(u => u.id === unit.id);
+                const isCheckedForCompare = compareSlotIdx !== -1;
                 const pricePerM2 = unit.buaM2 > 0 ? Math.round(unit.resalePriceEgp / unit.buaM2) : 0;
 
                 return (
@@ -647,14 +754,13 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                         type="checkbox"
                         checked={isCheckedForCompare}
                         onChange={() => toggleCompareUnit(unit)}
-                        disabled={!isCheckedForCompare && compareUnits.length >= 3}
                         className="w-4 h-4 rounded text-cyan-600 accent-cyan-600 cursor-pointer"
                         title={
                           isCheckedForCompare 
                             ? 'Remove from comparison' 
                             : compareUnits.length >= 3 
-                              ? 'Maximum 3 units selected' 
-                              : 'Select unit to compare'
+                              ? 'Replace oldest compared unit' 
+                              : 'Select unit to compare (up to 3)'
                         }
                       />
                     </td>
@@ -747,9 +853,9 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                               ? 'bg-cyan-600 text-white'
                               : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 hover:bg-cyan-500/20'
                           }`}
-                          title="Toggle Compare"
+                          title={isAr ? 'إضافة أو إزالة من جدول المقارنة (حتى ٣ وحدات)' : 'Add/Remove from 3-Unit Side-by-Side Comparison'}
                         >
-                          {isCheckedForCompare ? '✓ VS' : '+ VS'}
+                          {isCheckedForCompare ? `✓ #${compareSlotIdx + 1}` : '+ Compare'}
                         </button>
                       </div>
                     </td>
@@ -773,13 +879,14 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {compareUnits.map(u => {
+                {compareUnits.map((u, idx) => {
                   const ppm = u.buaM2 > 0 ? Math.round(u.resalePriceEgp / u.buaM2) : 0;
                   return (
                     <div 
                       key={u.id} 
                       className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-950/80 border border-cyan-500/40 text-[11px] font-mono"
                     >
+                      <span className="px-1 rounded bg-cyan-500/20 text-cyan-300 text-[9px] font-bold">#{idx + 1}</span>
                       <span className="font-bold text-amber-300">{u.unitCode}</span>
                       <span className="text-stone-300">({u.buaM2}m² · EGP {ppm.toLocaleString()}/m²)</span>
                       <button
@@ -801,7 +908,7 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-stone-950 font-extrabold text-xs shadow-md flex items-center gap-1.5 cursor-pointer transition-all uppercase tracking-wider"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>{isAr ? 'مقارنة المواصفات وسعر المتر الآن' : 'Compare Side-by-Side (Price/M²)'}</span>
+                <span>{isAr ? 'مقارنة المواصفات جنباً إلى جنب' : 'Compare Units Side-by-Side'}</span>
               </button>
               <button
                 onClick={clearCompare}
@@ -848,8 +955,14 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
       {isCompareModalOpen && (
         <UnitComparisonModal
           units={compareUnits.length > 0 ? compareUnits : units.slice(0, Math.min(units.length, 3))}
+          allUnits={units}
           onClose={() => setIsCompareModalOpen(false)}
           onRemoveUnit={removeFromCompare}
+          onAddUnit={toggleCompareUnit}
+          onInspectUnit={(unit) => {
+            setIsCompareModalOpen(false);
+            onSelectUnit(unit);
+          }}
           onBookViewing={(unit) => {
             setIsCompareModalOpen(false);
             onSelectUnit(unit);
