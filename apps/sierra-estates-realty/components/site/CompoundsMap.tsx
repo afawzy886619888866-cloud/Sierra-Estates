@@ -999,6 +999,8 @@ export interface CompoundsMapProps {
   filterBed?: number | 'any';
   isAr?: boolean;
   selectedOnly?: boolean;
+  theme?: 'dark' | 'light';
+  onThemeChange?: (theme: 'dark' | 'light') => void;
 }
 
 export default function CompoundsMap({
@@ -1015,19 +1017,31 @@ export default function CompoundsMap({
   filterBed,
   isAr = false,
   selectedOnly = false,
+  theme: externalTheme,
+  onThemeChange,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
   const site = useSite();
   const siteTheme = site?.theme;
 
-  // Visual Theme: Synchronized with site theme ("light for light mode and vice versa"), with manual toggle
-  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>(siteTheme === 'light' ? 'light' : 'dark');
+  // Visual Theme: Synchronized with external prop or site theme with manual toggle
+  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>(
+    externalTheme || (siteTheme === 'light' ? 'light' : 'dark')
+  );
 
   useEffect(() => {
-    if (siteTheme === 'light' || siteTheme === 'dark') {
+    if (externalTheme) {
+      setMapTheme(externalTheme);
+    } else if (siteTheme === 'light' || siteTheme === 'dark') {
       setMapTheme(siteTheme);
     }
-  }, [siteTheme]);
+  }, [externalTheme, siteTheme]);
+
+  const toggleMapTheme = () => {
+    const next = mapTheme === 'dark' ? 'light' : 'dark';
+    setMapTheme(next);
+    onThemeChange?.(next);
+  };
 
   // Masterplan Viewport Canvas Transformation
   const [zoom, setZoom] = useState(1);
@@ -1846,7 +1860,7 @@ export default function CompoundsMap({
 
         <button
           type="button"
-          onClick={() => setMapTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+          onClick={toggleMapTheme}
           title={mapTheme === 'dark' ? 'Switch to Light Masterplan' : 'Switch to Dark Masterplan'}
           style={{
             display: 'inline-flex',
