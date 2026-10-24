@@ -20,18 +20,21 @@ Four production deployments are live and verified end-to-end. Every `git push` t
 
 | # | App | URL | Framework | Status | Linked Repo |
 |---|---|---|---|---|---|
-| 1 | **Client Portal** | https://sierra-estates.net | Next.js 16.4 | ✅ HTTP 200 | `sierrablue8866-droid/SE-Vercel-deploy-main` |
-| 2 | **Admin Intelligence OS** | https://admin.sierra-estates.net | Next.js 16.4 | ✅ HTTP 200 | `sierrablue8866-droid/SE-Vercel-deploy-main` |
-| 3 | **Static Portal** (HTML) | https://sierra-estates-static-portal.vercel.app | Static | ✅ HTTP 200 | — (CLI-deployed from `deploy/`) |
-| 4 | **Legacy Subdomain** | https://legacy.sierra-estates.net | Static | ✅ HTTP 200 | — (CNAME → `cname.vercel-dns.com`) |
+| 1 | **Client Portal** | <https://sierra-estates.net> | Next.js 16.4 | ✅ HTTP 200 | `sierrablue8866-droid/SE-Vercel-deploy-main` |
+| 2 | **Admin Intelligence OS** | <https://admin.sierra-estates.net> | Next.js 16.4 | ✅ HTTP 200 | `sierrablue8866-droid/SE-Vercel-deploy-main` |
+| 3 | **Static Portal** (HTML) | <https://sierra-estates-static-portal.vercel.app> | Static | ✅ HTTP 200 | — (CLI-deployed from `deploy/`) |
+| 4 | **Legacy Subdomain** | <https://legacy.sierra-estates.net> | Static | ✅ HTTP 200 | — (CNAME → `cname.vercel-dns.com`) |
 
 ### Deployment protection
+
 All Vercel projects use `ssoProtection: all_except_custom_domains` — custom domains (the 4 URLs above) are publicly accessible; ephemeral `*.vercel.app` URLs require Vercel Authentication.
 
 ### Auto-deploy pipeline
+
 GitHub `main` → Vercel build (`pnpm install` + `pnpm --filter sierra-estates-client-page build`) → production deployment → alias assigned → live in ~2 min. The two Next.js projects share the same repo; pushes rebuild both.
 
 ### Vercel webhook → Telegram alerting
+
 Failed deployments alert the team Telegram channel via `POST /api/webhooks/vercel-deploy` (auth via `VERCEL_DEPLOY_WEBHOOK_SECRET` shared-secret). Two webhooks are registered — one per project — covering `deployment.created` and `deployment.error` events.
 
 ---
@@ -117,6 +120,7 @@ Direct intake portal with client-side photo previews, auto-calculated AI valuati
 ### 6. MCP Server Fleet (5 servers, 11 tools)
 
 Five Model Context Protocol servers expose tool bridges to AI agents:
+
 - **sierra-deals** — `create_pipeline_entry`, `update_pipeline_status`, `get_pipeline_summary`
 - **stripe-payments** — `create_payment_intent`, `verify_payment`, `calculate_split`
 - **docusign-signing** — `initiate_envelope`, `get_signature_status`, `generate_agreement`
