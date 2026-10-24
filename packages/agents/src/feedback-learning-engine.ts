@@ -31,7 +31,7 @@ export interface LearningEngineUpdate {
 /**
  * Analyzes a stakeholder objection to extract root cause and tactical responses.
  */
-export function analyzeObjection(reason: string, currentPrice?: number): ObjectionAnalysis {
+export function analyzeObjection(reason: string, _currentPrice?: number): ObjectionAnalysis {
   const normalized = (reason || '').toLowerCase();
 
   if (

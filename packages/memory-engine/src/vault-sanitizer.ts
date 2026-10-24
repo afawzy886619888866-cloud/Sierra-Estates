@@ -88,7 +88,7 @@ export function findPotentialSecrets(content: string): string[] {
 export function validateMemorySafety(
   title: string,
   body: string,
-  kind: MemoryKind = 'context'
+  _kind: MemoryKind = 'context'
 ): { isValid: boolean; sanitizedTitle: string; sanitizedBody: string; detectedSecrets: string[] } {
   const detectedSecrets = findPotentialSecrets(`${title}\n${body}`);
   if (detectedSecrets.length > 0) {
