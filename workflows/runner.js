@@ -362,7 +362,7 @@ async function schedulerTick() {
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
-      cairoHour >= 10 && cairoHour < 20 &&
+      cairoHour >= 10 && cairoHour <= 20 &&
       outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey

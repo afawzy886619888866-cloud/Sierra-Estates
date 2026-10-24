@@ -394,7 +394,7 @@ async function main() {
 
   // Active-hours gate (Cairo) — never text owners at night
   const hr = cairoNow().getHours();
-  if (hr < ACTIVE_HOURS[0] || hr >= ACTIVE_HOURS[1]) {
+  if (hr < ACTIVE_HOURS[0] || hr > ACTIVE_HOURS[1]) {
     summary.skippedHours = true;
     console.log(`outside active hours (${hr}:00 Cairo, window ${ACTIVE_HOURS[0]}-${ACTIVE_HOURS[1]}) — nothing sent`);
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
