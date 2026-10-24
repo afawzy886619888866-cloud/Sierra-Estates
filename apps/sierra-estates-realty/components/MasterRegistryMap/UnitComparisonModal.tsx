@@ -1,5 +1,6 @@
+'use client';
 import React from 'react';
-import { UnitListing, Compound } from '../data/registryData';
+import { UnitListing, Compound } from './registryData';
 import { 
   X, 
   Check, 

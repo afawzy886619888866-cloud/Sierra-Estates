@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { UnitListing, Compound, COMPOUNDS } from './registryData';
 import { X, CheckCircle2, ShieldCheck, Calendar, Phone, Mail, User, Building } from 'lucide-react';

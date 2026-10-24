@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { COMPOUNDS, UNIT_LISTINGS, REGISTRY_STATS } from './registryData';
 import { X, Printer, Download, CheckCircle, ShieldCheck, QrCode } from 'lucide-react';
