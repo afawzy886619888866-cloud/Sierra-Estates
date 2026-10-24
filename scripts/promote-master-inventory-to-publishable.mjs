@@ -19,7 +19,10 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-dotenv.config({ path: path.join(ROOT, '.env.local') });
+for (const envFile of ['.env.local', '.env', 'workflows/.env']) {
+  const p = path.join(ROOT, envFile);
+  if (fs.existsSync(p)) dotenv.config({ path: p });
+}
 
 const SNAPSHOT_PATH = path.join(ROOT, 'apps', 'sierra-estates-realty', 'lib', 'inventory', 'snapshot.json');
 
