@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
+  FileSpreadsheet,
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search, Map as MapIcon,
   Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles,
 } from 'lucide-react';
@@ -28,6 +29,10 @@ import { HZDATA } from '@/lib/site/data';
 import { usePublicListings } from '@/lib/site/usePublicListings';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
+
+const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
+  ssr: false,
+});
 
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ssr: false,
@@ -345,6 +350,8 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
+  const [sheetModalOpen, setSheetModalOpen] = useState(false);
+  const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [form, setForm] = useState({
@@ -844,6 +851,13 @@ export default function HomePage() {
               onSelectAction={(name) => {
                 setSelectedMapCompound(name);
                 setSearch((prev) => ({ ...prev, compound: name }));
+                setSheetModalCompound(name);
+                setSheetModalOpen(true);
+              }}
+              onOpenSheet={(name) => {
+                setSelectedMapCompound(name);
+                setSheetModalCompound(name);
+                setSheetModalOpen(true);
               }}
               showControls={true}
               filterCompound={search.compound}
@@ -887,6 +901,30 @@ export default function HomePage() {
                     <span>{isAr ? `تصفح كل وحدات ${selectedMapCompound}` : `Browse All in ${selectedMapCompound}`}</span>
                     <ArrowRight style={{ width: 14, height: 14 }} />
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSheetModalCompound(selectedMapCompound);
+                      setSheetModalOpen(true);
+                    }}
+                    className="btn"
+                    style={{
+                      padding: '8px 18px',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      borderRadius: 10,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      background: 'linear-gradient(135deg, rgba(200, 150, 26, 0.25), rgba(200, 150, 26, 0.1))',
+                      border: '1px solid rgba(200, 150, 26, 0.5)',
+                      color: '#e9c176',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <FileSpreadsheet style={{ width: 15, height: 15 }} />
+                    <span>{isAr ? 'فتح كشف الإكسل للوحدات' : 'Open Excel Units Sheet'}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSelectedMapCompound(null)}
@@ -1358,6 +1396,14 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+    
+      {/* Interactive Compound Excel Sheet Modal */}
+      <CompoundExcelSheetModal
+        isOpen={sheetModalOpen}
+        onClose={() => setSheetModalOpen(false)}
+        compoundName={sheetModalCompound}
+        isAr={isAr}
+      />
     </SiteShell>
   );
 }
