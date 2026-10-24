@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
-import SierraMasterRegistryApp from '@/components/MasterRegistryMap/SierraMasterRegistryApp';
+import MasterplanDualView from '../../client/MasterplanDualView';
 
 export const metadata: Metadata = {
-  title: 'New Cairo City Master Registry · Sierra Estates',
+  title: 'Interactive 3D Masterplan & GIS Explorer · Sierra Estates',
   description:
-    'Bilingual Light & Dark Ultra-HD Master Registry of New Cairo City (Fifth Settlement & Golden Square) with interactive compound cartography, live units inventory, unit comparisons, and rental yield analytics.',
+    'Explore Fifth Settlement (New Cairo) cadastral masterplan intelligence in interactive 3D and orthographic 2D with live inventory benchmarks.',
   openGraph: {
-    title: 'New Cairo City Master Registry · Sierra Estates',
+    title: 'Interactive 3D Masterplan & GIS Explorer · Sierra Estates',
     description:
-      'Interactive New Cairo cartographic master registry, Golden Square unit inventory with side-by-side comparison, 3D architectural twin, and rental yield heatmap.',
+      'Explore Fifth Settlement (New Cairo) cadastral masterplan intelligence in interactive 3D with live compound valuations and cadastral master registry.',
   },
 };
 
 export default function MasterplanPage() {
-  return <SierraMasterRegistryApp />;
+  return <MasterplanDualView />;
 }
