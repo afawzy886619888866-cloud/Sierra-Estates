@@ -6,6 +6,8 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   FileSpreadsheet,
+  Sun,
+  Moon,
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search, Map as MapIcon,
   Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles,
 } from 'lucide-react';
@@ -352,6 +354,7 @@ export default function HomePage() {
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sheetModalOpen, setSheetModalOpen] = useState(false);
   const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
+  const [homepageMapTheme, setHomepageMapTheme] = useState<'light' | 'dark'>('light');
   const [sent, setSent] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [form, setForm] = useState({
@@ -837,9 +840,68 @@ export default function HomePage() {
                 {t('mapSub')}
               </p>
             </div>
-            <Link href="/compounds" className="sec-link" style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
-            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {/* Dual Map Theme Switcher: Light vs Dark Edition */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: 3,
+                  borderRadius: 12,
+                  background: 'rgba(200, 150, 26, 0.1)',
+                  border: '1px solid rgba(200, 150, 26, 0.3)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setHomepageMapTheme('light')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 9,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: homepageMapTheme === 'light' ? '#ffffff' : 'transparent',
+                    color: homepageMapTheme === 'light' ? '#0f172a' : '#8a6a2c',
+                    boxShadow: homepageMapTheme === 'light' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Sun style={{ width: 14, height: 14, color: '#f59e0b' }} />
+                  <span>{isAr ? 'النسخة الفاتحة' : 'Light Edition'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHomepageMapTheme('dark')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 9,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: homepageMapTheme === 'dark' ? '#071523' : 'transparent',
+                    color: homepageMapTheme === 'dark' ? '#f5d78e' : '#8a6a2c',
+                    boxShadow: homepageMapTheme === 'dark' ? '0 2px 6px rgba(0,0,0,0.3)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Moon style={{ width: 14, height: 14, color: '#e9c176' }} />
+                  <span>{isAr ? 'النسخة الداكنة (Obsidian)' : 'Dark Edition'}</span>
+                </button>
+              </div>
+
+              <Link href="/compounds" className="sec-link" style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
+              </Link>
+            </div>
           </div>
 
           {/* Interactive Map Canvas */}
@@ -865,6 +927,8 @@ export default function HomePage() {
               filterType={search.type}
               filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
               isAr={isAr}
+              theme={homepageMapTheme}
+              onThemeChange={setHomepageMapTheme}
             />
           </div>
           <div className="map-status" role="status" aria-live="polite">
