@@ -1,26 +1,21 @@
+'use client';
 import React, { useState, useMemo } from 'react';
 import { UnitListing, Compound, UNIT_LISTINGS, COMPOUNDS } from './registryData';
 import { UnitComparisonModal } from './UnitComparisonModal';
+import { InventoryPdfDossierModal } from './InventoryPdfDossierModal';
 import { 
   FileSpreadsheet, 
   Download, 
   Search, 
-  Filter, 
-  ArrowUpDown, 
-  Eye, 
-  Maximize2, 
-  Calculator,
-  Building,
-  Check,
-  ChevronDown,
   Sparkles,
   Layers,
   MapPin,
-  TrendingUp,
   CheckSquare,
-  Square,
   Scale,
-  Trash2
+  FileText,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
 } from 'lucide-react';
 
 interface ExcelInventorySheetProps {
@@ -45,19 +40,27 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: string }>({ row: 1, col: 'A' });
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'rent-desc' | 'bua-desc' | 'ppm-asc' | 'code'>('code');
   const [showClearBlueprint, setShowClearBlueprint] = useState(true);
+  const [showAllCompoundsMode, setShowAllCompoundsMode] = useState(false);
+
+  // Blueprint vector zoom state (lossless infinite vector resolution)
+  const [blueprintZoom, setBlueprintZoom] = useState<number>(1);
+
+  // Branded PDF Dossier Modal state
+  const [isPdfDossierOpen, setIsPdfDossierOpen] = useState<boolean>(false);
 
   // Compare Units State (up to 3 units)
   const [compareUnits, setCompareUnits] = useState<UnitListing[]>([]);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState<boolean>(false);
 
   // Active compound ID filter
-  const currentCompoundId = selectedCompound ? selectedCompound.id : 'all';
+  const currentCompoundId = showAllCompoundsMode ? 'all' : (selectedCompound ? selectedCompound.id : 'all');
 
   const handleCompoundChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     if (val === 'all') {
-      onSelectCompound(COMPOUNDS[0]);
+      setShowAllCompoundsMode(true);
     } else {
+      setShowAllCompoundsMode(false);
       const found = COMPOUNDS.find(c => c.id === val);
       if (found) onSelectCompound(found);
     }
@@ -71,7 +74,6 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
         return prev.filter(u => u.id !== unit.id);
       } else {
         if (prev.length >= 3) {
-          // If already 3, replace the oldest or show notification
           return [...prev.slice(1), unit];
         }
         return [...prev, unit];
@@ -96,6 +98,7 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
         || (activePurpose === 'Rent' && (u.purpose === 'Rent' || u.purpose === 'Both'));
       const matchSearch = u.unitCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.compoundNameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.compoundNameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.typeEn.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCompound && matchPurpose && matchSearch;
     }).sort((a, b) => {
@@ -147,11 +150,17 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Sierra_Estates_Inventory_${selectedCompound?.nameEn || 'Registry'}_2026.csv`);
+    link.setAttribute('download', `Sierra_Estates_Inventory_${showAllCompoundsMode ? 'All_Compounds' : (selectedCompound?.nameEn || 'Registry')}_2026.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
+
+  // Dynamic SVG viewBox calculation for lossless vector zoom on the compound blueprint
+  const bpW = 600 / blueprintZoom;
+  const bpH = 240 / blueprintZoom;
+  const bpX = (600 - bpW) / 2;
+  const bpY = (240 - bpH) / 2;
 
   return (
     <div className={`w-full max-w-7xl mx-auto px-2 sm:px-4 py-6 transition-colors ${
@@ -181,7 +190,7 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                   SIERRA ESTATES · MASTER REGISTRY WORKBOOK.XLSX
                 </span>
                 <span className="px-2 py-0.2 rounded-xs bg-black/40 text-[10px] font-mono uppercase text-cyan-300 border border-cyan-500/30">
-                  Sheet: {selectedCompound?.nameEn || 'All Compounds'}
+                  Sheet: {showAllCompoundsMode ? 'All 18 Compounds' : (selectedCompound?.nameEn || 'All Compounds')}
                 </span>
                 <span className="text-[10px] font-mono text-amber-300 hidden sm:inline">
                   sierra-estates.net
@@ -193,7 +202,17 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* NEW: Download Inventory (Branded High-Resolution PDF Dossier) Button */}
+            <button
+              onClick={() => setIsPdfDossierOpen(true)}
+              className="px-3.5 py-1.5 rounded-md text-xs font-extrabold bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-amber-200/60"
+              title={isAr ? 'تصدير قائمة الوحدات المفلترة إلى ملف PDF معتمد فائق الدقة للطباعة أو الحفظ' : 'Export filtered compound & unit list into a branded High-Res PDF Dossier'}
+            >
+              <FileText className="w-3.5 h-3.5 text-stone-950" />
+              <span>{isAr ? 'تحميل كتيب الوحدات (PDF)' : 'Download Inventory'}</span>
+            </button>
+
             {/* Compare Units Trigger Button */}
             <button
               onClick={() => {
@@ -202,11 +221,11 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                 }
                 setIsCompareModalOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-md text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded-md text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               title={isAr ? 'مقارنة مواصفات وسعر المتر لـ 3 وحدات' : 'Compare up to 3 units side-by-side'}
             >
               <Scale className="w-3.5 h-3.5 text-cyan-200" />
-              <span>{isAr ? `مقارنة الوحدات (${compareUnits.length}/3)` : `Compare Units (${compareUnits.length}/3)`}</span>
+              <span>{isAr ? `مقارنة (${compareUnits.length}/3)` : `Compare (${compareUnits.length}/3)`}</span>
             </button>
 
             <button
@@ -219,10 +238,10 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
 
             <button
               onClick={exportExcel}
-              className="px-3.5 py-1.5 rounded-md text-xs font-bold bg-white text-stone-900 hover:bg-stone-100 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-md text-xs font-bold bg-white text-stone-900 hover:bg-stone-100 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
             >
               <Download className="w-3.5 h-3.5 text-emerald-700" />
-              <span>{isAr ? 'تصدير إكسيل .CSV' : 'Download .XLSX'}</span>
+              <span>{isAr ? 'تصدير .CSV' : 'Export .CSV'}</span>
             </button>
           </div>
         </div>
@@ -244,6 +263,9 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
               onChange={handleCompoundChange}
               className="px-3 py-1 rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-semibold text-xs text-stone-900 dark:text-white focus:outline-hidden focus:border-cyan-500"
             >
+              <option value="all">
+                {isAr ? 'جميع المشروعات (١٨ كمبوند - الحصر الشامل)' : 'All 18 Compounds (Full Filtered Registry)'}
+              </option>
               {COMPOUNDS.map(c => (
                 <option key={c.id} value={c.id}>
                   № {c.indexNumber < 10 ? `0${c.indexNumber}` : c.indexNumber} · {c.nameEn} ({c.zoneEn})
@@ -310,43 +332,147 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
           </div>
           <div className="text-stone-400 italic">fx</div>
           <div className="text-stone-700 dark:text-stone-300 flex-1 truncate">
-            =VALUATION.COMPARE("{selectedCompound?.nameEn || 'VILLETTE'}", PPM_AVG={Math.round(stats.avgPpm)}, UNITS={units.length})
+            =VALUATION.COMPARE("{showAllCompoundsMode ? 'ALL_ENCLAVES' : (selectedCompound?.nameEn || 'VILLETTE')}", PPM_AVG={Math.round(stats.avgPpm)}, UNITS={units.length})
           </div>
           <div className="text-[11px] text-stone-500 font-sans hidden sm:block">
             {units.length} rows loaded · Avg EGP {Math.round(stats.avgPpm).toLocaleString()}/m²
           </div>
         </div>
 
-        {/* 4. Split Layout: High-Clarity Master Plan Blueprint + Metrics */}
+        {/* 4. Split Layout: Lossless Vector CAD Master Plan Blueprint + Metrics */}
         {showClearBlueprint && selectedCompound && (
           <div className={`p-4 border-b ${
             isDarkMode ? 'bg-[#070E1A] border-stone-800' : 'bg-[#F5F8F6] border-emerald-900/20'
           }`}>
             <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
               
-              {/* Clear Blueprint Graphic */}
+              {/* Clear High-Resolution Vector CAD Blueprint Graphic with Lossless Zoom */}
               <div className={`w-full lg:w-1/2 rounded-xl overflow-hidden border p-3 shadow-inner ${
                 isDarkMode ? 'bg-[#040913] border-cyan-500/30' : 'bg-white border-emerald-600/40'
               }`}>
-                <div className="flex items-center justify-between text-xs font-mono text-cyan-700 dark:text-cyan-300 mb-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-cyan-700 dark:text-cyan-300 mb-2">
                   <span className="font-bold flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5" />
-                    <span>{selectedCompound.nameEn} · CLEAR MASTER PLAN BLUEPRINT</span>
+                    <span>{showAllCompoundsMode ? 'NEW CAIRO REGISTRY' : selectedCompound.nameEn} · VECTOR CAD BLUEPRINT</span>
                   </span>
-                  <span className="text-[10px] bg-cyan-500/10 px-2 py-0.5 rounded-sm border border-cyan-500/20">
-                    SCALE: 1:5,000 ARCHITECTURAL
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] bg-cyan-500/10 px-2 py-0.5 rounded-sm border border-cyan-500/20">
+                      INFINITE VECTOR DPI
+                    </span>
+                    <div className="flex items-center border border-cyan-500/30 rounded overflow-hidden bg-black/20">
+                      <button
+                        type="button"
+                        onClick={() => setBlueprintZoom(z => Math.max(1, Number((z - 0.5).toFixed(1))))}
+                        className="p-1 hover:bg-cyan-500/20 cursor-pointer"
+                        title="Zoom Out Blueprint"
+                      >
+                        <ZoomOut className="w-3 h-3" />
+                      </button>
+                      <span className="px-1.5 text-[10px] font-bold">{Math.round(blueprintZoom * 100)}%</span>
+                      <button
+                        type="button"
+                        onClick={() => setBlueprintZoom(z => Math.min(4, Number((z + 0.5).toFixed(1))))}
+                        className="p-1 hover:bg-cyan-500/20 cursor-pointer"
+                        title="Zoom In Blueprint (Lossless Vector)"
+                      >
+                        <ZoomIn className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlueprintZoom(1)}
+                        className="p-1 hover:bg-cyan-500/20 border-l border-cyan-500/30 cursor-pointer"
+                        title="Reset Blueprint Zoom"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                {/* SVG Clear Master Plan Diagram */}
-                <div className="relative w-full aspect-[21/9] rounded-lg bg-gradient-to-br from-cyan-950/20 via-sky-950/10 to-stone-900/20 flex items-center justify-center overflow-hidden border border-dashed border-cyan-500/30">
-                  <svg className="w-full h-full p-2" viewBox="0 0 600 240">
-                    <rect x="20" y="20" width="560" height="200" rx="16" fill="none" stroke="#06b6d4" strokeWidth="1.8" strokeDasharray="6 4" />
-                    <line x1="20" y1="120" x2="580" y2="120" stroke="#c8961a" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.6" />
-                    <line x1="300" y1="20" x2="300" y2="220" stroke="#c8961a" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.6" />
-                    <ellipse cx="300" cy="120" rx="60" ry="35" fill="rgba(6, 182, 212, 0.15)" stroke="#06b6d4" strokeWidth="1.5" />
-                    <text x="300" y="115" textAnchor="middle" fill="#38bdf8" fontSize="10" fontFamily="JetBrains Mono" fontWeight="bold">CENTRAL LAGOON & CLUBHOUSE</text>
-                    <text x="300" y="130" textAnchor="middle" fill="#d4af37" fontSize="9" fontFamily="JetBrains Mono">{selectedCompound.zoneEn}</text>
+                {/* Lossless Vector SVG Master Plan Diagram — uses viewBox zoom so lines & text never pixelate */}
+                <div className="relative w-full aspect-[21/9] rounded-lg bg-[#050C18] flex items-center justify-center overflow-hidden border border-cyan-500/30">
+                  <svg
+                    className="w-full h-full"
+                    viewBox={`${bpX} ${bpY} ${bpW} ${bpH}`}
+                    shapeRendering="geometricPrecision"
+                    textRendering="geometricPrecision"
+                  >
+                    <defs>
+                      <pattern id="excelCadSubGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1E293B" strokeWidth="0.5" />
+                        <path d="M 5 0 L 0 0 0 5" fill="none" stroke="#0F172A" strokeWidth="0.25" />
+                      </pattern>
+                    </defs>
+                    <rect x="0" y="0" width="600" height="240" fill="url(#excelCadSubGrid)" />
+                    <rect x="20" y="16" width="560" height="208" rx="14" fill="rgba(6, 182, 212, 0.03)" stroke="#06b6d4" strokeWidth="1.2" strokeDasharray="5 3" />
+                    <rect x="28" y="24" width="544" height="192" rx="10" fill="none" stroke="#d4af37" strokeWidth="0.7" opacity="0.6" />
+                    <line x1="28" y1="120" x2="572" y2="120" stroke="#c8961a" strokeWidth="0.9" strokeDasharray="3 3" opacity="0.65" />
+                    <line x1="300" y1="24" x2="300" y2="216" stroke="#c8961a" strokeWidth="0.9" strokeDasharray="3 3" opacity="0.65" />
+                    <ellipse cx="300" cy="120" rx="86" ry="38" fill="rgba(6, 182, 212, 0.16)" stroke="#38bdf8" strokeWidth="1.3" />
+                    <ellipse cx="300" cy="120" rx="64" ry="25" fill="rgba(56, 189, 248, 0.22)" stroke="#7dd3fc" strokeWidth="0.7" strokeDasharray="3 2" />
+                    <text x="300" y="116" textAnchor="middle" fill="#f8fafc" fontSize="8.5" fontFamily="monospace" fontWeight="bold">
+                      {showAllCompoundsMode ? 'NEW CAIRO MASTER CORRIDOR' : selectedCompound.nameEn.toUpperCase()}
+                    </text>
+                    <text x="300" y="128" textAnchor="middle" fill="#d4af37" fontSize="7" fontFamily="monospace">
+                      {selectedCompound.zoneEn} · {units.length} VERIFIED PARCELS
+                    </text>
+
+                    {/* Render crisp vector parcel nodes for filtered units */}
+                    {units.slice(0, 10).map((u, idx) => {
+                      const count = Math.min(units.length, 10);
+                      const angle = (idx / count) * Math.PI * 2 - Math.PI / 2;
+                      const px = 300 + Math.cos(angle) * 185;
+                      const py = 120 + Math.sin(angle) * 74;
+                      return (
+                        <g
+                          key={u.id}
+                          className="cursor-pointer"
+                          onClick={() => onSelectUnit(u)}
+                        >
+                          <line
+                            x1={300 + Math.cos(angle) * 86}
+                            y1={120 + Math.sin(angle) * 38}
+                            x2={px}
+                            y2={py}
+                            stroke="#d4af37"
+                            strokeWidth="0.5"
+                            strokeDasharray="2 2"
+                            opacity="0.6"
+                          />
+                          <rect
+                            x={px - 28}
+                            y={py - 10}
+                            width="56"
+                            height="20"
+                            rx="3"
+                            fill="#091526"
+                            stroke="#fbbf24"
+                            strokeWidth="0.9"
+                          />
+                          <text
+                            x={px}
+                            y={py - 1}
+                            textAnchor="middle"
+                            fill="#fde047"
+                            fontSize="6"
+                            fontFamily="monospace"
+                            fontWeight="bold"
+                          >
+                            {u.unitCode}
+                          </text>
+                          <text
+                            x={px}
+                            y={py + 6.5}
+                            textAnchor="middle"
+                            fill="#cbd5e1"
+                            fontSize="5"
+                            fontFamily="monospace"
+                          >
+                            {u.buaM2}m² · {(u.resalePriceEgp / 1_000_000).toFixed(1)}M
+                          </text>
+                        </g>
+                      );
+                    })}
                   </svg>
                 </div>
               </div>
@@ -356,10 +482,12 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
                 <div>
                   <div className="flex items-center justify-between pb-1 mb-2 border-b border-stone-200 dark:border-stone-800">
                     <span className="font-cinzel font-bold text-sm text-stone-900 dark:text-white">
-                      {selectedCompound.nameEn} ({selectedCompound.nameAr})
+                      {showAllCompoundsMode
+                        ? (isAr ? 'جميع مشروعات القاهرة الجديدة (١٨ كمبوند)' : 'All 18 New Cairo Enclaves')
+                        : `${selectedCompound.nameEn} (${selectedCompound.nameAr})`}
                     </span>
                     <span className="text-cyan-600 dark:text-cyan-400 font-bold">
-                      {selectedCompound.developerEn}
+                      {showAllCompoundsMode ? 'SIERRA ESTATES REGISTRY' : selectedCompound.developerEn}
                     </span>
                   </div>
                   <p className="text-stone-600 dark:text-stone-300 font-sans text-xs line-clamp-2">
@@ -688,7 +816,13 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
           <div className="flex items-center gap-3">
             <span>TOTAL VALUE: EGP {(stats.totalAssets / 1000000).toFixed(1)}M</span>
             <span>·</span>
-            <span className="text-cyan-300 font-bold">SIERRA ESTATES</span>
+            <button
+              onClick={() => setIsPdfDossierOpen(true)}
+              className="text-amber-300 hover:text-amber-200 underline font-bold cursor-pointer flex items-center gap-1"
+            >
+              <FileText className="w-3 h-3" />
+              <span>{isAr ? 'تحميل PDF' : 'Download Inventory PDF'}</span>
+            </button>
           </div>
         </div>
 
@@ -708,6 +842,18 @@ export const ExcelInventorySheet: React.FC<ExcelInventorySheetProps> = ({
           isDarkMode={isDarkMode}
         />
       )}
+
+      {/* Branded High-Resolution Inventory PDF Dossier Modal */}
+      <InventoryPdfDossierModal
+        isOpen={isPdfDossierOpen}
+        onClose={() => setIsPdfDossierOpen(false)}
+        selectedCompound={showAllCompoundsMode ? null : selectedCompound}
+        filteredUnits={units}
+        activePurpose={activePurpose}
+        stats={stats}
+        lang={lang}
+        isDarkMode={isDarkMode}
+      />
 
     </div>
   );

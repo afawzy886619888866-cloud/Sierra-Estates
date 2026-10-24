@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Compound, 
@@ -360,21 +361,23 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             onWheel={handleWheel}
             className="relative w-full aspect-[16/9] min-h-[540px] overflow-hidden cursor-grab active:cursor-grabbing select-none"
           >
-            {/* Transform Canvas Layer */}
+            {/* High-Resolution 4K + Infinite Vector Zoom Layer (Uses layout dimensions instead of GPU bitmap stretch so zooming never pixelates) */}
             <div 
               style={{
-                transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoomLevel})`,
-                transformOrigin: '50% 50%',
-                transition: isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                willChange: 'transform',
+                width: `${zoomLevel * 100}%`,
+                height: `${zoomLevel * 100}%`,
+                left: `${50 - zoomLevel * 50}%`,
+                top: `${50 - zoomLevel * 50}%`,
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+                transition: isDragging ? 'none' : 'width 0.16s ease-out, height 0.16s ease-out, left 0.16s ease-out, top 0.16s ease-out, transform 0.16s ease-out',
               }}
-              className="absolute inset-0 w-full h-full"
+              className="absolute"
             >
-              {/* Base Authentic Cartographic Backdrop Image (Image_1_f1dc350b.jpeg with Dark/Light grading) */}
+              {/* Base Authentic 4K Ultra-HD Cartographic Backdrop Image (3840x2143) with Dedicated Dark & Light Editions */}
               <img
-                src={mapStyle === 'previous' 
-                  ? '/assets/aistudio/Image_1_f1dc350b.jpeg' 
-                  : (activeDarkMode ? '/assets/maps/new-cairo-masterplan-dark.jpg' : '/assets/maps/new-cairo-masterplan-light.jpg')
+                src={activeDarkMode 
+                  ? '/assets/aistudio/Image_1_dark_4k.jpeg' 
+                  : '/assets/aistudio/Image_1_f1dc350b.jpeg'
                 }
                 onError={(e) => {
                   const target = e.currentTarget;
@@ -382,13 +385,14 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                     target.src = '/assets/aistudio/Image_1_f1dc350b.jpeg';
                   }
                 }}
-                alt="New Cairo City Master Registry Map"
-                className="w-full h-full object-cover select-none pointer-events-none transition-all duration-500"
+                alt={activeDarkMode ? "New Cairo City 4K Master Registry Map (Dark Edition)" : "New Cairo City 4K Master Registry Map (Light Edition)"}
+                decoding="sync"
+                fetchPriority="high"
+                className="w-full h-full object-cover select-none pointer-events-none transition-opacity duration-300"
                 style={{
-                  imageRendering: '-webkit-optimize-contrast',
                   filter: activeDarkMode 
-                    ? 'brightness(0.85) contrast(1.22) saturate(1.10) hue-rotate(-5deg)' 
-                    : 'brightness(1.04) contrast(1.08) saturate(1.06)',
+                    ? 'url(#ultraHdSharpen) contrast(1.12) saturate(1.08)' 
+                    : 'url(#ultraHdSharpen) brightness(1.02) contrast(1.08) saturate(1.06)',
                 }}
                 draggable={false}
               />
@@ -398,7 +402,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                 <div 
                   className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500"
                   style={{
-                    background: 'radial-gradient(ellipse at 50% 50%, rgba(6, 17, 34, 0.20) 0%, rgba(6, 17, 34, 0.65) 100%)',
+                    background: 'radial-gradient(ellipse at 50% 50%, rgba(6, 17, 34, 0.18) 0%, rgba(6, 17, 34, 0.62) 100%)',
                     mixBlendMode: 'multiply',
                   }}
                 />
@@ -406,7 +410,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                 <div 
                   className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500"
                   style={{
-                    background: 'radial-gradient(ellipse at 50% 50%, rgba(250, 248, 245, 0.05) 0%, rgba(250, 248, 245, 0.20) 100%)',
+                    background: 'radial-gradient(ellipse at 50% 50%, rgba(250, 248, 245, 0.04) 0%, rgba(250, 248, 245, 0.18) 100%)',
                     mixBlendMode: 'soft-light',
                   }}
                 />
@@ -419,13 +423,23 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                   : 'bg-gradient-to-t from-[#FAF8F5]/30 via-transparent to-[#FAF8F5]/20 shadow-[inset_0_0_60px_rgba(180,83,9,0.08)]'
               }`} />
 
-              {/* SVG Overlay: Delicate Glowing White/Gold Thin Lines around each compound */}
+              {/* Infinite-Resolution SVG Vector CAD Overlay: Geometric Precision at Any Zoom Level */}
               <svg 
                 className="absolute inset-0 w-full h-full pointer-events-none z-15" 
                 viewBox="0 0 1000 562.5"
                 preserveAspectRatio="xMidYMid meet"
+                shapeRendering="geometricPrecision"
+                textRendering="geometricPrecision"
               >
                 <defs>
+                  {/* Adaptive High-Definition Unsharp Mask Filter for crisp edges on zoom */}
+                  <filter id="ultraHdSharpen" x="0%" y="0%" width="100%" height="100%">
+                    <feConvolveMatrix
+                      order="3 3"
+                      preserveAlpha="true"
+                      kernelMatrix="0 -0.35 0 -0.35 2.4 -0.35 0 -0.35 0"
+                    />
+                  </filter>
                   {/* Subtle white-gold neon glow filter */}
                   <filter id="whiteGlow" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur1" />
@@ -457,15 +471,15 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                 {/* Concentric Radar Overlay from AUC Epicenter */}
                 {showRadarRings && (
                   <g opacity={activeDarkMode ? "0.75" : "0.6"}>
-                    <circle cx="498" cy="285" r="42" fill="none" stroke={activeDarkMode ? "#FFFFFF" : "#B8860B"} strokeWidth="0.8" strokeDasharray="3 3" opacity="0.6" />
-                    <circle cx="498" cy="285" r="95" fill="none" stroke={activeDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="1" opacity="0.5" />
-                    <circle cx="498" cy="285" r="150" fill="none" stroke={activeDarkMode ? '#D4AF37' : '#B45309'} strokeWidth="1" strokeDasharray="4 4" opacity="0.45" />
-                    <circle cx="498" cy="285" r="210" fill="none" stroke="#D4AF37" strokeWidth="1.2" opacity="0.5" />
-                    <circle cx="498" cy="285" r="280" fill="none" stroke={activeDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="0.9" strokeDasharray="6 4" opacity="0.35" />
+                    <circle cx="498" cy="285" r="42" fill="none" stroke={activeDarkMode ? "#FFFFFF" : "#B8860B"} strokeWidth={0.8 / Math.sqrt(zoomLevel)} strokeDasharray="3 3" opacity="0.6" />
+                    <circle cx="498" cy="285" r="95" fill="none" stroke={activeDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth={1 / Math.sqrt(zoomLevel)} opacity="0.5" />
+                    <circle cx="498" cy="285" r="150" fill="none" stroke={activeDarkMode ? '#D4AF37' : '#B45309'} strokeWidth={1 / Math.sqrt(zoomLevel)} strokeDasharray="4 4" opacity="0.45" />
+                    <circle cx="498" cy="285" r="210" fill="none" stroke="#D4AF37" strokeWidth={1.2 / Math.sqrt(zoomLevel)} opacity="0.5" />
+                    <circle cx="498" cy="285" r="280" fill="none" stroke={activeDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth={0.9 / Math.sqrt(zoomLevel)} strokeDasharray="6 4" opacity="0.35" />
                   </g>
                 )}
 
-                {/* Compound Subtle Glowing Thin Boundaries */}
+                {/* Compound Subtle Glowing Thin Boundaries + Progressive Vector CAD Subdivisions on Zoom */}
                 {filteredCompounds.map(c => {
                   const cx = (c.xPct / 100) * 1000;
                   const cy = (c.yPct / 100) * 562.5;
@@ -485,11 +499,56 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                         stroke={isHovered 
                           ? (activeDarkMode ? '#FDE047' : '#B45309') 
                           : (activeDarkMode ? 'rgba(212, 175, 55, 0.65)' : 'rgba(180, 83, 9, 0.55)')}
-                        strokeWidth={isHovered ? 2.5 : 1.1}
+                        strokeWidth={(isHovered ? 2.2 : 1.1) / Math.sqrt(zoomLevel)}
                         strokeDasharray={isHovered ? 'none' : '3 3'}
                         filter={isHovered ? 'url(#goldNeonGlow)' : undefined}
                         className="transition-all duration-200"
                       />
+
+                      {/* Progressive Vector CAD Detail when zoomed in (zoomLevel >= 1.35) or hovered — 100% mathematical vector clarity */}
+                      {(zoomLevel >= 1.35 || isHovered) && (
+                        <g opacity={isHovered ? 0.95 : 0.72}>
+                          <ellipse
+                            cx={cx}
+                            cy={cy}
+                            rx={c.boundaryRadiusX * 0.55}
+                            ry={c.boundaryRadiusY * 0.55}
+                            fill="rgba(56, 189, 248, 0.12)"
+                            stroke={activeDarkMode ? '#38BDF8' : '#0284C7'}
+                            strokeWidth={0.75 / Math.sqrt(zoomLevel)}
+                            strokeDasharray="2 1.5"
+                          />
+                          <line
+                            x1={cx - c.boundaryRadiusX * 0.85}
+                            y1={cy}
+                            x2={cx + c.boundaryRadiusX * 0.85}
+                            y2={cy}
+                            stroke={activeDarkMode ? '#D4AF37' : '#B45309'}
+                            strokeWidth={0.55 / Math.sqrt(zoomLevel)}
+                            strokeDasharray="1.5 1.5"
+                          />
+                          <line
+                            x1={cx}
+                            y1={cy - c.boundaryRadiusY * 0.85}
+                            x2={cx}
+                            y2={cy + c.boundaryRadiusY * 0.85}
+                            stroke={activeDarkMode ? '#D4AF37' : '#B45309'}
+                            strokeWidth={0.55 / Math.sqrt(zoomLevel)}
+                            strokeDasharray="1.5 1.5"
+                          />
+                          <text
+                            x={cx}
+                            y={cy + c.boundaryRadiusY + 8}
+                            textAnchor="middle"
+                            fontSize={Math.max(5.5, 8.5 / Math.sqrt(zoomLevel))}
+                            fontFamily="monospace"
+                            fontWeight="bold"
+                            fill={activeDarkMode ? '#FDE047' : '#78350F'}
+                          >
+                            {c.nameEn.toUpperCase()}
+                          </text>
+                        </g>
+                      )}
 
                       {/* Little thin line pointer & index marker when hovered */}
                       {isHovered && (
@@ -500,13 +559,13 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                             x2={cx}
                             y2={cy - c.boundaryRadiusY - 14}
                             stroke={activeDarkMode ? "#FDE047" : "#B45309"}
-                            strokeWidth="1.5"
+                            strokeWidth={1.5 / Math.sqrt(zoomLevel)}
                             filter="url(#softGlow)"
                           />
                           <circle
                             cx={cx}
                             cy={cy - c.boundaryRadiusY - 14}
-                            r="3"
+                            r={3 / Math.sqrt(zoomLevel)}
                             fill={activeDarkMode ? "#FDE047" : "#B45309"}
                             filter="url(#goldNeonGlow)"
                           />

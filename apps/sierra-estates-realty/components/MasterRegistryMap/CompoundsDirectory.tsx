@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { Compound, COMPOUNDS } from './registryData';
 import { Building, MapPin, Compass, Clock, ArrowRight, Shield, Layers } from 'lucide-react';

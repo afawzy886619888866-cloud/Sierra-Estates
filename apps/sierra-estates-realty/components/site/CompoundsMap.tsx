@@ -1518,7 +1518,7 @@ export default function CompoundsMap({
               opacity: mapTheme === 'dark' ? 1 : 0,
               transition: 'opacity 0.4s ease',
               pointerEvents: 'none',
-              imageRendering: '-webkit-optimize-contrast',
+              
               transform: 'translateZ(0)',
               filter: 'contrast(1.15) brightness(1.05) saturate(1.12) drop-shadow(0 0 1px rgba(223, 173, 58, 0.2))',
               backfaceVisibility: 'hidden',
@@ -1540,7 +1540,7 @@ export default function CompoundsMap({
               opacity: mapTheme === 'light' ? 1 : 0,
               transition: 'opacity 0.4s ease',
               pointerEvents: 'none',
-              imageRendering: '-webkit-optimize-contrast',
+              
               transform: 'translateZ(0)',
               filter: 'contrast(1.12) brightness(1.03) saturate(1.08)',
               backfaceVisibility: 'hidden',

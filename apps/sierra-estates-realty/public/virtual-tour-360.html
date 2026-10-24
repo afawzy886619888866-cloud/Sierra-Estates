@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sierra Estates · 360° Architectural Virtual Tour</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #061122; font-family: 'Inter', system-ui, sans-serif; color: #f8fafc; }
+    #tour-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    #tour-canvas:active { cursor: grabbing; }
+    .hud-top {
+      position: absolute; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none;
+    }
+    .badge {
+      background: rgba(6, 17, 34, 0.85);
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #fde047;
+      display: flex; align-items: center; gap: 8px;
+      pointer-events: auto;
+    }
+    .pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .hud-bottom {
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px;
+      background: rgba(6, 17, 34, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      padding: 5px;
+      border-radius: 10px;
+      backdrop-filter: blur(8px);
+    }
+    .room-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #cbd5e1;
+      font-family: monospace;
+      font-size: 10px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .room-btn.active, .room-btn:hover {
+      background: rgba(212, 175, 55, 0.22);
+      border-color: #d4af37;
+      color: #fde047;
+      font-weight: 700;
+    }
+    .compass-ring {
+      position: absolute; top: 54px; right: 14px;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(6, 17, 34, 0.8);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      display: flex; align-items: center; justify-content: center;
+      font-family: monospace; font-size: 9px; color: #d4af37;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="tour-canvas"></canvas>
+
+  <div class="hud-top">
+    <div class="badge">
+      <span class="pulse"></span>
+      <span id="unit-title">360° ARCHITECTURAL VIRTUAL TOUR</span>
+    </div>
+    <div class="badge" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);">
+      <span id="yaw-readout">360° DRAG TO LOOK AROUND</span>
+    </div>
+  </div>
+
+  <div class="compass-ring" id="compass">360°</div>
+
+  <div class="hud-bottom">
+    <button class="room-btn active" onclick="setRoom(0, this)">Grand Reception</button>
+    <button class="room-btn" onclick="setRoom(1, this)">Master Suite</button>
+    <button class="room-btn" onclick="setRoom(2, this)">Garden &amp; Pool Terrace</button>
+    <button class="room-btn" onclick="setRoom(3, this)">Sky Roof Lounge</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const unitCode = params.get('unit') || 'SIERRA-VILLA';
+    const compound = params.get('compound') || 'New Cairo';
+    const bua = params.get('bua') || '340';
+    document.getElementById('unit-title').textContent = `360° TOUR · ${unitCode} (${compound} · ${bua}m²)`;
+
+    const canvas = document.getElementById('tour-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const rooms = [
+      { name: 'GRAND RECEPTION & DOUBLE-HEIGHT SALON', ceil: '#0c192e', floor: '#1e1b18', wall: '#112240', accent: '#d4af37', windowColor: '#38bdf8' },
+      { name: 'MASTER EN-SUITE BEDROOM & DRESSING PAVILION', ceil: '#0f172a', floor: '#261f1a', wall: '#162032', accent: '#f59e0b', windowColor: '#7dd3fc' },
+      { name: 'PRIVATE LANDSCAPED GARDEN & INFINITY POOL DECK', ceil: '#041022', floor: '#0c2d27', wall: '#0a2239', accent: '#10b981', windowColor: '#2dd4bf' },
+      { name: 'PANORAMIC SKY ROOF TERRACE & LOUNGE', ceil: '#030712', floor: '#1c1917', wall: '#091526', accent: '#38bdf8', windowColor: '#fde047' }
+    ];
+
+    let currentRoom = 0;
+    let yaw = 0;
+    let pitch = 0;
+    let isDragging = false;
+    let lastX = 0, lastY = 0;
+    let autoRotate = true;
+
+    function setRoom(idx, btn) {
+      currentRoom = idx;
+      document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      autoRotate = false;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      yaw = (yaw - (e.clientX - lastX) * 0.45) % 360;
+      pitch = Math.max(-35, Math.min(35, pitch + (e.clientY - lastY) * 0.25));
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        autoRotate = false;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      }
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      yaw = (yaw - (e.touches[0].clientX - lastX) * 0.45) % 360;
+      pitch = Math.max(-35, Math.min(35, pitch + (e.touches[0].clientY - lastY) * 0.25));
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    });
+    window.addEventListener('touchend', () => { isDragging = false; });
+
+    function render() {
+      if (autoRotate) yaw = (yaw + 0.18) % 360;
+      const normYaw = ((yaw % 360) + 360) % 360;
+      document.getElementById('yaw-readout').textContent = `HDG ${Math.round(normYaw)}° · DRAG 360°`;
+      document.getElementById('compass').style.transform = `rotate(${-normYaw}deg)`;
+
+      const rm = rooms[currentRoom];
+      const horizonY = height * 0.5 + pitch * 3.2;
+
+      // Ceiling gradient
+      const ceilGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+      ceilGrad.addColorStop(0, rm.ceil);
+      ceilGrad.addColorStop(1, rm.wall);
+      ctx.fillStyle = ceilGrad;
+      ctx.fillRect(0, 0, width, horizonY);
+
+      // Floor gradient
+      const floorGrad = ctx.createLinearGradient(0, horizonY, 0, height);
+      floorGrad.addColorStop(0, rm.wall);
+      floorGrad.addColorStop(1, rm.floor);
+      ctx.fillStyle = floorGrad;
+      ctx.fillRect(0, horizonY, width, height - horizonY);
+
+      // 360 Panoramic Architectural Grid & Columns
+      const numPanels = 12;
+      for (let i = 0; i < numPanels; i++) {
+        const panelAngle = (i * (360 / numPanels) - normYaw + 540) % 360 - 180;
+        if (Math.abs(panelAngle) < 110) {
+          const x = width * 0.5 + (panelAngle / 90) * (width * 0.65);
+          const distFactor = 1 - Math.min(1, Math.abs(panelAngle) / 110) * 0.22;
+          const wallTop = horizonY - height * 0.28 * distFactor;
+          const wallBot = horizonY + height * 0.28 * distFactor;
+
+          // Vertical architectural column
+          ctx.strokeStyle = rm.accent;
+          ctx.globalAlpha = 0.38;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x, wallTop);
+          ctx.lineTo(x, wallBot);
+          ctx.stroke();
+
+          // Perspective floor & ceiling rays
+          ctx.globalAlpha = 0.18;
+          ctx.beginPath();
+          ctx.moveTo(x, wallBot);
+          ctx.lineTo(width * 0.5 + (x - width * 0.5) * 2.2, height);
+          ctx.moveTo(x, wallTop);
+          ctx.lineTo(width * 0.5 + (x - width * 0.5) * 2.2, 0);
+          ctx.stroke();
+
+          // Panoramic Glass Facade Window every 2nd bay
+          if (i % 2 === 0) {
+            ctx.fillStyle = rm.windowColor;
+            ctx.globalAlpha = 0.12;
+            ctx.fillRect(x - 36, wallTop + 14, 72, wallBot - wallTop - 28);
+            ctx.strokeStyle = rm.windowColor;
+            ctx.globalAlpha = 0.45;
+            ctx.strokeRect(x - 36, wallTop + 14, 72, wallBot - wallTop - 28);
+          }
+
+          // Interactive Hotspot Marker on cardinal bays
+          if (i % 3 === 0) {
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = rm.accent;
+            ctx.beginPath();
+            ctx.arc(x, horizonY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Room Title Watermark
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(rm.name, width * 0.5, horizonY - height * 0.31);
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(render);
+    }
+    render();
+  </script>
+</body>
+</html>
