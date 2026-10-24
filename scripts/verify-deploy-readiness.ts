@@ -166,7 +166,13 @@ check('Client Unit & Integration Tests', () => {
   }
 });
 
-// 9. A deployment must be reproducible from the checked-out commit.
+// 9. Check AI Reasoning Benchmark Harness & Ported Engines
+check('AI Reasoning Benchmark Harness & Ported Engines', () => {
+  execSync('npx tsx scripts/run-harness.ts', { stdio: 'pipe', env: process.env });
+  execSync('npx tsx scripts/verify-ported-engines.mjs', { stdio: 'pipe', env: process.env });
+});
+
+// 10. A deployment must be reproducible from the checked-out commit.
 check('Git Status & Zero Working Tree Drift', () => {
   const ignoredTestArtifacts = new Set([
     'scripts/verify-deploy-readiness.ts',
