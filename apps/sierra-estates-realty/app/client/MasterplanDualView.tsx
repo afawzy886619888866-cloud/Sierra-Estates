@@ -19,7 +19,7 @@ const SierraMasterRegistryApp = dynamic(
 );
 
 export default function MasterplanDualView() {
-  const [viewMode, setViewMode] = useState<'gis' | 'registry'>('gis');
+  const [viewMode, setViewMode] = useState<'gis' | 'registry'>('registry');
 
   return (
     <div className="relative min-h-screen">
