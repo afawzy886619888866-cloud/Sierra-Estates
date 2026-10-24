@@ -66,7 +66,12 @@ MESSAGES = [
 ]
 
 def get_cairo_time():
-    return datetime.utcnow() + timedelta(hours=2)
+    # Use the real Africa/Cairo zone so Egyptian DST (UTC+3) is honoured.
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("Africa/Cairo")).replace(tzinfo=None)
+    except Exception:
+        return datetime.utcnow() + timedelta(hours=3)
 
 def is_day_shift():
     now = get_cairo_time()
