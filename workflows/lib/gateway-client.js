@@ -148,29 +148,29 @@ class GatewayClient {
   async resolvePool() {
     if (this._poolCache && Date.now() - this._poolCache.at < POOL_CACHE_MS) return this._poolCache.entries;
     const entries = [];
-    const pending = []; // names needing resolution
-    for (const raw of this.sessionPool) {
-      if (UUID_RE.test(raw)) entries.push({ name: raw, uuid: raw });
-      else pending.push(raw);
-    }
-    if (pending.length) {
-      try {
-        const res = await requestJson(`${this.baseUrl}/api/sessions`, {
-          headers: { 'X-API-Key': this.adminKey },
-          timeoutMs: 8000,
-        });
-        if (res.ok && Array.isArray(res.data)) {
-          for (const name of pending) {
-            const found = res.data.find((s) => s && s.name === name);
-            if (found && found.id) entries.push({ name, uuid: found.id });
-            else console.warn(`[gateway-client] pool session "${name}" not found on gateway — skipped`);
+    try {
+      const res = await requestJson(`${this.baseUrl}/api/sessions`, {
+        headers: { 'X-API-Key': this.adminKey },
+        timeoutMs: 8000,
+      });
+      if (res.ok && Array.isArray(res.data)) {
+        for (const raw of this.sessionPool) {
+          const found = res.data.find((s) => s && (s.name === raw || s.id === raw));
+          if (found && found.id) {
+            if (found.status === 'ready') {
+              entries.push({ name: found.name || raw, uuid: found.id, status: found.status, phone: found.phone });
+            } else {
+              console.warn(`[gateway-client] pool session "${raw}" is not ready (status: ${found.status}) — skipped`);
+            }
+          } else {
+            console.warn(`[gateway-client] pool session "${raw}" not found on gateway — skipped`);
           }
-        } else {
-          console.warn(`[gateway-client] /api/sessions list HTTP ${res.status} — names unresolved this run`);
         }
-      } catch (e) {
-        console.warn(`[gateway-client] /api/sessions list failed: ${e.message}`);
+      } else {
+        console.warn(`[gateway-client] /api/sessions list HTTP ${res.status} — names unresolved this run`);
       }
+    } catch (e) {
+      console.warn(`[gateway-client] /api/sessions list failed: ${e.message}`);
     }
     this._poolCache = { at: Date.now(), entries };
     return entries;
