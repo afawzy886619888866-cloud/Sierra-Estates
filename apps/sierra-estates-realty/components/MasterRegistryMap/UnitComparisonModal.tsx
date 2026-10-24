@@ -1,5 +1,5 @@
 import React from 'react';
-import { UnitListing, Compound } from './registryData';
+import { UnitListing, Compound } from '../data/registryData';
 import { 
   X, 
   Check, 

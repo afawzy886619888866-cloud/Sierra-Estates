@@ -5,7 +5,7 @@ import {
   COMPOUNDS, 
   UNIT_LISTINGS, 
   ARTERY_ROADS 
-} from '../data/registryData';
+} from './registryData';
 import { 
   ZoomIn, 
   ZoomOut, 
@@ -123,12 +123,28 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
     }
   };
 
+  // Local theme state if not externally controlled, or synced
+  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(isDarkMode);
+  
+  useEffect(() => {
+    setInternalDarkMode(isDarkMode);
+  }, [isDarkMode]);
+
+  const activeDarkMode = onToggleTheme ? isDarkMode : internalDarkMode;
+  const toggleThemeMode = () => {
+    if (onToggleTheme) {
+      onToggleTheme();
+    } else {
+      setInternalDarkMode(prev => !prev);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col items-center">
       
       {/* Top Map Action Toolbar */}
       <div className={`w-full max-w-7xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs border-b transition-colors ${
-        isDarkMode ? 'border-amber-900/20 bg-[#080F1D]' : 'border-[#E6DEC8] bg-[#F7F3EB]'
+        activeDarkMode ? 'border-amber-900/30 bg-[#061122]' : 'border-[#E6DEC8] bg-[#FAF8F5]'
       }`}>
         {/* Zone Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
@@ -147,7 +163,9 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               className={`px-3 py-1 rounded-md text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 ${
                 activeZoneFilter === z.id
                   ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-white/70 dark:bg-stone-800/70 text-stone-700 dark:text-stone-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 border border-stone-200 dark:border-stone-700'
+                  : activeDarkMode 
+                    ? 'bg-[#0B192C]/80 text-stone-300 hover:bg-amber-950/40 border border-stone-700/60'
+                    : 'bg-white/80 text-stone-700 hover:bg-amber-100/50 border border-stone-200'
               }`}
             >
               {isAr ? z.ar : z.en}
@@ -158,26 +176,28 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
         {/* View Toggles, Theme Toggle & Zoom Controls */}
         <div className="flex items-center gap-2 shrink-0">
           
-          {/* Theme Toggle (Dark & Light) */}
-          {onToggleTheme && (
-            <button
-              onClick={onToggleTheme}
-              title={isDarkMode ? 'التبديل إلى النسخة المضيئة' : 'التبديل إلى النسخة الليلية'}
-              className="px-2.5 py-1 rounded-md text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all bg-white/70 dark:bg-stone-800/70 border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:border-amber-600"
-            >
-              {isDarkMode ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">{isAr ? 'النسخة المضيئة' : 'Light Edition'}</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="hidden sm:inline">{isAr ? 'النسخة الليلية' : 'Dark Edition'}</span>
-                </>
-              )}
-            </button>
-          )}
+          {/* Prominent Dark & Light Edition Toggle Button (Sierra Estates brand identity) */}
+          <button
+            onClick={toggleThemeMode}
+            title={activeDarkMode ? 'التبديل إلى النسخة المضيئة (Alabaster Light Edition)' : 'التبديل إلى النسخة الليلية (Midnight Obsidian Edition)'}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-2 cursor-pointer transition-all shadow-sm ${
+              activeDarkMode 
+                ? 'bg-[#0B192C] border-amber-400/50 text-amber-300 hover:border-amber-300 hover:bg-[#11243E]' 
+                : 'bg-white border-amber-600/40 text-amber-800 hover:border-amber-600 hover:bg-amber-50'
+            }`}
+          >
+            {activeDarkMode ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
+                <span>{isAr ? 'النسخة المضيئة' : 'Light Edition'}</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-amber-700" />
+                <span>{isAr ? 'النسخة الليلية' : 'Dark Edition'}</span>
+              </>
+            )}
+          </button>
 
           {/* AUC Radar Rings Toggle */}
           <button
@@ -230,7 +250,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             title={isAr ? 'التبديل بين الخريطة الأصلية السابقة والنمط الكارتوغرافي' : 'Toggle between Previous Authentic Masterplan and Vector Cartographic Edition'}
           >
             <Layers className="w-3.5 h-3.5 text-amber-500" />
-            <span>{mapStyle === 'previous' ? (isAr ? 'الخريطة السابقة' : 'Previous Map') : (isAr ? 'الخريطة المتجهة' : 'Vector Map')}</span>
+            <span>{mapStyle === 'previous' ? (isAr ? 'الخريطة الأصلية' : 'Authentic Map') : (isAr ? 'الخريطة المتجهة' : 'Vector Map')}</span>
           </button>
 
           {/* Zoom Buttons & Percentage Indicator */}
@@ -276,31 +296,58 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
       <div className="w-full max-w-7xl p-2 sm:p-4" ref={frameRef}>
         {/* Double Border Editorial Frame */}
         <div className={`relative w-full rounded-2xl overflow-hidden border-2 shadow-2xl transition-all duration-300 ${
-          isDarkMode 
-            ? 'border-cyan-500/30 bg-[#070E1A]' 
-            : 'border-[#B8860B]/40 bg-[#FAF8F5]'
+          activeDarkMode 
+            ? 'border-amber-500/40 bg-[#061122]' 
+            : 'border-[#D4AF37]/50 bg-[#FAF8F5]'
         }`}>
           
           {/* Inner hairline framing line */}
-          <div className="absolute inset-1.5 rounded-xl border border-cyan-500/20 dark:border-cyan-400/20 pointer-events-none z-30" />
+          <div className="absolute inset-1.5 rounded-xl border border-amber-500/20 dark:border-amber-400/20 pointer-events-none z-30" />
 
           {/* Top Title Banner */}
-          <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none px-4 py-1 rounded-full border backdrop-blur-md shadow-md text-center max-w-[90%] transition-colors ${
-            isDarkMode 
-              ? 'bg-[#080E1A]/90 border-cyan-500/40 text-stone-200' 
-              : 'bg-[#FAF8F5]/90 border-amber-600/40 text-stone-800'
+          <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none px-4 py-1.5 rounded-full border backdrop-blur-md shadow-lg text-center max-w-[92%] transition-all ${
+            activeDarkMode 
+              ? 'bg-[#061122]/92 border-amber-500/50 text-stone-100' 
+              : 'bg-[#FAF8F5]/95 border-amber-600/40 text-stone-900 shadow-stone-400/20'
           }`}>
             <span className="font-cinzel font-extrabold text-[10px] sm:text-xs tracking-widest uppercase">
-              {isDarkMode ? 'OBSIDIAN BLUEPRINT EDITION' : 'BILINGUAL LIGHT EDITORIAL EDITION'}
+              {activeDarkMode 
+                ? (isAr ? 'النسخة الليلية الفاخرة · SIERRA NOCTURNE' : 'SIERRA ESTATES · OBSIDIAN NOCTURNE MASTERPLAN') 
+                : (isAr ? 'النسخة المضيئة الملكية · SIERRA ALABASTER' : 'SIERRA ESTATES · ROYAL ALABASTER MASTERPLAN')}
             </span>
-            <span className="mx-2 text-cyan-500 font-bold">·</span>
-            <span className="text-[10px] font-mono tracking-wider text-cyan-600 dark:text-cyan-400 font-semibold">
+            <span className="mx-2 text-amber-500 font-bold">·</span>
+            <span className="text-[10px] font-mono tracking-wider text-cyan-500 font-semibold">
               sierra-estates.net
             </span>
             <span className="mx-2 text-stone-400">·</span>
-            <span className="text-[10px] font-mono tracking-wider text-amber-600 dark:text-amber-400">
-              New Cairo Master Registry 2026
+            <span className="text-[10px] font-mono tracking-wider text-amber-500 font-semibold">
+              {isAr ? 'المخطط الأصلي للقاهرة الجديدة 2026' : 'New Cairo Master Registry 2026'}
             </span>
+          </div>
+
+          {/* In-Map Quick Dark/Light Switcher Pill */}
+          <div className="absolute top-3 right-3 z-35 flex items-center">
+            <button
+              onClick={toggleThemeMode}
+              title={activeDarkMode ? 'التبديل إلى النسخة المضيئة (Light)' : 'التبديل إلى النسخة الليلية (Dark)'}
+              className={`px-3 py-1 rounded-full text-[11px] font-bold border backdrop-blur-md flex items-center gap-1.5 cursor-pointer shadow-lg transition-all ${
+                activeDarkMode
+                  ? 'bg-[#0B192C]/90 border-amber-400/60 text-amber-300 hover:bg-[#132845]'
+                  : 'bg-white/95 border-amber-600/50 text-amber-900 hover:bg-amber-50 shadow-md'
+              }`}
+            >
+              {activeDarkMode ? (
+                <>
+                  <Sun className="w-3 h-3 text-amber-400" />
+                  <span>{isAr ? 'فاتح' : 'Light'}</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3 h-3 text-amber-700" />
+                  <span>{isAr ? 'غامق' : 'Dark'}</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Interactive Map Viewport with Smooth Pan and Wheel Zoom */}
@@ -323,11 +370,11 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               }}
               className="absolute inset-0 w-full h-full"
             >
-              {/* Base Authentic Cartographic Backdrop Image (Previous authentic cadastral satellite map or Vector Edition) */}
+              {/* Base Authentic Cartographic Backdrop Image (Image_1_f1dc350b.jpeg with Dark/Light grading) */}
               <img
                 src={mapStyle === 'previous' 
                   ? '/assets/aistudio/Image_1_f1dc350b.jpeg' 
-                  : (isDarkMode ? '/assets/maps/new-cairo-masterplan-dark.jpg' : '/assets/maps/new-cairo-masterplan-light.jpg')
+                  : (activeDarkMode ? '/assets/maps/new-cairo-masterplan-dark.jpg' : '/assets/maps/new-cairo-masterplan-light.jpg')
                 }
                 onError={(e) => {
                   const target = e.currentTarget;
@@ -336,12 +383,41 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                   }
                 }}
                 alt="New Cairo City Master Registry Map"
-                className="w-full h-full object-cover select-none pointer-events-none transition-all duration-300 brightness-100 contrast-100"
+                className="w-full h-full object-cover select-none pointer-events-none transition-all duration-500"
                 style={{
                   imageRendering: '-webkit-optimize-contrast',
+                  filter: activeDarkMode 
+                    ? 'brightness(0.85) contrast(1.22) saturate(1.10) hue-rotate(-5deg)' 
+                    : 'brightness(1.04) contrast(1.08) saturate(1.06)',
                 }}
                 draggable={false}
               />
+
+              {/* Luxury Palette Overlay Tint matching Sierra Estates */}
+              {activeDarkMode ? (
+                <div 
+                  className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500"
+                  style={{
+                    background: 'radial-gradient(ellipse at 50% 50%, rgba(6, 17, 34, 0.20) 0%, rgba(6, 17, 34, 0.65) 100%)',
+                    mixBlendMode: 'multiply',
+                  }}
+                />
+              ) : (
+                <div 
+                  className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500"
+                  style={{
+                    background: 'radial-gradient(ellipse at 50% 50%, rgba(250, 248, 245, 0.05) 0%, rgba(250, 248, 245, 0.20) 100%)',
+                    mixBlendMode: 'soft-light',
+                  }}
+                />
+              )}
+
+              {/* Subtle Editorial Edge Vignette */}
+              <div className={`absolute inset-0 pointer-events-none z-12 transition-all duration-500 ${
+                activeDarkMode 
+                  ? 'bg-gradient-to-t from-[#061122]/70 via-transparent to-[#061122]/50 shadow-[inset_0_0_90px_rgba(6,17,34,0.85)]' 
+                  : 'bg-gradient-to-t from-[#FAF8F5]/30 via-transparent to-[#FAF8F5]/20 shadow-[inset_0_0_60px_rgba(180,83,9,0.08)]'
+              }`} />
 
               {/* SVG Overlay: Delicate Glowing White/Gold Thin Lines around each compound */}
               <svg 
@@ -360,6 +436,15 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
+                  <filter id="goldNeonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur1" />
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur2" />
+                    <feMerge>
+                      <feMergeNode in="blur1" />
+                      <feMergeNode in="blur2" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
                   <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
                     <feMerge>
@@ -371,12 +456,12 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
 
                 {/* Concentric Radar Overlay from AUC Epicenter */}
                 {showRadarRings && (
-                  <g opacity="0.65">
-                    <circle cx="498" cy="285" r="42" fill="none" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
-                    <circle cx="498" cy="285" r="95" fill="none" stroke={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="1" opacity="0.4" />
-                    <circle cx="498" cy="285" r="150" fill="none" stroke={isDarkMode ? '#38BDF8' : '#D4AF37'} strokeWidth="0.9" strokeDasharray="4 4" opacity="0.35" />
-                    <circle cx="498" cy="285" r="210" fill="none" stroke="#D4AF37" strokeWidth="1.1" opacity="0.4" />
-                    <circle cx="498" cy="285" r="280" fill="none" stroke={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="0.8" strokeDasharray="6 4" opacity="0.25" />
+                  <g opacity={activeDarkMode ? "0.75" : "0.6"}>
+                    <circle cx="498" cy="285" r="42" fill="none" stroke={activeDarkMode ? "#FFFFFF" : "#B8860B"} strokeWidth="0.8" strokeDasharray="3 3" opacity="0.6" />
+                    <circle cx="498" cy="285" r="95" fill="none" stroke={activeDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="1" opacity="0.5" />
+                    <circle cx="498" cy="285" r="150" fill="none" stroke={activeDarkMode ? '#D4AF37' : '#B45309'} strokeWidth="1" strokeDasharray="4 4" opacity="0.45" />
+                    <circle cx="498" cy="285" r="210" fill="none" stroke="#D4AF37" strokeWidth="1.2" opacity="0.5" />
+                    <circle cx="498" cy="285" r="280" fill="none" stroke={activeDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="0.9" strokeDasharray="6 4" opacity="0.35" />
                   </g>
                 )}
 
@@ -394,11 +479,15 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                         cy={cy}
                         rx={c.boundaryRadiusX}
                         ry={c.boundaryRadiusY}
-                        fill={isHovered ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.02)'}
-                        stroke={isHovered ? '#FFFFFF' : (isDarkMode ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255, 255, 255, 0.45)')}
-                        strokeWidth={isHovered ? 2.4 : 0.9}
+                        fill={isHovered 
+                          ? (activeDarkMode ? 'rgba(56, 189, 248, 0.22)' : 'rgba(217, 119, 6, 0.18)') 
+                          : 'rgba(255, 255, 255, 0.02)'}
+                        stroke={isHovered 
+                          ? (activeDarkMode ? '#FDE047' : '#B45309') 
+                          : (activeDarkMode ? 'rgba(212, 175, 55, 0.65)' : 'rgba(180, 83, 9, 0.55)')}
+                        strokeWidth={isHovered ? 2.5 : 1.1}
                         strokeDasharray={isHovered ? 'none' : '3 3'}
-                        filter={isHovered ? 'url(#whiteGlow)' : undefined}
+                        filter={isHovered ? 'url(#goldNeonGlow)' : undefined}
                         className="transition-all duration-200"
                       />
 
@@ -410,7 +499,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                             y1={cy - c.boundaryRadiusY}
                             x2={cx}
                             y2={cy - c.boundaryRadiusY - 14}
-                            stroke="#FFFFFF"
+                            stroke={activeDarkMode ? "#FDE047" : "#B45309"}
                             strokeWidth="1.5"
                             filter="url(#softGlow)"
                           />
@@ -418,8 +507,8 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                             cx={cx}
                             cy={cy - c.boundaryRadiusY - 14}
                             r="3"
-                            fill="#FFFFFF"
-                            filter="url(#whiteGlow)"
+                            fill={activeDarkMode ? "#FDE047" : "#B45309"}
+                            filter="url(#goldNeonGlow)"
                           />
                         </g>
                       )}
@@ -431,19 +520,29 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               {/* Road Axis Floating Badges */}
               {showRoadLabels && (
                 <div className="absolute inset-0 pointer-events-none z-15">
-                  <div className="absolute top-[13%] left-[47%] -translate-x-1/2 px-2 py-0.5 rounded-sm bg-black/60 text-stone-100 text-[10px] font-mono tracking-wider backdrop-blur-xs border border-white/10">
+                  <div className={`absolute top-[13%] left-[47%] -translate-x-1/2 px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wider backdrop-blur-xs border shadow-sm ${
+                    activeDarkMode ? 'bg-[#061122]/90 text-amber-200 border-amber-500/30' : 'bg-white/95 text-stone-800 border-amber-600/30'
+                  }`}>
                     Cairo Ring Road · الطريق الدائري
                   </div>
-                  <div className="absolute top-[8%] left-[72%] -translate-x-1/2 px-2 py-0.5 rounded-sm bg-black/60 text-stone-100 text-[10px] font-mono tracking-wider backdrop-blur-xs border border-white/10">
+                  <div className={`absolute top-[8%] left-[72%] -translate-x-1/2 px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wider backdrop-blur-xs border shadow-sm ${
+                    activeDarkMode ? 'bg-[#061122]/90 text-amber-200 border-amber-500/30' : 'bg-white/95 text-stone-800 border-amber-600/30'
+                  }`}>
                     Suez-Cairo Desert Road · طريق السويس
                   </div>
-                  <div className="absolute bottom-[23%] left-[40%] -translate-x-1/2 px-2 py-0.5 rounded-sm bg-black/60 text-stone-100 text-[10px] font-mono tracking-wider backdrop-blur-xs border border-white/10">
+                  <div className={`absolute bottom-[23%] left-[40%] -translate-x-1/2 px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wider backdrop-blur-xs border shadow-sm ${
+                    activeDarkMode ? 'bg-[#061122]/90 text-amber-200 border-amber-500/30' : 'bg-white/95 text-stone-800 border-amber-600/30'
+                  }`}>
                     Middle Ring Road · الدائري الأوسطي
                   </div>
-                  <div className="absolute bottom-[7%] left-[58%] -translate-x-1/2 px-2 py-0.5 rounded-sm bg-black/60 text-stone-100 text-[10px] font-mono tracking-wider backdrop-blur-xs border border-white/10">
+                  <div className={`absolute bottom-[7%] left-[58%] -translate-x-1/2 px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wider backdrop-blur-xs border shadow-sm ${
+                    activeDarkMode ? 'bg-[#061122]/90 text-amber-200 border-amber-500/30' : 'bg-white/95 text-stone-800 border-amber-600/30'
+                  }`}>
                     Ain Sokhna Road · طريق العين السخنة
                   </div>
-                  <div className="absolute top-[50%] left-[57%] -translate-x-1/2 px-2 py-0.5 rounded-sm bg-amber-950/80 text-amber-200 text-[10px] font-mono tracking-wider backdrop-blur-xs border border-amber-500/30">
+                  <div className={`absolute top-[50%] left-[57%] -translate-x-1/2 px-2.5 py-0.5 rounded-sm text-[10px] font-mono tracking-wider backdrop-blur-xs border shadow-md font-bold ${
+                    activeDarkMode ? 'bg-[#061122]/95 text-amber-300 border-amber-400/50' : 'bg-amber-100/95 text-amber-950 border-amber-500/50'
+                  }`}>
                     90th Street · شارع التسعين
                   </div>
                 </div>
@@ -474,8 +573,12 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                     {/* Quiet, delicate number pill that glows on hover */}
                     <div className={`px-1.5 py-0.5 rounded-xs text-[9px] font-mono font-bold tracking-widest transition-all duration-200 pointer-events-none ${
                       isHovered
-                        ? 'bg-white text-stone-900 shadow-[0_0_15px_rgba(255,255,255,0.95)] scale-110'
-                        : 'bg-black/40 text-white/80 border border-white/20 backdrop-blur-xs'
+                        ? (activeDarkMode 
+                            ? 'bg-amber-400 text-[#061122] shadow-[0_0_18px_rgba(251,191,36,0.95)] scale-110 font-black' 
+                            : 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.8)] scale-110 font-black')
+                        : (activeDarkMode
+                            ? 'bg-[#061122]/85 text-amber-300 border border-amber-500/40 backdrop-blur-xs'
+                            : 'bg-white/90 text-stone-800 border border-amber-600/40 backdrop-blur-xs shadow-xs')
                     }`}>
                       № {compound.indexNumber < 10 ? `0${compound.indexNumber}` : compound.indexNumber}
                     </div>
@@ -496,57 +599,61 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                           onSelectCompoundToExcel(compound);
                         }}
                       >
-                        <div className="p-3.5 rounded-xl bg-[#0F172A]/95 text-white border-2 border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
+                        <div className={`p-3.5 rounded-xl border-2 shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-md transition-all ${
+                          activeDarkMode 
+                            ? 'bg-[#061122]/96 text-white border-amber-400/60 shadow-black/90' 
+                            : 'bg-[#FAF8F5]/98 text-stone-900 border-amber-600/50 shadow-stone-500/20'
+                        }`}>
                           
                           {/* Top Kicker */}
-                          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/20 text-[10px] font-mono">
-                            <span className="text-amber-300 font-bold">
+                          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-amber-500/20 text-[10px] font-mono">
+                            <span className="text-amber-500 dark:text-amber-300 font-bold">
                               № {compound.indexNumber < 10 ? `0${compound.indexNumber}` : compound.indexNumber} · {compound.zoneEn}
                             </span>
-                            <span className="text-emerald-400 font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30">
+                            <span className="text-emerald-500 dark:text-emerald-400 font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30">
                               {compound.unitsCount} Units
                             </span>
                           </div>
 
                           {/* Compound Title */}
-                          <div className="font-cinzel font-extrabold text-sm tracking-wide text-white">
+                          <div className={`font-cinzel font-extrabold text-sm tracking-wide ${activeDarkMode ? 'text-white' : 'text-stone-900'}`}>
                             {compound.nameEn}
                           </div>
-                          <div className="font-cairo font-bold text-xs text-amber-200">
+                          <div className="font-cairo font-bold text-xs text-amber-600 dark:text-amber-200">
                             {compound.nameAr}
                           </div>
 
                           {/* Pricing & Rent Summary */}
-                          <div className="mt-2.5 pt-2 border-t border-white/10 grid grid-cols-2 gap-2 text-[10px] font-mono">
+                          <div className="mt-2.5 pt-2 border-t border-stone-200 dark:border-white/10 grid grid-cols-2 gap-2 text-[10px] font-mono">
                             <div>
-                              <span className="text-stone-400 block text-[9px]">Resale from:</span>
-                              <span className="font-bold text-amber-300">
+                              <span className="text-stone-500 dark:text-stone-400 block text-[9px]">{isAr ? 'يبدأ البيع من:' : 'Resale from:'}</span>
+                              <span className="font-bold text-amber-600 dark:text-amber-300">
                                 EGP {(compound.startingPriceEgp / 1000000).toFixed(1)}M
                               </span>
                             </div>
                             <div>
-                              <span className="text-stone-400 block text-[9px]">Rent from:</span>
-                              <span className="font-bold text-emerald-400">
+                              <span className="text-stone-500 dark:text-stone-400 block text-[9px]">{isAr ? 'يبدأ الإيجار من:' : 'Rent from:'}</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">
                                 EGP {(compound.startingRentEgp / 1000).toFixed(0)}k/mo
                               </span>
                             </div>
                           </div>
 
                           {/* Cap Rate Yield Badge */}
-                          <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-cyan-300">
-                            <span>Cap Rate Yield:</span>
-                            <span className="font-bold text-emerald-300">{compound.rentalYieldRange}</span>
+                          <div className="mt-2 pt-1.5 border-t border-stone-200 dark:border-white/10 flex items-center justify-between text-[10px] font-mono text-cyan-600 dark:text-cyan-300">
+                            <span>{isAr ? 'العائد الإيجاري:' : 'Cap Rate Yield:'}</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-300">{compound.rentalYieldRange}</span>
                           </div>
 
                           {/* Drive Times */}
-                          <div className="mt-1.5 text-[9px] font-mono text-stone-300 flex items-center justify-between">
+                          <div className="mt-1.5 text-[9px] font-mono text-stone-600 dark:text-stone-300 flex items-center justify-between">
                             <span>AUC: {compound.driveTimeToAucMin}m</span>
                             <span>Capital: {compound.driveTimeToNewCapitalMin}m</span>
                             <span>Airport: {compound.driveTimeToAirportMin}m</span>
                           </div>
 
                           {/* CTA Prompt */}
-                          <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300">
+                          <div className="mt-2.5 pt-2 border-t border-stone-200 dark:border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">
                             <span className="flex items-center gap-1.5">
                               <Table2 className="w-3.5 h-3.5" />
                               <span>{isAr ? 'فتح في شيت الإكسيل' : 'Open in Excel Sheet'}</span>
@@ -584,24 +691,32 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                 </svg>
               </div>
 
-              <div className="bg-white/85 dark:bg-stone-900/85 backdrop-blur-xs px-2.5 py-1 rounded-sm border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200">
+              <div className={`backdrop-blur-xs px-2.5 py-1 rounded-sm border ${
+                activeDarkMode 
+                  ? 'bg-[#061122]/90 border-amber-500/30 text-stone-200' 
+                  : 'bg-white/95 border-amber-600/30 text-stone-800 shadow-sm'
+              }`}>
                 <div className="flex items-center justify-between text-[9px] font-mono tracking-wider">
                   <span>0</span>
                   <span>1</span>
-                  <span className="font-bold">METRIC</span>
+                  <span className="font-bold text-amber-500">METRIC</span>
                   <span>3 KM</span>
                 </div>
-                <div className="w-28 h-1.5 border border-stone-800 dark:border-stone-200 flex mt-0.5">
-                  <div className="w-1/3 bg-stone-900 dark:bg-stone-100" />
+                <div className={`w-28 h-1.5 border flex mt-0.5 ${activeDarkMode ? 'border-amber-500/40' : 'border-stone-700'}`}>
+                  <div className={`w-1/3 ${activeDarkMode ? 'bg-amber-400' : 'bg-stone-900'}`} />
                   <div className="w-1/3 bg-transparent" />
-                  <div className="w-1/3 bg-stone-900 dark:bg-stone-100" />
+                  <div className={`w-1/3 ${activeDarkMode ? 'bg-amber-400' : 'bg-stone-900'}`} />
                 </div>
               </div>
             </div>
 
             {/* Bottom Right: Sierra Estates Monogram Logo Seal & Signature */}
-            <div className="absolute bottom-4 right-4 z-30 pointer-events-none flex items-center gap-3 bg-white/95 dark:bg-[#070E1A]/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-cyan-500/40 dark:border-cyan-400/30 shadow-xl">
-              <div className="w-9 h-9 rounded-lg overflow-hidden border border-cyan-500/50 bg-stone-900 shrink-0 p-0.5">
+            <div className={`absolute bottom-4 right-4 z-30 pointer-events-none flex items-center gap-3 backdrop-blur-md px-3.5 py-2 rounded-xl border shadow-xl ${
+              activeDarkMode 
+                ? 'bg-[#061122]/95 border-amber-400/40 text-stone-100 shadow-black/80' 
+                : 'bg-white/95 border-amber-600/40 text-stone-900 shadow-md'
+            }`}>
+              <div className="w-9 h-9 rounded-lg overflow-hidden border border-amber-500/50 bg-[#061122] shrink-0 p-0.5">
                 <img 
                   src="/assets/aistudio/8e9559f6f_image__1__4350f848.png" 
                   alt="Sierra Estates Seal"
@@ -610,14 +725,14 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-cinzel font-bold text-xs tracking-wider text-stone-900 dark:text-stone-100">
+                  <span className={`font-cinzel font-bold text-xs tracking-wider ${activeDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
                     SIERRA ESTATES
                   </span>
-                  <span className="text-[9px] font-mono font-semibold text-cyan-600 dark:text-cyan-400">
+                  <span className="text-[9px] font-mono font-semibold text-cyan-500">
                     sierra-estates.net
                   </span>
                 </div>
-                <span className="text-[9px] font-mono uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                <span className="text-[9px] font-mono uppercase tracking-widest text-amber-500">
                   New Cairo Master Plan 2026
                 </span>
               </div>
