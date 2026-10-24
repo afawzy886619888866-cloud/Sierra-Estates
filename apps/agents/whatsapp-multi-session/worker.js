@@ -102,29 +102,58 @@ for (const id of SESSION_IDS) {
 let roundRobinIndex = 0;
 
 /**
- * Middleware: Simple API authentication check (lenient on localhost UI)
+ * Middleware: Robust API authentication check
+ * Enforces API key verification on all external/tunneled requests while preserving
+ * seamless local operator UI on localhost.
  */
 function checkAuth(req, res, next) {
-  // Allow UI dashboard & static assets freely
-  if (req.path === '/' || req.path === '/dashboard' || req.path === '/api/health') {
-    return next();
-  }
-  
-  // Also allow GET /api/sessions for dashboard auto-polling
-  if (req.method === 'GET' && (req.path === '/api/sessions' || req.path.startsWith('/api/sessions/'))) {
+  // Check if request is genuine localhost (no proxy / tunnel headers)
+  const isDirectLocal = (
+    !req.headers['cf-connecting-ip'] &&
+    !req.headers['cf-ray'] &&
+    !req.headers['x-forwarded-for'] &&
+    (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')
+  );
+
+  // Health check endpoint is safe for all (returns minimal status)
+  if (req.path === '/api/health') {
     return next();
   }
 
-  const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
-  if (!apiKey || (apiKey !== ADMIN_API_KEY && apiKey !== OPERATOR_KEY)) {
-    // If running in development/local mode with no secret explicitly forced, allow localhost
-    const isLocal = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
-    if (!process.env.STRICT_GATEWAY_AUTH && isLocal) {
+  // Allow localhost browser UI and dashboard polling ONLY from direct local machine
+  if (isDirectLocal) {
+    if (req.path === '/' || req.path === '/dashboard' || req.path === '/map') {
       return next();
     }
-    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
+    if (req.method === 'GET' && (req.path === '/api/sessions' || req.path.startsWith('/api/sessions/'))) {
+      return next();
+    }
   }
-  next();
+
+  // Extract API key from headers or query parameters
+  const apiKey = (
+    req.headers['x-api-key'] ||
+    req.headers['apikey'] ||
+    req.headers['authorization']?.replace(/^Bearer\s+/i, '') ||
+    req.query.api_key ||
+    req.query.key
+  );
+
+  const isValidKey = Boolean(apiKey && (apiKey === ADMIN_API_KEY || apiKey === OPERATOR_KEY));
+
+  if (isValidKey) {
+    return next();
+  }
+
+  // Direct localhost write permission if strict auth is disabled
+  if (isDirectLocal && process.env.STRICT_GATEWAY_AUTH !== '1' && process.env.STRICT_GATEWAY_AUTH !== 'true') {
+    return next();
+  }
+
+  return res.status(401).json({
+    error: 'Unauthorized: Invalid or missing API key',
+    hint: 'Provide header x-api-key, apikey, Authorization Bearer, or query ?key='
+  });
 }
 
 /**

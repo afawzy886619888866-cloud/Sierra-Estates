@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, exec } from 'node:child_process';
 import fs from 'node:fs';
 
 const port = process.env.PORT || process.argv[2] || 3000;
@@ -50,6 +50,23 @@ function inspectLine(line) {
     console.log(`  • Twilio Inbound:   ${tunnelUrl}/api/webhooks/twilio-inbound`);
     console.log(`  • Property Finder:  ${tunnelUrl}/api/webhooks/property-finder`);
     console.log('\x1b[90m' + '-'.repeat(70) + '\x1b[0m\n');
+  
+    // Auto-persist tunnel URL locally
+    try {
+      fs.writeFileSync('H:\\Sierra Estates\\.tunnel-url', tunnelUrl, 'utf8');
+      fs.writeFileSync('C:\\Users\\Sierr\\SE-Vercel-deploy-main\\.tunnel-url', tunnelUrl, 'utf8');
+    } catch (_) {}
+
+    // Asynchronously synchronize GitHub repository variables so GitHub Actions never drifts
+    try {
+            const host = tunnelUrl.replace('https://', '');
+      const repo = 'afawzy886619888866-cloud/Sierra-Estates';
+      exec(`gh variable set WHATSAPP_API_URL --body "${tunnelUrl}" --repo ${repo}`, (e) => {
+        if (!e) console.log('\x1b[32m[Tunnel]\x1b[0m Synced WHATSAPP_API_URL to GitHub Actions');
+      });
+      exec(`gh variable set WHATSAPP_GATEWAY_URL --body "${tunnelUrl}" --repo ${repo}`);
+      exec(`gh variable set OPENWA_HOST --body "${host}" --repo ${repo}`);
+    } catch (_) {}
   }
 }
 
