@@ -223,3 +223,7 @@ sierra_checkpoint.json.tmp
 Sierra_Estates_Master_Units.xlsx
 .env.sierra*
 pair_*.html
+
+# Ephemeral WhatsApp QR codes
+apps/agents/whatsapp-multi-session/qr_*.png
+apps/agents/whatsapp-multi-session/.tmp/

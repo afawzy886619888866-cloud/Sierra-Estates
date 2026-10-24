@@ -62,16 +62,30 @@ async function main() {
   console.log('daily-digest: starting');
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 
-  // 1. Gateway health
+  // 1. Gateway health (multi-session aware)
   const gw = new GatewayClient();
   let gwLine;
   let gwOk = false;
   try {
-    const st = await gw.status();
-    gwOk = st.status === 'ready';
-    gwLine = gwOk
-      ? `🟢 بوابة الواتساب: تعمل — ${st.phone || '?'} (${st.pushName || 'Sierra Estates'})`
-      : `🟡 بوابة الواتساب: الحالة ${st.status}`;
+    const poolRes = await requestJson(`${gw.baseUrl}/api/sessions`, {
+      headers: { 'X-API-Key': gw.adminKey },
+      timeoutMs: 6000
+    });
+    if (poolRes.ok && Array.isArray(poolRes.data) && poolRes.data.length) {
+      const readySessions = poolRes.data.filter(x => x.status === 'ready');
+      const totalSent = poolRes.data.reduce((sum, x) => sum + (x.totalSent || 0), 0);
+      gwOk = readySessions.length > 0;
+      const readyPhones = readySessions.map(x => x.phone || x.id).join(', ');
+      gwLine = gwOk
+        ? `🟢 بوابة الواتساب: تعمل (${readySessions.length}/${poolRes.data.length} خطوط جاهزة: ${readyPhones}) — تم إرسال ${totalSent} رسالة اليوم`
+        : `🟡 بوابة الواتساب: جميع الخطوط (${poolRes.data.length}) غير متصلة`;
+    } else {
+      const st = await gw.status();
+      gwOk = st.status === 'ready';
+      gwLine = gwOk
+        ? `🟢 بوابة الواتساب: تعمل — ${st.phone || '?'} (${st.pushName || 'Sierra Estates'})`
+        : `🟡 بوابة الواتساب: الحالة ${st.status}`;
+    }
   } catch (err) {
     gwLine = `🔴 بوابة الواتساب: غير متاحة (${err.message.slice(0, 60)})`;
   }

@@ -480,7 +480,8 @@ b{color:#e9edef}</style></head><body><div class="card">
 <input class="key" id="key" type="password" placeholder="Access key" autocomplete="off">
 <button class="btn" id="save" onclick="saveKey()">فتح صفحة الربط</button>
 <div id="portal" style="display:none">
-<p>1) افتح واتساب على جوالك <b>+20 106 139 9688</b><br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
+<p style="font-size:12px;color:#d4af37;background:#1a231d;border:1px solid #2e4438;border-radius:8px;padding:8px 10px;margin-bottom:12px;">💡 المنظومة تعمل بـ 4 خطوط مخصصة. لإدارة الخطوط الأربعة معاً افتح <a href="http://127.0.0.1:2785" target="_blank" style="color:#00d95f;font-weight:700;text-decoration:underline;">محطة البوابة المجمعة (:2785)</a>.</p>
+<p>1) افتح واتساب على الجوال المراد ربطه<br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
 <img id="qr" alt="QR">
 <p class="st bad" id="st">…</p>
 <p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>

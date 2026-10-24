@@ -151,10 +151,7 @@ function ensureCliSink(waAutomate) {
           s.qrDataUrl = await QRCode.toDataURL(qrCode, { scale: 6, margin: 2 });
           const pngBuf = await QRCode.toBuffer(qrCode, { scale: 6, margin: 2 });
           fs.writeFileSync(path.join(__dirname, `qr_${sid}.png`), pngBuf);
-          const artifactDir = "C:\\Users\\Sierr\\.gemini\\antigravity\\brain\\09c69f86-7eb2-4d7e-be4f-96d584a3b175";
-          if (fs.existsSync(artifactDir)) {
-            fs.writeFileSync(path.join(artifactDir, `qr_${sid.replace(/-/g, "_")}.png`), pngBuf);
-          }
+          // Ephemeral QR code saved locally for gateway UI
         } else {
           s.qrDataUrl = qrCode.startsWith("data:") ? qrCode : null;
         }
