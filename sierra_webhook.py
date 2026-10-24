@@ -192,8 +192,26 @@ def analyze_payload(event_type: str, text: str, sender_phone: str):
     seen_dedup_keys.add(dedup_key)
     return {"action": "SAVE_INVENTORY", "data": extracted, "outgoing_message": None}
 
+@app.get("/")
+@app.get("/health")
+async def health_endpoint():
+    return {"status": "ok", "app": "Sierra PropTech Intelligence Engine", "port": 5000}
+
 @app.post("/webhook")
 async def evolution_webhook(request: Request):
+    client_host = request.client.host if request.client else ""
+    is_local = client_host in ("127.0.0.1", "::1", "localhost")
+    req_key = (
+        request.headers.get("x-api-key")
+        or request.headers.get("apikey")
+        or request.headers.get("authorization", "").replace("Bearer ", "").strip()
+        or request.query_params.get("key")
+        or request.query_params.get("api_key")
+    )
+    if not is_local and req_key != API_KEY:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=401, content={"error": "Unauthorized: Invalid or missing API key"})
+
     body = await request.json()
     event = body.get("event", "")
     instance = body.get("instance", "sierra_01032206443")
