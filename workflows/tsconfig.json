@@ -4,6 +4,7 @@
     "target": "ES2020",
     "module": "commonjs",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "types": ["node", "vitest/globals"],
     // The runtime files here are hand-written JavaScript (see package.json's
     // `node 01-whatsapp-scraper/index.js`); the only .ts is the test. Without
