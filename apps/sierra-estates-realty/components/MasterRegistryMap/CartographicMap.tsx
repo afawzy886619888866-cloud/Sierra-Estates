@@ -5,7 +5,7 @@ import {
   COMPOUNDS, 
   UNIT_LISTINGS, 
   ARTERY_ROADS 
-} from './registryData';
+} from '../data/registryData';
 import { 
   ZoomIn, 
   ZoomOut, 
@@ -42,6 +42,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   const isAr = lang === 'ar';
   
   const [activeZoneFilter, setActiveZoneFilter] = useState<string>('all');
+  const [mapStyle, setMapStyle] = useState<'previous' | 'vector'>('previous');
   const [showRadarRings, setShowRadarRings] = useState<boolean>(true);
   const [showRoadLabels, setShowRoadLabels] = useState<boolean>(true);
   const [showYieldHeatmap, setShowYieldHeatmap] = useState<boolean>(false);
@@ -218,6 +219,20 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             <span>{isAr ? 'طبقة العوائد' : 'Yield Heat'}</span>
           </button>
 
+          {/* Map Base Style Switcher: Previous Authentic Map vs Vector Edition */}
+          <button
+            onClick={() => setMapStyle(mapStyle === 'previous' ? 'vector' : 'previous')}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-colors ${
+              mapStyle === 'previous'
+                ? 'bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-300 shadow-xs'
+                : 'bg-transparent border-stone-300 dark:border-stone-700 text-stone-500 hover:text-amber-600'
+            }`}
+            title={isAr ? 'التبديل بين الخريطة الأصلية السابقة والنمط الكارتوغرافي' : 'Toggle between Previous Authentic Masterplan and Vector Cartographic Edition'}
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-500" />
+            <span>{mapStyle === 'previous' ? (isAr ? 'الخريطة السابقة' : 'Previous Map') : (isAr ? 'الخريطة المتجهة' : 'Vector Map')}</span>
+          </button>
+
           {/* Zoom Buttons & Percentage Indicator */}
           <div className="flex items-center border border-stone-300 dark:border-stone-700 rounded-md overflow-hidden bg-white/70 dark:bg-stone-800/70">
             <button
@@ -308,9 +323,12 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               }}
               className="absolute inset-0 w-full h-full"
             >
-              {/* Base Authentic Cartographic Backdrop Image (High Resolution, Smooth & Unobstructed from Sierra Estates) */}
+              {/* Base Authentic Cartographic Backdrop Image (Previous authentic cadastral satellite map or Vector Edition) */}
               <img
-                src={isDarkMode ? '/assets/maps/new-cairo-masterplan-dark.jpg' : '/assets/maps/new-cairo-masterplan-light.jpg'}
+                src={mapStyle === 'previous' 
+                  ? '/assets/aistudio/Image_1_f1dc350b.jpeg' 
+                  : (isDarkMode ? '/assets/maps/new-cairo-masterplan-dark.jpg' : '/assets/maps/new-cairo-masterplan-light.jpg')
+                }
                 onError={(e) => {
                   const target = e.currentTarget;
                   if (!target.src.includes('Image_1_f1dc350b.jpeg')) {
