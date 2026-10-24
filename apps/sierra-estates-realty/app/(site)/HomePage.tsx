@@ -350,6 +350,8 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
+  const [sheetModalOpen, setSheetModalOpen] = useState(false);
+  const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [form, setForm] = useState({
