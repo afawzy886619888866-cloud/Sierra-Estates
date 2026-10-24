@@ -1,9 +1,6 @@
 import pino from 'pino';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
-import { insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
+import { insertRecord } from '@sierra-estates/db';
 import { obsidian } from '@sierra-estates/obsidian';
 import { OpenClawAgent } from '../openclaw';
 

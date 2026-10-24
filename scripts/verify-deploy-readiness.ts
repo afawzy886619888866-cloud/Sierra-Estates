@@ -168,8 +168,8 @@ check('Client Unit & Integration Tests', () => {
 
 // 9. Check AI Reasoning Benchmark Harness & Ported Engines
 check('AI Reasoning Benchmark Harness & Ported Engines', () => {
-  execSync('npx tsx scripts/run-harness.ts', { stdio: 'pipe', env: process.env });
-  execSync('npx tsx scripts/verify-ported-engines.mjs', { stdio: 'pipe', env: process.env });
+  execSync(`${pnpmRunner} exec tsx scripts/run-harness.ts`, { stdio: 'pipe', env: process.env });
+  execSync(`${pnpmRunner} exec tsx scripts/verify-ported-engines.mjs`, { stdio: 'pipe', env: process.env });
 });
 
 // 10. A deployment must be reproducible from the checked-out commit.

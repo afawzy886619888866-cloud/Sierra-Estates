@@ -3,12 +3,10 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import {
   EpisodicContextCache,
-  HOT_DEAL_THRESHOLD_PCT,
   type Episode,
   type EntityProfile,
-  type WorkingMemorySession,
 } from '../../../packages/agents/tools/eccMemoryEngine';
-import { ObsidianMemory, type MemoryEntry } from '@sierra-estates/obsidian';
+import { ObsidianMemory } from '@sierra-estates/obsidian';
 
 export interface VaultNote {
   title: string;
