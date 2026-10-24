@@ -46,6 +46,7 @@
     ".next",
     "__tests__",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    "**/*.json"
   ]
 }
