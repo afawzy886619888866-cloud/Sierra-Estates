@@ -26,6 +26,7 @@ export interface Compound {
   driveTimeToNewCapitalMin: number;
   driveTimeToAirportMin: number;
   unitsCount: number;
+  avgMeterPriceEgp?: number;
 }
 
 export interface UnitListing {

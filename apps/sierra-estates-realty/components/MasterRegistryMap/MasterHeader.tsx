@@ -5,12 +5,17 @@ import { Compound, UnitListing, COMPOUNDS, UNIT_LISTINGS } from './registryData'
 
 interface MasterHeaderProps {
   currentTab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier';
-  onSelectTab: (tab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => void;
+  onSelectTab?: (tab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => void;
+  setCurrentTab?: (tab: any) => void;
   lang: 'en' | 'ar';
-  onToggleLang: () => void;
+  onToggleLang?: () => void;
+  toggleLang?: () => void;
   isDarkMode: boolean;
-  onToggleTheme: () => void;
-  onOpenConsultation: () => void;
+  onToggleTheme?: () => void;
+  toggleTheme?: () => void;
+  onOpenConsultation?: () => void;
+  onOpenVipModal?: () => void;
+  onOpenDossierModal?: () => void;
   onSelectCompound?: (compound: Compound) => void;
   onSelectUnit?: (unit: UnitListing) => void;
 }
@@ -18,14 +23,26 @@ interface MasterHeaderProps {
 export const MasterHeader: React.FC<MasterHeaderProps> = ({
   currentTab,
   onSelectTab,
+  setCurrentTab,
   lang,
   onToggleLang,
+  toggleLang,
   isDarkMode,
   onToggleTheme,
+  toggleTheme,
   onOpenConsultation,
+  onOpenVipModal,
+  onOpenDossierModal: _onOpenDossierModal,
   onSelectCompound,
   onSelectUnit,
 }) => {
+  const handleSelectTab = (tab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => {
+    if (onSelectTab) onSelectTab(tab);
+    else if (setCurrentTab) setCurrentTab(tab);
+  };
+  const handleToggleLang = onToggleLang || toggleLang || (() => {});
+  const handleToggleTheme = onToggleTheme || toggleTheme || (() => {});
+  const handleOpenConsultation = onOpenConsultation || onOpenVipModal || (() => {});
   const isAr = lang === 'ar';
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -107,7 +124,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
     if (onSelectCompound) {
       onSelectCompound(compound);
     } else {
-      onSelectTab('excel');
+      handleSelectTab('excel');
     }
     setIsSearchOpen(false);
     setSearchQuery('');
@@ -133,7 +150,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
         {/* Zone 1: Brand Wordmark with Official Sierra Estates Logo Image */}
         <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={() => onSelectTab('map')}
+            onClick={() => handleSelectTab('map')}
             className="flex items-center gap-3 text-left cursor-pointer group"
           >
             <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-cyan-500/40 bg-stone-900 shadow-md group-hover:border-cyan-400 transition-all p-0.5 flex items-center justify-center">
@@ -172,7 +189,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
         {/* Zone 2: Navigation links */}
         <nav className="hidden xl:flex items-center gap-5 text-xs font-semibold tracking-wide uppercase">
           <button
-            onClick={() => onSelectTab('map')}
+            onClick={() => handleSelectTab('map')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'map'
                 ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
@@ -184,7 +201,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onSelectTab('excel')}
+            onClick={() => handleSelectTab('excel')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'excel'
                 ? 'text-emerald-600 border-b-2 border-emerald-600 font-bold'
@@ -196,7 +213,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onSelectTab('yield')}
+            onClick={() => handleSelectTab('yield')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'yield'
                 ? 'text-cyan-500 border-b-2 border-cyan-500 font-bold'
@@ -208,7 +225,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onSelectTab('threed')}
+            onClick={() => handleSelectTab('threed')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'threed'
                 ? 'text-sky-500 border-b-2 border-sky-500 font-bold'
@@ -220,7 +237,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onSelectTab('compounds')}
+            onClick={() => handleSelectTab('compounds')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
               currentTab === 'compounds'
                 ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
@@ -231,7 +248,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onSelectTab('radar')}
+            onClick={() => handleSelectTab('radar')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
               currentTab === 'radar'
                 ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
@@ -242,7 +259,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onSelectTab('dossier')}
+            onClick={() => handleSelectTab('dossier')}
             className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1 ${
               currentTab === 'dossier'
                 ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
@@ -341,7 +358,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                                 </span>
                               </div>
                               <div className="text-[10px] font-mono text-stone-500 dark:text-stone-400 truncate">
-                                {isAr ? comp.zoneAr : comp.zoneEn} · Avg EGP {comp.avgMeterPriceEgp.toLocaleString()}/m²
+                                {isAr ? comp.zoneAr : comp.zoneEn} · Avg EGP {(comp.avgMeterPriceEgp ?? Math.round(comp.startingPriceEgp / 220)).toLocaleString()}/m²
                               </div>
                             </div>
                             <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -416,7 +433,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 
           {/* Language Switcher */}
           <button
-            onClick={onToggleLang}
+            onClick={handleToggleLang}
             title={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
             className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md border border-stone-300 dark:border-stone-700 hover:border-amber-600 dark:hover:border-amber-500 transition-colors text-stone-700 dark:text-stone-300 cursor-pointer"
           >
@@ -426,7 +443,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 
           {/* Theme Switcher */}
           <button
-            onClick={onToggleTheme}
+            onClick={handleToggleTheme}
             title={isDarkMode ? (isAr ? 'التبديل إلى النسخة التحريرية المضيئة' : 'Switch to Light Editorial Edition') : (isAr ? 'التبديل إلى النسخة الليلية الفاخرة' : 'Switch to Obsidian Dark Edition')}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md border border-stone-300 dark:border-stone-700 hover:border-amber-600 dark:hover:border-amber-400 text-stone-700 dark:text-stone-300 transition-colors cursor-pointer"
           >
@@ -445,7 +462,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 
           {/* Primary Action Button */}
           <button
-            onClick={onOpenConsultation}
+            onClick={handleOpenConsultation}
             className="px-3.5 py-2 text-xs font-bold tracking-wider uppercase text-amber-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-md shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border border-amber-300/40"
           >
             <ShieldCheck className="w-4 h-4 text-amber-900" />

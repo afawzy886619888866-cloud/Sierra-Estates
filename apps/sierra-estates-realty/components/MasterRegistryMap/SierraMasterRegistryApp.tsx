@@ -204,7 +204,7 @@ export default function SierraMasterRegistryApp({
       {/* Master Sovereign Navigation Header */}
       <MasterHeader
         currentTab={currentTab}
-        setCurrentTab={(tab) => {
+        onSelectTab={(tab) => {
           if (tab === 'dossier') {
             setIsDossierOpen(true);
           } else {
@@ -212,15 +212,14 @@ export default function SierraMasterRegistryApp({
           }
         }}
         lang={lang}
-        toggleLang={toggleLang}
+        onToggleLang={toggleLang}
         isDarkMode={isDarkMode}
-        toggleTheme={toggleTheme}
-        onOpenVipModal={() => {
+        onToggleTheme={toggleTheme}
+        onOpenConsultation={() => {
           setConsultationUnit(null);
           setConsultationCompound(selectedCompound);
           setIsConsultationOpen(true);
         }}
-        onOpenDossierModal={() => setIsDossierOpen(true)}
         onSelectCompound={handleSearchSelectCompound}
         onSelectUnit={handleSearchSelectUnit}
       />

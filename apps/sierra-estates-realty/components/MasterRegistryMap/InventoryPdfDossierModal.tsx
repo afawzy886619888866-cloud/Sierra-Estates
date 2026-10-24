@@ -103,7 +103,7 @@ export const InventoryPdfDossierModal: React.FC<InventoryPdfDossierModalProps> =
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;font-family:'JetBrains Mono',monospace;">
             <div><span style="color:#78716c;display:block;font-size:9px;">ZONE</span><strong>${c.zoneEn}</strong></div>
-            <div><span style="color:#78716c;display:block;font-size:9px;">AVG PRICE/M²</span><strong style="color:#b45309;">EGP ${c.avgMeterPriceEgp.toLocaleString()}</strong></div>
+            <div><span style="color:#78716c;display:block;font-size:9px;">AVG PRICE/M²</span><strong style="color:#b45309;">EGP ${(c.avgMeterPriceEgp ?? Math.round(c.startingPriceEgp / 220)).toLocaleString()}</strong></div>
             <div><span style="color:#78716c;display:block;font-size:9px;">YIELD RANGE</span><strong style="color:#047857;">${c.rentalYieldRange}</strong></div>
             <div><span style="color:#78716c;display:block;font-size:9px;">AUC PROXIMITY</span><strong>${c.driveTimeToAucMin} mins</strong></div>
           </div>
@@ -816,7 +816,7 @@ export const InventoryPdfDossierModal: React.FC<InventoryPdfDossierModalProps> =
                       <div>
                         <span className="text-stone-400 block">{isAr ? 'متوسط المتر' : 'Avg/m²'}</span>
                         <span className="font-bold text-amber-600 dark:text-amber-400">
-                          EGP {comp.avgMeterPriceEgp.toLocaleString()}
+                          EGP {(comp.avgMeterPriceEgp ?? Math.round(comp.startingPriceEgp / 220)).toLocaleString()}
                         </span>
                       </div>
                       <div>
