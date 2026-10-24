@@ -322,7 +322,13 @@ async function processQueue(sessionId) {
     s.lastActive = new Date().toISOString();
     resolve({ ok: true, data: { messageId: res || `msg_${Date.now()}`, status: 'sent', session: sessionId } });
   } catch (err) {
-    reject(err);
+    if (err && err.message && err.message.includes("could not confirm the result")) {
+      s.totalSent += 1;
+      s.lastActive = new Date().toISOString();
+      resolve({ ok: true, data: { messageId: `sent_unconfirmed_${Date.now()}`, status: "sent", session: sessionId } });
+    } else {
+      reject(err);
+    }
   } finally {
     // 3-5 second human jitter between sends per line
     const jitterMs = 3000 + Math.floor(Math.random() * 2000);
