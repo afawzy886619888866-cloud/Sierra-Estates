@@ -14,9 +14,29 @@ except Exception:
 
 app = FastAPI(title="Sierra PropTech Core Intelligence Engine")
 
-API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8080")
-API_KEY = os.getenv("EVOLUTION_API_KEY", "sierra_secret_key_2026")
+def _load_env_key():
+    for env_path in [".env", r"H:\Sierra Estates\.env", r"H:\Sierra Estates\workflows\.env"]:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith(("OPENWA_ADMIN_API_KEY=", "WHATSAPP_API_KEY=")):
+                            return line.split("=", 1)[1].strip().strip('"').strip("'")
+            except Exception:
+                pass
+    return "sierra_secret_key_2026"
+
+API_URL = os.getenv("EVOLUTION_API_URL", "http://127.0.0.1:2785")
+API_KEY = os.getenv("EVOLUTION_API_KEY") or _load_env_key()
 DIRECT_MGMT_PHONE = "+201092048333"
+
+INSTANCE_LINE_MAP = {
+    "sierra_01032206443": "line-1",
+    "sierra_01031622600": "line-2",
+    "sierra_01061399688": "line-3",
+    "sierra_01092048333": "line-4"
+}
 
 COMPOUNDS = [
     "New Cairo", "Mivida", "Al Rehab", "Madinaty", "The Square",
@@ -44,12 +64,32 @@ def normalize_phone(raw_phone: str):
     return digits if len(digits) >= 10 else None
 
 def send_whatsapp_message(instance: str, number: str, text: str):
-    url = f"{API_URL}/message/sendText/{instance}"
-    headers = {"apikey": API_KEY, "Content-Type": "application/json"}
-    payload = {"number": number, "text": text, "delay": 1200}
+    line_id = INSTANCE_LINE_MAP.get(instance, instance)
+    headers = {"x-api-key": API_KEY, "apikey": API_KEY, "Content-Type": "application/json"}
     try:
-        res = requests.post(url, json=payload, headers=headers, timeout=15)
-        return res.status_code in [200, 201]
+        res = requests.post(
+            f"{API_URL}/api/messages/send-text",
+            json={"chatId": number, "text": text},
+            headers=headers,
+            timeout=15
+        )
+        if res.status_code in [200, 201]:
+            return True
+        res_line = requests.post(
+            f"{API_URL}/api/sessions/{line_id}/messages/send-text",
+            json={"chatId": number, "text": text},
+            headers=headers,
+            timeout=15
+        )
+        if res_line.status_code in [200, 201]:
+            return True
+        res_evo = requests.post(
+            f"{API_URL}/message/sendText/{instance}",
+            json={"number": number, "text": text, "delay": 1200},
+            headers=headers,
+            timeout=15
+        )
+        return res_evo.status_code in [200, 201]
     except Exception:
         return False
 

@@ -14,9 +14,29 @@ try:
 except Exception:
     pass
 
-API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8080")
-API_KEY = os.getenv("EVOLUTION_API_KEY", "sierra_secret_key_2026")
+def _load_env_key():
+    for env_path in [".env", r"H:\Sierra Estates\.env", r"H:\Sierra Estates\workflows\.env"]:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith(("OPENWA_ADMIN_API_KEY=", "WHATSAPP_API_KEY=")):
+                            return line.split("=", 1)[1].strip().strip('"').strip("'")
+            except Exception:
+                pass
+    return "sierra_secret_key_2026"
+
+API_URL = os.getenv("EVOLUTION_API_URL", "http://127.0.0.1:2785")
+API_KEY = os.getenv("EVOLUTION_API_KEY") or _load_env_key()
 IS_CI = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI_SINGLE_RUN") == "true"
+
+INSTANCE_LINE_MAP = {
+    "sierra_01032206443": "line-1",
+    "sierra_01031622600": "line-2",
+    "sierra_01061399688": "line-3",
+    "sierra_01092048333": "line-4"
+}
 
 INSTANCES = [
     "sierra_01032206443",
@@ -109,10 +129,18 @@ def save_checkpoint(row, inst_idx, contacted, failed_dlq=None):
     os.replace(tmp_file, CHECKPOINT_FILE)
 
 def is_instance_connected(instance):
-    url = f"{API_URL}/instance/connectionState/{instance}"
-    headers = {"apikey": API_KEY}
+    line_id = INSTANCE_LINE_MAP.get(instance, instance)
+    headers = {"x-api-key": API_KEY, "apikey": API_KEY}
     try:
-        res = requests.get(url, headers=headers, timeout=6)
+        res = requests.get(f"{API_URL}/api/sessions/{line_id}", headers=headers, timeout=6)
+        if res.status_code == 200:
+            data = res.json()
+            if str(data.get("status", "")).lower() == "ready":
+                return True
+    except Exception:
+        pass
+    try:
+        res = requests.get(f"{API_URL}/instance/connectionState/{instance}", headers=headers, timeout=6)
         if res.status_code == 200:
             data = res.json()
             state = data.get("instance", {}).get("state") or data.get("state")
@@ -122,13 +150,25 @@ def is_instance_connected(instance):
     return False
 
 def send_msg(instance, phone, text, retries=2):
-    url = f"{API_URL}/message/sendText/{instance}"
-    headers = {"apikey": API_KEY, "Content-Type": "application/json"}
-    payload = {"number": phone, "text": text, "delay": 1500}
+    line_id = INSTANCE_LINE_MAP.get(instance, instance)
+    headers = {"x-api-key": API_KEY, "apikey": API_KEY, "Content-Type": "application/json"}
     for attempt in range(retries):
         try:
-            res = requests.post(url, json=payload, headers=headers, timeout=20)
+            res = requests.post(
+                f"{API_URL}/api/sessions/{line_id}/messages/send-text",
+                json={"chatId": phone, "text": text},
+                headers=headers,
+                timeout=20
+            )
             if res.status_code in [200, 201]:
+                return True
+            res_evo = requests.post(
+                f"{API_URL}/message/sendText/{instance}",
+                json={"number": phone, "text": text, "delay": 1500},
+                headers=headers,
+                timeout=20
+            )
+            if res_evo.status_code in [200, 201]:
                 return True
         except Exception:
             time.sleep(3 * (attempt + 1))
