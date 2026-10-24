@@ -157,10 +157,11 @@ class GatewayClient {
         for (const raw of this.sessionPool) {
           const found = res.data.find((s) => s && (s.name === raw || s.id === raw));
           if (found && found.id) {
-            if (found.status === 'ready') {
-              entries.push({ name: found.name || raw, uuid: found.id, status: found.status, phone: found.phone });
+            const readyStatus = found.status || 'ready';
+            if (readyStatus === 'ready') {
+              entries.push({ name: found.name || raw, uuid: found.id, status: readyStatus, phone: found.phone });
             } else {
-              console.warn(`[gateway-client] pool session "${raw}" is not ready (status: ${found.status}) — skipped`);
+              console.warn(`[gateway-client] pool session "${raw}" is not ready (status: ${readyStatus}) — skipped`);
             }
           } else {
             console.warn(`[gateway-client] pool session "${raw}" not found on gateway — skipped`);
