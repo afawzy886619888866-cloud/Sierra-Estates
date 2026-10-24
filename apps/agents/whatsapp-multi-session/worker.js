@@ -130,10 +130,41 @@ function checkAuth(req, res, next) {
 /**
  * Initialize a single OpenWA session
  */
+let cliSinkInstalled = false;
+function ensureCliSink(waAutomate) {
+  if (cliSinkInstalled || typeof waAutomate.setCliOutputSink !== "function") return;
+  cliSinkInstalled = true;
+  const baseSink = typeof waAutomate.createConsoleOutputSink === "function"
+    ? waAutomate.createConsoleOutputSink()
+    : { promptChoice: async () => "chrome", write: () => {}, status: () => {}, qr: () => {} };
+  waAutomate.setCliOutputSink({
+    ...baseSink,
+    qr: async (payload) => {
+      const sid = payload && payload.sessionId;
+      const qrCode = payload && payload.qr;
+      if (!sid || !qrCode) return;
+      const s = sessions.get(sid);
+      if (!s) return;
+      s.status = "AWAITING_QR";
+      try {
+        if (QRCode) {
+          s.qrDataUrl = await QRCode.toDataURL(qrCode, { scale: 6, margin: 2 });
+        } else {
+          s.qrDataUrl = qrCode.startsWith("data:") ? qrCode : null;
+        }
+      } catch (_) {
+        s.qrDataUrl = qrCode.startsWith("data:") ? qrCode : null;
+      }
+      console.log("[" + sid + "] QR Code Ready! View at http://localhost:" + PORT);
+    }
+  });
+}
+
 async function initSession(sessionId) {
   let waAutomate;
   try {
     waAutomate = require('@open-wa/wa-automate');
+    ensureCliSink(waAutomate);
   } catch (err) {
     console.error(`\n[ERROR] Failed to load @open-wa/wa-automate in ${__dirname}:`, err.message);
     const s = sessions.get(sessionId);
