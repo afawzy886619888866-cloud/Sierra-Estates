@@ -353,18 +353,26 @@ function saveDaily(d) {
 
 const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_SALUTATION_}
 
-مع حضرتك فريق Sierra Estates للتسويق العقاري بالتجمع الخامس.
+مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.
 
-بعتذر جداً لحضرتك على الإزعاج، كنا حابين نستفسر لو متاح عند حضرتك وحدة معروضة للإيجار أو البيع {_LOCATION_}؟ وحابين نتأكد من التفاصيل الحالية من حضرتك مباشرة إذا مناسب نتعاون في تسويقها لعملائنا.
+بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع {_LOCATION_} لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.
 
-لو الوحدة غير متاحة حالياً بنعتذر لحضرتك وشكراً جزيلاً لوقتك 🤝
+إذا كانت الوحدة غير متاحة حالياً فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝
 (لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
 function buildMessage(r) {
   let salutation = 'يا فندم،';
   if (r.name && r.name.trim() && !r.name.toLowerCase().includes('owner') && !r.name.includes('المالك')) {
-    const cleanName = r.name.trim().replace(/^أ[\.\/]\s*/, '');
-    salutation = `أ/ ${cleanName}،`;
+    const raw = r.name.trim();
+    if (/^(د|دكتور|dr)\.?[\s\/]+/i.test(raw)) {
+      salutation = `د/ ${raw.replace(/^(د|دكتور|dr)\.?[\s\/]+/i, '')}،`;
+    } else if (/^(م|مهندس|eng)\.?[\s\/]+/i.test(raw)) {
+      salutation = `البشمهندس ${raw.replace(/^(م|مهندس|eng)\.?[\s\/]+/i, '')}،`;
+    } else if (/^(أ|أستاذ|mr)\.?[\s\/]+/i.test(raw)) {
+      salutation = `أ/ ${raw.replace(/^(أ|أستاذ|mr)\.?[\s\/]+/i, '')}،`;
+    } else {
+      salutation = `أ/ ${raw}،`;
+    }
   }
 
   const loc = r.location && r.location.trim() ? `في ${r.location.trim()}` : 'بالتجمع الخامس';
