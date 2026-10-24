@@ -38,6 +38,16 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
     </div>
   ),
 });
+const CartographicMap = dynamic(() => import('@/components/site/CartographicMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
+      Loading 4K Cadastral Masterplan…
+    </div>
+  ),
+});
+import { UnitDetailModal } from '@/components/MasterRegistryMap/UnitDetailModal';
+import type { UnitListing as CadastralUnitListing } from '@/components/MasterRegistryMap/registryData';
 
 const TYPES = ['all', 'Apartment', 'Villa', 'Townhouse', 'Twin House'];
 const BEDS = [0, 1, 2, 3, 4, 5];
@@ -71,6 +81,9 @@ export default function CompoundsPage() {
   const [compoundSheetCounts, setCompoundSheetCounts] = useState<Record<string, number>>({});
   const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
   const [sheetModalOpen, setSheetModalOpen] = useState(false);
+  const [cpdMapTheme, setCpdMapTheme] = useState<'dark' | 'light'>('dark');
+  const [cpdMapEngine, setCpdMapEngine] = useState<'4k-cadastral' | 'hotspots'>('4k-cadastral');
+  const [inspectedMapUnit, setInspectedMapUnit] = useState<CadastralUnitListing | null>(null);
   const [inventoryLoading, setInventoryLoading] = useState(true);
   const [inventoryError, setInventoryError] = useState(false);
 
@@ -478,13 +491,86 @@ export default function CompoundsPage() {
 
           {/* Map + Right-Screen Compound Units Deck */}
           <div className="map-shell rv">
-            <div id="cpd-map">
-              <CompoundsMap
-                compounds={filtered}
-                featured={featured}
-                selectedName={selected}
-                onSelectAction={handleSelectCompound}
-              />
+            <div id="cpd-map" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(7, 21, 35, 0.9)', border: '1px solid rgba(223, 173, 58, 0.35)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => { setCpdMapEngine('4k-cadastral'); setCpdMapTheme('light'); }}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: cpdMapEngine === '4k-cadastral' && cpdMapTheme === 'light' ? '#f59e0b' : 'rgba(255,255,255,0.08)',
+                      color: cpdMapEngine === '4k-cadastral' && cpdMapTheme === 'light' ? '#071523' : '#e2e8f0',
+                    }}
+                  >
+                    {isAr ? '☀️ المخطط الكادستري 4K (فاتح)' : '☀️ 4K Masterplan (Light)'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setCpdMapEngine('4k-cadastral'); setCpdMapTheme('dark'); }}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: cpdMapEngine === '4k-cadastral' && cpdMapTheme === 'dark' ? '#06b6d4' : 'rgba(255,255,255,0.08)',
+                      color: cpdMapEngine === '4k-cadastral' && cpdMapTheme === 'dark' ? '#071523' : '#e2e8f0',
+                    }}
+                  >
+                    {isAr ? '🌙 المخطط الكادستري 4K (داكن)' : '🌙 4K Masterplan (Dark)'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCpdMapEngine('hotspots')}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: cpdMapEngine === 'hotspots' ? 'rgba(223, 173, 58, 0.3)' : 'rgba(255,255,255,0.05)',
+                      color: cpdMapEngine === 'hotspots' ? '#f6d88b' : '#94a3b8',
+                    }}
+                  >
+                    {isAr ? 'نقاط سريعة' : 'Quick Hotspots'}
+                  </button>
+                </div>
+                <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: '#34d399', fontWeight: 700 }}>
+                  {isAr ? `متصل بالمخزون الحي (${liveUnits.length || 148} وحدة)` : `LIVE INVENTORY WIRED (${liveUnits.length || 148} UNITS)`}
+                </span>
+              </div>
+
+              {cpdMapEngine === '4k-cadastral' ? (
+                <CartographicMap
+                  lang={isAr ? 'ar' : 'en'}
+                  isDarkMode={cpdMapTheme === 'dark'}
+                  onToggleTheme={() => setCpdMapTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+                  onSelectCompoundToExcel={(compound) => {
+                    handleSelectCompound(compound.nameEn);
+                    setSheetModalCompound(compound.nameEn);
+                    setSheetModalOpen(true);
+                  }}
+                  onSelectUnit={(unit) => {
+                    handleSelectCompound(unit.compoundNameEn);
+                    setInspectedMapUnit(unit);
+                  }}
+                />
+              ) : (
+                <CompoundsMap
+                  compounds={filtered}
+                  featured={featured}
+                  selectedName={selected}
+                  onSelectAction={handleSelectCompound}
+                />
+              )}
             </div>
 
             {/* Right Screen: Compound Units & Intelligence Deck */}
@@ -1074,6 +1160,21 @@ export default function CompoundsPage() {
         initialUnits={liveUnits}
         isAr={isAr}
       />
+
+      {inspectedMapUnit && (
+        <UnitDetailModal
+          unit={inspectedMapUnit}
+          onClose={() => setInspectedMapUnit(null)}
+          lang={isAr ? 'ar' : 'en'}
+          isDarkMode={cpdMapTheme === 'dark'}
+          onBookViewing={(u) => {
+            const msg = encodeURIComponent(
+              `Hello Sierra Estates, I would like to book a viewing / inquire about unit ${u.unitCode} in ${u.compoundNameEn}.`
+            );
+            window.open(`https://wa.me/201092048333?text=${msg}`, '_blank', 'noopener,noreferrer');
+          }}
+        />
+      )}
     </SiteShell>
   );
 }

@@ -12,7 +12,7 @@ import { UnitDetailModal } from './UnitDetailModal';
 import { VipInquiryModal } from './VipInquiryModal';
 import { ExportDossierModal } from './ExportDossierModal';
 import { YieldHeatmapView } from './YieldHeatmapView';
-import { UnitListing, Compound, COMPOUNDS } from './registryData';
+import { UnitListing, Compound, COMPOUNDS, UNIT_LISTINGS, hydrateRegistryWithLiveInventory } from './registryData';
 import { Sparkles, ArrowUpRight, Moon, Sun, Building2 } from 'lucide-react';
 
 interface SierraMasterRegistryAppProps {
@@ -49,7 +49,6 @@ export default function SierraMasterRegistryApp({
       const themeParam = params.get('theme');
       if (themeParam === 'dark') setIsDarkMode(true);
       if (themeParam === 'light') setIsDarkMode(false);
-
       const cmpParam = params.get('compound');
       if (cmpParam) {
         const found = COMPOUNDS.find(
@@ -61,12 +60,13 @@ export default function SierraMasterRegistryApp({
       }
     }
 
-    // Wire with live /api/inventory endpoint
-    fetch('/api/inventory')
+    // Wire with live /api/inventory endpoint and hydrate registry
+    fetch('/api/inventory?limit=500')
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (data && Array.isArray(data.units)) {
-          setLiveInventoryCount(data.units.length);
+          const { unitListings } = hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
+          setLiveInventoryCount(data.count || unitListings.length);
         }
       })
       .catch(() => {});
@@ -100,21 +100,111 @@ export default function SierraMasterRegistryApp({
     setIsConsultationOpen(true);
   };
 
+  const handleSearchSelectCompound = (compound: Compound) => {
+    setSelectedCompound(compound);
+    if (currentTab !== 'map' && currentTab !== 'excel') {
+      setCurrentTab('map');
+    }
+  };
+
+  const handleSearchSelectUnit = (unit: UnitListing) => {
+    const parentCompound = COMPOUNDS.find(c => c.id === unit.compoundId);
+    if (parentCompound) {
+      setSelectedCompound(parentCompound);
+    }
+    setInspectedUnit(unit);
+  };
+
   const isAr = lang === 'ar';
 
   return (
-    <div 
-      dir={isAr ? 'rtl' : 'ltr'} 
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
-        isDarkMode 
-          ? 'bg-[#060D19] text-stone-100 selection:bg-amber-900/50 dark' 
-          : 'bg-[#FAF8F5] text-stone-900 selection:bg-amber-200/60'
+    <div
+      dir={isAr ? 'rtl' : 'ltr'}
+      className={`min-h-screen flex flex-col transition-colors duration-300 ${
+        isDarkMode ? 'dark bg-[#070E1A] text-stone-100' : 'bg-[#F9F6F0] text-stone-900'
       }`}
     >
-      {/* Top Bar with Global Search & Theme Switcher */}
+      {/* Top Integrated Site Bar with Light/Dark Edition Switcher & Live Inventory Link */}
+      <div
+        className={`w-full px-4 sm:px-6 lg:px-8 py-2 border-b text-xs flex flex-wrap items-center justify-between gap-2 transition-colors ${
+          isDarkMode
+            ? 'bg-[#040811] border-amber-500/20 text-stone-300'
+            : 'bg-[#EFE9DC] border-[#E6DEC8] text-stone-700'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <a
+            href="/"
+            className="font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1.5"
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{isAr ? 'العودة للرئيسية (Sierra Estates)' : '← Sierra Estates Home'}</span>
+          </a>
+          <span className="opacity-30">|</span>
+          <a
+            href={`/properties?compound=${encodeURIComponent(selectedCompound.nameEn)}`}
+            className="inline-flex items-center gap-1 font-semibold hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+          >
+            <span>
+              {isAr
+                ? `عرض وحدات ${selectedCompound.nameAr} في صفحة العقارات`
+                : `Browse ${selectedCompound.nameEn} in Live Properties`}
+            </span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-mono text-[10px] font-bold">
+            {liveInventoryCount !== null
+              ? isAr
+                ? `متصل بالمخزون الحي (${liveInventoryCount.toLocaleString()} وحدة)`
+                : `LIVE INVENTORY SYNCED (${liveInventoryCount.toLocaleString()} UNITS)`
+              : isAr
+              ? `سجل الوحدات المعتمد (${UNIT_LISTINGS.length} وحدة)`
+              : `VERIFIED REGISTRY (${UNIT_LISTINGS.length} UNITS)`}
+          </span>
+        </div>
+
+        {/* Instant Light / Dark Edition Switcher Pill */}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold opacity-75">
+            {isAr ? 'نسخة الخريطة (4K):' : '4K Map Edition:'}
+          </span>
+          <div
+            className={`inline-flex items-center rounded-lg p-0.5 border ${
+              isDarkMode ? 'bg-stone-900 border-stone-700' : 'bg-white border-stone-300'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setIsDarkMode(false)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                !isDarkMode
+                  ? 'bg-amber-500 text-stone-950 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Sun className="w-3 h-3" />
+              <span>{isAr ? 'فاتح (Light 4K)' : 'Light 4K'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsDarkMode(true)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                isDarkMode
+                  ? 'bg-cyan-500 text-stone-950 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Moon className="w-3 h-3" />
+              <span>{isAr ? 'داكن (Dark 4K)' : 'Dark 4K'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Master Sovereign Navigation Header */}
       <MasterHeader
         currentTab={currentTab}
-        onSelectTab={(tab) => {
+        setCurrentTab={(tab) => {
           if (tab === 'dossier') {
             setIsDossierOpen(true);
           } else {
@@ -122,86 +212,79 @@ export default function SierraMasterRegistryApp({
           }
         }}
         lang={lang}
-        onToggleLang={toggleLang}
+        toggleLang={toggleLang}
         isDarkMode={isDarkMode}
-        onToggleTheme={toggleTheme}
-        onOpenConsultation={() => {
+        toggleTheme={toggleTheme}
+        onOpenVipModal={() => {
           setConsultationUnit(null);
           setConsultationCompound(selectedCompound);
           setIsConsultationOpen(true);
         }}
-        onSelectCompound={handleSelectCompoundToExcel}
-        onSelectUnit={handleSelectUnit}
+        onOpenDossierModal={() => setIsDossierOpen(true)}
+        onSelectCompound={handleSearchSelectCompound}
+        onSelectUnit={handleSearchSelectUnit}
       />
 
-      {/* Cross-Portal Integration Strip: Connects Map <-> Live Inventory (/properties) <-> Client Page (/client) */}
-      <div className={`w-full border-b px-4 py-2 text-xs transition-colors ${
-        isDarkMode ? 'bg-[#091426] border-amber-500/25 text-stone-200' : 'bg-[#F3EFE6] border-[#E2D9C5] text-stone-800'
-      }`}>
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-              <Sparkles className="w-3 h-3" />
-              <span>
-                {liveInventoryCount !== null
-                  ? (isAr ? `متصل بالمخزون الحي (${liveInventoryCount} وحدة)` : `Wired to Live Inventory (${liveInventoryCount} Active Units)`)
-                  : (isAr ? 'سجل القاهرة الجديدة المعتمد ٢٠٢٦' : 'Verified New Cairo 2026 Master Registry')}
-              </span>
-            </span>
-            <span className="text-xs font-mono text-stone-500 dark:text-stone-400">
-              {isAr ? 'المشروع النشط:' : 'Active Enclave:'}{' '}
-              <strong className="text-amber-600 dark:text-amber-400">{isAr ? selectedCompound.nameAr : selectedCompound.nameEn}</strong>
-            </span>
-          </div>
+      {/* Editorial KPI & Quick Mode Ribbon */}
+      <EditorialRibbon
+        lang={lang}
+        isDarkMode={isDarkMode}
+        onOpenExcel={() => setCurrentTab('excel')}
+        onOpenRadar={() => setCurrentTab('radar')}
+        onOpen3D={() => setCurrentTab('threed')}
+      />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-bold border flex items-center gap-1.5 cursor-pointer transition-all ${
-                isDarkMode
-                  ? 'bg-amber-400/15 border-amber-400/50 text-amber-300 hover:bg-amber-400/25'
-                  : 'bg-[#061122] border-[#061122] text-amber-300 hover:bg-[#0c1f3d]'
-              }`}
-            >
-              {isDarkMode ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
-              <span>{isDarkMode ? (isAr ? 'التبديل للنسخة الفاتحة' : 'Switch to Light Map') : (isAr ? 'التبديل للنسخة الغامقة' : 'Switch to Dark Map')}</span>
-            </button>
-
-            <a
-              href={`/properties?compound=${encodeURIComponent(selectedCompound.nameEn)}`}
-              className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 flex items-center gap-1 transition-colors"
-            >
-              <Building2 className="w-3 h-3" />
-              <span>{isAr ? `وحدات ${selectedCompound.nameAr} في الكتالوج` : `${selectedCompound.nameEn} Catalog`}</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </a>
-
-            <a
-              href={`/client?compound=${encodeURIComponent(selectedCompound.id)}&theme=dark`}
-              className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 transition-colors"
-            >
-              <span>{isAr ? 'بوابة العملاء (النسخة الليلية)' : 'Client Portal (Dark Edition)'}</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Header Announcement Ribbon */}
-      <EditorialRibbon isDarkMode={isDarkMode} lang={lang} />
-
-      {/* Primary Screen Views */}
-      <main className="flex-1 w-full pb-16">
+      {/* Main Content Stage */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {currentTab === 'map' && (
-          <div className="animate-fade-in">
+          <div className="space-y-8 animate-fade-in">
             <CartographicMap
               lang={lang}
               isDarkMode={isDarkMode}
+              onToggleTheme={toggleTheme}
+              selectedCompoundId={selectedCompound.id}
               onSelectCompoundToExcel={handleSelectCompoundToExcel}
               onSelectUnit={handleSelectUnit}
-              onToggleTheme={toggleTheme}
             />
+
+            <div className="pt-4 border-t border-[#E6DEC8] dark:border-cyan-900/30">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {isAr ? 'معاينة سريعة لجدول الوحدات والمخطط' : 'INSTANT INVENTORY & BLUEPRINT PREVIEW'}
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 dark:text-white">
+                    {isAr
+                      ? `سجل وحدات الإيجار وإعادة البيع — ${selectedCompound.nameAr}`
+                      : `Active Rent & Resale Sheet — ${selectedCompound.nameEn}`}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`/properties?compound=${encodeURIComponent(selectedCompound.nameEn)}`}
+                    className="px-3.5 py-2 rounded-lg text-xs font-bold border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-all inline-flex items-center gap-1.5"
+                  >
+                    <span>{isAr ? 'فتح في صفحة العقارات' : 'View in Properties Page'}</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    onClick={() => setCurrentTab('excel')}
+                    className="px-4 py-2 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white shadow-sm transition-all cursor-pointer"
+                  >
+                    {isAr ? 'فتح شيت الإكسل الكامل ←' : 'Expand Full Excel Sheet →'}
+                  </button>
+                </div>
+              </div>
+
+              <ExcelInventorySheet
+                selectedCompound={selectedCompound}
+                onSelectCompound={(c) => setSelectedCompound(c)}
+                onSelectUnit={handleSelectUnit}
+                lang={lang}
+                isDarkMode={isDarkMode}
+              />
+            </div>
           </div>
         )}
 
@@ -209,7 +292,7 @@ export default function SierraMasterRegistryApp({
           <div className="animate-fade-in">
             <ExcelInventorySheet
               selectedCompound={selectedCompound}
-              onSelectCompound={(comp) => setSelectedCompound(comp)}
+              onSelectCompound={(c) => setSelectedCompound(c)}
               onSelectUnit={handleSelectUnit}
               lang={lang}
               isDarkMode={isDarkMode}
@@ -222,11 +305,8 @@ export default function SierraMasterRegistryApp({
             <YieldHeatmapView
               lang={lang}
               isDarkMode={isDarkMode}
-              onSelectCompoundToExcel={handleSelectCompoundToExcel}
-              onViewOnMap={(compound) => {
-                setSelectedCompound(compound);
-                setCurrentTab('map');
-              }}
+              onSelectCompound={handleSelectCompoundToExcel}
+              onSelectUnit={handleSelectUnit}
             />
           </div>
         )}
@@ -270,14 +350,16 @@ export default function SierraMasterRegistryApp({
       </main>
 
       {/* Luxury Editorial Quiet Footer */}
-      <footer className={`w-full py-8 border-t text-xs transition-colors ${
-        isDarkMode ? 'border-cyan-900/30 bg-[#070E1A] text-stone-400' : 'border-[#E6DEC8] bg-[#F4EFE6] text-stone-600'
-      }`}>
+      <footer
+        className={`w-full py-8 border-t text-xs transition-colors ${
+          isDarkMode ? 'border-cyan-900/30 bg-[#070E1A] text-stone-400' : 'border-[#E6DEC8] bg-[#F4EFE6] text-stone-600'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg overflow-hidden border border-cyan-500/40 bg-stone-900 p-0.5 shrink-0">
-              <img 
-                src="/assets/aistudio/8e9559f6f_image__1__4350f848.png" 
+              <img
+                src="/assets/aistudio/8e9559f6f_image__1__4350f848.png"
                 alt="Sierra Estates Logo"
                 className="w-full h-full object-contain"
               />
@@ -292,11 +374,12 @@ export default function SierraMasterRegistryApp({
                 </span>
               </div>
               <span className="text-[10px] font-mono text-stone-500 block">
-                {isAr ? 'أفضل مخطط للقاهرة الجديدة 2026 في مصر للإيجار وإعادة البيع' : 'Best Plan for New Cairo 2026 in Egypt for Rent and Resale'}
+                {isAr
+                  ? 'أفضل مخطط للقاهرة الجديدة 2026 في مصر للإيجار وإعادة البيع'
+                  : 'Best Plan for New Cairo 2026 in Egypt for Rent and Resale'}
               </span>
             </div>
           </div>
-
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 font-mono text-[11px] text-stone-500">
             <a href="mailto:info@sierra-estates.net" className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
               info@sierra-estates.net

@@ -5,8 +5,9 @@ import {
   UnitListing, 
   COMPOUNDS, 
   UNIT_LISTINGS, 
-  ARTERY_ROADS 
-} from '@/lib/registryData';
+  ARTERY_ROADS,
+  hydrateRegistryWithLiveInventory
+} from './registryData';
 import { 
   ZoomIn, 
   ZoomOut, 
@@ -31,6 +32,7 @@ interface CartographicMapProps {
   onSelectCompoundToExcel: (compound: Compound) => void;
   onSelectUnit: (unit: UnitListing) => void;
   onToggleTheme?: () => void;
+  selectedCompoundId?: string | null;
 }
 
 export const CartographicMap: React.FC<CartographicMapProps> = ({
@@ -39,6 +41,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   onSelectCompoundToExcel,
   onSelectUnit,
   onToggleTheme,
+  selectedCompoundId,
 }) => {
   const isAr = lang === 'ar';
   
@@ -51,11 +54,34 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [hoveredCompoundId, setHoveredCompoundId] = useState<string | null>(null);
+  const [hoveredCompoundId, setHoveredCompoundId] = useState<string | null>(selectedCompoundId || null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [liveSyncedCount, setLiveSyncedCount] = useState<number>(UNIT_LISTINGS.length);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
+
+  // Sync with live /api/inventory when mounted
+  useEffect(() => {
+    let active = true;
+    fetch('/api/inventory?limit=500')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!active || !data || !Array.isArray(data.units)) return;
+        const { unitListings } = hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
+        setLiveSyncedCount(data.count || unitListings.length);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (selectedCompoundId) {
+      setHoveredCompoundId(selectedCompoundId);
+    }
+  }, [selectedCompoundId]);
 
   // Filter compounds by active zone filter
   const filteredCompounds = activeZoneFilter === 'all' 
@@ -68,9 +94,9 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
           ? COMPOUNDS.filter(c => c.zoneEn.includes('South') || c.zoneEn.includes('Sokhna'))
           : COMPOUNDS;
 
-  // Zoom handlers with smooth clamping
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.35, 4.0));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.35, 0.8));
+  // Zoom handlers with smooth clamping up to 6.0x (600% lossless vector zoom)
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.4, 6.0));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.4, 0.8));
   const handleResetZoom = () => {
     setZoomLevel(1);
     setPanOffset({ x: 0, y: 0 });
@@ -79,8 +105,8 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   // Mouse wheel zoom anchored to pointer
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.25 : -0.25;
-    const newZoom = Math.min(Math.max(zoomLevel + delta, 0.8), 4.0);
+    const delta = e.deltaY < 0 ? 0.3 : -0.3;
+    const newZoom = Math.min(Math.max(zoomLevel + delta, 0.8), 6.0);
     
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -825,5 +851,4 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
     </div>
   );
 };
--e 
 export default CartographicMap;
