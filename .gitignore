@@ -18,6 +18,7 @@ graphify-out/
 
 # Vercel CLI cache & local configs
 .vercel/
+.tunnel-url
 
 # TypeScript cache & compiled twins
 *.tsbuildinfo
