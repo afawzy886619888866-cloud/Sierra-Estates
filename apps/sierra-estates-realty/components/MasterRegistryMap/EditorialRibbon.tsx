@@ -5,9 +5,18 @@ import { Sparkles, TrendingUp, CheckCircle2 } from 'lucide-react';
 interface EditorialRibbonProps {
   isDarkMode: boolean;
   lang: 'en' | 'ar';
+  onOpenExcel?: () => void;
+  onOpenRadar?: () => void;
+  onOpen3D?: () => void;
 }
 
-export const EditorialRibbon: React.FC<EditorialRibbonProps> = ({ isDarkMode, lang }) => {
+export const EditorialRibbon: React.FC<EditorialRibbonProps> = ({
+  isDarkMode,
+  lang,
+  onOpenExcel: _onOpenExcel,
+  onOpenRadar: _onOpenRadar,
+  onOpen3D: _onOpen3D,
+}) => {
   const isAr = lang === 'ar';
 
   return (

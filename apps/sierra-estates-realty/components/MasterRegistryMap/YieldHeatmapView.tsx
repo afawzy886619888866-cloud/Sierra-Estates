@@ -25,8 +25,10 @@ import {
 interface YieldHeatmapViewProps {
   lang: 'en' | 'ar';
   isDarkMode: boolean;
-  onSelectCompoundToExcel: (compound: Compound) => void;
-  onViewOnMap: (compound: Compound) => void;
+  onSelectCompoundToExcel?: (compound: Compound) => void;
+  onViewOnMap?: (compound: Compound) => void;
+  onSelectCompound?: (compound: Compound) => void;
+  onSelectUnit?: (unit: any) => void;
 }
 
 // Helper to parse max rental yield percentage from string e.g. "8.4% - 9.8%" -> 9.8
@@ -50,9 +52,19 @@ export const YieldHeatmapView: React.FC<YieldHeatmapViewProps> = ({
   lang,
   isDarkMode,
   onSelectCompoundToExcel,
-  onViewOnMap,
+  onViewOnMap: _onViewOnMap,
+  onSelectCompound,
+  onSelectUnit: _onSelectUnit,
 }) => {
   const isAr = lang === 'ar';
+  const handleSelectToExcel = (comp: Compound) => {
+    if (onSelectCompoundToExcel) onSelectCompoundToExcel(comp);
+    else if (onSelectCompound) onSelectCompound(comp);
+  };
+  const handleViewOnMap = (comp: Compound) => {
+    if (_onViewOnMap) _onViewOnMap(comp);
+    else if (onSelectCompound) onSelectCompound(comp);
+  };
 
   const [minYieldFilter, setMinYieldFilter] = useState<number>(7.5);
   const [selectedZone, setSelectedZone] = useState<string>('all');
@@ -463,14 +475,14 @@ export const YieldHeatmapView: React.FC<YieldHeatmapViewProps> = ({
                 {/* Direct Action Buttons */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => onSelectCompoundToExcel(activeCompound)}
+                    onClick={() => handleSelectToExcel(activeCompound)}
                     className="px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                   >
                     <Table2 className="w-3.5 h-3.5" />
                     <span>{isAr ? 'عرض شيت الإكسيل' : 'Open in Excel'}</span>
                   </button>
                   <button
-                    onClick={() => onViewOnMap(activeCompound)}
+                    onClick={() => handleViewOnMap(activeCompound)}
                     className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500/20 text-stone-700 dark:text-stone-300 flex items-center gap-1.5 transition-all cursor-pointer border border-stone-300 dark:border-stone-700"
                   >
                     <Map className="w-3.5 h-3.5 text-cyan-500" />
@@ -545,7 +557,7 @@ export const YieldHeatmapView: React.FC<YieldHeatmapViewProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onSelectCompoundToExcel(c);
+                            handleSelectToExcel(c);
                           }}
                           className="px-2.5 py-1 rounded bg-emerald-600/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white transition-all text-[10px] font-bold cursor-pointer"
                         >
@@ -694,7 +706,7 @@ export const YieldHeatmapView: React.FC<YieldHeatmapViewProps> = ({
                   </div>
 
                   <button
-                    onClick={() => onSelectCompoundToExcel(activeCompound)}
+                    onClick={() => handleSelectToExcel(activeCompound)}
                     className="w-full py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Table2 className="w-4 h-4" />
