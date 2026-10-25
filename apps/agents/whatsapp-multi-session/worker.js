@@ -449,6 +449,24 @@ app.get('/api/sessions/:sessionId', (req, res) => {
 /**
  * POST /api/sessions/:sessionId/messages/send-text — GatewayClient sendText contract
  */
+/**
+ * GET /api/sessions/:sessionId/qr.png - Returns raw PNG binary of the active QR
+ */
+app.get('/api/sessions/:sessionId/qr.png', (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s || !s.qrDataUrl) {
+    return res.status(404).send('No active QR code for this session');
+  }
+  const base64Data = s.qrDataUrl.replace(/^data:image\/png;base64,/, '');
+  const imgBuf = Buffer.from(base64Data, 'base64');
+  res.writeHead(200, {
+    'Content-Type': 'image/png',
+    'Content-Length': imgBuf.length,
+    'Cache-Control': 'no-cache, no-store, must-revalidate'
+  });
+  res.end(imgBuf);
+});
+
 app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
   const s = resolveSession(req.params.sessionId);
   if (!s) return res.status(404).json({ error: `Session not found` });
