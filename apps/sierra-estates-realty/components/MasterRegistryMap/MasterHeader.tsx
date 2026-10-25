@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Globe, Moon, Sun, Sparkles, Table2, Map, Box, FileText, ShieldCheck, Search, X, Building2, Home, ArrowUpRight } from 'lucide-react';
