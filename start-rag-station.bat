@@ -20,6 +20,16 @@ if %ERRORLEVEL% EQU 0 (
     if /i "%USE_DOCKER%"=="Y" (
         echo [DOCKER] Starting RAG Station and Cloudflare Tunnel via Docker...
         docker compose -f infra/docker-compose.rag-station.yml up -d
+        if %ERRORLEVEL% NEQ 0 (
+            echo.
+            echo ===================================================================
+            echo [ERROR] docker compose failed. Most likely cause: gateway keys are
+            echo required on this path (it is exposed via a PUBLIC tunnel). Copy
+            echo infra/.env.example to infra/.env and set OPENWA_ADMIN_API_KEY.
+            echo ===================================================================
+            pause
+            exit /b 1
+        )
         echo.
         echo ===================================================================
         echo [SUCCESS] Containers running!
