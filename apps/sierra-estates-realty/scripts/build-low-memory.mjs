@@ -45,8 +45,13 @@
  *   - host >= 7 GB total: runs the normal single-phase build (6144 MB cap,
  *     identical to `pnpm build`'s next-build step)
  *   - host <  7 GB total: runs the two-phase split with adaptive caps
- *       compile  = clamp(2048, totalMem * 0.84, 4096) MB
+ *       compile  = clamp(2048, totalMem * 0.72, 4096) MB
  *       generate = clamp(2048, totalMem * 0.70, 3300) MB
+ *
+ *     0.72 (was 0.84, 2026-10-25): V8 grows RSS toward the ceiling — at
+ *     0.84x4042=3394MB the compile phase was kernel-OOM-killed during
+ *     page-data/trace collection while 2800 completed cleanly on the same
+ *     host. Tighter ceiling = more aggressive GC = lower RSS.
  *
  * Env overrides: SE_BUILD_HEAP (single-phase), SE_BUILD_COMPILE_HEAP,
  * SE_BUILD_GENERATE_HEAP — MB numbers, take precedence over the formulas.
@@ -96,7 +101,7 @@ function heapCapMb(kind) {
     return DEFAULT_SINGLE_HEAP_MB;
   }
   if (kind === 'compile') {
-    return clamp(2048, totalMb * 0.84, 4096);
+    return clamp(2048, totalMb * 0.72, 4096);
   }
   return clamp(2048, totalMb * 0.7, 3300);
 }

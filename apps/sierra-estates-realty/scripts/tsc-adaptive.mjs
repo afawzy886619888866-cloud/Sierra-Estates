@@ -9,8 +9,13 @@
  * picks the largest heap cap that fits the host instead of a fixed number:
  *
  *   - default cap: 4096 MB (previous behavior, kept on hosts that afford it)
- *   - on smaller hosts: totalMem * 0.82, clamped to [2048, 4096] MB
+ *   - on smaller hosts: totalMem * 0.72, clamped to [2048, 4096] MB
  *   - override: TSC_MAX_OLD_SPACE=<MB> forces a specific cap
+ *
+ *     0.72 (was 0.82, 2026-10-25): V8 grows RSS toward the ceiling, so a
+ *     higher cap wastes headroom — at 0.82x4042=3314MB the kernel OOM-killed
+ *     tsc under verify's parallel load while 2900 passed repeatedly on the
+ *     same host. Tighter ceiling = more aggressive GC = lower RSS.
  *
  * Usage (from package.json):
  *   "type-check": "node scripts/ensure-snapshot.mjs && node scripts/tsc-adaptive.mjs"
@@ -29,7 +34,7 @@ function resolveHeapCapMb() {
     return Math.floor(override);
   }
   const totalMb = os.totalmem() / (1024 * 1024);
-  const fitted = Math.floor(totalMb * 0.82);
+  const fitted = Math.floor(totalMb * 0.72);
   return Math.max(MIN_HEAP_MB, Math.min(DEFAULT_CAP_MB, fitted));
 }
 
