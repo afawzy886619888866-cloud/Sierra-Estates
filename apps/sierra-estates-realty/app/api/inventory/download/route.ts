@@ -1,11 +1,41 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import path from 'path';
 import fs from 'fs';
 import snapshot from '@/lib/inventory/snapshot.json';
+import { verifyPortalRequest } from '@/lib/server/auth-guard';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/**
+ * OWNER-PRIVACY GATE (2026-10-25):
+ *
+ * This route serves the master inventory as JSON/CSV/XLSX. Until now it
+ * exported the committed snapshot VERBATIM — including "Owner Contact
+ * Name", "Owner Phone" and "WhatsApp Direct" columns — to ANY anonymous
+ * caller (verified live: 12,334 rows exposing 10,755 Egyptian owner mobile
+ * numbers, no auth, CORS *). That is a publication-gate bypass: snapshot
+ * rows are not publish-gated rows, and owner contact data is private by
+ * the repo's own doctrine (scripts/sanitize-public-downloads.mjs replaces
+ * every owner phone in public assets with the concierge number).
+ *
+ * Contract now:
+ *   · PUBLIC callers receive the SAME doctrine-sanitized export the public
+ *     workbooks follow — owner contact columns replaced with the Sierra
+ *     Estates concierge contact, and any phone-like string inside free
+ *     text (description) scrubbed to the concierge number.
+ *   · AUTHENTICATED ADMIN callers (session cookie or secret key via
+ *     verifyPortalRequest) receive the full export including owner contact
+ *     columns — staff tooling is preserved.
+ *   · The route never invented listing data before and still does not —
+ *     this is a redaction gate, not a data change.
+ */
+const CONCIERGE_NAME = 'Sierra Estates Advisory';
+const CONCIERGE_PHONE = process.env.PF_AGENT_PHONE || '+201092048333';
+const CONCIERGE_WA = `https://wa.me/${CONCIERGE_PHONE.replace(/[^\d]/g, '')}`;
+const PHONE_SCRUB_RE = /(?:\+?20)?1[0125][0-9]{8}/g;
 
 function loadDataset(datasetName: string): any[] {
   if (datasetName === 'owners' || datasetName === 'verified' || datasetName === '585') {
@@ -80,7 +110,20 @@ function normalizeUnitRow(u: any) {
   };
 }
 
-export async function GET(request: Request) {
+/** Redact owner-identifying data for public output (concierge doctrine). */
+function sanitizePublicRow<T extends Record<string, unknown>>(row: T): T {
+  return {
+    ...row,
+    'Owner Contact Name': CONCIERGE_NAME,
+    'Owner Phone': CONCIERGE_PHONE,
+    'WhatsApp Direct': CONCIERGE_WA,
+    // Free text can embed owner phones — scrub to the concierge number,
+    // exactly like scripts/sanitize-public-downloads.mjs does for sheets.
+    Description: String(row.Description || '').replace(PHONE_SCRUB_RE, CONCIERGE_PHONE),
+  };
+}
+
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const format = (searchParams.get('format') || 'xlsx').toLowerCase();
   const datasetParam = searchParams.get('dataset') || 'consolidated';
@@ -88,6 +131,20 @@ export async function GET(request: Request) {
   const filterDealType = searchParams.get('dealType')?.toLowerCase();
 
   let rawUnits = loadDataset(datasetParam);
+
+  // ── Owner-privacy gate: full export is admin-only. ─────────────────────
+  let isStaffAdmin = false;
+  try {
+    const auth = await verifyPortalRequest(request);
+    isStaffAdmin = auth.authenticated && auth.access === 'admin';
+  } catch (err) {
+    logger.warn('[inventory/download] auth check failed — treating as public:', err);
+  }
+  if (!isStaffAdmin && rawUnits.length) {
+    logger.info(
+      `[inventory/download] public/redacted export (dataset=${datasetParam}, ${rawUnits.length} rows) — owner contact data withheld`,
+    );
+  }
 
   if (filterCompound) {
     rawUnits = rawUnits.filter((u) =>
@@ -104,7 +161,8 @@ export async function GET(request: Request) {
     });
   }
 
-  const tableRows = rawUnits.map(normalizeUnitRow);
+  let tableRows = rawUnits.map(normalizeUnitRow);
+  if (!isStaffAdmin) tableRows = tableRows.map(sanitizePublicRow);
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',

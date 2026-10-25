@@ -188,3 +188,54 @@ Unchanged from the prior report, plus:
     1. Inspect the Vercel build/deployment of this push; run the post-deploy smoke (§11.1).
     2. Rotate the two exposed Supabase credentials (§10.1–10.2).
     3. On EC2: set `RUNNER_API_KEY` and restart the runner; run `backfill-sheet.mjs --dry-run` before any apply.
+
+---
+
+# ADDENDUM — 2026-10-25 re-check & production-gap closure
+
+**Execution run:** 2026-10-25 · autonomous continuation on HEAD `0540680d`
+(stated baseline `c41a4e95` was already 3 commits behind; always re-fetch).
+**Full detail:** `docs/EXECUTION_REPORT_2026-10-25.md` (evidence tables,
+integration matrix, operator runbooks). This addendum records the verdict
+change drivers only.
+
+## Verdict (2026-10-25)
+
+`IMPLEMENTED — LIVE VERIFICATION INCOMPLETE` — unchanged in category, for
+two new reasons (both operator-side, neither code-side):
+
+1. **A live privacy breach is fixed in code but not yet deployed.**
+   Unauthenticated `GET /api/inventory/download?dataset=owners` was serving
+   the committed snapshot with 12,334 rows including 10,755 owner mobile
+   numbers (verified live 2026-10-25). The route is now admin-gated with
+   concierge-redacted public output (the repo's own
+   `sanitize-public-downloads` doctrine), with workbook-level regression
+   tests. Production deploys trigger on `v*` tags / manual dispatch, so the
+   operator must ship it (deploy order in the execution report §5).
+2. **The migration chain and G3 evidence remain credential-blocked.** The
+   Deploy Supabase workflow failed all 7 recorded runs on the missing
+   `SUPABASE_DB_URL` secret — and, by design audit, could never have applied
+   migrations 031–036 (it ran schema.sql alone). It now applies the
+   ledger-reconciled chain with G2-parity versions. The EC2 automations path
+   is down on invalid AWS credentials, so G3 (Phase 1 acceptance) has no
+   reachable evidence. Phase 2 stays deferred.
+
+## What this run changed (summary)
+
+| Area | Files | Defect closed |
+|---|---|---|
+| Inventory price parsing | `workflows/08-units-sync/sync.js`, `__tests__/units-sync-price-parsing.test.ts` | `8.34M`→834 bug; hardcoded EGP; ambiguous prices quarantined (validated 324/324 live rows, 0 mis-parses) |
+| Mock send paths | `apps/automations/src/{02,03,04}/*`, `scripts/check-no-compiled-twins.mjs` | fabricated `status:'sent'` records; mock email campaigns; twins deleted (ALLOWED 105→102) |
+| Owner discovery | `apps/automations/src/02-owner-search/index.ts`, `workflows/02-owner-search/search.js` + tests | broker-phone fallback; timeout→success; missing-broker⇒owner-direct inference; malformed-shape→empty-success |
+| Owner privacy | `apps/sierra-estates-realty/app/api/inventory/download/route.ts`, `__tests__/inventory-download-privacy.test.ts` | public owner-phone export (10,755 numbers) → admin-gated redaction, fail-closed |
+| Supabase deploy | `scripts/apply-supabase-migrations.mjs`, `.github/workflows/deploy-supabase.yml`, `__tests__/supabase-migration-chain.test.ts` | migrations never applied by CI; push events attempted real applies; credential gate blocked dry-runs |
+
+## Gates on the final tree (2026-10-25)
+
+- Root vitest: **85 files / 786 tests PASS** (729 baseline + 57 new).
+- `pnpm type-check`: **18/18 tasks pass** (client-page requires solo run on
+  4 GB hosts — turbo's parallel load OOM-kills tsc; the repo's adaptive-heap
+  wrapper passes it alone).
+- `pnpm lint`: **15/15 tasks, 0 errors** (114 pre-existing warnings).
+- `node scripts/apply-supabase-migrations.mjs --dry-run`: **PASS** (34
+  migrations, unique G2-parity versions, static idempotency validation).

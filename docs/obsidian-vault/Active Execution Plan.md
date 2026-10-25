@@ -2,7 +2,7 @@
 type: memory
 domain: operations
 status: living
-updated: 2026-10-19
+updated: 2026-10-25
 ---
 
 # Active Execution Plan — Owner Acquisition → Verified Inventory → Connected Systems
@@ -105,6 +105,52 @@ fingerprint (price is band-bucketed ±2.5%).
 - [ ] **G3 — Phase 1 acceptance gate**: end-to-end run of the §1 loop on the EC2
       runner with audit evidence (integration status log + status_history rows).
       Only after G3 passes does Phase 2 (lead-to-viewing) start.
+
+    **G3 status 2026-10-25 (re-check session, see
+    `docs/EXECUTION_REPORT_2026-10-25.md`): STILL OPEN — blocked by
+    infrastructure credentials, not by code.** The EC2 automations path is
+    down (invalid AWS security token — all 5 recent scheduled GHA runs
+    failed at `configure-aws-credentials`), so no runner telemetry
+    (`public.workflows`) is reachable and no Phase 1 end-to-end evidence
+    exists. The only real outreach evidence remains 61 owners dated
+    2026-10-11 (pre-telemetry-contract). Unblocking chain: rotate the AWS
+    key pair in repo secrets → EC2 workflow reaches the runner → runner
+    executes the repaired workflows → telemetry + ledger + status_history
+    evidence → G3 re-evaluation. Phase 2 stays deferred.
+
+- [x] **G2.5 — Production-gap re-check & closure** (2026-10-25, autonomous
+      continuation on HEAD `0540680d`): five defect classes fixed with
+      regression coverage — (1) units-sync price parsing
+      (`8.34M`→8,340,000; currency never assumed; ambiguous prices
+      quarantined for review; validated against all 324 live sheet rows,
+      0 mis-parses); (2) mock-only send paths removed from
+      `apps/automations` 02/03/04 (sent now requires a real 2xx provider
+      response; dry-run strictly distinct); (3) owner discovery made
+      evidence-based in both the automations package and the ACTIVE
+      `workflows/02-owner-search` (broker phones never land in owner_leads;
+      malformed API payloads are failures, never empty successes);
+      (4) **live privacy breach closed in code** — unauthenticated
+      `/api/inventory/download` was serving 12,334 rows with 10,755 owner
+      mobile numbers; now admin-gated with concierge-redacted public output
+      (⚠️ stays open in production until the operator deploys — see §7
+      item 1); (5) the Deploy Supabase workflow now actually applies the
+      migration chain (ledger-reconciled, G2-parity versions) instead of
+      schema.sql alone. Suite: 85 files / 786 tests green, type-check 18/18,
+      lint 0 errors.
+
+### 4.1 Migration-ledger reconciliation note (2026-10-25)
+
+Two historical statements in this note previously read as contradictory:
+G2 item 5 ("Migrations 031/032/033 VERIFIED applied + recorded") vs §7
+item 2 ("Migrations 031/032/033 NOT yet applied"). Resolution, preserved
+for the record: §7 item 2 was the 2026-10-19 **pre-deploy** blocker
+snapshot; G2 item 5 is the **post-deploy** evidence (ledger versions
+`20261019031000/32000/33000` recorded on project `REDACTED-PROJECT`).
+The G2 evidence stands as the last verifiable record — the ledger is not
+readable without credentials. Migrations **034/035/036 have no evidence of
+live application** and must be treated as pending until the reworked
+workflow runs (blocked on the missing `SUPABASE_DB_URL` secret — §7 item 2,
+updated).
 
 ## 5. Known-good components (REUSE — never rebuild)
 
@@ -277,3 +323,16 @@ below; never rewrite history.*
    counts all active rows incl. unverified; the "12,333 verified units" figure
    in Session 3's log is a stale claim — 4,828 is the verified-publishable
    number as of 2026-10-20 19:51 UTC.
+
+---
+
+## 8. Live-environment blockers — 2026-10-25 refresh (supersedes §7 for currency; §7 preserved as the 2026-10-19 snapshot)
+
+| # | Blocker | Current evidence (2026-10-25) | Exact responsible action |
+| --- | --- | --- | --- |
+| 1 | **Live owner-phone exposure on `/api/inventory/download`** — the redaction fix (G2.5 item 4) is in code only; production still serves the raw snapshot until the next deploy | Anonymous GET served 12,334 rows / 10,755 owner mobiles (verified 2026-10-25) | Operator: deploy order in `docs/EXECUTION_REPORT_2026-10-25.md` §5 — Supabase workflow first, then Vercel production deploy (tag or dispatch) |
+| 2 | **`SUPABASE_DB_URL` secret missing** — blocks the reworked Deploy Supabase workflow's apply path; 034/035/036 unverified on the live ledger | Secret inventory checked by name (57 secrets, no DB URL); all 7 historical workflow runs failed on it | Operator: add the secret (Supabase dashboard → Project Settings → Database → connection string) and run the workflow with `dry_run` unchecked |
+| 3 | **AWS credentials invalid** — EC2 runner path down, G3 evidence unreachable | `The security token included in the request is invalid` on all 5 recent scheduled EC2-automations runs (instance var `i-0bfd988398645d0cb`) | Owner: rotate `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` repo secrets; verify with a daily-digest dispatch |
+| 4 | **WhatsApp gateway not verifiable from audit environments** | `54.89.162.250:2785` connection timeout from this session | Operator: confirm gateway reachability from the GHA runners (the workflow's `WHATSAPP_API_URL` secret holds the live value) |
+| 5 | **`SUPABASE_ACCESS_TOKEN` possibly revoked** | 2026-10-19 §7 note (401 Revoked) predates the current secret (updated 2026-10-19 16:52 UTC); validity unknown | Owner: rotate if the workflow's first real run reports 401 |
+| 6 | **198/324 owner-sheet prices empty** (now quarantined, not fabricated) | Live sheet scan 2026-10-25 | Business: fill the price column in the sheet; the sync will pick them up on the next cycle |
