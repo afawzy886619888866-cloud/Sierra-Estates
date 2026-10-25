@@ -95,21 +95,46 @@ class GatewayClient {
     this._poolCache = null;         // { at, entries: [{name, uuid}] }
   }
 
-  /** Live session status via admin key. */
+  /** Live session status via admin key (multi-session pool aware). */
   async status() {
-    const res = await requestJson(
-      `${this.baseUrl}/api/sessions/${this.sessionId}`,
-      { headers: { 'X-API-Key': this.adminKey }, timeoutMs: 6000 }
-    );
-    if (!res.ok) {
-      const err = new Error(`gateway status HTTP ${res.status}`);
-      err.httpStatus = res.status;
+    let sessionPath = this.sessionId ? ("/api/sessions/" + this.sessionId) : null;
+    let res = null;
+    if (sessionPath) {
+      res = await requestJson(
+        this.baseUrl + sessionPath,
+        { headers: { "X-API-Key": this.adminKey }, timeoutMs: 6000 }
+      );
+    }
+    if (!res || !res.ok || (res.data && res.data.status !== "ready")) {
+      const poolRes = await requestJson(
+        this.baseUrl + "/api/sessions",
+        { headers: { "X-API-Key": this.adminKey }, timeoutMs: 6000 }
+      );
+      if (poolRes.ok && Array.isArray(poolRes.data)) {
+        const readySession = poolRes.data.find((s) => s.status === "ready") || poolRes.data[0];
+        if (readySession) {
+          return {
+            reachable: true,
+            status: readySession.status || "unknown",
+            phone: readySession.phone,
+            pushName: readySession.pushName,
+            lastActive: readySession.lastActive,
+            engineLoaded: Boolean(readySession.engineLoaded),
+            poolCount: poolRes.data.length,
+            readyCount: poolRes.data.filter((s) => s.status === "ready").length,
+          };
+        }
+      }
+    }
+    if (!res || !res.ok) {
+      const err = new Error("gateway status HTTP " + (res ? res.status : 503));
+      err.httpStatus = res ? res.status : 503;
       throw err;
     }
     const d = res.data || {};
     return {
       reachable: true,
-      status: d.status || 'unknown',
+      status: d.status || "unknown",
       phone: d.phone,
       pushName: d.pushName,
       lastActive: d.lastActive,
