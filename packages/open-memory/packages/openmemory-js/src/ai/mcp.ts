@@ -509,7 +509,7 @@ export const create_mcp_srv = (tenant?: string) => {
                 )
                 .optional(),
             tags: z.array(z.string()).optional(),
-            metadata: z.record(z.any()).optional(),
+            metadata: z.record(z.string(), z.any()).optional(),
             user_id: z.string().trim().min(1).optional(),
         },
         async ({
