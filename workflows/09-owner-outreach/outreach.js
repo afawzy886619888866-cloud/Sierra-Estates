@@ -528,7 +528,10 @@ async function main() {
       return { name: e.name, uuid: e.uuid || null };
     });
   } else if (DRY_RUN) {
-    const count = Math.max(1, Math.min(PARALLEL_LINES, 4));
+    // Offline verification: pseudo lanes mirror the configured parallelism so
+    // the split walk can be dry-verified at full width (8-line gateway era).
+    const PSEUDO_LANE_MAX = 8;
+    const count = Math.max(1, Math.min(PARALLEL_LINES, PSEUDO_LANE_MAX));
     lanes = Array.from({ length: count }, (_, i) => ({ name: `dry-lane-${i + 1}`, uuid: null }));
   } else {
     lanes = [{ name: 'session-default', uuid: null }];

@@ -148,6 +148,9 @@ function runCheck(execInfo) {
     cwd: rootDir,
     encoding: 'utf8',
     shell: true,
+    // Bounded probe: on a cold npx cache `npx -y cline` downloads the package
+    // before --version can answer; a diagnostic must never hang indefinitely.
+    timeout: 90_000,
   });
 
   if (versionResult.status === 0) {
@@ -162,6 +165,9 @@ function runCheck(execInfo) {
     console.error(`Status: FAILED (Exit Code ${versionResult.status})`);
     if (versionResult.error) {
       console.error('Spawn error:', versionResult.error.message);
+      if (versionResult.error.code === 'ETIMEDOUT') {
+        console.error('Version probe timed out (cold npx cache downloading cline?) — retry once the cache is warm.');
+      }
     }
     if (versionResult.stderr) {
       console.error(versionResult.stderr.trim());
