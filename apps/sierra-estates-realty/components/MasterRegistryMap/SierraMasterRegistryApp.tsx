@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { MasterHeader } from './MasterHeader';
 import { EditorialRibbon } from './EditorialRibbon';
 import { CartographicMap } from './CartographicMap';
@@ -13,7 +14,20 @@ import { VipInquiryModal } from './VipInquiryModal';
 import { ExportDossierModal } from './ExportDossierModal';
 import { YieldHeatmapView } from './YieldHeatmapView';
 import { UnitListing, Compound, COMPOUNDS, UNIT_LISTINGS, hydrateRegistryWithLiveInventory } from './registryData';
-import { Sparkles, ArrowUpRight, Moon, Sun, Building2 } from 'lucide-react';
+import type { InventoryUnit } from '@/lib/inventory/types';
+import { Sparkles, ArrowUpRight, Moon, Sun, Building2, Map, Globe } from 'lucide-react';
+
+const InventoryMap = dynamic(() => import('@/components/client/InventoryMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-170 rounded-2xl bg-[#001f38] flex flex-col items-center justify-center gap-3 text-[#00aeff] border border-[#00aeff]/30 shadow-2xl">
+      <div className="w-9 h-9 border-3 border-[#00aeff] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(0,174,255,0.4)]" />
+      <span className="text-xs font-mono uppercase tracking-widest text-[#00aeff] animate-pulse">
+        Initializing Houzez Spatial GIS Engine &amp; Live Inventory…
+      </span>
+    </div>
+  ),
+});
 
 interface SierraMasterRegistryAppProps {
   initialDarkMode?: boolean;
@@ -41,6 +55,8 @@ export default function SierraMasterRegistryApp({
 
   // Live inventory sync state from /api/inventory
   const [liveInventoryCount, setLiveInventoryCount] = useState<number | null>(null);
+  const [liveUnits, setLiveUnits] = useState<InventoryUnit[]>([]);
+  const [mapMode, setMapMode] = useState<'gis' | 'masterplan'>('gis');
 
   useEffect(() => {
     // Check URL search params for ?compound=... or ?theme=dark|light
@@ -65,6 +81,7 @@ export default function SierraMasterRegistryApp({
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (data && Array.isArray(data.units)) {
+          setLiveUnits(data.units);
           const { unitListings } = hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
           setLiveInventoryCount(data.count || unitListings.length);
         }
@@ -74,6 +91,60 @@ export default function SierraMasterRegistryApp({
 
   // Selected unit for detail inspection
   const [inspectedUnit, setInspectedUnit] = useState<UnitListing | null>(null);
+
+  // Bridge InventoryUnit from GIS map to active UnitListing detail modal
+  const handleSelectInventoryUnit = (u: InventoryUnit) => {
+    // 1. Sync compound
+    if (u.compound || u.location) {
+      const compName = (u.compound || u.location).toLowerCase();
+      const parent = COMPOUNDS.find(
+        c => c.nameEn.toLowerCase().includes(compName) || compName.includes(c.nameEn.toLowerCase())
+      );
+      if (parent) setSelectedCompound(parent);
+    }
+
+    // 2. Find or adapt unit
+    const code = u.code || u.id;
+    const existing = UNIT_LISTINGS.find(l => l.unitCode === code || l.id === u.id);
+    if (existing) {
+      setInspectedUnit(existing);
+    } else {
+      const adapted: UnitListing = {
+        id: u.id,
+        unitCode: code,
+        compoundId: selectedCompound.id,
+        compoundNameEn: u.compound || u.location,
+        compoundNameAr: selectedCompound.nameAr,
+        typeEn: u.propertyType || u.type || 'Residence',
+        typeAr: 'وحدة سكنية فاخرة',
+        buaM2: u.area || 220,
+        landM2: (u.area || 220) + (u.garden || 0),
+        bedrooms: u.beds || 3,
+        bathrooms: u.bath || 3,
+        purpose: u.mode === 'rent' ? 'Rent' : 'Resale',
+        purposeAr: u.mode === 'rent' ? 'إيجار' : 'إعادة بيع',
+        resalePriceEgp: u.mode === 'sale' ? u.price : 0,
+        resalePriceUsd: u.mode === 'sale' ? Math.round(u.price / 49) : 0,
+        monthlyRentEgp: u.mode === 'rent' ? u.price : 0,
+        monthlyRentUsd: u.mode === 'rent' ? Math.round(u.price / 49) : 0,
+        rentalYieldPct: 8.4,
+        statusEn: 'Available',
+        statusAr: 'متاح',
+        deliveryYear: 2026,
+        finishingEn: 'Ultra Super Lux',
+        finishingAr: 'ألترا سوبر لوكس',
+        downPaymentPct: 10,
+        installmentsYears: 7,
+        phaseEn: 'Primary Phase',
+        phaseAr: 'المرحلة الرئيسية',
+        zoneEn: u.zone || 'New Cairo Core',
+        zoneAr: 'القاهرة الجديدة',
+        parkingSlots: 2,
+        gardenM2: u.garden || 0,
+      };
+      setInspectedUnit(adapted);
+    }
+  };
 
   // VIP Consultation modal
   const [isConsultationOpen, setIsConsultationOpen] = useState<boolean>(false);
@@ -236,15 +307,77 @@ export default function SierraMasterRegistryApp({
       {/* Main Content Stage */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {currentTab === 'map' && (
-          <div className="space-y-8 animate-fade-in">
-            <CartographicMap
-              lang={lang}
-              isDarkMode={isDarkMode}
-              onToggleTheme={toggleTheme}
-              selectedCompoundId={selectedCompound.id}
-              onSelectCompoundToExcel={handleSelectCompoundToExcel}
-              onSelectUnit={handleSelectUnit}
-            />
+          <div className="space-y-6 animate-fade-in">
+            {/* Dual Engine Switcher Banner */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/80 dark:bg-[#002b4b]/80 border border-[#00aeff]/30 backdrop-blur-md shadow-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-[#00aeff] font-bold flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#00aeff]" />
+                  {isAr ? 'محرك الخرائط المزدوج:' : 'DUAL-ENGINE CARTOGRAPHY:'}
+                </span>
+                <span className="text-xs text-slate-300 hidden sm:inline">
+                  {isAr
+                    ? 'اختر بين الخريطة المكانية الحية ومخطط 4K المعماري'
+                    : 'Switch between Live Spatial GIS Map & High-Res Architectural Blueprint'}
+                </span>
+              </div>
+
+              <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-[#00aeff]/40">
+                <button
+                  type="button"
+                  onClick={() => setMapMode('gis')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    mapMode === 'gis'
+                      ? 'bg-[#00aeff] text-[#002b4b] shadow-md'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'خريطة GIS الحية (وحدات حقيقية)' : 'Live Spatial GIS (GPS)'}</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#002b4b]/30 text-[#002b4b] font-mono font-bold">
+                    {liveUnits.length > 0 ? liveUnits.length : 'Live'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapMode('masterplan')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    mapMode === 'masterplan'
+                      ? 'bg-[#e9c176] text-stone-950 shadow-md'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <Map className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'مخطط 4K المعماري' : '4K Masterplan Cartography'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Active Engine View */}
+            {mapMode === 'gis' ? (
+              <InventoryMap
+                units={liveUnits}
+                lang={lang}
+                isDarkMode={isDarkMode}
+                onSelect={handleSelectInventoryUnit}
+                onSelectCompound={(compoundName) => {
+                  const query = compoundName.toLowerCase();
+                  const found = COMPOUNDS.find(
+                    comp => comp.nameEn.toLowerCase().includes(query) || comp.id.toLowerCase().includes(query)
+                  );
+                  if (found) setSelectedCompound(found);
+                }}
+              />
+            ) : (
+              <CartographicMap
+                lang={lang}
+                isDarkMode={isDarkMode}
+                onToggleTheme={toggleTheme}
+                selectedCompoundId={selectedCompound.id}
+                onSelectCompoundToExcel={handleSelectCompoundToExcel}
+                onSelectUnit={handleSelectUnit}
+              />
+            )}
 
             <div className="pt-4 border-t border-[#E6DEC8] dark:border-cyan-900/30">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

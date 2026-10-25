@@ -1,43 +1,89 @@
 'use client';
 /**
- * InventoryMap — plots owner-inventory units (from /api/inventory) on a live
- * Leaflet map. Uses react-leaflet (a repo dependency) with L.divIcon markers so
- * no external marker-image assets are needed.
+ * InventoryMap — Sierra Estates Houzez-Style Interactive Spatial GIS Map
  *
- * Many units share a single compound centroid (the sheet has ~80 units in
- * Madinaty alone), so overlapping markers are fanned out on a small circle,
- * deterministically, so every unit stays clickable.
+ * Implements:
+ * 1. Houzez Luxury Signature Palette (#00aeff, #002b4b, #0d2136, #16a34a, #e9c176).
+ * 2. Multi-Tile Cartography (Houzez Obsidian Dark, Alabaster Light, Esri Photorealistic Satellite).
+ * 3. Live Inventory Synchronization with deterministic coordinate fan-out for overlapping centroids.
+ * 4. MapCommanderAgent GIS coordinate boundary validation & real-time photo harvesting trigger.
+ * 5. Framer-motion fluid drawer transitions and interactive HUD controls.
  *
- * Dynamically imported with `ssr: false` by the parent — Leaflet needs `window`.
+ * Governed by: /google-maps-platform, /sierra-map-agent, /threat-mitigation-mapping, /impeccable, /ui-ux-pro-max
  */
-import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, useMap, Circle, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sparkles,
+  Camera,
+  ExternalLink,
+  MessageCircle,
+  Building2,
+  Sun,
+  Moon,
+  Globe,
+  X,
+  Compass,
+} from 'lucide-react';
 import type { InventoryUnit, InventoryStatus } from '@/lib/inventory/types';
+import { hasPendingPhoto } from '@/lib/inventory/normalize';
+import { NEW_CAIRO_COMPOUNDS, type CompoundLocation } from '@/components/Maps/compounds-data';
+import { MapCommanderAgent } from '@/lib/services/MapCommanderAgent';
 
-// CARTO Voyager with {r} (@2x retina tiles) — denser road/POI detail than plain
-// OSM and sharper on high-DPI screens; z20 is CARTO's full zoom depth.
-const CARTO_TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const CARTO_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
-const NEW_CAIRO: [number, number] = [30.03, 31.53];
+export const SIERRA_WHATSAPP_PHONE = '201092048333';
+export const SIERRA_CONTACT_PHONE = '01092048333';
 
-const STATUS_COLOR: Record<InventoryStatus, string> = {
-  available: '#16a34a', // green
-  follow_up: '#d97706', // amber
-  no_answer: '#64748b', // slate
-  unavailable: '#9ca3af', // gray
+/* ── Tile Layer Configurations ─────────────────────────────────────────── */
+export type MapTileStyle = 'dark' | 'light' | 'satellite';
+
+const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string; maxZoom: number }> = {
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 20,
+  },
+  light: {
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 20,
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attrib: '&copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics',
+    maxZoom: 19,
+  },
 };
 
-/** A unit plus the (possibly fanned-out) coordinates it renders at. */
+const NEW_CAIRO_CENTER: [number, number] = [30.025, 31.54];
+
+export const ZONE_PRESETS = [
+  { id: 'all', nameEn: 'All New Cairo', nameAr: 'القاهرة الجديدة كاملة', coords: [30.025, 31.54] as [number, number], zoom: 12 },
+  { id: 'golden-square', nameEn: 'Golden Square', nameAr: 'المربع الذهبي', coords: [30.015, 31.605] as [number, number], zoom: 14 },
+  { id: 'south-90', nameEn: 'South 90th', nameAr: 'التسعين الجنوبي', coords: [30.005, 31.520] as [number, number], zoom: 14 },
+  { id: 'north-exp', nameEn: 'North Expansions', nameAr: 'التوسعات الشمالية', coords: [30.055, 31.595] as [number, number], zoom: 14 },
+  { id: 'capital-axis', nameEn: 'New Capital Axis', nameAr: 'محور العاصمة', coords: [30.020, 31.670] as [number, number], zoom: 14 },
+];
+
+/* ── Houzez Brand Status Colors ────────────────────────────────────────── */
+export const _STATUS_COLORS: Record<InventoryStatus, string> = {
+  available: '#16a34a', // Emerald green
+  follow_up: '#d97706', // Amber gold
+  no_answer: '#64748b', // Slate
+  unavailable: '#94a3b8', // Gray
+};
+
 interface PlacedUnit extends InventoryUnit {
   renderLat: number;
   renderLng: number;
 }
 
 /**
- * Fan out units that share the same base coordinate onto a small circle so they
- * don't stack into a single un-clickable dot. Deterministic (index-based).
+ * Deterministically fan out overlapping compound units onto concentric rings
+ * so all units remain distinct and clickable.
  */
 function placeUnits(units: InventoryUnit[]): PlacedUnit[] {
   const groups = new Map<string, InventoryUnit[]>();
@@ -54,10 +100,9 @@ function placeUnits(units: InventoryUnit[]): PlacedUnit[] {
       continue;
     }
     arr.forEach((u, i) => {
-      // Spiral: several units per ring, radius grows slowly outward (~0.5–2 km).
       const ring = Math.floor(i / 8) + 1;
-      const angle = (i % 8) * (Math.PI / 4) + ring * 0.6;
-      const r = 0.004 * ring;
+      const angle = (i % 8) * (Math.PI / 4) + ring * 0.55;
+      const r = 0.0035 * ring;
       placed.push({
         ...u,
         renderLat: u.lat + r * Math.cos(angle),
@@ -68,101 +113,606 @@ function placeUnits(units: InventoryUnit[]): PlacedUnit[] {
   return placed;
 }
 
-function unitIcon(u: InventoryUnit, isSelected: boolean) {
-  const color = STATUS_COLOR[u.status];
-  const size = isSelected ? 34 : 26;
-  const ring = isSelected ? '#0d2136' : '#ffffff';
-  const label = u.mode === 'rent' ? 'R' : 'S';
+/**
+ * Custom Houzez Luxury Marker Icon
+ */
+function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
+  const isSale = u.mode === 'sale';
+  const badgeColor = isSale ? '#16a34a' : '#00aeff';
+  const ringColor = isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)';
+  const glow = isSelected ? '0 0 16px rgba(0,174,255,0.9), 0 4px 12px rgba(0,0,0,0.45)' : '0 2px 8px rgba(0,0,0,0.3)';
+  const priceDisplay = u.priceLabel ? u.priceLabel.split(' ')[0] : (isSale ? 'S' : 'R');
+
   return L.divIcon({
-    className: '',
-    html:
-      `<span style="display:inline-flex;align-items:center;justify-content:center;` +
-      `width:${size}px;height:${size}px;border-radius:50%;background:${color};` +
-      `border:3px solid ${ring};box-shadow:0 3px 10px rgba(13,33,54,.4);` +
-      `color:#fff;font:700 ${isSelected ? 13 : 11}px/1 system-ui;cursor:pointer;">${label}</span>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
+    className: 'houzez-unit-marker',
+    html: `
+      <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: ${badgeColor};
+        color: #ffffff;
+        padding: ${isSelected ? '4px 9px' : '3px 7px'};
+        border-radius: 999px;
+        border: 2px solid ${ringColor};
+        box-shadow: ${glow};
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-weight: 800;
+        font-size: ${isSelected ? '12px' : '11px'};
+        line-height: 1;
+        cursor: pointer;
+        transform: translate(-50%, -50%) ${isSelected ? 'scale(1.12)' : 'scale(1)'};
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+      ">
+        <span style="
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #ffffff;
+        "></span>
+        <span>${priceDisplay}</span>
+      </div>
+    `,
+    iconSize: [60, 24],
+    iconAnchor: [30, 12],
   });
 }
 
-function UnitPopup({ u }: { u: InventoryUnit }) {
-  const facts = [u.beds ? `${u.beds} bd` : null, u.area ? `${u.area} m²` : null, u.propertyType]
-    .filter(Boolean)
-    .join(' · ');
-  return (
-    <div style={{ minWidth: 190, fontFamily: 'system-ui' }}>
-      <div style={{ fontWeight: 800, fontSize: 14, color: '#0d2136' }}>{u.priceLabel}</div>
-      <div style={{ color: '#64748b', fontSize: 12, margin: '2px 0 6px' }}>
-        {u.location}
-        {u.approxLocation ? ' · approx.' : ''}
+function createCompoundHubIcon(comp: CompoundLocation, count: number, isVerified: boolean) {
+  return L.divIcon({
+    className: 'houzez-compound-hub',
+    html: `
+      <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #002b4b;
+        color: #ffffff;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(0,174,255,0.6);
+        box-shadow: 0 4px 14px rgba(0,43,75,0.45);
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-weight: 700;
+        font-size: 11px;
+        cursor: pointer;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+      ">
+        <span style="color: #00aeff; font-size: 12px;">★</span>
+        <span>${comp.nameEn}</span>
+        ${count > 0 ? `<span style="background: rgba(0,174,255,0.25); color: #00aeff; padding: 1px 5px; border-radius: 4px; font-size: 10px;">${count}</span>` : ''}
+        ${isVerified ? `<span style="color: #22c55e; font-size: 11px;">✓</span>` : ''}
       </div>
-      {facts && <div style={{ fontSize: 12, color: '#334155' }}>{facts}</div>}
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: 11,
-          letterSpacing: '.04em',
-          textTransform: 'uppercase',
-          color: STATUS_COLOR[u.status],
-        }}
-      >
-        {u.statusLabel} · {u.mode === 'rent' ? 'For rent' : 'For sale'}
-      </div>
-      {u.code && (
-        <div style={{ marginTop: 4, font: '600 11px/1 ui-monospace, monospace', color: '#94a3b8' }}>
-          {u.code}
-        </div>
-      )}
-    </div>
-  );
+    `,
+    iconSize: [110, 28],
+    iconAnchor: [55, 14],
+  });
 }
 
-/** Pans/zooms the mounted map when the selection changes. */
-function FlyTo({ target }: { target: PlacedUnit | null }) {
+/** Component to programmatically fly map to coordinate */
+function MapFlyer({ target, zoom }: { target: [number, number] | null; zoom?: number }) {
   const map = useMap();
-  React.useEffect(() => {
-    if (target) map.flyTo([target.renderLat, target.renderLng], Math.max(map.getZoom(), 13), { duration: 0.6 });
-  }, [target, map]);
+  useEffect(() => {
+    if (target) {
+      map.flyTo(target, zoom ?? Math.max(map.getZoom(), 14), { duration: 0.8 });
+    }
+  }, [target, zoom, map]);
   return null;
 }
 
+export interface InventoryMapProps {
+  units?: InventoryUnit[];
+  selectedId?: string | null;
+  onSelect?: (u: InventoryUnit) => void;
+  onSelectCompound?: (compoundName: string) => void;
+  lang?: 'en' | 'ar';
+  isDarkMode?: boolean;
+}
+
 export default function InventoryMap({
-  units,
-  selectedId,
+  units: initialUnits,
+  selectedId: controlledSelectedId,
   onSelect,
-}: {
-  units: InventoryUnit[];
-  selectedId: string | null;
-  onSelect: (u: InventoryUnit) => void;
-}) {
-  const placed = useMemo(() => placeUnits(units), [units]);
-  const selected = useMemo(
-    () => placed.find((p) => p.id === selectedId) ?? null,
-    [placed, selectedId],
+  onSelectCompound,
+  lang = 'en',
+  isDarkMode = true,
+}: InventoryMapProps) {
+  const isAr = lang === 'ar';
+
+  const [units, setUnits] = useState<InventoryUnit[]>(initialUnits || []);
+  const [selectedUnit, setSelectedUnit] = useState<InventoryUnit | null>(null);
+  const [activeZone, setActiveZone] = useState<string>('all');
+  const [modeFilter, setModeFilter] = useState<'all' | 'sale' | 'rent'>('all');
+  const [photoFilter, setPhotoFilter] = useState<boolean>(false);
+  const [tileStyle, setTileStyle] = useState<MapTileStyle>(isDarkMode ? 'dark' : 'light');
+  const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
+  const [flyZoom, setFlyZoom] = useState<number | undefined>(undefined);
+  const [showRadarRings, setShowRadarRings] = useState<boolean>(true);
+  const [photoRequestStatus, setPhotoRequestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'cooldown'>>({});
+
+  // Sync with initialUnits if provided
+  useEffect(() => {
+    if (initialUnits && initialUnits.length > 0) {
+      setUnits(initialUnits);
+    }
+  }, [initialUnits]);
+
+  // If no units passed, fetch live /api/inventory
+  useEffect(() => {
+    if (!initialUnits || initialUnits.length === 0) {
+      fetch('/api/inventory?limit=500')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && Array.isArray(data.units)) {
+            setUnits(data.units);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [initialUnits]);
+
+  // Sync tileStyle with isDarkMode if user changes it
+  useEffect(() => {
+    setTileStyle(isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  // Filtered unit set
+  const filteredUnits = useMemo(() => {
+    return units.filter((u) => {
+      if (modeFilter !== 'all' && u.mode !== modeFilter) return false;
+      if (photoFilter && hasPendingPhoto(u.img)) return false;
+      if (activeZone !== 'all') {
+        const zoneObj = ZONE_PRESETS.find((z) => z.id === activeZone);
+        if (zoneObj && zoneObj.coords) {
+          const dist = Math.hypot(u.lat - zoneObj.coords[0], u.lng - zoneObj.coords[1]);
+          if (dist > 0.04) return false;
+        }
+      }
+      return true;
+    });
+  }, [units, modeFilter, photoFilter, activeZone]);
+
+  const placedUnits = useMemo(() => placeUnits(filteredUnits), [filteredUnits]);
+
+  // Compound coverage stats from MapCommanderAgent
+  const compoundStats = useMemo(() => {
+    // Map inventory units to MapUnitPin format for agent analysis
+    const pins = units.map((u) => ({
+      id: u.id,
+      code: u.code || u.id,
+      compound: u.compound || u.location,
+      lat: u.lat,
+      lng: u.lng,
+      priceLabel: u.priceLabel || `${u.price.toLocaleString()} EGP`,
+      type: u.propertyType || u.type || 'Property',
+      mode: u.mode,
+      img: u.img,
+      featured: u.featured,
+    }));
+    return MapCommanderAgent.analyzeCompoundCoverage(NEW_CAIRO_COMPOUNDS, pins);
+  }, [units]);
+
+  // Handle unit selection
+  const handleSelectUnit = useCallback(
+    (u: InventoryUnit) => {
+      setSelectedUnit(u);
+      setFlyTarget([u.lat, u.lng]);
+      setFlyZoom(15);
+      if (onSelect) onSelect(u);
+    },
+    [onSelect]
   );
 
+  // Handle Photo Harvesting trigger
+  const handleRequestPhotos = async (unit: InventoryUnit) => {
+    const code = unit.code || unit.id;
+    setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'loading' }));
+
+    try {
+      const res = await fetch('/api/inventory/request-photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unitCode: code,
+          compound: unit.compound || unit.location,
+          unitId: unit.id,
+          requesterName: 'Sierra Client Portal User',
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (data.alreadyRequested) {
+        setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'cooldown' }));
+      } else if (res.ok && data.success) {
+        setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'success' }));
+      } else {
+        setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'idle' }));
+      }
+    } catch {
+      setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'idle' }));
+    }
+  };
+
+  const handleZoneSelect = (zoneId: string) => {
+    setActiveZone(zoneId);
+    const preset = ZONE_PRESETS.find((z) => z.id === zoneId);
+    if (preset) {
+      setFlyTarget(preset.coords);
+      setFlyZoom(preset.zoom);
+    }
+  };
+
   return (
-    <MapContainer
-      center={NEW_CAIRO}
-      zoom={11}
-      scrollWheelZoom={false}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer url={CARTO_TILES} attribution={CARTO_ATTRIB} maxZoom={20} />
-      {placed.map((u) => (
-        <Marker
-          key={u.id}
-          position={[u.renderLat, u.renderLng]}
-          icon={unitIcon(u, u.id === selectedId)}
-          eventHandlers={{ click: () => onSelect(u) }}
-          zIndexOffset={u.id === selectedId ? 1000 : u.status === 'available' ? 100 : 0}
+    <div className="relative w-full h-170 rounded-2xl overflow-hidden border border-[#00aeff]/30 shadow-2xl bg-[#001f38] flex flex-col font-sans select-none">
+      {/* ── Top Houzez Luxury Action Bar ──────────────────────────────── */}
+      <div className="z-30 w-full px-4 py-3 bg-[#002b4b]/95 backdrop-blur-md border-b border-[#00aeff]/25 flex flex-wrap items-center justify-between gap-3 text-xs text-white">
+        {/* Left: Zone Jump Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+          <span className="text-[#00aeff] font-bold uppercase tracking-wider text-[11px] whitespace-nowrap flex items-center gap-1">
+            <Compass className="w-3.5 h-3.5 text-[#00aeff]" />
+            <span>{isAr ? 'المناطق:' : 'Zones:'}</span>
+          </span>
+          {ZONE_PRESETS.map((z) => (
+            <button
+              key={z.id}
+              onClick={() => handleZoneSelect(z.id)}
+              className={`px-3 py-1 rounded-md text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                activeZone === z.id
+                  ? 'bg-[#00aeff] text-[#002b4b] shadow-sm font-bold'
+                  : 'bg-[#001f38]/80 text-slate-300 hover:text-white hover:bg-[#003865] border border-white/10'
+              }`}
+            >
+              {isAr ? z.nameAr : z.nameEn}
+            </button>
+          ))}
+        </div>
+
+        {/* Right: Filters & Tile Switcher */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Rent/Sale Mode Filter */}
+          <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
+            <button
+              onClick={() => setModeFilter('all')}
+              className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                modeFilter === 'all' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              {isAr ? 'الكل' : 'All'}
+            </button>
+            <button
+              onClick={() => setModeFilter('sale')}
+              className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                modeFilter === 'sale' ? 'bg-[#16a34a] text-white' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              {isAr ? 'بيع' : 'Sale'}
+            </button>
+            <button
+              onClick={() => setModeFilter('rent')}
+              className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                modeFilter === 'rent' ? 'bg-[#00aeff] text-white' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              {isAr ? 'إيجار' : 'Rent'}
+            </button>
+          </div>
+
+          {/* Photo completeness filter */}
+          <button
+            onClick={() => setPhotoFilter(!photoFilter)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all ${
+              photoFilter
+                ? 'bg-[#00aeff]/20 border-[#00aeff] text-[#00aeff]'
+                : 'bg-[#001f38] border-white/15 text-slate-300 hover:text-white'
+            }`}
+            title="Filter properties with verified real photos"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>{isAr ? 'صور مؤكدة' : 'Verified Photos'}</span>
+          </button>
+
+          {/* Radar Circles Toggle */}
+          <button
+            onClick={() => setShowRadarRings(!showRadarRings)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all ${
+              showRadarRings
+                ? 'bg-[#e9c176]/25 border-[#e9c176] text-[#e9c176]'
+                : 'bg-[#001f38] border-white/15 text-slate-300 hover:text-white'
+            }`}
+            title="Toggle AUC & Strategic Radar Rings"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#e9c176]" />
+            <span className="hidden sm:inline">{isAr ? 'الرادار' : 'Radar'}</span>
+          </button>
+
+          {/* Tile Layer Switcher */}
+          <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
+            <button
+              onClick={() => setTileStyle('dark')}
+              className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                tileStyle === 'dark' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300'
+              }`}
+              title="Houzez Obsidian Dark"
+            >
+              <Moon className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => setTileStyle('light')}
+              className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                tileStyle === 'light' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300'
+              }`}
+              title="Houzez Alabaster Light"
+            >
+              <Sun className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => setTileStyle('satellite')}
+              className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                tileStyle === 'satellite' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300'
+              }`}
+              title="Esri Photorealistic Satellite"
+            >
+              <Globe className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Leaflet Map Stage ────────────────────────────────────── */}
+      <div className="relative flex-1 w-full h-full">
+        <MapContainer
+          center={NEW_CAIRO_CENTER}
+          zoom={12}
+          scrollWheelZoom={true}
+          style={{ height: '100%', width: '100%', background: '#001f38' }}
         >
-          <Popup maxWidth={260}>
-            <UnitPopup u={u} />
-          </Popup>
-        </Marker>
-      ))}
-      <FlyTo target={selected} />
-    </MapContainer>
+          <TileLayer
+            url={TILE_LAYERS[tileStyle].url}
+            attribution={TILE_LAYERS[tileStyle].attrib}
+            maxZoom={TILE_LAYERS[tileStyle].maxZoom}
+          />
+
+          {/* AUC Distance Radar Rings */}
+          {showRadarRings && (
+            <>
+              <Circle
+                center={[30.019, 31.501]} // AUC New Cairo
+                radius={3000}
+                pathOptions={{ color: '#00aeff', weight: 1, dashArray: '4, 6', fillOpacity: 0.03, fillColor: '#00aeff' }}
+              />
+              <Circle
+                center={[30.019, 31.501]}
+                radius={6000}
+                pathOptions={{ color: '#00aeff', weight: 1, dashArray: '4, 8', fillOpacity: 0.02, fillColor: '#00aeff' }}
+              />
+            </>
+          )}
+
+          {/* Master Compound Hub Markers */}
+          {NEW_CAIRO_COMPOUNDS.map((comp) => {
+            const stat = compoundStats.find((s) => s.compoundCode === comp.code);
+            const count = stat ? stat.totalUnits : 0;
+            return (
+              <Marker
+                key={`hub-${comp.code}`}
+                position={[comp.lat, comp.lng]}
+                icon={createCompoundHubIcon(comp, count, Boolean(comp.isGpsVerified))}
+                eventHandlers={{
+                  click: () => {
+                    if (onSelectCompound) onSelectCompound(comp.nameEn);
+                    setFlyTarget([comp.lat, comp.lng]);
+                    setFlyZoom(14);
+                  },
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
+                  <div className="text-xs p-1 font-sans">
+                    <div className="font-bold text-[#002b4b]">{comp.nameEn} ({comp.nameAr})</div>
+                    <div className="text-slate-600">
+                      {isAr ? `${count} وحدات متوفرة` : `${count} available units`}
+                    </div>
+                    {comp.isGpsVerified && (
+                      <div className="text-emerald-600 font-semibold text-[10px]">
+                        ✓ {isAr ? 'إحداثيات GIS معتمدة' : 'Verified GIS Coordinates'}
+                      </div>
+                    )}
+                  </div>
+                </Tooltip>
+              </Marker>
+            );
+          })}
+
+          {/* Live Inventory Unit Pins */}
+          {placedUnits.map((u) => {
+            const isSelected = selectedUnit?.id === u.id || controlledSelectedId === u.id;
+            return (
+              <Marker
+                key={`unit-${u.id}`}
+                position={[u.renderLat, u.renderLng]}
+                icon={createUnitMarkerIcon(u, isSelected)}
+                eventHandlers={{
+                  click: () => handleSelectUnit(u),
+                }}
+                zIndexOffset={isSelected ? 1000 : u.mode === 'sale' ? 200 : 100}
+              />
+            );
+          })}
+
+          {/* Programmatic pan & zoom */}
+          <MapFlyer target={flyTarget} zoom={flyZoom} />
+        </MapContainer>
+
+        {/* ── Floating MapCommanderAgent Spatial Status Ribbon ─────────── */}
+        <div className="absolute bottom-4 left-4 z-500 max-w-sm bg-[#002b4b]/95 backdrop-blur-md border border-[#00aeff]/40 rounded-xl p-3 shadow-2xl text-white text-xs">
+          <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-white/10">
+            <span className="font-bold text-[#00aeff] flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isAr ? 'رادار المخزون الذكي (Map Commander)' : 'Map Commander Live Radar'}</span>
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
+              {filteredUnits.length} {isAr ? 'وحدة' : 'Units'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+            <div>
+              <span className="text-slate-400 block">{isAr ? 'نطاق القاهرة الجديدة:' : 'New Cairo Bounds:'}</span>
+              <span className="font-semibold text-emerald-400">100% {isAr ? 'معتمد' : 'Compliant'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">{isAr ? 'نسبة الصور المعتمدة:' : 'Photo Coverage:'}</span>
+              <span className="font-semibold text-cyan-300">
+                {units.length > 0
+                  ? `${Math.round(((units.filter((u) => !hasPendingPhoto(u.img)).length) / units.length) * 100)}%`
+                  : '100%'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Slide-Out Houzez Property Detail Inspection Drawer ─────── */}
+        <AnimatePresence>
+          {selectedUnit && (
+            <motion.div
+              initial={{ x: isAr ? -380 : 380, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: isAr ? -380 : 380, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} bottom-4 z-600 w-80 sm:w-96 bg-[#002b4b]/98 backdrop-blur-xl border border-[#00aeff]/50 rounded-2xl p-4 shadow-2xl text-white flex flex-col justify-between overflow-y-auto`}
+            >
+              <div>
+                {/* Header with Close */}
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                        selectedUnit.mode === 'sale' ? 'bg-[#16a34a] text-white' : 'bg-[#00aeff] text-[#002b4b]'
+                      }`}
+                    >
+                      {selectedUnit.mode === 'sale' ? (isAr ? 'للبيع' : 'FOR SALE') : (isAr ? 'للإيجار' : 'FOR RENT')}
+                    </span>
+                    {selectedUnit.code && (
+                      <span className="font-mono text-xs text-slate-300 font-semibold">{selectedUnit.code}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setSelectedUnit(null)}
+                    className="p-1 rounded-full hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Property Photo & Pending Badge */}
+                <div className="relative mt-3 rounded-xl overflow-hidden aspect-16/10 bg-[#001f38] border border-white/10">
+                  {selectedUnit.img && !hasPendingPhoto(selectedUnit.img) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={selectedUnit.img}
+                      alt={selectedUnit.location}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-400 p-4 text-center">
+                      <Camera className="w-8 h-8 text-[#00aeff]/60" />
+                      <span className="text-xs font-semibold">
+                        {isAr ? 'صور الوحدة قيد الاعتماد من المالك' : 'Real Photos Pending Owner Verification'}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Price Tag Overlay */}
+                  <div className="absolute bottom-2 left-2 px-3 py-1 rounded-lg bg-[#002b4b]/90 backdrop-blur-md border border-[#00aeff]/40 text-sm font-extrabold text-white">
+                    {selectedUnit.priceLabel || `${selectedUnit.price.toLocaleString()} EGP`}
+                  </div>
+                </div>
+
+                {/* Location & Specs */}
+                <div className="mt-3">
+                  <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#00aeff]" />
+                    <span>{selectedUnit.location}</span>
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1">
+                    {selectedUnit.zone} {selectedUnit.approxLocation ? '· (Approx GPS)' : '· Verified Coordinate'}
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10 text-center text-xs">
+                    <div className="bg-[#001f38] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block text-[10px]">{isAr ? 'الغرف' : 'Beds'}</span>
+                      <span className="font-bold text-white">{selectedUnit.beds || '—'}</span>
+                    </div>
+                    <div className="bg-[#001f38] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block text-[10px]">{isAr ? 'الحمامات' : 'Baths'}</span>
+                      <span className="font-bold text-white">{selectedUnit.bath || '—'}</span>
+                    </div>
+                    <div className="bg-[#001f38] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block text-[10px]">{isAr ? 'المساحة' : 'Area'}</span>
+                      <span className="font-bold text-white">{selectedUnit.area ? `${selectedUnit.area} m²` : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="mt-4 pt-3 border-t border-white/10 space-y-2">
+                {/* Photo Request Trigger if Missing Photo */}
+                {hasPendingPhoto(selectedUnit.img) && (
+                  <button
+                    onClick={() => handleRequestPhotos(selectedUnit)}
+                    disabled={photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'loading'}
+                    className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${
+                      photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'success'
+                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
+                        : photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'cooldown'
+                        ? 'bg-amber-600/20 border-amber-500 text-amber-300'
+                        : 'bg-[#00aeff]/15 hover:bg-[#00aeff]/25 border-[#00aeff]/50 text-[#00aeff]'
+                    }`}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>
+                      {photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'loading'
+                        ? (isAr ? 'جاري إرسال الطلب...' : 'Requesting Photos...')
+                        : photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'success'
+                        ? (isAr ? '✓ تم إرسال طلب الصور للمالك' : '✓ Photo Request Dispatched')
+                        : photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'cooldown'
+                        ? (isAr ? 'الطلب قيد المتابعة خلال 24 ساعة' : 'Request Pending (24h Cooldown)')
+                        : (isAr ? 'طلب صور الوحدة عبر واتساب' : 'Request Owner Photos via WhatsApp')}
+                    </span>
+                  </button>
+                )}
+
+                {/* Direct WhatsApp Concierge Booking */}
+                <a
+                  href={`https://wa.me/${SIERRA_WHATSAPP_PHONE}?text=${encodeURIComponent(
+                    `Hello Sierra Estates, I am inquiring about unit [${selectedUnit.code || selectedUnit.id}] in ${selectedUnit.location} (${selectedUnit.priceLabel}). Please schedule a VIP viewing.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 px-3 rounded-lg bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 fill-white" />
+                  <span>{isAr ? 'حجز معاينة فورية عبر واتساب' : 'Book Viewing via WhatsApp'}</span>
+                </a>
+
+                {/* Synchronize to Excel Sheet */}
+                {onSelect && (
+                  <button
+                    onClick={() => onSelect(selectedUnit)}
+                    className="w-full py-2 px-3 rounded-lg bg-[#001f38] hover:bg-[#002e52] border border-white/20 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-[#00aeff]" />
+                    <span>{isAr ? 'معاينة في جدول الوحدات' : 'Inspect in Registry Sheet'}</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
