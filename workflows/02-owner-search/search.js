@@ -16,6 +16,17 @@ try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.e
  *     abort the whole batch.
  *   - Writes status col I ('PENDING') which workflow 03 consumes.
  *
+ * OWNER-EVIDENCE RULE (2026-10-25, no-fabrication era):
+ *   - Only rows with POSITIVE owner evidence (unit.owner.phone) are
+ *     appended as owner leads. The previous `unit.owner?.phone ||
+ *     unit.agent?.phone || 'No contact'` fallback put BROKER phone numbers
+ *     into the owner_leads sheet — workflow 03 would then text a broker
+ *     as if they were an owner — and appended empty 'No contact' rows.
+ *     Both paths are gone: broker-attributed rows and rows with no owner
+ *     contact are counted and skipped, never re-labeled.
+ *   - A malformed API response (non-array data) is a FAILURE that exits 1 —
+ *     it must never masquerade as a successful empty search.
+ *
  * Usage:  node 02-owner-search/search.js
  * Env:    PROPERTY_FINDER_API_BASE, PROPERTY_FINDER_JWT_TOKEN,
  *         BROKER_INBOX_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_KEY
@@ -29,7 +40,7 @@ const PF_TOKEN = process.env.PROPERTY_FINDER_JWT_TOKEN || '';
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
 const SA_PATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '';
 
-const summary = { found: 0, appended: 0, skipped: 0, errors: 0 };
+const summary = { found: 0, appended: 0, skipped: 0, skippedNoOwnerEvidence: 0, skippedBrokerOnly: 0, errors: 0 };
 
 function failUnconfigured(msg) {
   console.log(`UNCONFIGURED: ${msg}`);
@@ -81,15 +92,46 @@ async function searchPropertyFinder() {
   if (response.status === 401 || response.status === 403) {
     failUnconfigured(`PF token rejected (HTTP ${response.status}) — rotate PROPERTY_FINDER_JWT_TOKEN`);
   }
+  if (response.status === 429) {
+    // Rate limit from the source — respect it and fail loudly (never an
+    // "empty search"). The runner labels this run :error so operators see it.
+    throw new Error('PF API rate limited (HTTP 429) — back off before retrying');
+  }
   if (!response.ok) {
     throw new Error(`PF API HTTP ${response.status}`);
   }
 
   const data = await response.json();
-  const rows = Array.isArray(data?.data) ? data.data : [];
+  // Malformed shape = FAILURE. The old coercion to [] reported a healthy
+  // empty search for a broken payload (anti-fabrication: an extraction
+  // failure is never a successful empty result).
+  if (!data || typeof data !== 'object' || !Array.isArray(data.data)) {
+    throw new Error(`PF API malformed response (data is not an array): ${JSON.stringify(data).slice(0, 200)}`);
+  }
+  const rows = data.data;
   summary.found = rows.length;
   console.log(`PF returned ${rows.length} owner properties`);
   return rows;
+}
+
+/** Positive owner evidence only — see OWNER-EVIDENCE RULE above. */
+function hasOwnerEvidence(unit) {
+  return Boolean(unit && unit.owner && typeof unit.owner.phone === 'string' && unit.owner.phone.trim());
+}
+
+/** Build the owner_leads sheet row for an evidence-backed owner lead. */
+function buildLeadRow(unit) {
+  return [
+    new Date().toISOString(),
+    'property_finder',
+    String(unit.title || '').slice(0, 200),
+    unit.price ?? '',
+    unit.location?.name || '',
+    `${unit.beds || 0} BR, ${unit.baths || 0} BA, ${unit.area || '?'} sqm`,
+    String(unit.owner.phone).trim(), // OWNER phone only — never the agent's
+    unit.url || '',
+    'PENDING', // col I — status consumed by workflow 03
+  ];
 }
 
 async function main() {
@@ -99,18 +141,15 @@ async function main() {
 
   for (const unit of units) {
     try {
-      const contact = unit.owner?.phone || unit.agent?.phone || 'No contact';
-      await appendToSheet(sheets, 'owner_leads', [
-        new Date().toISOString(),
-        'property_finder',
-        String(unit.title || '').slice(0, 200),
-        unit.price ?? '',
-        unit.location?.name || '',
-        `${unit.beds || 0} BR, ${unit.baths || 0} BA, ${unit.area || '?'} sqm`,
-        contact,
-        unit.url || '',
-        'PENDING', // col I — status consumed by workflow 03
-      ]);
+      // OWNER-EVIDENCE GATE: broker-attributed rows and rows with no owner
+      // contact are counted and skipped — a missing owner phone is NEVER
+      // filled with the agent's phone or a 'No contact' placeholder.
+      if (!hasOwnerEvidence(unit)) {
+        if (unit && unit.agent && (unit.agent.phone || unit.agent.name)) summary.skippedBrokerOnly++;
+        else summary.skippedNoOwnerEvidence++;
+        continue;
+      }
+      await appendToSheet(sheets, 'owner_leads', buildLeadRow(unit));
       summary.appended++;
     } catch (err) {
       summary.errors++;
@@ -123,7 +162,15 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error(`owner-search FAILED: ${err.message}`);
-  process.exit(1);
-});
+/* Unit-testable surface (spawned as a child process by the runner — pure
+ * helpers only, safe to export; main() only runs when invoked directly). */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { hasOwnerEvidence, buildLeadRow };
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`owner-search FAILED: ${err.message}`);
+    process.exit(1);
+  });
+}
