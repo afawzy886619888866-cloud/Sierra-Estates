@@ -190,57 +190,57 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
         <nav className="hidden xl:flex items-center gap-5 text-xs font-semibold tracking-wide uppercase">
           <button
             onClick={() => handleSelectTab('map')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'map'
-                ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
+                ? 'text-[#00aeff] border-b-2 border-[#00aeff] font-bold drop-shadow-[0_0_8px_rgba(0,174,255,0.4)]'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
-            <Map className="w-3.5 h-3.5" />
+            <Map className="w-3.5 h-3.5 text-[#00aeff]" />
             <span>{isAr ? 'الخريطة التفاعلية' : 'Master Plan'}</span>
           </button>
 
           <button
             onClick={() => handleSelectTab('excel')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'excel'
-                ? 'text-emerald-600 border-b-2 border-emerald-600 font-bold'
+                ? 'text-[#16a34a] border-b-2 border-[#16a34a] font-bold'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
-            <Table2 className="w-3.5 h-3.5 text-emerald-600" />
+            <Table2 className="w-3.5 h-3.5 text-[#16a34a]" />
             <span>{isAr ? 'جدول الإكسيل' : 'Units Excel'}</span>
           </button>
 
           <button
             onClick={() => handleSelectTab('yield')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'yield'
-                ? 'text-cyan-500 border-b-2 border-cyan-500 font-bold'
+                ? 'text-[#00aeff] border-b-2 border-[#00aeff] font-bold'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
+            <Sparkles className="w-3.5 h-3.5 text-[#00aeff]" />
             <span>{isAr ? 'عوائد الإيجار' : 'Yield Heatmap'}</span>
           </button>
 
           <button
             onClick={() => handleSelectTab('threed')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1.5 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 flex items-center gap-1.5 ${
               currentTab === 'threed'
-                ? 'text-sky-500 border-b-2 border-sky-500 font-bold'
+                ? 'text-sky-400 border-b-2 border-sky-400 font-bold'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
-            <Box className="w-3.5 h-3.5 text-sky-500" />
+            <Box className="w-3.5 h-3.5 text-sky-400" />
             <span>{isAr ? 'مجسم 3D' : '3D Scene'}</span>
           </button>
 
           <button
             onClick={() => handleSelectTab('compounds')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 ${
               currentTab === 'compounds'
-                ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
+                ? 'text-[#e9c176] border-b-2 border-[#e9c176] font-bold'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
@@ -249,9 +249,9 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 
           <button
             onClick={() => handleSelectTab('radar')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 ${
               currentTab === 'radar'
-                ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
+                ? 'text-[#e9c176] border-b-2 border-[#e9c176] font-bold'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
@@ -260,13 +260,13 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 
           <button
             onClick={() => handleSelectTab('dossier')}
-            className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 flex items-center gap-1 ${
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 flex items-center gap-1 ${
               currentTab === 'dossier'
-                ? 'text-amber-600 border-b-2 border-amber-600 font-bold'
+                ? 'text-[#00aeff] border-b-2 border-[#00aeff] font-bold'
                 : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-3.5 h-3.5 text-[#00aeff]" />
             <span>{isAr ? 'الملف' : 'Dossier'}</span>
           </button>
         </nav>
@@ -460,12 +460,12 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
             )}
           </button>
 
-          {/* Primary Action Button */}
+          {/* Primary Action Button — Houzez Luxury Signature */}
           <button
             onClick={handleOpenConsultation}
-            className="px-3.5 py-2 text-xs font-bold tracking-wider uppercase text-amber-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-md shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border border-amber-300/40"
+            className="px-3.5 py-2 text-xs font-bold tracking-wider uppercase text-white bg-linear-to-r from-[#00aeff] to-[#0077b6] hover:from-[#0092d6] hover:to-[#005f99] rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(0,174,255,0.4)] transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 border border-[#00aeff]/40"
           >
-            <ShieldCheck className="w-4 h-4 text-amber-900" />
+            <ShieldCheck className="w-4 h-4 text-white" />
             <span className="hidden md:inline">{isAr ? 'حجز معاينة واستشارة' : 'Rent & Resale Desk'}</span>
           </button>
         </div>
