@@ -21,18 +21,21 @@ WHATSAPP_API_URL=http://127.0.0.1:2785
 WHATSAPP_API_TOKEN=__OPKEY__
 OPENWA_ADMIN_API_KEY=__ADKEY__
 OPENWA_SESSION_ID=__UUID__
-# 4-line sender pool (overrides OPENWA_SESSION_ID when set):
-OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4
+# 8-line sender pool (overrides OPENWA_SESSION_ID when set) — must match
+# the session names registered in the multi-session gateway worker:
+OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8
 RUNNER_API_KEY=__ADKEY__
 RUNNER_PORT=2786
 RUNNER_BIND=__BIND__
-WF_OWNER_CONTACT_DAILY_CAP=40
-# Parallel outreach: up to 4 READY lines send simultaneously per slot
-# ("2 lines here + 2 lines on the other side" — split walks the sheet from
+# Daily cap is a TOTAL when set explicitly: 40/line x 8 lines = 320/day.
+# (Leave unset to let the workflow default to 40/line x pool size.)
+WF_OWNER_CONTACT_DAILY_CAP=320
+# Parallel outreach: up to 8 READY lines send simultaneously per slot
+# ("4 lines here + 4 lines on the other side" — split walks the sheet from
 # BOTH ends and meets in the middle; top/bottom dedicate this host to one
 # end of a TWO-host setup, see workflows/TWO_HOST_OUTREACH.md). Per-line
 # pacing is unchanged.
-WF_PARALLEL_LINES=4
+WF_PARALLEL_LINES=8
 WF_HOST_SIDE=split
 # Messages per 30-min slot (all lanes combined, exact) + graceful deadline:
 # lanes stop claiming new rows after 23 min so the runner's 25-min kill is

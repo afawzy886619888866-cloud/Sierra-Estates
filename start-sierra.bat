@@ -1,9 +1,9 @@
 @echo off
-title Sierra Estates - Local Control Plane & 4-Line Parallel Outreach
+title Sierra Estates - Local Control Plane & 8-Line Parallel Outreach
 echo ========================================================
 echo Sierra Estates - 100%% LOCAL CONTROL PLANE (ZERO AWS EC2)
-echo Mode     : WF_HOST_SIDE=split (2 lines top + 2 lines bottom)
-echo Lines    : line-1, line-2, line-3, line-4 (Local Gateway :2785)
+echo Mode     : WF_HOST_SIDE=split (4 lines top + 4 lines bottom)
+echo Lines    : line-1 .. line-8 (Local Gateway :2785)
 echo Engine   : Dispatches ALL active workflows (02..10)
 echo Window   : 10:00-20:00 Cairo, 30-min slots, batch 30, 23-min
 echo            graceful deadline (never killed mid-send)
@@ -30,14 +30,15 @@ REM ─────────────────────────�
 set RUNNER_WORKFLOWS=
 
 REM ────────────────────────────────────────────────────────────────
-REM 4-LINE SPLIT WALK: 2 lines walk top-down, 2 lines walk bottom-up
+REM 8-LINE SPLIT WALK: 4 lines walk top-down, 4 lines walk bottom-up
+REM (40/line daily cap x 8 lines = 320 total per Cairo day)
 REM ────────────────────────────────────────────────────────────────
 set WF_HOST_SIDE=split
-set WF_PARALLEL_LINES=4
-set OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4
+set WF_PARALLEL_LINES=8
+set OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8
 set WF_SLOT_BATCH=30
 set WF_SLOT_DEADLINE_MS=1380000
-set WF_OWNER_CONTACT_DAILY_CAP=160
+set WF_OWNER_CONTACT_DAILY_CAP=320
 set WF_OUTREACH_ACTIVE_HOURS=10-20
 set UNITS_SHEET_ID=1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk
 set UNITS_SHEET_GID=1127958606
@@ -89,7 +90,7 @@ echo [3/4] Starting Cloudflare Tunnel for http://127.0.0.1:2785...
 start "Sierra Cloudflare Tunnel" /min cmd /k "cd /d %~dp0 && node scripts\tunnel.mjs 2785"
 
 REM ── Step 4: Start Workflow Runner Control Plane (:2786) ──────────
-echo [4/4] Starting Workflow Engine (ALL workflows, 4-line split mode)...
+echo [4/4] Starting Workflow Engine (ALL workflows, 8-line split mode)...
 start "Sierra Workflow Engine (:2786)" /min cmd /k "cd /d %~dp0workflows && node runner.js"
 
 echo Done. All services are running 100%% locally (Gateway :2785, Runner :2786, Admin Bridge :2790, Cloudflare Tunnel).
