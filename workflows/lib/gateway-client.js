@@ -13,7 +13,7 @@
  * The gateway engine registry resolves sessions by UUID ONLY — sending by
  * session name returns 400 "not active". Always pass OPENWA_SESSION_ID.
  *
- * 4-line sender pool (Oct 2026): pass `sessionPool` (or env OPENWA_SESSION_IDS,
+ * Multi-line sender pool (4 → 8 lines, Oct 2026): pass `sessionPool` (or env OPENWA_SESSION_IDS,
  * comma-separated names or UUIDs) and sendText() round-robins across healthy
  * sessions, resolving names → UUIDs via GET /api/sessions once (5-min cache).
  * A session that errors is benched for 2 minutes; an empty/unresolvable pool
@@ -86,7 +86,7 @@ class GatewayClient {
     // gracefully when only one is provisioned.
     this.operatorKey = opts.operatorKey || process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_API_KEY || '';
     this.adminKey = opts.adminKey || process.env.OPENWA_ADMIN_API_KEY || this.operatorKey;
-    // 4-line pool: explicit opts.sessionPool wins, else OPENWA_SESSION_IDS env
+    // multi-line pool (8-line gateway): explicit opts.sessionPool wins, else OPENWA_SESSION_IDS env
     // (comma-separated session names or UUIDs, matching the Lines sheet).
     this.sessionPool = (opts.sessionPool
       || String(process.env.OPENWA_SESSION_IDS || '')).split(',').map((s) => s.trim()).filter(Boolean);

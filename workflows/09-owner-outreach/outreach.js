@@ -4,16 +4,18 @@
  * ──────────────────────────────────────────────────────────────────────────────────
  * Runs on the EC2 se-workflow-runner cron, Africa/Cairo time.
  *
- * PARALLEL SENDER ("2 lines here + 2 lines on the other side", Oct 2026):
- *   Up to WF_PARALLEL_LINES (default 4) READY pool lines send SIMULTANEOUSLY,
+ * PARALLEL SENDER ("N lines here + N lines on the other side", Oct 2026):
+ *   Up to WF_PARALLEL_LINES (default 2; start-sierra.bat sets 8) READY pool
+ *   lines send SIMULTANEOUSLY,
  *   each lane with its own 45–55 s pacing clock — the per-LINE rate is
  *   unchanged (anti-ban), the slot simply finishes in a fraction of the time.
  *   The sheet is partitioned by direction so lines never collide:
  *
  *     WF_HOST_SIDE=split (default)
- *         lane 1+3 walk the sheet front→back, lane 2+4 walk back→front —
- *         "2 lines here and 2 lines on the other side" — the cursors meet
- *         in the middle. With 2 lanes: 1 top + 1 bottom. With 1: top only.
+ *         even-numbered lanes walk the sheet front→back, odd lanes walk
+ *         back→front — "N lines here and N lines on the other side" — the
+ *         cursors meet in the middle. With 2 lanes: 1 top + 1 bottom.
+ *         With 8 lanes (8-line gateway): 4 top + 4 bottom. With 1: top only.
  *     WF_HOST_SIDE=top      all lanes walk front→back (host A of a 2-host setup)
  *     WF_HOST_SIDE=bottom   all lanes walk back→front  (host B of a 2-host setup)
  *
@@ -56,9 +58,9 @@
  *
  * Env: UNITS_SHEET_ID / UNITS_SHEET_GID (defaults = owner inventory sheet),
  *      WHATSAPP_API_TOKEN, OPENWA_SESSION_ID, WHATSAPP_API_URL,
- *      OPENWA_SESSION_IDS (pool: 'line1,line2,line3,line4' — overrides
+ *      OPENWA_SESSION_IDS (pool: 'line-1,…,line-8' — overrides
  *      OPENWA_SESSION_ID when set), WF_HOST_SIDE (split|top|bottom),
- *      WF_PARALLEL_LINES (4), WF_SLOT_BATCH (30), WF_SLOT_DEADLINE_MS
+ *      WF_PARALLEL_LINES (2 default; 8 in start-sierra.bat), WF_SLOT_BATCH (30), WF_SLOT_DEADLINE_MS
  *      (1380000 = 23 min),
  *      WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
  *      WF_OUTREACH_AVAILABILITIES, WF_OUTREACH_ACTIVE_HOURS (10-20)
