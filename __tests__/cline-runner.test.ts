@@ -21,29 +21,40 @@ describe('Cline CLI Automation Suite', () => {
     const result = spawnSync(process.execPath, [RUNNER_SCRIPT, '--check'], {
       cwd: ROOT_DIR,
       encoding: 'utf8',
+      // The diagnostic shells out to `npx -y cline` for version resolution,
+      // which can take well over 20s on a cold cache or a loaded CI host.
+      // Give the child an explicit timeout so a slow run surfaces as a clear
+      // ETIMEDOUT error instead of the vitest worker being killed mid-spawn
+      // (which previously made this test flaky under parallel suite load).
+      timeout: 55_000,
+      maxBuffer: 4 * 1024 * 1024,
     });
 
+    expect(result.error, `cline --check child failed to run: ${result.error ?? 'unknown'}`).toBeUndefined();
     if (result.status !== 0) {
       console.error(result.stderr || result.stdout);
     }
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Cline CLI Environment Diagnostic');
     expect(result.stdout).toContain('Status: READY');
-  }, 20000);
+  }, 60_000);
 
   it('supports --dry-run for presets without executing LLM calls', () => {
     const result = spawnSync(process.execPath, [RUNNER_SCRIPT, '--preset', 'audit', '--dry-run'], {
       cwd: ROOT_DIR,
       encoding: 'utf8',
+      timeout: 55_000,
+      maxBuffer: 4 * 1024 * 1024,
     });
 
+    expect(result.error, `cline --dry-run child failed to run: ${result.error ?? 'unknown'}`).toBeUndefined();
     if (result.status !== 0) {
       console.error(result.stderr || result.stdout);
     }
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('[Cline Runner] (Dry-Run) Command:');
     expect(result.stdout).toContain('Preset: audit');
-  }, 20000);
+  }, 60_000);
 
   it('schedule cron scripts exist for both Windows and Linux', () => {
     expect(fs.existsSync(PS1_CRON), 'schedule-cline-cron.ps1 must exist').toBe(true);
