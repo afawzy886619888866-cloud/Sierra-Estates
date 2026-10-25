@@ -27,6 +27,10 @@
  *      LEAD_NOTIFY_WHATSAPP_NUMBER (optional)
  * Exit: 0 sent · 1 error · 2 unconfigured
  */
+const path = require('path');
+try { require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); } catch {}
+try { require('dotenv').config({ path: path.join(__dirname, '..', 'workflows.env') }); } catch {}
+
 const { GatewayClient, requestJson, normalizeChatId } = require('../lib/gateway-client');
 const sb = require('../lib/supabase-sync');
 
