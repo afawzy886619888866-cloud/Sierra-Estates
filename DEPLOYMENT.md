@@ -96,6 +96,7 @@ pnpm migrate:supabase
 - `pnpm deploy:rules` and `pnpm deploy:functions` are legacy Firebase commands and are intentionally not part of the active workflow.
 - `pnpm check:backend` is the canonical guard for Supabase write policy.
 - `pnpm deploy:check` validates deployment readiness against the active architecture contract.
+- `pnpm --filter sierra-estates-client-page build:low-memory` is the drop-in `pnpm build` equivalent for memory-constrained hosts (< 7 GB): it runs the same prebuild + type-check + next build chain but splits the build into Next's compile/generate phases with adaptive heap caps and sweeps orphaned build workers. Vercel and hosts with ≥ 7 GB keep using `pnpm build` unchanged.
 
 ---
 
