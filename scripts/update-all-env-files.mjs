@@ -22,14 +22,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 
+const rootEnv = path.join(ROOT, '.env');
 const rootEnvLocal = path.join(ROOT, '.env.local');
-if (!fs.existsSync(rootEnvLocal)) {
-  console.error('❌ Root .env.local not found!');
-  process.exit(1);
+const appEnvLocal = path.join(ROOT, 'apps/sierra-estates-realty/.env.local');
+
+const master = {};
+if (fs.existsSync(rootEnv)) {
+  Object.assign(master, dotenv.parse(fs.readFileSync(rootEnv, 'utf-8')));
+}
+if (fs.existsSync(appEnvLocal)) {
+  Object.assign(master, dotenv.parse(fs.readFileSync(appEnvLocal, 'utf-8')));
+}
+if (fs.existsSync(rootEnvLocal)) {
+  Object.assign(master, dotenv.parse(fs.readFileSync(rootEnvLocal, 'utf-8')));
 }
 
-const master = dotenv.parse(fs.readFileSync(rootEnvLocal, 'utf-8'));
-console.log(`✅ Loaded ${Object.keys(master).length} master keys from root .env.local`);
+console.log(`✅ Loaded ${Object.keys(master).length} master keys across workspace authoritative env sources`);
 
 function upsertEnvFile(targetRelPath, specificKeys = null, customMappings = {}) {
   const targetPath = path.join(ROOT, targetRelPath);
@@ -199,6 +207,21 @@ upsertEnvFile('.vercel/.env.production.local', [
   'VERCEL_ORG_ID',
   'CLIENT_VERCEL_PROJECT_ID',
   'ADMIN_VERCEL_PROJECT_ID',
+]);
+
+// 8. apps/agents/whatsapp-multi-session/.env
+upsertEnvFile('apps/agents/whatsapp-multi-session/.env', [
+  'WHATSAPP_GATEWAY_PORT',
+  'OPENWA_ADMIN_API_KEY',
+  'OPENWA_OPERATOR_KEY',
+  'OPENWA_SESSION_IDS',
+  'STRICT_GATEWAY_AUTH',
+  'SE_APP_WEBHOOK_URL',
+  'SBR_SECRET_KEY',
+  'SE_HEARTBEAT_URL',
+  'SE_BRIDGE_DISABLE',
+  'WHATSAPP_API_URL',
+  'WHATSAPP_API_KEY',
 ]);
 
 console.log('\n🎉 ALL .ENV FILES SYNCHRONIZED SUCCESSFULLY ACROSS ALL PLATFORMS!');

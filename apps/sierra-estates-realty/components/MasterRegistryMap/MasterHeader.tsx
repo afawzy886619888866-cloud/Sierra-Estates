@@ -321,7 +321,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                   ? 'bg-[#0A1220] border-amber-500/30 text-stone-100'
                   : 'bg-[#FAF8F5] border-amber-600/30 text-stone-900'
               }`}>
-                <div className="px-3.5 py-2 bg-gradient-to-r from-amber-500/15 via-transparent to-transparent border-b border-stone-200 dark:border-stone-800 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                <div className="px-3.5 py-2 bg-linear-to-r from-[#00aeff]/15 via-transparent to-transparent border-b border-stone-200 dark:border-stone-800 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-stone-500 dark:text-stone-400">
                   <span>
                     {searchResults.isDefault
                       ? (isAr ? 'بحث سريع في السجل العقاري' : 'QUICK REGISTRY DIRECTORY')
