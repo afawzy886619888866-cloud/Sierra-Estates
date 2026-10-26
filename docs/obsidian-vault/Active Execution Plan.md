@@ -2,7 +2,7 @@
 type: memory
 domain: operations
 status: living
-updated: 2026-10-25
+updated: 2026-10-26
 ---
 
 # Active Execution Plan — Owner Acquisition → Verified Inventory → Connected Systems
@@ -117,6 +117,20 @@ fingerprint (price is band-bucketed ±2.5%).
     key pair in repo secrets → EC2 workflow reaches the runner → runner
     executes the repaired workflows → telemetry + ledger + status_history
     evidence → G3 re-evaluation. Phase 2 stays deferred.
+
+    **G3 status 2026-10-26 — EXECUTION PATH MIGRATED TO DOCKER (owner
+    decision).** The AWS unblocking chain above is superseded: the runner
+    now runs as a Docker service on the owner host alongside the 8-line
+    gateway — `infra/docker-compose.runner.yml` + `workflows/Dockerfile`
+    + `start-docker-runner.bat`, plan in
+    `infra/DOCKER-RUNNER-MIGRATION.md`. No AWS credential is needed in
+    the G3 chain anymore (the EC2 t3.micro with 1 GB RAM could never host
+    the 8-line gateway era anyway — 10 GB soft floor). Telemetry labels on
+    the new path read `docker-runner:*` (runner.js `RUNNER_LABEL`). G3
+    evidence = `public.workflows` rows + status_history written by the
+    Docker runner once `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` are set
+    in `infra/.env` and the §1 loop is dispatched. Phase 2 still deferred
+    until that run passes.
 
 - [x] **G2.5 — Production-gap re-check & closure** (2026-10-25, autonomous
       continuation on HEAD `0540680d`): five defect classes fixed with
@@ -336,3 +350,18 @@ below; never rewrite history.*
 | 4 | **WhatsApp gateway not verifiable from audit environments** | `54.89.162.250:2785` connection timeout from this session | Operator: confirm gateway reachability from the GHA runners (the workflow's `WHATSAPP_API_URL` secret holds the live value) |
 | 5 | **`SUPABASE_ACCESS_TOKEN` possibly revoked** | 2026-10-19 §7 note (401 Revoked) predates the current secret (updated 2026-10-19 16:52 UTC); validity unknown | Owner: rotate if the workflow's first real run reports 401 |
 | 6 | **198/324 owner-sheet prices empty** (now quarantined, not fabricated) | Live sheet scan 2026-10-25 | Business: fill the price column in the sheet; the sync will pick them up on the next cycle |
+
+**2026-10-26 addendum (AWS→Docker migration session):**
+
+- **Blocker 1 is CLOSED in production** — verified live this session:
+  anonymous `GET /api/inventory/download?dataset=owners` now serves 5,532
+  rows with exactly ONE distinct `Owner Phone` (`+201092048333`, the
+  concierge redaction) and one wa.me link. The Vercel GitHub integration
+  auto-deployed the G2.5 fix when `23d1374` landed on main — the "deploy
+  needed" note was stale.
+- **Blocker 3 is RESOLVED BY MIGRATION** — the EC2 runner path is retired
+  in favor of the Docker runner (`infra/DOCKER-RUNNER-MIGRATION.md`);
+  rotating the AWS keys is no longer on any critical chain. The AWS keys
+  should instead be REMOVED from repo + Vercel secrets during EC2
+  decommissioning (see the migration plan §5).
+- Blockers 2, 4, 5, 6 unchanged.

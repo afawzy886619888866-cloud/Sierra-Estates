@@ -1,5 +1,12 @@
 # Sierra Estates — Active EC2 Instance Configuration
 
+> ⚠️ **DEPRECATED (2026-10-26):** the EC2 runner path is superseded by the
+> Docker migration — see [`infra/DOCKER-RUNNER-MIGRATION.md`](../DOCKER-RUNNER-MIGRATION.md).
+> The 8-line gateway + workflow runner now run as Docker services on the
+> owner host. This file is retained as the historical record of the EC2 era
+> and as the decommission reference (instance/IP identifiers below).
+> Do NOT build new automation on this path.
+
 This document records the exact configuration, credentials, and connection instructions for the running AWS EC2 server.
 
 ---
