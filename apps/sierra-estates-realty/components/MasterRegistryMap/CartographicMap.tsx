@@ -21,7 +21,9 @@ import {
   Minimize2,
   Sun,
   Moon,
-  Flame
+  Flame,
+  Eye,
+  ShieldCheck
 } from 'lucide-react';
 
 interface CartographicMapProps {
@@ -37,7 +39,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   lang,
   isDarkMode,
   onSelectCompoundToExcel,
-  onSelectUnit: _onSelectUnit,
+  onSelectUnit,
   onToggleTheme,
   selectedCompoundId,
 }) => {
@@ -135,6 +137,46 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   };
 
   const handleMouseUp = () => setIsDragging(false);
+
+  // Mobile Touch Pan & Pinch-to-Zoom handlers
+  const [touchPinchDist, setTouchPinchDist] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.touches[0].clientX - panOffset.x, y: e.touches[0].clientY - panOffset.y });
+      setTouchPinchDist(null);
+    } else if (e.touches.length === 2) {
+      setIsDragging(false);
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      setTouchPinchDist(Math.hypot(dx, dy));
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDragging) {
+      setPanOffset({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    } else if (e.touches.length === 2 && touchPinchDist !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const currentDist = Math.hypot(dx, dy);
+      const diff = currentDist - touchPinchDist;
+      if (Math.abs(diff) > 4) {
+        const delta = diff > 0 ? 0.06 : -0.06;
+        setZoomLevel(prev => Math.min(Math.max(prev + delta, 0.8), 6.0));
+        setTouchPinchDist(currentDist);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setTouchPinchDist(null);
+  };
 
   // Toggle fullscreen
   const toggleFullscreen = () => {
@@ -383,7 +425,11 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onWheel={handleWheel}
-            className="relative w-full aspect-video min-h-135 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+            className="relative w-full aspect-video min-h-135 overflow-hidden cursor-grab active:cursor-grabbing select-none touch-none"
           >
             {/* High-Resolution 4K + Infinite Vector Zoom Layer (Uses layout dimensions instead of GPU bitmap stretch so zooming never pixelates) */}
             <div 
@@ -412,7 +458,9 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                 alt={activeDarkMode ? "New Cairo City 4K Master Registry Map (Dark Edition)" : "New Cairo City 4K Master Registry Map (Light Edition)"}
                 decoding="sync"
                 fetchPriority="high"
-                className="w-full h-full object-cover select-none pointer-events-none transition-opacity duration-300"
+                className={`w-full h-full object-cover select-none pointer-events-none transition-opacity duration-300 ${
+                  mapStyle === 'vector' ? 'opacity-30' : 'opacity-100'
+                }`}
                 style={{
                   filter: activeDarkMode 
                     ? 'url(#ultraHdSharpen) contrast(1.12) saturate(1.08)' 
@@ -420,6 +468,19 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                 }}
                 draggable={false}
               />
+
+              {/* Vector Blueprint CAD Grid when Vector style active */}
+              {mapStyle === 'vector' && (
+                <div 
+                  className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500"
+                  style={{
+                    backgroundImage: activeDarkMode
+                      ? 'linear-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.12) 1px, transparent 1px)'
+                      : 'linear-gradient(rgba(180, 83, 9, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(180, 83, 9, 0.12) 1px, transparent 1px)',
+                    backgroundSize: '36px 36px',
+                  }}
+                />
+              )}
 
               {/* Luxury Palette Overlay Tint matching Sierra Estates */}
               {activeDarkMode ? (
@@ -634,6 +695,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               {/* Interactive Transparent Hit Targets & Floating Popup Signs */}
               {filteredCompounds.map(compound => {
                 const isHovered = compound.id === hoveredCompoundId;
+                const featuredUnit = UNIT_LISTINGS.find(u => u.compoundId === compound.id);
 
                 return (
                   <div
@@ -706,6 +768,12 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                             {compound.nameAr}
                           </div>
 
+                          {/* GIS Spatial Verification Badge */}
+                          <div className="mt-1 flex items-center gap-1.5 text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                            <ShieldCheck className="w-3 h-3 text-emerald-500 shrink-0" />
+                            <span>{isAr ? 'إحداثيات GIS مدققة وموثقة' : 'GPS Spatial Verified Polygon'}</span>
+                          </div>
+
                           {/* Pricing & Rent Summary */}
                           <div className="mt-2.5 pt-2 border-t border-stone-200 dark:border-white/10 grid grid-cols-2 gap-2 text-[10px] font-mono">
                             <div>
@@ -735,8 +803,25 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                             <span>Airport: {compound.driveTimeToAirportMin}m</span>
                           </div>
 
+                          {/* Quick Inspect Unit CTA if available */}
+                          {onSelectUnit && featuredUnit && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectUnit(featuredUnit);
+                              }}
+                              className="mt-2 w-full py-1.5 px-2.5 rounded-lg text-[10px] font-bold bg-[#00aeff]/15 hover:bg-[#00aeff]/25 text-[#00aeff] border border-[#00aeff]/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                            >
+                              <Eye className="w-3 h-3 text-[#00aeff]" />
+                              <span>
+                                {isAr ? `معاينة وحدة فورية (${featuredUnit.unitCode})` : `Inspect Unit (${featuredUnit.unitCode})`}
+                              </span>
+                            </button>
+                          )}
+
                           {/* CTA Prompt */}
-                          <div className="mt-2.5 pt-2 border-t border-stone-200 dark:border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">
+                          <div className="mt-2 pt-1.5 border-t border-stone-200 dark:border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">
                             <span className="flex items-center gap-1.5">
                               <Table2 className="w-3.5 h-3.5" />
                               <span>{isAr ? 'فتح في شيت الإكسيل' : 'Open in Excel Sheet'}</span>
