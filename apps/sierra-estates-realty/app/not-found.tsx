@@ -47,7 +47,7 @@ export default function NotFound() {
             margin: '0 0 12px',
           }}
         >
-          We couldn&apos;t find that page
+          {"We couldn't find that page"}
         </h1>
         <p style={{ color: 'rgba(255,255,255,.74)', fontSize: 15, margin: '0 0 30px' }}>
           The link may be out of date, or the unit it pointed to has been sold or
