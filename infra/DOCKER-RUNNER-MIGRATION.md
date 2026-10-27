@@ -98,7 +98,7 @@ the gateway, never the runner.
 - [ ] Terminate `i-0be8ff8c5cfba7363`, release Elastic IP `18.232.148.172`
 - [ ] Rotate/remove AWS secrets in repo + Vercel (`AWS_ACCESS_KEY_ID`,
       `AWS_SECRET_ACCESS_KEY`) — nothing should need them anymore
-- [ ] Disable the `ec2-automations.yml` schedule (workflow kept for history)
+- [x] Disable the `ec2-automations.yml` schedule (workflow kept for history) — DONE 2026-10-27, commit `4a986d7e`: cron trigger removed, `workflow_dispatch` preserved as the manual/history/rollback path (see `docs/EXECUTION_REPORT_2026-10-27.md` §3/§5)
 
 ## 6. What is intentionally NOT migrated
 
