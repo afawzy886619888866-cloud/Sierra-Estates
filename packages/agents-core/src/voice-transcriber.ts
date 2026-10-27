@@ -59,7 +59,7 @@ export class VoiceTranscriberEngine {
 
     // Detect Price (e.g. "مليون ونص", "٣٥ مليون", "١٥ مليون")
     let extractedPriceEGP: number | undefined;
-    const millionMatch = text.match(/(\d+(?:\.\d+)?)\s*مليون/);
+    const millionMatch = text.match(/([0-9]{1,8}(?:\.[0-9]{1,4})?)\s*مليون/);
     if (millionMatch) {
       extractedPriceEGP = Math.round(parseFloat(millionMatch[1]) * 1e6);
     } else if (/مليون ونص/.test(text)) {
@@ -72,7 +72,7 @@ export class VoiceTranscriberEngine {
 
     // Detect Down Payment %
     let extractedDownPaymentPercent: number | undefined;
-    const downMatch = text.match(/مقدم\s*(\d+)\s*%/);
+    const downMatch = text.match(/مقدم\s*([0-9]{1,3})\s*%/);
     if (downMatch) {
       extractedDownPaymentPercent = parseInt(downMatch[1], 10);
     } else if (/مقدم\s*١٠%/i.test(text) || /عشرة في المية مقدم/.test(text)) {
@@ -81,7 +81,7 @@ export class VoiceTranscriberEngine {
 
     // Detect Tenure Years
     let extractedTenureYears: number | undefined;
-    const yearsMatch = text.match(/(\d+)\s*(?:سنين|سنوات)/);
+    const yearsMatch = text.match(/([0-9]{1,2})\s*(?:سنين|سنوات)/);
     if (yearsMatch) {
       extractedTenureYears = parseInt(yearsMatch[1], 10);
     }

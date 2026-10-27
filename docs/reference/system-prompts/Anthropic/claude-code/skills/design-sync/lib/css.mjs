@@ -57,8 +57,8 @@ export function copyTokens({ tokensPkg, tokensGlob, nodeModules, out }) {
   const tjson = JSON.parse(readFileSync(join(tdir, 'package.json'), 'utf8'));
   if (tokensGlob) {
     const parts = tokensGlob.split('/');
-    const pat = parts.pop();
-    const rx = new RegExp('^' + pat.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+    const escaped = pat.replace(/[\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*');
+    const rx = new RegExp('^' + escaped + '$');
     const deep = parts.includes('**');
     const base = join(tdir, ...parts.filter((p) => p !== '**'));
     (function collect(d, rel = '') {

@@ -252,7 +252,7 @@ export class NotebookLMHarvester {
 
     // 2. Price extraction
     let priceEgp = 0;
-    const priceMatch = text.match(/(?:سعر|بمبلغ|كاش|مطلوب|اجمالي|إجمالي)\s*[:=]?\s*([0-9,.\s]{5,14})(?:\s*(?:جنيه|الف|ألف|مليون|ج\.م|egp|m))?/i)
+    const priceMatch = text.match(/(?:سعر|بمبلغ|كاش|مطلوب|اجمالي|إجمالي)\s*(?:[:=]\s*)?([0-9,.]{3,14})(?:\s*(?:جنيه|الف|ألف|مليون|ج\.م|egp|m))?/i)
       || text.match(/([0-9]{1,3}(?:[,.][0-9]{3})+)\s*(?:جنيه|ج\.م|egp)/i)
       || text.match(/([0-9]{1,2}(?:\.[0-9]{1,3})?)\s*(?:مليون|million)/i);
 
@@ -267,7 +267,7 @@ export class NotebookLMHarvester {
 
     // 3. Area sqm
     let areaSqm: number | null = null;
-    const areaMatch = text.match(/(?:مساحة|مساحه|مساحتها)\s*[:=]?\s*(\d{2,4})\s*(?:متر|م²|م2|م|sqm)?/i)
+    const areaMatch = text.match(/(?:مساحة|مساحه|مساحتها)\s*(?:[:=]\s*)?(\d{2,4})\s*(?:متر|م²|م2|م|sqm)?/i)
       || text.match(/(\d{2,4})\s*(?:متر|م²|م2|م|sqm)(?:\s|$|[^\u0600-\u06FF])/i)
       || text.match(/(\d{2,4})\s*م(?:\s|$|[^\u0600-\u06FF])/);
     if (areaMatch) {

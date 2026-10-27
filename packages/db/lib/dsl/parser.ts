@@ -128,7 +128,7 @@ function parseFilterLine(line: string): FilterClause | null {
   }
 
   // IN: FILTER "Status" IN ("a", "b", "c")
-  const inOp = line.match(/FILTER\s+"([^"]+)"\s+IN\s*\(([^)]+)\)/i);
+  const inOp = line.match(/^\s*FILTER\s+"([^"\r\n]+)"\s+IN\s*\(([^)\r\n]+)\)/i);
   if (inOp) {
     return {
       field: inOp[1],
@@ -214,7 +214,8 @@ export function parseDSL(dsl: string, collectionName = "listings"): ParsedView {
 
     // ── SHOW "SBR_Code" AS PRIMARY_ID ───────────────────────────
     else if (U.startsWith("SHOW") && U.includes("AS PRIMARY_ID")) {
-      const f = extractQuoted(line)[0] || line.replace(/^SHOW\s+/i, "").split(/\s+AS/i)[0].trim().replace(/["']/g, "");
+      const asIdx = line.toUpperCase().indexOf(" AS ");
+      const f = extractQuoted(line)[0] || (asIdx !== -1 ? line.slice(4, asIdx).trim().replace(/["']/g, "") : "");
       if (f) result.primaryIdField = f;
     }
 

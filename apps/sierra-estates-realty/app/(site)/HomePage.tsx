@@ -29,7 +29,7 @@ import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { usePublicListings } from '@/lib/site/usePublicListings';
-import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import { getCuratedListingImage, isStockPhotoUrl } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
 const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
@@ -339,7 +339,7 @@ export default function HomePage() {
             mode: u.mode || 'sale',
             agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
             img: getCuratedListingImage(u, i),
-            imgCurated: !u.img || u.img.includes('unsplash.com') || u.img.includes('placeholder'),
+            imgCurated: !u.img || isStockPhotoUrl(u.img) || u.img.includes('placeholder'),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
@@ -427,7 +427,7 @@ export default function HomePage() {
             mode: u.mode || 'sale',
             agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
             img: getCuratedListingImage(u, i),
-            imgCurated: !u.img || u.img.includes('unsplash.com') || u.img.includes('placeholder'),
+            imgCurated: !u.img || isStockPhotoUrl(u.img) || u.img.includes('placeholder'),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
