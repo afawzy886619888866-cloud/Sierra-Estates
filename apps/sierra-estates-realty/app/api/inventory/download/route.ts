@@ -5,6 +5,12 @@ import fs from 'fs';
 import snapshot from '@/lib/inventory/snapshot.json';
 import { verifyPortalRequest } from '@/lib/server/auth-guard';
 import { logger } from '@/lib/logger';
+import {
+  CONCIERGE_CONTACT_NAME,
+  CONCIERGE_PHONE,
+  CONCIERGE_WA_LINK,
+  scrubOwnerContactText,
+} from '@/lib/server/owner-privacy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,11 +38,6 @@ export const dynamic = 'force-dynamic';
  *   · The route never invented listing data before and still does not —
  *     this is a redaction gate, not a data change.
  */
-const CONCIERGE_NAME = 'Sierra Estates Advisory';
-const CONCIERGE_PHONE = process.env.PF_AGENT_PHONE || '+201092048333';
-const CONCIERGE_WA = `https://wa.me/${CONCIERGE_PHONE.replace(/[^\d]/g, '')}`;
-const PHONE_SCRUB_RE = /(?:\+?20)?1[0125][0-9]{8}/g;
-
 function loadDataset(datasetName: string): any[] {
   if (datasetName === 'owners' || datasetName === 'verified' || datasetName === '585') {
     const snapshotData = snapshot as unknown;
@@ -110,17 +111,26 @@ function normalizeUnitRow(u: any) {
   };
 }
 
-/** Redact owner-identifying data for public output (concierge doctrine). */
+/** Redact owner-identifying data for public output (concierge doctrine).
+ *
+ * Section D hardening (2026-10-27): free-text phones were previously
+ * scrubbed from Description only — live probing found mobile-like strings
+ * in OTHER string fields too (Unit Type, and numeric legacy Listing
+ * ID/Sierra Code values). In the EXPORT COPY these fields are not
+ * load-bearing (the DB identity is untouched; authenticated admin exports
+ * keep the real values), so EVERY string field is scrubbed — maximal
+ * containment for the public artifact. */
 function sanitizePublicRow<T extends Record<string, unknown>>(row: T): T {
-  return {
-    ...row,
-    'Owner Contact Name': CONCIERGE_NAME,
-    'Owner Phone': CONCIERGE_PHONE,
-    'WhatsApp Direct': CONCIERGE_WA,
-    // Free text can embed owner phones — scrub to the concierge number,
-    // exactly like scripts/sanitize-public-downloads.mjs does for sheets.
-    Description: String(row.Description || '').replace(PHONE_SCRUB_RE, CONCIERGE_PHONE),
-  };
+  const out: Record<string, unknown> = { ...row };
+  out['Owner Contact Name'] = CONCIERGE_CONTACT_NAME;
+  out['Owner Phone'] = CONCIERGE_PHONE;
+  out['WhatsApp Direct'] = CONCIERGE_WA_LINK;
+  for (const k of Object.keys(out)) {
+    if (typeof out[k] === 'string') {
+      out[k] = scrubOwnerContactText(out[k] as string);
+    }
+  }
+  return out as T;
 }
 
 export async function GET(request: NextRequest) {
