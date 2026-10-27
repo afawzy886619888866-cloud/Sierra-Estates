@@ -32,7 +32,9 @@ def _get_db():
     if _db is not None:
         return _db
 
-    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL") or "https://gaxfqcietzoonlmatiot.supabase.co"
+    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    if not supabase_url:
+        raise RuntimeError("SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) is required for the omni-agent DB layer.")
     supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
     if not supabase_key:
         raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY (or anon key) is required for the omni-agent DB layer.")
@@ -177,11 +179,12 @@ def send_whatsapp_message(phone_number: str, message: str) -> Dict[str, Any]:
     services with no shared package to import from)."""
     phone_number_id = os.getenv("META_PHONE_NUMBER_ID")
     access_token = os.getenv("META_ACCESS_TOKEN")
+    whatsapp_api_url = os.getenv("WHATSAPP_API_URL", "https://graph.facebook.com/v18.0")
     if not phone_number_id or not access_token:
         logger.warning("[Titan] META_PHONE_NUMBER_ID/META_ACCESS_TOKEN not configured — message not sent.")
         return {"success": False, "error": "WhatsApp send is not configured"}
 
-    url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"
+    url = f"{whatsapp_api_url}/{phone_number_id}/messages"
     payload = {
         "messaging_product": "whatsapp",
         "to": phone_number,

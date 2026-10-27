@@ -19,6 +19,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// The script now fails fast when Supabase env is missing (security purge
+// removed the hardcoded project fallback). Provide test values BEFORE the
+// module is imported — vi.hoisted runs ahead of the static imports below.
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'https://test-project-ref.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test-service-role-key';
+});
+
 vi.mock('dotenv', () => ({ config: vi.fn(() => ({}) as Record<string, string>) }));
 vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn() }));
 
