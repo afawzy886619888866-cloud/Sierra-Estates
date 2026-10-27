@@ -33,6 +33,7 @@ import {
 import { useSite } from '@/lib/site/SiteContext';
 import { GsapMagnetic } from './GsapAnimations';
 import { getEcoSmartTagMeta } from '@/lib/services/listing-normalize';
+import { isStockPhotoUrl } from '@/lib/site/luxury-images';
 
 // AI scores are optional on public inventory units (anti-fabrication rule 5:
 // hide rather than synthesize). Never dereference an undefined score — render
@@ -114,7 +115,7 @@ export default function PropertyCard({
         (x) =>
           typeof x === 'string' &&
           x.startsWith('http') &&
-          !x.includes('unsplash.com') &&
+          !isStockPhotoUrl(x) &&
           !x.includes('placeholder') &&
           !x.includes('stock')
       )

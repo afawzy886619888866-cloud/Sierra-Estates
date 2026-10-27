@@ -197,7 +197,7 @@ export function findGroup(idOrName: string): WhatsAppGroup | undefined {
  */
 export function classifySourceType(sender: string, groupName: string): GroupSourceType {
   const text = `${sender} ${groupName}`.toLowerCase();
-  if (/(owner|مالك|مالكة|صاحب|من المالك|direct.*owner|verified owner|owner direct)/i.test(text)) {
+  if (/(owner|مالك|مالكة|صاحب|من المالك|direct\s*(?:verified\s*)?owner|verified owner|owner direct)/i.test(text)) {
     return 'owner';
   }
   if (/(broker|سمسار|وسيط|agent|agency|مكتب|عقاري)/i.test(text)) {

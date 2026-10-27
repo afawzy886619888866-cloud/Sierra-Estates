@@ -131,10 +131,14 @@ export function ingestDoc(path) {
   // Drop noise that applies to .md and .mdx alike: HTML comments, raw
   // <style>/<script> blocks, and VuePress/dumi-style `:::tip ... :::`
   // admonition fences (keep the content between the fences).
-  txt = txt
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/^:::.*$/gm, '');
+  let prev;
+  do {
+    prev = txt;
+    txt = txt
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
+  } while (txt !== prev);
+  txt = txt.replace(/^:::.*$/gm, '');
   if (/\.mdx$/i.test(path)) {
     const lines = txt.split('\n');
     // Drop the leading import block. A prettier-wrapped multi-line import

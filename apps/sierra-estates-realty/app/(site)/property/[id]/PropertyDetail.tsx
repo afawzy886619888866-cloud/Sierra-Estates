@@ -13,7 +13,7 @@ import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { CurrencyGoldSelector } from '@/components/site/CurrencyGoldSelector';
-import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import { getCuratedListingImage, isStockPhotoUrl } from '@/lib/site/luxury-images';
 import PropertyIntelligenceDossier from '@/components/site/PropertyIntelligenceDossier';
 
 export default function PropertyDetail({ id }: { id: string }) {
@@ -55,8 +55,8 @@ export default function PropertyDetail({ id }: { id: string }) {
           mode,
           agent: 'Sierra Advisor Desk',
           ago: u.ago || 'Live sync',
-          img: (u.img && !u.img.includes('unsplash.com')) ? u.img : (Array.isArray(u.images) && u.images[0] && !u.images[0].includes('unsplash.com')) ? u.images[0] : '',
-          images: Array.isArray(u.images) ? u.images.filter((x: unknown) => typeof x === 'string' && String(x).startsWith('http') && !String(x).includes('unsplash.com') && !String(x).includes('placeholder')) : [],
+          img: (u.img && !isStockPhotoUrl(u.img)) ? u.img : (Array.isArray(u.images) && u.images[0] && !isStockPhotoUrl(u.images[0])) ? u.images[0] : '',
+          images: Array.isArray(u.images) ? u.images.filter((x: unknown) => typeof x === 'string' && String(x).startsWith('http') && !isStockPhotoUrl(String(x)) && !String(x).includes('placeholder')) : [],
           tags: Array.isArray(u.tags) ? u.tags : [],
         });
       })
@@ -171,7 +171,7 @@ export default function PropertyDetail({ id }: { id: string }) {
     );
   }
 
-  const heroImg = (p.img && !p.img.includes('unsplash.com')) ? p.img : getCuratedListingImage({ code: p.code, compound: p.cmp, type: p.type }, 0);
+  const heroImg = (p.img && !isStockPhotoUrl(p.img)) ? p.img : getCuratedListingImage({ code: p.code, compound: p.cmp, type: p.type }, 0);
   const hero = photo || heroImg;
   const unitImages = Array.isArray(p.images) && p.images.length > 0 ? p.images : [];
   const gallery = unitImages.length > 1
