@@ -81,9 +81,14 @@ export function isRealPhoto(url?: string | null): boolean {
   if (!url) return false;
   const s = String(url).trim().toLowerCase();
   if (!s.startsWith('http')) return false;
-  if (s.includes('unsplash.com')) return false;
   if (s.includes('placeholder')) return false;
-  if (s.includes('example.com')) return false;
+  try {
+    const h = new URL(s).hostname.toLowerCase();
+    if (h === 'unsplash.com' || h.endsWith('.unsplash.com')) return false;
+    if (h === 'example.com' || h.endsWith('.example.com')) return false;
+  } catch {
+    return false;
+  }
   return true;
 }
 

@@ -256,7 +256,7 @@ export function resolveLocation(raw: string): ResolvedLocation {
   const key = normalizeKey(raw);
   if (key) {
     if (GAZETTEER[key]) return { ...GAZETTEER[key], approx: false };
-    const noCity = key.replace(/\s*city$/, '').trim();
+    const noCity = key.endsWith('city') ? key.slice(0, -4).trim() : key;
     if (GAZETTEER[noCity]) return { ...GAZETTEER[noCity], approx: false };
 
     // Substring alias match
