@@ -57,9 +57,15 @@ async function main() {
     const cmp = (d.compound || 'New Cairo').trim();
     const type = (d.property_type || 'apartment').trim().toLowerCase();
 
-    const realImgs = d.images.filter(
-      (img) => typeof img === 'string' && img.startsWith('https://static.shared.propertyfinder.eg')
-    );
+    const realImgs = d.images.filter((img) => {
+      if (typeof img !== 'string') return false;
+      try {
+        const u = new URL(img);
+        return u.protocol === 'https:' && u.hostname === 'static.shared.propertyfinder.eg';
+      } catch {
+        return false;
+      }
+    });
 
     realImgs.forEach((img) => {
       allRealPhotos.add(img);
