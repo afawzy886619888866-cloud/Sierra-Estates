@@ -147,11 +147,14 @@ class BrokerHarvester {
     console.log(`\n🔥 [HARVESTER] New Unit Grabbed from Line ${safeSession}:`);
     console.log(`   Compound: ${safeCompound} (${safeZone})`);
     console.log(`   Type: ${safeType} · ${safeDeal} · ${safePrice}`);
-    console.log(`   Broker: ${safeBroker}\n`);
-
     this.broadcast('NEW_UNIT', {
       unit: parsed,
       stats: this.getStatsSummary()
+    });
+
+    // Ingest asynchronously to Sierra backend
+    this.syncToSierraBackend(parsed).catch((err) => {
+      console.warn(`[HARVESTER] Backend sync failed: ${err.message}`);
     });
 
     return parsed;
@@ -273,6 +276,50 @@ class BrokerHarvester {
       capturedByLine: sessionId,
       harvestedAt: new Date().toISOString()
     };
+  }
+
+  async syncToSierraBackend(parsed) {
+    const backendUrl = process.env.SIERRA_API_URL || 'http://localhost:3000';
+    const secretKey = process.env.SBR_SECRET_KEY || 'sierra-broker-relay-dev-secret';
+    try {
+      const payload = {
+        message: parsed.rawText,
+        sender: parsed.brokerPhone || parsed.brokerName || 'WhatsApp Broker',
+        groupName: parsed.sourceChat || 'Broker Group',
+        capturedByLine: parsed.capturedByLine,
+        isListing: true,
+        metadata: {
+          compound: parsed.compound,
+          zone: parsed.zone,
+          dealType: parsed.dealType,
+          unitType: parsed.unitType,
+          priceEgp: parsed.priceEgp,
+          areaSqm: parsed.areaSqm,
+          bedrooms: parsed.bedrooms,
+          lat: parsed.lat,
+          lng: parsed.lng,
+          harvestedAt: parsed.harvestedAt
+        }
+      };
+
+      const res = await fetch(`${backendUrl}/api/ingest/whatsapp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-sbr-secret-key': secretKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        console.warn(`[HARVESTER] Backend sync responded with status ${res.status}`);
+      } else {
+        const json = await res.json();
+        console.log(`[HARVESTER] Synced to Sierra backend: id=${json.id}, code=${json.sierraCode || 'N/A'}`);
+      }
+    } catch (err) {
+      console.warn(`[HARVESTER] Backend sync skipped or unavailable: ${err.message}`);
+    }
   }
 
   getStatsSummary() {

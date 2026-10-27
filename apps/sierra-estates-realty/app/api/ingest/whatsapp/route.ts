@@ -15,6 +15,7 @@ import {
   upsertCanonicalListing,
   type UpsertResult,
 } from '@/lib/services/inventory/ingest-bridge';
+import { mempalace } from '@sierra-estates/memory-engine';
 
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
@@ -221,6 +222,30 @@ export async function POST(req: NextRequest) {
 
     const listing = buildListingDocument(rawMessage, sender, group, parsed);
     const docRef = await insertRecord<{ id: string }>('broker_listings', { ...listing, dedupeHash });
+
+    // Index into MemPalace listings room
+    try {
+      if (parsed?.isListing === true) {
+        mempalace.store({
+          id: `listing-${docRef.id}`,
+          room: 'listings',
+          drawer: parsed.compound || 'New Cairo',
+          content: `[${listing.extractedData?.sierraCode || 'SE-UNIT'}] ${parsed.compound || 'New Cairo'} - ${parsed.bedrooms || 0}BR ${parsed.finishing || ''} | ${parsed.price || 0} ${parsed.currency || 'EGP'} | Sender: ${sender}`,
+          metadata: {
+            docId: docRef.id,
+            compound: parsed.compound,
+            price: parsed.price,
+            bedrooms: parsed.bedrooms,
+            sierraCode: listing.extractedData?.sierraCode || null,
+            sourceGroup: group,
+            sender,
+          },
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (memErr) {
+      logger.warn('[WhatsApp Ingest] MemPalace store error:', memErr);
+    }
 
     // Dual-Ingestion: Also append to Google Sheets Master Log
     try {
