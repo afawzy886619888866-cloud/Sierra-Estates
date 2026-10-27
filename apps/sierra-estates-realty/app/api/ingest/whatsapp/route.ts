@@ -226,14 +226,15 @@ export async function POST(req: NextRequest) {
     // Index into MemPalace listings room
     try {
       if (parsed?.isListing === true) {
+        const compoundName = parsed.compound ? String(parsed.compound) : 'unspecified';
         mempalace.store({
           id: `listing-${docRef.id}`,
           room: 'listings',
-          drawer: parsed.compound || 'New Cairo',
-          content: `[${listing.extractedData?.sierraCode || 'SE-UNIT'}] ${parsed.compound || 'New Cairo'} - ${parsed.bedrooms || 0}BR ${parsed.finishing || ''} | ${parsed.price || 0} ${parsed.currency || 'EGP'} | Sender: ${sender}`,
+          drawer: compoundName,
+          content: `[${listing.extractedData?.sierraCode || 'SE-UNIT'}] ${compoundName} - ${parsed.bedrooms || 0}BR ${parsed.finishing || ''} | ${parsed.price || 0} ${parsed.currency || 'EGP'} | Sender: ${sender}`,
           metadata: {
             docId: docRef.id,
-            compound: parsed.compound,
+            compound: parsed.compound || null,
             price: parsed.price,
             bedrooms: parsed.bedrooms,
             sierraCode: listing.extractedData?.sierraCode || null,
