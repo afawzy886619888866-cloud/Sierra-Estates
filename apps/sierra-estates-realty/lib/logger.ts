@@ -16,7 +16,15 @@ const pinoLogger = pino({
 
 function sanitizeLog<T>(input: T): T {
   if (typeof input === 'string') {
-    return (input as string).replace(/\r|\n/g, '') as unknown as T;
+    return (input as string).replace(/[\r\n]/g, ' ') as unknown as T;
+  }
+  if (input !== null && typeof input === 'object') {
+    try {
+      const sanitized = JSON.stringify(input).replace(/[\r\n]/g, ' ');
+      return JSON.parse(sanitized) as T;
+    } catch {
+      return String(input).replace(/[\r\n]/g, ' ') as unknown as T;
+    }
   }
   return input;
 }

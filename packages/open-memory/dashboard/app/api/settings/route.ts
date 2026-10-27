@@ -78,13 +78,15 @@ export async function POST(request: Request) {
         let content = ''
         let envExists = false
 
-        if (fs.existsSync(ENV_PATH)) {
+        try {
             content = fs.readFileSync(ENV_PATH, 'utf-8')
             envExists = true
-        } else {
+        } catch {
             const examplePath = path.resolve(process.cwd(), '../.env.example')
-            if (fs.existsSync(examplePath)) {
+            try {
                 content = fs.readFileSync(examplePath, 'utf-8')
+            } catch {
+                content = ''
             }
         }
 
@@ -100,7 +102,7 @@ export async function POST(request: Request) {
             message: 'Settings saved. Restart the backend to apply changes.'
         })
     } catch (e: any) {
-        console.error('[Settings API] write error:', e)
+        console.error('[Settings API] write error:', String(e?.message || e).replace(/[\r\n]/g, ' '))
         return NextResponse.json(
             { error: 'internal', message: e.message },
             { status: 500 }

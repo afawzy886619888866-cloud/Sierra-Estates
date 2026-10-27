@@ -755,12 +755,10 @@ export class EpisodicContextCache {
   private persistAsync(): void {
     try {
       let currentData: Record<string, any> = {};
-      if (fs.existsSync(this.storagePath)) {
-        try {
-          currentData = JSON.parse(fs.readFileSync(this.storagePath, 'utf-8'));
-        } catch {
-          currentData = {};
-        }
+      try {
+        currentData = JSON.parse(fs.readFileSync(this.storagePath, 'utf-8'));
+      } catch {
+        currentData = {};
       }
 
       currentData['ecc_memory'] = {
@@ -780,18 +778,21 @@ export class EpisodicContextCache {
 
   private loadFromStorage(): void {
     try {
-      if (fs.existsSync(this.storagePath)) {
-        const raw = fs.readFileSync(this.storagePath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (parsed['ecc_memory']) {
-          const ecc = parsed['ecc_memory'];
-          if (Array.isArray(ecc.recent_episodes)) {
-            this.episodicJournal = ecc.recent_episodes;
-          }
-          if (ecc.entities && typeof ecc.entities === 'object') {
-            for (const [k, v] of Object.entries(ecc.entities)) {
-              this.entityGraph.set(k, v as EntityProfile);
-            }
+      let raw = '';
+      try {
+        raw = fs.readFileSync(this.storagePath, 'utf-8');
+      } catch {
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (parsed['ecc_memory']) {
+        const ecc = parsed['ecc_memory'];
+        if (Array.isArray(ecc.recent_episodes)) {
+          this.episodicJournal = ecc.recent_episodes;
+        }
+        if (ecc.entities && typeof ecc.entities === 'object') {
+          for (const [k, v] of Object.entries(ecc.entities)) {
+            this.entityGraph.set(k, v as EntityProfile);
           }
         }
       }

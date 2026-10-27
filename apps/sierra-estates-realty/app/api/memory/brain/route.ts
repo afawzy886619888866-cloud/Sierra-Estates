@@ -24,30 +24,36 @@ function getVaultNotes() {
 
   try {
     const files = fs.readdirSync(vaultDir).filter(f => f.endsWith('.md'));
-    return files.map(file => {
-      const fullPath = path.join(vaultDir!, file);
-      const stat = fs.statSync(fullPath);
-      const content = fs.readFileSync(fullPath, 'utf8');
+    const notes = [];
+    for (const file of files) {
+      try {
+        const fullPath = path.join(vaultDir, file);
+        const content = fs.readFileSync(fullPath, 'utf8');
+        const stat = fs.statSync(fullPath);
 
-      // Extract tags like #compound or frontmatter tags
-      const tagMatches = content.match(/#[a-zA-Z0-9_\-\/]+/g) || [];
-      const tags = Array.from(new Set(tagMatches.map(t => t.replace('#', '')))).slice(0, 5);
+        // Extract tags like #compound or frontmatter tags
+        const tagMatches = content.match(/#[a-zA-Z0-9_\-\/]+/g) || [];
+        const tags = Array.from(new Set(tagMatches.map(t => t.replace('#', '')))).slice(0, 5);
 
-      // Extract summary
-      const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#'));
-      const excerpt = lines[0] ? lines[0].slice(0, 160) : 'Knowledge note';
+        // Extract summary
+        const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#'));
+        const excerpt = lines[0] ? lines[0].slice(0, 160) : 'Knowledge note';
 
-      return {
-        filename: file,
-        title: file.replace('.md', ''),
-        sizeBytes: stat.size,
-        modifiedAt: stat.mtime.toISOString(),
-        tags: tags.length ? tags : ['sierra', 'real-estate', 'intelligence'],
-        excerpt,
-      };
-    });
+        notes.push({
+          filename: file,
+          title: file.replace('.md', ''),
+          sizeBytes: stat.size,
+          modifiedAt: stat.mtime.toISOString(),
+          tags: tags.length ? tags : ['sierra', 'real-estate', 'intelligence'],
+          excerpt,
+        });
+      } catch {
+        continue;
+      }
+    }
+    return notes;
   } catch (e) {
-    console.warn('Failed to read vault notes:', e);
+    console.warn('Failed to read vault notes:', String(e).replace(/[\r\n]/g, ' '));
     return [];
   }
 }

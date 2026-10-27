@@ -364,24 +364,20 @@ function walkFor(
     return hits;
 
     function walk(dir: string): void {
-        let entries: string[];
+        let entries: any[];
         try {
-            entries = readdirSync(dir);
+            entries = readdirSync(dir, { withFileTypes: true });
         } catch {
             return;
         }
-        for (const entry of entries) {
-            if (entry === 'node_modules' || entry === '.next' || entry === 'dist' || entry === 'coverage' || entry.startsWith('.git')) continue;
-            const full = join(dir, entry);
-            let st;
-            try {
-                st = statSync(full);
-            } catch {
-                continue;
-            }
-            if (st.isDirectory()) {
+        for (const dirent of entries) {
+            const name = typeof dirent === 'string' ? dirent : dirent.name;
+            if (name === 'node_modules' || name === '.next' || name === 'dist' || name === 'coverage' || name.startsWith('.git')) continue;
+            const full = join(dir, name);
+            const isDir = typeof dirent === 'object' && dirent.isDirectory ? dirent.isDirectory() : false;
+            if (isDir) {
                 walk(full);
-            } else if (/\.(ts|tsx|js|jsx)$/.test(entry)) {
+            } else if (/\.(ts|tsx|js|jsx)$/.test(name)) {
                 try {
                     const content = readFileSync(full, 'utf8');
                     const hit = predicate(content, full);

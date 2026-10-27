@@ -17,13 +17,14 @@ export const runCurator = async (
   collection: keyof typeof COLLECTIONS,
   stage: OrchestrationStage
 ) => {
+  const safeDocId = String(docId || '').replace(/[\r\n]/g, '');
   return instrumentAgent('curator', stage, docId, async () => {
     // Verify document exists
     const doc = await StateManager.getDocument(docId, collection);
-    if (!doc) throw new Error(`Document ${docId} not found`);
+    if (!doc) throw new Error(`Document ${safeDocId} not found`);
 
     if (stage === 'S3') {
-      console.log(`[CURATOR] S3: Asset Branding (Bilingual/Multimodal) for ${docId}`);
+      console.log(`[CURATOR] S3: Asset Branding (Bilingual/Multimodal) for ${safeDocId}`);
 
       const mediaUrls = doc?.mediaUrls || [];
 
@@ -79,15 +80,15 @@ Deliverables (JSON):
           'brandedMediaUrls': brandedMediaUrls,
           'automation.isBranded': true,
         });
-        console.log(`✅ [CURATOR] S3 Branding completed for ${docId}`);
+        console.log(`✅ [CURATOR] S3 Branding completed for ${safeDocId}`);
       } catch (error) {
-        console.error('[CURATOR] S3 Error', { docId, error });
+        console.error('[CURATOR] S3 Error', { docId: safeDocId, error });
         await StateManager.failStage(docId, collection, stage, 'Branding AI failed');
       }
     }
 
     if (stage === 'S4') {
-      console.log(`[CURATOR] S4: Global Distribution for ${docId}`);
+      console.log(`[CURATOR] S4: Global Distribution for ${safeDocId}`);
 
       const systemPrompt = `You are "The Curator". Generate high-impact distribution templates.
 Deliverables (JSON):
@@ -111,13 +112,13 @@ Deliverables (JSON):
           'automation.whatsappAdGenerated': true,
         });
       } catch (error) {
-        console.error('[CURATOR] S4 Error', { docId, error });
+        console.error('[CURATOR] S4 Error', { docId: safeDocId, error });
         await StateManager.failStage(docId, collection, stage, 'Distribution AI failed');
       }
     }
 
     if (stage === 'S5') {
-      console.log(`[CURATOR] S5: Portal Sync for ${docId}`);
+      console.log(`[CURATOR] S5: Portal Sync for ${safeDocId}`);
       await StateManager.completeStage(docId, collection, 'S6', {
         'automation.isPublishedToPF': true,
       });

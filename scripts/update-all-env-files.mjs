@@ -42,15 +42,15 @@ console.log(`✅ Loaded ${Object.keys(master).length} master keys across workspa
 function upsertEnvFile(targetRelPath, specificKeys = null, customMappings = {}) {
   const targetPath = path.join(ROOT, targetRelPath);
   const targetDir = path.dirname(targetPath);
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
+  fs.mkdirSync(targetDir, { recursive: true });
 
   let existing = {};
   let originalContent = '';
-  if (fs.existsSync(targetPath)) {
+  try {
     originalContent = fs.readFileSync(targetPath, 'utf-8');
     existing = dotenv.parse(originalContent);
+  } catch {
+    existing = {};
   }
 
   // Determine which keys to apply
