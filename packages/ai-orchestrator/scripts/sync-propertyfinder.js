@@ -15,7 +15,7 @@ async function syncPropertyFinder() {
   console.log('   SIERRA ESTATES · PROPERTYFINDER CATALOG SYNCHRONIZATION');
   console.log('══════════════════════════════════════════════════════════════\n');
 
-  console.log(`🔑 Using API Key: ${apiKey.substring(0, 6)}...`);
+  console.log(`🔑 API Key configured: [PRESENT]`);
 
   // Sample catalog entries
   const listings = [

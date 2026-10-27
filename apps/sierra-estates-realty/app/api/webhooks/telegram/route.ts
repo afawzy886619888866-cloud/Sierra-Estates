@@ -67,7 +67,10 @@ export async function POST(req: NextRequest) {
     const text = message.text.trim();
     const sender = message.from?.username || message.from?.first_name || 'Authorized User';
 
-    console.log(`📡 [Telegram Webhook] Received from ${sender} (chat ${chatId}): "${text}"`);
+    const safeSender = String(sender).replace(/[\r\n]/g, '');
+    const safeChatId = String(chatId).replace(/[\r\n]/g, '');
+    const safeText = String(text).replace(/[\r\n]/g, ' ');
+    console.log(`📡 [Telegram Webhook] Received from ${safeSender} (chat ${safeChatId}): "${safeText}"`);
 
     // 3. Command Parsing: Check if it's a slash command
     if (text.startsWith('/')) {

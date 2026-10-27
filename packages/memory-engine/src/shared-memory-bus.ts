@@ -102,7 +102,7 @@ export class SharedMemoryBus {
       const safeTtl = Math.min(Math.max(100, effectiveTtl), 2147483647)
       const timer = setTimeout(() => {
         void this.expire(id).catch((error) => {
-          console.error('[SharedMemoryBus] Failed to expire memory:', id, error)
+          console.error('[SharedMemoryBus] Failed to expire memory:', String(id).replace(/[\r\n]/g, ''), error)
         })
       }, safeTtl)
       this.expiryTimers.set(id, timer)
@@ -198,7 +198,7 @@ export class SharedMemoryBus {
     await this.store.delete(id)
     this.clearExpiryTimer(id)
     this.emit('expire', { type: 'expire', id })
-    console.log('[SharedMemoryBus] Memory expired:', id)
+    console.log('[SharedMemoryBus] Memory expired:', String(id).replace(/[\r\n]/g, ''))
   }
 
   private clearExpiryTimer(id: string): void {

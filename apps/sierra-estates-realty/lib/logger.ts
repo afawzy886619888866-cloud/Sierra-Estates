@@ -14,10 +14,17 @@ const pinoLogger = pino({
   }),
 });
 
+function sanitizeLog<T>(input: T): T {
+  if (typeof input === 'string') {
+    return (input as string).replace(/\r|\n/g, ' ') as unknown as T;
+  }
+  return input;
+}
+
 export const logger = {
-  info: (msg: any, ...args: any[]) => (pinoLogger.info as any)(msg, ...args),
-  warn: (msg: any, ...args: any[]) => (pinoLogger.warn as any)(msg, ...args),
-  error: (msg: any, ...args: any[]) => (pinoLogger.error as any)(msg, ...args),
-  debug: (msg: any, ...args: any[]) => (pinoLogger.debug as any)(msg, ...args),
+  info: (msg: any, ...args: any[]) => (pinoLogger.info as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
+  warn: (msg: any, ...args: any[]) => (pinoLogger.warn as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
+  error: (msg: any, ...args: any[]) => (pinoLogger.error as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
+  debug: (msg: any, ...args: any[]) => (pinoLogger.debug as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
 };
 

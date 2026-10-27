@@ -9,7 +9,7 @@
  */
 
 import http from 'http';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -45,8 +45,8 @@ async function runVerification() {
   total++;
   try {
     process.stdout.write('1. AWS CLI & Caller Identity (sierra-estates)... ');
-    const awsExe = `${process.env.LOCALAPPDATA}\\Programs\\Amazon\\AWSCLIV2\\aws.exe`;
-    const out = execSync(`"${awsExe}" sts get-caller-identity --profile sierra-estates --output json`, { encoding: 'utf-8' });
+    const awsExe = `${process.env.LOCALAPPDATA || ''}\\Programs\\Amazon\\AWSCLIV2\\aws.exe`;
+    const out = execFileSync(awsExe, ['sts', 'get-caller-identity', '--profile', 'sierra-estates', '--output', 'json'], { encoding: 'utf-8' });
     const identity = JSON.parse(out);
     console.log(`${GREEN}✓ OK${RESET} (Account: ${identity.Account}, Arn: ${identity.Arn})`);
     passed++;

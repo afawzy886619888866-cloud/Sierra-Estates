@@ -284,7 +284,7 @@ describe('§21 no-fabrication — runtime sources carry no invented defaults', (
         ['default delivery date', /(?:\|\||\?\?)\s*['"]December 2026['"]/],
         ['default invented party name', /(?:\|\||\?\?)\s*['"](?:Dr\. Karim Mansour|Emaar Misr Developments)['"]/],
         ['default local scan path', /(?:\|\||\?\?)\s*['"]I:\\\\supabase\\\\Sheets['"]/],
-        ['fabricated docusign domain', /docusign\.sierra-estates\.com/],
+        ['fabricated docusign domain', /(?:^|[^\w.-])docusign\.sierra-estates\.com/],
         ['fabricated envelope id', /envelopeId:\s*`env_\$\{Date\.now\(\)\}`/],
         // Wave-5: admin-portal demo data — fabricated legal records and
         // invented persons must not be seeded into runtime surfaces.

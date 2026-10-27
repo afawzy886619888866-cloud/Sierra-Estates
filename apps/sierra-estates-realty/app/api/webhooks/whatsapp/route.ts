@@ -60,7 +60,7 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
   const { sendWhatsApp } = await import('@/lib/server/twilio-client');
   const result = await sendWhatsApp('', toPhone, text);
   if (!result.simulated) {
-    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${toPhone} via ${result.provider}`);
+    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${toPhone.replace(/[\r\n]/g, '')} via ${result.provider}`);
     return true;
   }
   console.log('ℹ️ [WhatsApp Webhook] Outbound reply could not be delivered (no provider accepted it).');
