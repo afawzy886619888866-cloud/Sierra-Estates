@@ -1,9 +1,19 @@
 name: EC2 WhatsApp and Owner Automations
 
+# SCHEDULE DISABLED (execution order Section I, 2026-10-27): the production
+# execution path migrated to the Docker runner on the owner host
+# (infra/DOCKER-RUNNER-MIGRATION.md §5 decommission checklist — "disable
+# ec2-automations.yml schedule"). Every scheduled run since the AWS key
+# expiry failed at `configure-aws-credentials` ("The security token
+# included in the request is invalid") while the Docker runner owns the
+# authoritative schedules. The AWS keys are deliberately NOT rotated to
+# revive this deprecated path.
+#
+# The workflow_dispatch trigger below is PRESERVED as the documented
+# manual/history/rollback path: it remains usable if the EC2 instance is
+# ever needed again (rollback conditions in DOCKER-RUNNER-MIGRATION.md),
+# and it never fires on its own.
 on:
-  schedule:
-    # End-of-day report at 20:30 Cairo during standard UTC operation.
-    - cron: '30 18 * * *'
   workflow_dispatch:
     inputs:
       action:
