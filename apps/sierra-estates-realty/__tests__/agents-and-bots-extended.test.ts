@@ -9,6 +9,27 @@
  */
 
 export {};
+
+// Deterministic DB boundary (execution order Section E, 2026-10-27): the
+// matcher's inventory query is mocked as a SUCCESSFUL query with ZERO rows —
+// the genuine-empty contract this suite means to pin. A DB failure or an
+// unconfigured DB must NOT be observable as "zero matches" (that
+// misrepresentation is pinned as a REJECTION in
+// whatsapp-agent-matcher.test.ts); this mock removes the live-network
+// dependency that previously made this test pass only because the query
+// failed silently.
+jest.mock('../../../packages/whatsapp-shared/src/supabase-service', () => ({
+  adminDb: {
+    collection: () => ({
+      where: () => ({
+        limit: () => ({
+          get: async () => ({ empty: true, docs: [] }),
+        }),
+      }),
+    }),
+  },
+}));
+
 const propertyEvaluator = require('../../../packages/whatsapp-shared/src/property-evaluator');
 const propertyMatcher = require('../../../packages/whatsapp-shared/src/property-matcher');
 
@@ -67,7 +88,9 @@ describe('Agents & Bots Orchestration Suite', () => {
 
       expect(matches).toBeDefined();
       expect(Array.isArray(matches)).toBe(true);
-      // With no live database inventory the matcher must NOT invent listings.
+      // A SUCCESSFUL query with zero rows must return [] — the matcher must
+      // NOT invent listings (Master Rule 5). DB failures reject instead
+      // (distinct outcome — see whatsapp-agent-matcher.test.ts).
       expect(matches.length).toBe(0);
     });
 
