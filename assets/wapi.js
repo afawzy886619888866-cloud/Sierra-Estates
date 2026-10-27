@@ -1416,11 +1416,13 @@ window.WAPI.getBufferedNewMessages = function () {
 window.WAPI.joinGroupViaLink = async function (link) {
     return await Store.WapQuery.acceptGroupInvite(link.split('\/').pop()).then(res => res.status === 200 ? res.gid._serialized : res.status);
     let code = link;
-    //is it a link? if not, assume it's a code, otherwise, process the link to get the code.
-    if (link.includes('chat.whatsapp.com')) {
-        if (!link.match(/chat.whatsapp.com\/([\w\d]*)/g).length) return false;
-        code = link.match(/chat.whatsapp.com\/([\w\d]*)/g)[0].replace('chat.whatsapp.com\/', '');
-    }
+    try {
+        const u = new URL(link);
+        if (u.hostname === 'chat.whatsapp.com') {
+            const parts = u.pathname.split('/').filter(Boolean);
+            if (parts.length > 0) code = parts[0];
+        }
+    } catch (_) {}
     const group = await Store.GroupInvite.joinGroupViaInvite(code);
     if (!group.id) return false;
     return group.id._serialized
