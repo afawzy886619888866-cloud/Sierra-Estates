@@ -18,6 +18,8 @@ import {
 import { mempalace } from '@sierra-estates/memory-engine';
 import { eccMemory } from '@/lib/eccMemoryEngine';
 import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
+import { sharedPubSub } from '@/lib/pubsub';
+import { NEW_CAIRO_COMPOUNDS } from '@/components/Maps/compounds-data';
 
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
@@ -336,6 +338,39 @@ export async function POST(req: NextRequest) {
           } catch (valErr) {
             logger.warn('[WhatsApp Ingest] Valuation analysis warning:', valErr);
           }
+        }
+
+        // 4. Publish sanitized real-time opportunity event to SSE stream (HARV-030-003)
+        try {
+          const matchedCompound = parsed.compound
+            ? NEW_CAIRO_COMPOUNDS.find(
+                (c) =>
+                  c.nameEn.toLowerCase() === String(parsed.compound).toLowerCase() ||
+                  c.nameAr === parsed.compound ||
+                  c.code.toLowerCase() === String(parsed.compound).toLowerCase() ||
+                  String(parsed.compound).toLowerCase().includes(c.nameEn.toLowerCase())
+              )
+            : null;
+
+          // Zero PII: Strictly omit sender phone, personal broker name, or phone numbers
+          await sharedPubSub.publishHarvesterEvent({
+            id: sierraCode || `unit-${docRef.id}`,
+            compound: parsed.compound ? String(parsed.compound) : 'Unspecified Compound',
+            type: parsed.unitType || 'Property',
+            price: Number(parsed.price) || 0,
+            areaSqm: parsed.areaSqm ? Number(parsed.areaSqm) : undefined,
+            pricePerSqm:
+              parsed.areaSqm && parsed.price
+                ? Math.round(Number(parsed.price) / Number(parsed.areaSqm))
+                : undefined,
+            mode: parsed.dealType === 'Rent' ? 'rent' : 'sale',
+            discountPct: priceDropResult?.dropPct,
+            hotDeal: isHotDeal,
+            lat: matchedCompound?.lat,
+            lng: matchedCompound?.lng,
+          });
+        } catch (pubErr) {
+          logger.warn('[WhatsApp Ingest] Failed to publish harvester opportunity event:', pubErr);
         }
       }
     } catch (eccErr) {

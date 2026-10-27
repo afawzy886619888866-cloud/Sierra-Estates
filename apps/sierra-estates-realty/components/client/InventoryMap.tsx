@@ -28,6 +28,8 @@ import {
   Globe,
   X,
   Compass,
+  Radio,
+  Zap,
 } from 'lucide-react';
 import type { InventoryUnit, InventoryStatus } from '@/lib/inventory/types';
 import { hasPendingPhoto } from '@/lib/inventory/normalize';
@@ -192,6 +194,38 @@ function createCompoundHubIcon(comp: CompoundLocation, count: number, isVerified
   });
 }
 
+export interface HarvesterPulse {
+  id: string;
+  compound: string;
+  type: string;
+  price: number;
+  areaSqm?: number;
+  mode: 'sale' | 'rent';
+  discountPct?: number;
+  hotDeal?: boolean;
+  lat: number;
+  lng: number;
+  timestamp: number;
+}
+
+function createHarvesterPulseIcon(pulse: HarvesterPulse) {
+  const isHot = pulse.hotDeal || (pulse.discountPct && pulse.discountPct >= 8);
+  const pulseColor = isHot ? '#f59e0b' : '#00aeff';
+  const pulseBorder = isHot ? '#ef4444' : '#0284c7';
+
+  return L.divIcon({
+    className: 'houzez-harvester-pulse-marker',
+    html: `
+      <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); cursor: pointer;">
+        <div style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: ${pulseColor}; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        <div style="position: relative; width: 14px; height: 14px; border-radius: 50%; background: ${pulseColor}; border: 2.5px solid #ffffff; box-shadow: 0 0 10px ${pulseBorder};"></div>
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+}
+
 /** Component to programmatically fly map to coordinate */
 function MapFlyer({ target, zoom }: { target: [number, number] | null; zoom?: number }) {
   const map = useMap();
@@ -232,6 +266,71 @@ export default function InventoryMap({
   const [flyZoom, setFlyZoom] = useState<number | undefined>(undefined);
   const [showRadarRings, setShowRadarRings] = useState<boolean>(true);
   const [photoRequestStatus, setPhotoRequestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'cooldown'>>({});
+
+  // Real-time Harvester Live Opportunities & Telemetry (HARV-030-003)
+  const [harvesterPulses, setHarvesterPulses] = useState<HarvesterPulse[]>([]);
+  const [latestOpportunityAlert, setLatestOpportunityAlert] = useState<HarvesterPulse | null>(null);
+  const [sseConnected, setSseConnected] = useState<boolean>(false);
+
+  // Real-time Harvester SSE Stream Connection (HARV-030-003)
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let pulseExpiryTimer: NodeJS.Timeout | null = null;
+
+    try {
+      eventSource = new EventSource('/api/harvester/stream');
+
+      eventSource.addEventListener('connected', () => {
+        setSseConnected(true);
+      });
+
+      eventSource.addEventListener('opportunity', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+            const pulse: HarvesterPulse = {
+              id: data.id || `pulse-${Date.now()}`,
+              compound: data.compound || 'New Cairo',
+              type: data.type || 'Property',
+              price: data.price || 0,
+              areaSqm: data.areaSqm,
+              mode: data.mode || 'sale',
+              discountPct: data.discountPct,
+              hotDeal: Boolean(data.hotDeal),
+              lat: data.lat,
+              lng: data.lng,
+              timestamp: Date.now(),
+            };
+
+            setHarvesterPulses((prev) => [pulse, ...prev.slice(0, 19)]);
+            setLatestOpportunityAlert(pulse);
+
+            setTimeout(() => {
+              setLatestOpportunityAlert((current) => (current?.id === pulse.id ? null : current));
+            }, 8000);
+          }
+        } catch (err) {
+          console.warn('[InventoryMap] Failed to parse opportunity SSE:', err);
+        }
+      });
+
+      eventSource.onerror = () => {
+        setSseConnected(false);
+      };
+    } catch (err) {
+      console.warn('[InventoryMap] SSE connection failed:', err);
+    }
+
+    pulseExpiryTimer = setInterval(() => {
+      const now = Date.now();
+      setHarvesterPulses((prev) => prev.filter((p) => now - p.timestamp < 180000));
+    }, 30000);
+
+    return () => {
+      if (eventSource) eventSource.close();
+      if (pulseExpiryTimer) clearInterval(pulseExpiryTimer);
+    };
+  }, []);
 
   // Sync with initialUnits if provided
   useEffect(() => {
@@ -541,9 +640,92 @@ export default function InventoryMap({
             );
           })}
 
+          {/* Real-time Harvester Live Opportunity Pulse Markers (HARV-030-003) */}
+          {harvesterPulses.map((pulse) => (
+            <React.Fragment key={`pulse-${pulse.id}`}>
+              <Circle
+                center={[pulse.lat, pulse.lng]}
+                radius={pulse.hotDeal ? 650 : 350}
+                pathOptions={{
+                  color: pulse.hotDeal ? '#ef4444' : '#00aeff',
+                  fillColor: pulse.hotDeal ? '#f59e0b' : '#00aeff',
+                  fillOpacity: 0.22,
+                  weight: 2,
+                  dashArray: '3, 6',
+                }}
+              />
+              <Marker
+                position={[pulse.lat, pulse.lng]}
+                icon={createHarvesterPulseIcon(pulse)}
+                zIndexOffset={1200}
+                eventHandlers={{
+                  click: () => {
+                    setFlyTarget([pulse.lat, pulse.lng]);
+                    setFlyZoom(15);
+                  },
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -16]} opacity={0.95}>
+                  <div className="text-xs p-1 font-sans">
+                    <div className="flex items-center gap-1 font-bold text-[#002b4b]">
+                      <span>⚡ {pulse.hotDeal ? '🔥 Hot Deal Opportunity' : 'Live Harvester Intake'}</span>
+                    </div>
+                    <div className="font-semibold text-slate-800">{pulse.compound}</div>
+                    <div className="text-emerald-700 font-bold">
+                      {pulse.price ? `${pulse.price.toLocaleString()} EGP` : 'Price on Inquiry'}
+                    </div>
+                    {pulse.discountPct ? (
+                      <div className="text-amber-600 font-bold text-[10px]">
+                        📉 -{pulse.discountPct}% Historical Price Drop
+                      </div>
+                    ) : null}
+                  </div>
+                </Tooltip>
+              </Marker>
+            </React.Fragment>
+          ))}
+
           {/* Programmatic pan & zoom */}
           <MapFlyer target={flyTarget} zoom={flyZoom} />
         </MapContainer>
+
+        {/* ── Live Opportunity SSE Incoming Toast (HARV-030-003) ──────── */}
+        <AnimatePresence>
+          {latestOpportunityAlert && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-500 flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#002b4b]/95 border border-[#00aeff]/60 shadow-2xl backdrop-blur-md cursor-pointer hover:border-[#00aeff] transition-all"
+              onClick={() => {
+                setFlyTarget([latestOpportunityAlert.lat, latestOpportunityAlert.lng]);
+                setFlyZoom(15);
+              }}
+            >
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00aeff]/20 text-[#00aeff]">
+                <Zap className="w-3.5 h-3.5 animate-pulse text-[#00aeff]" />
+              </span>
+              <div className="text-xs">
+                <span className="font-bold text-white">
+                  {latestOpportunityAlert.hotDeal ? '🔥 Hot Deal Detected: ' : '⚡ Live Harvester Offer: '}
+                </span>
+                <span className="text-[#00aeff] font-semibold">{latestOpportunityAlert.compound}</span>
+                <span className="text-slate-300 ml-1.5 font-mono">
+                  {latestOpportunityAlert.price ? `${latestOpportunityAlert.price.toLocaleString()} EGP` : ''}
+                </span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLatestOpportunityAlert(null);
+                }}
+                className="text-slate-400 hover:text-white ml-1 p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Floating MapCommanderAgent Spatial Status Ribbon ─────────── */}
         <div className="absolute bottom-4 left-4 z-500 max-w-sm bg-[#002b4b]/95 backdrop-blur-md border border-[#00aeff]/40 rounded-xl p-3 shadow-2xl text-white text-xs">
@@ -552,9 +734,22 @@ export default function InventoryMap({
               <Sparkles className="w-3.5 h-3.5" />
               <span>{isAr ? 'رادار المخزون الذكي (Map Commander)' : 'Map Commander Live Radar'}</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
-              {filteredUnits.length} {isAr ? 'وحدة' : 'Units'}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  sseConnected
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                }`}
+                title={sseConnected ? 'Connected to /api/harvester/stream' : 'Connecting to SSE feed'}
+              >
+                <Radio className={`w-2.5 h-2.5 ${sseConnected ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
+                <span>{sseConnected ? 'LIVE FEED' : 'SYNCING'}</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
+                {filteredUnits.length} {isAr ? 'وحدة' : 'Units'}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
