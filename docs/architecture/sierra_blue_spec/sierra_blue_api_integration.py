@@ -250,7 +250,7 @@ class WhatsAppIntegration:
 class MetaCloudWhatsAppIntegration:
     """Official Meta Cloud WhatsApp API Integration"""
     
-    BASE_URL = "REDACTED_WHATSAPP_API_URL"
+    BASE_URL = os.environ["WHATSAPP_API_URL"]  # set WHATSAPP_API_URL (was hardcoded before the security purge)
     
     def __init__(self, phone_number_id: str, access_token: str):
         self.phone_number_id = phone_number_id

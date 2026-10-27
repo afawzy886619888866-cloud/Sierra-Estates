@@ -64,7 +64,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "REDACTED_WHATSAPP_API_URL/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "url": "{{ $env.WHATSAPP_API_URL }}/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,

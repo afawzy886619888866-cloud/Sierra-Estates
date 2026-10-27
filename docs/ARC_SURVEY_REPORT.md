@@ -13,7 +13,7 @@ The technical survey established that candidate logic from legacy `arc` ancestor
 
 ### Key Architectural Mandates
 
-1. **Supabase is the Sole Authoritative Backend**: All tables, authentication, pgvector embeddings, and media storage are rooted in Supabase (`https://REDACTED-PROJECT.supabase.co`).
+1. **Supabase is the Sole Authoritative Backend**: All tables, authentication, pgvector embeddings, and media storage are rooted in Supabase (`https://<your-project-ref>.supabase.co`).
 2. **Legacy Firebase Architecture Decommissioned**: Ancestral branch dumps under `firebase/` are archived and decoupled from CI/CD deploy gates. No production traffic routes through Firebase.
 3. **Containerized Python Microservice**: Standalone backend workers (Property Finder sync, ECC memory, Valuation agent) run via the containerized FastAPI service in `apps/api/` deployed to Cloud Run.
 
@@ -118,5 +118,5 @@ The survey flagged `mempalace` (vector-memory library). Introducing `mempalace` 
    - Host: **Google Cloud Run**
    - Container: Built using `apps/api/Dockerfile`.
 3. **Database & Auth Plane**:
-   - Platform: **Supabase (`https://REDACTED-PROJECT.supabase.co`)**
+   - Platform: **Supabase (`https://<your-project-ref>.supabase.co`)**
    - Tables, RLS policies, and vector indexes confirmed active.

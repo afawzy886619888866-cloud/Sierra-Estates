@@ -123,7 +123,7 @@ Probed directly (full detail + evidence in `docs/LIVE_ENVIRONMENT_GATE.md`):
 |---|---|---|
 | `https://sierra-estates.net` (client) | **Deployed + Live (HTTP 200)** | `/api/health` healthy v3.1.0, prod env, Supabase connected 210 ms |
 | `https://admin.sierra-estates.net` (admin SPA) | **Deployed + Live (HTTP 200)** | Static no-build SPA (`deploy/`) |
-| Supabase project `REDACTED-PROJECT.supabase.co` | **Live — CONNECTED (platform-verified)** | Health endpoint reports "Connected to Supabase PostgreSQL"; public API returns real rows |
+| Supabase project `<your-project-ref>.supabase.co` | **Live — CONNECTED (platform-verified)** | Health endpoint reports "Connected to Supabase PostgreSQL"; public API returns real rows |
 | OpenWA WhatsApp gateway `18.232.148.172:3000` | **Host UP (HTTP 200)** | Session/auth state requires gateway admin key — UNKNOWN |
 | Gemini (`gemini-2.0-flash`) | **Configured (self-reported)** | Independent generation test NOT performed (no key in audit env) |
 | Telegram / Excel sync | **Configured (self-reported)** | Independent delivery test NOT performed |

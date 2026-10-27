@@ -27,8 +27,8 @@ pipeline. This order is about the four remaining closure tasks.
 - **Repo**: `https://github.com/afawzy886619888866-cloud/Sierra-Estates.git`
   — **PUBLIC** (`"private": false`). Default branch `main`.
   Monorepo, pnpm workspaces, app at `apps/sierra-estates-realty`.
-- **Supabase** (sole backend): `https://REDACTED-PROJECT.supabase.co`,
-  project id `REDACTED-PROJECT`. Storage: `property-media` (public),
+- **Supabase** (sole backend): `https://<your-project-ref>.supabase.co`,
+  project id `<your-project-ref>`. Storage: `property-media` (public),
   `media` (private).
 - **Vercel**: org `team_UvdJ5ezVTaqEKyhqZ5QVqOKJ`; client project `prj_ieVc…`;
   admin project `prj_inhT…` (find exact ids with `vercel project ls`).
@@ -82,7 +82,7 @@ dashboard and has the new `sb_secret_…` value available.
    never into the chat).
 2. Verify the old keys are dead (expect HTTP 401 now):
    `curl -s -o /dev/null -w '%{http_code}' -H "apikey: <OLD-KEY>" \
-     https://REDACTED-PROJECT.supabase.co/rest/v1/listings?select=id&limit=1`
+     https://<your-project-ref>.supabase.co/rest/v1/listings?select=id&limit=1`
    Do the same for the legacy JWT (it is in git history — extract it with
    `git show 178bac90^:apps/sierra-estates-realty/__tests__/supabase-storage-and-vercel-resilience.test.ts`).
    **401 on both old credentials = success.**

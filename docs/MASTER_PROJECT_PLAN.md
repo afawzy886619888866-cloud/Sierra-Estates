@@ -8,7 +8,7 @@
 
 **Sierra Estates** is an enterprise-grade luxury PropTech intelligence platform engineered specifically for the New Cairo real estate market. It combines:
 
-- **Authoritative Backend**: Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`) with `pgvector` embeddings, real-time queues, and strict Row-Level Security (RLS).
+- **Authoritative Backend**: Supabase PostgreSQL (`<your-project-ref>.supabase.co`) with `pgvector` embeddings, real-time queues, and strict Row-Level Security (RLS).
 - **Dual-Domain Frontend**: Next.js 16 (App Router) serving the buyer client experience at `https://sierra-estates.net` and the administrative command deck at `https://admin.sierra-estates.net`.
 - **7-Layer Autonomous Agent Fleet**: Coordinated AI agents (Matchmaker, Closer, Valuation Scorer, Concierge, Voice Transcriber, Legal Contract Generator, Orchestrator).
 - **Shared Memory Brain Engine**: A unified RAG engine fusing the **Obsidian Knowledge Vault** (`docs/obsidian-vault/`) and the **Episodic Context Cache (ECC)** for fleet-wide active goal alignment.

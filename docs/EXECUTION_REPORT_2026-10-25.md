@@ -163,7 +163,7 @@ touches local files; the migration applier was only run with `--dry-run`).
   (checked by name; `SUPABASE_ACCESS_TOKEN` exists). The workflow's
   two-key gate therefore blocks the apply path.
 - **Operator action to unblock** (one-time):
-  1. Supabase dashboard → Project `REDACTED-PROJECT` → Settings →
+  1. Supabase dashboard → Project `<your-project-ref>` → Settings →
      Database → copy the connection string (Transaction pooler URI is fine).
   2. `gh secret set SUPABASE_DB_URL` (or repo Settings → Secrets → Actions →
      New repository secret) — never paste it in chat or commit it.

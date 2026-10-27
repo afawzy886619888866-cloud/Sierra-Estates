@@ -15,8 +15,17 @@
 import { createClient } from '@supabase/supabase-js';
 
 const PROD_URL = process.env.PROD_URL || 'https://sierra-estates.net';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'REDACTED_SUPABASE_ANON_KEY';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+if (!SUPABASE_URL) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_ANON_KEY) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_ANON_KEY — cannot run Supabase assertions.');
+  process.exit(1);
+}
 
 interface TestResult {
   name: string;

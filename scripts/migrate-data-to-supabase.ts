@@ -18,7 +18,16 @@ const ROOT = path.resolve(__dirname, '..');
 dotenv.config({ path: path.resolve(ROOT, '.env.local') });
 dotenv.config();
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+
+if (!SUPABASE_URL) {
+
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) — refusing to fall back to a hardcoded Supabase project.');
+
+  process.exit(1);
+
+}
+
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('placeholder')) {

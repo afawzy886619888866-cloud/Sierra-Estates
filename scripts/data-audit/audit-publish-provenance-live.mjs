@@ -15,12 +15,17 @@
  *
  * Credential: SUPABASE_ACCESS_TOKEN (Management API — same as
  * scripts/apply-migration-020.mjs). Optional: SUPABASE_PROJECT_REF
- * (default REDACTED-PROJECT).
+ * (required — no default since the security purge).
  *
  * Exit codes: 0 = clean (or only skipped checks) · 1 = violations found ·
  *             2 = missing credential / connection failed.
  */
-const REF = process.env.SUPABASE_PROJECT_REF || 'REDACTED-PROJECT';
+const REF = process.env.SUPABASE_PROJECT_REF;
+if (!REF) {
+  console.error('❌ Missing SUPABASE_PROJECT_REF — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 const API = `https://api.supabase.com/v1/projects/${REF}/database/query`;
 

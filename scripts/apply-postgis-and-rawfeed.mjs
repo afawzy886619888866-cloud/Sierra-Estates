@@ -1,7 +1,12 @@
 import fetch from 'node-fetch';
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
-const projectRef = 'REDACTED-PROJECT';
+const projectRef = process.env.SUPABASE_PROJECT_REF;
+if (!projectRef) {
+  console.error('❌ Missing SUPABASE_PROJECT_REF — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+
 
 const sql = `
 -- 1. Enable PostGIS

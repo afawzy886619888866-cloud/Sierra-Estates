@@ -56,8 +56,7 @@ const logger = pino({ level: LOG_LEVEL, name: 'sierra-wa' });
 
 const SUPABASE_URL =
   process.env.SUPABASE_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  'https://REDACTED-PROJECT.supabase.co';
+  process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_ANON_KEY ||
@@ -71,6 +70,11 @@ if (SUPABASE_URL && SUPABASE_KEY) {
   } catch (err) {
     logger.error({ err: err.message }, 'Supabase Client init failed');
   }
+} else {
+  logger.error(
+    'Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY — Supabase client NOT initialized; DB writes disabled. ' +
+    'Set them in infra/whatsapp-scraper/.env (no hardcoded fallback since the security purge).'
+  );
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

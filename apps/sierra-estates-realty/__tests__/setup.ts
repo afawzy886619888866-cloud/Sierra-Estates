@@ -1,6 +1,6 @@
 // Jest setup — canonical mocks for Supabase and external services
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://REDACTED-PROJECT.supabase.co';
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test-project-ref.supabase.co';
 }
 if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';

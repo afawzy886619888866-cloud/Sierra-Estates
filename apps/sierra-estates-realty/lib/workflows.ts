@@ -137,7 +137,7 @@ async function contactNewOwners() {
     if (!row.phone) continue;
 
     // WhatsApp message via Meta API
-    await fetch('REDACTED_WHATSAPP_API_URL/PHONE_NUMBER_ID/messages', {
+    await fetch(`${process.env.WHATSAPP_API_URL}/PHONE_NUMBER_ID/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

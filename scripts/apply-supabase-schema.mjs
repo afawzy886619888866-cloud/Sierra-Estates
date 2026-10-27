@@ -10,7 +10,7 @@ const token = process.env.SUPABASE_ACCESS_TOKEN;
 
 /**
  * Target project ref — explicit env only. The previous hardcoded fallback
- * ('REDACTED-PROJECT') silently targeted one specific project; consistent
+ * (a hardcoded project ref) silently targeted one specific project; consistent
  * with packages/db credential resolution, we refuse to guess.
  */
 function resolveProjectRef() {

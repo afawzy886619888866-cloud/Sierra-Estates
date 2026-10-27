@@ -6,7 +6,7 @@
 
 ## Quick Status Summary
 
-- **Authoritative Backend**: Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`) + `pgvector`
+- **Authoritative Backend**: Supabase PostgreSQL (`<your-project-ref>.supabase.co`) + `pgvector`
 - **Current Release Status**: Production Ready · 105/105 Next.js 16 Pages Verified
 - **Test Coverage**: 152 Test Suites / 1,592 Tests Passing (100%)
 - **Completed Milestones**: M3, M4, M5, M6, M7, M8, M9, M10, M11 (100% Completed & Closed Out)

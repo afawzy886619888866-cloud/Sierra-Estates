@@ -22,7 +22,7 @@
 | `infra/` | n8n workflows, OpenWA docker, AWS EC2 config, Baileys scraper, 3rd migration dir |
 | Data files | `data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx` (7 sheets, 11,488 rows in "All Master Listings"), `owners_rent_tab_separated.tsv` (299 rows), `owners_rent_with_photos.tsv` (332 rows), committed 6.5MB `lib/inventory/snapshot.json` (11,017 units) |
 
-### 1.2 Database (Supabase project `REDACTED-PROJECT`)
+### 1.2 Database (Supabase project `<your-project-ref>`)
 
 - **57 tables** in `supabase/schema.sql`: `listings` (70+ cols, pgvector `embedding vector(1536)`, PostGIS), `leads`, `deals`, `proposals`, `sales`, `viewings` ×3 (`viewings`, `viewing_requests`, `viewing_appointments`), `owners`, `broker_listings`, `compounds`, `whatsapp_queue` + `whatsapp_numbers` + `whatsapp_conversations`, `followups`, `lead_messages`, `owner_negotiations`, `automation_rules`, `workflows`, `agents_registry`, `audit_logs`, `unified_memory` (pgvector), etc.
 - **RLS on every table**: `is_admin()`/`is_staff()` SECURITY DEFINER functions; public can read only `listings` where `status='active'` + compounds + published pages.

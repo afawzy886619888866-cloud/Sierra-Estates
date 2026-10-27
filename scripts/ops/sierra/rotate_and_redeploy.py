@@ -22,7 +22,9 @@ PROJECTS = [
     ("admin-dashboard", "prj_inhTu8kppYhQv2NZZV3GTUdU8uBi"),
 ]
 
-SUPABASE_URL = "https://REDACTED-PROJECT.supabase.co"
+SUPABASE_URL = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+if not SUPABASE_URL:
+    sys.exit('ERROR: SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL must be exported — refusing to fall back to a hardcoded Supabase project.')
 
 
 def load_secret_key():

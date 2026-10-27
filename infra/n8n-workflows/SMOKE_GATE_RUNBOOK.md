@@ -17,7 +17,7 @@ Store only in n8n — never in source control or environment files checked into 
 ### 2 · n8n Environment Variables (Secret Store)
 | Variable | Description | Source |
 |---|---|---|
-| `SUPABASE_URL` | `https://REDACTED-PROJECT.supabase.co` | Supabase project settings |
+| `SUPABASE_URL` | `https://<your-project-ref>.supabase.co` | Supabase project settings |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role JWT | Supabase → API → service_role |
 
 Set via **n8n UI → Settings → Environment Variables** (not `.env` file).

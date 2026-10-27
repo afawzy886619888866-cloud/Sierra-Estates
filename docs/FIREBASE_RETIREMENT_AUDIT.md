@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-As mandated by repository governance and GEMINI.md, **Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`)** is the sole authoritative backend for Sierra Estates (Database, Auth, `pgvector`, Realtime Queues, Storage).
+As mandated by repository governance and GEMINI.md, **Supabase PostgreSQL (`<your-project-ref>.supabase.co`)** is the sole authoritative backend for Sierra Estates (Database, Auth, `pgvector`, Realtime Queues, Storage).
 
 This audit confirms that:
 

@@ -23,7 +23,9 @@ DEFAULT_PF_BASE_URL = 'https://api.property-finder.eg/v2'
 
 def sync_to_supabase(normalized: dict[str, Any]) -> str:
     """Sync a normalized Property Finder listing to Supabase public.listings."""
-    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL') or os.getenv('SUPABASE_URL')
+    if not supabase_url:
+        raise RuntimeError('Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_URL environment variable — refusing to fall back to a hardcoded Supabase project.')
     supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
     if not supabase_key:
         raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')

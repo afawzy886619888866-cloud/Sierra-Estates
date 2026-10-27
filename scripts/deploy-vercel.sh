@@ -4,7 +4,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 #
 #  Deploys Sierra Estates (Client Portal + Unified Admin) to Vercel.
-#  Authoritative Backend: Supabase Postgres (https://REDACTED-PROJECT.supabase.co)
+#  Authoritative Backend: Supabase Postgres (URL comes from NEXT_PUBLIC_SUPABASE_URL)
 #
 #  PREREQUISITES:
 #    pnpm install
@@ -38,7 +38,7 @@ cd "$(dirname "$0")/../apps/sierra-estates-realty"
 
 # Set authoritative Supabase environment variables on Vercel
 echo "  Configuring authoritative Supabase environment..."
-npx vercel env add NEXT_PUBLIC_SUPABASE_URL production <<< "https://REDACTED-PROJECT.supabase.co" 2>/dev/null || true
+npx vercel env add NEXT_PUBLIC_SUPABASE_URL production <<< "${NEXT_PUBLIC_SUPABASE_URL:?export NEXT_PUBLIC_SUPABASE_URL first}" 2>/dev/null || true
 npx vercel env add SUPABASE_PROPERTY_MEDIA_BUCKET production <<< "property-media" 2>/dev/null || true
 
 echo "  Building & Deploying..."

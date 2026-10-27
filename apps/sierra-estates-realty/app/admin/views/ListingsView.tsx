@@ -1719,7 +1719,7 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="url"
-                  placeholder="https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e1e2eba5-ed1e-11ef-8cf7-0a8c5593e6a3-eb58b4d5-7931-4ccf-8873-c1315a729f60.png or https://REDACTED-PROJECT.supabase.co/storage/..."
+                  placeholder="https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e1e2eba5-ed1e-11ef-8cf7-0a8c5593e6a3-eb58b4d5-7931-4ccf-8873-c1315a729f60.png or https://<your-project-ref>.supabase.co/storage/..."
                   value={customPhotoUrl}
                   onChange={(e) => setCustomPhotoUrl(e.target.value)}
                   style={{

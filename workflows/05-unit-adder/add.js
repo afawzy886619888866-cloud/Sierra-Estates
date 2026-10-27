@@ -37,7 +37,12 @@ const ROOT = path.resolve(__dirname, '../..');
 });
 
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+if (!SUPABASE_URL) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 const summary = { pending: 0, added: 0, deduplicated: 0, errors: 0 };

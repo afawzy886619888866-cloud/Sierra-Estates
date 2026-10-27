@@ -51,7 +51,7 @@ Firebase web API key should still be restricted in Google Cloud Console).
 
 | Var | Where | Public? | Notes |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | V | yes | Project API URL (host `REDACTED-PROJECT.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | V | yes | Project API URL (host `<your-project-ref>.supabase.co`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | V | no | **High-value.** Server-only writes (listings upsert, gazetteer sync, embeddings). Without it every write leg reports `unavailable` honestly — nothing silently degrades to a fake success |
 
 ## Rate-limiting

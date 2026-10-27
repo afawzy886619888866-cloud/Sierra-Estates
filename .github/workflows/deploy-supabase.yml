@@ -86,7 +86,7 @@ jobs:
           # SUPABASE_DB_URL (checked above) is the operator's declared
           # authorization that the DATABASE connection target is correct.
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          # Production project ref — same default as the outreach workflow's
-          # NEXT_PUBLIC_SUPABASE_URL; override via the SUPABASE_PROJECT_REF
-          # repository variable if the project ever moves.
-          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'REDACTED-PROJECT' }}
+          # Production project ref — set the SUPABASE_PROJECT_REF repository
+          # variable (Settings → Secrets and variables → Actions → Variables).
+          # No hardcoded fallback: the schema scripts fail fast when unset.
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}

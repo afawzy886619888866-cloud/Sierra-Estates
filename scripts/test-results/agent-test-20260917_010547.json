@@ -63,7 +63,7 @@
     {
       "test": "Supabase client init",
       "status": "PASS",
-      "detail": "project=REDACTED-PROJECT",
+      "detail": "project=your-project-ref",
       "duration_ms": 193.4
     },
     {

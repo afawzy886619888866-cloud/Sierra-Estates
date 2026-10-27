@@ -2,7 +2,7 @@ version: '3.8'
 
 # Sierra Estates — Dify Multi-Agent Orchestration & Workflow Engine
 # Integrated with:
-#  - Supabase PostgreSQL (REDACTED-PROJECT.supabase.co)
+#  - Supabase PostgreSQL (URL from NEXT_PUBLIC_SUPABASE_URL)
 #  - DeepSeek Reasoning Harness
 #  - Episodic Context Cache (ECC) & Obsidian Memory Engine
 #  - WhatsApp Ingestion Pipeline (Port 3000 / EC2)
@@ -34,7 +34,7 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_GENAI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SIERRA_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://REDACTED-PROJECT.supabase.co}
+      - SIERRA_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL is required (see infra/.env.example)}
       - SIERRA_SUPABASE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
     depends_on:
       - dify-db
@@ -148,7 +148,7 @@ services:
       - NODE_ENV=production
       - DIFY_API_URL=http://dify-api:5001
       - DIFY_API_KEY=${DIFY_API_KEY:-}
-      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://REDACTED-PROJECT.supabase.co}
+      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL is required (see infra/.env.example)}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
     depends_on:

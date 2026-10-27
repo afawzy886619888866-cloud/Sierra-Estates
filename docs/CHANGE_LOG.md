@@ -516,7 +516,7 @@ Baseline HEAD `4e1796eb1d097b4e180b9fbaa1a639abd3a9d4c3`. All changes additive a
 
 ### Change 5 — Secret exposure removed (SECURITY)
 
-- **Change:** root `__tests__/supabase-storage-and-vercel-resilience.test.ts` hard-coded a LIVE `service_role` JWT as an env fallback (confirmed active via a read-only probe → HTTP 200). The embedded credential is removed; the suite now injects via environment. **ROTATION REQUIRED** for the `SUPABASE_SERVICE_ROLE_KEY` of project `REDACTED-PROJECT` (the value remains in git history).
+- **Change:** root `__tests__/supabase-storage-and-vercel-resilience.test.ts` hard-coded a LIVE `service_role` JWT as an env fallback (confirmed active via a read-only probe → HTTP 200). The embedded credential is removed; the suite now injects via environment. **ROTATION REQUIRED** for the `SUPABASE_SERVICE_ROLE_KEY` of project `<your-project-ref>` (the value remains in git history).
 - **Reason:** Mission §1.4 — treat the repository as public; report confirmed exposures.
 - **Files:** `__tests__/supabase-storage-and-vercel-resilience.test.ts`.
 - **DB impact:** none.

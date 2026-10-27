@@ -11,9 +11,9 @@ public `sales-kits` storage bucket instead of git. Byte-identical copies
 
 | Document | Size | URL |
 |---|---|---|
-| Sierra Estates AI Sales Architecture | 16.7 MB | https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/sales-kits/Sierra_Estates_AI_Sales_Architecture.pdf |
-| Sierra Estates PropTech | 12.4 MB | https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/sales-kits/Sierra_Estates_PropTech.pdf |
-| The Sunlit Dossier | 9.2 MB | https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/sales-kits/The_Sunlit_Dossier.pdf |
+| Sierra Estates AI Sales Architecture | 16.7 MB | https://<your-project-ref>.supabase.co/storage/v1/object/public/sales-kits/Sierra_Estates_AI_Sales_Architecture.pdf |
+| Sierra Estates PropTech | 12.4 MB | https://<your-project-ref>.supabase.co/storage/v1/object/public/sales-kits/Sierra_Estates_PropTech.pdf |
+| The Sunlit Dossier | 9.2 MB | https://<your-project-ref>.supabase.co/storage/v1/object/public/sales-kits/The_Sunlit_Dossier.pdf |
 
 Bucket: `sales-kits` (public) on the Sierra Estates Supabase project.
 Service-role uploads use `x-upsert: true`, so re-uploading a refreshed PDF

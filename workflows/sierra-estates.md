@@ -9,7 +9,7 @@ description: How to develop, test, and deploy the Sierra Estates Realty platform
 - **Location**: `H:\Sierra Estates` (Monorepo root)
 - **Client Application**: `apps/sierra-estates-realty`
 - **Stack**: Next.js 16, React 19, TypeScript, Supabase (PostgreSQL + pgvector + Auth + Storage), Vercel, Tailwind CSS v4, Framer Motion
-- **Authoritative Backend**: **Supabase** (`https://REDACTED-PROJECT.supabase.co`). Firebase is permanently decommissioned.
+- **Authoritative Backend**: **Supabase** (`https://<your-project-ref>.supabase.co`). Firebase is permanently decommissioned.
 - **Brand Mandate**: Always use "Investment Stakeholders" (not leads), "Strategic Pipeline" (not CRM), "Portfolio Assets" (not listings), in all UI + code comments
 - **Aesthetic**: Cinematic Luxury — Navy `#0A1A3A`, Gold `#C9A24A`, Silver `#E2E8F0`, glassmorphism, micro-animations
 - **Unified Inventory**: 12,333 curated units synced across Local Master Excel, Supabase `public.listings`, Supabase Storage `inventory-snapshots/snapshot.json`, Client Interactive Map, and the RAG Memory Engine.
@@ -154,7 +154,7 @@ pnpm tsx scripts/seed-openclaw-memory.ts
 ## 7. Environment Variables (`.env.local`)
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://REDACTED-PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 GEMINI_API_KEY=...

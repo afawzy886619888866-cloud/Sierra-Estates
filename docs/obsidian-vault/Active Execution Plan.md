@@ -91,7 +91,7 @@ fingerprint (price is band-bucketed ±2.5%).
       fire-and-forget per-real-send audit write in workflows/09 (dry-run never
       writes; audit failures counted in the run summary, never block a send).
       5) **Live Database Migrations 031/032/033 Verified** — verified on
-      production Supabase (`REDACTED-PROJECT`) and recorded in
+      production Supabase (`<your-project-ref>`) and recorded in
       `supabase_migrations.schema_migrations` (`20261019031000`, `20261019032000`,
       `20261019033000`). Public read access granted for `anon` and `authenticated`.
       6) **Production Vercel Deployment LIVE** — deployment
@@ -159,7 +159,7 @@ G2 item 5 ("Migrations 031/032/033 VERIFIED applied + recorded") vs §7
 item 2 ("Migrations 031/032/033 NOT yet applied"). Resolution, preserved
 for the record: §7 item 2 was the 2026-10-19 **pre-deploy** blocker
 snapshot; G2 item 5 is the **post-deploy** evidence (ledger versions
-`20261019031000/32000/33000` recorded on project `REDACTED-PROJECT`).
+`20261019031000/32000/33000` recorded on project `<your-project-ref>`).
 The G2 evidence stands as the last verifiable record — the ledger is not
 readable without credentials. Migrations **034/035/036 have no evidence of
 live application** and must be treated as pending until the reworked
@@ -200,7 +200,7 @@ updated).
    of: (a) a current Supabase personal access token (sbp_…) — the one stored
    in Vercel env (`SUPABASE_ACCESS_TOKEN`) returns 401 Revoked; (b) the
    database password (Vercel `POSTGRES_PASSWORD` is empty on both projects;
-   `POSTGRES_HOST=db.REDACTED-PROJECT.supabase.co` is already correct);
+   `POSTGRES_HOST=db.<your-project-ref>.supabase.co` is already correct);
    or (c) run `node scripts/apply-live-migrations.mjs` (deployed by session 2
    to the operator workspace) / `pnpm deploy:supabase` on a host with a valid
    `SUPABASE_ACCESS_TOKEN`. **Deploy order is hard-gated: the app deploy must
@@ -250,7 +250,7 @@ updated).
 ### Session 3 — 2026-10-20 (G2 Closure: Live Migrations, Vercel Deploy & Intelligence Route Verification)
 
 - **Database Verification & Schema Parity**:
-  - Live Supabase datastore (`REDACTED-PROJECT`) verified: `sierra_listing_code_seq`, `uq_listings_code`, `trg_listings_code_immutable`, `trg_listings_assign_code`, `owner_outreach_log`, and all extended columns (`sources`, `status_history`, `ownership_doc_ref`, `reservation_ref`) confirmed live.
+  - Live Supabase datastore (`<your-project-ref>`) verified: `sierra_listing_code_seq`, `uq_listings_code`, `trg_listings_code_immutable`, `trg_listings_assign_code`, `owner_outreach_log`, and all extended columns (`sources`, `status_history`, `ownership_doc_ref`, `reservation_ref`) confirmed live.
   - Recorded migrations `20261019031000` (031), `20261019032000` (032), `20261019033000` (033) into `supabase_migrations.schema_migrations`.
   - Executed `GRANT SELECT ON public.listings, public.properties, public.units TO anon, authenticated;`.
 - **Production UI & Vercel Verification**:

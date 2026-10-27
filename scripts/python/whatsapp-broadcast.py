@@ -28,7 +28,9 @@ class SafeTemplateDict(dict[str, str]):
 
 def _read_supabase_leads() -> list[dict[str, Any]]:
     """Read leads from Supabase PostgreSQL public.leads."""
-    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL') or os.getenv('SUPABASE_URL')
+    if not supabase_url:
+        raise RuntimeError('Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_URL environment variable — refusing to fall back to a hardcoded Supabase project.')
     supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
     if not supabase_key:
         raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')

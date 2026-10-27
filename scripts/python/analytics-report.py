@@ -24,7 +24,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-SUPABASE_URL = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL') or 'https://REDACTED-PROJECT.supabase.co'
+SUPABASE_URL = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+if not SUPABASE_URL:
+    raise RuntimeError('Missing SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL environment variable — refusing to fall back to a hardcoded Supabase project.')
 SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_ANON_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
 
 

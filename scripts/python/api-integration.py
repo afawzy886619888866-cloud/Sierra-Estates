@@ -3,6 +3,8 @@ sierra estatesE BOT - API INTEGRATION GUIDE
 Real API Endpoints & Configuration Examples
 """
 
+import os
+
 # ============================================================================
 # 1. CRM INTEGRATION (HubSpot)
 # ============================================================================
@@ -266,7 +268,13 @@ class MetaWhatsAppIntegration:
         """
         self.phone_number_id = phone_number_id
         self.access_token = access_token
-        self.base_url = f"REDACTED_WHATSAPP_API_URL/{phone_number_id}/messages"
+        whatsapp_api_url = os.getenv("WHATSAPP_API_URL")
+        if not whatsapp_api_url:
+            raise RuntimeError(
+                "WHATSAPP_API_URL environment variable is required "
+                "(this URL was hardcoded before the security purge)."
+            )
+        self.base_url = f"{whatsapp_api_url}/{phone_number_id}/messages"
     
     def send_text_message(self, recipient_phone: str, message_text: str) -> Dict:
         """Send text message"""
@@ -615,7 +623,7 @@ curl -X GET https://api.property-finder.eg/v2/properties/SB001 \
   -H "Content-Type: application/json"
 
 Test WhatsApp API:
-curl -X POST REDACTED_WHATSAPP_API_URL/{phone_number_id}/messages \
+curl -X POST $WHATSAPP_API_URL/{phone_number_id}/messages \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

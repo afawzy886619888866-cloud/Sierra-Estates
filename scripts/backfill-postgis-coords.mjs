@@ -8,7 +8,12 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
-const projectRef = 'REDACTED-PROJECT';
+const projectRef = process.env.SUPABASE_PROJECT_REF;
+if (!projectRef) {
+  console.error('❌ Missing SUPABASE_PROJECT_REF — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+
 
 async function runQuery(query) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {

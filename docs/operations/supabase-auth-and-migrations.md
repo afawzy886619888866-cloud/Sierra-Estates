@@ -17,9 +17,9 @@ that token or a database password.
 
 ```powershell
 $env:SUPABASE_ACCESS_TOKEN = '<fresh token>'
-pnpm dlx supabase@latest migration list --project-ref REDACTED-PROJECT
-pnpm dlx supabase@latest db push --project-ref REDACTED-PROJECT
-pnpm dlx supabase@latest migration list --project-ref REDACTED-PROJECT
+pnpm dlx supabase@latest migration list --project-ref <your-project-ref>
+pnpm dlx supabase@latest db push --project-ref <your-project-ref>
+pnpm dlx supabase@latest migration list --project-ref <your-project-ref>
 ```
 
 After the push, verify the schema in the Supabase SQL editor:
@@ -66,7 +66,7 @@ Authorized JavaScript origins:
 Add this exact Authorized redirect URI to the Google OAuth client:
 
 ```text
-https://REDACTED-PROJECT.supabase.co/auth/v1/callback
+https://<your-project-ref>.supabase.co/auth/v1/callback
 ```
 
 Finally, in Supabase Dashboard > Authentication > Providers > Google:

@@ -446,18 +446,24 @@ export function createStorageCompat(customClient?: SupabaseClient) {
                         },
                         async getSignedUrl(_options?: { action?: string; expires?: number | Date }) {
                             if (!storageBucket) {
-                                return [`https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/${bucketName}/${filePath}`];
+                                const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+                                if (!baseUrl) throw new Error('[SupabaseStorageCompat] No storage client available and NEXT_PUBLIC_SUPABASE_URL is not set — cannot construct a public URL.');
+                                return [`${baseUrl}/storage/v1/object/public/${bucketName}/${filePath}`];
                             }
                             const expiresInSec = 3600;
                             const { data, error } = await storageBucket.createSignedUrl(filePath, expiresInSec);
                             if (error || !data?.signedUrl) {
-                                return [`https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/${bucketName}/${filePath}`];
+                                const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+                                if (!baseUrl) throw new Error('[SupabaseStorageCompat] Signed URL fetch failed and NEXT_PUBLIC_SUPABASE_URL is not set — cannot construct a public URL.');
+                                return [`${baseUrl}/storage/v1/object/public/${bucketName}/${filePath}`];
                             }
                             return [data.signedUrl];
                         },
                         getPublicUrl() {
                             if (!storageBucket) {
-                                return `https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/${bucketName}/${filePath}`;
+                                const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+                                if (!baseUrl) throw new Error('[SupabaseStorageCompat] No storage client available and NEXT_PUBLIC_SUPABASE_URL is not set — cannot construct a public URL.');
+                                return `${baseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
                             }
                             const { data } = storageBucket.getPublicUrl(filePath);
                             return data?.publicUrl;

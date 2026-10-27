@@ -1,7 +1,16 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const ref = 'REDACTED-PROJECT';
+const ref = process.env.SUPABASE_PROJECT_REF;
+
+if (!ref) {
+
+  console.error('❌ Missing SUPABASE_PROJECT_REF — refusing to fall back to a hardcoded Supabase project.');
+
+  process.exit(1);
+
+}
+
 const url = `https://${ref}.supabase.co`;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

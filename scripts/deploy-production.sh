@@ -55,7 +55,7 @@ fi
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  ✅ Production deployment complete!"
-echo "  Authoritative Backend: Supabase (https://REDACTED-PROJECT.supabase.co)"
+echo "  Authoritative Backend: Supabase (${NEXT_PUBLIC_SUPABASE_URL:-not set — export NEXT_PUBLIC_SUPABASE_URL})"
 echo "  Live Client URL:       https://sierra-estates.net"
 echo "  Live Admin URL:        https://admin.sierra-estates.net"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

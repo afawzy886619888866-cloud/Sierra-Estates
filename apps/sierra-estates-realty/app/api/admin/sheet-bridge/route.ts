@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       price: 45000,
       bedrooms: 3,
       space: 185,
-      mediaUrls: ['https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/property-media/sample.jpg'],
+      mediaUrls: ['https://your-project-ref.supabase.co/storage/v1/object/public/property-media/sample.jpg'],
       notes: 'Test ping from Sierra Admin Bridge',
     };
 

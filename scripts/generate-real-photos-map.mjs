@@ -24,7 +24,16 @@ for (const envFile of ['.env.local', '.env', 'workflows/.env']) {
 
 const OUT_PATH = path.join(ROOT, 'apps', 'sierra-estates-realty', 'lib', 'inventory', 'compound-real-photos.json');
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+
+if (!url) {
+
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) — refusing to fall back to a hardcoded Supabase project.');
+
+  process.exit(1);
+
+}
+
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(url, serviceKey);

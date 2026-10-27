@@ -2,7 +2,7 @@
 
 ## 1. Authoritative Backend & Architecture
 
-- **Supabase is the Sole Authoritative Backend**: All database tables, Auth, pgvector embeddings, real-time queues, and media storage live in Supabase Postgres (`https://REDACTED-PROJECT.supabase.co`).
+- **Supabase is the Sole Authoritative Backend**: All database tables, Auth, pgvector embeddings, real-time queues, and media storage live in Supabase Postgres (`https://<your-project-ref>.supabase.co`).
 - **Legacy Deployments Retired**: Firebase deployments are permanently deactivated. Never deploy to Firebase or reintroduce Firebase hosting/rules workflows.
 - **Environment & Secrets**: Never commit or expose service role keys, database secrets, or API tokens client-side. Always use `process.env.SUPABASE_SERVICE_ROLE_KEY` in server-only contexts and `NEXT_PUBLIC_*` strictly for public values.
 

@@ -134,7 +134,7 @@ noreply@sierra-estates.com
 **Type:** Supabase API URL  
 **Value:**
 ```
-https://REDACTED-PROJECT.supabase.co
+https://<your-project-ref>.supabase.co
 ```
 
 ---

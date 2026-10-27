@@ -16,7 +16,7 @@ UNKNOWN                = cannot be determined without external input
 ```
 
 Probes were executed against the live production deployment
-(`https://sierra-estates.net`), Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`),
+(`https://sierra-estates.net`), Supabase PostgreSQL (`<your-project-ref>.supabase.co`),
 and automation runners. No credentials are revealed anywhere in this document.
 
 ---
@@ -25,7 +25,7 @@ and automation runners. No credentials are revealed anywhere in this document.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Service reachability | **CONNECTED** | `https://REDACTED-PROJECT.supabase.co` responds; live `/api/health`: "Connected to Supabase PostgreSQL", latency 277 ms. |
+| Service reachability | **CONNECTED** | `https://<your-project-ref>.supabase.co` responds; live `/api/health`: "Connected to Supabase PostgreSQL", latency 277 ms. |
 | Real data flows through it | **CONNECTED** | Public endpoints query `public.listings` (15,994 total rows; gated to 0 PUBLISHABLE, 15,994 REVIEW_REQUIRED; honest empty set served). |
 | URL / publishable (anon) key | **CONNECTED** | Tested against PostgREST & app: HTTP 200, 0 unverified rows visible under RLS Policy 020. |
 | Service-role key | **CONNECTED** | Active in environment; used to audit provenance, execute 025 repairs, demote unverified inventory, and test probe rows. |

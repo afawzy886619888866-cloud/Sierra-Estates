@@ -28,7 +28,7 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PROJECT_REF="${SUPABASE_PROJECT_REF:-REDACTED-PROJECT}"
+PROJECT_REF="${SUPABASE_PROJECT_REF:?export SUPABASE_PROJECT_REF (your Supabase project ref) first}"
 MGMT_API="https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query"
 FAILURES=0
 LIVE_INCONCLUSIVE=0

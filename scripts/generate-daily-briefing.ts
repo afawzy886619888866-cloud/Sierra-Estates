@@ -30,12 +30,18 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), 'apps/sierra-estates-realty/.env.local') });
 
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'REDACTED_SUPABASE_ANON_KEY';
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_URL) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+if (!SUPABASE_KEY) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY).');
+  process.exit(1);
+}
 
 export type BriefingQueryOutcome = 'ok' | 'error';
 export type BriefingDataStatus = 'OK' | 'DEGRADED' | 'BLOCKED';

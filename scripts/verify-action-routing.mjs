@@ -8,7 +8,7 @@
  * Target Domains:
  * 1. [CLIENT]     apps/sierra-estates-realty -> Vercel Client (sierra-estates-client-portal)
  * 2. [ADMIN]      apps/sierra-estates-realty/app/admin -> Vercel Admin (sierra-estates-admin-page)
- * 3. [DATABASE]   supabase/ & packages/db -> Supabase PostgreSQL (REDACTED-PROJECT)
+ * 3. [DATABASE]   supabase/ & packages/db -> Supabase PostgreSQL (from NEXT_PUBLIC_SUPABASE_URL)
  * 4. [AUTOMATION] apps/automations & infra/ -> Background Workers & Cron Jobs
  * 5. [SHARED]     packages/* & shared configs -> Monorepo Core
  */
@@ -112,7 +112,7 @@ if (targets.admin.length) {
   targets.admin.forEach((f) => console.log(`      • ${f}`));
 }
 if (targets.database.length) {
-  console.log(`  🗄️  [Supabase Target]      -> PostgreSQL: https://REDACTED-PROJECT.supabase.co`);
+  console.log(`  🗄️  [Supabase Target]      -> PostgreSQL: ${process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '<not configured>'}`);
   targets.database.forEach((f) => console.log(`      • ${f}`));
 }
 if (targets.automation.length) {

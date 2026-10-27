@@ -121,7 +121,7 @@ See §4 matrix. Fail-closed dispatch (no Supabase → idle), paused-stays-paused
 **Fixed this run:** the fail-open runner control plane, the hard-coded tracker credential, unauthenticated pairing assets, the unauthenticated `sheet-bridge` admin route, the bridge's fallback credential and fabricated readiness.
 
 **Standing risks — rotation/actions that remain (all require human/owner access):**
-1. **ROTATE (required, unchanged):** legacy `service_role` JWT for Supabase project `REDACTED-PROJECT` — value remains recoverable in git history (removed from HEAD in `178bac90`). Supabase dashboard → Settings → API Keys → rotate. Until rotated, anyone with repo history access has full RLS-bypassing DB access.
+1. **ROTATE (required, unchanged):** legacy `service_role` JWT for Supabase project `<your-project-ref>` — value remains recoverable in git history (removed from HEAD in `178bac90`). Supabase dashboard → Settings → API Keys → rotate. Until rotated, anyone with repo history access has full RLS-bypassing DB access.
 2. **ROTATE (required):** the `sb_secret_…` new-format secret exposed in a chat log (documented incident).
 3. **ROTATE after use:** the GitHub PAT shared in-chat for this run (used only for the push; never written to any file or commit).
 4. **Rotate/invalidate:** the old tracker credential `SE2026…` — the code path is removed; if the same value is used anywhere else (e.g., a bookmark, a monitoring probe), retire it.

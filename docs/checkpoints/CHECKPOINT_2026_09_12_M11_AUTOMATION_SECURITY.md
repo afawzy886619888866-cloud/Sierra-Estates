@@ -4,7 +4,7 @@
 **Milestone**: `M11: End-to-End Agent Automation, Memory Reliability & Security Remediation`  
 **Command Deck Board**: `board_c6e3065cb0`  
 **Milestone ID**: `ms_3dffb568eb`  
-**Authoritative Backend**: Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`)  
+**Authoritative Backend**: Supabase PostgreSQL (`<your-project-ref>.supabase.co`)  
 **Public Gateway Number**: `+201092048333`
 
 ---

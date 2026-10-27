@@ -7,7 +7,8 @@ compatibility_date = "2024-04-01"
 crons = ["*/30 8-18 * * *"]
 
 [vars]
-SUPABASE_URL = "https://REDACTED-PROJECT.supabase.co"
+# Set BEFORE deploying: your Supabase project URL (was hardcoded before the security purge).
+SUPABASE_URL = "https://your-project-ref.supabase.co"
 SHEET_ID = "1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk"
 SHEET_GID = "1127958606"
 ACTIVE_HOURS_START = "10"

@@ -170,7 +170,16 @@ async function syncToSupabase(listings) {
   console.log('  STAGE 2 — Syncing Real Listings to Supabase');
   console.log('══════════════════════════════════════════════════════');
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+
+  if (!supabaseUrl) {
+
+    console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) — refusing to fall back to a hardcoded Supabase project.');
+
+    process.exit(1);
+
+  }
+
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseKey) {

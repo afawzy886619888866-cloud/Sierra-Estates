@@ -27,15 +27,17 @@ export class MemoryPalace {
   }
 
   private seedDefaultKnowledge() {
+    const projectRef = process.env.SUPABASE_PROJECT_REF || 'not-configured';
+    const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'not-configured';
     this.store({
       id: 'system-backend-authoritative-supabase',
       room: 'system',
       drawer: 'architecture',
-      content: 'Supabase is the primary authoritative backend, PostgreSQL database, Auth, and Vector memory engine for Sierra Estates (Project Ref: REDACTED-PROJECT, URL: https://REDACTED-PROJECT.supabase.co), fully replacing Firebase across all listings, leads, profiles, and agent memory systems.',
+      content: `Supabase is the primary authoritative backend, PostgreSQL database, Auth, and Vector memory engine for Sierra Estates (Project Ref: ${projectRef}, URL: ${projectUrl}), fully replacing Firebase across all listings, leads, profiles, and agent memory systems.`,
       metadata: {
         provider: 'supabase',
-        projectRef: 'REDACTED-PROJECT',
-        url: 'https://REDACTED-PROJECT.supabase.co',
+        projectRef,
+        url: projectUrl,
         status: 'active-primary',
         replaces: 'firebase',
       },

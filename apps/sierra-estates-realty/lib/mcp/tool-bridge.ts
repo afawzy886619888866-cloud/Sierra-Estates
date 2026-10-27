@@ -108,9 +108,9 @@ export const TOOL_DEFINITIONS: Map<string, ToolDefinition> = new Map([
       requiredScope: 'mcp:write',
       handler: async (args: z.infer<typeof SendMessageSchema>) => {
         logger.info(`[WhatsAppMCP] Sending template '${args.template}' to ${args.leadPhone}`);
-        if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+        if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_API_URL) {
           try {
-            const res = await fetch(`REDACTED_WHATSAPP_API_URL/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+            const res = await fetch(`${process.env.WHATSAPP_API_URL}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
@@ -145,9 +145,9 @@ export const TOOL_DEFINITIONS: Map<string, ToolDefinition> = new Map([
       requiredScope: 'mcp:write',
       handler: async (args: z.infer<typeof SendDocumentSchema>) => {
         logger.info(`[WhatsAppMCP] Sending document ${args.documentUrl} to ${args.leadPhone}`);
-        if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+        if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_API_URL) {
           try {
-            const res = await fetch(`REDACTED_WHATSAPP_API_URL/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+            const res = await fetch(`${process.env.WHATSAPP_API_URL}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,

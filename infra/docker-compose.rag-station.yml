@@ -40,7 +40,7 @@ services:
       - OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8
       - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY in infra/.env (copy infra/.env.example) - the legacy default is public knowledge and this path is tunnel-exposed}
       - OPENWA_OPERATOR_KEY=${OPENWA_OPERATOR_KEY:-${OPENWA_ADMIN_API_KEY}}
-      - SUPABASE_URL=${SUPABASE_URL:-https://REDACTED-PROJECT.supabase.co}
+      - SUPABASE_URL=${SUPABASE_URL:?SUPABASE_URL is required (see infra/.env.example)}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
     volumes:
       - ../apps/agents/whatsapp-multi-session/whatsapp-auth:/app/whatsapp-auth

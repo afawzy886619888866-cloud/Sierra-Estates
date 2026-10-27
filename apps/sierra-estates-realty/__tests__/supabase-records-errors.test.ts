@@ -32,7 +32,7 @@ jest.mock('@supabase/supabase-js', () => ({
 }));
 
 // The admin client refuses to build without a service-role key, by design.
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://REDACTED-PROJECT.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test-project-ref.supabase.co';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 

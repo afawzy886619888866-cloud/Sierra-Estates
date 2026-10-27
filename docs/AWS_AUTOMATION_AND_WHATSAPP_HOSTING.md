@@ -17,7 +17,7 @@ Because GitHub Actions enforces runner minute quotas and $0 spending limits on f
                ▼                              ▼
       ┌────────────────────────────────────────────────┐
       │     Supabase Postgres & pgvector Backend       │
-      │       https://REDACTED-PROJECT...          │
+      │       https://<your-project-ref>...          │
       └────────────────────────────────────────────────┘
 ```
 

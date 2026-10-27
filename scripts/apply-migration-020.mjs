@@ -19,7 +19,7 @@
  *
  * Credential: SUPABASE_ACCESS_TOKEN (same token as apply-supabase-schema.mjs;
  * also accepted as a CLI arg for one-shot use: node apply-migration-020.mjs sbp_...).
- * Optional: SUPABASE_PROJECT_REF (default REDACTED-PROJECT).
+ * Required: SUPABASE_PROJECT_REF (no hardcoded default since the security purge).
  *
  * Exit codes: 0 applied (or already applied) + verification PASS
  *             1 apply or verification failed
@@ -37,7 +37,12 @@ const HARNESS = path.join(ROOT, 'supabase', 'tests', 'run-rls-tests.sh');
 
 const tokenArg = process.argv[2]?.startsWith('sbp_') ? process.argv[2] : null;
 const token = tokenArg || process.env.SUPABASE_ACCESS_TOKEN;
-const projectRef = process.env.SUPABASE_PROJECT_REF || 'REDACTED-PROJECT';
+const projectRef = process.env.SUPABASE_PROJECT_REF;
+if (!projectRef) {
+  console.error('❌ Missing SUPABASE_PROJECT_REF — refusing to fall back to a hardcoded Supabase project.');
+  process.exit(1);
+}
+
 const API = `https://api.supabase.com/v1/projects/${projectRef}/database/query`;
 
 if (!token) {
