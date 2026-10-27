@@ -85,6 +85,30 @@
       "hints": [
         "all"
       ]
+    },
+    {
+      "domain": ".*[\\\\/]docs[\\\\/]reference[\\\\/].*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*[\\\\/]public[\\\\/]assets[\\\\/].*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*tweaks-panel\\.jsx",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*\\.jsx",
+      "hints": [
+        "all"
+      ]
     }
   ]
 }
