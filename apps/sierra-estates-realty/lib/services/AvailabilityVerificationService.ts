@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logger } from '@/lib/logger';
 import { sharedMemory } from '@sierra-estates/memory-engine';
@@ -199,7 +200,7 @@ export class AvailabilityVerificationService {
 
     const now = Date.now();
     const expiresAt = now + this.SLA_TIMEOUT_MS;
-    const sessionId = `req-net-${now}-${Math.random().toString(36).substring(2, 7)}`;
+    const sessionId = `req-net-${now}-${crypto.randomBytes(4).toString('hex')}`;
 
     const verificationUnits: VerificationUnitItem[] = [];
 

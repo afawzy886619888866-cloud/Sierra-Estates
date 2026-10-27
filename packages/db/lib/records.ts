@@ -48,7 +48,11 @@ function convertKeys<T>(value: unknown, convert: (key: string) => string): T {
     if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
         const out: RecordData = {};
         for (const [key, item] of Object.entries(value as RecordData)) {
-            out[convert(key)] = convertKeys(item, convert);
+            const safeKey = convert(key);
+            if (safeKey === '__proto__' || safeKey === 'constructor' || safeKey === 'prototype') {
+                continue;
+            }
+            out[safeKey] = convertKeys(item, convert);
         }
         return out as unknown as T;
     }

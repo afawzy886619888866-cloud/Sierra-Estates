@@ -25,6 +25,13 @@ try {
   process.exit(1);
 }
 
+let rateLimit = null;
+try {
+  rateLimit = require('express-rate-limit');
+} catch (e) {
+  rateLimit = null;
+}
+
 let qrcodeTerminal = null;
 try {
   qrcodeTerminal = require('qrcode-terminal');
@@ -593,7 +600,12 @@ app.post('/api/harvester/simulate', async (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/map', (req, res) => {
+const mapLimiter = rateLimit ? rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+}) : (req, res, next) => next();
+
+app.get('/map', mapLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'map-station.html'));
 });
 

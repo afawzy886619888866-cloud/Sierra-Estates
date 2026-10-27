@@ -52,7 +52,7 @@ export class ObsidianMemory {
   private writeStore(data: Record<string, MemoryEntry>): void {
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
-        fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+        fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), { encoding: 'utf-8', mode: 0o600 });
         return;
       } catch (err) {
         if (attempt === 4) {
@@ -66,11 +66,15 @@ export class ObsidianMemory {
   }
 
   async get(id: string): Promise<MemoryEntry | null> {
+    if (id === '__proto__' || id === 'constructor' || id === 'prototype') return null;
     const store = this.readStore();
     return store[id] || null;
   }
 
   async set(id: string, value: any, tags: string[] = []): Promise<MemoryEntry> {
+    if (id === '__proto__' || id === 'constructor' || id === 'prototype') {
+      throw new Error(`Invalid entry id: ${id}`);
+    }
     const store = this.readStore();
     const now = new Date().toISOString();
 
@@ -116,6 +120,7 @@ export class ObsidianMemory {
   }
 
   async delete(id: string): Promise<boolean> {
+    if (id === '__proto__' || id === 'constructor' || id === 'prototype') return false;
     const store = this.readStore();
     if (store[id]) {
       delete store[id];

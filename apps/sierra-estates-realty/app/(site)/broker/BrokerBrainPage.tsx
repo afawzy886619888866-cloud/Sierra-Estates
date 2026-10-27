@@ -117,7 +117,7 @@ export default function BrokerBrainPage() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const [sessionId] = useState(() => (typeof crypto !== 'undefined' && crypto.randomUUID ? `session-${crypto.randomUUID()}` : `session-${Date.now()}`));
   const [profile, setProfile] = useState<Record<string, any>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);

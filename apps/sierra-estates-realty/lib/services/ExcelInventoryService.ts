@@ -598,7 +598,7 @@ export async function appendToExcelInventory(
     }
 
     const outBuf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    fs.writeFileSync(filePath, outBuf);
+    fs.writeFileSync(filePath, outBuf, { mode: 0o600 });
     logger.info(`[ExcelInventory] Successfully appended unit ${recordId} to sheet "${sheetName}" in ${filePath}`);
 
     // Synchronize to Supabase — ONLY when the caller has not already
