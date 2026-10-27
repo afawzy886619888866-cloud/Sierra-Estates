@@ -46,9 +46,19 @@ async function main() {
       let cleanImages = row.images;
       let cleanRaw = row.raw_data;
 
+      const isUnsplash = (u) => {
+        if (typeof u !== 'string') return false;
+        try {
+          const h = new URL(u).hostname.toLowerCase();
+          return h === 'unsplash.com' || h.endsWith('.unsplash.com');
+        } catch {
+          return false;
+        }
+      };
+
       if (Array.isArray(row.images)) {
         const filtered = row.images.filter(
-          (u) => typeof u === 'string' && !u.includes('unsplash.com') && !u.includes('placeholder')
+          (u) => typeof u === 'string' && !isUnsplash(u) && !u.includes('placeholder')
         );
         if (filtered.length !== row.images.length) {
           cleanImages = filtered;
@@ -56,7 +66,7 @@ async function main() {
         }
       }
 
-      if (cleanRaw && typeof cleanRaw === 'object' && cleanRaw.img && String(cleanRaw.img).includes('unsplash.com')) {
+      if (cleanRaw && typeof cleanRaw === 'object' && cleanRaw.img && isUnsplash(String(cleanRaw.img))) {
         cleanRaw = { ...cleanRaw, img: null };
         changed = true;
       }
