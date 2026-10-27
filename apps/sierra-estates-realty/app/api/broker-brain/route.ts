@@ -23,13 +23,13 @@ function getGemini() {
 
 // ── Parse intent from user query ──────────────────────────────────────────
 function parseIntent(query: string) {
-  const q = query.toLowerCase();
+  const q = (query || '').slice(0, 500).toLowerCase();
   const intent = {
     isRent: /rent|ايجار|إيجار|monthly|شهري/.test(q),
     isBuy: /buy|sale|resale|purchase|شراء|بيع/.test(q),
-    beds: (/(\d+)\s*(bed|br|room|غرفة|غرف)/.exec(q) || [])[1],
-    maxPrice: (/(?:under|below|max|less than|أقل من)\s*([\d,]+)/.exec(q) || [])[1]?.replace(/,/g, ''),
-    minArea: (/(\d+)\s*(?:sqm|m2|متر)/.exec(q) || [])[1],
+    beds: (/(\d{1,3})\s*(?:bed|br|room|غرفة|غرف)/.exec(q) || [])[1],
+    maxPrice: (/(?:under|below|max|less than|أقل من)\s*([\d,]{1,15})/.exec(q) || [])[1]?.replace(/,/g, ''),
+    minArea: (/(\d{1,5})\s*(?:sqm|m2|متر)/.exec(q) || [])[1],
     compound: extractCompound(q),
     zone: /rehab|madinaty|new cairo|hyde park|mivida|fifth settlement|katameya|eastown|mountain view|palm hills|galleria|uptown|fifth square/i.exec(q)?.[0],
   };

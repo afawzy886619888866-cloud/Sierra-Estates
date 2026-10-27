@@ -134,8 +134,9 @@ export class WhatsAppParserService {
           price = num < 1000 ? num * 1000000 : num;
         }
 
-        const bedsMatch = content.match(/(\d+)\s*(?:غرف|غرفة|نوم|beds?|bd)/i);
-        const areaMatch = content.match(/(\d+)\s*(?:متر|م²|م٢|sqm|m2)/i);
+        const safeContent = (content || '').slice(0, 1000);
+        const bedsMatch = safeContent.match(/(\d{1,3})\s*(?:غرف|غرفة|نوم|beds?|bd)/i);
+        const areaMatch = safeContent.match(/(\d{1,5})\s*(?:متر|م²|م٢|sqm|m2)/i);
 
         const looksLikeListing = Boolean(
           price !== undefined ||

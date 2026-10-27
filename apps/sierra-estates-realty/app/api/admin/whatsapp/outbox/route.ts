@@ -57,12 +57,15 @@ function normalizeUrl(raw: string, defaultPort = '2785'): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `http://${url}`;
   }
-  url = url.replace(/\/+$/, '');
-  // If no port and not https / trycloudflare, check if we need port
-  if (!url.includes('trycloudflare.com') && !url.includes('.net') && !url.includes('.com') && !/:[0-9]+$/.test(url)) {
-    url = `${url}:${defaultPort}`;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.port && (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')) {
+      parsed.port = String(defaultPort);
+    }
+    return parsed.origin;
+  } catch {
+    return url.replace(/\/+$/, '');
   }
-  return url;
 }
 
 function getCandidateEndpoints(): string[] {
@@ -153,7 +156,15 @@ async function fetchGatewayStatus(): Promise<GatewayInfo> {
       const overallStatus = readySessions.length > 0 ? 'ready' : awaitingQrSessions.length > 0 ? 'scan_qr' : (sessions[0]?.status || 'starting');
 
       const primary = readySessions[0] || sessions[0];
-      const tunnelUrl = endpoints.find((e) => e.includes('trycloudflare.com')) || null;
+      const tunnelUrl =
+        endpoints.find((e) => {
+          try {
+            const h = new URL(e).hostname.toLowerCase();
+            return h === 'trycloudflare.com' || h.endsWith('.trycloudflare.com');
+          } catch {
+            return false;
+          }
+        }) || null;
 
       return {
         reachable: true,
