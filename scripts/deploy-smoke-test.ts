@@ -76,7 +76,7 @@ async function runProbe(p: Probe): Promise<boolean> {
       );
 
       req.on('error', (err) => {
-        console.log(`  ⚠️ ${p.name} -> Error (${err.message})`);
+        console.log(`  ⚠️ ${p.name} -> Error (${err.message.replace(/[\r\n]/g, '')})`);
         finish(false);
       });
 

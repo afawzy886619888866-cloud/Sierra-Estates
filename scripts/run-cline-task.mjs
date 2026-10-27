@@ -282,7 +282,8 @@ function main() {
   console.log(`[Cline Runner] Working Dir: ${rootDir}`);
 
   if (options.dryRun) {
-    console.log(`[Cline Runner] (Dry-Run) Command: ${execInfo.cmd} ${cliArgs.map(a => a.includes(' ') ? `"${a}"` : a).join(' ')}`);
+    const sanitizedArgs = cliArgs.map((a, i) => (cliArgs[i - 1] === '--key' ? '******' : a.includes(' ') ? `"${a}"` : a));
+    console.log(`[Cline Runner] (Dry-Run) Command: ${execInfo.cmd} ${sanitizedArgs.join(' ')}`);
     process.exit(0);
   }
 

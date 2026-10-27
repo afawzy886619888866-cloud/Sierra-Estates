@@ -234,7 +234,7 @@ export class MemoryBrainEngine {
         // Tag matches
         if (note.tags.some((t) => t.includes(token))) score += 4;
         // Body matches
-        const count = (lowerContent.match(new RegExp(token, 'g')) || []).length;
+        const count = Math.max(0, lowerContent.split(token).length - 1);
         score += Math.min(count, 5);
       }
 

@@ -51,7 +51,7 @@ export default async function Page() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaJsonLd).replace(/</g, '\\u003c') }}
       />
       <PriceIndexClient initialData={indexData} />
     </>

@@ -84,7 +84,21 @@ export async function POST(request: Request) {
     }
 
     if (grantType === 'refresh_token') {
-      const token = OAuthStore.issueToken(clientId, 'mcp:read mcp:tools');
+      const { refresh_token } = payload;
+      if (!refresh_token) {
+        return NextResponse.json(
+          { error: 'invalid_request', error_description: 'refresh_token is required' },
+          { status: 400 },
+        );
+      }
+      const existingToken = OAuthStore.consumeRefreshToken(refresh_token);
+      if (!existingToken) {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'Invalid or revoked refresh token' },
+          { status: 400 },
+        );
+      }
+      const token = OAuthStore.issueToken(existingToken.client_id, existingToken.scope);
       return NextResponse.json({
         access_token: token.access_token,
         token_type: 'Bearer',

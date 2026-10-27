@@ -191,6 +191,7 @@ function TweaksPanel({ title = 'Tweaks', children }) {
 
   React.useEffect(() => {
     const onMsg = (e) => {
+      if (e.origin && e.origin !== window.location.origin) return;
       const t = e?.data?.type;
       if (t === '__activate_edit_mode') setOpen(true);
       else if (t === '__deactivate_edit_mode') setOpen(false);

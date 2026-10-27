@@ -173,4 +173,16 @@ export class OAuthStore {
     }
     return false;
   }
+
+  public static consumeRefreshToken(refreshTokenStr: string): OAuthToken | undefined {
+    if (!refreshTokenStr) return undefined;
+    for (const [key, token] of tokens.entries()) {
+      if (token.refresh_token === refreshTokenStr) {
+        if (token.revoked) return undefined;
+        tokens.delete(key);
+        return token;
+      }
+    }
+    return undefined;
+  }
 }

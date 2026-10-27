@@ -69,7 +69,7 @@ export async function PUT(req: Request) {
 
   const updated = await updateRecord("inquiries", id, update);
   if (!updated) {
-    console.warn(`[admin/inquiries] no inquiry row for id ${id}; update skipped`);
+    console.warn(`[admin/inquiries] no inquiry row for id ${String(id).replace(/[\r\n]/g, '')}; update skipped`);
   }
 
   // Write audit log
