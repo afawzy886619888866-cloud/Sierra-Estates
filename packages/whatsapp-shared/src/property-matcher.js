@@ -7,8 +7,11 @@
  * ANTI-FABRICATION POLICY (Master Rule 5):
  * This matcher NEVER invents properties, prices, availability, or URLs.
  * - Inventory comes exclusively from the Supabase `listings` table.
- * - If the database is unreachable or empty, findMatches() returns [] and the
- *   caller must tell the client honestly (bilingual no-match message).
+ * - If the database is unreachable or unconfigured, findMatches() REJECTS —
+ *   a failed/unconfigured DB is NEVER reported as a verified empty result
+ *   (execution order Section E, 2026-10-27). Only a SUCCESSFUL query with
+ *   zero rows returns [] (genuine empty), and the caller then sends the
+ *   honest bilingual no-match message.
  * - Missing fields are rendered as "غير متوفر / N/A", never defaulted to plausible values.
  */
 
@@ -24,18 +27,21 @@ class PropertyMatcher {
     let inventory = [];
 
     // Single source of truth: Supabase listings with status 'active'.
+    // Distinct outcomes (Section E): unconfigured and failed are ERRORS,
+    // never disguised as a verified empty inventory.
+    if (!adminDb) {
+      throw new Error('inventory database not configured — cannot verify matches (not a verified empty result)');
+    }
     try {
-      if (adminDb) {
-        const snap = await adminDb.collection('listings').where('status', '==', 'active').limit(20).get();
-        if (!snap.empty) {
-          inventory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
+      const snap = await adminDb.collection('listings').where('status', '==', 'active').limit(20).get();
+      if (!snap.empty) {
+        inventory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       }
     } catch (e) {
-      console.error('[PropertyMatcher] inventory query failed — returning NO matches rather than fabricating:', e.message);
-      return [];
+      throw new Error(`inventory query failed — NOT a verified empty result: ${e.message}`);
     }
 
+    // Genuine empty: the query SUCCEEDED and zero rows matched.
     if (inventory.length === 0) return [];
 
     const targetBudget = parseFloat(String(qualData.budget || '').replace(/,/g, '')) || 0;
