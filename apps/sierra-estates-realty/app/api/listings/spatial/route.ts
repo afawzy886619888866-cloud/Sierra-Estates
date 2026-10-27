@@ -21,6 +21,7 @@ import {
 import { isPubliclyVisibleListingStatus } from '@/lib/models/schema';
 // SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5)
 import type { Listing } from '@/lib/types';
+import { scrubOwnerContactText } from '@/lib/server/owner-privacy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -222,10 +223,10 @@ export async function GET(request: Request) {
         aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
         tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
         mode: itemMode,
-        agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
+        agent: item.agent_name || '',
         img: (item.images && item.images[0]) || '',
         status,
-        description: item.description || '',
+        description: scrubOwnerContactText(item.description) || '',
         distanceKm,
         latitude: itemLat,
         longitude: itemLng,

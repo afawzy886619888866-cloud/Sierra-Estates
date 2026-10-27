@@ -47,6 +47,8 @@ export interface InventoryUnit {
   furnishing?: string | null;
   /** Numeric price in EGP (total for sale, monthly for rent); 0 = on request. */
   price: number;
+  /** Row's real currency when explicitly known (never inferred — §21). */
+  priceCurrency?: string | null;
   priceLabel?: string;
   egpM?: number;
   usd?: number;
