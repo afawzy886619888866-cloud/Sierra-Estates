@@ -20,12 +20,18 @@ export async function POST(request: Request) {
     }
 
     const grantType = payload.grant_type;
-    const clientId = payload.client_id || 'sierra-mcp-connector';
+
+    if (grantType !== 'authorization_code' && grantType !== 'refresh_token') {
+      return NextResponse.json(
+        { error: 'unsupported_grant_type', error_description: `Grant type '${grantType}' not supported` },
+        { status: 400 },
+      );
+    }
 
     if (grantType === 'authorization_code') {
-      const { code, redirect_uri, code_verifier } = payload;
+      const { code, redirect_uri, code_verifier, client_id: requestClientId } = payload;
 
-      if (!code) {
+      if (!code || typeof code !== 'string') {
         return NextResponse.json(
           { error: 'invalid_request', error_description: 'code is required' },
           { status: 400 },
@@ -40,6 +46,14 @@ export async function POST(request: Request) {
         );
       }
 
+      // Validate client_id matches the authorization request per RFC 6749 §4.1.3
+      if (requestClientId && authCode.client_id && requestClientId !== authCode.client_id) {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'client_id mismatch' },
+          { status: 400 },
+        );
+      }
+
       // Validate redirect_uri matches the authorization request per RFC 6749 §4.1.3
       if (redirect_uri && authCode.redirect_uri && redirect_uri !== authCode.redirect_uri) {
         return NextResponse.json(
@@ -50,7 +64,7 @@ export async function POST(request: Request) {
 
       // Verify PKCE verifier
       if (authCode.code_challenge) {
-        if (!code_verifier) {
+        if (!code_verifier || typeof code_verifier !== 'string') {
           return NextResponse.json(
             { error: 'invalid_request', error_description: 'code_verifier required for PKCE flow' },
             { status: 400 },
@@ -71,8 +85,9 @@ export async function POST(request: Request) {
         }
       }
 
-      // Issue access token
-      const token = OAuthStore.issueToken(clientId, authCode.scope);
+      // Issue access token bound to the verified authCode client_id
+      const targetClientId = authCode.client_id || 'sierra-mcp-connector';
+      const token = OAuthStore.issueToken(targetClientId, authCode.scope);
 
       return NextResponse.json({
         access_token: token.access_token,
@@ -85,7 +100,7 @@ export async function POST(request: Request) {
 
     if (grantType === 'refresh_token') {
       const { refresh_token } = payload;
-      if (!refresh_token) {
+      if (!refresh_token || typeof refresh_token !== 'string') {
         return NextResponse.json(
           { error: 'invalid_request', error_description: 'refresh_token is required' },
           { status: 400 },
@@ -107,11 +122,6 @@ export async function POST(request: Request) {
         scope: token.scope,
       });
     }
-
-    return NextResponse.json(
-      { error: 'unsupported_grant_type', error_description: `Grant type '${grantType}' not supported` },
-      { status: 400 },
-    );
   } catch (error: any) {
     return NextResponse.json(
       { error: 'server_error', error_description: error.message || 'Token endpoint error' },

@@ -86,7 +86,12 @@ export class ObsidianMemory {
       updatedAt: now,
     };
 
-    store[id] = entry;
+    Object.defineProperty(store, id, {
+      value: entry,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
     this.writeStore(store);
     return entry;
   }
@@ -122,8 +127,8 @@ export class ObsidianMemory {
   async delete(id: string): Promise<boolean> {
     if (id === '__proto__' || id === 'constructor' || id === 'prototype') return false;
     const store = this.readStore();
-    if (store[id]) {
-      delete store[id];
+    if (Object.prototype.hasOwnProperty.call(store, id)) {
+      Reflect.deleteProperty(store, id);
       this.writeStore(store);
       return true;
     }

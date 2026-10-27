@@ -52,7 +52,12 @@ function convertKeys<T>(value: unknown, convert: (key: string) => string): T {
             if (safeKey === '__proto__' || safeKey === 'constructor' || safeKey === 'prototype') {
                 continue;
             }
-            out[safeKey] = convertKeys(item, convert);
+            Object.defineProperty(out, safeKey, {
+                value: convertKeys(item, convert),
+                writable: true,
+                enumerable: true,
+                configurable: true,
+            });
         }
         return out as unknown as T;
     }
