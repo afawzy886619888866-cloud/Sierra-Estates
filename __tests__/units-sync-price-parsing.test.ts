@@ -195,3 +195,77 @@ describe('08-units-sync — rowToListing price wiring', () => {
         expect(listing).not.toHaveProperty('source_verified_at');
     });
 });
+
+describe('08-units-sync — multi-value fabrication regressions (2026-10-27)', () => {
+    it('quarantines word-separated ranges ("8M or 9M") — previously fabricated as 89,000,000', () => {
+        const r = parseUnitPrice('8M or 9M');
+        expect(r.status).toBe('quarantined');
+        expect(r.reason).toBe('multiple_values');
+        expect(r.price).toBe(0);
+        expect(r.raw).toBe('8M or 9M');
+    });
+
+    it('quarantines slash-separated values ("8/9") — previously fabricated as 89', () => {
+        expect(parseUnitPrice('8/9')).toEqual(
+            expect.objectContaining({ status: 'quarantined', reason: 'multiple_values', price: 0 }),
+        );
+    });
+
+    it('quarantines Arabic "or" ranges ("8 أو 9 مليون")', () => {
+        expect(parseUnitPrice('8 أو 9 مليون')).toEqual(
+            expect.objectContaining({ status: 'quarantined', reason: 'multiple_values' }),
+        );
+    });
+
+    it('quarantines pipe / tilde / en-dash / "to" separated values', () => {
+        for (const bad of ['8M | 9M', '8~9', '8–9M', '2 to 3 million']) {
+            expect(parseUnitPrice(bad).reason).toBe('multiple_values');
+        }
+    });
+
+    it('quarantines "POA or 5M" (marker with digits on one side is still ambiguous)', () => {
+        expect(parseUnitPrice('POA or 5M').reason).toBe('multiple_values');
+    });
+
+    it('classifies "-5,000 EGP" as non_positive (was mislabeled bare_decimal_ambiguous)', () => {
+        const r = parseUnitPrice('-5,000 EGP');
+        expect(r.status).toBe('quarantined');
+        expect(r.reason).toBe('non_positive');
+        expect(r.currency).toBe('EGP');
+        expect(r.price).toBe(0);
+    });
+
+    it('legitimate sheet dialects never trip the multi-value markers (no over-quarantining)', () => {
+        // Regression guard: the marker detection must not break any REAL
+        // dialect the live 324-row sheet carries.
+        expect(parseUnitPrice('8,340,000 EGP')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 8_340_000, currency: 'EGP' }),
+        );
+        expect(parseUnitPrice('8.34M')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 8_340_000, currency: null }),
+        );
+        expect(parseUnitPrice('1,400$')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 1400, currency: 'USD' }),
+        );
+        expect(parseUnitPrice('1.250.000')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 1_250_000 }),
+        );
+        expect(parseUnitPrice('٨٫٣٤ مليون جنيه')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 8_340_000, currency: 'EGP' }),
+        );
+        expect(parseUnitPrice('28,000')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 28_000, currency: null }),
+        );
+        expect(parseUnitPrice('8.5K')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 8_500 }),
+        );
+        // Space-grouped thousands are NOT a multi-value list.
+        expect(parseUnitPrice('8 500 000')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 8_500_000 }),
+        );
+        // Decimal-comma million is NOT a multi-value list.
+        expect(parseUnitPrice('8,5M')).toEqual(
+            expect.objectContaining({ status: 'parsed', price: 8_500_000 }),
+        );
+    });
+});

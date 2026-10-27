@@ -208,6 +208,16 @@ function parseUnitPrice(rawInput) {
   // handled below as non_positive.)
   const candidates = numeric.split('-').filter((p) => /\d/.test(p));
   if (candidates.length > 1) return out('quarantined', 0, currency, 'multiple_values');
+  // Word/slash-separated lists ('8M or 9M', '8 أو 9', '8/9', '8–9M') are
+  // detected on the SOURCE text: the digit strip above would otherwise glue
+  // the fragments into ONE fabricated number ('8M or 9M' → '89' → 89,000,000
+  // — regression-locked in __tests__/units-sync-price-parsing.test.ts). A
+  // marker with digits on only one side ('POA or 5M') is still ambiguous →
+  // quarantined too. Over-quarantining is the safe direction: the human
+  // review queue adjudicates; downstream fabrication is not reversible.
+  if (/(?:\bor\b|\bto\b|أو|[/|~–—])/i.test(s)) {
+    return out('quarantined', 0, currency, 'multiple_values');
+  }
   let body = numeric;
 
   // ── Separator semantics ──────────────────────────────────────────────
@@ -246,6 +256,12 @@ function parseUnitPrice(rawInput) {
   }
   const value = parseFloat(body);
   if (!Number.isFinite(value)) return out('quarantined', 0, currency, 'malformed_number');
+
+  // Non-positive is classified BEFORE the bare-decimal check so a labeled
+  // negative with separators ('-5,000 EGP' → body '-5.000') reports
+  // non_positive — the reason drives the human-review queue label, and the
+  // old order mislabeled it bare_decimal_ambiguous.
+  if (value <= 0) return out('quarantined', 0, currency, 'non_positive');
 
   // Bare decimal with NO explicit multiplier ('8.34') — the sheet's Code
   // convention ('MT-B14-3U-8.34M') suggests millions, but the sheet also
@@ -449,8 +465,22 @@ async function main() {
   }
 
   console.log(`SUMMARY ${JSON.stringify(summary)}`);
-  if (summary.errors > 0 && summary.upserted === 0) {
-    console.error('units-sync FAILED: no rows synced');
+
+  // Honest exit semantics (execution order H4 — no false successful-sync
+  // count when the downstream system rejected rows): ANY chunk error fails
+  // the run; a partially-synced batch must not report success. (Previously
+  // only errors>0 && upserted===0 exited 1, so partial failures exited 0
+  // with a green runner label.)
+  if (summary.errors > 0) {
+    console.error(`units-sync FAILED: ${summary.errors} row(s) failed to sync (partial failure is not success)`);
+    process.exit(1);
+  }
+  // A structurally empty sheet (wrong tab / missing Code column / zero
+  // rows) must not be reported as a healthy empty sync either — the live
+  // sheet contract is 324 rows (docstring). Genuine emptiness still
+  // deserves human eyes, so it fails loudly instead of exiting green.
+  if (summary.rows === 0 || summary.validUnits === 0) {
+    console.error(`units-sync FAILED: sheet yielded ${summary.rows} rows / ${summary.validUnits} valid units — refusing to report an empty sync as success`);
     process.exit(1);
   }
   console.log('units-sync: done');
