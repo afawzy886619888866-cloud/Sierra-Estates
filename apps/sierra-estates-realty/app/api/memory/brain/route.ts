@@ -4,6 +4,7 @@ import path from 'path';
 import { DeepSeekHarness, BENCHMARK_SCENARIOS } from '@sierra-estates/deepseek-harness';
 import { mempalace, brainRAG } from '@sierra-estates/memory-engine';
 import { eccMemory } from '@/lib/eccMemoryEngine';
+import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
@@ -221,6 +222,26 @@ export async function POST(req: NextRequest) {
         ownerName || 'Direct Owner'
       );
       return NextResponse.json({ success: true, result: res });
+    }
+
+    // Upsert entity profile in ECC
+    if (action === 'upsert_entity') {
+      const { entity } = body;
+      if (!entity || !entity.id || !entity.type) {
+        return NextResponse.json({ success: false, error: 'Missing entity id or type' }, { status: 400 });
+      }
+      const updated = eccMemory.upsertEntity(entity);
+      return NextResponse.json({ success: true, entity: updated });
+    }
+
+    // Run valuation arbitrage analyzer
+    if (action === 'evaluate_valuation') {
+      const { property } = body;
+      if (!property) {
+        return NextResponse.json({ success: false, error: 'Missing property payload' }, { status: 400 });
+      }
+      const valuation = evaluatePropertyValuation(property);
+      return NextResponse.json({ success: true, valuation });
     }
 
     return NextResponse.json({ success: false, error: 'Unrecognized action' }, { status: 400 });

@@ -16,6 +16,8 @@ import {
   type UpsertResult,
 } from '@/lib/services/inventory/ingest-bridge';
 import { mempalace } from '@sierra-estates/memory-engine';
+import { eccMemory } from '@/lib/eccMemoryEngine';
+import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
 
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
@@ -248,6 +250,98 @@ export async function POST(req: NextRequest) {
       logger.warn('[WhatsApp Ingest] MemPalace store error:', memErr);
     }
 
+    // ── ECC Memory & Broker Intelligence (HARV-030-002) ─────────────────────────
+    let isHotDeal = false;
+    let priceDropResult: { dropPct: number; isHotDeal: boolean } | null = null;
+    try {
+      if (parsed?.isListing === true) {
+        const sierraCode = listing.extractedData?.sierraCode || null;
+        const brokerContact = parsed.brokerPhone || (sender.startsWith('20') ? sender : undefined);
+
+        // 1. Maintain entity graph profile for listing broker
+        if (brokerContact) {
+          eccMemory.upsertEntity({
+            id: brokerContact,
+            type: 'broker',
+            name: parsed.brokerName || 'WhatsApp Broker',
+            contact: brokerContact,
+            compound: parsed.compound || undefined,
+            tags: ['whatsapp_broker', parsed.compound ? `compound:${parsed.compound}` : ''].filter(Boolean),
+            lastUpdated: new Date().toISOString(),
+          });
+        }
+
+        // 2. Automated price-reduction & historical tracking
+        if (sierraCode && parsed.price) {
+          const currentPrice = Number(parsed.price);
+          const existingEntity = eccMemory.getEntity(sierraCode);
+          const previousPrice = existingEntity?.historicalPrices?.length
+            ? existingEntity.historicalPrices[existingEntity.historicalPrices.length - 1].price
+            : null;
+
+          if (previousPrice && previousPrice > currentPrice) {
+            priceDropResult = eccMemory.trackPriceReduction(
+              sierraCode,
+              previousPrice,
+              currentPrice,
+              group || 'WhatsApp Broker Group',
+              brokerContact || sender
+            );
+            isHotDeal = priceDropResult.isHotDeal;
+            if (isHotDeal) {
+              logger.info(`🔥 [ECC Memory] Hot deal detected on ${sierraCode}: ${priceDropResult.dropPct}% reduction!`);
+            }
+          }
+
+          // Record unit in entity graph with historical price tracking
+          eccMemory.upsertEntity({
+            id: sierraCode,
+            type: 'property',
+            compound: parsed.compound || undefined,
+            historicalPrices: [{
+              price: currentPrice,
+              timestamp: new Date().toISOString(),
+              source: group || 'WhatsApp Harvester',
+            }],
+            tags: ['harvested_listing', parsed.dealType || 'Sale'],
+            lastUpdated: new Date().toISOString(),
+          });
+        }
+
+        // 3. Valuation & Arbitrage Comps Analyzer
+        if (parsed.price) {
+          try {
+            const valuation = evaluatePropertyValuation({
+              property_type: parsed.unitType || 'residential',
+              transaction_type: parsed.dealType === 'Rent' ? 'Rent' : 'Sale',
+              offered_purchase_price: parsed.dealType !== 'Rent' ? Number(parsed.price) : undefined,
+              offered_rent: parsed.dealType === 'Rent' ? Number(parsed.price) : undefined,
+              size_sqm: parsed.areaSqm ? Number(parsed.areaSqm) : undefined,
+              location: parsed.compound || undefined,
+            });
+
+            if (valuation.investment_metrics?.is_arbitrage_play) {
+              eccMemory.recordEpisode({
+                type: 'arbitrage_detected',
+                entityId: sierraCode || `unit-${docRef.id}`,
+                actor: 'Sierra Valuation Engine',
+                summary: `Arbitrage opportunity: ${valuation.verdict} (${valuation.investment_metrics.arbitrage_alert || 'High yield'})`,
+                data: {
+                  verdict: valuation.verdict,
+                  metrics: valuation.investment_metrics,
+                  price: parsed.price,
+                },
+              });
+            }
+          } catch (valErr) {
+            logger.warn('[WhatsApp Ingest] Valuation analysis warning:', valErr);
+          }
+        }
+      }
+    } catch (eccErr) {
+      logger.warn('[WhatsApp Ingest] ECC intelligence error:', eccErr);
+    }
+
     // Dual-Ingestion: Also append to Google Sheets Master Log
     try {
       await GoogleSheetsSync.appendRow('Leads', {
@@ -273,6 +367,8 @@ export async function POST(req: NextRequest) {
       isListing: parsed?.isListing === true,
       sierraCode: listing.extractedData?.sierraCode || null,
       canonical: canonical ? { id: canonical.id, action: canonical.action, fingerprint: canonical.fingerprint } : null,
+      isHotDeal,
+      priceDrop: priceDropResult,
       orchestration: parsed?.isListing === true ? 'S1-S2 completed' : 'Stored for manual review',
       leilaReply
     });

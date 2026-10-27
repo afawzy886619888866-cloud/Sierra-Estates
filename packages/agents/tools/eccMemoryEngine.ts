@@ -32,7 +32,8 @@ export type EpisodeType =
   | 'objection_handled'
   | 'due_diligence_verified'
   | 'lead_scored'
-  | 'owner_listing_drop';
+  | 'owner_listing_drop'
+  | 'arbitrage_detected';
 
 export interface PriceNormalizationOptions {
   propertyType?: string | null;
