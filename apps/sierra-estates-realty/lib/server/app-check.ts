@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { timingSafeEqual, createHmac } from 'node:crypto';
+import { timingSafeEqual, scryptSync } from 'node:crypto';
 import { logger } from '@/lib/logger';
 
 /**
@@ -15,8 +15,8 @@ import { logger } from '@/lib/logger';
  *    CLOSED — never open.
  */
 function constantTimeMatch(a: string, b: string): boolean {
-  const hashA = createHmac('sha256', 'app-check-attestation-salt').update(a).digest();
-  const hashB = createHmac('sha256', 'app-check-attestation-salt').update(b).digest();
+  const hashA = scryptSync(a, 'app-check-attestation-salt', 32);
+  const hashB = scryptSync(b, 'app-check-attestation-salt', 32);
   return timingSafeEqual(hashA, hashB);
 }
 
