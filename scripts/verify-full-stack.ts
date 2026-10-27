@@ -9,7 +9,30 @@
  */
 
 import http from 'http';
-import { execSync, execFileSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { execFileSync } from 'child_process';
+
+// Load .env and .env.local if present
+for (const envFile of ['.env', '.env.local']) {
+  const p = path.join(process.cwd(), envFile);
+  if (fs.existsSync(p)) {
+    const lines = fs.readFileSync(p, 'utf-8').split('\n');
+    for (const line of lines) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let val = (match[2] || '').trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -33,6 +56,20 @@ async function checkUrl(url: string, headers: Record<string, string> = {}): Prom
   });
 }
 
+function resolveAwsCli(): string {
+  const candidates = [
+    'aws',
+    'H:\\Program Files\\AWS\\aws.exe',
+    'C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe',
+    `${process.env.LOCALAPPDATA || ''}\\Programs\\Amazon\\AWSCLIV2\\aws.exe`,
+  ];
+  for (const c of candidates) {
+    if (c === 'aws') continue;
+    if (fs.existsSync(c)) return c;
+  }
+  return 'aws';
+}
+
 async function runVerification() {
   console.log(`\n${BOLD}${CYAN}═══════════════════════════════════════════════════════════════${RESET}`);
   console.log(`${BOLD}${CYAN}   Sierra Estates — Full Stack Live Verification Suite        ${RESET}`);
@@ -45,7 +82,7 @@ async function runVerification() {
   total++;
   try {
     process.stdout.write('1. AWS CLI & Caller Identity (sierra-estates)... ');
-    const awsExe = `${process.env.LOCALAPPDATA || ''}\\Programs\\Amazon\\AWSCLIV2\\aws.exe`;
+    const awsExe = resolveAwsCli();
     const out = execFileSync(awsExe, ['sts', 'get-caller-identity', '--profile', 'sierra-estates', '--output', 'json'], { encoding: 'utf-8' });
     const identity = JSON.parse(out);
     console.log(`${GREEN}✓ OK${RESET} (Account: ${identity.Account}, Arn: ${identity.Arn})`);
@@ -82,26 +119,27 @@ async function runVerification() {
   // 3. Check WhatsApp Session Status
   total++;
   process.stdout.write('3. WhatsApp Session Health Endpoint... ');
-  const qrRes = await checkUrl(`http://${openwaHost}:${openwaPort}/api/sessions`, {
-    'X-API-Key': process.env.OPENWA_ADMIN_API_KEY,
-    ...(process.env.OPENWA_ADMIN_API_KEY ? {} : (() => { throw new Error('OPENWA_ADMIN_API_KEY is required'); })()),
-  });
-  if (qrRes.status === 200 || qrRes.status === 401) {
-    console.log(`${GREEN}✓ ACTIVE${RESET} (Gateway responding, Auth enforced: HTTP ${qrRes.status})`);
-    passed++;
+  if (!process.env.OPENWA_ADMIN_API_KEY) {
+    console.log(`${YELLOW}⚠ SKIPPED${RESET} (OPENWA_ADMIN_API_KEY not configured in env)`);
   } else {
-    console.log(`${RED}✗ UNREACHABLE${RESET} (Status: ${qrRes.status})`);
-  }
-  if (qrRes.ok) {
-    try {
-      const data = JSON.parse(qrRes.body);
-      console.log(`${GREEN}✓ ACTIVE${RESET} (Status: ${data.status}, QR Code Ready: ${Boolean(data.qrCode)})`);
+    const qrRes = await checkUrl(`http://${openwaHost}:${openwaPort}/api/sessions`, {
+      'X-API-Key': process.env.OPENWA_ADMIN_API_KEY,
+    });
+    if (qrRes.status === 200 || qrRes.status === 401) {
+      console.log(`${GREEN}✓ ACTIVE${RESET} (Gateway responding, Auth enforced: HTTP ${qrRes.status})`);
       passed++;
-    } catch {
-      console.log(`${YELLOW}⚠ Unexpected response${RESET}`);
+    } else {
+      console.log(`${RED}✗ UNREACHABLE${RESET} (Status: ${qrRes.status})`);
     }
-  } else {
-    console.log(`${RED}✗ FAILED${RESET} (Status: ${qrRes.status})`);
+    if (qrRes.ok) {
+      try {
+        const data = JSON.parse(qrRes.body);
+        console.log(`${GREEN}✓ ACTIVE${RESET} (Status: ${data.status}, QR Code Ready: ${Boolean(data.qrCode)})`);
+        passed++;
+      } catch {
+        console.log(`${YELLOW}⚠ Unexpected response${RESET}`);
+      }
+    }
   }
 
   // 4. Check Local Next.js Dev Server

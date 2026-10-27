@@ -252,8 +252,10 @@ async function runOutreachCycle(env: Env, opts: { dryRun?: boolean; limitOverrid
     if (eligible.length >= batchLimit) break;
   }
 
-  const results: Array<{ phone: string; code: string; ok: boolean; status?: string; error?: string }> = [];
-  const gatewayUrl = env.WHATSAPP_API_URL?.replace(/\/+$/, '') || 'http://127.0.0.1:2785';
+  let gatewayUrl = env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+  while (gatewayUrl.endsWith('/')) {
+    gatewayUrl = gatewayUrl.slice(0, -1);
+  }
   const gatewayToken = env.WHATSAPP_API_TOKEN || '';
   const sessionId = env.OPENWA_SESSION_ID || 'session-default';
 

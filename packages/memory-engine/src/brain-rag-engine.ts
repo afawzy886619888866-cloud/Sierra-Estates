@@ -162,34 +162,40 @@ export class MemoryBrainEngine {
     }
 
     try {
-      if (!fs.existsSync(this.vaultDir)) {
+      let files: string[] = [];
+      try {
+        files = fs.readdirSync(this.vaultDir);
+      } catch {
         return;
       }
 
-      const files = fs.readdirSync(this.vaultDir);
       for (const file of files) {
         if (!file.endsWith('.md')) continue;
 
         const filePath = path.join(this.vaultDir, file);
-        const stat = fs.statSync(filePath);
-        const content = fs.readFileSync(filePath, 'utf-8');
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const stat = fs.statSync(filePath);
 
-        // Extract inline or frontmatter tags (#tag or tags: [...])
-        const tags: string[] = [];
-        const tagMatches = content.match(/#([a-zA-Z0-9_\u0600-\u06FF-]+)/g);
-        if (tagMatches) {
-          tags.push(...tagMatches.map((t) => t.substring(1).toLowerCase()));
+          // Extract inline or frontmatter tags (#tag or tags: [...])
+          const tags: string[] = [];
+          const tagMatches = content.match(/#([a-zA-Z0-9_\u0600-\u06FF-]+)/g);
+          if (tagMatches) {
+            tags.push(...tagMatches.map((t) => t.substring(1).toLowerCase()));
+          }
+
+          const title = file.replace('.md', '');
+          this.vaultCache.set(file.toLowerCase(), {
+            title,
+            filename: file,
+            path: filePath,
+            content,
+            tags: Array.from(new Set(tags)),
+            lastModified: stat.mtimeMs,
+          });
+        } catch {
+          continue;
         }
-
-        const title = file.replace('.md', '');
-        this.vaultCache.set(file.toLowerCase(), {
-          title,
-          filename: file,
-          path: filePath,
-          content,
-          tags: Array.from(new Set(tags)),
-          lastModified: stat.mtimeMs,
-        });
       }
 
       this.lastVaultScan = now;

@@ -44,9 +44,7 @@ async function syncSnapshot() {
   
   try {
     // Ensure target directory exists
-    if (!fs.existsSync(TARGET_DIR)) {
-      fs.mkdirSync(TARGET_DIR, { recursive: true });
-    }
+    fs.mkdirSync(TARGET_DIR, { recursive: true });
 
     const { data, error } = await supabase
       .storage
@@ -59,10 +57,10 @@ async function syncSnapshot() {
         console.warn(`Static generation may fail if the app expects this file.`);
         // Don't fail the build outright if it's the first time and the bucket is empty,
         // but generate an empty valid JSON to prevent build crashes.
-        if (!fs.existsSync(TARGET_PATH)) {
-          fs.writeFileSync(TARGET_PATH, JSON.stringify({ units: [], lastUpdated: new Date().toISOString() }));
+        try {
+          fs.writeFileSync(TARGET_PATH, JSON.stringify({ units: [], lastUpdated: new Date().toISOString() }), { flag: 'wx' });
           console.log(`[Snapshot Sync] Created empty stub at ${TARGET_PATH}`);
-        }
+        } catch (_) {}
         return;
       }
       throw error;

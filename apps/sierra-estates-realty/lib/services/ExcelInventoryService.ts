@@ -528,10 +528,10 @@ export async function appendToExcelInventory(
 
   try {
     let wb: XLSX.WorkBook;
-    if (fs.existsSync(filePath)) {
+    try {
       const buf = fs.readFileSync(filePath);
       wb = XLSX.read(buf, { type: 'buffer' });
-    } else {
+    } catch {
       wb = XLSX.utils.book_new();
     }
 

@@ -133,7 +133,10 @@ const server = http.createServer(async (req, res) => {
   const sendMatch = pathname.match(/^\/api\/sessions\/([^/]+)\/messages\/send-text$/);
   if (sendMatch && req.method === 'POST') {
     const body = await parseBody(req);
-    console.log(`[Gateway 2785] Session ${sendMatch[1]} -> sending to ${body.chatId}: ${body.text?.slice(0, 60)}...`);
+    const safeSession = String(sendMatch[1] || '').replace(/[\r\n]/g, '');
+    const safeChat = String(body.chatId || '').replace(/[\r\n]/g, '');
+    const safeText = String(body.text?.slice(0, 60) || '').replace(/[\r\n]/g, '');
+    console.log(`[Gateway 2785] Session ${safeSession} -> sending to ${safeChat}: ${safeText}...`);
     return sendJson(res, 200, {
       ok: true,
       messageId: `BAE5${Date.now().toString(16).toUpperCase()}`,
@@ -145,7 +148,8 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/webhooks' && req.method === 'POST') {
     const body = await parseBody(req);
     webhooks.push(body);
-    console.log('[Gateway 2785] Registered webhook:', body);
+    const safeWebhook = JSON.stringify(body).replace(/[\r\n]/g, ' ');
+    console.log('[Gateway 2785] Registered webhook:', safeWebhook);
     return sendJson(res, 200, { ok: true, webhook: body });
   }
 
@@ -165,5 +169,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[Sierra WhatsApp Gateway] Listening on http://127.0.0.1:${PORT}`);
-  console.log(`[Sierra WhatsApp Gateway] Sessions active (${sessions.length}): ` + sessions.map(s => `${s.name} (${s.phone})`).join(', '));
+  const safeSessionList = sessions.map(s => `${String(s.name).replace(/[\r\n]/g, '')} (${String(s.phone).replace(/[\r\n]/g, '')})`).join(', ');
+  console.log(`[Sierra WhatsApp Gateway] Sessions active (${sessions.length}): ` + safeSessionList);
 });
