@@ -365,3 +365,37 @@ below; never rewrite history.*
   should instead be REMOVED from repo + Vercel secrets during EC2
   decommissioning (see the migration plan §5).
 - Blockers 2, 4, 5, 6 unchanged.
+
+**2026-10-27 addendum (P0 production-gap session — see
+`docs/EXECUTION_REPORT_2026-10-27.md`):**
+
+- **Blocker 1 is REOPENED and widened, then closed at HEAD**: the 2026-10-26
+  addendum verified only `/api/inventory/download`. Live probing found **15
+  git-tracked owner-PII files served STATICALLY at `/downloads/*`** (390
+  distinct raw owner mobiles in `owners-all.csv` alone) plus
+  `/api/inventory/sheets/*` re-serving them and 15 stragglers in the download
+  payload's non-Description fields. ALL closed in code at `ab322a3d`
+  (in-place redaction + route-level defense-in-depth + full-payload scrub),
+  pinned by `__tests__/public-downloads-privacy.test.ts`. Live once the
+  Vercel auto-deploy completes. **New owner decision required**: the repo is
+  PUBLIC and git HISTORY retains every raw number — go private or purge
+  history (`git filter-repo`, out of autonomous-session policy).
+- **H1 closed**: the daily briefing's false-success path (green Actions +
+  "count query failed" + "ready for broadcast") now classifies
+  OK/DEGRADED/BLOCKED with honest exit codes — pinned by 10 tests.
+- **Section E closed**: both flaky suites (mcp-smoke-verification,
+  whatsapp-agent-matcher) are deterministic and offline; the matcher now
+  REJECTS on DB failure/unconfigured instead of returning a disguised empty.
+- **C1 hardened**: multi-value price lists ('8M or 9M' fabricated 89,000,000)
+  quarantined; units-sync partial-failure/empty-sheet runs exit non-zero.
+- **C3 narrowed, never weakened**: suspicious-sale gate is currency/deal-aware
+  with an operator triage breakdown; `/api/inventory` exposes
+  `priceCurrency`/`dealType` and never fabricates an EGP label.
+- **Section I (partial)**: the obsolete EC2 cron is disabled (migration §5
+  item ticked; dispatch preserved). The full schedule matrix (30 rows) lives
+  in the session worklog — whatsapp-dispatch quadruple-scheduling with a
+  non-atomic claim race and the outreach triple-path/DST drift are DOCUMENTED
+  owner decisions, not silently changed.
+- **Session GitHub PAT must be rotated** (exposed in chat, near-total scopes).
+- G3 status unchanged: BLOCKED on owner-host Docker runtime access; Phase 2
+  deferred. Root suite on the final tree: **87 files / 811 tests green**.

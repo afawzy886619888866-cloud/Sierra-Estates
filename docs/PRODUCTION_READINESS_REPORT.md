@@ -239,3 +239,35 @@ two new reasons (both operator-side, neither code-side):
 - `pnpm lint`: **15/15 tasks, 0 errors** (114 pre-existing warnings).
 - `node scripts/apply-supabase-migrations.mjs --dry-run`: **PASS** (34
   migrations, unique G2-parity versions, static idempotency validation).
+
+---
+
+## Addendum — 2026-10-27 (autonomous P0 session; supersedes nothing, appends)
+
+Baseline `51be6f3d` (verified: root vitest 85/786 green before any change).
+Final state: 7 commits pushed to `main` (`2cdbd531..ab322a3d`, rebase onto a
+parallel session's security commits, zero overlap). Full detail:
+`docs/EXECUTION_REPORT_2026-10-27.md`. Highlights:
+
+- **Live static PII breach CLOSED in code**: 15 git-tracked owner files under
+  `public/downloads/` (served at `/downloads/*`, no auth — 390 distinct raw
+  owner mobiles in `owners-all.csv` alone) are now concierge-redacted
+  (4,131 cells) + sheets routes redact at serving time + download route scrubs
+  every string field + `/api/inventory` & `/api/listings` free-text/owner-name
+  leaks fixed. Regression: `__tests__/public-downloads-privacy.test.ts` (8).
+  Live once the Vercel auto-deploy of `ab322a3d` completes.
+- **NEW caveat**: the repo is PUBLIC and git HISTORY still carries the raw
+  numbers — private-repo or history-purge is an owner decision.
+- Briefing H1 false-success fixed (OK/DEGRADED/BLOCKED gating, honest exits);
+  both flaky suites (mcp-smoke, agent-matcher) now deterministic and offline;
+  matcher fails loud on DB errors; units-sync multi-value price fabrication
+  quarantined + honest exit semantics; smoke suspicious-sale gate is
+  currency/deal-aware with a triage breakdown (threshold unchanged); EC2 cron
+  disabled per the Docker migration §5 checklist.
+- Gates on the final tree: root vitest **87 files / 811 tests PASS**; app
+  type-check 0 errors; twins/legacy-runtime/public-env/backend (CI posture)
+  PASS; migration dry-run PASS (34 migrations). G3 remains BLOCKED
+  (owner-host Docker runtime unreachable from the sandbox) — Phase 2 deferred.
+- Operator actions outstanding: rotate the session GitHub PAT (exposed in
+  chat, near-total scopes); `SUPABASE_DB_URL` secret; quarantine-tool
+  classification before any apply; gateway/Cline/Telegram live verification.
