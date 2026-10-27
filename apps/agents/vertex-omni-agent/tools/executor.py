@@ -179,9 +179,9 @@ def send_whatsapp_message(phone_number: str, message: str) -> Dict[str, Any]:
     services with no shared package to import from)."""
     phone_number_id = os.getenv("META_PHONE_NUMBER_ID")
     access_token = os.getenv("META_ACCESS_TOKEN")
-    whatsapp_api_url = os.getenv("WHATSAPP_API_URL")
-    if not phone_number_id or not access_token or not whatsapp_api_url:
-        logger.warning("[Titan] META_PHONE_NUMBER_ID/META_ACCESS_TOKEN/WHATSAPP_API_URL not configured — message not sent.")
+    whatsapp_api_url = os.getenv("WHATSAPP_API_URL", "https://graph.facebook.com/v18.0")
+    if not phone_number_id or not access_token:
+        logger.warning("[Titan] META_PHONE_NUMBER_ID/META_ACCESS_TOKEN not configured — message not sent.")
         return {"success": False, "error": "WhatsApp send is not configured"}
 
     url = f"{whatsapp_api_url}/{phone_number_id}/messages"

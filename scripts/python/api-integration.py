@@ -268,12 +268,9 @@ class MetaWhatsAppIntegration:
         """
         self.phone_number_id = phone_number_id
         self.access_token = access_token
-        whatsapp_api_url = os.getenv("WHATSAPP_API_URL")
-        if not whatsapp_api_url:
-            raise RuntimeError(
-                "WHATSAPP_API_URL environment variable is required "
-                "(this URL was hardcoded before the security purge)."
-            )
+        # Public Meta WhatsApp Cloud API endpoint (documented, not a secret).
+        # Set WHATSAPP_API_URL to override with a custom gateway.
+        whatsapp_api_url = os.getenv("WHATSAPP_API_URL", "https://graph.facebook.com/v18.0")
         self.base_url = f"{whatsapp_api_url}/{phone_number_id}/messages"
     
     def send_text_message(self, recipient_phone: str, message_text: str) -> Dict:
@@ -623,7 +620,7 @@ curl -X GET https://api.property-finder.eg/v2/properties/SB001 \
   -H "Content-Type: application/json"
 
 Test WhatsApp API:
-curl -X POST $WHATSAPP_API_URL/{phone_number_id}/messages \
+curl -X POST https://graph.facebook.com/v18.0/{phone_number_id}/messages \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

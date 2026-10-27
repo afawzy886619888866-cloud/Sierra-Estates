@@ -250,7 +250,9 @@ class WhatsAppIntegration:
 class MetaCloudWhatsAppIntegration:
     """Official Meta Cloud WhatsApp API Integration"""
     
-    BASE_URL = os.environ["WHATSAPP_API_URL"]  # set WHATSAPP_API_URL (was hardcoded before the security purge)
+    # Public Meta WhatsApp Cloud API endpoint (documented, not a secret).
+    # Set WHATSAPP_API_URL to override with a custom gateway.
+    BASE_URL = os.environ.get("WHATSAPP_API_URL", "https://graph.facebook.com/v18.0")
     
     def __init__(self, phone_number_id: str, access_token: str):
         self.phone_number_id = phone_number_id
