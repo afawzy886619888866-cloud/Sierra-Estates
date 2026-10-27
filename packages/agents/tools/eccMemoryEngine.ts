@@ -772,7 +772,7 @@ export class EpisodicContextCache {
         entities: Object.fromEntries(this.entityGraph.entries()),
       };
 
-      fs.writeFileSync(this.storagePath, JSON.stringify(currentData, null, 2), 'utf-8');
+      fs.writeFileSync(this.storagePath, JSON.stringify(currentData, null, 2), { encoding: 'utf-8', mode: 0o600 });
     } catch {
       // Non-blocking fail-safe in memory
     }

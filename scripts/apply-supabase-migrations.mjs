@@ -280,7 +280,17 @@ async function run() {
       skipped++;
       continue;
     }
-    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8');
+    const safeFilename = path.basename(f);
+    if (!/^[a-zA-Z0-9_-]+\.sql$/.test(safeFilename)) {
+      skipped++;
+      continue;
+    }
+    const safePath = path.resolve(MIGRATIONS_DIR, safeFilename);
+    if (!safePath.startsWith(path.resolve(MIGRATIONS_DIR))) {
+      skipped++;
+      continue;
+    }
+    const sql = fs.readFileSync(safePath, 'utf8');
     try {
       await mgmtQuery(projectRef, sql);
       await mgmtQuery(

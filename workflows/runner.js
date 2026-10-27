@@ -129,10 +129,10 @@ function authorized(req) {
   if (!API_KEY) return false;
   const h = req.headers['x-api-key'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!h) return false;
-  // Compare fixed-length SHA-256 digests so both length and content checks
+  // Compare fixed-length HMAC-SHA-256 digests so both length and content checks
   // are timing-safe (no early return on the first mismatching byte).
-  const a = crypto.createHash('sha256').update(String(h)).digest();
-  const b = crypto.createHash('sha256').update(String(API_KEY)).digest();
+  const a = crypto.createHmac('sha256', 'runner-auth-salt').update(String(h)).digest();
+  const b = crypto.createHmac('sha256', 'runner-auth-salt').update(String(API_KEY)).digest();
   return crypto.timingSafeEqual(a, b);
 }
 

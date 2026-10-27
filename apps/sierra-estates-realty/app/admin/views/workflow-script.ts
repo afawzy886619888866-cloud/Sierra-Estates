@@ -238,7 +238,7 @@ export function generateNodeScript(graph: WorkflowGraph): string {
       case 'trigger':
         return `async function step${i}(ctx) {
   // ${meta.label}: ${n.label}
-  ctx.log('trigger fired: ${n.label.replace(/'/g, "\\'")}');
+  ctx.log('trigger fired:', ${jsString(n.label)});
   // Schedules belong in cron / GitHub Actions — see workflows/README.md
 }`;
       case 'agent':
@@ -254,7 +254,7 @@ export function generateNodeScript(graph: WorkflowGraph): string {
   // ${meta.label}: ${n.label}
   const expression = ${jsString(params.when ?? 'true')};
   const passed = Boolean(expression);
-  ctx.log('condition ${n.label.replace(/'/g, "\\'")}:', passed ? 'PASS' : 'FAIL');
+  ctx.log('condition ' + ${jsString(n.label)} + ':', passed ? 'PASS' : 'FAIL');
   if (!passed) ctx.skipBranch('${n.id}');
 }`;
       case 'notify':
@@ -290,7 +290,7 @@ export function generateNodeScript(graph: WorkflowGraph): string {
       default:
         return `async function step${i}(ctx) {
   // ${meta.label}: ${n.label}
-  ctx.log('action: ${n.label.replace(/'/g, "\\'")}');
+  ctx.log('action:', ${jsString(n.label)});
   // TODO: implement the action body.
 }`;
     }
@@ -324,7 +324,7 @@ ${steps.map((s, i) => `/* ${ordered[i].label} */\n${s}`).join('\n\n')}
 const STEPS = [${steps.map((_, i) => `step${i}`).join(', ')}];
 
 async function main() {
-  ctx.log('▶ ${graph.name.replace(/'/g, "\\'")} — starting');
+  ctx.log('▶ ' + ${jsString(graph.name)} + ' — starting');
   for (let i = 0; i < STEPS.length; i++) {
     if (ctx.skipped.has(NODE_ORDER[i])) {
       ctx.log('↷ skipping step', NODE_ORDER[i]);

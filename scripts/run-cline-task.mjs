@@ -262,9 +262,6 @@ function main() {
     process.env.ANTHROPIC_API_KEY ||
     process.env.OPENAI_API_KEY ||
     process.env.GEMINI_API_KEY;
-  if (apiKey) {
-    cliArgs.push('--key', apiKey);
-  }
 
   // Append any extra args
   if (options.extraArgs.length > 0) {
@@ -282,9 +279,18 @@ function main() {
   console.log(`[Cline Runner] Working Dir: ${rootDir}`);
 
   if (options.dryRun) {
-    const sanitizedArgs = cliArgs.map((a, i) => (cliArgs[i - 1] === '--key' ? '******' : a.includes(' ') ? `"${a}"` : a));
+    const dryRunArgs = [...cliArgs];
+    if (apiKey) {
+      dryRunArgs.splice(dryRunArgs.length - 1, 0, '--key', '******');
+    }
+    const sanitizedArgs = dryRunArgs.map((a) => (a.includes(' ') ? `"${a}"` : a));
     console.log(`[Cline Runner] (Dry-Run) Command: ${execInfo.cmd} ${sanitizedArgs.join(' ')}`);
     process.exit(0);
+  }
+
+  if (apiKey) {
+    // Insert --key before the final positional prompt
+    cliArgs.splice(cliArgs.length - 1, 0, '--key', apiKey);
   }
 
   const result = spawnSync(execInfo.cmd, cliArgs, {

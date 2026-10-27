@@ -58,7 +58,21 @@ describe('deploy/ (Static Client Portal & Pages)', () => {
         const content = fs.readFileSync(path.join(DEPLOY_DIR, page), 'utf-8');
         
         // Strip out <script> blocks before checking HTML tags
-        const contentWithoutScripts = content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        let contentWithoutScripts = '';
+        let cursor = 0;
+        while (cursor < content.length) {
+          const scriptStart = content.toLowerCase().indexOf('<script', cursor);
+          if (scriptStart === -1) {
+            contentWithoutScripts += content.slice(cursor);
+            break;
+          }
+          contentWithoutScripts += content.slice(cursor, scriptStart);
+          const scriptEnd = content.toLowerCase().indexOf('</script>', scriptStart);
+          if (scriptEnd === -1) {
+            break;
+          }
+          cursor = scriptEnd + '</script>'.length;
+        }
         
         const hasInlineStyle = inlineStyleRegex.test(contentWithoutScripts);
         expect(hasInlineStyle, `File ${page} still contains inline style attribute in HTML markup`).toBe(false);

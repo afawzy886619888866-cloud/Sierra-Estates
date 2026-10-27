@@ -97,9 +97,10 @@ export class SharedMemoryBus {
     }, allTags))
 
     // Handle TTL expiry (bounded to prevent timer overflow / resource exhaustion)
-    if (effectiveTtl && effectiveTtl > 0) {
+    const MAX_TIMER_DELAY = 24 * 60 * 60 * 1000 // 24 hours max timer delay
+    if (effectiveTtl && effectiveTtl > 0 && effectiveTtl <= MAX_TIMER_DELAY) {
       this.clearExpiryTimer(id)
-      const safeTtl = Math.min(Math.max(100, effectiveTtl), 2147483647)
+      const safeTtl = Math.min(Math.max(100, effectiveTtl), MAX_TIMER_DELAY)
       const timer = setTimeout(() => {
         void this.expire(id).catch((error) => {
           console.error('[SharedMemoryBus] Failed to expire memory:', String(id).replace(/[\r\n]/g, ''), error)

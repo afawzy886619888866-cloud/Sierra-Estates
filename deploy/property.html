@@ -279,11 +279,13 @@
       '</div>';
   }).join('');
 
-  thumbsContainer.querySelectorAll('.gallery-thumb').forEach(function (thumb) {
+  thumbsContainer.querySelectorAll('.gallery-thumb').forEach(function (thumb, idx) {
     thumb.addEventListener('click', function () {
       thumbsContainer.querySelectorAll('.gallery-thumb').forEach(function (t) { t.classList.remove('active'); });
       this.classList.add('active');
-      mainPhoto.src = this.getAttribute('data-src');
+      if (galleryImages[idx]) {
+        mainPhoto.src = galleryImages[idx];
+      }
     });
   });
 

@@ -174,6 +174,58 @@ async function sendToAdminChat(html: string, plain: string): Promise<AccessReque
   }
 }
 
+/** Plain-text fallback for access request creation. */
+export function formatAccessRequestPlainText(params: {
+  email: string;
+  fullName: string;
+  provider: string;
+  requestedAt?: string;
+}): string {
+  const name = params.fullName || '—';
+  const provider = params.provider || 'google';
+  const when = params.requestedAt ?? new Date().toISOString();
+  return [
+    '🔔 NEW PORTAL ACCESS REQUEST',
+    '',
+    `👤 Name: ${name}`,
+    `✉️ Email: ${params.email}`,
+    `🔐 Provider: ${provider}`,
+    `🕒 Time: ${when}`,
+    '',
+    '→ Review in Admin Portal → Access Approvals (super-admin only).',
+  ].join('\n');
+}
+
+/** Plain-text fallback for access request decisions. */
+export function formatAccessDecisionPlainText(params: {
+  email: string;
+  decision: 'approved' | 'denied';
+  grantedRole?: string | null;
+  decidedBy?: string | null;
+  note?: string | null;
+}): string {
+  const by = params.decidedBy ?? '';
+  const note = params.note?.trim() ? params.note.trim().slice(0, 300) : '';
+  if (params.decision === 'approved') {
+    const role = params.grantedRole || 'viewer';
+    return [
+      '✅ ACCESS REQUEST APPROVED',
+      '',
+      `✉️ Email: ${params.email}`,
+      `🎭 Granted role: ${role}`,
+      ...(by ? [`🛡️ By: ${by}`] : []),
+      ...(note ? [`📝 Note: ${note}`] : []),
+    ].join('\n');
+  }
+  return [
+    '🚫 ACCESS REQUEST DENIED',
+    '',
+    `✉️ Email: ${params.email}`,
+    ...(by ? [`🛡️ By: ${by}`] : []),
+    ...(note ? [`📝 Note: ${note}`] : []),
+  ].join('\n');
+}
+
 /** Alert the admin chat that a new access request is pending approval. */
 export async function notifyAccessRequestCreated(params: {
   email: string;
@@ -182,11 +234,7 @@ export async function notifyAccessRequestCreated(params: {
   requestedAt?: string;
 }): Promise<AccessRequestNotificationResult> {
   const html = formatAccessRequestNotification(params);
-  const plain = html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+  const plain = formatAccessRequestPlainText(params);
   const result = await sendToAdminChat(html, plain);
   if (!result.ok) {
     logger.warn(
@@ -205,11 +253,7 @@ export async function notifyAccessRequestDecided(params: {
   note?: string | null;
 }): Promise<AccessRequestNotificationResult> {
   const html = formatAccessDecisionNotification(params);
-  const plain = html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+  const plain = formatAccessDecisionPlainText(params);
   const result = await sendToAdminChat(html, plain);
   if (!result.ok) {
     logger.warn(

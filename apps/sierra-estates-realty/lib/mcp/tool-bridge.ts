@@ -531,6 +531,8 @@ export function isScopeAuthorized(tokenScope: string, requiredScope: MCPRequired
 /**
  * Validates tool authorization and input arguments against Zod schema
  */
+export const checkToolExecutionScope = validateAndAuthorizeTool;
+
 export function validateAndAuthorizeTool(
   toolName: string,
   args: unknown,

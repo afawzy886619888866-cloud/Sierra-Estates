@@ -136,8 +136,7 @@ describe('Errors, Resilience & Edge-Case Protection Test Suite', () => {
       if (!raw || typeof raw !== 'string') return '';
       // Strip potentially dangerous XSS script tags and control characters
       return raw
-        .replace(/<[^>]*>?/gm, '')
-        .replace(/['";=]/g, '')
+        .replace(/[<>'";=]/g, '')
         .trim()
         .slice(0, 100);
     }
