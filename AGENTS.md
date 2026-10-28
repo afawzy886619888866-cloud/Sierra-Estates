@@ -33,6 +33,7 @@ To invoke a slash command, read the corresponding workflow file:
 - **remember** → [.agents/workflows/remember.md](.agents/workflows/remember.md)
 - **docs** → [.agents/workflows/docs.md](.agents/workflows/docs.md)
 - **bug** → [.agents/workflows/bug.md](.agents/workflows/bug.md)
+- **ingest-listings** → [.agents/workflows/ingest-listings.md](.agents/workflows/ingest-listings.md)
 
 ## Product Manager Experience
 1. **Proactive Guidance**: If the user starts a session without a specific request, proactively ask them if they want to improve their Project Charter / PRD, or if they have an idea to start the first MCD cycle.

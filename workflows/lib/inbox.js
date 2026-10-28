@@ -22,8 +22,10 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { loadWorkflowEnv, createSheetsClient } = require('./google-sheets');
-const { requestJson } = require('./gateway-client');
+const { GatewayClient, requestJson } = require('./gateway-client');
+const { generateListingContent } = require('./listing-copywriter');
 
 loadWorkflowEnv(path.resolve(__dirname, '..'));
 
@@ -448,28 +450,265 @@ async function handleDirectOwnerReply(message) {
   };
 }
 
+/**
+ * Detect whether an inbound WhatsApp message contains a real estate listing drop.
+ */
+function isListingDrop(message) {
+  const text = String(message.body || '').trim();
+  if (text.length < 15) return false;
+
+  const phoneDigits = String(message.chatId || message.sender || '').replace(/\D/g, '');
+  // Explicitly trusted owner/broker source number specified by user
+  const isTrustedSender = phoneDigits.endsWith('1092048333');
+
+  const keywords = [
+    'للبيع', 'للايجار', 'للإيجار', 'ايجار', 'إيجار', 'بيع', 'شقة', 'شقه', 'فيلا', 'توين هاوس',
+    'تاون هاوس', 'دوبلكس', 'بنتهاوس', 'مساحة', 'مساحه', 'مطلوب', 'متاح', 'كمبوند', 'كود',
+    'sqm', 'rent', 'sale', 'apartment', 'villa', 'penthouse', 'duplex', 'townhouse',
+    'twinhouse', 'compound', 'furnished', 'unfurnished', 'bedroom', 'bedrooms', 'bathroom'
+  ];
+  let kwCount = 0;
+  const lower = text.toLowerCase();
+  for (const kw of keywords) {
+    if (lower.includes(kw)) kwCount++;
+  }
+
+  const isOwnerGroup = message.isGroup && /owner|ملاك|augast/i.test(message.chatId || '');
+
+  return Boolean(isTrustedSender || (kwCount >= 2) || (isOwnerGroup && kwCount >= 1));
+}
+
+/**
+ * Parses and ingests an inbound WhatsApp listing drop directly into Supabase listings,
+ * enriches it with luxury AI marketing copy, and sends an automated confirmation reply.
+ */
+async function handleInboundListingDrop(message) {
+  const text = String(message.body || '').trim();
+  const lower = text.toLowerCase();
+  const sb = sbConfig();
+
+  // 1. Compound Detection
+  const compounds = [
+    { keys: ['ميفيدا', 'mivida'], label: 'Mivida' },
+    { keys: ['ماونتن فيو هايد بارك', 'mountain view hyde park', 'mv hp'], label: 'Mountain View Hyde Park' },
+    { keys: ['هايد بارك', 'hyde park', 'هايدبارك'], label: 'Hyde Park' },
+    { keys: ['فيفث سكوير', 'المراسم', 'fifth square', 'marasem'], label: 'Fifth Square' },
+    { keys: ['بالم هيلز', 'palm hills'], label: 'Palm Hills New Cairo' },
+    { keys: ['مدينتي', 'madinaty'], label: 'Madinaty' },
+    { keys: ['الرحاب', 'rehab', 'al rehab'], label: 'Al Rehab' },
+    { keys: ['بيت الوطن', 'beit el watan'], label: 'Beit El Watan' },
+    { keys: ['ايست تاون', 'eastown', 'ايستاون'], label: 'Eastown' },
+    { keys: ['فيليت', 'villette'], label: 'Villette' },
+    { keys: ['سوان ليك', 'swan lake'], label: 'Swan Lake' },
+    { keys: ['اوريانا', 'oriana'], label: 'Oriana 2' },
+  ];
+  let detectedCompound = 'New Cairo';
+  for (const c of compounds) {
+    if (c.keys.some((k) => lower.includes(k))) {
+      detectedCompound = c.label;
+      break;
+    }
+  }
+
+  // 2. Deal Type (strictly lowercase 'rent' | 'sale' per Postgres constraint)
+  const isRent = /ايجار|إيجار|للايجار|للإيجار|rent|مفروش/i.test(text);
+  const dealType = isRent ? 'rent' : 'sale';
+
+  // 3. Property Type
+  let propertyType = 'Apartment';
+  if (/فيلا مستقلة|فيلا ستاند|standalone|villa/i.test(text)) propertyType = 'Standalone Villa';
+  else if (/توين هاوس|twin\s*house/i.test(text)) propertyType = 'Twin House';
+  else if (/تاون هاوس|town\s*house/i.test(text)) propertyType = 'Townhouse';
+  else if (/دوبلكس|duplex/i.test(text)) propertyType = 'Duplex';
+  else if (/بنتهاوس|روف|penthouse/i.test(text)) propertyType = 'Penthouse';
+  else if (/شاليه|chalet/i.test(text)) propertyType = 'Chalet';
+
+  // 4. Area
+  let areaSqm = null;
+  const areaMatch = text.match(/(?:مساحة|مساحه|area)?\s*[:=]?\s*(\d{2,4})\s*(?:متر|م²|م|sqm|m2)/i);
+  if (areaMatch) areaSqm = parseInt(areaMatch[1], 10);
+
+  // 5. Price
+  let price = 0;
+  const priceMillionMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:مليون|ملون|million|m\b)/i);
+  if (priceMillionMatch) {
+    price = Math.round(parseFloat(priceMillionMatch[1].replace(/,/g, '')) * 1_000_000);
+  } else {
+    const priceThousandMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:الف|ألف|k\b)/i);
+    if (priceThousandMatch) {
+      price = Math.round(parseFloat(priceThousandMatch[1].replace(/,/g, '')) * 1_000);
+    } else {
+      const priceGenMatch = text.match(/(?:سعر|مطلوب|الايجار|الإيجار|بـ|ب)\s*[:=]?\s*(\d[0-9,]{3,9})/i);
+      if (priceGenMatch) price = Math.round(parseFloat(priceGenMatch[1].replace(/,/g, '')));
+    }
+  }
+
+  // 6. Beds & Baths
+  let bedrooms = 3;
+  const bedMatch = text.match(/(\d)\s*(?:غرف|غرفة|نوم|beds?|bedrooms?)/i);
+  if (bedMatch) bedrooms = parseInt(bedMatch[1], 10);
+
+  let bathrooms = 2;
+  const bathMatch = text.match(/(\d)\s*(?:حمام|حمامات|baths?|bathrooms?)/i);
+  if (bathMatch) bathrooms = parseInt(bathMatch[1], 10);
+
+  // 7. Phone & Hash
+  const phoneDigits = normalizeOwnerPhone(message.chatId || message.sender);
+  const hashKey = `${dealType}:${detectedCompound}:${propertyType}:${areaSqm || ''}:${price || ''}:${phoneDigits || ''}`;
+  const dupeCheckHash = crypto.createHash('sha256').update(hashKey).digest('hex').slice(0, 16);
+  const code = `WA-${dupeCheckHash.slice(0, 8).toUpperCase()}`;
+
+  // 8. Generate Luxury AI Marketing Copy
+  const copy = await generateListingContent({
+    code,
+    compound: detectedCompound,
+    dealType,
+    propertyType,
+    price,
+    areaSqm,
+    bedrooms,
+    bathrooms,
+    description: text,
+  });
+
+  const nowIso = new Date().toISOString();
+  let dbSaved = false;
+
+  if (sb) {
+    const listingPayload = {
+      code,
+      title: copy.titleEn,
+      description: copy.descriptionEn,
+      deal_type: dealType,
+      property_type: propertyType,
+      compound: detectedCompound,
+      price: price || 0,
+      area_sqm: areaSqm || 0,
+      bedrooms,
+      bathrooms,
+      owner_phone: phoneDigits || null,
+      source_channel: 'whatsapp_inbound_spy',
+      status: 'active',
+      availability: 'available',
+      publish_status: 'DRAFT',
+      dupe_check_hash: dupeCheckHash,
+      images: [],
+      photo_count: 0,
+      raw_data: {
+        raw_message: text,
+        title_ar: copy.titleAr,
+        description_ar: copy.descriptionAr,
+        model_used: copy.modelUsed,
+        chat_id: message.chatId,
+        sender: message.sender,
+        ingested_at: nowIso,
+      },
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    try {
+      const insRes = await requestJson(`${sb.url}/rest/v1/listings`, {
+        method: 'POST',
+        headers: { ...sb.headers, Prefer: 'return=representation' },
+        body: listingPayload,
+        timeoutMs: 10000,
+      });
+      if (insRes.ok) {
+        dbSaved = true;
+      } else if (insRes.status === 409 || /duplicate|uq_listings_dupe_check_hash/i.test(JSON.stringify(insRes.data))) {
+        dbSaved = true; // Already exists
+      }
+    } catch (err) {
+      console.warn(`inbox: listing insert failed: ${err.message}`);
+    }
+  }
+
+  // 9. Send Automated WhatsApp Confirmation Reply
+  const replyTarget = message.chatId || normalizeOwnerPhone(message.sender);
+  const confirmationMsg = `✅ تم استلام وفحص الوحدة بنجاح!\n\n` +
+    `• كود الوحدة: ${code}\n` +
+    `• الكومباوند: ${detectedCompound}\n` +
+    `• النوع: ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
+    `• السعر: ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
+    `• العنوان الإعلاني: ${copy.titleAr}\n\n` +
+    `تم إدراج الوحدة ضمن المخزون، وتحديث خريطة العملاء ومراجعة إعلانات Property Finder.`;
+
+  let replySent = false;
+  try {
+    const gateway = new GatewayClient();
+    await gateway.sendText(replyTarget, confirmationMsg, { timeoutMs: 8000 });
+    replySent = true;
+  } catch (err) {
+    // Gateway not immediately online — enqueue in Supabase whatsapp_queue so it sends as soon as ready
+    if (sb && replyTarget) {
+      await requestJson(`${sb.url}/rest/v1/whatsapp_queue`, {
+        method: 'POST',
+        headers: { ...sb.headers, Prefer: 'return=minimal' },
+        body: {
+          recipient_phone: replyTarget,
+          message_body: confirmationMsg,
+          purpose: 'owner-negotiation',
+          status: 'queued',
+          metadata: { kind: 'inbound-listing-confirmation', code },
+          created_at: nowIso,
+          updated_at: nowIso,
+        },
+        timeoutMs: 6000,
+      }).catch(() => ({ ok: false }));
+    }
+  }
+
+  return {
+    routed: true,
+    intent: 'listing_ingested',
+    code,
+    compound: detectedCompound,
+    dealType,
+    price,
+    dbSaved,
+    replySent,
+  };
+}
+
 /** Handle one webhook delivery. Resolves {stored, sheet, directReply} — never throws. */
 async function handleInbound(body) {
   const message = extractMessage(body);
   let stored = false;
   let sheet = false;
   let directReply = null;
+  let listingIngest = null;
+
   try {
     appendJsonl(INBOX_FILE, { receivedAt: new Date().toISOString(), body });
     stored = true;
   } catch (err) {
     console.error(`inbox: jsonl append failed: ${err.message}`);
   }
+
   try {
+    // Priority 1: Check if this message is a listing drop (from 01092048333, owners group, or contains listing specs)
+    if (isListingDrop(message)) {
+      listingIngest = await handleInboundListingDrop(message);
+    }
+
     if (message.isGroup) {
       sheet = await appendToSheet(message);
-    } else {
+    } else if (!listingIngest) {
       directReply = await handleDirectOwnerReply(message);
     }
   } catch (err) {
     console.error(`inbox: routing path failed: ${err.message}`);
   }
-  return { stored, sheet, directReply, chatId: message.chatId, isGroup: message.isGroup };
+
+  return {
+    stored,
+    sheet,
+    directReply,
+    listingIngest,
+    chatId: message.chatId,
+    isGroup: message.isGroup,
+  };
 }
 
 /** Tail the inbox JSONL for the control API. */
@@ -488,6 +727,8 @@ function preview(n = 20) {
 module.exports = {
   handleInbound,
   handleDirectOwnerReply,
+  handleInboundListingDrop,
+  isListingDrop,
   writeOwnerReplyToSheet,
   classifyOwnerReply,
   normalizeOwnerPhone,

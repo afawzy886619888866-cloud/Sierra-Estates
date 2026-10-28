@@ -21,6 +21,7 @@ import * as path from 'path';
 if (fs.existsSync(path.resolve('.env.local'))) {
   const dotenv = await import('dotenv');
   dotenv.config({ path: '.env.local' });
+  dotenv.config({ path: '.env' });
 }
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;

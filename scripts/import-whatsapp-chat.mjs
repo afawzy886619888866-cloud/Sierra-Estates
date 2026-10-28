@@ -20,8 +20,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+
+const require = createRequire(import.meta.url);
+const { generateInstitutionalCopy } = require('../workflows/lib/listing-copywriter.js');
 
 dotenv.config({ path: 'workflows/.env' });
 dotenv.config({ path: '.env' });
@@ -380,9 +384,21 @@ export async function processChatFile(chatFilePath, options = {}, sb = null) {
       }
 
       const listingCode = `WA-${u.dupeHash.slice(0, 8).toUpperCase()}`;
+      const copy = generateInstitutionalCopy({
+        code: listingCode,
+        compound: u.compound,
+        propertyType: u.propertyType,
+        dealType: u.dealType,
+        price: u.price,
+        areaSqm: u.areaSqm,
+        bedrooms: u.bedrooms,
+        bathrooms: u.bathrooms,
+        description: u.rawText,
+      });
+
       payloads.push({
         code: listingCode,
-        title: `${u.propertyType} in ${u.compound}`,
+        title: copy.titleEn || `${u.propertyType} in ${u.compound}`,
         compound: u.compound,
         location_area: u.zone,
         price: u.price || 0,
@@ -393,7 +409,7 @@ export async function processChatFile(chatFilePath, options = {}, sb = null) {
         deal_type: (u.dealType || 'sale').toLowerCase(),
         owner_name: u.ownerName || null,
         owner_phone: u.ownerPhone || null,
-        description: u.rawText || `${u.propertyType} in ${u.compound}`,
+        description: copy.descriptionEn || u.rawText || `${u.propertyType} in ${u.compound}`,
         images: uploadedUrls.length ? uploadedUrls : null,
         photo_count: uploadedUrls.length,
         status: 'active',
@@ -402,6 +418,13 @@ export async function processChatFile(chatFilePath, options = {}, sb = null) {
         dupe_check_hash: u.dupeHash,
         latitude: u.lat || 30.03,
         longitude: u.lng || 31.47,
+        raw_data: {
+          title_ar: copy.titleAr,
+          description_ar: copy.descriptionAr,
+          raw_message: u.rawText,
+          source_group: groupName,
+          ingested_at: new Date().toISOString(),
+        },
       });
     }
 
