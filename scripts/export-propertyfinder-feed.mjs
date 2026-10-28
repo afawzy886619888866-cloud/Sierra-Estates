@@ -22,10 +22,21 @@ function loadEnv() {
   }
 }
 
+function loadCompoundPhotoPool() {
+  const poolPath = path.join(ROOT, 'apps', 'sierra-estates-realty', 'lib', 'inventory', 'compound-real-photos.json');
+  if (!fs.existsSync(poolPath)) return {};
+  try {
+    const parsed = JSON.parse(fs.readFileSync(poolPath, 'utf8'));
+    return parsed && typeof parsed.compounds === 'object' ? parsed.compounds : {};
+  } catch {
+    return {};
+  }
+}
+
 function mapOfferingType(dealType) {
   const d = String(dealType || '').toLowerCase();
-  if (d.includes('rent') || d.includes('ايجار')) return 'RR'; // Residential Rent
-  return 'RS'; // Residential Sale
+  if (d.includes('rent') || d.includes('ايجار')) return 'RR';
+  return 'RS';
 }
 
 function mapPropertyType(type) {
@@ -38,25 +49,27 @@ function mapPropertyType(type) {
   if (t.includes('chalet') || t.includes('شاليه')) return 'CH';
   if (t.includes('commercial') || t.includes('retail') || t.includes('shop')) return 'RE';
   if (t.includes('office') || t.includes('مكتب')) return 'OF';
-  return 'AP'; // Apartment
+  return 'AP';
 }
 
-/** The AUG26 WhatsApp ingest glued image entries ("/manus-storage/IMG-20 https://real.jpg",
- *  "https://a.jpg https://b.jpg"). Extract every clean http(s) URL so the feed
- *  never carries malformed or relative junk, and URLs trapped inside glued
- *  entries are not silently lost. Mirrors scripts/export-ad-kit.mjs sanitizeImages. */
 function sanitizeFeedImages(raw) {
-  const entries = Array.isArray(raw) ? raw
-    : typeof raw === 'string' && raw.trim() ? (() => {
-        try { const v = JSON.parse(raw); return Array.isArray(v) ? v : [raw]; }
-        catch { return [raw]; }
-      })()
-    : [];
+  const entries = Array.isArray(raw)
+    ? raw
+    : typeof raw === 'string' && raw.trim()
+      ? (() => {
+          try {
+            const v = JSON.parse(raw);
+            return Array.isArray(v) ? v : [raw];
+          } catch {
+            return [raw];
+          }
+        })()
+      : [];
   const urls = [];
   for (const e of entries) {
     if (typeof e !== 'string') continue;
     for (const m of e.matchAll(/https?:\/\/[^\s"'<>\\]+/g)) {
-      const u = m[0].replace(/[),.;]+$/, '').replace(/&amp;/g, '&'); // decode HTML-entity & from legacy ingest
+      const u = m[0].replace(/[),.;]+$/, '').replace(/&amp;/g, '&');
       if (u && !urls.includes(u)) urls.push(u);
     }
   }
@@ -72,6 +85,68 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+function buildPropertyBlock(item, compoundPool, agentPhone, agentEmail) {
+  const ref = item.pf_reference_number || item.code || item.ref_id || `SE-${item.id.slice(0, 8).toUpperCase()}`;
+  const offeringType = mapOfferingType(item.deal_type);
+  const propType = mapPropertyType(item.property_type);
+  const city = item.city || 'Cairo';
+  const community = item.location_area || 'New Cairo';
+  const subCommunity = item.compound || '';
+  const titleEn = item.title || `${item.property_type || 'Property'} in ${item.compound || 'New Cairo'}`;
+  const descEn = item.description || titleEn;
+  const price = Number(item.price) || 0;
+  const size = Number(item.area_sqm) || 0;
+  const beds = Number(item.bedrooms) || 0;
+  const baths = Number(item.bathrooms) || 0;
+
+  let images = sanitizeFeedImages(item.images);
+  if (images.length === 0 && subCommunity && Array.isArray(compoundPool[subCommunity])) {
+    images = compoundPool[subCommunity].slice(0, 5);
+  }
+
+  let block = `  <property last_update="${new Date(item.updated_at || Date.now()).toISOString().replace('T', ' ').slice(0, 19)}">\n`;
+  block += `    <reference_number>${escapeXml(ref)}</reference_number>\n`;
+  block += `    <offering_type>${offeringType}</offering_type>\n`;
+  block += `    <property_type>${propType}</property_type>\n`;
+  block += `    <price_on_application>${price > 0 ? '0' : '1'}</price_on_application>\n`;
+  block += `    <price>${price}</price>\n`;
+  if (offeringType === 'RR') {
+    block += `    <rental_period>M</rental_period>\n`;
+  }
+  block += `    <currency>${escapeXml(item.price_currency || 'EGP')}</currency>\n`;
+  block += `    <city>${escapeXml(city)}</city>\n`;
+  block += `    <community>${escapeXml(community)}</community>\n`;
+  if (subCommunity) {
+    block += `    <sub_community>${escapeXml(subCommunity)}</sub_community>\n`;
+  }
+  block += `    <title_en><![CDATA[${titleEn}]]></title_en>\n`;
+  if (item.title_ar) {
+    block += `    <title_ar><![CDATA[${item.title_ar}]]></title_ar>\n`;
+  }
+  block += `    <description_en><![CDATA[${descEn}]]></description_en>\n`;
+  if (item.description_ar) {
+    block += `    <description_ar><![CDATA[${item.description_ar}]]></description_ar>\n`;
+  }
+  if (size > 0) block += `    <size>${size}</size>\n`;
+  if (beds > 0) block += `    <bedroom>${beds}</bedroom>\n`;
+  if (baths > 0) block += `    <bathroom>${baths}</bathroom>\n`;
+  block += `    <agent>\n`;
+  block += `      <name>${escapeXml(item.agent_name || 'Sierra Estates Advisory')}</name>\n`;
+  block += `      <email>${escapeXml(agentEmail)}</email>\n`;
+  block += `      <phone>${escapeXml(agentPhone)}</phone>\n`;
+  block += `    </agent>\n`;
+
+  if (images.length > 0) {
+    block += `    <photo>\n`;
+    for (const imgUrl of images.slice(0, 15)) {
+      block += `      <url>${escapeXml(imgUrl)}</url>\n`;
+    }
+    block += `    </photo>\n`;
+  }
+  block += `  </property>\n`;
+  return { block, hasDirectPhotos: sanitizeFeedImages(item.images).length > 0 };
+}
+
 async function exportPropertyFinderFeed() {
   loadEnv();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -81,92 +156,75 @@ async function exportPropertyFinderFeed() {
     throw new Error('Supabase credentials missing.');
   }
 
-  const supabase = createClient(url, key);
-  console.log('Fetching active listings from Supabase for Property Finder feed...');
+  const agentPhone = process.env.PF_AGENT_PHONE || process.env.SIERRA_AGENT_PHONE || '+201092048333';
+  const agentEmail = process.env.PF_AGENT_EMAIL || 'info@sierra-estates.net';
+  const compoundPool = loadCompoundPhotoPool();
 
-  const { data: listings, error } = await supabase
-    .from('listings')
-    .select('id, ref_id, code, pf_reference_number, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, finishing_type, description, description_ar, images, updated_at, agent_name')
-    .in('status', ['available', 'active', 'published'])
-    .order('updated_at', { ascending: false });
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  console.log('Fetching publish-gated active listings from Supabase for Property Finder syndication (paginated)...');
 
-  if (error) throw new Error(`Supabase query failed: ${error.message}`);
-  console.log(`Found ${listings.length} active listings for Property Finder syndication.`);
+  const PAGE_SIZE = 1000;
+  const listings = [];
+  for (let from = 0; from < 25000; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('listings')
+      .select(
+        'id, ref_id, code, pf_reference_number, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, description, description_ar, images, updated_at, agent_name'
+      )
+      .eq('publish_status', 'PUBLISHABLE')
+      .in('status', ['available', 'active', 'published'])
+      .gt('price', 0)
+      .order('updated_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Supabase query failed at offset ${from}: ${error.message}`);
+    const batch = data || [];
+    listings.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+  }
+
+  console.log(`Found ${listings.length} PUBLISHABLE priced listings for Property Finder syndication.`);
 
   const outputDir = path.join(ROOT, 'docs', 'drafts', 'propertyfinder');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // 1. Build Canonical Property Finder XML Feed
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<list last_update="${new Date().toISOString()}">\n`;
+  const nowIso = new Date().toISOString();
+  const fullBlocks = [];
+  const compactBlocks = [];
+  const COMPACT_LIMIT = 1000;
+
+  // Prioritize units with direct photos for the tracked compact feed (<5 MB git policy)
+  const sortedForCompact = [...listings].sort((a, b) => {
+    const aPhotos = sanitizeFeedImages(a.images).length;
+    const bPhotos = sanitizeFeedImages(b.images).length;
+    return bPhotos - aPhotos;
+  });
 
   for (const item of listings) {
-    const ref = item.pf_reference_number || item.code || item.ref_id || `SE-${item.id.slice(0, 8).toUpperCase()}`;
-    const offeringType = mapOfferingType(item.deal_type);
-    const propType = mapPropertyType(item.property_type);
-    const city = item.city || 'Cairo';
-    const community = item.location_area || 'New Cairo';
-    const subCommunity = item.compound || '';
-    const titleEn = item.title || `${item.property_type || 'Property'} in ${item.compound || 'New Cairo'}`;
-    const descEn = item.description || titleEn;
-    const price = Number(item.price) || 0;
-    const size = Number(item.area_sqm) || 0;
-    const beds = Number(item.bedrooms) || 0;
-    const baths = Number(item.bathrooms) || 0;
-
-    // sanitized: only clean http(s) URLs survive (glued/relative junk dropped)
-    const images = sanitizeFeedImages(item.images);
-
-    xml += `  <property last_update="${new Date(item.updated_at || Date.now()).toISOString().replace('T', ' ').slice(0, 19)}">\n`;
-    xml += `    <reference_number>${escapeXml(ref)}</reference_number>\n`;
-    xml += `    <offering_type>${offeringType}</offering_type>\n`;
-    xml += `    <property_type>${propType}</property_type>\n`;
-    xml += `    <price_on_application>${price > 0 ? '0' : '1'}</price_on_application>\n`;
-    xml += `    <price>${price}</price>\n`;
-    if (offeringType === 'RR') {
-      xml += `    <rental_period>M</rental_period>\n`;
-    }
-    xml += `    <currency>EGP</currency>\n`;
-    xml += `    <city>${escapeXml(city)}</city>\n`;
-    xml += `    <community>${escapeXml(community)}</community>\n`;
-    if (subCommunity) {
-      xml += `    <sub_community>${escapeXml(subCommunity)}</sub_community>\n`;
-    }
-    xml += `    <title_en><![CDATA[${titleEn}]]></title_en>\n`;
-    if (item.title_ar) {
-      xml += `    <title_ar><![CDATA[${item.title_ar}]]></title_ar>\n`;
-    }
-    xml += `    <description_en><![CDATA[${descEn}]]></description_en>\n`;
-    if (item.description_ar) {
-      xml += `    <description_ar><![CDATA[${item.description_ar}]]></description_ar>\n`;
-    }
-    if (size > 0) xml += `    <size>${size}</size>\n`;
-    if (beds > 0) xml += `    <bedroom>${beds}</bedroom>\n`;
-    if (baths > 0) xml += `    <bathroom>${baths}</bathroom>\n`;
-    xml += `    <agent>\n`;
-    xml += `      <name>${escapeXml(item.agent_name || 'Sierra Estates Team')}</name>\n`;
-    xml += `      <email>info@sierra-estates.net</email>\n`;
-    xml += `      <phone>+201000000000</phone>\n`;
-    xml += `    </agent>\n`;
-
-    if (images.length > 0) {
-      xml += `    <photo>\n`;
-      for (const imgUrl of images) {
-        xml += `      <url>${escapeXml(imgUrl)}</url>\n`;
-      }
-      xml += `    </photo>\n`;
-    }
-    xml += `  </property>\n`;
+    const { block } = buildPropertyBlock(item, compoundPool, agentPhone, agentEmail);
+    fullBlocks.push(block);
   }
 
-  xml += `</list>\n`;
+  for (const item of sortedForCompact.slice(0, COMPACT_LIMIT)) {
+    const { block } = buildPropertyBlock(item, compoundPool, agentPhone, agentEmail);
+    compactBlocks.push(block);
+  }
 
-  const xmlPath = path.join(outputDir, 'propertyfinder-feed.xml');
-  fs.writeFileSync(xmlPath, xml, 'utf8');
-  console.log(`[✓] Wrote Property Finder XML Feed (${listings.length} ads) → ${xmlPath}`);
+  const fullXml = `<?xml version="1.0" encoding="UTF-8"?>\n<list last_update="${nowIso}">\n${fullBlocks.join('')}</list>\n`;
+  const compactXml = `<?xml version="1.0" encoding="UTF-8"?>\n<list last_update="${nowIso}">\n${compactBlocks.join('')}</list>\n`;
 
-  // 2. Build Property Finder CSV for Direct Portal Upload
+  const allXmlPath = path.join(outputDir, 'propertyfinder-all-units.xml');
+  const feedXmlPath = path.join(outputDir, 'propertyfinder-feed.xml');
+  fs.writeFileSync(allXmlPath, fullXml, 'utf8');
+  fs.writeFileSync(feedXmlPath, compactXml, 'utf8');
+
+  console.log(`[✓] Wrote Full Property Finder XML (${listings.length} ads, ${(fullXml.length / 1024 / 1024).toFixed(2)} MB) → ${allXmlPath}`);
+  console.log(`[✓] Wrote Tracked Compact XML (${compactBlocks.length} top photo-verified ads, ${(compactXml.length / 1024 / 1024).toFixed(2)} MB) → ${feedXmlPath}`);
+
   const csvHeaders = [
     'Reference',
     'Offering Type',
@@ -180,27 +238,32 @@ async function exportPropertyFinderFeed() {
     'Bathrooms',
     'Area (sqm)',
     'Title (EN)',
+    'Title (AR)',
     'Description (EN)',
+    'Description (AR)',
   ];
 
   const csvRows = [csvHeaders.join(',')];
+  const cleanStr = (s) => `"${String(s || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
   for (const item of listings) {
     const ref = item.pf_reference_number || item.code || item.ref_id || `SE-${item.id.slice(0, 8).toUpperCase()}`;
-    const cleanStr = (s) => `"${String(s || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+    const offering = mapOfferingType(item.deal_type);
     csvRows.push([
       cleanStr(ref),
-      cleanStr(mapOfferingType(item.deal_type)),
+      cleanStr(offering),
       cleanStr(mapPropertyType(item.property_type)),
       item.price || 0,
-      mapOfferingType(item.deal_type) === 'RR' ? 'Monthly' : '',
+      offering === 'RR' ? 'Monthly' : '',
       cleanStr(item.city || 'Cairo'),
       cleanStr(item.location_area || 'New Cairo'),
       cleanStr(item.compound || ''),
       item.bedrooms || 0,
       item.bathrooms || 0,
       item.area_sqm || 0,
-      cleanStr(item.title || `${item.property_type} in ${item.compound}`),
+      cleanStr(item.title || `${item.property_type || 'Property'} in ${item.compound || 'New Cairo'}`),
+      cleanStr(item.title_ar || ''),
       cleanStr(item.description || item.title || ''),
+      cleanStr(item.description_ar || ''),
     ].join(','));
   }
 

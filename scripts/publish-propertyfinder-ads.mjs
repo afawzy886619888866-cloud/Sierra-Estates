@@ -64,7 +64,16 @@ const COMPOUND_TRANSLATIONS = {
 };
 
 // Verified Property Finder CDN architectural photos pool by compound/type
+const REAL_COMPOUND_POOL = (() => {
+  try {
+    const pJson = path.join(ROOT, 'apps', 'sierra-estates-realty', 'lib', 'inventory', 'compound-real-photos.json');
+    if (fs.existsSync(pJson)) return JSON.parse(fs.readFileSync(pJson, 'utf8')).compounds || {};
+  } catch {}
+  return {};
+})();
+
 const COMPOUND_PHOTO_FALLBACKS = {
+  ...REAL_COMPOUND_POOL,
   'Hyde Park': [
     'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
@@ -579,7 +588,11 @@ function generateFeeds(units) {
 
   fs.writeFileSync(allXmlPath, xml, 'utf8');
   fs.writeFileSync(ownersXmlPath, xml, 'utf8');
-  fs.writeFileSync(defaultXmlPath, xml, 'utf8');
+  // Keep tracked propertyfinder-feed.xml safely <5MB (top 600 units); full XML is in propertyfinder-all-units.xml
+  const compactHeader = `<?xml version="1.0" encoding="UTF-8"?>\n<list last_update="${now}">\n`;
+  const propBlocks = [...xml.matchAll(/  <property[\s\S]*?<\/property>\n/g)].map(m => m[0]);
+  const compactXml = compactHeader + propBlocks.slice(0, 600).join('') + '</list>\n';
+  fs.writeFileSync(defaultXmlPath, compactXml, 'utf8');
   fs.writeFileSync(allCsvPath, csvRows.join('\n'), 'utf8');
 
   console.log(`✅ Generated propertyfinder-all-units.xml (${(xml.length / 1024 / 1024).toFixed(2)} MB, ${units.length} ads)`);

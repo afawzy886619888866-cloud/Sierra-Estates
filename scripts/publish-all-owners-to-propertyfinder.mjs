@@ -32,7 +32,7 @@ const AVAILABLE_ONLY = process.argv.includes('--available-only');
 
 // Config
 const WORKBOOK = path.join(ROOT, 'data', 'Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx');
-const OUT_DIR  = path.join(ROOT, 'apps', 'sierra-estates-realty', 'public', 'feeds');
+const OUT_DIR  = path.join(ROOT, 'docs', 'drafts', 'propertyfinder');
 
 const SKIP_AVAILABILITY = new Set(['not available', 'sold', 'rented', 'cancelled', 'not_available']);
 
@@ -45,7 +45,7 @@ function loadExistingPhotos() {
   const byRef   = new Map(); // ref -> [url, ...]
   const byPhone = new Map(); // last-9-digits-of-phone -> [url, ...]
 
-  const feedDir = path.join(ROOT, 'apps', 'sierra-estates-realty', 'public', 'feeds');
+  const feedDir = path.join(ROOT, 'docs', 'drafts', 'propertyfinder');
   const xmlFiles = ['propertyfinder-photos-only.xml', 'propertyfinder-feed.xml'];
 
   for (const fname of xmlFiles) {
@@ -203,7 +203,16 @@ const COMPOUND_TRANSLATIONS = {
   'New Cairo': { ar: 'القاهرة الجديدة', dev: 'Private Builder', devAr: 'مطور خاص', zone: 'New Cairo', zoneAr: 'القاهرة الجديدة' }
 };
 
+const REAL_COMPOUND_POOL = (() => {
+  try {
+    const pJson = path.join(ROOT, 'apps', 'sierra-estates-realty', 'lib', 'inventory', 'compound-real-photos.json');
+    if (fs.existsSync(pJson)) return JSON.parse(fs.readFileSync(pJson, 'utf8')).compounds || {};
+  } catch {}
+  return {};
+})();
+
 const COMPOUND_PHOTO_FALLBACKS = {
+  ...REAL_COMPOUND_POOL,
   'Hyde Park': [
     'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
@@ -497,8 +506,19 @@ function csvStr(s) {
 function buildCsvRow(unit, photoCount = 8) {
   const compound = unit.compound || unit.zone || '';
   const zone = unit.zone || 'New Cairo';
-  const photos = unit.photos.slice(0, photoCount);
+  const effectivePhotos = (unit.photos && unit.photos.length > 0)
+    ? unit.photos
+    : (COMPOUND_PHOTO_FALLBACKS[compound] || COMPOUND_PHOTO_FALLBACKS['DEFAULT'] || []);
+  const photos = effectivePhotos.slice(0, photoCount);
   const photoCols = Array.from({ length: photoCount }, (_, i) => csvStr(photos[i] || ''));
+  const { title_en, title_ar } = buildTitle(unit.propType, compound, zone, unit.offeringType, unit);
+  const { desc_en, desc_ar } = buildDesc(
+    { Description: unit.description, Furnishing: unit.furnishing, Bedrooms: unit.beds, Bathrooms: unit.baths, 'Area (sqm)': unit.area, price: unit.price },
+    unit.offeringType,
+    compound,
+    zone,
+    unit,
+  );
   return [
     csvStr(unit.ref),
     csvStr(unit._type === 'rent' ? 'Owners Rent' : 'Owners Resale'),
@@ -512,24 +532,106 @@ function buildCsvRow(unit, photoCount = 8) {
     unit.baths || '',
     unit.area || '',
     ...photoCols,
-    csvStr(unit.photos.join(' | ')),
-    csvStr(buildTitle(unit.propType, compound, zone, unit.offeringType)),
-    csvStr(buildDesc({ Description: unit.description, Furnishing: unit.furnishing, Bedrooms: unit.beds, 'Area (sqm)': unit.area }, unit.offeringType, compound, zone)),
+    csvStr(effectivePhotos.join(' | ')),
+    csvStr(title_en),
+    csvStr(title_ar),
+    csvStr(desc_en),
+    csvStr(desc_ar),
   ].join(',');
+}
+
+
+function loadDotEnv() {
+  for (const rel of ['.env.local', '.env', 'workflows/.env']) {
+    const f = path.join(ROOT, rel);
+    if (!fs.existsSync(f)) continue;
+    for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!m || process.env[m[1]]) continue;
+      process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
+    }
+  }
+}
+
+async function loadUnitsFromSupabase() {
+  loadDotEnv();
+  const sbUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!sbUrl || !sbKey) {
+    throw new Error('Neither Master Workbook nor Supabase credentials found.');
+  }
+  const { createClient } = require('@supabase/supabase-js');
+  const sb = createClient(sbUrl, sbKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const rows = [];
+  const PAGE = 1000;
+  for (let from = 0; from < 20000; from += PAGE) {
+    const { data, error } = await sb
+      .from('listings')
+      .select('id, code, ref_id, pf_reference_number, compound, location_area, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, furnishing_status, status, availability, owner_name, owner_phone, source_channel, description, images')
+      .not('owner_phone', 'is', null)
+      .order('updated_at', { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error('Supabase owner query failed: ' + error.message);
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length < PAGE) break;
+  }
+
+  const rentUnits = [];
+  const resaleUnits = [];
+  for (const r of rows) {
+    const isRent = String(r.deal_type || '').toLowerCase().includes('rent');
+    const compound = normalizeCompound(r.compound || r.location_area);
+    const zone = String(r.location_area || 'New Cairo').trim();
+    const rawStatus = String(r.availability || r.status || 'available').toLowerCase().trim();
+    const isArchivedOrSold = ['archived', 'sold', 'off-market', 'not available', 'rented', 'cancelled', 'not_available'].includes(rawStatus) ||
+      ['archived', 'sold', 'off-market'].includes(String(r.status || '').toLowerCase());
+    const cleanPhotos = Array.isArray(r.images)
+      ? r.images.flatMap((e) => typeof e === 'string' ? [...e.matchAll(/https?:\/\/[^\s"'<>\\]+/g)].map((m) => m[0]) : [])
+      : [];
+    const unit = {
+      _type: isRent ? 'rent' : 'resale',
+      ref: r.pf_reference_number || r.code || r.ref_id || (isRent ? 'OWN-R-' : 'OWN-S-') + String(r.id).slice(0, 8).toUpperCase(),
+      compound,
+      zone,
+      propType: String(r.property_type || 'Apartment').trim(),
+      offeringType: isRent ? 'RR' : 'RS',
+      price: Number(r.price) || 0,
+      area: Number(r.area_sqm) || 0,
+      beds: Number(r.bedrooms) || 0,
+      baths: Number(r.bathrooms) || 0,
+      furnishing: String(r.furnishing_status || '').trim(),
+      availability: rawStatus,
+      isAvailable: !isArchivedOrSold,
+      phone: String(r.owner_phone || '').replace(/[^0-9]/g, ''),
+      ownerName: String(r.owner_name || '').trim(),
+      sourceHeritage: String(r.source_channel || 'Supabase Direct Owner').trim(),
+      photos: [...new Set(cleanPhotos)],
+      description: r.description || '',
+    };
+    if (isRent) rentUnits.push(unit);
+    else resaleUnits.push(unit);
+  }
+  return { rentUnits, resaleUnits };
 }
 
 async function main() {
   console.log('\n  Sierra Estates -- All Owners -> Property Finder Publisher');
-  console.log(`  Workbook: ${WORKBOOK}`);
   console.log(`  Flags: dry-run=${DRY_RUN} | available-only=${AVAILABLE_ONLY}\n`);
 
-  const wb = loadWorkbook();
-
-  const rentRaw = XLSX.utils.sheet_to_json(wb.Sheets['Direct Owners - Rent'] || {});
-  const rentUnits = rentRaw.map(normaliseRent);
-
-  const resaleRaw = XLSX.utils.sheet_to_json(wb.Sheets['Direct Owners - Resale'] || {});
-  const resaleUnits = resaleRaw.map(normaliseResale);
+  let rentUnits = [];
+  let resaleUnits = [];
+  if (fs.existsSync(WORKBOOK)) {
+    console.log(`  Source: Workbook (${WORKBOOK})`);
+    const wb = loadWorkbook();
+    rentUnits = XLSX.utils.sheet_to_json(wb.Sheets['Direct Owners - Rent'] || {}).map(normaliseRent);
+    resaleUnits = XLSX.utils.sheet_to_json(wb.Sheets['Direct Owners - Resale'] || {}).map(normaliseResale);
+  } else {
+    console.log('  Source: Authoritative Supabase public.listings (Direct Owners)');
+    const loaded = await loadUnitsFromSupabase();
+    rentUnits = loaded.rentUnits;
+    resaleUnits = loaded.resaleUnits;
+  }
 
   const allUnits = [...rentUnits, ...resaleUnits];
   console.log(`Raw totals: ${rentUnits.length} Owners Rent + ${resaleUnits.length} Owners Resale = ${allUnits.length} total`);
@@ -621,7 +723,7 @@ async function main() {
     'Compound', 'Community / Zone', 'Price (EGP)', 'Rental Period',
     'Bedrooms', 'Bathrooms', 'Area (sqm)',
     ...photoHeaders,
-    'All Photo URLs', 'Title (EN)', 'Description (EN)',
+    'All Photo URLs', 'Title (EN)', 'Title (AR)', 'Description (EN)', 'Description (AR)',
   ];
   const csvRows = [csvHeaders.join(',')];
   for (const unit of priceFiltered) {

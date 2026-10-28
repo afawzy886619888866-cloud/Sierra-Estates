@@ -228,3 +228,11 @@ pair_*.html
 # Ephemeral WhatsApp QR codes
 apps/agents/whatsapp-multi-session/qr_*.png
 apps/agents/whatsapp-multi-session/.tmp/
+
+# Large multi-MB Property Finder bulk XML drafts (generated locally / CI artifacts;
+# canonical tracked sample propertyfinder-feed.xml stays <5MB per git-weight policy)
+docs/drafts/propertyfinder/propertyfinder-all-units.xml
+docs/drafts/propertyfinder/propertyfinder-owners-full.xml
+docs/drafts/propertyfinder/propertyfinder-photos-only.xml
+docs/drafts/propertyfinder/propertyfinder-full-feed.xml
+!workflows/.env.example

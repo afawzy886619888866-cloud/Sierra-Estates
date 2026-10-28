@@ -65,7 +65,7 @@ async function main() {
 
   console.log(`Loaded ${allPhotoUnits.length} units with photos across all 4 categories.`);
 
-  const outputDir = path.join(ROOT, 'apps', 'sierra-estates-realty', 'public', 'feeds');
+  const outputDir = path.join(ROOT, 'docs', 'drafts', 'propertyfinder');
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
   // 1. Build XML Feed for Units with Photos
@@ -107,7 +107,7 @@ async function main() {
     xml += `    <agent>\n`;
     xml += `      <name>Sierra Estates Team</name>\n`;
     xml += `      <email>info@sierra-estates.net</email>\n`;
-    xml += `      <phone>+201000000000</phone>\n`;
+    xml += `      <phone>${escapeXml(process.env.PF_AGENT_PHONE || '+201092048333')}</phone>\n`;
     xml += `    </agent>\n`;
 
     if (photoUrls.length > 0) {
