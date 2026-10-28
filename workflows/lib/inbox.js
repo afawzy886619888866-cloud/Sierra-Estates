@@ -15,9 +15,10 @@
  *   3. Direct 1-on-1 messages (@c.us): classifies owner replies
  *      (opt-out "إلغاء", available "متاحة", unavailable/sold "اتباعت",
  *      or negotiation/terms), persists opt-outs to .state/owner-outreach-optouts.jsonl,
- *      updates Supabase public.listings / public.leads / public.memory_events,
- *      and enqueues automated photo-harvest or Closer follow-up jobs in
- *      public.whatsapp_queue when eligible.
+ *      updates Supabase public.listings (respecting lifecycle trigger & Client Map
+ *      status='active' for PUBLISHABLE rows) / public.leads, writes back to
+ *      Google Sheets via WF_SHEET_WRITE_URL, and enqueues automated photo-harvest
+ *      follow-up jobs in public.whatsapp_queue when eligible.
  */
 const fs = require('fs');
 const path = require('path');
@@ -57,6 +58,51 @@ function normalizeOwnerPhone(raw) {
     return `+20${local}`;
   }
   return null;
+}
+
+/** Format current Cairo date DD/MM/YYYY for Google Sheet writeback parity. */
+function cairoDateDmy(d = new Date()) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Cairo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
+  } catch {
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  }
+}
+
+/** Write owner reply availability + contact date back to Google Sheets via Apps Script Web App. */
+async function writeOwnerReplyToSheet(e164Phone, availabilityLabel, code) {
+  const writeUrl = process.env.WF_SHEET_WRITE_URL || '';
+  const writeSecret = process.env.WF_SHEET_WRITE_SECRET || '';
+  if (!writeUrl || !writeSecret || !e164Phone) return false;
+
+  const digits = e164Phone.replace(/\D/g, '');
+  const localMobile = digits.startsWith('20') && digits.length === 12 ? `0${digits.slice(2)}` : e164Phone;
+  const dateStr = cairoDateDmy();
+  const rows = [
+    { phone: localMobile, date: dateStr, availability: availabilityLabel, ...(code ? { code } : {}) },
+  ];
+  if (localMobile !== e164Phone) {
+    rows.push({ phone: e164Phone, date: dateStr, availability: availabilityLabel, ...(code ? { code } : {}) });
+  }
+
+  try {
+    const res = await fetch(writeUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: writeSecret, rows }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const json = await res.json().catch(() => ({}));
+    return Boolean(res.ok && json.ok !== false);
+  } catch (err) {
+    console.warn(`inbox: Google Sheet writeback failed: ${err.message}`);
+    return false;
+  }
 }
 
 /** Best-effort extraction of {chatId, sender, body, ts, isGroup, fromMe} from a delivery. */
@@ -203,9 +249,9 @@ function sbConfig() {
 
 /**
  * Closed-loop processing for 1-on-1 owner replies:
- *  - Opt-out ("إلغاء") -> local suppression ledger + memory_events
- *  - Available ("متاحة") -> updates matching listing status='available', logs lead + queues photo request if needed
- *  - Unavailable ("اتباعت"/"اتأجرت") -> updates matching listing status='sold'|'off-market'
+ *  - Opt-out ("إلغاء") -> local suppression ledger + sheet writeback
+ *  - Available ("متاحة") -> updates matching listing status ('active' when PUBLISHABLE so Client Map stays synced, else 'available') + sheet writeback + queues photo request if needed
+ *  - Unavailable ("اتباعت"/"اتأجرت") -> transitions matching listing via lifecycle ('reserved'->'sold' or 'off-market') so Client Map & PF immediately hide it + sheet writeback
  *  - Negotiation -> upserts owner lead for Stage-9 Closer follow-up
  */
 async function handleDirectOwnerReply(message) {
@@ -219,6 +265,7 @@ async function handleDirectOwnerReply(message) {
 
   if (intent === 'opt_out') {
     recordOptOut(e164, message.chatId, message.body);
+    await writeOwnerReplyToSheet(e164, 'Not available', null);
   }
 
   const sb = sbConfig();
@@ -229,7 +276,7 @@ async function handleDirectOwnerReply(message) {
   let matchedListing = null;
   try {
     const res = await requestJson(
-      `${sb.url}/rest/v1/listings?owner_phone=ilike.*${encodeURIComponent(suffix9)}*&select=id,code,compound,images,status,owner_name&limit=3`,
+      `${sb.url}/rest/v1/listings?owner_phone=ilike.*${encodeURIComponent(suffix9)}*&select=id,code,compound,images,status,publish_status,owner_name,raw_data&limit=3`,
       { headers: sb.headers, timeoutMs: 8000 }
     );
     if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
@@ -239,7 +286,6 @@ async function handleDirectOwnerReply(message) {
     console.warn(`inbox: listing lookup failed: ${err.message}`);
   }
 
-  // Also check if phone was contacted in owner_outreach_log
   let wasContactedOwner = Boolean(matchedListing);
   if (!wasContactedOwner) {
     try {
@@ -255,27 +301,68 @@ async function handleDirectOwnerReply(message) {
     }
   }
 
-  // Only mutate listings / owner leads when sender is a known owner or explicitly opted out
   if (!wasContactedOwner && intent !== 'opt_out') {
     return { routed: false, intent, e164, knownOwner: false };
   }
 
   const nowIso = new Date().toISOString();
+  let sheetUpdated = false;
 
-  // 1. Update listing availability status (never touching publish_status / human provenance)
-  if (matchedListing && (intent === 'available' || intent === 'unavailable')) {
+  // 1. Update listing availability status + Google Sheet (never touching publish_status / human provenance)
+  if (intent === 'available' || intent === 'unavailable') {
     const isSold = /(اتباع|تم البيع|sold)/i.test(message.body);
-    const nextStatus = intent === 'available' ? 'available' : (isSold ? 'sold' : 'off-market');
-    await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
-      method: 'PATCH',
-      headers: { ...sb.headers, Prefer: 'return=minimal' },
-      body: {
-        status: nextStatus,
-        availability: intent === 'available' ? 'Available' : (isSold ? 'Sold' : 'Not available'),
-        updated_at: nowIso,
-      },
-      timeoutMs: 8000,
-    }).catch((err) => console.warn(`inbox: listing status update failed: ${err.message}`));
+    const availabilityLabel = intent === 'available' ? 'Available' : (isSold ? 'Sold' : 'Not available');
+    sheetUpdated = await writeOwnerReplyToSheet(e164, availabilityLabel, matchedListing?.code || null);
+
+    if (matchedListing) {
+      const prevRaw = (matchedListing.raw_data && typeof matchedListing.raw_data === 'object')
+        ? matchedListing.raw_data
+        : {};
+      const nextRawData = {
+        ...prevRaw,
+        availability: availabilityLabel,
+        last_owner_reply_at: nowIso,
+      };
+
+      const isPublishable = String(matchedListing.publish_status || '').toUpperCase() === 'PUBLISHABLE';
+      const curStatus = String(matchedListing.status || '').toLowerCase();
+
+      if (intent === 'available') {
+        // Keep/set status='active' for PUBLISHABLE rows so public Client Map (/api/inventory) stays visible
+        const targetStatus = isPublishable ? 'active' : 'available';
+        await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
+          method: 'PATCH',
+          headers: { ...sb.headers, Prefer: 'return=minimal' },
+          body: { status: targetStatus, availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
+          timeoutMs: 8000,
+        }).catch((err) => console.warn(`inbox: listing status update failed: ${err.message}`));
+      } else {
+        // Unavailable: respect Postgres lifecycle trigger (`published -> reserved -> sold` or `published -> off-market`)
+        if (isSold && ['active', 'available', 'verified', 'published'].includes(curStatus)) {
+          await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
+            method: 'PATCH',
+            headers: { ...sb.headers, Prefer: 'return=minimal' },
+            body: { status: 'reserved', availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
+            timeoutMs: 8000,
+          }).catch(() => ({ ok: false }));
+        }
+        const finalPatch = await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
+          method: 'PATCH',
+          headers: { ...sb.headers, Prefer: 'return=minimal' },
+          body: { status: isSold ? 'sold' : 'off-market', availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
+          timeoutMs: 8000,
+        }).catch(() => ({ ok: false }));
+
+        if (!finalPatch || !finalPatch.ok) {
+          await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
+            method: 'PATCH',
+            headers: { ...sb.headers, Prefer: 'return=minimal' },
+            body: { status: 'off-market', availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
+            timeoutMs: 8000,
+          }).catch((err) => console.warn(`inbox: fallback off-market update failed: ${err.message}`));
+        }
+      }
+    }
   }
 
   // 2. Upsert into public.leads for Closer / Advisor visibility
@@ -354,6 +441,7 @@ async function handleDirectOwnerReply(message) {
     intent,
     e164,
     matchedCode: matchedListing?.code || null,
+    sheetUpdated,
     photoQueued,
   };
 }
@@ -398,6 +486,7 @@ function preview(n = 20) {
 module.exports = {
   handleInbound,
   handleDirectOwnerReply,
+  writeOwnerReplyToSheet,
   classifyOwnerReply,
   normalizeOwnerPhone,
   loadOptOutSet,

@@ -46,12 +46,10 @@ try {
   // QRCode dataURL optional fallback
 }
 
-const { harvesterInstance } = require('./harvester');
-const appBridge = require('./app-bridge');
-
-// Load environment variables
+// Load environment variables BEFORE requiring bridge/harvester modules
 const envPaths = [
   path.join(__dirname, '.env'),
+  path.join(__dirname, '..', '..', '..', '.env.local'),
   path.join(__dirname, '..', '..', '..', '.env'),
   path.join(__dirname, '..', '..', '..', 'workflows', '.env')
 ];
@@ -62,6 +60,9 @@ for (const p of envPaths) {
     } catch (_) {}
   }
 }
+
+const { harvesterInstance } = require('./harvester');
+const appBridge = require('./app-bridge');
 
 const PORT = parseInt(process.env.WHATSAPP_GATEWAY_PORT || process.env.PORT || '2785', 10);
 const ADMIN_API_KEY = process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || 'sierra-admin-secret';
@@ -98,6 +99,7 @@ for (const id of SESSION_IDS) {
     engineLoaded: false,
     client: null,
     messageQueue: [],
+    webhooks: [],
     isSending: false,
     error: null,
     totalSent: 0,
@@ -324,7 +326,7 @@ async function initSession(sessionId) {
       s.lastActive = new Date().toISOString();
       // Forward to the Sierra app webhook (fire-and-forget; the app decides
       // DM auto-replies vs silent group handling). See app-bridge.js.
-      appBridge.forwardMessage(sessionId, msg);
+      appBridge.forwardMessage(sessionId, msg, s.webhooks);
       harvesterInstance.handleIncomingMessage(sessionId, msg).catch((err) => {
         console.error(`[harvester] Error processing message on ${sessionId}:`, err.message);
       });
@@ -548,6 +550,49 @@ app.post('/api/sessions/:sessionId/restart', async (req, res) => {
 
   initSession(s.id);
   res.json({ ok: true, message: `Session ${s.id} restarted` });
+});
+
+/**
+ * GET/POST/DELETE /api/sessions/:sessionId/webhooks — Per-session webhook subscriptions
+ */
+app.get('/api/sessions/:sessionId/webhooks', (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  res.json({ ok: true, sessionId: s.id, webhooks: s.webhooks || [], bridge: appBridge.status() });
+});
+
+app.post('/api/sessions/:sessionId/webhooks', (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  const { url, events, headers } = req.body || {};
+  if (!url || !/^https?:\/\//i.test(String(url))) {
+    return res.status(400).json({ error: 'Valid webhook url is required' });
+  }
+  s.webhooks = (s.webhooks || []).filter((w) => w.url !== url);
+  const entry = {
+    url: String(url),
+    events: Array.isArray(events) && events.length ? events : ['message.received'],
+    headers: headers && typeof headers === 'object' ? headers : {},
+    createdAt: new Date().toISOString(),
+  };
+  s.webhooks.push(entry);
+  res.json({ ok: true, sessionId: s.id, webhook: entry, count: s.webhooks.length });
+});
+
+app.delete('/api/sessions/:sessionId/webhooks', (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  const targetUrl = req.query.url || (req.body && req.body.url);
+  if (targetUrl) {
+    s.webhooks = (s.webhooks || []).filter((w) => w.url !== targetUrl);
+  } else {
+    s.webhooks = [];
+  }
+  res.json({ ok: true, sessionId: s.id, count: s.webhooks.length });
+});
+
+app.get('/api/bridge/status', (req, res) => {
+  res.json({ ok: true, bridge: appBridge.status() });
 });
 
 /**

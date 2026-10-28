@@ -1,11 +1,15 @@
 import axios from 'axios';
 export * from './connector';
 
-const DEFAULT_ATLAS_BASE = 'https://atlas.propertyfinder.com/v1';
+const PROD_ATLAS_BASE = 'https://atlas.propertyfinder.com/v1';
+const SANDBOX_ATLAS_BASE = 'https://sandbox.atlas.propertyfinder.com/v1';
+
+export type PropertyFinderEnvironment = 'production' | 'sandbox';
 
 export interface PropertyFinderTokenState {
   accessToken: string;
   expiresAtMs: number;
+  cacheKey: string;
 }
 
 export interface SierraListingInput {
@@ -26,6 +30,8 @@ export interface SierraListingInput {
   city?: string;
   images?: string[];
   agentEmail?: string;
+  locationId?: number;
+  publicProfileId?: number;
 }
 
 export interface PropertyFinderFormattedPayload {
@@ -41,6 +47,40 @@ export interface PropertyFinderFormattedPayload {
     amounts: {
       sale?: number;
       monthly?: number;
+    };
+  };
+  title: {
+    en: string;
+    ar?: string;
+  };
+  description: {
+    en: string;
+    ar?: string;
+  };
+  media: {
+    images: Array<{ original: { url: string } }>;
+  };
+}
+
+/**
+ * Strict OpenAPI 3.1.0 `request-combined-flat` payload shape for Egypt `POST /v1/listings`.
+ */
+export interface PropertyFinderAtlasRequestPayload {
+  reference: string;
+  category: 'residential' | 'commercial';
+  offeringType: 'sale' | 'rent';
+  type: string;
+  bedrooms: string;
+  bathrooms: string;
+  size: number;
+  location: { id: number };
+  assignedTo?: { id: number };
+  price: {
+    type: 'sale' | 'monthly' | 'yearly';
+    amounts: {
+      sale?: number;
+      monthly?: number;
+      yearly?: number;
     };
   };
   title: {
@@ -110,8 +150,33 @@ export interface PropertyFinderAtlasLead {
 
 let cachedToken: PropertyFinderTokenState | null = null;
 
-function resolveGatewayBase(): string {
-  return (process.env.PROPERTY_FINDER_API_GATEWAY || DEFAULT_ATLAS_BASE).replace(/\/+$/, '');
+export function resolveEnvironment(): PropertyFinderEnvironment {
+  return (process.env.PROPERTY_FINDER_ENV || 'production').trim().toLowerCase() === 'sandbox'
+    ? 'sandbox'
+    : 'production';
+}
+
+export function resolveGatewayBase(): string {
+  const explicit = (process.env.PROPERTY_FINDER_API_GATEWAY || '').trim().replace(/\/+$/, '');
+  if (explicit) {
+    return explicit.endsWith('/v1') ? explicit : `${explicit}/v1`;
+  }
+  return resolveEnvironment() === 'sandbox' ? SANDBOX_ATLAS_BASE : PROD_ATLAS_BASE;
+}
+
+function resolveCredentials(): { apiKey: string; apiSecret: string; staticJwt: string } {
+  if (resolveEnvironment() === 'sandbox') {
+    return {
+      apiKey: process.env.PROPERTY_FINDER_SANDBOX_API_KEY || process.env.PROPERTY_FINDER_API_KEY || '',
+      apiSecret: process.env.PROPERTY_FINDER_SANDBOX_API_SECRET || process.env.PROPERTY_FINDER_API_SECRET || '',
+      staticJwt: process.env.PROPERTY_FINDER_SANDBOX_JWT_TOKEN || process.env.PROPERTY_FINDER_JWT_TOKEN || '',
+    };
+  }
+  return {
+    apiKey: process.env.PROPERTY_FINDER_API_KEY || '',
+    apiSecret: process.env.PROPERTY_FINDER_API_SECRET || '',
+    staticJwt: process.env.PROPERTY_FINDER_JWT_TOKEN || '',
+  };
 }
 
 /**
@@ -189,26 +254,61 @@ export function formatForPropertyFinder(unit: SierraListingInput): PropertyFinde
 }
 
 /**
- * Exchanges `PROPERTY_FINDER_API_KEY` + `PROPERTY_FINDER_API_SECRET` against
- * Property Finder Enterprise Atlas OAuth2 (`POST /v1/auth/token`) with in-memory
- * caching, falling back to `PROPERTY_FINDER_JWT_TOKEN` when set directly.
+ * Builds an OpenAPI 3.1.0 `request-combined-flat` payload ready for `POST /v1/listings`.
+ * Requires an explicit integer `locationId` (never fabricates a fallback).
+ */
+export function buildAtlasListingRequest(
+  unit: SierraListingInput,
+  options: { locationId: number; publicProfileId?: number },
+): PropertyFinderAtlasRequestPayload {
+  const formatted = formatForPropertyFinder(unit);
+  const isRent = /(rent|lease|ايجار)/.test(String(unit.dealType || 'sale').toLowerCase());
+  const normalizedType =
+    formatted.type === 'office'
+      ? 'office-space'
+      : formatted.type === 'twin house'
+        ? 'twin-house'
+        : formatted.type === 'standalone villa'
+          ? 'villa'
+          : formatted.type;
+
+  return {
+    reference: formatted.reference,
+    category: formatted.category,
+    offeringType: isRent ? 'rent' : 'sale',
+    type: normalizedType,
+    bedrooms: formatted.bedrooms === 0 ? 'studio' : String(formatted.bedrooms),
+    bathrooms: formatted.bathrooms === 0 ? 'none' : String(formatted.bathrooms),
+    size: formatted.size,
+    location: { id: options.locationId },
+    ...(options.publicProfileId ? { assignedTo: { id: options.publicProfileId } } : {}),
+    price: formatted.price,
+    title: formatted.title,
+    description: formatted.description,
+    media: formatted.media,
+  };
+}
+
+/**
+ * Exchanges API Key + Secret against Property Finder Enterprise Atlas OAuth2
+ * (`POST /v1/auth/token`) with environment-aware in-memory caching.
  */
 export async function getAuthToken(): Promise<string> {
-  if (cachedToken && isTokenValid(cachedToken.accessToken, cachedToken.expiresAtMs)) {
+  const base = resolveGatewayBase();
+  const { apiKey, apiSecret, staticJwt } = resolveCredentials();
+  const cacheKey = `${base}|${apiKey}`;
+
+  if (cachedToken && cachedToken.cacheKey === cacheKey && isTokenValid(cachedToken.accessToken, cachedToken.expiresAtMs)) {
     return cachedToken.accessToken;
   }
 
-  const apiKey = process.env.PROPERTY_FINDER_API_KEY || '';
-  const apiSecret = process.env.PROPERTY_FINDER_API_SECRET || '';
-  const staticJwt = process.env.PROPERTY_FINDER_JWT_TOKEN || '';
-
   if (apiKey && apiSecret) {
-    const base = resolveGatewayBase();
     const res = await fetch(`${base}/auth/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        'X-PF-Error-Format': 'problem-json-v2',
       },
       body: JSON.stringify({ apiKey, apiSecret }),
       signal: AbortSignal.timeout(15000),
@@ -226,6 +326,7 @@ export async function getAuthToken(): Promise<string> {
     cachedToken = {
       accessToken: payload.accessToken,
       expiresAtMs: computeTokenExpiry(payload.expiresIn ?? 1800),
+      cacheKey,
     };
     return cachedToken.accessToken;
   }
@@ -255,6 +356,7 @@ export async function listProperties(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',
+      'X-PF-Error-Format': 'problem-json-v2',
     },
     signal: AbortSignal.timeout(20000),
   });
@@ -286,6 +388,7 @@ export async function listAtlasLeads(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',
+      'X-PF-Error-Format': 'problem-json-v2',
     },
     signal: AbortSignal.timeout(20000),
   });
@@ -306,26 +409,28 @@ export async function listAtlasLeads(
 export async function getProperty(id: string): Promise<Record<string, unknown>> {
   const token = await getAuthToken();
   const response = await axios.get<Record<string, unknown>>(`${resolveGatewayBase()}/listings/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' },
   });
   return response.data;
 }
 
-export async function createListing(data: PropertyFinderFormattedPayload | Record<string, unknown>): Promise<Record<string, unknown>> {
+export async function createListing(
+  data: PropertyFinderFormattedPayload | PropertyFinderAtlasRequestPayload | Record<string, unknown>,
+): Promise<Record<string, unknown>> {
   const token = await getAuthToken();
   const response = await axios.post<Record<string, unknown>>(`${resolveGatewayBase()}/listings`, data, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' },
   });
   return response.data;
 }
 
 export async function updateListing(
   id: string,
-  data: Partial<PropertyFinderFormattedPayload> | Record<string, unknown>,
+  data: Partial<PropertyFinderFormattedPayload> | Partial<PropertyFinderAtlasRequestPayload> | Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const token = await getAuthToken();
   const response = await axios.put<Record<string, unknown>>(`${resolveGatewayBase()}/listings/${id}`, data, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' },
   });
   return response.data;
 }
@@ -333,8 +438,28 @@ export async function updateListing(
 export async function deleteListing(id: string): Promise<Record<string, unknown>> {
   const token = await getAuthToken();
   const response = await axios.delete<Record<string, unknown>>(`${resolveGatewayBase()}/listings/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' },
   });
+  return response.data;
+}
+
+export async function publishListing(id: string): Promise<Record<string, unknown>> {
+  const token = await getAuthToken();
+  const response = await axios.post<Record<string, unknown>>(
+    `${resolveGatewayBase()}/listings/${id}/publish`,
+    {},
+    { headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' } },
+  );
+  return response.data;
+}
+
+export async function unpublishListing(id: string): Promise<Record<string, unknown>> {
+  const token = await getAuthToken();
+  const response = await axios.post<Record<string, unknown>>(
+    `${resolveGatewayBase()}/listings/${id}/unpublish`,
+    {},
+    { headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' } },
+  );
   return response.data;
 }
 
@@ -343,7 +468,7 @@ export async function setFeatured(id: string, featured: boolean): Promise<Record
   const response = await axios.patch<Record<string, unknown>>(
     `${resolveGatewayBase()}/listings/${id}`,
     { featured },
-    { headers: { Authorization: `Bearer ${token}` } },
+    { headers: { Authorization: `Bearer ${token}`, 'X-PF-Error-Format': 'problem-json-v2' } },
   );
   return response.data;
 }

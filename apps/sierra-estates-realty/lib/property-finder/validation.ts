@@ -5,21 +5,38 @@ export interface ValidationResult {
   errors: string[];
 }
 
+/**
+ * Strips HTML tags and emojis/pictographs from Property Finder titles and
+ * descriptions per OpenAPI 3.1.0 (`request-combined-flat` plain-text rule),
+ * while preserving English, Arabic, digits, and standard punctuation.
+ */
+export function sanitizePfText(input: string): string {
+  if (!input) return '';
+  return input
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export class EgyptListingValidator {
   /**
-   * Allowed Property Types for Egypt by Category
+   * Allowed Property Types for Egypt by Category (OpenAPI 3.1.0)
    */
   private static readonly ALLOWED_TYPES: Record<PFPropertyCategory, PFPropertyType[]> = {
     commercial: [
       'farm', 'land', 'bulk-rent-unit', 'bulk-sale-unit', 'cafeteria', 'clinic',
       'co-working-space', 'factory', 'hotel-apartment', 'medical-facility',
       'office-space', 'restaurant', 'retail', 'shop', 'show-room',
-      'staff-accommodation', 'villa', 'warehouse', 'whole-building'
+      'staff-accommodation', 'villa', 'warehouse', 'whole-building',
+      'full-floor', 'half-floor'
     ],
     residential: [
       'land', 'apartment', 'bulk-rent-unit', 'bulk-sale-unit', 'bungalow',
       'cabin', 'chalet', 'duplex', 'hotel-apartment', 'villa', 'palace',
-      'penthouse', 'roof', 'townhouse', 'twin-house', 'whole-building'
+      'penthouse', 'roof', 'townhouse', 'twin-house', 'whole-building',
+      'full-floor', 'half-floor'
     ]
   };
 
@@ -74,6 +91,8 @@ export class EgyptListingValidator {
       const allowedAmenities = this.ALLOWED_AMENITIES[request.category];
       if (request.type === 'land') {
         errors.push('Amenities are not allowed for "land" property type.');
+      } else if (request.type === 'farm') {
+        errors.push('Amenities are not allowed for "farm" property type.');
       } else if (allowedAmenities) {
         const invalidAmenities = request.amenities.filter(a => !allowedAmenities.includes(a));
         if (invalidAmenities.length > 0) {
