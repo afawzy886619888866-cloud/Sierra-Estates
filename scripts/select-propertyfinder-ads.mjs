@@ -2,22 +2,29 @@
 /**
  * select-propertyfinder-ads.mjs
  * ─────────────────────────────────────────────────────────────────────────────
- * Deterministic Property Finder Enterprise (Atlas OpenAPI 3.1.0) Ad Selector.
+ * Deterministic Property Finder Enterprise (Atlas OpenAPI 3.1.0) Ad Selector
+ * with 6-Photo & >=800x600px Image Quality Gate.
  *
  * 1. Connects to Property Finder Atlas (Production or Sandbox) to index all
- *    currently live PF references so zero duplicate ads are ever proposed.
+ *    currently live PF references & ULIDs so zero duplicate ads are proposed.
  * 2. Evaluates priority cohorts in Supabase `public.listings`:
  *      - All photo-bearing listings (`images != {}`)
  *      - All Google Sheet synced owner listings (`sync_source = sheets-units | master-owner-sheet`)
  *      - Active `PUBLISHABLE` Client Map listings
- * 3. Scores & classifies candidates into three actionable tiers:
- *      - Tier 1A (`tier1a_gate_ready`): Passes all 8 C6 PublishGate rules now.
- *      - Tier 1B (`tier1b_prime_photo_units`): PUBLISHABLE Direct-Owner units with
- *        real non-stock HTTPS photos + mapped Egypt `location.id` (valid OpenAPI 3.1.0
- *        payloads ready; lists exact PublishGate sign-off steps).
- *      - Tier 2 (`tier2_sheet_available_owners`): Confirmed-Available Google Sheet
- *        Direct-Owner units prioritized for WhatsApp photo harvest & verification.
- * 4. Writes strictly PII-free manifest + ready OpenAPI 3.1.0 payloads to:
+ * 3. Probes HTTP Range (`bytes=0-65535`) of candidate property images to parse
+ *    real pixel dimensions (`width x height`), file size (`<=10MB`), and CDN
+ *    reachability, enforcing:
+ *      - `PF_AD_MIN_PHOTOS = 6` genuine HTTPS photos
+ *      - `PF_MIN_IMAGE_WIDTH = 800`, `PF_MIN_IMAGE_HEIGHT = 600`
+ * 4. Scores & classifies candidates into three actionable tiers:
+ *      - Tier 1A (`tier1a_gate_ready`): >=6 qualifying (>=800x600px) photos +
+ *        passes all C6 PublishGate rules now.
+ *      - Tier 1B (`tier1b_prime_photo_units`): PUBLISHABLE Direct-Owner units
+ *        with real photos + mapped Egypt `location.id` (shows exact photos,
+ *        measured dimensions, and exact `photosNeededFor6` for visual approval).
+ *      - Tier 2 (`tier2_sheet_available_owners`): Confirmed-Available Google
+ *        Sheet Direct-Owner units prioritized for 6-photo WhatsApp harvest.
+ * 5. Writes strictly PII-free manifest + photo dimensions + OpenAPI 3.1.0 payloads to:
  *      `docs/property-finder/selected-ads-manifest.json`
  */
 
@@ -28,6 +35,11 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
+
+export const PF_AD_MIN_PHOTOS = 6;
+export const PF_MIN_IMAGE_WIDTH = 800;
+export const PF_MIN_IMAGE_HEIGHT = 600;
+export const PF_MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return;
@@ -242,6 +254,142 @@ function isGenuineListingPhoto(url) {
   return true;
 }
 
+function parseImageDimensions(buf) {
+  if (!buf || buf.length < 10) return null;
+  // PNG
+  if (buf.length >= 24 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    const width = buf.readUInt32BE(16);
+    const height = buf.readUInt32BE(20);
+    if (width > 0 && height > 0) return { width, height, format: 'png' };
+  }
+  // JPEG
+  if (buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2;
+    while (i < buf.length - 9) {
+      if (buf[i] !== 0xff) { i++; continue; }
+      const marker = buf[i + 1];
+      if (marker === 0xff) { i++; continue; }
+      if (marker === 0xd8 || marker === 0xd9 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+        i += 2; continue;
+      }
+      const len = buf.readUInt16BE(i + 2);
+      if (len < 2) break;
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+        const height = buf.readUInt16BE(i + 5);
+        const width = buf.readUInt16BE(i + 7);
+        if (width > 0 && height > 0) return { width, height, format: 'jpeg' };
+        break;
+      }
+      i += 2 + len;
+    }
+  }
+  // WebP
+  if (buf.length >= 25 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') {
+    const chunk = buf.toString('ascii', 12, 16);
+    if (chunk === 'VP8 ' && buf.length >= 30) {
+      return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff, format: 'webp' };
+    }
+    if (chunk === 'VP8L' && buf.length >= 25) {
+      const b0 = buf[21], b1 = buf[22], b2 = buf[23], b3 = buf[24];
+      return {
+        width: 1 + (((b1 & 0x3f) << 8) | b0),
+        height: 1 + (((b3 & 0x0f) << 10) | (b2 << 2) | ((b1 & 0xc0) >> 6)),
+        format: 'webp',
+      };
+    }
+    if (chunk === 'VP8X' && buf.length >= 30) {
+      return {
+        width: 1 + (buf[24] | (buf[25] << 8) | (buf[26] << 16)),
+        height: 1 + (buf[27] | (buf[28] << 8) | (buf[29] << 16)),
+        format: 'webp',
+      };
+    }
+  }
+  return null;
+}
+
+const probeCache = new Map();
+
+async function probeImageUrl(url) {
+  if (probeCache.has(url)) return probeCache.get(url);
+  let result;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Range: 'bytes=0-65535',
+        Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok && res.status !== 206) {
+      result = {
+        url,
+        reachable: false,
+        httpStatus: res.status,
+        width: null,
+        height: null,
+        format: 'unknown',
+        byteSize: null,
+        qualifying: false,
+        issue: `Unreachable HTTP ${res.status}`,
+      };
+    } else {
+      const ab = await res.arrayBuffer();
+      const buf = Buffer.from(ab.slice(0, 65536));
+      const cr = res.headers.get('content-range');
+      const cl = res.headers.get('content-length');
+      const byteSize = cr && /\/(\d+)\s*$/.test(cr)
+        ? Number(cr.match(/\/(\d+)\s*$/)[1])
+        : (cl ? Number(cl) : ab.byteLength);
+      const dims = parseImageDimensions(buf);
+      if (!dims) {
+        result = {
+          url,
+          reachable: true,
+          httpStatus: res.status,
+          width: null,
+          height: null,
+          format: 'unknown',
+          byteSize,
+          qualifying: false,
+          issue: 'Unreadable image dimensions',
+        };
+      } else {
+        const sizeOk = dims.width >= PF_MIN_IMAGE_WIDTH && dims.height >= PF_MIN_IMAGE_HEIGHT;
+        const bytesOk = !byteSize || byteSize <= PF_MAX_IMAGE_BYTES;
+        const qualifying = sizeOk && bytesOk;
+        result = {
+          url,
+          reachable: true,
+          httpStatus: res.status,
+          width: dims.width,
+          height: dims.height,
+          format: dims.format,
+          byteSize,
+          qualifying,
+          issue: !sizeOk
+            ? `Resolution ${dims.width}x${dims.height}px below minimum ${PF_MIN_IMAGE_WIDTH}x${PF_MIN_IMAGE_HEIGHT}px`
+            : (!bytesOk ? 'Exceeds 10MB max size' : null),
+        };
+      }
+    }
+  } catch (err) {
+    result = {
+      url,
+      reachable: false,
+      httpStatus: null,
+      width: null,
+      height: null,
+      format: 'unknown',
+      byteSize: null,
+      qualifying: false,
+      issue: `Probe error: ${err.message}`,
+    };
+  }
+  probeCache.set(url, result);
+  return result;
+}
+
 function sanitizeText(raw) {
   if (!raw) return '';
   return String(raw)
@@ -389,7 +537,6 @@ async function fetchSupabaseCohorts() {
       headers: { ...headers, Prefer: 'count=exact' },
       signal: AbortSignal.timeout(15000),
     }),
-    // Cohort 1: 100% of listings with non-empty images
     fetch(`${sbUrl}/rest/v1/listings?images=not.eq.{}&select=${selectCols}&limit=1000`, {
       headers,
       signal: AbortSignal.timeout(20000),
@@ -397,7 +544,6 @@ async function fetchSupabaseCohorts() {
       if (!r.ok) throw new Error(`Supabase photo cohort HTTP ${r.status}`);
       return r.json();
     }),
-    // Cohort 2: 100% of Google Sheet synced owner units
     fetch(`${sbUrl}/rest/v1/listings?sync_source=in.(sheets-units,master-owner-sheet)&select=${selectCols}&limit=1000`, {
       headers,
       signal: AbortSignal.timeout(20000),
@@ -405,7 +551,6 @@ async function fetchSupabaseCohorts() {
       if (!r.ok) throw new Error(`Supabase sheet cohort HTTP ${r.status}`);
       return r.json();
     }),
-    // Cohort 3: Top active PUBLISHABLE Client Map listings
     fetch(`${sbUrl}/rest/v1/listings?publish_status=eq.PUBLISHABLE&status=eq.active&price=gt.0&select=${selectCols}&order=price.desc&limit=2000`, {
       headers,
       signal: AbortSignal.timeout(20000),
@@ -443,7 +588,7 @@ function buildEditorialFallbackEn(row, pfType, isRent) {
   );
 }
 
-function evaluateRow(row, livePf) {
+function evaluateRowSync(row, livePf) {
   const rawMeta = (row.raw_data && typeof row.raw_data === 'object') ? row.raw_data : {};
   const status = String(row.status || '').toLowerCase();
   const avail = String(row.availability || rawMeta.availability || '').toLowerCase();
@@ -464,6 +609,7 @@ function evaluateRow(row, livePf) {
     row.code,
     row.unit_code,
     row.sbr_code,
+    String(row.code || '').replace(/^pf-/i, ''),
   ]
     .filter(Boolean)
     .map((v) => String(v).trim().toLowerCase());
@@ -501,7 +647,9 @@ function evaluateRow(row, livePf) {
     return { skip: 'missing_area_sqm' };
   }
 
-  const realPhotos = Array.isArray(row.images) ? row.images.filter(isGenuineListingPhoto) : [];
+  const realPhotos = Array.from(
+    new Set((Array.isArray(row.images) ? row.images : []).filter(isGenuineListingPhoto))
+  );
   const ownerTypeMeta = String(rawMeta.ownerType || rawMeta.owner_type || '').toLowerCase();
   const isSheetSynced = ['sheets-units', 'master-owner-sheet'].includes(String(row.sync_source || ''));
   const isDirectOwner =
@@ -533,90 +681,143 @@ function evaluateRow(row, livePf) {
   const bedrooms = Number(row.bedrooms) === 0 ? 'studio' : String(Math.max(1, Number(row.bedrooms) || 1));
   const bathrooms = Number(row.bathrooms) === 0 ? 'none' : String(Math.max(1, Number(row.bathrooms) || 1));
 
-  // Ad Readiness & ROI Score (0..100)
-  let adScore = 0;
-  if (isDirectOwner) adScore += 25;
-  if (realPhotos.length >= 5) adScore += 25;
-  else if (realPhotos.length >= 3) adScore += 20;
-  else if (realPhotos.length >= 1) adScore += 14;
-
-  if (PRIME_LOCATION_IDS.has(locationId)) adScore += 20;
-  else adScore += 12;
-
-  if (area >= 80 && Number(row.bedrooms) >= 0) adScore += 15;
-  else adScore += 8;
-
-  if (pubStatus === 'PUBLISHABLE' && freshVerified) adScore += 15;
-  else if (pubStatus === 'PUBLISHABLE') adScore += 10;
-  else if (avail === 'available') adScore += 10;
-
-  const gateEligible =
-    pubStatus === 'PUBLISHABLE' &&
-    realPhotos.length >= 3 &&
-    qualityScore >= 75 &&
-    freshVerified &&
-    ['available', 'active', 'verified', 'published'].includes(status);
-
-  const missingForGate = [];
-  if (realPhotos.length < 3) missingForGate.push(`needs_${3 - realPhotos.length}_more_real_photos`);
-  if (pubStatus !== 'PUBLISHABLE' || !freshVerified) missingForGate.push('staff_verification_stamp');
-  if (qualityScore < 75) missingForGate.push(`quality_score_${qualityScore}_below_75`);
-
-  const atlasPayload = {
-    reference,
-    category,
-    type: pfType,
-    offeringType: isRent ? 'rent' : 'sale',
-    location: { id: locationId },
-    size: area,
-    bedrooms,
-    bathrooms,
-    assignedTo: { id: DEFAULT_PUBLIC_PROFILE_ID },
-    price: isRent
-      ? { type: 'monthly', amounts: { monthly: approxEgp } }
-      : { type: 'sale', amounts: { sale: approxEgp } },
-    title: {
-      en: titleEn,
-      ...(titleAr ? { ar: titleAr } : {}),
-    },
-    description: {
-      en: descEn,
-      ...(descAr ? { ar: descAr } : {}),
-    },
-    media: {
-      images: realPhotos.slice(0, 15).map((url) => ({ original: { url } })),
-    },
-  };
-
-  let tier = 'tier3_other';
-  if (gateEligible) {
-    tier = 'tier1a_gate_ready';
-  } else if (realPhotos.length >= 1 && pubStatus === 'PUBLISHABLE') {
-    tier = 'tier1b_prime_photo_units';
-  } else if (isSheetSynced && avail === 'available') {
-    tier = 'tier2_sheet_available_owners';
-  }
-
   return {
     skip: null,
-    tier,
-    adScore,
     id: row.id,
     reference,
     compound: row.compound || row.location_area || row.city,
     pfLocationId: locationId,
+    category,
     propertyType: pfType,
     offeringType: isRent ? 'rent' : 'sale',
     priceEgp: approxEgp,
     areaSqm: area,
     bedrooms,
     bathrooms,
+    titleEn,
+    titleAr,
+    descEn,
+    descAr,
+    realPhotos,
     realPhotoCount: realPhotos.length,
     isDirectOwner,
     isSheetSynced,
+    freshVerified,
+    qualityScore,
     onClientMap: pubStatus === 'PUBLISHABLE' && status === 'active',
     publishStatus: pubStatus,
     status: row.status,
+    avail,
+  };
+}
+
+async function finalizeWithPhotoProbe(base) {
+  const photosDetailed = base.realPhotos.length > 0
+    ? await Promise.all(base.realPhotos.slice(0, 15).map((u) => probeImageUrl(u)))
+    : [];
+
+  const qualifyingPhotos = photosDetailed.filter((p) => p.qualifying);
+  const qualifyingPhotoCount = qualifyingPhotos.length;
+  const photosNeededFor6 = Math.max(0, PF_AD_MIN_PHOTOS - qualifyingPhotoCount);
+
+  let adScore = 0;
+  if (base.isDirectOwner) adScore += 25;
+  if (qualifyingPhotoCount >= PF_AD_MIN_PHOTOS) adScore += 30;
+  else if (qualifyingPhotoCount >= 3) adScore += 20;
+  else if (qualifyingPhotoCount >= 1) adScore += 12;
+
+  if (PRIME_LOCATION_IDS.has(base.pfLocationId)) adScore += 18;
+  else adScore += 10;
+
+  if (base.areaSqm >= 80) adScore += 12;
+  else adScore += 6;
+
+  if (base.publishStatus === 'PUBLISHABLE' && base.freshVerified) adScore += 15;
+  else if (base.publishStatus === 'PUBLISHABLE') adScore += 10;
+  else if (base.avail === 'available') adScore += 10;
+
+  const gateEligible =
+    base.publishStatus === 'PUBLISHABLE' &&
+    qualifyingPhotoCount >= PF_AD_MIN_PHOTOS &&
+    base.qualityScore >= 75 &&
+    base.freshVerified &&
+    ['available', 'active', 'verified', 'published'].includes(String(base.status || '').toLowerCase());
+
+  const missingForGate = [];
+  if (qualifyingPhotoCount < PF_AD_MIN_PHOTOS) {
+    missingForGate.push(
+      `needs_${photosNeededFor6}_more_qualifying_photos_min_${PF_MIN_IMAGE_WIDTH}x${PF_MIN_IMAGE_HEIGHT}px`
+    );
+  }
+  const rejectedLowResCount = photosDetailed.filter((p) => p.reachable && !p.qualifying).length;
+  const deadUrlCount = photosDetailed.filter((p) => !p.reachable).length;
+  if (rejectedLowResCount > 0) missingForGate.push(`${rejectedLowResCount}_photo_below_800x600px`);
+  if (deadUrlCount > 0) missingForGate.push(`${deadUrlCount}_photo_url_unreachable`);
+  if (base.publishStatus !== 'PUBLISHABLE' || !base.freshVerified) missingForGate.push('staff_verification_stamp');
+  if (base.qualityScore < 75) missingForGate.push(`quality_score_${base.qualityScore}_below_75`);
+
+  const atlasPayload = {
+    reference: base.reference,
+    category: base.category,
+    type: base.propertyType,
+    offeringType: base.offeringType,
+    location: { id: base.pfLocationId },
+    size: base.areaSqm,
+    bedrooms: base.bedrooms,
+    bathrooms: base.bathrooms,
+    assignedTo: { id: DEFAULT_PUBLIC_PROFILE_ID },
+    price: base.offeringType === 'rent'
+      ? { type: 'monthly', amounts: { monthly: base.priceEgp } }
+      : { type: 'sale', amounts: { sale: base.priceEgp } },
+    title: {
+      en: base.titleEn,
+      ...(base.titleAr ? { ar: base.titleAr } : {}),
+    },
+    description: {
+      en: base.descEn,
+      ...(base.descAr ? { ar: base.descAr } : {}),
+    },
+    media: {
+      images: qualifyingPhotos.slice(0, 15).map((p) => ({ original: { url: p.url } })),
+    },
+  };
+
+  let tier = 'tier3_other';
+  if (gateEligible) {
+    tier = 'tier1a_gate_ready';
+  } else if (base.realPhotos.length >= 1 && base.publishStatus === 'PUBLISHABLE') {
+    tier = 'tier1b_prime_photo_units';
+  } else if (base.isSheetSynced && base.avail === 'available') {
+    tier = 'tier2_sheet_available_owners';
+  }
+
+  return {
+    tier,
+    adScore,
+    id: base.id,
+    reference: base.reference,
+    compound: base.compound,
+    pfLocationId: base.pfLocationId,
+    propertyType: base.propertyType,
+    offeringType: base.offeringType,
+    priceEgp: base.priceEgp,
+    areaSqm: base.areaSqm,
+    bedrooms: base.bedrooms,
+    bathrooms: base.bathrooms,
+    titleEn: base.titleEn,
+    titleAr: base.titleAr || null,
+    descriptionEn: base.descEn,
+    realPhotoCount: base.realPhotoCount,
+    qualifyingPhotoCount,
+    requiredPhotoCount: PF_AD_MIN_PHOTOS,
+    photosNeededFor6,
+    minDimensionsRequired: `${PF_MIN_IMAGE_WIDTH}x${PF_MIN_IMAGE_HEIGHT}`,
+    photosDetailed,
+    isDirectOwner: base.isDirectOwner,
+    isSheetSynced: base.isSheetSynced,
+    onClientMap: base.onClientMap,
+    publishStatus: base.publishStatus,
+    status: base.status,
     missingForGate,
     atlasPayload,
   };
@@ -624,7 +825,7 @@ function evaluateRow(row, livePf) {
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════════════════');
-  console.log(' SIERRA ESTATES · PROPERTY FINDER AD SELECTION ENGINE (OpenAPI 3.1.0)');
+  console.log(' SIERRA ESTATES · PROPERTY FINDER AD SELECTION ENGINE (6-Photo + Size)');
   console.log('═══════════════════════════════════════════════════════════════════════');
 
   const [livePf, cohorts] = await Promise.all([
@@ -643,33 +844,40 @@ async function main() {
   );
 
   const skipReasons = {};
-  const tier1a = [];
-  const tier1b = [];
-  const tier2 = [];
-
-  // Deduplicate identical compound+type+price+area clones when ranking ads
   const seenFingerprints = new Set();
+  const preCandidates = [];
 
   for (const row of cohorts.rows) {
-    const res = evaluateRow(row, livePf);
-    if (res.skip) {
-      skipReasons[res.skip] = (skipReasons[res.skip] || 0) + 1;
+    const base = evaluateRowSync(row, livePf);
+    if (base.skip) {
+      skipReasons[base.skip] = (skipReasons[base.skip] || 0) + 1;
       continue;
     }
-    const fp = `${res.pfLocationId}|${res.propertyType}|${res.offeringType}|${res.priceEgp}|${res.areaSqm}`;
+    const fp = `${base.pfLocationId}|${base.propertyType}|${base.offeringType}|${base.priceEgp}|${base.areaSqm}`;
     if (seenFingerprints.has(fp)) {
       skipReasons.duplicate_unit_fingerprint = (skipReasons.duplicate_unit_fingerprint || 0) + 1;
       continue;
     }
     seenFingerprints.add(fp);
 
-    if (res.tier === 'tier1a_gate_ready') tier1a.push(res);
-    else if (res.tier === 'tier1b_prime_photo_units') tier1b.push(res);
-    else if (res.tier === 'tier2_sheet_available_owners') tier2.push(res);
+    if (base.realPhotos.length >= 1 || (base.isSheetSynced && base.avail === 'available')) {
+      preCandidates.push(base);
+    }
   }
+
+  // Probe image dimensions only on photo-bearing candidates (bounded & cached)
+  const evaluated = [];
+  for (const base of preCandidates) {
+    evaluated.push(await finalizeWithPhotoProbe(base));
+  }
+
+  const tier1a = evaluated.filter((x) => x.tier === 'tier1a_gate_ready');
+  const tier1b = evaluated.filter((x) => x.tier === 'tier1b_prime_photo_units');
+  const tier2 = evaluated.filter((x) => x.tier === 'tier2_sheet_available_owners');
 
   const rankSort = (a, b) =>
     b.adScore - a.adScore ||
+    b.qualifyingPhotoCount - a.qualifyingPhotoCount ||
     b.realPhotoCount - a.realPhotoCount ||
     b.priceEgp - a.priceEgp ||
     String(a.reference).localeCompare(String(b.reference));
@@ -685,6 +893,12 @@ async function main() {
   const manifest = {
     generatedAt: new Date().toISOString(),
     specVersion: '3.1.0',
+    mediaQualityPolicy: {
+      minPhotos: PF_AD_MIN_PHOTOS,
+      minWidthPx: PF_MIN_IMAGE_WIDTH,
+      minHeightPx: PF_MIN_IMAGE_HEIGHT,
+      maxBytesPerImage: PF_MAX_IMAGE_BYTES,
+    },
     pfGateway: {
       environment: livePf.environment,
       connected: livePf.connected,
@@ -711,36 +925,45 @@ async function main() {
   const outPath = path.join(outDir, 'selected-ads-manifest.json');
   fs.writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 
+  console.log('\n── Media Quality Policy ────────────────────────────────────────────────');
+  console.log(`  • Minimum Qualifying Photos : ${PF_AD_MIN_PHOTOS}`);
+  console.log(`  • Minimum Resolution        : ${PF_MIN_IMAGE_WIDTH}x${PF_MIN_IMAGE_HEIGHT} px`);
+
   console.log('\n── Exclusion & Deduplication Summary ───────────────────────────────────');
   for (const [reason, count] of Object.entries(skipReasons)) {
     console.log(`  • ${reason.padEnd(30)} : ${count}`);
   }
 
-  console.log(`\n── Tier 1A: Full C6 PublishGate Eligible (${tier1a.length}) ────────────────────────`);
+  console.log(`\n── Tier 1A: >=6 Photos (>=800x600) + PublishGate Ready (${tier1a.length}) ─────────`);
   for (const u of selected1a.slice(0, 15)) {
     console.log(
-      `  [Score ${String(u.adScore).padStart(2)}] ${u.reference.padEnd(18)} | ${String(u.compound).slice(0, 22).padEnd(22)} | locId=${String(u.pfLocationId).padEnd(5)} | ${u.propertyType.padEnd(10)} | ${u.offeringType.padEnd(4)} | EGP ${u.priceEgp.toLocaleString().padStart(11)} | photos=${u.realPhotoCount}`
+      `  [Score ${String(u.adScore).padStart(2)}] ${u.reference.padEnd(28)} | ${String(u.compound).slice(0, 18).padEnd(18)} | validPhotos=${u.qualifyingPhotoCount}/${PF_AD_MIN_PHOTOS}`
     );
   }
 
-  console.log(`\n── Tier 1B: Prime Direct-Owner Units w/ Real Photos (${tier1b.length}) ─────────────`);
+  console.log(`\n── Tier 1B: Candidate Units w/ Probed Photos (${tier1b.length}) ───────────────────`);
   for (const u of selected1b.slice(0, 15)) {
+    const dimSummary = u.photosDetailed
+      .map((p) => (p.reachable ? `${p.width}x${p.height}${p.qualifying ? '✓' : '✗'}` : `HTTP_${p.httpStatus || 'ERR'}✗`))
+      .join(', ');
     console.log(
-      `  [Score ${String(u.adScore).padStart(2)}] ${u.reference.padEnd(18)} | ${String(u.compound).slice(0, 22).padEnd(22)} | locId=${String(u.pfLocationId).padEnd(5)} | ${u.propertyType.padEnd(10)} | ${u.offeringType.padEnd(4)} | EGP ${u.priceEgp.toLocaleString().padStart(11)} | photos=${u.realPhotoCount} | clientMap=${u.onClientMap}`
+      `  [Score ${String(u.adScore).padStart(2)}] ${u.reference.padEnd(28)} | ${String(u.compound).slice(0, 14).padEnd(14)} | EGP ${u.priceEgp.toLocaleString().padStart(11)} | valid=${u.qualifyingPhotoCount}/6 (raw=${u.realPhotoCount}) | [${dimSummary}]`
     );
   }
 
   console.log(`\n── Tier 2: Google Sheet Confirmed-Available Owners (${tier2.length}) ──────────────`);
-  for (const u of selected2.slice(0, 15)) {
+  for (const u of selected2.slice(0, 10)) {
     console.log(
-      `  [Score ${String(u.adScore).padStart(2)}] ${u.reference.padEnd(18)} | ${String(u.compound).slice(0, 22).padEnd(22)} | locId=${String(u.pfLocationId).padEnd(5)} | ${u.propertyType.padEnd(10)} | ${u.offeringType.padEnd(4)} | EGP ${u.priceEgp.toLocaleString().padStart(11)} | sheet=true`
+      `  [Score ${String(u.adScore).padStart(2)}] ${u.reference.padEnd(28)} | ${String(u.compound).slice(0, 18).padEnd(18)} | EGP ${u.priceEgp.toLocaleString().padStart(11)} | needs=${u.photosNeededFor6} photos`
     );
   }
 
   console.log(`\n✅ Manifest written (PII-free): ${path.relative(ROOT, outPath)}`);
 }
 
-main().catch((err) => {
-  console.error('❌ Ad selector failed:', err.message);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((err) => {
+    console.error('❌ Ad selector failed:', err.message);
+    process.exit(1);
+  });
+}

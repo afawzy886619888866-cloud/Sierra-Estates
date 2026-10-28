@@ -406,13 +406,15 @@ async function handleDirectOwnerReply(message) {
       console.warn(`inbox: lead upsert failed: ${err.message}`);
     }
 
-    // 3. Automated Photo-Harvest Follow-Up when owner confirms availability and unit lacks >=3 photos
+    // 3. Automated Photo-Harvest Follow-Up when owner confirms availability and unit lacks >=6 PF-grade photos
+    const PF_AD_MIN_PHOTOS = 6;
     const imageList = Array.isArray(matchedListing?.images) ? matchedListing.images.filter((u) => /^https?:\/\//i.test(String(u || ''))) : [];
-    if (intent === 'available' && matchedListing && imageList.length < 3) {
+    if (intent === 'available' && matchedListing && imageList.length < PF_AD_MIN_PHOTOS) {
       const compoundLabel = matchedListing.compound ? ` في ${matchedListing.compound}` : '';
+      const neededCount = Math.max(1, PF_AD_MIN_PHOTOS - imageList.length);
       const photoPrompt =
         `شكراً جزيلاً لتأكيد حضرتك إتاحة الوحدة${compoundLabel} 🌿\n\n` +
-        `لرفع الوحدة ضمن العروض المميزة لعملائنا الجادين على منصات Sierra Estates وProperty Finder، هل يمكن لحضرتك إرسال صور واضحة للوحدة وتفاصيل السعر النهائي؟\n\n` +
+        `لرفع الوحدة ضمن الإعلانات المميزة على Property Finder ومنصة Sierra Estates، يشترط توفر 6 صور واضحة على الأقل بجودة عالية (أبعاد لا تقل عن 800×600 بكسل — ريسبشن، غرف، مطبخ، حمام، والفيو). حالياً ينقص الوحدة ${neededCount} صور واضحة بالإضافة لتأكيد السعر النهائي.\n\n` +
         `خالص التقدير — فريق سييرا العقارية 🤝\n(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
       const qRes = await requestJson(`${sb.url}/rest/v1/whatsapp_queue`, {
         method: 'POST',

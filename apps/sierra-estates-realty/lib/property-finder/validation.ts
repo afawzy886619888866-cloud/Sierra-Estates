@@ -1,4 +1,12 @@
 import { PFListingRequest, PFPropertyCategory, PFPropertyType, PFAmenity } from './types';
+import {
+  PF_AD_MIN_PHOTOS,
+  PF_MIN_IMAGE_WIDTH,
+  PF_MIN_IMAGE_HEIGHT,
+  PF_MAX_IMAGE_BYTES,
+  isGenuineListingPhotoUrl,
+  type ProbedPhotoReport,
+} from './media-quality';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -124,6 +132,68 @@ export class EgyptListingValidator {
     return {
       isValid: errors.length === 0,
       errors
+    };
+  }
+
+  /**
+   * Validates Property Finder Ad Approval readiness, enforcing:
+   *  - All Egypt OpenAPI 3.1.0 schema rules (`validate(request)`)
+   *  - Minimum 6 genuine non-placeholder HTTPS photos (`PF_AD_MIN_PHOTOS = 6`)
+   *  - Minimum image resolution `800x600` px and `<= 10 MB` when probed metadata is supplied
+   */
+  public static validateAdMediaQuality(
+    request: PFListingRequest,
+    probedPhotos?: ProbedPhotoReport[]
+  ): ValidationResult {
+    const base = this.validate(request);
+    const errors = [...base.errors];
+
+    const urls = (request.media?.images ?? [])
+      .map((img) => img?.original?.url?.trim() || '')
+      .filter(Boolean);
+    const genuineUrls = Array.from(new Set(urls.filter((u) => isGenuineListingPhotoUrl(u))));
+
+    if (genuineUrls.length < PF_AD_MIN_PHOTOS) {
+      errors.push(
+        `Property Finder ad requires at least ${PF_AD_MIN_PHOTOS} genuine HTTPS photos (found ${genuineUrls.length}).`
+      );
+    }
+
+    if (probedPhotos && probedPhotos.length > 0) {
+      let qualifyingCount = 0;
+      for (const p of probedPhotos) {
+        if (!p.reachable) {
+          errors.push(`Photo unreachable (${p.httpStatus ?? 'network error'}): ${p.url}`);
+          continue;
+        }
+        if (
+          p.width === null ||
+          p.height === null ||
+          p.width < PF_MIN_IMAGE_WIDTH ||
+          p.height < PF_MIN_IMAGE_HEIGHT
+        ) {
+          errors.push(
+            `Photo below minimum ${PF_MIN_IMAGE_WIDTH}x${PF_MIN_IMAGE_HEIGHT}px (${p.width ?? '?'}x${p.height ?? '?'}px): ${p.url}`
+          );
+          continue;
+        }
+        if (p.byteSize !== null && p.byteSize > PF_MAX_IMAGE_BYTES) {
+          errors.push(`Photo exceeds 10MB max size: ${p.url}`);
+          continue;
+        }
+        qualifyingCount++;
+      }
+
+      if (qualifyingCount < PF_AD_MIN_PHOTOS) {
+        errors.push(
+          `At least ${PF_AD_MIN_PHOTOS} photos must meet >=${PF_MIN_IMAGE_WIDTH}x${PF_MIN_IMAGE_HEIGHT}px resolution (found ${qualifyingCount} qualifying).`
+        );
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
     };
   }
 }

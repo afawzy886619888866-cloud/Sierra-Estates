@@ -188,7 +188,7 @@ async function runWorkflow(slug, trigger = 'cron') {
   // whose persisted status is not 'active' — a paused/draft workflow can only
   // be executed through the authenticated explicit POST /run endpoint by a
   // human operator (deliberate emergency action, honestly labelled).
-  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', 'studio', 'run-requested']);
+  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', '30m-window', 'studio', 'run-requested']);
   if (AUTOMATIC_TRIGGERS.has(trigger) && sb.configured()) {
     try {
       const current = await sb.getWorkflows([slug]);
@@ -343,8 +343,8 @@ async function schedulerTick() {
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (10:00–20:00 Cairo time; last slot fires 19:30 —
-  // outreach.js re-gates and never sends at hr >= 20) for owner-outreach.
+  // Hourly window check (10:00–22:00 Cairo time; 30-min slots fire 10:00..21:30 —
+  // outreach.js re-gates and stops cleanly at 22:00 / 10:00 PM) for owner-outreach.
   // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
   // A paused/draft workflow must never execute from a local timer, and the
   // status is re-verified again inside runWorkflow() immediately before the
@@ -359,7 +359,7 @@ async function schedulerTick() {
       month: '2-digit',
       day: '2-digit',
     }).formatToParts(new Date());
-    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10);
+    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10) % 24;
     const cairoMin = parseInt(cairoFmt.find((p) => p.type === 'minute')?.value || '0', 10);
     const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
     const slotMin = cairoMin < 30 ? '00' : '30';
@@ -367,12 +367,12 @@ async function schedulerTick() {
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
-      cairoHour >= 10 && cairoHour <= 20 &&
+      cairoHour >= 10 && cairoHour < 22 &&
       outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey
     ) {
-      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing batch`);
+      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing 25-msg rotated sender batch`);
       lastFiredHour.set('owner-outreach', hourKey);
       manualQueue.set('owner-outreach', '30m-window');
     }
@@ -778,9 +778,9 @@ async function main() {
       slug: 'owner-outreach',
       name: 'Owner Outreach',
       name_ar: 'التواصل مع الملاك',
-      description: 'Daily Cairo-windowed WhatsApp introductions to property owners from the inventory sheet (gviz read, local ledger dedupe, cap 40/day, 10:00-20:00 Cairo only).',
+      description: 'Daily 10:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
       status: 'active',
-      schedule: '11 11,16 * * *',
+      schedule: '*/30 10-21 * * *',
       category: 'outreach',
       trigger_type: 'cron',
       source_path: 'workflows/09-owner-outreach/outreach.js',
