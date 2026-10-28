@@ -1,45 +1,38 @@
-try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
+'use strict';
 /**
  * Workflow 03: Owner Contact  (rewired 2026-10)
  * ─────────────────────────────────────────
- * Sends WhatsApp introduction messages to property owners read from the
- * Google Sheets "owner_leads" tab, through the project's own OpenWA gateway
- * (the same session the admin Outbox + lead flows use).
+ * Sends WhatsApp introduction messages to property owners discovered by
+ * Workflow 02 (`owner_leads` Google Sheet tab and/or Supabase `public.leads`
+ * where `origin_channel = 'workflow-02-owner-search'` and `stage = 'inbound'`),
+ * dispatching via the OpenWA gateway session pool (`OPENWA_SESSION_IDS` or
+ * `OPENWA_SESSION_ID`) and honoring opt-out suppression.
  *
- * FIXES over the previous revision (it could never have delivered a message):
- *   - Endpoint was `POST {WA_API_URL}/send` with `{phone, message}` and
- *     `Authorization: Bearer` — no such route exists on the OpenWA gateway.
- *     Now: POST {WHATSAPP_API_URL}/api/sessions/{UUID}/messages/send-text
- *          body {chatId, text}, auth header X-API-Key.
- *   - Column mapping was wrong: owner_leads is Timestamp, Source, Title,
- *     Price, Location, Beds/Baths, Contact, URL, Status → contact is col G
- *     (index 6) not index 5, and status lives in col I (the old code filtered
- *     on col H = URL, which never says 'PENDING').
- *   - Phone → chatId normalization (+20/00XX/01x local forms → @c.us).
- *   - Missing credentials exit 2 ("unconfigured") instead of crashing.
- *   - 3–6 s jittered throttle (1 s flat is bot-flag territory), permanent-4xx
- *     aborts the batch so a bad key doesn't hammer the gateway.
- *   - Purpose 'owner-negotiation' → exempt from the Cairo Plaza notice per
- *     announcement/DISCLAIMER-POLICY.md (same decision table as the app
- *     drain worker); the policy helper still rides along for future
- *     client-facing workflows.
- *
- * Env: WHATSAPP_API_URL (127.0.0.1:2785 on the gateway box), WHATSAPP_API_TOKEN,
- *      OPENWA_SESSION_ID, OPENWA_ADMIN_API_KEY, BROKER_INBOX_SHEET_ID,
- *      GOOGLE_SERVICE_ACCOUNT_KEY, WF_OWNER_CONTACT_DAILY_CAP (default 40)
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
-const { google } = require('googleapis');
-const fs = require('fs');
-const { GatewayClient } = require('../lib/gateway-client');
+const path = require('path');
+const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+loadWorkflowEnv(path.join(__dirname, '..'));
+const { GatewayClient, requestJson } = require('../lib/gateway-client');
 const { enforceOutreachNotice } = require('../lib/notice');
+const { loadOptOutSet } = require('../lib/inbox');
 
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
-const SA_PATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '';
+const SB_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
 
-const summary = { pending: 0, sent: 0, failed: 0, skipped: 0, capped: 0, dryRun: DRY_RUN };
+const summary = {
+  pending: 0,
+  sent: 0,
+  failed: 0,
+  skipped: 0,
+  skippedOptOut: 0,
+  capped: 0,
+  source: 'none',
+  dryRun: DRY_RUN,
+};
 
 function failUnconfigured(msg) {
   console.log(`UNCONFIGURED: ${msg}`);
@@ -54,23 +47,10 @@ const CONTACT_TEMPLATE = `السلام عليكم ورحمة الله وبركا
 
 هل الوحدة ما زالت متاحة للتنفيذ لمراجعة التفاصيل وتنسيق المعاينة للعميل؟
 
-يسعدنا جداً التعاون المثمر مع حضرتك، ولكم منا خالص التقدير 🤝`;
+يسعدنا جداً التعاون المثمر مع حضرتك، ولكم منا خالص التقدير 🤝
+(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
-function sheetsClient() {
-  if (!SHEET_ID) failUnconfigured('BROKER_INBOX_SHEET_ID missing');
-  if (!SA_PATH || !fs.existsSync(SA_PATH)) failUnconfigured('GOOGLE_SERVICE_ACCOUNT_KEY missing or file not found');
-  const creds = JSON.parse(fs.readFileSync(SA_PATH, 'utf8'));
-  return google.sheets({
-    version: 'v4',
-    auth: new google.auth.GoogleAuth({
-      credentials: creds,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    }),
-  });
-}
-
-/** Reads owner_leads rows; pending = col I empty or 'PENDING'. */
-async function getOwnerLeads(sheets) {
+async function getSheetOwnerLeads(sheets) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
     range: "'owner_leads'!A:I",
@@ -78,14 +58,19 @@ async function getOwnerLeads(sheets) {
   const rows = response.data.values || [];
   return rows
     .slice(1)
-    .map((row, idx) => ({ row, sheetRow: idx + 2 })) // 1-based + header offset
-    .filter(({ row }) => {
-      const status = String(row[8] || '').trim().toUpperCase();
-      return status === '' || status === 'PENDING';
-    });
+    .map((row, idx) => ({
+      kind: 'sheet',
+      sheetRow: idx + 2,
+      phone: String(row[6] || '').trim(),
+      price: String(row[3] || '').trim(),
+      location: String(row[4] || '').trim(),
+      title: String(row[2] || '').slice(0, 60),
+      status: String(row[8] || '').trim().toUpperCase(),
+    }))
+    .filter((item) => item.status === '' || item.status === 'PENDING');
 }
 
-async function updateStatus(sheets, sheetRow, status) {
+async function updateSheetStatus(sheets, sheetRow, status) {
   try {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
@@ -98,6 +83,43 @@ async function updateStatus(sheets, sheetRow, status) {
   }
 }
 
+async function getSupabaseOwnerLeads() {
+  const res = await requestJson(
+    `${SB_URL}/rest/v1/leads?origin_channel=eq.workflow-02-owner-search&stage=eq.inbound&select=id,full_name,phone,target_compound,summary_notes&order=created_at.asc&limit=${DAILY_CAP}`,
+    {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+      timeoutMs: 10000,
+    }
+  );
+  if (!res.ok || !Array.isArray(res.data)) return [];
+  return res.data.map((row) => ({
+    kind: 'supabase',
+    leadId: row.id,
+    phone: String(row.phone || '').trim(),
+    price: '',
+    location: String(row.target_compound || '').trim(),
+    title: String(row.summary_notes || row.full_name || '').slice(0, 60),
+  }));
+}
+
+async function updateSupabaseLeadStage(leadId, stage) {
+  await requestJson(`${SB_URL}/rest/v1/leads?id=eq.${leadId}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: SB_KEY,
+      Authorization: `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: {
+      stage,
+      last_contact_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    timeoutMs: 8000,
+  }).catch((err) => console.error(`supabase stage update failed for ${leadId}: ${err.message}`));
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
@@ -105,69 +127,95 @@ async function main() {
   if (!process.env.WHATSAPP_API_TOKEN && !process.env.WHATSAPP_API_KEY) {
     failUnconfigured('WHATSAPP_API_TOKEN (operator key) missing');
   }
-  if (!process.env.OPENWA_SESSION_ID) failUnconfigured('OPENWA_SESSION_ID missing');
-
-  const sheets = sheetsClient();
-  const gw = new GatewayClient();
-
-  // Pre-flight: never start a batch on an unhealthy session.
-  const st = await gw.status();
-  if (st.status !== 'ready') {
-    throw new Error(`gateway session not ready (${st.status}) — aborting batch`);
+  if (!process.env.OPENWA_SESSION_ID && !process.env.OPENWA_SESSION_IDS) {
+    failUnconfigured('OPENWA_SESSION_ID / OPENWA_SESSION_IDS missing');
   }
-  console.log(`gateway ready: ${st.phone || '?'} push=${st.pushName || '?'}`);
 
-  const leads = await getOwnerLeads(sheets);
+  const sheets = SHEET_ID ? createSheetsClient(['https://www.googleapis.com/auth/spreadsheets']) : null;
+  const hasSupabase = Boolean(SB_URL && SB_KEY);
+  if (!sheets && !hasSupabase) {
+    failUnconfigured('Neither Google Sheets (GOOGLE_SERVICE_ACCOUNT_*) nor Supabase (SUPABASE_SERVICE_ROLE_KEY) is configured');
+  }
+
+  const gw = new GatewayClient();
+  const readyPool = await gw.healthyPool().catch(() => []);
+  if (!readyPool.length) {
+    const st = await gw.status().catch(() => ({ status: 'offline' }));
+    if (st.status !== 'ready' && !DRY_RUN) {
+      console.log(`gateway session not ready (${st.status}) — retry next cycle`);
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      process.exit(0);
+    }
+  } else {
+    console.log(`gateway pool ready: ${readyPool.map((p) => p.name).join(', ')}`);
+  }
+
+  let leads = [];
+  if (sheets) {
+    summary.source = 'google-sheets';
+    leads = await getSheetOwnerLeads(sheets);
+  } else {
+    summary.source = 'supabase-leads';
+    leads = await getSupabaseOwnerLeads();
+  }
+
   summary.pending = leads.length;
-  console.log(`pending owner leads: ${leads.length}`);
+  console.log(`pending owner leads (${summary.source}): ${leads.length}`);
 
-  for (const { row, sheetRow } of leads) {
+  const optedOut = loadOptOutSet();
+
+  for (const item of leads) {
     if (summary.sent >= DAILY_CAP) {
-      summary.capped = leads.length - summary.sent - summary.skipped - summary.failed;
-      console.log(`daily cap ${DAILY_CAP} reached — remaining rows stay PENDING`);
+      summary.capped = leads.length - summary.sent - summary.skipped - summary.skippedOptOut - summary.failed;
+      console.log(`daily cap ${DAILY_CAP} reached — remaining rows stay pending`);
       break;
     }
 
-    const rawPhone = String(row[6] || '').trim();
-    const price = String(row[3] || '').trim();
-    const location = String(row[4] || '').trim();
-    const title = String(row[2] || '').slice(0, 60);
-
+    const rawPhone = item.phone;
+    const digits = rawPhone.replace(/\D/g, '');
     if (!rawPhone || rawPhone === 'No contact') {
-      await updateStatus(sheets, sheetRow, 'SKIPPED');
+      if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'SKIPPED');
+      else await updateSupabaseLeadStage(item.leadId, 'disqualified');
       summary.skipped++;
+      continue;
+    }
+
+    if (digits && optedOut.has(digits)) {
+      if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'OPTED_OUT');
+      else await updateSupabaseLeadStage(item.leadId, 'closed');
+      summary.skippedOptOut++;
       continue;
     }
 
     const text = enforceOutreachNotice(
       'owner-negotiation',
-      CONTACT_TEMPLATE.replace('___PRICE___', price || 'غير معلن').replace('___LOCATION___', location || '—')
+      CONTACT_TEMPLATE
+        .replace('___PRICE___', item.price || 'السعر المعروض')
+        .replace('___LOCATION___', item.location || 'التجمع الخامس')
     );
 
     if (DRY_RUN) {
-      console.log(`[dry-run] would send to ${rawPhone} (${title})`);
-      summary.sent++; // counted as "would-send" for telemetry shape
+      console.log(`[dry-run] would send to ${rawPhone} (${item.title})`);
+      summary.sent++;
       continue;
     }
 
     try {
       await gw.sendText(rawPhone, text, { retries: 2 });
-      await updateStatus(sheets, sheetRow, 'CONTACTED');
+      if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'CONTACTED');
+      else await updateSupabaseLeadStage(item.leadId, 'contacted');
       summary.sent++;
-      console.log(`sent → ${rawPhone} (${title})`);
+      console.log(`sent → ${rawPhone} (${item.title})`);
     } catch (err) {
+      if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'ERROR');
+      summary.failed++;
       if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
-        await updateStatus(sheets, sheetRow, 'ERROR');
-        summary.failed++;
         console.error(`permanent send failure (${err.message}) — aborting batch to protect the session`);
         break;
       }
-      await updateStatus(sheets, sheetRow, 'ERROR');
-      summary.failed++;
       console.error(`send failed for ${rawPhone}: ${err.message}`);
     }
 
-    // jittered 3–6 s pacing
     await sleep(3000 + Math.floor(Math.random() * 3000));
   }
 

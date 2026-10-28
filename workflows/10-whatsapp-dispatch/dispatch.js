@@ -3,15 +3,14 @@
  * Workflow 10: WhatsApp Dispatch — Drains queued WhatsApp messages from Supabase.
  * ─────────────────────────────────────────────────────────────────────────────
  * Operates on Supabase `public.whatsapp_queue` using the OpenWA WhatsApp Gateway.
- * Can be run:
- *   - By the local runner or EC2 runner (`runner.js`)
- *   - On schedule via crone or direct CLI execution
- *   - Alongside or instead of the Vercel/GHA cron routes
+ * Honors `.state/owner-outreach-optouts.jsonl` suppression and emits structured
+ * `SUMMARY {...}` telemetry on every exit-0 path for `workflows/runner.js`.
  */
 const path = require('path');
-try { require('dotenv').config({ path: path.join(__dirname, '../.env') }); } catch {}
-const { GatewayClient, normalizeChatId } = require('../lib/gateway-client');
-const { requestJson } = require('../lib/gateway-client');
+const { loadWorkflowEnv } = require('../lib/google-sheets');
+loadWorkflowEnv(path.join(__dirname, '..'));
+const { GatewayClient, requestJson } = require('../lib/gateway-client');
+const { loadOptOutSet } = require('../lib/inbox');
 
 const SB_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -39,6 +38,16 @@ function isWithinCairoHours() {
 }
 
 async function run() {
+  const summary = {
+    candidates: 0,
+    sent: 0,
+    failed: 0,
+    deferred: 0,
+    skippedOptOut: 0,
+    skippedHours: false,
+    gatewayOffline: false,
+  };
+
   console.log(`[whatsapp-dispatch] Starting queue drain at ${new Date().toISOString()}`);
 
   if (!SB_URL || !SB_KEY) {
@@ -48,20 +57,23 @@ async function run() {
 
   const force = String(process.env.FORCE_DISPATCH || '').trim() === '1';
   if (!force && !isWithinCairoHours()) {
+    summary.skippedHours = true;
     console.log('[whatsapp-dispatch] Outside operating hours (10:00-20:00 Cairo). Exiting.');
+    console.log(`SUMMARY ${JSON.stringify(summary)}`);
     process.exit(0);
   }
 
   const gateway = new GatewayClient();
   const pool = await gateway.healthyPool().catch(() => []);
   if (!pool.length && !gateway.sessionId) {
+    summary.gatewayOffline = true;
     console.warn('[whatsapp-dispatch] No active OpenWA gateway session found. Retrying next cycle.');
+    console.log(`SUMMARY ${JSON.stringify(summary)}`);
     process.exit(0);
   }
 
-  // Fetch pending queued jobs
   const queryUrl = `${SB_URL}/rest/v1/whatsapp_queue?status=in.(queued,pending)&select=id,recipient_phone,message_body,scheduled_for,attempts,purpose,metadata&order=created_at.asc&limit=${BATCH_LIMIT}`;
-  
+
   const res = await requestJson(queryUrl, { headers: sbHeaders(), timeoutMs: 15000 });
   if (!res.ok) {
     console.error(`[whatsapp-dispatch] Failed to fetch queue: HTTP ${res.status}`, res.data);
@@ -69,30 +81,43 @@ async function run() {
   }
 
   const jobs = Array.isArray(res.data) ? res.data : [];
+  summary.candidates = jobs.length;
   if (!jobs.length) {
     console.log('[whatsapp-dispatch] No queued messages to dispatch.');
+    console.log(`SUMMARY ${JSON.stringify(summary)}`);
     process.exit(0);
   }
 
   console.log(`[whatsapp-dispatch] Found ${jobs.length} candidate jobs in queue.`);
-
-  let sent = 0;
-  let failed = 0;
-  let deferred = 0;
+  const optedOut = loadOptOutSet();
 
   for (const job of jobs) {
-    const phone = job.recipient_phone;
+    const phone = String(job.recipient_phone || '');
+    const digits = phone.replace(/\D/g, '');
     const body = job.message_body;
+
+    if (digits && optedOut.has(digits)) {
+      summary.skippedOptOut++;
+      await requestJson(`${SB_URL}/rest/v1/whatsapp_queue?id=eq.${job.id}`, {
+        method: 'PATCH',
+        headers: sbHeaders({ Prefer: 'return=minimal' }),
+        body: {
+          status: 'cancelled',
+          error_message: 'recipient_opted_out',
+          updated_at: new Date().toISOString(),
+        },
+      }).catch(() => null);
+      continue;
+    }
 
     if (job.scheduled_for) {
       const scheduledTime = new Date(job.scheduled_for).getTime();
       if (!isNaN(scheduledTime) && scheduledTime > Date.now()) {
-        deferred++;
+        summary.deferred++;
         continue;
       }
     }
 
-    // Mark job as sending
     await requestJson(`${SB_URL}/rest/v1/whatsapp_queue?id=eq.${job.id}`, {
       method: 'PATCH',
       headers: sbHeaders({ Prefer: 'return=minimal' }),
@@ -119,11 +144,11 @@ async function run() {
         },
       });
 
-      sent++;
+      summary.sent++;
       console.log(`[whatsapp-dispatch] ✓ Sent to ${phone}`);
       await new Promise((r) => setTimeout(r, 3000));
     } catch (err) {
-      failed++;
+      summary.failed++;
       const errMsg = err?.message || String(err);
       console.error(`[whatsapp-dispatch] ✗ Failed for ${phone}:`, errMsg);
 
@@ -143,7 +168,8 @@ async function run() {
     }
   }
 
-  console.log(`[whatsapp-dispatch] Finished. Sent: ${sent}, Failed: ${failed}, Deferred: ${deferred}`);
+  console.log(`[whatsapp-dispatch] Finished. Sent: ${summary.sent}, Failed: ${summary.failed}, Deferred: ${summary.deferred}, OptedOut: ${summary.skippedOptOut}`);
+  console.log(`SUMMARY ${JSON.stringify(summary)}`);
   process.exit(0);
 }
 

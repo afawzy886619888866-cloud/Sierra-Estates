@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@sierra-estates/db';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { processLailaIntake, resetLailaSession } from '@/lib/services/LailaLeadIntakeService';
 import { logger } from '@/lib/logger';
@@ -7,14 +8,11 @@ import { verifySharedSecret } from '@/lib/server/webhook-auth';
 /**
  * WhatsApp Webhook Gateway — routes to the correct service:
  *
- *   • BROKER GROUPS  → WhatsAppParserService (The Scribe) — extracts inventory listings
- *   • DIRECT CLIENTS → LailaLeadIntakeService — qualification flow → matching → CRM
- *
- * Routing key: `isGroup` flag from the gateway payload. If missing, falls back
- * to checking if the group field contains known broker group names.
+ *   • BROKER GROUPS       → WhatsAppParserService (The Scribe) — extracts inventory listings
+ *   • OWNER PHOTO HARVEST → WhatsAppParserService — attaches owner-sent media to matching listing
+ *   • DIRECT CLIENTS      → LailaLeadIntakeService — qualification flow → matching → CRM
  */
 
-// Known broker / owner group identifiers (partial match, case-insensitive)
 const BROKER_GROUP_KEYWORDS = [
   'broker',
   'بروكر',
@@ -33,7 +31,6 @@ const BROKER_GROUP_KEYWORDS = [
   'مجموعه',
 ];
 
-// Words that trigger a Laila session reset
 const RESET_KEYWORDS = ['reset', 'ابدأ', 'restart', 'start', 'مرحبا', 'هاي', 'hi', 'hello', 'أهلا'];
 
 function isBrokerGroup(group: string, isGroup?: boolean): boolean {
@@ -51,31 +48,65 @@ function verifyWebhookSecret(req: NextRequest) {
   });
 }
 
+async function isKnownDirectOwnerPhone(rawPhone: string): Promise<{ matched: boolean; code?: string }> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { matched: false };
+  const suffix = rawPhone.replace(/\D/g, '').slice(-9);
+  if (suffix.length < 9) return { matched: false };
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data } = await supabase
+      .from('listings')
+      .select('id, code')
+      .ilike('owner_phone', `%${suffix}%`)
+      .limit(1);
+    if (Array.isArray(data) && data.length > 0) {
+      return { matched: true, code: String(data[0].code || data[0].id) };
+    }
+  } catch (err: unknown) {
+    logger.warn('[Webhook] Owner phone media lookup skipped:', err instanceof Error ? err.message : String(err));
+  }
+  return { matched: false };
+}
+
 export async function POST(req: NextRequest) {
   const denied = verifyWebhookSecret(req);
   if (denied) return denied;
 
   try {
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
+    const nestedData = (body.data && typeof body.data === 'object' ? body.data : {}) as Record<string, unknown>;
+    const nestedMsg = (nestedData.message && typeof nestedData.message === 'object' ? nestedData.message : {}) as Record<string, unknown>;
+    const nestedMedia = (body.media && typeof body.media === 'object' ? body.media : {}) as Record<string, unknown>;
 
-    // ── Parse payload ────────────────────────────────────────────
-    const rawMessage =
-      body.message || body.text || body.data?.message?.text || body.Body || body.content || '';
-    const sender: string =
-      body.sender || body.from || body.From || body.senderName || 'Unknown';
-    const phone: string =
-      body.phone || body.senderPhone || body.msisdn || sender.replace(/[^0-9+]/g, '') || sender;
-    const group: string =
-      body.groupName || body.group || body.To || 'Direct Message';
-    const isGroup: boolean | undefined = body.isGroup;
-    const mediaData: string | undefined = body.media?.data || body.mediaData;
-    const mediaMime: string | undefined = body.media?.mimetype || body.mediaMimeType;
+    const rawMessage = String(
+      body.message || body.text || nestedMsg.text || body.Body || body.content || '',
+    );
+    const sender = String(
+      body.sender || body.from || body.From || body.senderName || 'Unknown',
+    );
+    const phone = String(
+      body.phone || body.senderPhone || body.msisdn || sender.replace(/[^0-9+]/g, '') || sender,
+    );
+    const group = String(
+      body.groupName || body.group || body.To || 'Direct Message',
+    );
+    const isGroup = typeof body.isGroup === 'boolean' ? body.isGroup : undefined;
+    const mediaData = typeof nestedMedia.data === 'string'
+      ? nestedMedia.data
+      : typeof body.mediaData === 'string'
+        ? body.mediaData
+        : undefined;
+    const mediaMime = typeof nestedMedia.mimetype === 'string'
+      ? nestedMedia.mimetype
+      : typeof body.mediaMimeType === 'string'
+        ? body.mediaMimeType
+        : undefined;
 
     if (!rawMessage && !mediaData) {
       return NextResponse.json({ error: 'No valid message content found' }, { status: 400 });
     }
 
-    // ── Route: Broker groups → The Scribe (inventory parser) ────
+    // ── Route 1: Broker groups → The Scribe (inventory parser) ────
     if (isBrokerGroup(group, isGroup)) {
       logger.info(`[Webhook] BROKER GROUP message from ${sender} in "${group}" → The Scribe`);
 
@@ -86,7 +117,7 @@ export async function POST(req: NextRequest) {
         rawMessage || '[media]',
         sender,
         group,
-        media
+        media,
       );
 
       return NextResponse.json({
@@ -99,7 +130,28 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── Route: Direct messages → Laila (lead intake) ─────────────
+    // ── Route 2: Direct Owner sending unit photos → Media Harvester ─
+    if (mediaData && mediaMime) {
+      const ownerMatch = await isKnownDirectOwnerPhone(phone);
+      if (ownerMatch.matched) {
+        logger.info(`[Webhook] DIRECT OWNER MEDIA from ${phone} (listing ${ownerMatch.code}) → Media Harvester`);
+        const result = await WhatsAppParserService.processIncomingMessage(
+          rawMessage || `[owner-media:${ownerMatch.code}]`,
+          sender,
+          'Direct Owner Media Harvest',
+          { data: mediaData, mimeType: mediaMime },
+        );
+        return NextResponse.json({
+          success: true,
+          route: 'owner-media-harvest',
+          id: result.id,
+          listingCode: ownerMatch.code,
+          orchestration: 'Direct Owner Photo Harvested',
+        });
+      }
+    }
+
+    // ── Route 3: Direct messages → Laila (lead intake) ─────────────
     logger.info(`[Webhook] DIRECT MESSAGE from ${phone} → Laila Intake (Stage)`);
 
     const msgLower = rawMessage.toLowerCase().trim();
@@ -112,14 +164,12 @@ export async function POST(req: NextRequest) {
       reply = await processLailaIntake(rawMessage, phone);
     }
 
-    // ── Dispatch reply via configured WhatsApp gateway ───────────
     const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL;
     const gatewayToken = process.env.WHATSAPP_GATEWAY_TOKEN || process.env.ULTRAMSG_TOKEN;
     const gatewayInstance = process.env.ULTRAMSG_INSTANCE_ID;
 
     if (gatewayUrl && reply) {
       try {
-        // Support Ultramsg-style API
         const dispatchUrl = gatewayInstance
           ? `https://api.ultramsg.com/${gatewayInstance}/messages/chat`
           : gatewayUrl;
@@ -138,7 +188,7 @@ export async function POST(req: NextRequest) {
           }),
         });
         logger.info(`[Webhook] Reply dispatched to ${phone} via gateway`);
-      } catch (sendErr) {
+      } catch (sendErr: unknown) {
         logger.warn('[Webhook] Failed to dispatch reply via gateway:', sendErr);
       }
     }
@@ -150,23 +200,23 @@ export async function POST(req: NextRequest) {
       reply,
       replyLength: reply.length,
     });
-
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : String(error);
     logger.error('[WhatsApp Webhook Error]:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal Server Error', details: error?.message },
-      { status: 500 }
+      { success: false, error: 'Internal Server Error', details },
+      { status: 500 },
     );
   }
 }
 
-// Health check
 export async function GET() {
   return NextResponse.json({
     status: 'active',
     service: 'Sierra Estates WhatsApp Webhook Gateway',
     routes: {
       brokerGroups: 'WhatsAppParserService (The Scribe) — Inventory ingestion',
+      ownerMediaHarvest: 'WhatsAppParserService — Direct Owner photo attachment',
       directMessages: 'LailaLeadIntakeService — Lead qualification + AI matching',
     },
   });

@@ -68,8 +68,10 @@
  */
 const fs = require('fs');
 const path = require('path');
-try { require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); } catch {}
+const { loadWorkflowEnv } = require('../lib/google-sheets');
+loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient } = require('../lib/gateway-client');
+const { loadOptOutSet } = require('../lib/inbox');
 
 const WRITE_URL = process.env.WF_SHEET_WRITE_URL;
 const WRITE_SECRET = process.env.WF_SHEET_WRITE_SECRET;
@@ -230,6 +232,7 @@ const summary = {
   lanes: 0,
   slotDeadline: false,
   skippedDupRow: 0,
+  skippedOptOut: 0,
   auditWritten: 0,
   auditFailed: 0,
   auditSkipped: 0,
@@ -328,13 +331,24 @@ function cairoNow() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
 }
 
+const RECONTACT_AFTER_DAYS = Math.max(0, parseInt(process.env.WF_RECONTACT_AFTER_DAYS || '0', 10));
+
 function loadLedgerPhones() {
   const seen = new Set();
+  const cutoffMs = RECONTACT_AFTER_DAYS > 0 ? Date.now() - RECONTACT_AFTER_DAYS * 86400_000 : 0;
   try {
     const lines = fs.readFileSync(LEDGER, 'utf8').split('\n');
     for (const l of lines) {
       if (!l.trim()) continue;
-      try { seen.add(JSON.parse(l).phone); } catch { /* skip bad line */ }
+      try {
+        const entry = JSON.parse(l);
+        if (!entry || !entry.phone) continue;
+        if (cutoffMs > 0 && entry.at) {
+          const ts = Date.parse(entry.at);
+          if (!Number.isNaN(ts) && ts < cutoffMs) continue;
+        }
+        seen.add(entry.phone);
+      } catch { /* skip bad line */ }
     }
   } catch { /* first run */ }
   return seen;
@@ -468,6 +482,7 @@ async function main() {
   const SHEET_DEDUPE = !/^(0|false|no)$/i.test(process.env.WF_SHEET_DEDUPE || '');
 
   const contacted = loadLedgerPhones();
+  const optedOut = loadOptOutSet(STATE_DIR);
   const daily = loadDaily();
 
   const candidates = [];
@@ -700,6 +715,8 @@ async function main() {
         // Later duplicate row for an owner already carried by an earlier row —
         // the first-occurrence row (wherever the walkers reach it) does the send.
         summary.skippedDupRow++;
+      } else if (optedOut.has(phone)) {
+        summary.skippedOptOut++;
       } else if (!contacted.has(phone)) {
         const text = buildMessage(cand);
         if (DRY_RUN) {

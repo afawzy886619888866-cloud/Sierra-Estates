@@ -49,6 +49,62 @@ export interface OutreachStatusSummary {
   eligibleInventoryCount: number;
 }
 
+interface DbOwnerListingRecord {
+  id: string;
+  code?: string | null;
+  unitCode?: string | null;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+  contactInfo?: string | null;
+  compound?: string | null;
+  zone?: string | null;
+  locationArea?: string | null;
+  dealType?: string | null;
+  offerType?: string | null;
+  propertyType?: string | null;
+  priceEgp?: number | string | null;
+  price?: number | string | null;
+  status?: string | null;
+}
+
+interface DbQueueRow {
+  id: string;
+  recipientPhone?: string | null;
+  status?: string | null;
+}
+
+interface DbNegotiationRow {
+  id: string;
+  ownerPhone?: string | null;
+  status?: string | null;
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+function loadWorkflowOptOuts(): Set<string> {
+  const optedOut = new Set<string>();
+  const optOutPath = path.resolve(process.cwd(), 'workflows/.state/owner-outreach-optouts.jsonl');
+  if (!fs.existsSync(optOutPath)) return optedOut;
+  try {
+    const lines = fs.readFileSync(optOutPath, 'utf8').split(/\r?\n/).filter(Boolean);
+    for (const line of lines) {
+      try {
+        const parsed = JSON.parse(line) as { phone?: string; e164?: string };
+        const norm = normalizeEgyptPhone(parsed.e164 || parsed.phone || '');
+        if (norm) optedOut.add(norm);
+      } catch (parseErr: unknown) {
+        logger.debug('[OwnerOutreachService] Malformed opt-out jsonl entry skipped:', errorMessage(parseErr));
+      }
+    }
+  } catch (err: unknown) {
+    logger.warn('[OwnerOutreachService] Failed reading workflow opt-out ledger:', errorMessage(err));
+  }
+  return optedOut;
+}
+
 /**
  * Normalizes Egyptian mobile phone numbers to strict E.164 (+201xxxxxxxxx).
  */
@@ -111,44 +167,52 @@ export class OwnerOutreachService {
   /**
    * Reads inventory, finding direct owners with valid mobile contacts.
    *
-   * 2026-10-19 fix: the Windows drive-letter sheet paths were dead on every
-   * real host (Vercel/EC2 run Linux) — removed. Canonical source order is now
-   * Supabase `listings` (owner-direct rows) first, repo `data/*.csv`
-   * exports second (the workflow-09 sheet export lives there). DB errors
-   * are logged, never silently swallowed (a silent blend failure would
-   * hide the primary source and quietly shrink the outreach pool).
+   * Canonical source order:
+   * 1. Supabase `public.listings` rows carrying direct-owner `source_channel`
+   *    (`Direct Owner`, `sheets`, `owner_direct`) with valid `owner_phone`.
+   * 2. Repo `data/*.csv` exports (workflow-09 sheet exports).
    */
   static async loadEligibleInventory(): Promise<OwnerInventoryItem[]> {
     const items: OwnerInventoryItem[] = [];
     const seenPhones = new Set<string>();
+    const optedOut = loadWorkflowOptOuts();
 
-    // 1. Canonical inventory (Supabase owner-direct listings)
+    // 1. Canonical inventory (Supabase owner-direct listings via live source_channel column)
     try {
-      const dbListings = await listRecords<any>('listings', {
-        where: [{ column: 'owner_type', value: 'owner' }],
-        limit: 1000,
+      const dbListings = await listRecords<DbOwnerListingRecord>('listings', {
+        where: [
+          { column: 'source_channel', op: 'in', value: ['Direct Owner', 'sheets', 'owner_direct'] },
+        ],
+        limit: 1500,
       });
       for (const row of dbListings) {
-        const e164 = normalizeEgyptPhone(row.owner_phone || row.contact_info);
-        if (e164 && !seenPhones.has(e164)) {
+        const statusLower = String(row.status || 'available').toLowerCase();
+        if (statusLower === 'sold' || statusLower === 'off-market' || statusLower === 'archived') {
+          continue;
+        }
+        const rawPhone = row.ownerPhone || row.contactInfo || '';
+        const e164 = normalizeEgyptPhone(rawPhone);
+        if (e164 && !seenPhones.has(e164) && !optedOut.has(e164)) {
           seenPhones.add(e164);
+          const rawDeal = String(row.dealType || row.offerType || 'sale').toLowerCase();
+          const numericPrice = Number(row.priceEgp ?? row.price ?? 0);
           items.push({
             id: row.id,
-            name: row.owner_name || '',
-            phone: row.owner_phone || '',
+            name: row.ownerName || '',
+            phone: rawPhone,
             e164Phone: e164,
             compound: row.compound || '',
-            zone: row.zone || row.location_area || '',
-            dealType: (row.deal_type || row.offer_type || 'sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
-            propertyType: row.property_type || '',
-            priceEgp: parseFloat(row.price_egp || row.price) || 0,
-            code: row.code || row.unit_code || row.id,
+            zone: row.zone || row.locationArea || '',
+            dealType: rawDeal === 'rent' ? 'rent' : 'sale',
+            propertyType: row.propertyType || '',
+            priceEgp: Number.isFinite(numericPrice) ? numericPrice : 0,
+            code: row.code || row.unitCode || row.id,
           });
         }
       }
       logger.info(`[OwnerOutreachService] Supabase blend: ${items.length} owner-direct listings`);
-    } catch (err: any) {
-      logger.error('[OwnerOutreachService] Supabase owner-listing blend FAILED (canonical source unavailable):', err?.message ?? err);
+    } catch (err: unknown) {
+      logger.error('[OwnerOutreachService] Supabase owner-listing blend FAILED (canonical source unavailable):', errorMessage(err));
     }
 
     // 2. Repo data exports (Linux-relative — the workflow-09 sheet export)
@@ -177,11 +241,10 @@ export class OwnerOutreachService {
           const codeIdx = header.findIndex((h) => h.includes('code') || h.includes('no'));
 
           for (let i = 1; i < lines.length; i++) {
-            // Basic CSV row parsing taking care of quoted values
             const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
             const rawPhone = phoneIdx >= 0 ? (row[phoneIdx] || '').replace(/['"]/g, '').trim() : '';
             const e164 = normalizeEgyptPhone(rawPhone);
-            if (!e164 || seenPhones.has(e164)) continue;
+            if (!e164 || seenPhones.has(e164) || optedOut.has(e164)) continue;
 
             seenPhones.add(e164);
             const dealRaw = dealIdx >= 0 ? (row[dealIdx] || '').replace(/['"]/g, '').trim().toLowerCase() : '';
@@ -201,8 +264,8 @@ export class OwnerOutreachService {
             });
           }
         }
-      } catch (err: any) {
-        logger.warn(`[OwnerOutreachService] Failed reading ${filePath}:`, err?.message);
+      } catch (err: unknown) {
+        logger.warn(`[OwnerOutreachService] Failed reading ${filePath}:`, errorMessage(err));
       }
     }
 
@@ -214,12 +277,6 @@ export class OwnerOutreachService {
    * Computes the scheduled ISO timestamps distributed across the operating
    * window (12:00–20:00 Africa/Cairo, the canonical config in
    * lib/server/whatsapp-queue.ts).
-   *
-   * 2026-10-19 fix: the previous version computed a Cairo-window target and
-   * then ignored it — jobs scheduled outside the window (nights, early
-   * mornings) were dispatched at `now + offset` anyway. Now a slot outside
-   * the window rolls forward to the next window opening (12:00 Cairo, same
-   * or next day), DST-safe via the Intl wall-clock offset.
    */
   static getNextHourlySlot(hourOffset: number = 0): string {
     const WINDOW_START = 12; // 12:00 Cairo
@@ -232,9 +289,6 @@ export class OwnerOutreachService {
       return scheduled.toISOString();
     }
 
-    // Outside the window → roll to the next 12:00 Cairo opening.
-    // Full wall-clock round-trip: expressing Cairo's H:M:S as UTC ms and
-    // subtracting the actual instant yields the zone offset (DST included).
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Cairo', hour12: false,
       year: 'numeric', month: '2-digit', day: '2-digit',
@@ -244,30 +298,56 @@ export class OwnerOutreachService {
     const wallMs = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'), get('second'));
     const offset = wallMs - scheduled.getTime();
     const wallDayStart = wallMs - (wallMs % 86400000);
-    const days = cairoHour >= WINDOW_END ? 1 : 0; // after 20:00 → tomorrow
+    const days = cairoHour >= WINDOW_END ? 1 : 0;
     const targetWallMs = wallDayStart + days * 86400000 + WINDOW_START * 3600000;
-    const rolled = new Date(targetWallMs - offset);
+    let rolled = new Date(targetWallMs - offset);
+    const rolledParts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Cairo', hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(rolled);
+    const getRolled = (t: string) => Number(rolledParts.find((p) => p.type === t)?.value ?? 0);
+    const rolledWallMs = Date.UTC(
+      getRolled('year'),
+      getRolled('month') - 1,
+      getRolled('day'),
+      getRolled('hour') % 24,
+      getRolled('minute'),
+      getRolled('second'),
+    );
+    const rolledOffset = rolledWallMs - rolled.getTime();
+    if (rolledOffset !== offset) {
+      rolled = new Date(targetWallMs - rolledOffset);
+    }
     return rolled.toISOString();
   }
 
   /**
-   * Enqueues exactly batchSize (default 40) owners into Supabase whatsapp_queue
-   * after verifying they have not already been contacted.
+   * Enqueues up to batchSize (default 40) owners into Supabase whatsapp_queue
+   * after verifying they have not already been contacted or opted out.
    */
   static async enqueueBatch(options: { batchSize?: number; targetHourOffset?: number } = {}): Promise<EnqueueBatchResult> {
     const batchSize = options.batchSize || 40;
     const inventory = await this.loadEligibleInventory();
+    const optedOut = loadWorkflowOptOuts();
 
-    // Query already contacted phones from owner_negotiations and whatsapp_queue
     const contactedPhones = new Set<string>();
     try {
-      const activeNegotiations = await listRecords<{ ownerPhone: string }>('owner_negotiations', { limit: 1000 });
-      activeNegotiations.forEach((n) => n.ownerPhone && contactedPhones.add(normalizeEgyptPhone(n.ownerPhone) || n.ownerPhone));
+      const activeNegotiations = await listRecords<DbNegotiationRow>('owner_negotiations', { limit: 1000 });
+      activeNegotiations.forEach((n) => {
+        if (n.ownerPhone) {
+          contactedPhones.add(normalizeEgyptPhone(n.ownerPhone) || n.ownerPhone);
+        }
+      });
 
-      const queuedJobs = await listRecords<{ recipientPhone: string }>('whatsapp_queue', { limit: 1000 });
-      queuedJobs.forEach((q) => q.recipientPhone && contactedPhones.add(normalizeEgyptPhone(q.recipientPhone) || q.recipientPhone));
-    } catch (err: any) {
-      logger.warn('[OwnerOutreachService] Could not check prior contacted records:', err?.message);
+      const queuedJobs = await listRecords<DbQueueRow>('whatsapp_queue', { limit: 1000 });
+      queuedJobs.forEach((q) => {
+        if (q.recipientPhone) {
+          contactedPhones.add(normalizeEgyptPhone(q.recipientPhone) || q.recipientPhone);
+        }
+      });
+    } catch (err: unknown) {
+      logger.warn('[OwnerOutreachService] Could not check prior contacted records:', errorMessage(err));
     }
 
     const enqueuedJobs: EnqueueBatchResult['jobs'] = [];
@@ -284,7 +364,7 @@ export class OwnerOutreachService {
         continue;
       }
 
-      if (contactedPhones.has(item.e164Phone)) {
+      if (contactedPhones.has(item.e164Phone) || optedOut.has(item.e164Phone)) {
         skippedAlreadyContacted++;
         continue;
       }
@@ -309,8 +389,8 @@ export class OwnerOutreachService {
           jobId,
           scheduledFor,
         });
-      } catch (err: any) {
-        logger.error(`[OwnerOutreachService] Failed to enqueue for ${item.e164Phone}:`, err);
+      } catch (err: unknown) {
+        logger.error(`[OwnerOutreachService] Failed to enqueue for ${item.e164Phone}:`, errorMessage(err));
       }
     }
 
@@ -339,21 +419,21 @@ export class OwnerOutreachService {
     let activeNegotiations = 0;
 
     try {
-      const queued = await listRecords<any>('whatsapp_queue', { where: [{ column: 'status', value: 'queued' }] });
+      const queued = await listRecords<DbQueueRow>('whatsapp_queue', { where: [{ column: 'status', value: 'queued' }] });
       totalQueued = queued.length;
 
-      const sent = await listRecords<any>('whatsapp_queue', { where: [{ column: 'status', value: 'sent' }] });
+      const sent = await listRecords<DbQueueRow>('whatsapp_queue', { where: [{ column: 'status', value: 'sent' }] });
       totalSent = sent.length;
 
-      const failed = await listRecords<any>('whatsapp_queue', { where: [{ column: 'status', value: 'failed' }] });
+      const failed = await listRecords<DbQueueRow>('whatsapp_queue', { where: [{ column: 'status', value: 'failed' }] });
       totalFailed = failed.length;
 
-      const negs = await listRecords<any>('owner_negotiations', {
+      const negs = await listRecords<DbNegotiationRow>('owner_negotiations', {
         where: [{ column: 'status', op: 'in', value: ['contacted', 'negotiating'] }],
       });
       activeNegotiations = negs.length;
-    } catch (err: any) {
-      logger.error('[OwnerOutreachService] getStatus metrics lookup FAILED (reporting zeros is dishonest — surfacing the error):', err?.message ?? err);
+    } catch (err: unknown) {
+      logger.error('[OwnerOutreachService] getStatus metrics lookup FAILED (reporting zeros is dishonest — surfacing the error):', errorMessage(err));
       throw err;
     }
 

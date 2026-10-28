@@ -43,7 +43,7 @@ const http = require('http');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-try { require('dotenv').config({ path: path.join(__dirname, '.env') }); } catch {}
+const { loadWorkflowEnv } = require('./lib/google-sheets'); loadWorkflowEnv(__dirname);
 const { isDue } = require('./lib/crone');
 const state = require('./lib/state');
 const sb = require('./lib/supabase-sync');

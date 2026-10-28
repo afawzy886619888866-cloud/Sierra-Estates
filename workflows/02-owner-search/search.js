@@ -1,63 +1,58 @@
-try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
+'use strict';
 /**
  * Workflow 02: Owner Search  (fixed 2026-10)
  * ─────────────────────────────────────────
  * Searches Property Finder for direct-owner properties and appends them to
- * the Google Sheets "owner_leads" tab.
- *
- * FIXES over the previous revision:
- *   - `fetch()` never supported the `qs` option (that is request/axios
- *     syntax) — every run silently queried the unfiltered endpoint. The URL
- *     is now built with URLSearchParams.
- *   - Missing PROPERTY_FINDER_JWT_TOKEN now exits with code 2 ("unconfigured")
- *     instead of throwing a raw 401 stack — the runner records it as
- *     unconfigured, not failed.
- *   - Response shape guards + per-row try/catch so one bad listing can't
- *     abort the whole batch.
- *   - Writes status col I ('PENDING') which workflow 03 consumes.
+ * the Google Sheets "owner_leads" tab (or Supabase `public.leads` when Sheets
+ * credentials are omitted in cloud/Docker environments).
  *
  * OWNER-EVIDENCE RULE (2026-10-25, no-fabrication era):
  *   - Only rows with POSITIVE owner evidence (unit.owner.phone) are
- *     appended as owner leads. The previous `unit.owner?.phone ||
- *     unit.agent?.phone || 'No contact'` fallback put BROKER phone numbers
- *     into the owner_leads sheet — workflow 03 would then text a broker
- *     as if they were an owner — and appended empty 'No contact' rows.
- *     Both paths are gone: broker-attributed rows and rows with no owner
- *     contact are counted and skipped, never re-labeled.
- *   - A malformed API response (non-array data) is a FAILURE that exits 1 —
- *     it must never masquerade as a successful empty search.
+ *     appended as owner leads. Broker-attributed rows and rows without owner
+ *     phone are counted and skipped, never re-labeled or filled with placeholders.
+ *   - A malformed API response (non-array data) is a FAILURE that exits 1.
  *
  * Usage:  node 02-owner-search/search.js
  * Env:    PROPERTY_FINDER_API_BASE, PROPERTY_FINDER_JWT_TOKEN,
- *         BROKER_INBOX_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_KEY
+ *         BROKER_INBOX_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_KEY / GOOGLE_SERVICE_ACCOUNT_JSON,
+ *         SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Exit:   0 ok · 2 unconfigured · 1 error
  */
-const { google } = require('googleapis');
-const fs = require('fs');
+const path = require('path');
+const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+const { requestJson } = require('../lib/gateway-client');
+const { normalizeOwnerPhone } = require('../lib/inbox');
+
+loadWorkflowEnv(path.join(__dirname, '..'));
 
 const PF_API_BASE = (process.env.PROPERTY_FINDER_API_BASE || 'https://api.propertyfinder.com.eg/v3').replace(/\/+$/, '');
 const PF_TOKEN = process.env.PROPERTY_FINDER_JWT_TOKEN || '';
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
-const SA_PATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '';
+const SB_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const summary = { found: 0, appended: 0, skipped: 0, skippedNoOwnerEvidence: 0, skippedBrokerOnly: 0, errors: 0 };
+const summary = {
+  found: 0,
+  appended: 0,
+  supabaseInserted: 0,
+  skipped: 0,
+  skippedNoOwnerEvidence: 0,
+  skippedBrokerOnly: 0,
+  errors: 0,
+};
 
 function failUnconfigured(msg) {
   console.log(`UNCONFIGURED: ${msg}`);
   process.exit(2);
 }
 
-function sheetsClient() {
-  if (!SHEET_ID) failUnconfigured('BROKER_INBOX_SHEET_ID missing');
-  if (!SA_PATH || !fs.existsSync(SA_PATH)) failUnconfigured('GOOGLE_SERVICE_ACCOUNT_KEY missing or file not found');
-  const creds = JSON.parse(fs.readFileSync(SA_PATH, 'utf8'));
-  return google.sheets({
-    version: 'v4',
-    auth: new google.auth.GoogleAuth({
-      credentials: creds,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    }),
-  });
+function resolveDestinations() {
+  const sheets = SHEET_ID ? createSheetsClient(['https://www.googleapis.com/auth/spreadsheets']) : null;
+  const hasSupabase = Boolean(SB_URL && SB_KEY);
+  if (!sheets && !hasSupabase) {
+    failUnconfigured('Neither Google Sheets (BROKER_INBOX_SHEET_ID + GOOGLE_SERVICE_ACCOUNT_*) nor Supabase (SUPABASE_SERVICE_ROLE_KEY) is configured');
+  }
+  return { sheets, hasSupabase };
 }
 
 async function appendToSheet(sheets, tabName, values) {
@@ -67,6 +62,49 @@ async function appendToSheet(sheets, tabName, values) {
     valueInputOption: 'USER_ENTERED',
     resource: { values: [values] },
   });
+}
+
+async function insertSupabaseOwnerLead(unit) {
+  const rawPhone = String(unit.owner.phone).trim();
+  const normalizedPhone = normalizeOwnerPhone(rawPhone) || rawPhone;
+  const nowIso = new Date().toISOString();
+  const checkRes = await requestJson(
+    `${SB_URL}/rest/v1/leads?phone=eq.${encodeURIComponent(normalizedPhone)}&select=id&limit=1`,
+    {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+      timeoutMs: 8000,
+    }
+  );
+  if (checkRes.ok && Array.isArray(checkRes.data) && checkRes.data.length > 0) {
+    summary.skipped++;
+    return false;
+  }
+  const insRes = await requestJson(`${SB_URL}/rest/v1/leads`, {
+    method: 'POST',
+    headers: {
+      apikey: SB_KEY,
+      Authorization: `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: {
+      full_name: unit.owner?.name || 'Property Finder Direct Owner',
+      phone: normalizedPhone,
+      source: 'property_finder',
+      origin_channel: 'workflow-02-owner-search',
+      lead_type: 'seller',
+      stage: 'inbound',
+      target_compound: unit.location?.name || null,
+      summary_notes: `${String(unit.title || '').slice(0, 180)} | Price: ${unit.price ?? 'N/A'} | ${unit.url || ''}`,
+      created_at: nowIso,
+      updated_at: nowIso,
+    },
+    timeoutMs: 8000,
+  });
+  if (!insRes.ok) {
+    throw new Error(`Supabase lead insert HTTP ${insRes.status}`);
+  }
+  return true;
 }
 
 async function searchPropertyFinder() {
@@ -93,8 +131,6 @@ async function searchPropertyFinder() {
     failUnconfigured(`PF token rejected (HTTP ${response.status}) — rotate PROPERTY_FINDER_JWT_TOKEN`);
   }
   if (response.status === 429) {
-    // Rate limit from the source — respect it and fail loudly (never an
-    // "empty search"). The runner labels this run :error so operators see it.
     throw new Error('PF API rate limited (HTTP 429) — back off before retrying');
   }
   if (!response.ok) {
@@ -102,9 +138,6 @@ async function searchPropertyFinder() {
   }
 
   const data = await response.json();
-  // Malformed shape = FAILURE. The old coercion to [] reported a healthy
-  // empty search for a broken payload (anti-fabrication: an extraction
-  // failure is never a successful empty result).
   if (!data || typeof data !== 'object' || !Array.isArray(data.data)) {
     throw new Error(`PF API malformed response (data is not an array): ${JSON.stringify(data).slice(0, 200)}`);
   }
@@ -136,21 +169,24 @@ function buildLeadRow(unit) {
 
 async function main() {
   console.log('owner-search: starting');
-  const sheets = sheetsClient();
+  const { sheets, hasSupabase } = resolveDestinations();
   const units = await searchPropertyFinder();
 
   for (const unit of units) {
     try {
-      // OWNER-EVIDENCE GATE: broker-attributed rows and rows with no owner
-      // contact are counted and skipped — a missing owner phone is NEVER
-      // filled with the agent's phone or a 'No contact' placeholder.
       if (!hasOwnerEvidence(unit)) {
         if (unit && unit.agent && (unit.agent.phone || unit.agent.name)) summary.skippedBrokerOnly++;
         else summary.skippedNoOwnerEvidence++;
         continue;
       }
-      await appendToSheet(sheets, 'owner_leads', buildLeadRow(unit));
-      summary.appended++;
+      if (sheets) {
+        await appendToSheet(sheets, 'owner_leads', buildLeadRow(unit));
+        summary.appended++;
+      }
+      if (hasSupabase) {
+        const inserted = await insertSupabaseOwnerLead(unit);
+        if (inserted) summary.supabaseInserted++;
+      }
     } catch (err) {
       summary.errors++;
       console.error(`row append failed: ${err.message}`);
@@ -162,8 +198,6 @@ async function main() {
   process.exit(0);
 }
 
-/* Unit-testable surface (spawned as a child process by the runner — pure
- * helpers only, safe to export; main() only runs when invoked directly). */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { hasOwnerEvidence, buildLeadRow };
 }
