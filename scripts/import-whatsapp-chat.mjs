@@ -2,20 +2,24 @@
 'use strict';
 
 /**
- * Sierra Estates — WhatsApp Group Chat Importer & Unit Harvester
+ * Sierra Estates — WhatsApp Group Chat & Media Importer
  * ──────────────────────────────────────────────────────────────
- * Parses exported WhatsApp chat logs (.txt) from owner/broker groups
- * (e.g. "augast owners", "owners"), extracts property listings, resolves
- * New Cairo compound coordinates, normalizes Egyptian pricing, and syncs
- * directly to Supabase `public.listings` and Google Sheets.
+ * Parses exported WhatsApp chat logs (.txt) or complete export archives (.zip)
+ * from owner/broker groups (e.g. "augast owners", "owners"), extracts property
+ * listings, matches attached photos from phone/email exports, verifies
+ * Property Finder media dimensions (>= 800x600 px), and syncs directly to
+ * Supabase `public.listings` and Supabase Storage (`property-media`).
  *
  * Usage:
- *   node scripts/import-whatsapp-chat.mjs --file "path/to/_chat.txt" [--dry-run] [--sync-db]
+ *   node scripts/import-whatsapp-chat.mjs --file "path/to/_chat.txt" [--sync-db]
+ *   node scripts/import-whatsapp-chat.mjs --file "path/to/OwnersExport.zip" [--sync-db]
+ *   node scripts/import-whatsapp-chat.mjs --file "path/to/_chat.txt" --phone-media-dir "D:/WhatsApp/Media" [--sync-db]
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
@@ -136,6 +140,10 @@ export function extractUnitDetails(msg, groupName = 'WhatsApp Group') {
     area = parseInt(areaMatch[1], 10);
   }
 
+  // Attached photos extraction (<attached: xxx.jpg> or <ملف مرفق: xxx.jpg>)
+  const photoMatches = [...text.matchAll(/<(?:attached|ملف مرفق):\s*([^>]+)>/gi)];
+  const attachedPhotos = photoMatches.map((m) => m[1].trim()).filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f));
+
   // Deal type & property type
   const isRent = text.includes('ايجار') || text.includes('إيجار') || text.includes('للايجار') || text.includes('للإيجار');
   const dealType = isRent ? 'Rent' : 'Sale';
@@ -162,35 +170,87 @@ export function extractUnitDetails(msg, groupName = 'WhatsApp Group') {
     ownerPhone: phone,
     ownerName: msg.sender,
     rawText: text,
+    attachedPhotos,
     sourceGroup: groupName,
     timestamp: msg.timestamp,
     dupeHash,
   };
 }
 
+// Basic image dimension probe
+function parseImageDimensions(buf) {
+  if (!buf || buf.length < 24) return null;
+  // PNG
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    const width = ((buf[16] << 24) | (buf[17] << 16) | (buf[18] << 8) | buf[19]) >>> 0;
+    const height = ((buf[20] << 24) | (buf[21] << 16) | (buf[22] << 8) | buf[23]) >>> 0;
+    return { width, height };
+  }
+  // JPEG SOF0..SOF2
+  if (buf[0] === 0xff && buf[1] === 0xd8) {
+    let offset = 2;
+    while (offset < buf.length - 8) {
+      if (buf[offset] !== 0xff) break;
+      const marker = buf[offset + 1];
+      if (marker === 0xc0 || marker === 0xc1 || marker === 0xc2) {
+        const height = ((buf[offset + 5] << 8) | buf[offset + 6]) >>> 0;
+        const width = ((buf[offset + 7] << 8) | buf[offset + 8]) >>> 0;
+        return { width, height };
+      }
+      const len = ((buf[offset + 2] << 8) | buf[offset + 3]) >>> 0;
+      offset += 2 + len;
+    }
+  }
+  return null;
+}
+
 async function main() {
   const args = process.argv.slice(2);
-  const fileArg = args.find((a, i) => args[i - 1] === '--file') || args.find((a) => a.endsWith('.txt'));
+  const fileArg = args.find((a, i) => args[i - 1] === '--file') || args.find((a) => a.endsWith('.txt') || a.endsWith('.zip'));
+  const phoneMediaDir = args.find((a, i) => args[i - 1] === '--phone-media-dir');
   const isDryRun = args.includes('--dry-run') || !args.includes('--sync-db');
 
   if (!fileArg || !fs.existsSync(fileArg)) {
     console.log(`
-Sierra Estates — WhatsApp Group Chat Importer
-─────────────────────────────────────────────
+Sierra Estates — WhatsApp Group Chat & Media Importer
+─────────────────────────────────────────────────────
 Usage:
-  node scripts/import-whatsapp-chat.mjs --file "<path-to-_chat.txt>" [--sync-db]
+  node scripts/import-whatsapp-chat.mjs --file "<path-to-_chat.txt or export.zip>" [--phone-media-dir "<path>"] [--sync-db]
 
 Options:
-  --file <path>   Path to the exported WhatsApp _chat.txt file
-  --sync-db       Persist parsed listings directly to Supabase public.listings (default: dry-run)
-  --dry-run       Audit and preview extracted units without database writes
+  --file <path>             Path to WhatsApp _chat.txt or .zip export archive
+  --phone-media-dir <path>  Path to local phone WhatsApp Images folder (e.g. from USB / backup)
+  --sync-db                 Persist parsed listings & upload photos to Supabase (default: dry-run)
+  --dry-run                 Audit and preview extracted units & photos without database writes
     `);
     process.exit(0);
   }
 
-  const content = fs.readFileSync(fileArg, 'utf8');
-  const groupName = path.basename(path.dirname(fileArg)) || 'WhatsApp Owners Group';
-  console.log(`[import] Reading export file: ${fileArg}`);
+  let chatFilePath = fileArg;
+  let mediaSearchDir = path.dirname(fileArg);
+
+  // If ZIP archive was provided, unpack it automatically
+  if (fileArg.endsWith('.zip')) {
+    const extractDir = path.join(path.dirname(fileArg), path.basename(fileArg, '.zip') + '_extracted');
+    if (!fs.existsSync(extractDir)) {
+      console.log(`[import] Unpacking ZIP archive into ${extractDir}...`);
+      fs.mkdirSync(extractDir, { recursive: true });
+      const pwshCmd = `Expand-Archive -LiteralPath '${fileArg.replace(/'/g, "''")}' -DestinationPath '${extractDir.replace(/'/g, "''")}' -Force`;
+      execSync(`pwsh -NoProfile -Command "${pwshCmd}"`, { stdio: 'inherit' });
+    }
+    mediaSearchDir = extractDir;
+    // Find _chat.txt
+    const txtFiles = fs.readdirSync(extractDir).filter((f) => f.endsWith('.txt'));
+    if (!txtFiles.length) {
+      console.error('[import] No .txt file found inside extracted ZIP');
+      process.exit(1);
+    }
+    chatFilePath = path.join(extractDir, txtFiles[0]);
+  }
+
+  const content = fs.readFileSync(chatFilePath, 'utf8');
+  const groupName = path.basename(path.dirname(chatFilePath)) || 'WhatsApp Owners Group';
+  console.log(`[import] Reading export file: ${chatFilePath}`);
   const messages = parseWhatsAppExport(content);
   console.log(`[import] Found ${messages.length} total messages in chat export`);
 
@@ -200,16 +260,42 @@ Options:
     const u = extractUnitDetails(m, groupName);
     if (u && !seenHashes.has(u.dupeHash)) {
       seenHashes.add(u.dupeHash);
+
+      // Locate attached photos
+      const localPhotos = [];
+      const searchDirs = [mediaSearchDir, phoneMediaDir].filter(Boolean);
+      for (const pName of u.attachedPhotos) {
+        for (const dir of searchDirs) {
+          const candidate = path.join(dir, pName);
+          if (fs.existsSync(candidate)) {
+            const buf = fs.readFileSync(candidate);
+            const dims = parseImageDimensions(buf);
+            localPhotos.push({
+              filename: pName,
+              path: candidate,
+              bytes: buf.length,
+              width: dims?.width || null,
+              height: dims?.height || null,
+              qualifying: (dims?.width || 0) >= 800 && (dims?.height || 0) >= 600,
+            });
+            break;
+          }
+        }
+      }
+      u.localPhotos = localPhotos;
       units.push(u);
     }
   }
 
-  console.log(`[import] Extracted ${units.length} unique valid property units with owner contacts!`);
-  console.log(`\nSample Extracted Listings (first 3):`);
-  console.log(JSON.stringify(units.slice(0, 3), null, 2));
+  console.log(`[import] Extracted ${units.length} unique valid property units!`);
+  const unitsWithPhotos = units.filter((u) => u.localPhotos && u.localPhotos.length > 0);
+  console.log(`[import] Found ${unitsWithPhotos.length} units with verified attached photos from phone/backup`);
+
+  console.log(`\nSample Extracted Listings (first 2):`);
+  console.log(JSON.stringify(units.slice(0, 2), null, 2));
 
   if (isDryRun) {
-    console.log(`\n[DRY RUN] ${units.length} units extracted. Pass '--sync-db' to commit to Supabase & Sheet.`);
+    console.log(`\n[DRY RUN] ${units.length} units extracted (${unitsWithPhotos.length} with photos). Pass '--sync-db' to commit.`);
     return;
   }
 
@@ -223,6 +309,27 @@ Options:
   const sb = createClient(supabaseUrl, serviceKey);
   let inserted = 0;
   for (const u of units) {
+    const photoUrls = [];
+
+    // Upload qualifying photos to Supabase Storage bucket 'property-media'
+    for (const p of u.localPhotos || []) {
+      if (p.qualifying) {
+        try {
+          const buf = fs.readFileSync(p.path);
+          const ext = path.extname(p.path).replace('.', '') || 'jpg';
+          const storagePath = `whatsapp-units/${u.dupeHash}/${crypto.randomUUID()}.${ext}`;
+          const { error: uploadErr } = await sb.storage.from('property-media').upload(storagePath, buf, {
+            contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
+            upsert: true,
+          });
+          if (!uploadErr) {
+            const { data: pubUrl } = sb.storage.from('property-media').getPublicUrl(storagePath);
+            if (pubUrl && pubUrl.publicUrl) photoUrls.push(pubUrl.publicUrl);
+          }
+        } catch (_) {}
+      }
+    }
+
     const { error } = await sb.from('listings').upsert({
       code: `WA-${u.dupeHash.slice(0, 8).toUpperCase()}`,
       title: `${u.propertyType} in ${u.compound}`,
@@ -235,6 +342,7 @@ Options:
       owner_name: u.ownerName,
       owner_phone: u.ownerPhone,
       description: u.rawText,
+      photos: photoUrls.length ? photoUrls : null,
       status: 'active',
       availability: 'available',
       dupe_check_hash: u.dupeHash,
