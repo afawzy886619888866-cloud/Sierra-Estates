@@ -257,6 +257,12 @@ function freshCheckpoint(totalCount, side) {
 }
 
 function loadCheckpoint(totalCount) {
+  if (/^(1|true|yes)$/i.test(process.env.WF_RESET_CHECKPOINT || "")) {
+    console.log("[outreach] WF_RESET_CHECKPOINT active — starting a fresh sweep cycle (dedupe ledger protects already contacted owners)");
+    const cp = freshCheckpoint(totalCount, HOST_SIDE);
+    saveCheckpoint(cp);
+    return cp;
+  }
   try {
     const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
     if (typeof cp.cursor === 'number' || typeof cp.topCursor === 'number') {
@@ -560,10 +566,21 @@ async function main() {
         ? (checkpoint.cursor + 1)
         : (candidates.length - checkpoint.cursor);
   if (remaining <= 0 || checkpoint.completed) {
-    summary.completed = true;
-    console.log('🏁 All candidates in the sheet have already been contacted!');
-    console.log(`SUMMARY ${JSON.stringify(summary)}`);
-    return;
+    const uncontactedCount = candidates.filter((c) => !contacted.has(c.phone) && c.dupOf === null).length;
+    if (uncontactedCount > 0 && !process.env.WF_NO_RECYCLE) {
+      console.log(`[outreach] Walk completed previous pass, but found ${uncontactedCount} uncontacted owners remaining — refreshing sweep cursors (ledger dedupe active)`);
+      const recycled = freshCheckpoint(candidates.length, HOST_SIDE);
+      saveCheckpoint(recycled);
+      checkpoint.topCursor = recycled.topCursor;
+      checkpoint.bottomCursor = recycled.bottomCursor;
+      checkpoint.cursor = recycled.cursor;
+      checkpoint.completed = false;
+    } else {
+      summary.completed = true;
+      console.log('🏁 All candidates in the sheet have already been contacted!');
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      return;
+    }
   }
 
   // ── Direction-aware atomic claim ───────────────────────────────────
