@@ -95,7 +95,7 @@ _bd = Counter(
     if _deal(u) in ("sale", "buy", "resale") and 0 < float(u.get("price") or 0) < 100000
 )
 print(f"{n} {geo} {prc} {stub} {sale_cheap}")
-print("SUSPICIOUS-SALE BREAKDOWN (currency, deal, segment) -> count, for operator triage: " + json.dumps(dict(_bd)), file=sys.stderr)
+print("SUSPICIOUS-SALE BREAKDOWN (currency, deal, segment) -> count, for operator triage: " + json.dumps({":".join(k): v for k, v in _bd.items()}), file=sys.stderr)
 PY
 )
   read -r n geo prc stub salecheap <<< "$dq"

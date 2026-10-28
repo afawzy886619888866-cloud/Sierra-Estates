@@ -160,6 +160,8 @@ export function formatForPropertyFinder(unit: SierraListingInput): PropertyFinde
     .filter((u) => /^https?:\/\//i.test(String(u || '').trim()))
     .map((url) => ({ original: { url: url.trim() } }));
 
+  const locationSuffix = unit.compound ? ` in ${unit.compound}` : unit.city ? ` in ${unit.city}` : '';
+
   return {
     reference,
     category,
@@ -173,11 +175,11 @@ export function formatForPropertyFinder(unit: SierraListingInput): PropertyFinde
       amounts: isRent ? { monthly: amount } : { sale: amount },
     },
     title: {
-      en: unit.title || `${unit.propertyType || 'Luxury Property'} in ${unit.compound || 'New Cairo'}`,
+      en: unit.title || `${unit.propertyType || 'Luxury Property'}${locationSuffix}`,
       ...(unit.titleAr ? { ar: unit.titleAr } : {}),
     },
     description: {
-      en: unit.description || unit.title || `Verified property in ${unit.compound || 'New Cairo'}.`,
+      en: unit.description || unit.title || `Verified property${locationSuffix}.`,
       ...(unit.descriptionAr ? { ar: unit.descriptionAr } : {}),
     },
     media: {

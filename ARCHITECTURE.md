@@ -18,9 +18,10 @@ Vercel / Next.js (`apps/sierra-estates-realty`)
   +--> Supabase
   |      PostgreSQL + Auth + Storage + RLS + pgvector
   |
-  +--> Worker services
-         apps/api / Cloud Run
-         n8n / Docker / VPS
+  +--> Worker services & 4-Engine Automation Plane
+         Docker Runner (:2786) + 8-Line OpenWA RAG Station (:2785)
+         OpenClaw Worker Manager + DeepSeek Evaluation Harness
+         Property Finder Enterprise Atlas v1 Connector
          GitHub Actions and scheduled workflows
 ```
 
@@ -28,6 +29,8 @@ The Next.js application owns request handling, authentication boundaries, typed
 domain services, and user-facing responses. It does not own long-running scraping,
 sync, bot, or batch work. Those jobs run in workers and persist canonical state in
 Supabase.
+
+For the full **4-Engine Revenue & Automation Architecture** (Memory Engine, RAG/GIS Map Engine, DeepSeek Harness, and Workflows/OpenClaw/Property Finder Atlas v1), see [`docs/FOUR_ENGINE_AUTOMATION_ARCHITECTURE.md`](./docs/FOUR_ENGINE_AUTOMATION_ARCHITECTURE.md).
 
 ## Repository boundaries
 
@@ -39,10 +42,11 @@ Supabase.
 | `packages/db` | Supabase clients, typed records, backend policy assertions |
 | `packages/agents*` | Agent definitions, tools, orchestration, and lifecycle contracts |
 | `packages/memory-engine` | Episodic and vector-backed agent memory |
-| `packages/property-finder-api` | External Property Finder connector and parsers |
+| `packages/deepseek-harness` | 10-scenario DeepSeek evaluation harness and quality gates |
+| `packages/property-finder-api` | Enterprise Atlas v1 OAuth2 connector, lead sync, and parsers |
 | `packages/ui` | Shared UI primitives and design tokens |
-| `workflows/` | Worker-oriented sync and outreach pipelines |
-| `scripts/` | Deployment checks, migration, operational, and data tooling |
+| `workflows/` | 10-workflow control plane (`:2786`), inbound reply classifier, and outreach pipelines |
+| `scripts/` | Deployment checks, migration, Property Finder feed exporters, and OpenClaw tooling |
 | `supabase/` | Authoritative schema, functions, policies, and database tests |
 
 ## Data and write boundaries
@@ -107,6 +111,7 @@ In particular, the following are retired:
 - Firebase Hosting deployment
 - Firebase rules and Functions deployment commands
 - Firestore as the primary exchange or inventory store
+- Legacy AWS EC2 host (`54.89.162.250`) — replaced by the Docker Runner + Cloudflare Tunnel control plane
 - A second standalone admin application
 
 When legacy code is removed, update this section and the relevant migration tests

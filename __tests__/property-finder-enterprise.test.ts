@@ -86,7 +86,7 @@ describe('Property Finder Enterprise Integration & Closed-Loop Owner Reply Suite
       const formatted = formatForPropertyFinder(sparseAsset);
 
       expect(formatted.reference).toBe('SE-ABCDEF12');
-      expect(formatted.title.en).toContain('New Cairo');
+      expect(formatted.title.en).toContain('Luxury Property');
       expect(formatted.price.amounts.sale).toBe(0);
       expect(formatted.bedrooms).toBe(0);
     });

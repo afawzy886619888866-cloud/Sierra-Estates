@@ -155,8 +155,8 @@ function parseMissingPhotosQueue(): MissingPhotoCandidate[] {
     candidates.push({
       reference: cols[0] || '',
       dealType: cols[1] || 'rent',
-      compound: cols[2] || 'New Cairo',
-      zone: cols[3] || 'New Cairo',
+      compound: cols[2] || '',
+      zone: cols[3] || '',
       priceEgp: Number(cols[4]) || 0,
       beds: Number(cols[5]) || 0,
       area: Number(cols[6]) || 0,
