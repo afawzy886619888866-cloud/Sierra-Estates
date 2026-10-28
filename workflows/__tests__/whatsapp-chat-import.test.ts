@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseWhatsAppExport, extractUnitDetails, normalizePhone } from '../../scripts/import-whatsapp-chat.mjs';
+import { parseWhatsAppExport, extractUnitDetails, parseGroupedListings, normalizePhone } from '../../scripts/import-whatsapp-chat.mjs';
 
 describe('WhatsApp Chat Import & Harvester Engine', () => {
   it('normalizes Egyptian mobile numbers across formats', () => {
@@ -42,5 +42,35 @@ describe('WhatsApp Chat Import & Harvester Engine', () => {
     expect(unit2?.dealType).toBe('Rent');
     expect(unit2?.price).toBe(80000);
     expect(unit2?.ownerPhone).toBe('201122334455');
+  });
+
+  it('groups consecutive media attachments and follow-up specs from same sender', () => {
+    const rawChat = `
+5/15/25, 6:11 PM - Hagar Mohamed: Furnished Apartment for Rent in Fifth Square Compound by Al Marasem
+3 Bedrooms
+2 Bathrooms
+First-time Use
+5/15/25, 6:11 PM - Hagar Mohamed: 55k
+5/15/25, 6:11 PM - Hagar Mohamed: IMG-20250512-WA0041.jpg (file attached)
+5/15/25, 6:11 PM - Hagar Mohamed: IMG-20250512-WA0042.jpg (file attached)
+5/15/25, 6:11 PM - Hagar Mohamed: IMG-20250512-WA0043.jpg (file attached)
+5/15/25, 6:12 PM - Other Agent: Available?
+`.trim();
+
+    const messages = parseWhatsAppExport(rawChat);
+    expect(messages.length).toBeGreaterThanOrEqual(6);
+
+    const units = parseGroupedListings(messages, 'Test Group');
+    expect(units).toHaveLength(1);
+    expect(units[0].compound).toBe('Fifth Square');
+    expect(units[0].price).toBe(55000);
+    expect(units[0].bedrooms).toBe(3);
+    expect(units[0].bathrooms).toBe(2);
+    expect(units[0].dealType).toBe('Rent');
+    expect(units[0].attachedPhotos).toEqual([
+      'IMG-20250512-WA0041.jpg',
+      'IMG-20250512-WA0042.jpg',
+      'IMG-20250512-WA0043.jpg'
+    ]);
   });
 });

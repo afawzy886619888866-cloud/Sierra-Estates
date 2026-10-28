@@ -142,6 +142,73 @@ function Start-WorkflowRunnerIfDown {
   }
 }
 
+$script:lastPhoneSyncHash = ""
+function Check-PhoneCableAndImport {
+  try {
+    $shell = New-Object -ComObject Shell.Application
+    $thisPC = $shell.Namespace(17)
+    $phone = $null
+    foreach ($item in $thisPC.Items()) {
+      if ($item.Type -match "Mobile Phone|Portable Device" -or $item.Name -match "S24|Ultra|Samsung|Android|Phone|أحمد|Ahmed") {
+        $phone = $item
+        break
+      }
+    }
+    if ($phone) {
+      $phoneFolder = $phone.GetFolder
+      $internalStorage = $null
+      foreach ($sub in $phoneFolder.Items()) {
+        if ($sub.Name -match "Internal storage$") {
+          $internalStorage = $sub.GetFolder
+          break
+        }
+      }
+      if ($internalStorage) {
+        $downloadFolder = $null
+        foreach ($item in $internalStorage.Items()) {
+          if ($item.Name -eq "Download") {
+            $downloadFolder = $item.GetFolder
+            break
+          }
+        }
+        if ($downloadFolder) {
+          $foundItems = @()
+          foreach ($item in $downloadFolder.Items()) {
+            if ($item.Name -match "WhatsApp Chat|\.zip$|brokers|owners" -and $item.Name -notmatch "\.apk$") {
+              $foundItems += $item
+            }
+          }
+          if ($foundItems.Count -gt 0) {
+            $currentHash = ($foundItems | ForEach-Object { "$($_.Name)|$($_.Size)" }) -join ";"
+            if ($currentHash -ne $script:lastPhoneSyncHash) {
+              Write-AutoLog "Detected $($foundItems.Count) WhatsApp export(s) on $($phone.Name) over USB. Triggering auto-pull & ingestion..."
+              $destFolder = $shell.Namespace((Join-Path $RepoRoot "data\whatsapp-phone-import"))
+              $existingNames = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot "data\whatsapp-phone-import") | ForEach-Object { $_.Name })
+              $copied = 0
+              foreach ($item in $foundItems) {
+                $already = $false
+                foreach ($ex in $existingNames) {
+                  if ($ex -eq $item.Name -or ($item.Name.Length -ge 15 -and $ex.StartsWith($item.Name.Substring(0, 15)))) {
+                    $already = $true; break
+                  }
+                }
+                if (-not $already) {
+                  $destFolder.CopyHere($item, 16 + 512 + 1024)
+                  $copied++
+                }
+              }
+              if ($copied -gt 0) { Start-Sleep -Seconds 3 }
+              $script:lastPhoneSyncHash = $currentHash
+              Start-Process -FilePath "node" -ArgumentList @((Join-Path $RepoRoot "scripts\import-whatsapp-chat.mjs"), "--all-staged", "--sync-db") -WorkingDirectory $RepoRoot -WindowStyle Hidden | Out-Null
+              Write-AutoLog "Auto-ingestion process spawned for new WhatsApp exports."
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+}
+
 Write-AutoLog "Sierra Estates Auto-Start Supervisor booted (PID=$PID, Once=$Once)."
 
 while ($true) {
@@ -156,6 +223,7 @@ while ($true) {
   Start-GatewayIfDown
   Start-AdminBridgeIfDown
   Start-WorkflowRunnerIfDown
+  Check-PhoneCableAndImport
 
   if ($Once) {
     Write-AutoLog 'Single-pass (-Once) verification finished.'
