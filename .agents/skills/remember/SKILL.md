@@ -1,14 +1,14 @@
 ---
 name: remember
-description: "Capture a compact memory checkpoint for ierra without phase transition"
+description: Capture a compact operational memory checkpoint via the Command Deck API without triggering an MCD phase transition.
 ---
 
 # REMEMBER
 
-This workflow invokes the canonical MCD REMEMBER command.
+This skill invokes the canonical MCD REMEMBER command.
 
 1. Read the command instructions:
-[REMEMBER.md](file:///${projectRoot}/.amphion/control-plane/mcd/REMEMBER.md)
+   [REMEMBER.md](file:///h:/Sierra%20Estates/.amphion/control-plane/mcd/REMEMBER.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

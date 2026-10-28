@@ -1,14 +1,14 @@
 ---
 name: contract
-description: "Run MCD CONTRACT command for ierra"
+description: Run MCD CONTRACT command for Sierra Estates to author milestone-bound contract cards with acceptance criteria via the Command Deck API.
 ---
 
 # CONTRACT
 
-This workflow invokes the canonical MCD CONTRACT command.
+This skill invokes the canonical MCD CONTRACT command.
 
 1. Read the command instructions:
-[CONTRACT.md](file:///${projectRoot}/.amphion/control-plane/mcd/CONTRACT.md)
+   [CONTRACT.md](file:///h:/Sierra%20Estates/.amphion/control-plane/mcd/CONTRACT.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

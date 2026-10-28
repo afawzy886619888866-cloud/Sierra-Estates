@@ -1,14 +1,14 @@
 ---
 name: execute
-description: "Run MCD EXECUTE command for ierra"
+description: Run MCD EXECUTE command for Sierra Estates to implement approved milestone contract cards and verify test and type-check gates.
 ---
 
 # EXECUTE
 
-This workflow invokes the canonical MCD EXECUTE command.
+This skill invokes the canonical MCD EXECUTE command.
 
 1. Read the command instructions:
-[EXECUTE.md](file:///${projectRoot}/.amphion/control-plane/mcd/EXECUTE.md)
+   [EXECUTE.md](file:///h:/Sierra%20Estates/.amphion/control-plane/mcd/EXECUTE.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

@@ -59,6 +59,12 @@ jobs:
 
       - name: Run explicitly selected fleet tasks
         env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROPERTY_FINDER_API_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY }}
+          PROPERTY_FINDER_API_SECRET: ${{ secrets.PROPERTY_FINDER_API_SECRET }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           CLINE_API_KEY: ${{ secrets.CLINE_API_KEY || secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -74,7 +80,7 @@ jobs:
               for task in "${task_list[@]}"; do
                 task=$(echo "$task" | xargs)
                 case "$task" in
-                  briefing:daily|sync-propertyfinder|vertex-agent|run-harness|deepseek:reason|deepseek:eval|deepseek:develop|check-thresholds|openclaw:task|cline:audit|cline:hygiene|cline:docs-sync|cline:check)
+                  briefing:daily|sync-propertyfinder|export:propertyfinder|pf:publish:owners|pf:publish:ads|harvest:photos|automation:cycle|vertex-agent|run-harness|deepseek:reason|deepseek:eval|deepseek:develop|check-thresholds|openclaw:task|cline:audit|cline:hygiene|cline:docs-sync|cline:check)
                     echo "→ pnpm $task"
                     pnpm "$task"
                     ;;

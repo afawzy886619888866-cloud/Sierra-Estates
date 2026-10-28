@@ -52,20 +52,34 @@ services:
       - WHATSAPP_API_URL=http://whatsapp-rag-station:2785
       - WHATSAPP_API_TOKEN=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY in infra/.env — the runner cannot drive the gateway without a key}
       - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY}
-      - OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8
-      # ── 8-line outreach era (matches start-sierra.bat) ──
-      - WF_PARALLEL_LINES=8
-      - WF_HOST_SIDE=split
-      - WF_SLOT_BATCH=30
-      - WF_OWNER_CONTACT_DAILY_CAP=40
-      - WF_ACTIVE_HOURS=10-20
-      # ── Supabase telemetry (G3 evidence; optional — empty = no telemetry) ──
+      - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8}
+      # ── 8-line outreach era (matches start-sierra.bat & outreach.js env contract) ──
+      - WF_PARALLEL_LINES=${WF_PARALLEL_LINES:-8}
+      - WF_HOST_SIDE=${WF_HOST_SIDE:-split}
+      - WF_SLOT_BATCH=${WF_SLOT_BATCH:-30}
+      - WF_SLOT_DEADLINE_MS=${WF_SLOT_DEADLINE_MS:-3000000}
+      - WF_OWNER_CONTACT_DAILY_CAP=${WF_OWNER_CONTACT_DAILY_CAP:-40}
+      - WF_OUTREACH_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-10-20}
+      - WF_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-10-20}
+      - WF_RECONTACT_AFTER_DAYS=${WF_RECONTACT_AFTER_DAYS:-0}
+      # ── Master Inventory Sheet & Writeback Integration ──
+      - UNITS_SHEET_ID=${UNITS_SHEET_ID:-1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk}
+      - UNITS_SHEET_GID=${UNITS_SHEET_GID:-1127958606}
+      - BROKER_INBOX_SHEET_ID=${BROKER_INBOX_SHEET_ID:-}
+      - WF_SHEET_WRITE_URL=${WF_SHEET_WRITE_URL:-}
+      - WF_SHEET_WRITE_SECRET=${WF_SHEET_WRITE_SECRET:-}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+      # ── Property Finder Enterprise Atlas Credentials (optional) ──
+      - PROPERTY_FINDER_API_KEY=${PROPERTY_FINDER_API_KEY:-}
+      - PROPERTY_FINDER_API_SECRET=${PROPERTY_FINDER_API_SECRET:-}
+      # ── Supabase telemetry & CRM sync (G3 evidence; optional — empty = no telemetry) ──
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
     volumes:
-      # Run-state (overlap locks, last-run summaries) survives rebuilds.
+      # Run-state (overlap locks, last-run summaries, opt-out ledger) survives rebuilds.
       - runner-state:/app/.state
-      # OPTIONAL Google service-account key for private-sheet workflows.
+      # OPTIONAL Google service-account key file for private-sheet workflows
+      # (if not using inline GOOGLE_SERVICE_ACCOUNT_JSON above).
       # Uncomment ONLY after the file exists on the host (a missing bind
       # source would be created as a directory by Docker):
       # - ../workflows/service-account-key.json:/app/service-account-key.json:ro

@@ -77,20 +77,24 @@ jobs:
           WF_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || (vars.WHATSAPP_LIVE_OUTREACH == 'true' && 'false' || 'true') }}
           WF_SLOT_BATCH: ${{ inputs.batch_size || '25' }}
           WF_HOST_SIDE: ${{ inputs.host_side || 'split' }}
-          
-          # Target Sheet
+          WF_OUTREACH_ACTIVE_HOURS: '10-20'
+
+          # Target Sheet & Writeback
           UNITS_SHEET_ID: ${{ vars.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk' }}
           UNITS_SHEET_GID: ${{ vars.UNITS_SHEET_GID || '1127958606' }}
+          WF_SHEET_WRITE_URL: ${{ secrets.WF_SHEET_WRITE_URL || vars.WF_SHEET_WRITE_URL }}
+          WF_SHEET_WRITE_SECRET: ${{ secrets.WF_SHEET_WRITE_SECRET }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
 
           # Supabase Dedupe & Audit Ledger
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-          # WhatsApp Gateway Connectivity
-          WHATSAPP_API_URL: ${{ secrets.WHATSAPP_API_URL || vars.WHATSAPP_GATEWAY_URL || vars.WHATSAPP_API_URL || 'http://54.89.162.250:2785' }}
+          # WhatsApp Gateway Connectivity (Cloudflare Tunnel / RAG Station — retired EC2 IP removed)
+          WHATSAPP_API_URL: ${{ secrets.WHATSAPP_API_URL || vars.WHATSAPP_GATEWAY_URL || vars.WHATSAPP_API_URL || '' }}
           WHATSAPP_API_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN || secrets.WHATSAPP_GATEWAY_TOKEN || secrets.OPENWA_OPERATOR_KEY }}
-          OPENWA_SESSION_ID: ${{ secrets.OPENWA_SESSION_ID || vars.OPENWA_SESSION_ID || '9fbfb682-2fa8-44aa-9af0-35bb23ea80dd' }}
-          OPENWA_SESSION_IDS: ${{ secrets.OPENWA_SESSION_IDS || vars.OPENWA_SESSION_IDS }}
+          OPENWA_SESSION_ID: ${{ secrets.OPENWA_SESSION_ID || vars.OPENWA_SESSION_ID || 'line-1' }}
+          OPENWA_SESSION_IDS: ${{ secrets.OPENWA_SESSION_IDS || vars.OPENWA_SESSION_IDS || 'line-1,line-2,line-3,line-4' }}
         run: |
           echo "======================================================="
           echo "🚀 Starting WhatsApp Owner Outreach from GitHub Actions"

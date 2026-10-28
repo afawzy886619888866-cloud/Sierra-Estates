@@ -28,7 +28,8 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
           entry.name === '__pycache__' ||
           entry.name === '.pytest_cache' ||
           entry.name === '.wwebjs_cache' ||
-          entry.name === 'wa_sessions'
+          entry.name === 'wa_sessions' ||
+          entry.name === 'whatsapp-auth'
         ) {
           continue;
         }
@@ -95,10 +96,10 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
       try {
         const content = fs.readFileSync(file, 'utf-8');
         JSON.parse(content);
-      } catch (err: any) {
+      } catch (err: unknown) {
         invalidJsonFiles.push({
           file: path.relative(ROOT_DIR, file),
-          error: err.message,
+          error: err instanceof Error ? err.message : String(err),
         });
       }
     }

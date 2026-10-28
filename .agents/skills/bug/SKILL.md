@@ -1,11 +1,11 @@
 ---
 name: bug
-description: "Run MCD BUG command for ierra"
+description: Create and link a prioritized bug card on the active Amphion Command Deck milestone via POST /api/cards.
 ---
 
 # BUG
 
-This workflow handles the creation of a new bug card on the active Command Deck board.
+This skill handles the creation of a new bug card on the active Command Deck board.
 
 1. Ensure you have the context of the bug (title and description) from the user's request.
 2. Obtain the ID of the active board and active milestone. **CRITICAL: The bug card MUST be connected to the current active milestone.**
