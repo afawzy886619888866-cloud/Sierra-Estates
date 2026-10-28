@@ -26,6 +26,7 @@ const crypto = require('crypto');
 const { loadWorkflowEnv, createSheetsClient } = require('./google-sheets');
 const { GatewayClient, requestJson } = require('./gateway-client');
 const { generateListingContent } = require('./listing-copywriter');
+const { studyCustomerChat, extractClientNeeds } = require('./customer-chat-learner');
 
 loadWorkflowEnv(path.resolve(__dirname, '..'));
 
@@ -686,6 +687,11 @@ async function handleInbound(body) {
     console.error(`inbox: jsonl append failed: ${err.message}`);
   }
 
+  // Continuous Learning: Analyze customer inquiries, needs & Egyptian real estate idioms
+  try {
+    studyCustomerChat(message).catch(() => {});
+  } catch (_) {}
+
   try {
     // Priority 1: Check if this message is a listing drop (from 01092048333, owners group, or contains listing specs)
     if (isListingDrop(message)) {
@@ -729,6 +735,8 @@ module.exports = {
   handleDirectOwnerReply,
   handleInboundListingDrop,
   isListingDrop,
+  studyCustomerChat,
+  extractClientNeeds,
   writeOwnerReplyToSheet,
   classifyOwnerReply,
   normalizeOwnerPhone,

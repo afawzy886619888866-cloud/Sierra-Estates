@@ -445,21 +445,54 @@ function buildMessage(r) {
   if (r.name && r.name.trim() && !r.name.toLowerCase().includes('owner') && !r.name.includes('المالك')) {
     const raw = r.name.trim();
     if (/^(د|دكتور|dr)\.?[\s\/]+/i.test(raw)) {
-      salutation = `د/ ${raw.replace(/^(د|دكتور|dr)\.?[\s\/]+/i, '')}،`;
+      salutation = 'د/ ' + raw.replace(/^(د|دكتور|dr)\.?[\s\/]+/i, '') + '،';
     } else if (/^(م|مهندس|eng)\.?[\s\/]+/i.test(raw)) {
-      salutation = `البشمهندس ${raw.replace(/^(م|مهندس|eng)\.?[\s\/]+/i, '')}،`;
+      salutation = 'البشمهندس ' + raw.replace(/^(م|مهندس|eng)\.?[\s\/]+/i, '') + '،';
     } else if (/^(أ|أستاذ|mr)\.?[\s\/]+/i.test(raw)) {
-      salutation = `أ/ ${raw.replace(/^(أ|أستاذ|mr)\.?[\s\/]+/i, '')}،`;
+      salutation = 'أ/ ' + raw.replace(/^(أ|أستاذ|mr)\.?[\s\/]+/i, '') + '،';
     } else {
-      salutation = `أ/ ${raw}،`;
+      salutation = 'أ/ ' + raw + '،';
     }
   }
 
-  const loc = r.location && r.location.trim() ? `في ${r.location.trim()}` : 'بالتجمع الخامس';
+  const loc = r.location && r.location.trim() ? ('في ' + r.location.trim()) : 'بالتجمع الخامس';
+  const unitRef = r.code ? (' (كود: ' + r.code + ')') : '';
 
-  return TEMPLATE
-    .replace('{_SALUTATION_}', salutation)
-    .replace('{_LOCATION_}', loc);
+  // Detect specific missing information to query from the owner
+  const missingPrompts = [];
+  const priceNum = Number(String(r.price || '').replace(/[^\d]/g, '')) || 0;
+  if (priceNum <= 0) {
+    missingPrompts.push('• تأكيد السعر النهائي المطلوب حالياً');
+  }
+
+  const photoNum = Number(r.photoCount || 0);
+  if (photoNum < 6) {
+    const needed = Math.max(1, 6 - photoNum);
+    missingPrompts.push('• إرسال ' + (needed >= 6 ? '6 صور' : (needed + ' صور إضافية')) + ' واضحة وعالية الدقة (ريسبشن، غرف، حمام، مطبخ، إطلالة) لاعتماد إعلان مميز على Property Finder');
+  }
+
+  const areaNum = Number(String(r.areaSqm || '').replace(/[^\d]/g, '')) || 0;
+  if (areaNum <= 0) {
+    missingPrompts.push('• تأكيد المساحة الإجمالية بالمتر المربع (م²)');
+  }
+
+  let inquirySection = '';
+  if (missingPrompts.length > 0) {
+    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع ' + loc + unitRef + ' لا تزال متاحة حالياً، وفي حال إتاحتها نرجو التكرم بتوضيح التالي لعرضها على عملائنا الجادين واعتماد الإعلان فوراً:\n\n' + missingPrompts.join('\n') + '\n';
+  } else {
+    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع ' + loc + unitRef + ' لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.';
+  }
+
+  return [
+    'السلام عليكم ورحمة الله وبركاته ' + salutation,
+    '',
+    'مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.',
+    '',
+    'بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ ' + inquirySection,
+    '',
+    'إذا كانت الوحدة غير متاحة حالياً أو تم التصرف فيها فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝',
+    '(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")'
+  ].join('\n');
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -496,10 +529,10 @@ async function mergeSupabaseOwners({ candidates, contacted, phoneFirstIdx, summa
     let added = 0;
     while (page < maxPages) {
       const { data, error } = await sb.from('listings')
-        .select('id,code,unit_code,owner_name,owner_phone,compound,location_area,price,bedrooms,property_type,status,availability')
+        .select('id,code,unit_code,owner_name,owner_phone,compound,location_area,price,bedrooms,area_sqm,photo_count,images,property_type,status,availability,created_at')
         .not('owner_phone', 'is', null)
         .neq('owner_phone', '')
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (error || !data || !data.length) break;
 
