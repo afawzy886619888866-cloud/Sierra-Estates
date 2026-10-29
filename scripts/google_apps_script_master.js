@@ -288,7 +288,13 @@ function setupMasterInventory() {
   // Apply all smart dropdown menus
   applyAllDropdowns();
 
-  return { ok: true, message: "Master Inventory sheet styled, organized, and dropdowns applied successfully." };
+  // Normalize existing data in place (compounds, rooms, misplaced numbers)
+  const normResult = normalizeExistingSheetData();
+
+  return { 
+    ok: true, 
+    message: `Master Inventory sheet styled, organized, dropdowns attached, and existing data normalized. (Compounds cleaned: ${normResult.cleanedLocCount || 0}, Rooms normalized: ${normResult.cleanedBedCount || 0}).` 
+  };
 }
 
 /**
@@ -329,8 +335,17 @@ function normalizeExistingSheetData() {
       else if (locLower === "cfc" || locLower === "cairo festival city") updatedLoc = "Cairo Festival City (CFC)";
       else if (locLower === "hyde park" || locLower === "hydepark") updatedLoc = "Hyde Park";
       else if (locLower === "villette") updatedLoc = "Villette";
-      else if (locLower === "5th settlement" || locLower === "fifth settlement") updatedLoc = "New Cairo";
-      else if (locLower === "n/a" || locLower === "other") updatedLoc = "Other / To Be Added";
+      else if (locLower === "5th settlement" || locLower === "fifth settlement" || locLower === "التجمع الخامس" || locLower === "new cairo") updatedLoc = "New Cairo (General)";
+      else if (locLower === "lake view" || locLower === "lakeview" || locLower === "lake view residence") updatedLoc = "Lake View Residence";
+      else if (locLower === "sodic" || locLower === "sodic east") updatedLoc = "SODIC East";
+      else if (locLower === "swan lake" || locLower === "swanlake") updatedLoc = "Swan Lake";
+      else if (locLower === "palm hills" || locLower === "palm hills new cairo") updatedLoc = "Palm Hills New Cairo";
+      else if (locLower === "the waterway" || locLower === "waterway" || locLower === "water way") updatedLoc = "Waterway";
+      else if (locLower === "mountain view" || locLower === "mountain view icity" || locLower === "mv") updatedLoc = "Mountain View iCity";
+      else if (locLower === "zed" || locLower === "zed east") updatedLoc = "Zed East";
+      else if (locLower === "galleria" || locLower === "galleria moon valley") updatedLoc = "Galleria Moon Valley";
+      else if (locLower === "oriana" || locLower === "oriana 2") updatedLoc = "Oriana 2";
+      else if (locLower === "n/a" || locLower === "other" || !loc) updatedLoc = "Other / To Be Added";
 
       if (updatedLoc !== loc) {
         row[locColIdx - 1] = updatedLoc;
@@ -341,6 +356,8 @@ function normalizeExistingSheetData() {
     // 2. Clean Bedrooms & Fix Misplaced Prices
     if (bedColIdx > 0) {
       let bedVal = String(row[bedColIdx - 1] || "").trim();
+      // Convert Arabic digits to Western digits
+      bedVal = bedVal.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
       const bedNum = Number(bedVal.replace(/[^\d]/g, ""));
 
       // If a large number like 80000 was pasted into bedrooms, move it to Price if Price is empty
@@ -350,16 +367,23 @@ function normalizeExistingSheetData() {
         }
         row[bedColIdx - 1] = "Ask Owner / Unknown";
         cleanedBedCount++;
-      } else if (!bedVal && commentColIdx > 0) {
+      } else if (!bedVal || bedVal === "0" || bedVal.toLowerCase() === "nan") {
         // Try to infer bedrooms from comment
-        const comment = String(row[commentColIdx - 1] || "");
-        const match = comment.match(/(\d+)\s*(غرف|غرفه|غرفة|نوم|bed|bhk)/i);
-        if (match && match[1]) {
-          row[bedColIdx - 1] = match[1];
+        let inferred = false;
+        if (commentColIdx > 0) {
+          const comment = String(row[commentColIdx - 1] || "");
+          const match = comment.match(/(\d+)\s*(غرف|غرفه|غرفة|نوم|bed|bhk)/i);
+          if (match && match[1]) {
+            row[bedColIdx - 1] = match[1];
+            cleanedBedCount++;
+            inferred = true;
+          }
+        }
+        if (!inferred) {
+          row[bedColIdx - 1] = "Ask Owner / Unknown";
           cleanedBedCount++;
         }
       }
-    }
   }
 
   dataRange.setValues(values);
