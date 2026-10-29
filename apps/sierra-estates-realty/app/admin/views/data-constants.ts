@@ -214,6 +214,15 @@ export const NAV_ITEMS = (T: TranslationFn, role?: unknown): NavItem[] => {
       badge: 'Multi-Host',
       badgeCls: 'nb-green',
     },
+    // 4b. Server-Side Workflow Control Plane (10 background automation jobs & runner control)
+    {
+      id: 'workflow_ops',
+      label: isAr ? 'مركز التحكم بمسارات العمل' : 'Workflow Ops & Control',
+      icon: '⚙️',
+      section: isAr ? 'المراسلات والتسويق' : 'Outreach & Comms',
+      badge: '10 Jobs',
+      badgeCls: 'nb-gold',
+    },
     // 5. AI Intelligence Hub (Autonomous Fleet, Workflows & Studio, Memory Brain, DeepSeek, NotebookLM)
     {
       id: 'intelligence',

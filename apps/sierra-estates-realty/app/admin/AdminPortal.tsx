@@ -465,7 +465,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
               📁 {isAr ? 'فتح جوجل درايف' : 'Open Google Drive Folder'} ↗
             </a>
             <a 
-              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911" 
+              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="btn btn-ghost"

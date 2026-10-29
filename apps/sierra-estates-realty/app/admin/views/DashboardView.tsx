@@ -856,7 +856,7 @@ export default function DashboardView({
               </div>
 
               <a
-                href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911"
+                href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 hover:border-[#C8961A]/60 text-slate-300 hover:text-[#E9C176] text-xs font-mono transition-colors"
@@ -1004,8 +1004,8 @@ export default function DashboardView({
                   </h4>
                   <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                     {isAr
-                      ? 'مربوط مباشرة بـ Google Sheet (gid=341562911) مع معالجة البيانات الناقصة وفلاتر دروب داون'
-                      : 'Live synced with Google Sheet (gid=341562911) featuring graceful fallbacks & smart dropdowns'}
+                      ? 'مربوط مباشرة بـ Google Sheet (gid=1127958606) مع معالجة البيانات الناقصة وفلاتر دروب داون'
+                      : 'Live synced with Google Sheet (gid=1127958606) featuring graceful fallbacks & smart dropdowns'}
                   </p>
                 </div>
               </div>
@@ -1461,11 +1461,11 @@ export default function DashboardView({
             <span>↗</span>
           </a>
           <a
-            href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911"
+            href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606"
             target="_blank"
             rel="noopener noreferrer"
             className="clay-btn-emerald px-3.5 py-2 text-xs font-mono gap-1.5"
-            title="Open Master Google Sheet (gid=341562911)"
+            title="Open Master Google Sheet (gid=1127958606)"
             aria-label="Open Master Google Sheet"
           >
             <span>📊 {isAr ? 'الشيت الرئيسي المباشر' : 'Master Online Sheet'}</span>

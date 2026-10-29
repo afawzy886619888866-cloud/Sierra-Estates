@@ -385,35 +385,45 @@ async function fetchSheetRows() {
 }
 
 async function syncChunk(listings) {
-  // Live DB has no unique constraint on dupe_check_hash usable by ON CONFLICT
-  // (migration 013's partial index is not applied there) — so: probe existing
-  // hashes, PATCH updates, INSERT fresh rows. In-batch dedup keeps last row.
-  const byHashInBatch = new Map();
-  for (const l of listings) byHashInBatch.set(l.dupe_check_hash, l); // last wins
-  const unique = [...byHashInBatch.values()];
+  // In-batch dedup by Code (sheet's canonical identifier)
+  const byCodeInBatch = new Map();
+  for (const l of listings) {
+    if (l.code) byCodeInBatch.set(l.code, l);
+    else byCodeInBatch.set(l.dupe_check_hash, l);
+  }
+  const unique = [...byCodeInBatch.values()];
 
+  const codes = unique.map((l) => `"${l.code}"`).join(',');
   const hashes = unique.map((l) => `"${l.dupe_check_hash}"`).join(',');
+
+  // Probe existing rows by either code or dupe_check_hash
   const probe = await requestJson(
-    `${SB_URL}/rest/v1/listings?select=id,dupe_check_hash&dupe_check_hash=in.(${encodeURIComponent(hashes)})`,
+    `${SB_URL}/rest/v1/listings?select=id,code,dupe_check_hash,status&or=(code.in.(${encodeURIComponent(codes)}),dupe_check_hash.in.(${encodeURIComponent(hashes)}))`,
     { headers: sbHeaders(), timeoutMs: 20000 }
   );
   if (!probe.ok) throw new Error(`existing read HTTP ${probe.status}: ${JSON.stringify(probe.data).slice(0, 200)}`);
-  const existingId = new Map((probe.data || []).map((r) => [r.dupe_check_hash, r.id]));
+
+  const existingMap = new Map();
+  for (const r of (probe.data || [])) {
+    if (r.code) existingMap.set(r.code, r);
+    if (r.dupe_check_hash) existingMap.set(r.dupe_check_hash, r);
+  }
 
   let inserted = 0;
   let updated = 0;
   const fresh = [];
   for (const l of unique) {
-    const id = existingId.get(l.dupe_check_hash);
-    if (!id) { fresh.push(l); continue; }
-    // ANTI-OVERWRITE (Task Follow-up): UPDATE path MUST NOT modify human-controlled
-    // verification fields (publish_status, verified_at, verified_by). These fields
-    // belong to human staff audits and must never be silently undone by automated syncs.
-    const { publish_status, verified_at, verified_by, ...updatePayload } = l;
+    const existing = existingMap.get(l.code) || existingMap.get(l.dupe_check_hash);
+    if (!existing) { fresh.push(l); continue; }
+    // ANTI-OVERWRITE: UPDATE path MUST NOT modify human-controlled
+    // verification fields (publish_status, verified_at, verified_by).
+    // Omit status to prevent Postgres trigger "Illegal listing transition" rejections;
+    // raw availability is preserved in l.availability.
+    const { publish_status, verified_at, verified_by, status: _st, ...updatePayload } = l;
     delete updatePayload.code;
     delete updatePayload.dupe_check_hash;
     const p = await requestJson(
-      `${SB_URL}/rest/v1/listings?id=eq.${id}`,
+      `${SB_URL}/rest/v1/listings?id=eq.${existing.id}`,
       { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: updatePayload, timeoutMs: 20000 }
     );
     if (!p.ok) throw new Error(`update HTTP ${p.status}: ${JSON.stringify(p.data).slice(0, 200)}`);
