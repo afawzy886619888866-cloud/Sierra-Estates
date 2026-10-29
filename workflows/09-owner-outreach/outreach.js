@@ -458,11 +458,14 @@ function buildMessage(r) {
   const loc = r.location && r.location.trim() ? ('في ' + r.location.trim()) : 'بالتجمع الخامس';
   const unitRef = r.code ? (' (كود: ' + r.code + ')') : '';
 
+  const isRent = String(r.dealType || '').toLowerCase() === 'rent' || (Number(r.price) > 0 && Number(r.price) < 500000);
+  const dealLabel = isRent ? 'للإيجار' : 'للبيع';
+
   // Detect specific missing information to query from the owner
   const missingPrompts = [];
   const priceNum = Number(String(r.price || '').replace(/[^\d]/g, '')) || 0;
   if (priceNum <= 0) {
-    missingPrompts.push('• تأكيد السعر النهائي المطلوب حالياً');
+    missingPrompts.push(isRent ? '• تأكيد القيمة الإيجارية الشهرية المطلوبة حالياً' : '• تأكيد السعر النهائي المطلوب حالياً');
   }
 
   const photoNum = Number(r.photoCount || 0);
@@ -478,9 +481,9 @@ function buildMessage(r) {
 
   let inquirySection = '';
   if (missingPrompts.length > 0) {
-    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع ' + loc + unitRef + ' لا تزال متاحة حالياً، وفي حال إتاحتها نرجو التكرم بتوضيح التالي لعرضها على عملائنا الجادين واعتماد الإعلان فوراً:\n\n' + missingPrompts.join('\n') + '\n';
+    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً، وفي حال إتاحتها نرجو التكرم بتوضيح التالي لعرضها على عملائنا الجادين واعتماد الإعلان فوراً:\n\n' + missingPrompts.join('\n') + '\n';
   } else {
-    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع ' + loc + unitRef + ' لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.';
+    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.';
   }
 
   return [
@@ -522,50 +525,81 @@ async function mergeSupabaseOwners({ candidates, contacted, phoneFirstIdx, summa
       }
     }
 
-    // 2. Fetch active listings with non-empty owner_phone
-    let page = 0;
-    const pageSize = 1000;
-    const maxPages = 10;
+    // 2. Fetch active listings prioritizing RENT units first
+    const selectCols = 'id,code,unit_code,owner_name,owner_phone,compound,location_area,price,bedrooms,area_sqm,photo_count,images,property_type,deal_type,status,availability,created_at';
     let added = 0;
-    while (page < maxPages) {
+
+    const processListingRow = (r) => {
+      const status = String(r.status || '').toLowerCase().trim();
+      const avail = String(r.availability || '').toLowerCase().trim();
+      if (['sold', 'rented', 'off-market', 'unavailable', 'archived'].includes(status)) return false;
+      if (['sold', 'rented', 'unavailable'].includes(avail)) return false;
+
+      const rawPhone = String(r.owner_phone || '').trim();
+      const phone = normalizePhone(rawPhone);
+      if (!phone || !/^201[0125]\d{8}$/.test(phone)) return false;
+
+      const dupOf = phoneFirstIdx.has(phone) ? phoneFirstIdx.get(phone) : null;
+      if (dupOf === null) phoneFirstIdx.set(phone, candidates.length);
+
+      candidates.push({
+        code: (r.code || r.unit_code || '').trim() || ('SE-DB-' + (candidates.length + 1)),
+        name: (r.owner_name || '').trim() || 'صاحب الإعلان',
+        phone,
+        rawMobile: rawPhone,
+        avail: avail || status || 'available',
+        dupOf,
+        location: (r.compound || r.location_area || '').trim(),
+        price: String(r.price || '').replace(/[^\d]/g, ''),
+        bedrooms: String(r.bedrooms || '').replace(/[^\d]/g, ''),
+        propertyType: (r.property_type || '').trim(),
+        dealType: String(r.deal_type || '').toLowerCase().trim(),
+        areaSqm: Number(r.area_sqm) || 0,
+        photoCount: Number(r.photo_count) || (Array.isArray(r.images) ? r.images.length : 0),
+        source: 'supabase_listings',
+      });
+      return true;
+    };
+
+    // Pass 1: RENT units first (deal_type ~ 'rent')
+    let rentPage = 0;
+    const pageSize = 1000;
+    const maxRentPages = 5;
+    while (rentPage < maxRentPages) {
       const { data, error } = await sb.from('listings')
-        .select('id,code,unit_code,owner_name,owner_phone,compound,location_area,price,bedrooms,area_sqm,photo_count,images,property_type,status,availability,created_at')
+        .select(selectCols)
+        .ilike('deal_type', '%rent%')
         .not('owner_phone', 'is', null)
         .neq('owner_phone', '')
         .order('created_at', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+        .range(rentPage * pageSize, (rentPage + 1) * pageSize - 1);
       if (error || !data || !data.length) break;
 
       for (const r of data) {
-        const status = String(r.status || '').toLowerCase().trim();
-        const avail = String(r.availability || '').toLowerCase().trim();
-        if (['sold', 'rented', 'off-market', 'unavailable', 'archived'].includes(status)) continue;
-        if (['sold', 'rented', 'unavailable'].includes(avail)) continue;
-
-        const rawPhone = String(r.owner_phone || '').trim();
-        const phone = normalizePhone(rawPhone);
-        if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue;
-
-        const dupOf = phoneFirstIdx.has(phone) ? phoneFirstIdx.get(phone) : null;
-        if (dupOf === null) phoneFirstIdx.set(phone, candidates.length);
-
-        candidates.push({
-          code: (r.code || r.unit_code || '').trim() || ('SE-DB-' + (candidates.length + 1)),
-          name: (r.owner_name || '').trim() || 'صاحب الإعلان',
-          phone,
-          rawMobile: rawPhone,
-          avail: avail || status || 'available',
-          dupOf,
-          location: (r.compound || r.location_area || '').trim(),
-          price: String(r.price || '').replace(/[^\d]/g, ''),
-          bedrooms: String(r.bedrooms || '').replace(/[^\d]/g, ''),
-          propertyType: (r.property_type || '').trim(),
-          source: 'supabase_listings',
-        });
-        added++;
+        if (processListingRow(r)) added++;
       }
       if (data.length < pageSize) break;
-      page++;
+      rentPage++;
+    }
+
+    // Pass 2: Remaining non-rent units (Sale or unclassified)
+    let otherPage = 0;
+    const maxOtherPages = 5;
+    while (otherPage < maxOtherPages) {
+      const { data, error } = await sb.from('listings')
+        .select(selectCols)
+        .not('deal_type', 'ilike', '%rent%')
+        .not('owner_phone', 'is', null)
+        .neq('owner_phone', '')
+        .order('created_at', { ascending: false })
+        .range(otherPage * pageSize, (otherPage + 1) * pageSize - 1);
+      if (error || !data || !data.length) break;
+
+      for (const r of data) {
+        if (processListingRow(r)) added++;
+      }
+      if (data.length < pageSize) break;
+      otherPage++;
     }
     summary.supabaseCandidates = added;
     return added;

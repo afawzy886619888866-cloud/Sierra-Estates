@@ -37,6 +37,7 @@ const PROPERTY_TYPE_NAMES = {
   'Twin House': { en: 'Twin House', ar: 'توين هاوس' },
   'Townhouse': { en: 'Townhouse', ar: 'تاون هاوس' },
   'Apartment': { en: 'Luxury Apartment', ar: 'شقة فاخرة' },
+  'Luxury Apartment': { en: 'Luxury Apartment', ar: 'شقة فاخرة' },
   'Duplex': { en: 'Duplex', ar: 'دوبلكس' },
   'Penthouse': { en: 'Penthouse', ar: 'بنتهاوس' },
   'Chalet': { en: 'Chalet', ar: 'شاليه' },

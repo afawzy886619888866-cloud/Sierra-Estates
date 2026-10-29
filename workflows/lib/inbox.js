@@ -78,7 +78,7 @@ function cairoDateDmy(d = new Date()) {
 }
 
 /** Write owner reply availability + contact date back to Google Sheets via Apps Script Web App. */
-async function writeOwnerReplyToSheet(e164Phone, availabilityLabel, code) {
+async function writeOwnerReplyToSheet(e164Phone, availabilityLabel, code, extra = {}) {
   const writeUrl = process.env.WF_SHEET_WRITE_URL || '';
   const writeSecret = process.env.WF_SHEET_WRITE_SECRET || '';
   if (!writeUrl || !writeSecret || !e164Phone) return false;
@@ -86,11 +86,19 @@ async function writeOwnerReplyToSheet(e164Phone, availabilityLabel, code) {
   const digits = e164Phone.replace(/\D/g, '');
   const localMobile = digits.startsWith('20') && digits.length === 12 ? `0${digits.slice(2)}` : e164Phone;
   const dateStr = cairoDateDmy();
-  const rows = [
-    { phone: localMobile, date: dateStr, availability: availabilityLabel, ...(code ? { code } : {}) },
-  ];
+  const rowObj = {
+    phone: localMobile,
+    date: dateStr,
+    last_update_date: dateStr,
+    availability: availabilityLabel,
+    ...(code ? { code } : {}),
+    ...(extra.price ? { price: extra.price } : {}),
+    ...(extra.dealType ? { deal_type: extra.dealType } : {}),
+    ...(extra.notes ? { notes: String(extra.notes).slice(0, 100) } : {}),
+  };
+  const rows = [rowObj];
   if (localMobile !== e164Phone) {
-    rows.push({ phone: e164Phone, date: dateStr, availability: availabilityLabel, ...(code ? { code } : {}) });
+    rows.push({ ...rowObj, phone: e164Phone });
   }
 
   try {
@@ -139,7 +147,7 @@ function classifyOwnerReply(rawText) {
   }
 
   // 2. Explicit unavailable / sold / rented BEFORE available ("غير متاحة" contains "متاحة")
-  if (/(غير متاح|مش متاح|ليست متاح|اتباع|تم البيع|اتاجر|تم الايجار|مؤجر|ماجر|خلاص اتباع|not available|unavailable|sold|rented)/i.test(normalized)) {
+  if (/(غير متاح|مش متاح|ليست متاح|اتباع|تم البيع|اتاجر|اتأجر|تم الايجار|مؤجر|مؤجرة|ماجر|خلاص اتباع|خلاص اتاجر|not available|unavailable|sold|rented)/i.test(normalized)) {
     return 'unavailable';
   }
 
@@ -311,11 +319,26 @@ async function handleDirectOwnerReply(message) {
   const nowIso = new Date().toISOString();
   let sheetUpdated = false;
 
-  // 1. Update listing availability status + Google Sheet (never touching publish_status / human provenance)
+  // 1. Update listing availability status + Google Sheet with last update date and extracted info
   if (intent === 'available' || intent === 'unavailable') {
     const isSold = /(اتباع|تم البيع|sold)/i.test(message.body);
-    const availabilityLabel = intent === 'available' ? 'Available' : (isSold ? 'Sold' : 'Not available');
-    sheetUpdated = await writeOwnerReplyToSheet(e164, availabilityLabel, matchedListing?.code || null);
+    const isRented = /(اتأجر|اتاجر|تم الايجار|مؤجر|مؤجرة|ماجر|rented)/i.test(message.body);
+    const availabilityLabel = intent === 'available' ? 'Available' : (isRented ? 'Rented' : (isSold ? 'Sold' : 'Not available'));
+
+    // Extract updated rent/sale price if mentioned by owner
+    let extractedPrice = null;
+    const priceThousand = message.body.match(/(\d+(?:[.,]\d+)?)\s*(?:الف|ألف|k\b)/i);
+    const priceMillion = message.body.match(/(\d+(?:[.,]\d+)?)\s*(?:مليون|ملون|million|m\b)/i);
+    const priceDirect = message.body.match(/(?:سعر|مطلوب|الايجار|الإيجار|بـ|ب)\s*[:=]?\s*(\d[0-9,]{3,9})/i);
+    if (priceThousand) extractedPrice = Math.round(parseFloat(priceThousand[1].replace(/,/g, '')) * 1000);
+    else if (priceMillion) extractedPrice = Math.round(parseFloat(priceMillion[1].replace(/,/g, '')) * 1000000);
+    else if (priceDirect) extractedPrice = Math.round(parseFloat(priceDirect[1].replace(/,/g, '')));
+
+    sheetUpdated = await writeOwnerReplyToSheet(e164, availabilityLabel, matchedListing?.code || null, {
+      price: extractedPrice,
+      dealType: matchedListing?.deal_type || 'rent',
+      notes: message.body
+    });
 
     if (matchedListing) {
       const prevRaw = (matchedListing.raw_data && typeof matchedListing.raw_data === 'object')
@@ -325,23 +348,37 @@ async function handleDirectOwnerReply(message) {
         ...prevRaw,
         availability: availabilityLabel,
         last_owner_reply_at: nowIso,
+        last_owner_reply_text: String(message.body || '').slice(0, 200),
+        last_update_date: nowIso,
+        ...(extractedPrice ? { last_extracted_price: extractedPrice } : {}),
       };
 
-      const isPublishable = String(matchedListing.publish_status || '').toUpperCase() === 'PUBLISHABLE';
+      const photoCount = Number(matchedListing.photo_count) || (Array.isArray(matchedListing.images) ? matchedListing.images.length : 0);
+      const finalPrice = extractedPrice || Number(matchedListing.price) || 0;
+      const qualifiesForPf = intent === 'available' && photoCount >= 6 && finalPrice > 0;
+      const isPublishable = qualifiesForPf || String(matchedListing.publish_status || '').toUpperCase() === 'PUBLISHABLE';
       const curStatus = String(matchedListing.status || '').toLowerCase();
 
       if (intent === 'available') {
-        // Keep/set status='active' for PUBLISHABLE rows so public Client Map (/api/inventory) stays visible
+        // Keep/set status='active' for PUBLISHABLE rows so public Client Map & PF stay synced
         const targetStatus = isPublishable ? 'active' : 'available';
+        const patchBody = {
+          status: targetStatus,
+          availability: availabilityLabel,
+          raw_data: nextRawData,
+          updated_at: nowIso,
+          ...(extractedPrice ? { price: extractedPrice } : {}),
+          ...(qualifiesForPf ? { publish_status: 'PUBLISHABLE', pf_status: 'approved' } : {})
+        };
         await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
           method: 'PATCH',
           headers: { ...sb.headers, Prefer: 'return=minimal' },
-          body: { status: targetStatus, availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
+          body: patchBody,
           timeoutMs: 8000,
         }).catch((err) => console.warn(`inbox: listing status update failed: ${err.message}`));
       } else {
-        // Unavailable: respect Postgres lifecycle trigger (`published -> reserved -> sold` or `published -> off-market`)
-        if (isSold && ['active', 'available', 'verified', 'published'].includes(curStatus)) {
+        const unavailableTarget = isRented ? 'rented' : (isSold ? 'sold' : 'off-market');
+        if ((isSold || isRented) && ['active', 'available', 'verified', 'published'].includes(curStatus)) {
           await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
             method: 'PATCH',
             headers: { ...sb.headers, Prefer: 'return=minimal' },
@@ -352,7 +389,7 @@ async function handleDirectOwnerReply(message) {
         const finalPatch = await requestJson(`${sb.url}/rest/v1/listings?id=eq.${matchedListing.id}`, {
           method: 'PATCH',
           headers: { ...sb.headers, Prefer: 'return=minimal' },
-          body: { status: isSold ? 'sold' : 'off-market', availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
+          body: { status: unavailableTarget, availability: availabilityLabel, raw_data: nextRawData, updated_at: nowIso },
           timeoutMs: 8000,
         }).catch(() => ({ ok: false }));
 
