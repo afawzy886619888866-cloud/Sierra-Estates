@@ -36,13 +36,24 @@ const COMPOUND_CODES = {
 // Shorthand Property Type codes for Property Finder
 const PF_PROPERTY_TYPES = {
   'Apartment': 'AP',
+  'apartment': 'AP',
   'Luxury Apartment': 'AP',
   'Standalone Villa': 'VH',
+  'villa': 'VH',
+  'standalone': 'VH',
+  'standalone villa': 'VH',
   'Twin House': 'TH',
+  'twinhouse': 'TH',
+  'twin_house': 'TH',
   'Townhouse': 'TW',
+  'townhouse': 'TW',
+  'town_house': 'TW',
   'Duplex': 'DX',
+  'duplex': 'DX',
   'Penthouse': 'PH',
+  'penthouse': 'PH',
   'Chalet': 'CH',
+  'chalet': 'CH',
 };
 
 /**
@@ -161,10 +172,16 @@ function buildPropertyFinderRentPayload(unit) {
   const validation = validateRentListingForPropertyFinder(unit);
   const code = unit.code || generateCanonicalRentCode(unit);
   const script = generateRentMarketingScript(unit);
-  const typeCode = PF_PROPERTY_TYPES[unit.propertyType] || 'AP';
+  const pType = unit.property_type || unit.propertyType;
+  const typeCode = PF_PROPERTY_TYPES[pType] || PF_PROPERTY_TYPES[String(pType).toLowerCase()] || 'AP';
 
   const priceNum = Math.max(0, Number(unit.price) || 0);
-  const areaNum = Math.max(0, Number(unit.areaSqm) || 150);
+  const areaNum = Math.max(0, Number(unit.area_sqm || unit.areaSqm || unit.area) || 150);
+
+  const titleAr = (unit.title_ar || unit.titleAr || script.titleAr || '').slice(0, 80);
+  const titleEn = (unit.title || unit.titleEn || script.titleEn || '').slice(0, 80);
+  const descAr = unit.description_ar || unit.descriptionAr || script.descriptionAr || '';
+  const descEn = unit.description || unit.descriptionEn || script.descriptionEn || '';
 
   return {
     reference: code,
@@ -189,12 +206,12 @@ function buildPropertyFinderRentPayload(unit) {
       }
     },
     title: {
-      ar: script.titleAr.slice(0, 80),
-      en: script.titleEn.slice(0, 80),
+      ar: titleAr,
+      en: titleEn,
     },
     description: {
-      ar: script.descriptionAr,
-      en: script.descriptionEn,
+      ar: descAr,
+      en: descEn,
     },
     media: {
       photos: validation.cleanPhotos.map(url => ({

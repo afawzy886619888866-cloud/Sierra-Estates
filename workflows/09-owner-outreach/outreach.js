@@ -332,10 +332,17 @@ function loadCheckpoint(totalCount) {
           console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows`);
           cp.totalCount = totalCount;
           cp.completed = false;
-          if (cp.side === 'split') cp.bottomCursor = Math.max(cp.bottomCursor, totalCount - 1);
-          if (cp.side === 'bottom') cp.cursor = Math.max(cp.cursor, totalCount - 1);
-          saveCheckpoint(cp);
         }
+        // Always clamp cursors within [0, totalCount - 1] to prevent undefined candidate access
+        if (cp.side === 'split') {
+          cp.topCursor = Math.max(0, Math.min(typeof cp.topCursor === 'number' ? cp.topCursor : 0, Math.max(0, totalCount - 1)));
+          cp.bottomCursor = Math.max(0, Math.min(typeof cp.bottomCursor === 'number' ? cp.bottomCursor : totalCount - 1, Math.max(0, totalCount - 1)));
+        } else if (cp.side === 'bottom') {
+          cp.cursor = Math.max(0, Math.min(typeof cp.cursor === 'number' ? cp.cursor : totalCount - 1, Math.max(0, totalCount - 1)));
+        } else {
+          cp.cursor = Math.max(0, Math.min(typeof cp.cursor === 'number' ? cp.cursor : 0, Math.max(0, totalCount - 1)));
+        }
+        saveCheckpoint(cp);
         return cp;
       }
       console.log(`[outreach] checkpoint side '${cp.side || '(legacy rotation)'}' ≠ current '${HOST_SIDE}' — resetting walk for this side (sheet dedupe keeps already-contacted rows safe)`);
@@ -931,6 +938,7 @@ async function main() {
       if (!claimed) break; // this lane's direction is exhausted
       const { idx } = claimed;
       const cand = candidates[idx];
+      if (!cand || !cand.phone) continue;
       const phone = cand.phone;
 
       if (cand.dupOf !== null && cand.dupOf !== undefined) {
