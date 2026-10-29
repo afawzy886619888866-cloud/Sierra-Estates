@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T17:12:16.529Z",
+  "generatedAt": "2026-10-29T09:05:31.606Z",
   "specVersion": "3.1.0",
   "mediaQualityPolicy": {
     "minPhotos": 6,
@@ -36,14 +36,14 @@
     ]
   },
   "inventorySummary": {
-    "totalSupabaseListings": 20281,
-    "priorityCohortEvaluated": 1684,
+    "totalSupabaseListings": 21748,
+    "priorityCohortEvaluated": 1688,
     "excludedBreakdown": {
       "inactive_status": 343,
       "already_live_on_pf": 185,
       "unmapped_property_type": 60,
       "below_market_price_floor": 306,
-      "missing_area_sqm": 111,
+      "missing_area_sqm": 113,
       "duplicate_unit_fingerprint": 253,
       "unresolved_pf_location_id": 73
     },
