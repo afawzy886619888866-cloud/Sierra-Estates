@@ -123,23 +123,35 @@ describe('09-owner-outreach — 10:00-22:00 Cairo, 25 msgs/slot, 30-min rotating
         if (table === 'listings') {
           return {
             select() {
-              return {
-                not() {
-                  return {
-                    neq() {
-                      return {
-                        order() {
-                          return {
-                            async range() {
-                              return { data: mockListings, error: null };
-                            },
-                          };
-                        },
-                      };
-                    },
-                  };
+              let isRent = false;
+              let isNotRent = false;
+              const builder: any = {
+                ilike(col: string, val: string) {
+                  if (col === 'deal_type' && String(val).includes('rent')) isRent = true;
+                  return builder;
+                },
+                not(col: string, op?: string, val?: string) {
+                  if (col === 'deal_type' && op === 'ilike' && String(val).includes('rent')) isNotRent = true;
+                  return builder;
+                },
+                neq() {
+                  return builder;
+                },
+                order() {
+                  return builder;
+                },
+                async range(start: number) {
+                  if (start > 0) return { data: [], error: null };
+                  const data = mockListings.filter((l) => {
+                    const dt = String((l as any).deal_type || 'sale').toLowerCase();
+                    if (isRent) return dt.includes('rent');
+                    if (isNotRent) return !dt.includes('rent');
+                    return true;
+                  });
+                  return { data, error: null };
                 },
               };
+              return builder;
             },
           };
         }
