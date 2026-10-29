@@ -31,19 +31,16 @@ API_URL = os.getenv("EVOLUTION_API_URL", "http://127.0.0.1:2785")
 API_KEY = os.getenv("EVOLUTION_API_KEY") or _load_env_key()
 IS_CI = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI_SINGLE_RUN") == "true"
 
-INSTANCE_LINE_MAP = {
-    "sierra_01032206443": "line-1",
-    "sierra_01031622600": "line-2",
-    "sierra_01061399688": "line-3",
-    "sierra_01092048333": "line-4"
-}
+def _load_instances():
+    """Instance names from env (repo convention: SIERRA_INSTANCES, comma-separated).
+    Keeps real line numbers out of this public repository (runbook hardening #2).
+    Lines are derived positionally: 1st name -> line-1, 2nd -> line-2, ..."""
+    raw = os.getenv("SIERRA_INSTANCES", "")
+    return [n.strip() for n in raw.split(",") if n.strip()]
 
-INSTANCES = [
-    "sierra_01032206443",
-    "sierra_01092048333",
-    "sierra_01031622600",
-    "sierra_01061399688"
-]
+INSTANCES = _load_instances()
+
+INSTANCE_LINE_MAP = {name: f"line-{i + 1}" for i, name in enumerate(INSTANCES)}
 
 SHEET_ID = os.getenv("UNITS_SHEET_ID", "1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk")
 SHEET_GID = os.getenv("UNITS_SHEET_GID", "1127958606")
@@ -274,16 +271,20 @@ def process_inventory_coding(df):
         print(f"[Inventory Engine] No new unrecorded units found. Master DB is up to date ({len(df_master)} units).")
 
 def run_cycle():
+    if not INSTANCES:
+        print("[Warning] No WhatsApp instances configured. Set SIERRA_INSTANCES "
+              "(comma-separated instance names) in your environment or .env. "
+              "Skipping outbound cycle (inventory coding still runs below if sheet is reachable).")
     df = fetch_sheet_data()
     cp = load_checkpoint()
     last_row = cp.get("last_row", 0)
-    inst_idx = cp.get("instance_idx", 0) % len(INSTANCES)
+    inst_idx = (cp.get("instance_idx", 0) % len(INSTANCES)) if INSTANCES else 0
     contacted = set(cp.get("contacted", []))
     failed_dlq = set(cp.get("failed_dead_letter", []))
 
     process_inventory_coding(df)
 
-    if is_day_shift():
+    if is_day_shift() and INSTANCES:
         connected_inst = None
         for _ in range(len(INSTANCES)):
             candidate = INSTANCES[inst_idx]

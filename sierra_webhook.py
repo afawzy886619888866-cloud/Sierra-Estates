@@ -31,12 +31,14 @@ API_URL = os.getenv("EVOLUTION_API_URL", "http://127.0.0.1:2785")
 API_KEY = os.getenv("EVOLUTION_API_KEY") or _load_env_key()
 DIRECT_MGMT_PHONE = "+201092048333"
 
-INSTANCE_LINE_MAP = {
-    "sierra_01032206443": "line-1",
-    "sierra_01031622600": "line-2",
-    "sierra_01061399688": "line-3",
-    "sierra_01092048333": "line-4"
-}
+def _load_instances():
+    """Instance names from env (repo convention: SIERRA_INSTANCES, comma-separated).
+    Keeps real line numbers out of this public repository (runbook hardening #2).
+    Lines are derived positionally: 1st name -> line-1, 2nd -> line-2, ..."""
+    raw = os.getenv("SIERRA_INSTANCES", "")
+    return [n.strip() for n in raw.split(",") if n.strip()]
+
+INSTANCE_LINE_MAP = {name: f"line-{i + 1}" for i, name in enumerate(_load_instances())}
 
 COMPOUNDS = [
     "New Cairo", "Mivida", "Al Rehab", "Madinaty", "The Square",
@@ -214,7 +216,8 @@ async def evolution_webhook(request: Request):
 
     body = await request.json()
     event = body.get("event", "")
-    instance = body.get("instance", "sierra_01032206443")
+    _instances = [n for n in os.getenv("SIERRA_INSTANCES", "").split(",") if n.strip()]
+    instance = body.get("instance") or (_instances[0] if _instances else "")
     data = body.get("data", {})
 
     if "call" in event.lower():
