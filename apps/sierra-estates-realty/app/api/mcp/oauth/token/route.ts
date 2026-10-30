@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       }
 
       // Validate client_id matches the authorization request per RFC 6749 §4.1.3
-      if (requestClientId && authCode.client_id && requestClientId !== authCode.client_id) {
+      if (Boolean(authCode.client_id) && (!requestClientId || requestClientId !== authCode.client_id)) {
         return NextResponse.json(
           { error: 'invalid_grant', error_description: 'client_id mismatch' },
           { status: 400 },
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       }
 
       // Validate redirect_uri matches the authorization request per RFC 6749 §4.1.3
-      if (redirect_uri && authCode.redirect_uri && redirect_uri !== authCode.redirect_uri) {
+      if (Boolean(authCode.redirect_uri) && (!redirect_uri || redirect_uri !== authCode.redirect_uri)) {
         return NextResponse.json(
           { error: 'invalid_grant', error_description: 'redirect_uri mismatch' },
           { status: 400 },

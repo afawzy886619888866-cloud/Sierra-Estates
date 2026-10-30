@@ -134,7 +134,7 @@ export function ingestDoc(path) {
   let prev;
   do {
     prev = txt;
-    txt = txt.replace(/<!--[\s\S]*?-->/g, '');
+    txt = txt.split('<!--').join('&lt;!--').split('-->').join('--&gt;');
     txt = txt.replace(/<!--/g, '').replace(/-->/g, '');
     txt = txt.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
   } while (txt !== prev);

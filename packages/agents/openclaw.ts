@@ -280,6 +280,7 @@ export class OpenClawAgent {
     }
 
     // 6. Extract Price with Advanced Arabic Idioms
+    const safeRaw = (normalizedRawText || "").slice(0, 500);
     let price = 0;
     let priceNeedsVerification = false;
 
@@ -292,8 +293,8 @@ export class OpenClawAgent {
       price = 2_000_000;
     } else {
       // Pattern B: Compound "X مليون و Y الف" (e.g. "11 مليون و 500 الف" -> 11,500,000)
-      const compoundPriceMatch = normalizedRawText.match(
-        /(\d{1,4}(?:\.\d{1,4})?)\s*مليون\s*(?:و)?\s*(\d{1,6})?\s*(?:الف|ألف)?/i,
+      const compoundPriceMatch = safeRaw.match(
+        /(\d{1,4}(?:\.\d{1,2})?)\s*مليون(?:\s*و\s*(\d{1,6})\s*(?:الف|ألف))?/i,
       );
       if (compoundPriceMatch && compoundPriceMatch[2]) {
         const millions = parseFloat(compoundPriceMatch[1]) * 1_000_000;
@@ -301,14 +302,14 @@ export class OpenClawAgent {
         price = millions + thousands;
       } else {
         // Pattern C: Standard Million match: "11.5 مليون" or "48M"
-        const priceMillionMatch = normalizedRawText.match(
+        const priceMillionMatch = safeRaw.match(
           /(\d{1,4}(?:\.\d{1,4})?)\s*(?:مليون|million|m\b)/i,
         );
         if (priceMillionMatch) {
           price = parseFloat(priceMillionMatch[1]) * 1_000_000;
         } else {
           // Pattern D: Thousand match: "38 الف" or "45 ألف" or "45k" (frequent for rentals or installment amounts)
-          const priceThousandMatch = normalizedRawText.match(
+          const priceThousandMatch = safeRaw.match(
             /(\d{1,6}(?:\.\d{1,4})?)\s*(?:الف|ألف|الاف|ألاف|k\b)/i,
           );
           if (
@@ -318,7 +319,7 @@ export class OpenClawAgent {
             price = parseFloat(priceThousandMatch[1]) * 1_000;
           } else {
             // Pattern E: Explicit price keyword label "سعر: 11,500,000"
-            const priceRawMatch = normalizedRawText.match(
+            const priceRawMatch = safeRaw.match(
               /(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]{1,15})/i,
             );
             if (priceRawMatch) {
@@ -383,13 +384,13 @@ export class OpenClawAgent {
     let paymentPlan:
       | { downpayment?: number; installments?: number; deliveryDate?: string }
       | undefined;
-    const dpMatch = normalizedRawText.match(
+    const dpMatch = safeRaw.match(
       /(?:مقدم|دفعة اولى|down\s*payment)\s*[:=]?\s*(\d{1,4}(?:\.\d{1,4})?)\s*(مليون|الف|ألف|%|k)?/i,
     );
-    const instMatch = normalizedRawText.match(
+    const instMatch = safeRaw.match(
       /(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d{1,2})\s*(?:سنوات|سنة|سنين|years)/i,
     );
-    const delivMatch = normalizedRawText.match(
+    const delivMatch = safeRaw.match(
       /(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d{1,2}\s*شهور|immediate)/i,
     );
 

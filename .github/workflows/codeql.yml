@@ -5,6 +5,8 @@ name: CodeQL Security Scan
 # an explicit permissions block).
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     # Weekly, Sunday 03:30 UTC — off-peak for the Cairo working day.
@@ -34,6 +36,19 @@ jobs:
         with:
           languages: javascript-typescript
           queries: security-extended
+          config: |
+            paths:
+              - apps
+              - packages
+              - workflows
+              - infra
+            paths-ignore:
+              - '**/__tests__/**'
+              - '**/*.test.ts'
+              - docs
+              - assets
+              - transport
+              - node_modules
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

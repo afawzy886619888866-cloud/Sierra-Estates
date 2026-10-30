@@ -31,22 +31,31 @@ export class ObsidianMemory {
   private readStore(): Record<string, MemoryEntry> {
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
-        if (fs.existsSync(this.filePath)) {
-          const content = fs.readFileSync(this.filePath, 'utf-8');
-          return JSON.parse(content);
+        const content = fs.readFileSync(this.filePath, 'utf-8');
+        const parsed = JSON.parse(content);
+        const store: Record<string, MemoryEntry> = Object.create(null);
+        if (parsed && typeof parsed === 'object') {
+          for (const [k, v] of Object.entries(parsed)) {
+            if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype') {
+              store[k] = v as MemoryEntry;
+            }
+          }
         }
-        return {};
-      } catch (err) {
+        return store;
+      } catch (err: any) {
+        if (err && err.code === 'ENOENT') {
+          return Object.create(null);
+        }
         if (attempt === 4) {
           console.error('[ObsidianMemory] Error reading memory store:', err);
-          return {};
+          return Object.create(null);
         }
         // Small synchronous backoff on lock contention
         const end = Date.now() + 10 * (attempt + 1);
         while (Date.now() < end) {}
       }
     }
-    return {};
+    return Object.create(null);
   }
 
   private writeStore(data: Record<string, MemoryEntry>): void {

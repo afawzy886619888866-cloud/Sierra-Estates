@@ -46,7 +46,7 @@ function convertKeys<T>(value: unknown, convert: (key: string) => string): T {
     }
     // Plain objects only: leave class instances and null alone.
     if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
-        const out: RecordData = {};
+        const out: RecordData = Object.create(null);
         for (const [key, item] of Object.entries(value as RecordData)) {
             const safeKey = convert(key);
             if (safeKey === '__proto__' || safeKey === 'constructor' || safeKey === 'prototype') {
@@ -59,7 +59,7 @@ function convertKeys<T>(value: unknown, convert: (key: string) => string): T {
                 configurable: true,
             });
         }
-        return out as unknown as T;
+        return Object.assign({}, out) as unknown as T;
     }
     return value as T;
 }

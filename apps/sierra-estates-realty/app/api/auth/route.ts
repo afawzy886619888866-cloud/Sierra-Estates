@@ -106,7 +106,10 @@ export async function POST(req: Request) {
         const user = error ? null : data?.user;
 
         if (user) {
-          const verifiedEmail = (user.email || targetEmail || "").trim().toLowerCase();
+          const verifiedEmail = (user.email || "").trim().toLowerCase();
+        if (!verifiedEmail) {
+          return NextResponse.json({ error: "Access token user email missing" }, { status: 400, headers: NO_STORE_HEADERS });
+        }
           const profile = await getRecord<Partial<User> & { fullName?: string; role?: string; status?: string | null }>(
             "profiles",
             user.id
