@@ -462,11 +462,34 @@ function buildMessage(r) {
   const isRent = String(r.dealType || '').toLowerCase() === 'rent' || (Number(r.price) > 0 && Number(r.price) < 500000);
   const dealLabel = isRent ? 'للإيجار' : 'للبيع';
 
+  // Optional dynamic missing info inquiries (enabled only via WF_DYNAMIC_INQUIRY=1; default is clean simple message per operator instruction)
+  const missingPrompts = [];
+  if (process.env.WF_DYNAMIC_INQUIRY === '1') {
+    const priceNum = Number(String(r.price || '').replace(/[^\d]/g, '')) || 0;
+    if (priceNum <= 0) {
+      missingPrompts.push(isRent ? '• تأكيد القيمة الإيجارية الشهرية المطلوبة حالياً' : '• تأكيد السعر النهائي المطلوب حالياً');
+    }
+    const photoNum = Number(r.photoCount || 0);
+    if (photoNum < 6) {
+      const needed = Math.max(1, 6 - photoNum);
+      missingPrompts.push('• إرسال ' + (needed >= 6 ? '6 صور' : (needed + ' صور إضافية')) + ' واضحة وعالية الدقة (ريسبشن، غرف، حمام، مطبخ، إطلالة) لاعتماد إعلان مميز على Property Finder');
+    }
+    const areaNum = Number(String(r.areaSqm || '').replace(/[^\d]/g, '')) || 0;
+    if (areaNum <= 0) {
+      missingPrompts.push('• تأكيد المساحة الإجمالية بالمتر المربع (م²)');
+    }
+  }
+
+  let inquiryBody = 'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.';
+  if (missingPrompts.length > 0) {
+    inquiryBody += '\n\nوفي حال إتاحتها نرجو التكرم بالتوضيح التالي:\n' + missingPrompts.join('\n');
+  }
+
   return [
     'السلام عليكم ورحمة الله وبركاته يا فندم،',
     '',
     'مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.',
-    'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.',
+    inquiryBody,
     '',
     'إذا كانت الوحدة تم بيعها أو غير متاحة فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝',
     '(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")'

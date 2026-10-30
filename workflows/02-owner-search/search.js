@@ -127,6 +127,9 @@ async function searchPropertyFinder() {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(15000),
       });
+      if (leadsRes.status === 429) {
+        throw new Error('Atlas leads HTTP 429 rate limited — back off');
+      }
       if (!leadsRes.ok) throw new Error(`Atlas leads HTTP ${leadsRes.status}`);
       const payload = await leadsRes.json();
       const rawLeads = Array.isArray(payload.data) ? payload.data : [];
@@ -181,6 +184,9 @@ async function searchPropertyFinder() {
 
     if (response.status === 401 || response.status === 403) {
       failUnconfigured(`PF token rejected (HTTP ${response.status}) — rotate credentials`);
+    }
+    if (response.status === 429) {
+      throw new Error(`PF API HTTP 429 rate limited — back off`);
     }
     if (!response.ok) {
       throw new Error(`PF API HTTP ${response.status}`);
