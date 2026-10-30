@@ -11,6 +11,7 @@ const { loadWorkflowEnv } = require('../lib/google-sheets');
 loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient, requestJson } = require('../lib/gateway-client');
 const { loadOptOutSet } = require('../lib/inbox');
+const { toLocalPhone } = require('../lib/phone-utils');
 
 const SB_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -125,7 +126,7 @@ async function run() {
     });
 
     try {
-      console.log(`[whatsapp-dispatch] Sending to ${phone} (job ${job.id})...`);
+      console.log(`[whatsapp-dispatch] Sending to ${toLocalPhone(phone)} (job ${job.id})...`);
       const sendResult = await gateway.sendText(phone, body);
 
       await requestJson(`${SB_URL}/rest/v1/whatsapp_queue?id=eq.${job.id}`, {
@@ -145,12 +146,12 @@ async function run() {
       });
 
       summary.sent++;
-      console.log(`[whatsapp-dispatch] ✓ Sent to ${phone}`);
+      console.log(`[whatsapp-dispatch] ✓ Sent to ${toLocalPhone(phone)}`);
       await new Promise((r) => setTimeout(r, 3000));
     } catch (err) {
       summary.failed++;
       const errMsg = err?.message || String(err);
-      console.error(`[whatsapp-dispatch] ✗ Failed for ${phone}:`, errMsg);
+      console.error(`[whatsapp-dispatch] ✗ Failed for ${toLocalPhone(phone)}:`, errMsg);
 
       const attempts = (job.attempts || 0) + 1;
       const nextStatus = attempts >= 3 ? 'failed' : 'queued';

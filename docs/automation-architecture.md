@@ -1,6 +1,8 @@
 # Sierra Estates — Automation Architecture
 
-**Updated:** 2026-10-11 (master-execution run, branch `agents/master-execution-glm`)
+> **Authoritative Plan Reference**: For the full unified specification including Master Inventory V3 Ingestion, Owner Rent-First Outreach, WhatsApp Chat Learning, and Omnichannel Syndication, see **[docs/REPOSITORY_AUTOMATION_AND_WORKFLOW_PLAN.md](REPOSITORY_AUTOMATION_AND_WORKFLOW_PLAN.md)**.
+
+**Updated:** 2026-10-30 (Unified Master Ingestion & Outreach Automation Update)
 
 ## Scheduling topology (target state)
 
