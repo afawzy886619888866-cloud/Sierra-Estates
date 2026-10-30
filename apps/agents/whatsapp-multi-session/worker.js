@@ -361,26 +361,33 @@ async function processQueue(sessionId) {
 
   try {
     const formattedChatId = chatId.includes('@') ? chatId : `${chatId}@c.us`;
-    const sendWithTimeout = Promise.race([
-      s.client.sendText(formattedChatId, text).catch(async (sendErr) => {
-        if (sendErr && /license/i.test(sendErr.message)) {
-          const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage() : null);
-          if (page) {
-            console.log(`[${sessionId}] License restriction bypassed via direct WAPI send`);
-            const rawSent = await page.evaluate(async ({ id, msg }) => {
+    const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage().catch(() => null) : null);
+    let res = null;
+
+    try {
+      res = await Promise.race([
+        s.client.sendText(formattedChatId, text),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText slow (>8s)')), 8000))
+      ]);
+    } catch (sendErr) {
+      if (page) {
+        console.log(`[${sessionId}] Attempting direct WAPI sendMessage fallback for ${formattedChatId}...`);
+        try {
+          res = await Promise.race([
+            page.evaluate(async ({ id, msg }) => {
               if (window.WAPI && typeof window.WAPI.sendMessage === 'function') {
                 return await window.WAPI.sendMessage(id, msg);
               }
               return null;
-            }, { id: formattedChatId, msg: text });
-            if (rawSent) return rawSent;
-          }
+            }, { id: formattedChatId, msg: text }),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('WAPI timeout (>10s)')), 10000))
+          ]);
+        } catch (wapiErr) {
+          console.warn(`[${sessionId}] WAPI fallback failed:`, wapiErr.message);
         }
-        throw sendErr;
-      }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText timed out after 20000ms')), 20000))
-    ]);
-    const res = await sendWithTimeout;
+      }
+      if (!res) throw sendErr;
+    }
     s.totalSent += 1;
     s.lastActive = new Date().toISOString();
     resolve({ ok: true, data: { messageId: res || `msg_${Date.now()}`, status: 'sent', session: sessionId } });

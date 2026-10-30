@@ -24,7 +24,7 @@ const http = require('http');
 const { URL } = require('url');
 const { normalizePhone, normalizeChatId } = require('./phone-utils');
 
-const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 60000;
 const POOL_CACHE_MS = 5 * 60_000;
 const SESSION_BACKOFF_MS = 2 * 60_000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
