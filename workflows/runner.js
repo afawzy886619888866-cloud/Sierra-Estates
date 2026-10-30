@@ -387,6 +387,7 @@ async function schedulerTick() {
     const slug = row.slug;
     if (!SCRIPTS[slug]) continue;
     if (row.status !== 'active') continue;
+    if (slug === 'owner-outreach') continue; // Handled exclusively by Cairo 30m active slot scheduler above
 
     // admin pressed "Run now" in the Studio? (Layer-2 patch sets last_run_label='run-requested')
     if (row.last_run_label === 'run-requested' && !manualQueue.has(slug)) {

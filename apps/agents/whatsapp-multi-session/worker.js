@@ -382,8 +382,26 @@ async function processQueue(sessionId) {
         try {
           res = await Promise.race([
             page.evaluate(async ({ id, msg }) => {
+              try {
+                if (window.Store && window.Store.Chat) {
+                  const wid = window.Store.WidFactory && window.Store.WidFactory.createWid ? window.Store.WidFactory.createWid(id) : id;
+                  let chat = await window.Store.Chat.find(wid).catch(() => null);
+                  if (!chat && window.Store.Chat.get) chat = window.Store.Chat.get(wid);
+                  if (chat) {
+                    if (typeof chat.sendMessage === 'function') {
+                      await chat.sendMessage(msg);
+                      return chat.lastReceivedKey?._serialized || ('msg_' + Date.now());
+                    }
+                    if (window.Store.SendTextMsgToChat) {
+                      await window.Store.SendTextMsgToChat(chat, msg);
+                      return chat.lastReceivedKey?._serialized || ('msg_' + Date.now());
+                    }
+                  }
+                }
+              } catch (e) {}
               if (window.WAPI && typeof window.WAPI.sendMessage === 'function') {
-                return await window.WAPI.sendMessage(id, msg);
+                const wRes = await window.WAPI.sendMessage(id, msg);
+                if (wRes && wRes !== 'Not a contact' && typeof wRes === 'string') return wRes;
               }
               return null;
             }, { id: formattedChatId, msg: text }),
@@ -404,7 +422,16 @@ async function processQueue(sessionId) {
       s.lastActive = new Date().toISOString();
       resolve({ ok: true, data: { messageId: `sent_unconfirmed_${Date.now()}`, status: "sent", session: sessionId } });
     } else {
-      reject(err);
+      const isUnregistered = err && err.message && (
+        err.message.includes("Starting a chat with a new number") ||
+        err.message.includes("Not a contact")
+      );
+      if (isUnregistered) {
+        console.warn(`[${sessionId}] Recipient ${chatId} has no active WhatsApp account: ${err.message}`);
+        resolve({ ok: false, error: 'number_not_registered_on_whatsapp', permanent: true });
+      } else {
+        reject(err);
+      }
     }
   } finally {
     s.sendStartedAt = 0;
@@ -541,6 +568,9 @@ app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
     });
 
     const result = await sendPromise;
+    if (result && result.ok === false) {
+      return res.status(400).json(result);
+    }
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: `Send failed: ${err.message}` });

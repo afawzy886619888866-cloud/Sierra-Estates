@@ -958,18 +958,35 @@ async function main() {
                 auditDb.from('listings').update({
                   availability: 'contacted',
                   updated_at: new Date().toISOString()
-                }).or(`code.eq.${cand.code},unit_code.eq.${cand.code}`).then(() => null).catch(() => null);
+                  }).or('code.eq.' + cand.code + ',unit_code.eq.' + cand.code).then(() => null).catch(() => null);
               }
             }
           } catch (err) {
             summary.failed++;
             console.error(`Send failed for ${phone} via ${lane.name}: ${err.message}`);
-            if (err.permanent || err.httpStatus === 400 || (err.message && err.message.includes('400'))) {
+            const isInvalidPhone = err.permanent || err.httpStatus === 400 || (err.message && (
+              err.message.includes('400') ||
+              err.message.includes('not_registered') ||
+              err.message.includes('license') ||
+              err.message.includes('contact') ||
+              err.message.includes('unusable chatId')
+            ));
+            if (isInvalidPhone) {
               appendInvalidPhone(phone);
               invalidPhones.add(phone);
+              saveCheckpoint(checkpoint);
+              if (cand.code) {
+                const auditDb = getAuditClient();
+                if (auditDb) {
+                  auditDb.from('listings').update({
+                    availability: 'invalid_phone',
+                    updated_at: new Date().toISOString()
+                  }).or('code.eq.' + cand.code + ',unit_code.eq.' + cand.code).then(() => null).catch(() => null);
+                }
+              }
             }
-            if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
-              console.error('permanent failure — aborting batch');
+            if (err.httpStatus === 401 || err.httpStatus === 403) {
+              console.error('gateway authentication failure — aborting batch');
               abortBatch = true;
               break;
             }
