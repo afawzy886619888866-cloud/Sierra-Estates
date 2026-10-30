@@ -14,18 +14,25 @@ except Exception:
 
 app = FastAPI(title="Sierra PropTech Core Intelligence Engine")
 
-def _load_env_key():
+def _load_all_env():
     for env_path in [".env", r"H:\Sierra Estates\.env", r"H:\Sierra Estates\workflows\.env"]:
         if os.path.exists(env_path):
             try:
                 with open(env_path, "r", encoding="utf-8", errors="ignore") as f:
                     for line in f:
                         line = line.strip()
-                        if line.startswith(("OPENWA_ADMIN_API_KEY=", "WHATSAPP_API_KEY=")):
-                            return line.split("=", 1)[1].strip().strip('"').strip("'")
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip('"').strip("'")
+                            if k not in os.environ and v:
+                                os.environ[k] = v
             except Exception:
                 pass
-    return "sierra_secret_key_2026"
+_load_all_env()
+
+def _load_env_key():
+    return os.getenv("EVOLUTION_API_KEY") or os.getenv("OPENWA_ADMIN_API_KEY") or os.getenv("WHATSAPP_API_KEY") or "sierra_secret_key_2026"
 
 API_URL = os.getenv("EVOLUTION_API_URL", "http://127.0.0.1:2785")
 API_KEY = os.getenv("EVOLUTION_API_KEY") or _load_env_key()

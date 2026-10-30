@@ -28,10 +28,12 @@ function loadEnvFile(filePath) {
 }
 
 // Load environment variables from AutoClaw and project root
-const autoclawEnv = path.resolve('C:/Users/Sierr/AutoClaw/.env');
+const autoclawEnv = path.resolve('H:/Sierra Estates/tools/autoclaw/.env');
 const projectEnv = path.resolve('H:/Sierra Estates/.env.local');
+const rootEnv = path.resolve('H:/Sierra Estates/.env');
 
 loadEnvFile(autoclawEnv);
+loadEnvFile(rootEnv);
 loadEnvFile(projectEnv);
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
