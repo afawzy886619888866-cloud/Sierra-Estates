@@ -79,8 +79,10 @@ class GatewayClient {
     this.adminKey = opts.adminKey || process.env.OPENWA_ADMIN_API_KEY || this.operatorKey;
     // multi-line pool (8-line gateway): explicit opts.sessionPool wins, else OPENWA_SESSION_IDS env
     // (comma-separated session names or UUIDs, matching the Lines sheet).
-    this.sessionPool = (opts.sessionPool
-      || String(process.env.OPENWA_SESSION_IDS || '')).split(',').map((s) => s.trim()).filter(Boolean);
+    const rawPool = Array.isArray(opts.sessionPool)
+      ? opts.sessionPool
+      : (opts.sessionPool || String(process.env.OPENWA_SESSION_IDS || '')).split(',');
+    this.sessionPool = rawPool.map((s) => String(s).trim()).filter(Boolean);
     this._rr = 0;                 // round-robin cursor
     this._benchedUntil = new Map(); // uuid -> retry-after epoch ms
     this._poolCache = null;         // { at, entries: [{name, uuid}] }
