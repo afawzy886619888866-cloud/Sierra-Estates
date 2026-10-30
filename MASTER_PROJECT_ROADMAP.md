@@ -13,4 +13,5 @@
 - **Active Planning Milestone**: M12 (Realtime Audio Briefings & Video Property Tours)
 
 For the complete architecture, data flow diagrams, milestone execution history, and upcoming roadmap, please refer to:
-👉 **[View Complete Master Project Plan](docs/MASTER_PROJECT_PLAN.md)**
+👉 **[View Complete Master Project Plan](docs/MASTER_PROJECT_PLAN.md)**  
+👉 **[View Repository Automation & Workflow Master Plan](docs/REPOSITORY_AUTOMATION_AND_WORKFLOW_PLAN.md)**

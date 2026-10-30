@@ -236,3 +236,6 @@ docs/drafts/propertyfinder/propertyfinder-owners-full.xml
 docs/drafts/propertyfinder/propertyfinder-photos-only.xml
 docs/drafts/propertyfinder/propertyfinder-full-feed.xml
 !workflows/.env.example
+
+# Archived Agent Skills
+.agents/skills-archive/

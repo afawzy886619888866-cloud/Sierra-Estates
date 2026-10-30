@@ -534,6 +534,139 @@ app.post('/api/messages/send-text', async (req, res) => {
 /**
  * POST /api/sessions/:sessionId/restart — Restart / re-pair line
  */
+/**
+ * POST /api/sessions/:sessionId/check-number
+ * Silently probes if a phone/chatId exists on WhatsApp (zero messages sent).
+ */
+app.post('/api/sessions/:sessionId/check-number', async (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  if (s.status !== 'READY' || !s.client) {
+    return res.status(503).json({ error: `Session ${s.id} is not ready (status: ${s.status})` });
+  }
+
+  const rawPhone = req.body.phone || req.body.chatId || req.body.number;
+  if (!rawPhone) {
+    return res.status(400).json({ error: 'Missing required parameter: phone, chatId, or number' });
+  }
+
+  const formattedChatId = String(rawPhone).includes('@') ? String(rawPhone) : `${String(rawPhone).replace(/[^\d]/g, '')}@c.us`;
+
+  try {
+    let result = null;
+    if (typeof s.client.checkNumberStatus === 'function') {
+      result = await s.client.checkNumberStatus(formattedChatId);
+    } else if (typeof s.client.getContact === 'function') {
+      result = await s.client.getContact(formattedChatId);
+    }
+
+    const exists = Boolean(
+      result &&
+      (result.status === 200 || result.canReceiveMessage === true || (result.id && result.id._serialized))
+    );
+
+    res.json({
+      ok: true,
+      exists,
+      status: result && result.status ? result.status : (exists ? 200 : 404),
+      canReceiveMessage: result && result.canReceiveMessage !== undefined ? result.canReceiveMessage : exists,
+      isBusiness: Boolean(result && result.isBusiness),
+      chatId: formattedChatId,
+      session: s.id,
+      raw: result
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: `checkNumberStatus failed: ${err.message}`, chatId: formattedChatId, session: s.id });
+  }
+});
+
+/**
+ * POST /api/check-number — Auto Round-Robin check across ready sessions
+ */
+app.post('/api/check-number', async (req, res) => {
+  const readySessions = Array.from(sessions.values()).filter(s => s.status === 'READY' && s.client);
+  if (!readySessions.length) {
+    return res.status(503).json({ error: 'No WhatsApp lines are currently in READY status' });
+  }
+
+  roundRobinIndex = (roundRobinIndex + 1) % readySessions.length;
+  const chosen = readySessions[roundRobinIndex];
+
+  const rawPhone = req.body.phone || req.body.chatId || req.body.number;
+  if (!rawPhone) {
+    return res.status(400).json({ error: 'Missing required parameter: phone, chatId, or number' });
+  }
+
+  const formattedChatId = String(rawPhone).includes('@') ? String(rawPhone) : `${String(rawPhone).replace(/[^\d]/g, '')}@c.us`;
+
+  try {
+    let result = null;
+    if (typeof chosen.client.checkNumberStatus === 'function') {
+      result = await chosen.client.checkNumberStatus(formattedChatId);
+    }
+    const exists = Boolean(
+      result &&
+      (result.status === 200 || result.canReceiveMessage === true || (result.id && result.id._serialized))
+    );
+
+    res.json({
+      ok: true,
+      exists,
+      status: result && result.status ? result.status : (exists ? 200 : 404),
+      canReceiveMessage: result && result.canReceiveMessage !== undefined ? result.canReceiveMessage : exists,
+      isBusiness: Boolean(result && result.isBusiness),
+      chatId: formattedChatId,
+      session: chosen.id
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: `check-number failed on ${chosen.id}: ${err.message}`, chatId: formattedChatId });
+  }
+});
+
+/**
+ * POST /api/numbers/verify-batch — Verify a batch of candidate numbers silently
+ */
+app.post('/api/numbers/verify-batch', async (req, res) => {
+  const readySessions = Array.from(sessions.values()).filter(s => s.status === 'READY' && s.client);
+  if (!readySessions.length) {
+    return res.status(503).json({ error: 'No WhatsApp lines are currently in READY status' });
+  }
+
+  const numbers = req.body.numbers;
+  if (!Array.isArray(numbers) || !numbers.length) {
+    return res.status(400).json({ error: 'Missing required parameter: numbers array' });
+  }
+
+  const results = [];
+  for (let i = 0; i < numbers.length; i++) {
+    const raw = numbers[i];
+    const target = String(raw).includes('@') ? String(raw) : `${String(raw).replace(/[^\d]/g, '')}@c.us`;
+    const chosen = readySessions[i % readySessions.length];
+    try {
+      let r = null;
+      if (typeof chosen.client.checkNumberStatus === 'function') {
+        r = await chosen.client.checkNumberStatus(target);
+      }
+      const exists = Boolean(r && (r.status === 200 || r.canReceiveMessage === true));
+      results.push({ number: raw, chatId: target, exists, isBusiness: Boolean(r && r.isBusiness) });
+    } catch (e) {
+      results.push({ number: raw, chatId: target, exists: false, error: e.message });
+    }
+    // Safe anti-rate-limit delay between checks
+    if (i < numbers.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+  }
+
+  res.json({
+    ok: true,
+    total: numbers.length,
+    validCount: results.filter(r => r.exists).length,
+    invalidCount: results.filter(r => !r.exists).length,
+    results
+  });
+});
+
 app.post('/api/sessions/:sessionId/restart', async (req, res) => {
   const s = sessions.get(req.params.sessionId);
   if (!s) return res.status(404).json({ error: 'Session not found' });

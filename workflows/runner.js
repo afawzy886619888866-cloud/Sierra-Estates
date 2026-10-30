@@ -68,7 +68,7 @@ const BIND = process.env.RUNNER_BIND || '127.0.0.1';
 // keeps the historical EC2 label; the Docker migration
 // (infra/docker-compose.runner.yml) sets RUNNER_LABEL=docker-runner so the
 // Workflow Studio never confuses the two execution paths.
-const RUNNER_LABEL = process.env.RUNNER_LABEL || 'ec2-runner';
+const RUNNER_LABEL = process.env.RUNNER_LABEL || 'docker-runner';
 const API_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
 
 const SLUGS = [

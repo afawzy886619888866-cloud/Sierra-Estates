@@ -22,23 +22,14 @@
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const { normalizePhone, normalizeChatId } = require('./phone-utils');
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const POOL_CACHE_MS = 5 * 60_000;
 const SESSION_BACKOFF_MS = 2 * 60_000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function normalizeChatId(phone) {
-  if (!phone) return '';
-  let p = String(phone).trim().replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-  if (p.includes('@')) return p; // already a chatId
-  p = p.replace(/[^\d+]/g, '');
-  if (p.startsWith('+')) p = p.slice(1);
-  // Egyptian local formats: 002010..., 2010..., 010... → full CC form
-  if (p.startsWith('00')) p = p.slice(2);
-  if (p.startsWith('0')) p = `20${p}`;
-  return `${p}@c.us`;
-}
+
 
 /** Low-level JSON request with timeout. Resolves {status, ok, data}. */
 function requestJson(urlStr, { method = 'GET', headers = {}, body = null, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
@@ -229,6 +220,41 @@ class GatewayClient {
    * With no pool: legacy behavior — retries transient failures (network/5xx)
    * up to `retries` times with linear backoff on the single session.
    */
+  /**
+   * Check if a phone number is registered on WhatsApp without sending a message.
+   * Resolves { ok: boolean, exists: boolean, chatId: string, session?: string }.
+   */
+  async checkNumber(phone, { sessionId = null, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+    if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
+    const target = normalizeChatId(phone);
+    if (!target) return { ok: false, exists: false, error: 'invalid phone' };
+
+    const pool = sessionId
+      ? [{ name: sessionId, uuid: sessionId }]
+      : await this.healthyPool();
+    if (!pool.length) throw new Error('no gateway session available (pool empty)');
+
+    for (const entry of pool) {
+      try {
+        const res = await requestJson(
+          `${this.baseUrl}/api/sessions/${entry.uuid}/check-number`,
+          {
+            method: 'POST',
+            headers: { 'X-API-Key': this.operatorKey || this.adminKey || '' },
+            body: { phone: target },
+            timeoutMs,
+          }
+        );
+        if (res.ok && res.data) {
+          return { ok: true, exists: Boolean(res.data.exists), chatId: target, session: entry.name, details: res.data };
+        }
+      } catch (e) {
+        // try next line
+      }
+    }
+    return { ok: false, exists: false, error: 'check-number failed across pool' };
+  }
+
   async sendText(chatId, text, { sessionId = null, retries = 2, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
     if (!this.operatorKey) throw new Error('no operator/API key configured');

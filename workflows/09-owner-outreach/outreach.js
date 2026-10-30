@@ -71,6 +71,7 @@ const path = require('path');
 const { loadWorkflowEnv } = require('../lib/google-sheets');
 loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient } = require('../lib/gateway-client');
+const { normalizePhone, toWesternDigits, toLocalPhone } = require('../lib/phone-utils');
 const { loadOptOutSet } = require('../lib/inbox');
 
 const WRITE_URL = process.env.WF_SHEET_WRITE_URL;
@@ -377,20 +378,7 @@ function parseCsv(text) {
   return rows;
 }
 
-function toWesternDigits(str) {
-  return String(str || '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-}
-
-/** Egyptian mobile → 201XXXXXXXXX; null when not a plausible mobile. */
-function normalizePhone(raw) {
-  let d = toWesternDigits(raw).replace(/[^\d]/g, '');
-  if (!d) return null;
-  if (d.startsWith('0020')) d = d.slice(4);
-  else if (d.startsWith('20')) d = d.slice(2);
-  else if (d.startsWith('0')) d = d.slice(1);
-  if (/^1[0125]\d{8}$/.test(d)) return '20' + d; // 10/11/12/15 prefixes, 10 digits
-  return null;
-}
+/* phone normalization handled by workflows/lib/phone-utils.js */
 
 function cairoNow() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
@@ -417,6 +405,27 @@ function loadLedgerPhones() {
     }
   } catch { /* first run */ }
   return seen;
+}
+
+const INVALID_CACHE = path.join(STATE_DIR, 'invalid-whatsapp-numbers.json');
+
+function loadInvalidPhones() {
+  try {
+    if (fs.existsSync(INVALID_CACHE)) {
+      const data = JSON.parse(fs.readFileSync(INVALID_CACHE, 'utf8'));
+      if (Array.isArray(data)) return new Set(data);
+    }
+  } catch (_) { /* ignore */ }
+  return new Set();
+}
+
+function appendInvalidPhone(phone) {
+  try {
+    const set = loadInvalidPhones();
+    set.add(phone);
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.writeFileSync(INVALID_CACHE, JSON.stringify(Array.from(set).sort(), null, 2), 'utf8');
+  } catch (_) { /* ignore */ }
 }
 
 function appendLedger(entry) {
@@ -693,6 +702,7 @@ async function main() {
 
   const contacted = loadLedgerPhones();
   const optedOut = loadOptOutSet(STATE_DIR);
+  const invalidPhones = loadInvalidPhones();
   const daily = loadDaily();
 
   const candidates = [];
@@ -947,10 +957,12 @@ async function main() {
         summary.skippedDupRow++;
       } else if (optedOut.has(phone)) {
         summary.skippedOptOut++;
+      } else if (invalidPhones.has(phone)) {
+        summary.skippedInvalid = (summary.skippedInvalid || 0) + 1;
       } else if (!contacted.has(phone)) {
         const text = buildMessage(cand);
         if (DRY_RUN) {
-          console.log(`[dry-run][${lane.direction}][#${idx}] would send → ${phone} (${cand.code}) via ${lane.name}`);
+          console.log(`[dry-run][${lane.direction}][#${idx}] would send → ${toLocalPhone(phone)} (${cand.code}) via ${lane.name}`);
           summary.sent++;
           summary.bySession[lane.name] = (summary.bySession[lane.name] || 0) + 1;
           summary.byDirection[lane.direction]++;
@@ -977,11 +989,15 @@ async function main() {
             // Canonical audit row (migration 033) — fire-and-forget, REAL
             // sends only (dry-run never fabricates contact records, §21).
             void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
-            console.log(`sent [${lane.direction}][#${idx}] → ${phone} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+            console.log(`sent [${lane.direction}][#${idx}] → ${toLocalPhone(phone)} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
             await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
           } catch (err) {
             summary.failed++;
             console.error(`Send failed for ${phone} via ${lane.name}: ${err.message}`);
+            if (err.permanent || err.httpStatus === 400 || (err.message && err.message.includes('400'))) {
+              appendInvalidPhone(phone);
+              invalidPhones.add(phone);
+            }
             if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
               console.error('permanent failure — aborting batch');
               abortBatch = true;
