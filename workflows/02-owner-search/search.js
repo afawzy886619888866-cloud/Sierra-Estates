@@ -108,43 +108,95 @@ async function insertSupabaseOwnerLead(unit) {
 }
 
 async function searchPropertyFinder() {
-  if (!PF_TOKEN) failUnconfigured('PROPERTY_FINDER_JWT_TOKEN missing');
+  const apiKey = process.env.PROPERTY_FINDER_API_KEY;
+  const apiSecret = process.env.PROPERTY_FINDER_API_SECRET;
 
-  const params = new URLSearchParams({
-    category_id: '1',
-    location_id: process.env.PF_LOCATION_ID || 'cairo-new-cairo',
-    purpose: 'sale',
-    owner_only: 'true',
-    sort_by: 'date',
-    limit: process.env.PF_LIMIT || '50',
-  });
+  if (apiKey && apiSecret) {
+    try {
+      const tokenRes = await fetch('https://atlas.propertyfinder.com/v1/auth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ apiKey, apiSecret }),
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!tokenRes.ok) throw new Error(`Atlas auth HTTP ${tokenRes.status}`);
+      const tokenData = await tokenRes.json();
+      const accessToken = tokenData.accessToken;
 
-  const response = await fetch(`${PF_API_BASE}/properties?${params.toString()}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${PF_TOKEN}`,
-      Accept: 'application/json',
-    },
-  });
+      const leadsRes = await fetch('https://atlas.propertyfinder.com/v1/leads?perPage=50', {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!leadsRes.ok) throw new Error(`Atlas leads HTTP ${leadsRes.status}`);
+      const payload = await leadsRes.json();
+      const rawLeads = Array.isArray(payload.data) ? payload.data : [];
 
-  if (response.status === 401 || response.status === 403) {
-    failUnconfigured(`PF token rejected (HTTP ${response.status}) — rotate PROPERTY_FINDER_JWT_TOKEN`);
-  }
-  if (response.status === 429) {
-    throw new Error('PF API rate limited (HTTP 429) — back off before retrying');
-  }
-  if (!response.ok) {
-    throw new Error(`PF API HTTP ${response.status}`);
+      const rows = rawLeads.map((item) => {
+        const phoneContact = (item.sender?.contacts || []).find((c) => c.type === 'phone');
+        const phone = phoneContact?.value || '';
+        return {
+          id: item.id,
+          title: `Inquiry for ${item.listing?.reference || 'Property'}`,
+          price: null,
+          location: { name: 'New Cairo' },
+          beds: 0,
+          baths: 0,
+          area: 0,
+          url: item.responseLink || '',
+          owner: {
+            name: item.sender?.name || 'PF Lead',
+            phone: phone,
+          },
+        };
+      });
+
+      summary.found = rows.length;
+      console.log(`PF Atlas returned ${rows.length} verified inbound leads`);
+      return rows;
+    } catch (err) {
+      console.warn(`PF Atlas lead query failed (${err.message}) — checking legacy fallback`);
+    }
   }
 
-  const data = await response.json();
-  if (!data || typeof data !== 'object' || !Array.isArray(data.data)) {
-    throw new Error(`PF API malformed response (data is not an array): ${JSON.stringify(data).slice(0, 200)}`);
+  if (!PF_TOKEN) failUnconfigured('PROPERTY_FINDER_API_KEY / PROPERTY_FINDER_JWT_TOKEN missing');
+
+  try {
+    const params = new URLSearchParams({
+      category_id: '1',
+      location_id: process.env.PF_LOCATION_ID || 'cairo-new-cairo',
+      purpose: 'sale',
+      owner_only: 'true',
+      sort_by: 'date',
+      limit: process.env.PF_LIMIT || '50',
+    });
+
+    const response = await fetch(`${PF_API_BASE}/properties?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${PF_TOKEN}`,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      failUnconfigured(`PF token rejected (HTTP ${response.status}) — rotate credentials`);
+    }
+    if (!response.ok) {
+      throw new Error(`PF API HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data || typeof data !== 'object' || !Array.isArray(data.data)) {
+      throw new Error(`PF API malformed response: ${JSON.stringify(data).slice(0, 100)}`);
+    }
+    const rows = data.data;
+    summary.found = rows.length;
+    console.log(`PF returned ${rows.length} owner properties`);
+    return rows;
+  } catch (err) {
+    failUnconfigured(`Property Finder service unreachable (${err.message})`);
   }
-  const rows = data.data;
-  summary.found = rows.length;
-  console.log(`PF returned ${rows.length} owner properties`);
-  return rows;
 }
 
 /** Positive owner evidence only — see OWNER-EVIDENCE RULE above. */

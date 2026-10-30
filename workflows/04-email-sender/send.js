@@ -1,27 +1,17 @@
-try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch {}
+const path = require('path');
+const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+loadWorkflowEnv(path.join(__dirname, '..'));
+
 /**
  * Workflow 04: Email Sender  (hardened 2026-10)
  * ─────────────────────────────────────────
  * Sends campaign emails from the Sheets "email_campaigns" tab via SendGrid,
  * with open/click tracking enabled.
- *
- * CHANGES over the previous revision:
- *   - Variables cell (`email_campaigns!C`) is JSON — a malformed cell used to
- *     crash the whole run mid-batch. Now parsed defensively; malformed rows
- *     are marked ERROR and the batch continues.
- *   - Missing SENDGRID_API_KEY exits 2 ("unconfigured") instead of crashing
- *     at require-time via sgMail.setApiKey(undefined).
- *   - Per-send try/catch already existed; kept. Template miss marks ERROR.
- *
- * Env: SENDGRID_API_KEY, SENDGRID_FROM_EMAIL, BROKER_INBOX_SHEET_ID,
- *      GOOGLE_SERVICE_ACCOUNT_KEY
- * Exit: 0 ok · 2 unconfigured · 1 error
  */
 const { google } = require('googleapis');
 const fs = require('fs');
 
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
-const SA_PATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '';
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY || '';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@sierra-estates.com';
 
@@ -34,15 +24,9 @@ function failUnconfigured(msg) {
 
 function sheetsClient() {
   if (!SHEET_ID) failUnconfigured('BROKER_INBOX_SHEET_ID missing');
-  if (!SA_PATH || !fs.existsSync(SA_PATH)) failUnconfigured('GOOGLE_SERVICE_ACCOUNT_KEY missing or file not found');
-  const creds = JSON.parse(fs.readFileSync(SA_PATH, 'utf8'));
-  return google.sheets({
-    version: 'v4',
-    auth: new google.auth.GoogleAuth({
-      credentials: creds,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    }),
-  });
+  const client = createSheetsClient(['https://www.googleapis.com/auth/spreadsheets']);
+  if (!client) failUnconfigured('Google Sheets credentials not configured (GOOGLE_SERVICE_ACCOUNT_*)');
+  return client;
 }
 
 const EMAIL_TEMPLATES = {

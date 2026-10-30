@@ -24,7 +24,7 @@ const http = require('http');
 const { URL } = require('url');
 const { normalizePhone, normalizeChatId } = require('./phone-utils');
 
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 30000;
 const POOL_CACHE_MS = 5 * 60_000;
 const SESSION_BACKOFF_MS = 2 * 60_000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -231,10 +231,15 @@ class GatewayClient {
     const target = normalizeChatId(phone);
     if (!target) return { ok: false, exists: false, error: 'invalid phone' };
 
-    const pool = sessionId
+    const targetPhone = target.replace(/@c\.us$/, '').replace(/\D/g, '');
+    let pool = sessionId
       ? [{ name: sessionId, uuid: sessionId }]
       : await this.healthyPool();
     if (!pool.length) throw new Error('no gateway session available (pool empty)');
+    if (pool.length > 1 && targetPhone) {
+      const nonSelf = pool.filter((e) => !e.phone || !targetPhone.endsWith(String(e.phone).replace(/\D/g, '')));
+      if (nonSelf.length) pool = nonSelf;
+    }
 
     for (const entry of pool) {
       try {

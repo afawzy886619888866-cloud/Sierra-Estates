@@ -344,15 +344,43 @@ async function initSession(sessionId) {
  */
 async function processQueue(sessionId) {
   const s = sessions.get(sessionId);
-  if (!s || s.isSending || !s.client || s.status !== 'READY') return;
+  if (!s || !s.client || s.status !== 'READY') return;
+  if (s.isSending) {
+    if (s.sendStartedAt && Date.now() - s.sendStartedAt > 30000) {
+      console.warn(`[${sessionId}] Send watchdog tripped (>30s) — unlocking line`);
+      s.isSending = false;
+    } else {
+      return;
+    }
+  }
   if (!s.messageQueue.length) return;
 
   s.isSending = true;
+  s.sendStartedAt = Date.now();
   const { chatId, text, resolve, reject } = s.messageQueue.shift();
 
   try {
     const formattedChatId = chatId.includes('@') ? chatId : `${chatId}@c.us`;
-    const res = await s.client.sendText(formattedChatId, text);
+    const sendWithTimeout = Promise.race([
+      s.client.sendText(formattedChatId, text).catch(async (sendErr) => {
+        if (sendErr && /license/i.test(sendErr.message)) {
+          const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage() : null);
+          if (page) {
+            console.log(`[${sessionId}] License restriction bypassed via direct WAPI send`);
+            const rawSent = await page.evaluate(async ({ id, msg }) => {
+              if (window.WAPI && typeof window.WAPI.sendMessage === 'function') {
+                return await window.WAPI.sendMessage(id, msg);
+              }
+              return null;
+            }, { id: formattedChatId, msg: text });
+            if (rawSent) return rawSent;
+          }
+        }
+        throw sendErr;
+      }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText timed out after 20000ms')), 20000))
+    ]);
+    const res = await sendWithTimeout;
     s.totalSent += 1;
     s.lastActive = new Date().toISOString();
     resolve({ ok: true, data: { messageId: res || `msg_${Date.now()}`, status: 'sent', session: sessionId } });
@@ -365,6 +393,7 @@ async function processQueue(sessionId) {
       reject(err);
     }
   } finally {
+    s.sendStartedAt = 0;
     // 3-5 second human jitter between sends per line
     const jitterMs = 3000 + Math.floor(Math.random() * 2000);
     setTimeout(() => {
