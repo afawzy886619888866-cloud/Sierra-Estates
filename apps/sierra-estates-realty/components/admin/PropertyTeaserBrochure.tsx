@@ -48,12 +48,70 @@ export function PropertyTeaserBrochure({ initialData: _initialData, lang: _lang 
     setFormData((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
+  const numericFields: Array<keyof typeof EMPTY_FORM> = [
+    'buaSqm',
+    'bedrooms',
+    'bathrooms',
+    'askingPriceEGP',
+    'downPaymentPercent',
+    'installmentTenureYears',
+    'deliveryYear',
+  ];
+
   const requiredFields: Array<keyof typeof EMPTY_FORM> = [
     'referenceId', 'title', 'compoundName', 'unitType', 'buaSqm', 'bedrooms',
     'bathrooms', 'finishing', 'askingPriceEGP', 'downPaymentPercent',
     'installmentTenureYears', 'deliveryYear', 'brokerName', 'brokerPhone',
   ];
-  const incomplete = requiredFields.filter((k) => !formData[k] || (k !== 'finishing' && !(Number(formData[k]) > 0)));
+
+  const incomplete = requiredFields.filter((k) => {
+    const val = formData[k];
+    if (val === undefined || val === null || String(val).trim() === '') return true;
+    if (numericFields.includes(k) && !(Number(val) > 0)) return true;
+    return false;
+  });
+
+  const loadPreset = (type: 'mivida' | 'cairo-plaza') => {
+    if (type === 'mivida') {
+      setFormData({
+        referenceId: 'MIV-VIL-088',
+        title: 'Mivida Emaar Luxury Lake Villa',
+        compoundName: 'Mivida',
+        unitType: 'Standalone Villa',
+        buaSqm: '390',
+        landSqm: '450',
+        bedrooms: '5',
+        bathrooms: '6',
+        finishing: 'fully_finished',
+        askingPriceEGP: '38500000',
+        downPaymentPercent: '15',
+        installmentTenureYears: '6',
+        deliveryYear: '2026',
+        brokerName: 'Ahmed Fawzy',
+        brokerPhone: '+201092048333',
+      });
+    } else if (type === 'cairo-plaza') {
+      setFormData({
+        referenceId: 'CP-RET-104',
+        title: 'Cairo Plaza Prime Retail Ground Floor',
+        compoundName: 'Cairo Plaza',
+        unitType: 'Commercial Retail',
+        buaSqm: '125',
+        landSqm: '',
+        bedrooms: '1',
+        bathrooms: '2',
+        finishing: 'semi_finished',
+        askingPriceEGP: '19500000',
+        downPaymentPercent: '20',
+        installmentTenureYears: '5',
+        deliveryYear: '2026',
+        brokerName: 'Sierra Estates Desk',
+        brokerPhone: '+201061399688',
+      });
+    }
+    setErrorMsg('');
+    setMissingFields([]);
+  };
 
   const handleGenerate = async () => {
     if (incomplete.length > 0) {
@@ -146,6 +204,34 @@ export function PropertyTeaserBrochure({ initialData: _initialData, lang: _lang 
       <div className="card-hd" style={{ marginBottom: 16 }}>
         <span className="card-title">📄 Luxury Brochure & Investor Teaser Generator</span>
         <span className="chip chip-gold">The Curator Engine</span>
+      </div>
+
+      {/* Quick Presets */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        <button
+          type="button"
+          onClick={() => loadPreset('mivida')}
+          className="chip"
+          style={{ cursor: 'pointer', background: 'rgba(200, 150, 26, 0.15)', borderColor: 'rgba(200, 150, 26, 0.3)', color: '#F5D78E', fontSize: 11 }}
+        >
+          🏡 Load Mivida Lake Villa
+        </button>
+        <button
+          type="button"
+          onClick={() => loadPreset('cairo-plaza')}
+          className="chip"
+          style={{ cursor: 'pointer', background: 'rgba(52, 211, 153, 0.15)', borderColor: 'rgba(52, 211, 153, 0.3)', color: '#34d399', fontSize: 11 }}
+        >
+          🏢 Load Cairo Plaza Retail
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFormData({ ...EMPTY_FORM }); setTearSheet(null); }}
+          className="chip"
+          style={{ cursor: 'pointer', background: 'rgba(255, 255, 255, 0.05)', fontSize: 11, color: 'var(--tx-m)' }}
+        >
+          🔄 Clear Form
+        </button>
       </div>
 
       {/* Input Parameters — all explicit, nothing prefilled */}

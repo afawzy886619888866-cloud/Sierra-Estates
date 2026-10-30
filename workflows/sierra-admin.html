@@ -239,8 +239,62 @@
         <span class="slot-tag">08:00 PM</span>
       </div>
       <div class="stat-sub" style="margin-top: 0.5rem;">
-        Runner Port: <strong>2786</strong> | Bridge Port: <strong>2790</strong> (Strictly Read-Only)
+        Runner Port: <strong>2786</strong> | Bridge Port: <strong>2790</strong> | Gateway: <strong>2785</strong>
       </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Workstation Instant Sender Card -->
+  <div class="card" style="margin-bottom: 2rem; border-color: rgba(16, 185, 129, 0.3);">
+    <div class="card-header">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.25rem;">💬</span>
+        <span class="card-title" style="color: #34d399; font-weight: 700;">WhatsApp Workstation · Stealth Human Sender</span>
+      </div>
+      <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3)">
+        Anti-Bot Shield: Active
+      </span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+      <div>
+        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 600;">
+          Select Sender Line
+        </label>
+        <select id="send-session-select" style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--text-primary); font-family: inherit;">
+          <option value="auto">🔄 Auto Round-Robin (All Ready Lines)</option>
+          <option value="line-1">📱 Line 1: Ahmed Fawzy (201032206443)</option>
+          <option value="line-2">📱 Line 2: Ahmed Fawzy (201092048333)</option>
+          <option value="line-3">📱 Line 3: Sierra Estates (201061399688)</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 600;">
+          Recipient Phone Number
+        </label>
+        <input type="text" id="send-recipient-phone" placeholder="e.g. +201001534224" style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--text-primary); font-family: monospace;">
+      </div>
+    </div>
+
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+        <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">
+          Message Content
+        </label>
+        <div style="display: flex; gap: 0.4rem;">
+          <button type="button" onclick="setAdminTemplate('listing')" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 0.3rem; color: var(--text-secondary); cursor: pointer;">🏡 New Unit</button>
+          <button type="button" onclick="setAdminTemplate('reminder')" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 0.3rem; color: var(--text-secondary); cursor: pointer;">📅 Viewing</button>
+        </div>
+      </div>
+      <textarea id="send-message-text" rows="3" placeholder="Type WhatsApp message here..." style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--text-primary); font-family: inherit; resize: vertical;"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span id="send-status-pill" style="font-size: 0.8125rem; color: var(--text-muted);">Ready to dispatch.</span>
+      <button type="button" id="send-dispatch-btn" onclick="dispatchAdminMessage()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 0.5rem; padding: 0.6rem 1.4rem; font-weight: 700; cursor: pointer; font-size: 0.875rem;">
+        🚀 Send via WhatsApp (Stealth Emulation)
+      </button>
     </div>
   </div>
 
@@ -306,6 +360,56 @@
         }
       } catch (err) {
         console.error('Refresh failed:', err);
+      }
+    }
+
+    function setAdminTemplate(type) {
+      const txt = document.getElementById('send-message-text');
+      if (type === 'listing') {
+        txt.value = 'مرحباً، لدينا وحدة مميزة جديدة متاحة اليوم في كمبوند ميفيدا بالتجمع الخامس بسعر مغري جداً. هل تود تفاصيل المعاينة؟\nSierra Estates';
+      } else if (type === 'reminder') {
+        txt.value = 'عزيزي العميل، نود تذكيرك بموعد المعاينة المحدد غداً الساعة 4:00 عصراً. مستشارك العقاري سيكون بانتظارك.\nSierra Estates';
+      }
+    }
+
+    async function dispatchAdminMessage() {
+      const phoneInput = document.getElementById('send-recipient-phone');
+      const textInput = document.getElementById('send-message-text');
+      const sessionSelect = document.getElementById('send-session-select');
+      const statusPill = document.getElementById('send-status-pill');
+      const btn = document.getElementById('send-dispatch-btn');
+
+      const phone = phoneInput.value.trim();
+      const text = textInput.value.trim();
+      const sessionId = sessionSelect.value;
+
+      if (!phone || !text) {
+        statusPill.innerHTML = '<span style="color: #f87171;">Please enter recipient phone and message text.</span>';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Simulating typing & sending...';
+      statusPill.innerHTML = '<span style="color: #60a5fa;">Simulating human presence (seen + typing 1.5-4s)...</span>';
+
+      try {
+        const res = await fetch('/admin/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, text, sessionId })
+        });
+        const data = await res.json();
+        if (data && (data.ok || data.messageId || data.status === 'sent')) {
+          statusPill.innerHTML = `<span style="color: #34d399;">✓ Message dispatched successfully! (ID: ${data.messageId || data.data?.messageId || 'sent'})</span>`;
+          textInput.value = '';
+        } else {
+          statusPill.innerHTML = `<span style="color: #f87171;">✗ Dispatch failed: ${data.error || 'Gateway returned error'}</span>`;
+        }
+      } catch (err) {
+        statusPill.innerHTML = `<span style="color: #f87171;">✗ Error: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Send via WhatsApp (Stealth Emulation)';
       }
     }
 

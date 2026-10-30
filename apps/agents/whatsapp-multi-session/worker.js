@@ -371,6 +371,51 @@ async function processQueue(sessionId) {
     const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage().catch(() => null) : null);
     let res = null;
 
+    // ── Human Stealth Emulation ──────────────────────────────────────
+    // 1. Mark chat as seen (simulates opening conversation like a real user)
+    try {
+      if (typeof s.client.sendSeen === 'function') {
+        await s.client.sendSeen(formattedChatId).catch(() => {});
+      } else if (page) {
+        await page.evaluate(async (id) => {
+          if (window.WAPI && typeof window.WAPI.sendSeen === 'function') {
+            await window.WAPI.sendSeen(id).catch(() => {});
+          }
+        }, formattedChatId).catch(() => {});
+      }
+    } catch (_) {}
+
+    // 2. Simulate typing presence (WhatsApp 'composing' chat state)
+    try {
+      if (typeof s.client.simulateTyping === 'function') {
+        await s.client.simulateTyping(formattedChatId, true).catch(() => {});
+      } else if (page) {
+        await page.evaluate(async (id) => {
+          if (window.WAPI && typeof window.WAPI.simulateTyping === 'function') {
+            await window.WAPI.simulateTyping(id, true).catch(() => {});
+          }
+        }, formattedChatId).catch(() => {});
+      }
+    } catch (_) {}
+
+    // 3. Natural human typing delay proportional to message length
+    // Average human typing speed: ~25-30ms per character + cognitive pause (1.2s - 4.5s total)
+    const typingDuration = Math.min(4500, Math.max(1200, Math.floor(String(text).length * 28) + Math.floor(Math.random() * 800)));
+    await new Promise((r) => setTimeout(r, typingDuration));
+
+    // 4. End typing presence before dispatch
+    try {
+      if (typeof s.client.simulateTyping === 'function') {
+        await s.client.simulateTyping(formattedChatId, false).catch(() => {});
+      } else if (page) {
+        await page.evaluate(async (id) => {
+          if (window.WAPI && typeof window.WAPI.simulateTyping === 'function') {
+            await window.WAPI.simulateTyping(id, false).catch(() => {});
+          }
+        }, formattedChatId).catch(() => {});
+      }
+    } catch (_) {}
+
     try {
       res = await Promise.race([
         s.client.sendText(formattedChatId, text),

@@ -108,6 +108,15 @@ Thumbs.db
 *.7z
 *.tmp
 *.bak
+*.dump
+*.dmp
+*.rdb
+*.sql.dump
+*.sql.bak
+*.sql.gz
+*.sql.tar
+*.sql.zip
+*.db.dump
 testrun/
 output/
 work-items-out/

@@ -921,9 +921,12 @@
           <!-- Content Displays with Instant Copy -->
           <div id="content-pane-whatsapp">
             <div class="content-box" id="copy-whatsapp"></div>
-            <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end;">
+            <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap;">
               <button class="btn btn-outline btn-sm" onclick="copyToClipboard('copy-whatsapp')">
                 <i class="fa-regular fa-copy"></i> Copy WhatsApp Message
+              </button>
+              <button class="btn btn-gold btn-sm" onclick="sendViaWhatsAppWorkstation()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-weight: 700; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;">
+                <i class="fa-brands fa-whatsapp"></i> Send via WhatsApp Workstation
               </button>
             </div>
           </div>
@@ -2174,6 +2177,46 @@
       document.getElementById('dropzone-label').innerText = 'Click or drag image here';
       recalculateCode();
       showToast('Form cleared.');
+    }
+
+    async function sendViaWhatsAppWorkstation() {
+      const text = document.getElementById('copy-whatsapp').innerText;
+      if (!text || !text.trim()) {
+        showToast('Please parse or generate listing content first.');
+        return;
+      }
+      const phone = prompt('Enter recipient WhatsApp number (e.g. +201001534224):');
+      if (!phone || !phone.trim()) return;
+      showToast('Simulating human presence & sending via OpenWA...');
+      try {
+        const res = await fetch('http://127.0.0.1:2785/api/messages/send-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId: phone.replace(/\D/g, '') + '@c.us', text })
+        });
+        const data = await res.json();
+        if (data && (data.ok || data.messageId || data.status === 'sent')) {
+          showToast('✓ Dispatched via WhatsApp Workstation with stealth simulation!');
+        } else {
+          showToast('✗ Send error: ' + (data.error || 'Gateway error'));
+        }
+      } catch (e) {
+        try {
+          const res2 = await fetch('http://127.0.0.1:2790/admin/api/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, text })
+          });
+          const data2 = await res2.json();
+          if (data2 && (data2.ok || data2.messageId)) {
+            showToast('✓ Dispatched via Admin Bridge Workstation!');
+          } else {
+            showToast('✗ Send error: ' + (data2.error || 'Gateway error'));
+          }
+        } catch (e2) {
+          showToast('Could not reach WhatsApp Gateway on port 2785 or 2790.');
+        }
+      }
     }
 
     function copyToClipboard(elementId) {
