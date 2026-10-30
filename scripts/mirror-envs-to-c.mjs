@@ -2,9 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const SRC = 'H:\\Sierra Estates';
-const DST = 'C:\\Users\\Sierr\\Sierra-Estates-Workspace';
+const DST = process.env.SIERRA_MIRROR_DST || 'I:\\c files\\Sierra-Estates-Workspace-Backup';
 
 function copyEnvFiles(dir) {
+  if (!fs.existsSync(DST)) {
+    console.log(`Target destination "${DST}" does not exist — skipping env mirror.`);
+    return;
+  }
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.name === 'node_modules' || entry.name === '.git') continue;
@@ -22,4 +26,4 @@ function copyEnvFiles(dir) {
 }
 
 copyEnvFiles(SRC);
-console.log('✅ All .env files mirrored to C:\\Users\\Sierr\\Sierra-Estates-Workspace');
+console.log(`✅ All .env files synced to ${DST}`);
