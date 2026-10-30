@@ -457,59 +457,18 @@ const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_S
 (لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
 function buildMessage(r) {
-  let salutation = 'يا فندم،';
-  if (r.name && r.name.trim() && !r.name.toLowerCase().includes('owner') && !r.name.includes('المالك')) {
-    const raw = r.name.trim();
-    if (/^(د|دكتور|dr)\.?[\s\/]+/i.test(raw)) {
-      salutation = 'د/ ' + raw.replace(/^(د|دكتور|dr)\.?[\s\/]+/i, '') + '،';
-    } else if (/^(م|مهندس|eng)\.?[\s\/]+/i.test(raw)) {
-      salutation = 'البشمهندس ' + raw.replace(/^(م|مهندس|eng)\.?[\s\/]+/i, '') + '،';
-    } else if (/^(أ|أستاذ|mr)\.?[\s\/]+/i.test(raw)) {
-      salutation = 'أ/ ' + raw.replace(/^(أ|أستاذ|mr)\.?[\s\/]+/i, '') + '،';
-    } else {
-      salutation = 'أ/ ' + raw + '،';
-    }
-  }
-
   const loc = r.location && r.location.trim() ? ('في ' + r.location.trim()) : 'بالتجمع الخامس';
   const unitRef = r.code ? (' (كود: ' + r.code + ')') : '';
-
   const isRent = String(r.dealType || '').toLowerCase() === 'rent' || (Number(r.price) > 0 && Number(r.price) < 500000);
   const dealLabel = isRent ? 'للإيجار' : 'للبيع';
 
-  // Detect specific missing information to query from the owner
-  const missingPrompts = [];
-  const priceNum = Number(String(r.price || '').replace(/[^\d]/g, '')) || 0;
-  if (priceNum <= 0) {
-    missingPrompts.push(isRent ? '• تأكيد القيمة الإيجارية الشهرية المطلوبة حالياً' : '• تأكيد السعر النهائي المطلوب حالياً');
-  }
-
-  const photoNum = Number(r.photoCount || 0);
-  if (photoNum < 6) {
-    const needed = Math.max(1, 6 - photoNum);
-    missingPrompts.push('• إرسال ' + (needed >= 6 ? '6 صور' : (needed + ' صور إضافية')) + ' واضحة وعالية الدقة (ريسبشن، غرف، حمام، مطبخ، إطلالة) لاعتماد إعلان مميز على Property Finder');
-  }
-
-  const areaNum = Number(String(r.areaSqm || '').replace(/[^\d]/g, '')) || 0;
-  if (areaNum <= 0) {
-    missingPrompts.push('• تأكيد المساحة الإجمالية بالمتر المربع (م²)');
-  }
-
-  let inquirySection = '';
-  if (missingPrompts.length > 0) {
-    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً، وفي حال إتاحتها نرجو التكرم بتوضيح التالي لعرضها على عملائنا الجادين واعتماد الإعلان فوراً:\n\n' + missingPrompts.join('\n') + '\n';
-  } else {
-    inquirySection = 'كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.';
-  }
-
   return [
-    'السلام عليكم ورحمة الله وبركاته ' + salutation,
+    'السلام عليكم ورحمة الله وبركاته يا فندم،',
     '',
     'مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.',
+    'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.',
     '',
-    'بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ ' + inquirySection,
-    '',
-    'إذا كانت الوحدة غير متاحة حالياً أو تم التصرف فيها فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝',
+    'إذا كانت الوحدة تم بيعها أو غير متاحة فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝',
     '(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")'
   ].join('\n');
 }
@@ -990,7 +949,18 @@ async function main() {
             // sends only (dry-run never fabricates contact records, §21).
             void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
             console.log(`sent [${lane.direction}][#${idx}] → ${toLocalPhone(phone)} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-            await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
+            await writeSheetDate(phone, cand.rawMobile, formatCairoDate(), cand.code, 'تم التواصل');
+            saveCheckpoint(checkpoint);
+            // Update listing availability and status in Supabase if code present
+            if (cand.code) {
+              const auditDb = getAuditClient();
+              if (auditDb) {
+                auditDb.from('listings').update({
+                  availability: 'contacted',
+                  updated_at: new Date().toISOString()
+                }).or(`code.eq.${cand.code},unit_code.eq.${cand.code}`).then(() => null).catch(() => null);
+              }
+            }
           } catch (err) {
             summary.failed++;
             console.error(`Send failed for ${phone} via ${lane.name}: ${err.message}`);

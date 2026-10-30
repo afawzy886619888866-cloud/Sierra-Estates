@@ -97,6 +97,18 @@ async function run() {
     const digits = phone.replace(/\D/g, '');
     const body = job.message_body;
 
+    // Strict safety check: Never dispatch to group JIDs or invalid numbers
+    if (phone.includes('@g.us') || phone.startsWith('120363') || digits.length > 15 || digits.length < 9) {
+      summary.failed++;
+      console.warn(`[whatsapp-dispatch] 🛑 Safety guard: blocked dispatch to group/invalid number ${phone} (job ${job.id})`);
+      await requestJson(`${SB_URL}/rest/v1/whatsapp_queue?id=eq.${job.id}`, {
+        method: 'PATCH',
+        headers: sbHeaders({ Prefer: 'return=minimal' }),
+        body: { status: 'failed', error_message: 'rejected_group_recipient_safety_guard', updated_at: new Date().toISOString() },
+      }).catch(() => null);
+      continue;
+    }
+
     if (digits && optedOut.has(digits)) {
       summary.skippedOptOut++;
       await requestJson(`${SB_URL}/rest/v1/whatsapp_queue?id=eq.${job.id}`, {

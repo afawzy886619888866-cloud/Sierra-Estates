@@ -662,8 +662,21 @@ async function handleInboundListingDrop(message) {
     }
   }
 
-  // 9. Send Automated WhatsApp Confirmation Reply
-  const replyTarget = message.chatId || normalizeOwnerPhone(message.sender);
+  // 9. Send Automated WhatsApp Confirmation Reply ONLY for individual chats (NEVER groups)
+  const isGroupMsg = message.isGroup || String(message.chatId).includes('@g.us') || String(message.chatId).startsWith('120363');
+  if (isGroupMsg) {
+    return {
+      routed: true,
+      intent: 'listing_ingested_silent',
+      code,
+      compound: detectedCompound,
+      dealType,
+      price,
+      dbSaved,
+      replySent: false,
+    };
+  }
+  const replyTarget = normalizeOwnerPhone(message.sender) || message.chatId;
   const confirmationMsg = `✅ تم استلام وفحص الوحدة بنجاح!\n\n` +
     `• كود الوحدة: ${code}\n` +
     `• الكومباوند: ${detectedCompound}\n` +

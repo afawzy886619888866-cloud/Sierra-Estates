@@ -359,6 +359,13 @@ async function processQueue(sessionId) {
   s.sendStartedAt = Date.now();
   const { chatId, text, resolve, reject } = s.messageQueue.shift();
 
+  if (String(chatId).includes('@g.us') || String(chatId).startsWith('120363') || String(chatId).replace(/\D/g, '').length > 15) {
+    console.warn(`[${sessionId}] 🛑 Safety guard: blocked send to group/invalid recipient ${chatId}`);
+    resolve({ ok: false, error: 'blocked_group_recipient_safety_guard' });
+    s.isSending = false;
+    return;
+  }
+
   try {
     const formattedChatId = chatId.includes('@') ? chatId : `${chatId}@c.us`;
     const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage().catch(() => null) : null);
@@ -520,6 +527,9 @@ app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
   }
 
   const { chatId, text } = req.body;
+  if (String(chatId).includes('@g.us') || String(chatId).startsWith('120363') || String(chatId).replace(/\D/g, '').length > 15) {
+    return res.status(400).json({ error: 'Safety guard: sending messages to WhatsApp groups is strictly disabled' });
+  }
   if (!chatId || !text) {
     return res.status(400).json({ error: 'Missing required parameters: chatId and text' });
   }
@@ -550,6 +560,9 @@ app.post('/api/messages/send-text', async (req, res) => {
   const chosen = readySessions[roundRobinIndex];
 
   const { chatId, text } = req.body;
+  if (String(chatId).includes('@g.us') || String(chatId).startsWith('120363') || String(chatId).replace(/\D/g, '').length > 15) {
+    return res.status(400).json({ error: 'Safety guard: sending messages to WhatsApp groups is strictly disabled' });
+  }
   if (!chatId || !text) {
     return res.status(400).json({ error: 'Missing required parameters: chatId and text' });
   }

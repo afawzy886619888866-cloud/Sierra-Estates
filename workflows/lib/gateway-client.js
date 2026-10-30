@@ -266,7 +266,7 @@ class GatewayClient {
     if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
     if (!this.operatorKey) throw new Error('no operator/API key configured');
     const target = normalizeChatId(chatId);
-    if (!/^(\d+@c\.us|[\w\-]+@g\.us)$/.test(target)) {
+    if (target.endsWith('@g.us') || target.startsWith('120363') || !/^\d+@c\.us$/.test(target)) {
       const err = new Error(`unusable chatId after normalization: "${target}"`);
       err.permanent = true;
       throw err;
