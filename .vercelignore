@@ -22,6 +22,9 @@ tmp
 __pycache__
 
 # Non-web applications and backend tools
+apps/agents/**
+**/whatsapp-auth/**
+quarantine/**
 apps/api/**
 infra/**
 workflows/**
