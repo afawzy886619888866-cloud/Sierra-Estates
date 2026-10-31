@@ -45,7 +45,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     // Revalidate the public inventory cache so the Client Page Map reflects
     // status/publish_status changes immediately without waiting for cache TTL.
-    revalidateTag('inventory');
+    revalidateTag('inventory', 'max');
 
     return NextResponse.json({ success: true, listing: mapListingToSpa(id, rowToListingDoc(updated)) });
   } catch (err) {
@@ -68,7 +68,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await deleteRecord('listings', id);
 
     // Revalidate inventory cache after deletion
-    revalidateTag('inventory');
+    revalidateTag('inventory', 'max');
 
     return NextResponse.json({ success: true });
   } catch (err) {

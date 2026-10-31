@@ -2266,6 +2266,17 @@ export default function InventoryCommandView({
           {notice.text}
         </div>
       )}
+      {sheetSyncMsg && (
+        <div className="fixed bottom-16 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border text-sm font-semibold transition-all animate-bounce"
+          style={{
+            background: sheetSyncMsg.startsWith('✓') ? '#052e16' : '#3b0764',
+            borderColor: sheetSyncMsg.startsWith('✓') ? '#16a34a' : '#9333ea',
+            color: sheetSyncMsg.startsWith('✓') ? '#4ade80' : '#e879f9',
+          }}
+        >
+          {sheetSyncMsg}
+        </div>
+      )}
     </div>
   );
 }
@@ -3084,15 +3095,4 @@ function StyledSelect({
       {children}
     </select>
   );
-      {sheetSyncMsg && (
-        <div className="fixed bottom-16 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border text-sm font-semibold transition-all animate-bounce"
-          style={{
-            background: sheetSyncMsg.startsWith('✓') ? '#052e16' : '#3b0764',
-            borderColor: sheetSyncMsg.startsWith('✓') ? '#16a34a' : '#9333ea',
-            color: sheetSyncMsg.startsWith('✓') ? '#4ade80' : '#e879f9',
-          }}
-        >
-          {sheetSyncMsg}
-        </div>
-      )}
 }
