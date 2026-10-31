@@ -216,6 +216,27 @@ export default function PipelineBoard() {
     };
   }, []);
 
+  // ── Polling fallback (snapshot refresh while the tab is visible) ────────
+  // The realtime channel above subscribes cleanly, but `leads`/`deals` carry
+  // staff-only RLS policies (service_role + authenticated staff) while this
+  // browser client runs on the publishable/anon key — the app's staff auth is
+  // the sierra_sess cookie, not a Supabase session — so postgres_changes
+  // events are RLS-filtered to nothing for this connection and the board
+  // would otherwise never live-update. Poll every 20s while visible until
+  // staff flows get real Supabase Auth sessions (then authenticated RLS
+  // applies and CDC streams for real).
+  useEffect(() => {
+    const POLL_MS = 20_000;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        reloadLeadsRef.current();
+        reloadDealsRef.current();
+      }
+    }, POLL_MS);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Derived groupings ────────────────────────────────────────────────────
   const dealsByLead = useMemo(() => {
     const map = new Map<string, BoardDeal[]>();

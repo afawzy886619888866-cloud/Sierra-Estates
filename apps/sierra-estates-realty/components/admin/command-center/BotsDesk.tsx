@@ -207,6 +207,22 @@ export default function BotsDesk() {
     };
   }, []);
 
+  // ── Polling fallback (snapshot refresh while the tab is visible) ────────
+  // Same story as PipelineBoard: `webhook_logs` is staff-only under RLS while
+  // this browser client holds the publishable/anon key (staff auth is the
+  // sierra_sess cookie, not a Supabase session), so the postgres_changes
+  // stream is RLS-filtered to nothing. Poll every 20s while visible until
+  // staff flows carry real Supabase Auth sessions.
+  useEffect(() => {
+    const POLL_MS = 20_000;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        reloadLogsRef.current();
+      }
+    }, POLL_MS);
+    return () => window.clearInterval(id);
+  }, []);
+
   async function runWorkflow(workflow: (typeof WORKFLOWS)[number]['id']) {
     setRunning(workflow);
     setNotice(null);
