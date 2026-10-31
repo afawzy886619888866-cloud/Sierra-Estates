@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import {
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const {
   generateCanonicalRentCode,
   generateRentMarketingScript,
   validateRentListingForPropertyFinder,
   buildPropertyFinderRentPayload,
-} from '../workflows/lib/propertyfinder-rent-ad';
-import { classifyOwnerReply } from '../workflows/lib/inbox';
+} = require('../workflows/lib/propertyfinder-rent-ad.js');
+const { classifyOwnerReply } = require('../workflows/lib/inbox.js');
 
 describe('Owner Rent Workflow & Property Finder Rent Ad Suite', () => {
   it('generates canonical rent code matching {Compound}-{Beds}{Furnished}-{PriceTag}', () => {
