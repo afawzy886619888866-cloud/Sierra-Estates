@@ -132,7 +132,7 @@ Sends an executive Arabic WhatsApp operations digest every morning summarizing W
 npm run daily-digest
 ```
 
-**Schedule:** Daily at 08:00 Cairo (cron: `0 8 * * *`)
+**Schedule:** Daily at 03:00 Cairo (cron: `0 3 * * *`)
 
 **Required env vars:**
 
@@ -294,7 +294,7 @@ Upgrades shipped with this revision (deployed via `install.sh` / pushdir to `/op
 ### Workflows
 
 - **06-gateway-sentinel** — escalation path: after `WF_ALERT_FAIL_THRESHOLD` (default 2 ≈ 10 min) consecutive failed probes it writes `.state/alerts.jsonl` and emails `WF_ALERT_EMAIL_TO` via SendGrid when available. On recovery it sends a WhatsApp confirmation to `WF_ALERT_TO` (fallback: the session's own number, "message yourself").
-- **07-daily-digest (new)** — 08:00 Cairo Arabic WhatsApp digest: gateway health, per-workflow last exit + success rate, new leads and new units in the last 24 h. Target: `WF_DIGEST_TO` → `LEAD_NOTIFY_WHATSAPP_NUMBER` → session self-chat. Internal ops content — no Cairo Plaza notice per `lib/notice.js` decision table.
+- **07-daily-digest** — 03:00 Cairo Arabic WhatsApp morning briefing (owner decision "B" 2026-10-31): gateway health, per-workflow last exit + success rate, campaign results (real owner-outreach sends from `owner_outreach_log`, dry-run excluded), new leads and new units in the last 24 h. Target: `WF_DIGEST_TO` → `LEAD_NOTIFY_WHATSAPP_NUMBER` → session self-chat. Internal ops content — no Cairo Plaza notice per `lib/notice.js` decision table.
 
 ### One-time operator actions (2026-10)
 

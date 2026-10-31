@@ -73,4 +73,20 @@ async function upsertWorkflowRow(row) {
   return res.ok;
 }
 
-module.exports = { configured, headers, getWorkflows, patchTelemetry, upsertWorkflowRow };
+/**
+ * Patch admin-owned default fields (schedule / name / description) for one slug.
+ * Used ONLY by the runner's one-time default migrations: the caller must first
+ * verify the row still carries the OLD default so operator-customized values
+ * are never overwritten. Telemetry fields stay owned by patchTelemetry().
+ */
+async function patchWorkflowRow(slug, patch) {
+  if (!configured()) return false;
+  if (!patch || !Object.keys(patch).length) return false;
+  const res = await requestJson(
+    `${SB_URL}/rest/v1/workflows?slug=eq.${encodeURIComponent(slug)}`,
+    { method: 'PATCH', headers: headers({ Prefer: 'return=minimal' }), body: patch, timeoutMs: 12000 }
+  );
+  return res.ok;
+}
+
+module.exports = { configured, headers, getWorkflows, patchTelemetry, upsertWorkflowRow, patchWorkflowRow };

@@ -5,7 +5,7 @@ import * as path from 'node:path';
 
 const require = createRequire(import.meta.url);
 
-describe('09-owner-outreach — 10:00-22:00 Cairo, 25 msgs/slot, 30-min rotating sender', () => {
+describe('09-owner-outreach — 09:00-22:00 Cairo, 25 msgs/slot, 30-min rotating sender', () => {
   // Ensure clean env before requiring outreach module defaults
   const savedBatch = process.env.WF_SLOT_BATCH;
   const savedHours = process.env.WF_OUTREACH_ACTIVE_HOURS;
@@ -20,9 +20,9 @@ describe('09-owner-outreach — 10:00-22:00 Cairo, 25 msgs/slot, 30-min rotating
   if (savedHours !== undefined) process.env.WF_OUTREACH_ACTIVE_HOURS = savedHours;
   if (savedRotate !== undefined) process.env.WF_ROTATE_SINGLE_LINE = savedRotate;
 
-  it('defaults to 25 msgs per 30-min slot, 10:00–22:00 Cairo window, and single-line rotation ON', () => {
+  it('defaults to 25 msgs per 30-min slot, 09:00–22:00 Cairo window, and single-line rotation ON', () => {
     expect(outreach.BATCH_CAP).toBe(25);
-    expect(outreach.ACTIVE_HOURS).toEqual([10, 22]);
+    expect(outreach.ACTIVE_HOURS).toEqual([9, 22]);
     expect(outreach.ROTATE_SINGLE_LINE).toBe(true);
   });
 
@@ -55,10 +55,10 @@ describe('09-owner-outreach — 10:00-22:00 Cairo, 25 msgs/slot, 30-min rotating
     expect(slot5.lane.name).toBe('line-1');
   });
 
-  it('configures runner.js for 10:00-22:00 30-min slots and inbox.js for >=6 PF photo harvest', () => {
+  it('configures runner.js for 09:00-22:00 30-min slots and inbox.js for >=6 PF photo harvest', () => {
     const runnerSrc = fs.readFileSync(path.resolve(__dirname, '..', 'runner.js'), 'utf8');
-    expect(runnerSrc).toContain('cairoHour >= 10 && cairoHour < 22');
-    expect(runnerSrc).toContain("schedule: '*/30 10-21 * * *'");
+    expect(runnerSrc).toContain('cairoHour >= 9 && cairoHour < 22');
+    expect(runnerSrc).toContain("schedule: '*/30 9-21 * * *'");
     expect(runnerSrc).toContain("'30m-window'");
 
     const inboxSrc = fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'inbox.js'), 'utf8');

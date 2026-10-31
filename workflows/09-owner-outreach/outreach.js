@@ -63,7 +63,7 @@
  *      WF_PARALLEL_LINES (2 default; 8 in start-sierra.bat), WF_SLOT_BATCH (30), WF_SLOT_DEADLINE_MS
  *      (1380000 = 23 min),
  *      WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
- *      WF_OUTREACH_AVAILABILITIES, WF_OUTREACH_ACTIVE_HOURS (10-20)
+ *      WF_OUTREACH_AVAILABILITIES, WF_OUTREACH_ACTIVE_HOURS (9-22)
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
 const fs = require('fs');
@@ -203,12 +203,13 @@ const SLOT_DEADLINE_MS = parseInt(process.env.WF_SLOT_DEADLINE_MS || '1380000', 
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
 const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer')
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-const AH_ENV = String(process.env.WF_OUTREACH_ACTIVE_HOURS || '10-22').split('-');
+const AH_ENV = String(process.env.WF_OUTREACH_ACTIVE_HOURS || '9-22').split('-');
 const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || AH_ENV[1] === '' || parseInt(AH_ENV[1], 10) > 23 ? 24 : parseInt(AH_ENV[1], 10)];
 // ── Rotating / Parallel sender configuration ───────────────────────
 // Default (`WF_ROTATE_SINGLE_LINE=1`): 1 active WhatsApp line per 30-min slot,
-// rotating to the next ready number every 30 minutes across 10:00-22:00 Cairo
-// (25 msgs per number per slot, ~30-40s spacing). Set `WF_ROTATE_SINGLE_LINE=0`
+// rotating to the next ready number every 30 minutes across 09:00-22:00 Cairo
+// (owner requirement 2026-10-31: lane open at least 09:00–21:00 Cairo;
+// 25 msgs per number per slot, ~30-40s spacing). Set `WF_ROTATE_SINGLE_LINE=0`
 // only if simultaneous multi-lane sending is explicitly desired.
 const ROTATE_SINGLE_LINE = !/^(0|false|no)$/i.test(process.env.WF_ROTATE_SINGLE_LINE ?? '1');
 const PACE_MIN_MS = Math.max(5000, parseInt(process.env.WF_PACE_MIN_MS || '30000', 10));
@@ -615,7 +616,7 @@ async function main() {
   }
   if (!process.env.OPENWA_SESSION_ID && !process.env.OPENWA_SESSION_IDS) { console.log('UNCONFIGURED: OPENWA_SESSION_ID / OPENWA_SESSION_IDS missing'); process.exit(2); }
 
-  // Active-hours gate (Cairo) — strictly 10:00 AM up to 10:00 PM (10..21:59 when window is 10-22)
+  // Active-hours gate (Cairo) — strictly 09:00 AM up to 10:00 PM (9..21:59 when window is 9-22)
   const hr = cairoNow().getHours();
   if (hr < ACTIVE_HOURS[0] || hr >= ACTIVE_HOURS[1]) {
     summary.skippedHours = true;
