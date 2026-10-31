@@ -82,7 +82,14 @@ the gateway, never the runner.
      → DB rows + local run state
    - Workflow Studio (admin) → rows update within one 60 s poll, labels
      read `docker-runner:ok`
-5. **G3 evidence run** — with Supabase telemetry on, dispatch the §1 loop
+5. **Auto-start at PC logon** (owner requirement: the WhatsApp lane must be
+   alive once the PC is opened, at least 09:00–21:00 Cairo) — run
+   `ENABLE-AUTO-START.bat` once. It registers a Startup-folder launcher that
+   runs `sierra-autostart.bat` at every logon: start Docker Desktop → wait
+   for the engine → `up -d` both compose projects (idempotent; containers
+   also self-resume via `restart: unless-stopped`). Remove with
+   `DISABLE-AUTO-START.bat`. Boot log: `.state/autostart.log`.
+6. **G3 evidence run** — with Supabase telemetry on, dispatch the §1 loop
    (`POST /api/workflows/owner-outreach/run` with the key, or the Studio's
    Run-now). Acceptance = status_history rows + `public.workflows`
    telemetry written by the Docker runner — no AWS credential anywhere in

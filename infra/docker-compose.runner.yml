@@ -54,13 +54,15 @@ services:
       - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY}
       - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8}
       # ── 8-line outreach era (matches start-sierra.bat & outreach.js env contract) ──
+      # Lane opens 09:00 Cairo (owner requirement: WhatsApp lane open at least
+      # 9am-9pm; PR #37). Keep this default in sync with outreach.js ACTIVE_HOURS.
       - WF_PARALLEL_LINES=${WF_PARALLEL_LINES:-8}
       - WF_HOST_SIDE=${WF_HOST_SIDE:-split}
       - WF_SLOT_BATCH=${WF_SLOT_BATCH:-30}
       - WF_SLOT_DEADLINE_MS=${WF_SLOT_DEADLINE_MS:-3000000}
       - WF_OWNER_CONTACT_DAILY_CAP=${WF_OWNER_CONTACT_DAILY_CAP:-40}
-      - WF_OUTREACH_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-10-20}
-      - WF_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-10-20}
+      - WF_OUTREACH_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-9-22}
+      - WF_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-9-22}
       - WF_RECONTACT_AFTER_DAYS=${WF_RECONTACT_AFTER_DAYS:-0}
       # ── Master Inventory Sheet & Writeback Integration ──
       - UNITS_SHEET_ID=${UNITS_SHEET_ID:-1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk}
@@ -75,6 +77,11 @@ services:
       # ── Supabase telemetry & CRM sync (G3 evidence; optional — empty = no telemetry) ──
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      # ── Morning briefing delivery (07-daily-digest, 03:00 Cairo) ──
+      # WF_DIGEST_TO wins; empty falls back to LEAD_NOTIFY_WHATSAPP_NUMBER,
+      # then to the gateway session's own number ("message yourself" chat).
+      - WF_DIGEST_TO=${WF_DIGEST_TO:-}
+      - LEAD_NOTIFY_WHATSAPP_NUMBER=${LEAD_NOTIFY_WHATSAPP_NUMBER:-}
     volumes:
       # Run-state (overlap locks, last-run summaries, opt-out ledger) survives rebuilds.
       - runner-state:/app/.state
