@@ -18,8 +18,8 @@ WORKDIR /app
 
 # Dependencies first (layer cache): lockfile is committed, so `npm ci`
 # gives reproducible installs (dev deps excluded).
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund
+COPY package.json ./
+RUN npm install --omit=dev --no-audit --no-fund
 
 # Runner + workflow sources + shared libraries (workflows/lib holds the
 # gateway client, cron parser, state, supabase sync — same relative layout
