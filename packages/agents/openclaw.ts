@@ -2,8 +2,7 @@
 // and workspace-only tooling. Importing it from a Client Component must fail
 // at build time with a clear message instead of the cryptic "Can't resolve
 // 'fs'" webpack error. Server routes and the agents barrel keep working.
-import 'server-only';
-
+if (typeof window !== 'undefined') { throw new Error("Server-only module"); }
 import pino from "pino";
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import * as XLSX from "xlsx";
