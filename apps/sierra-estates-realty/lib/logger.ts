@@ -1,38 +1,38 @@
 import pino from 'pino';
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isProduction = process.env.NODE_ENV === 'production';
 
+// In Next.js client-side, fallback or suppress pino pretty
 const pinoLogger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  ...(isDev && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-      },
-    },
-  }),
+  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+  transport: !isProduction && typeof window === 'undefined'
+    ? {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          ignore: 'pid,hostname',
+          translateTime: 'HH:MM:ss Z',
+        },
+      }
+    : undefined,
 });
 
-function sanitizeLog<T>(input: T): T {
-  if (typeof input === 'string') {
-    return (input as string).replace(/[\r\n]/g, ' ') as unknown as T;
+function sanitize<T>(val: T): T {
+  if (typeof val === 'string') {
+    return (val as string).replace(/\n|\r/g, ' ') as unknown as T;
   }
-  if (input !== null && typeof input === 'object') {
-    try {
-      const sanitized = JSON.stringify(input).replace(/[\r\n]/g, ' ');
-      return JSON.parse(sanitized) as T;
-    } catch {
-      return String(input).replace(/[\r\n]/g, ' ') as unknown as T;
-    }
-  }
-  return input;
+  return val;
 }
 
 export const logger = {
-  info: (msg: any, ...args: any[]) => (pinoLogger.info as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
-  warn: (msg: any, ...args: any[]) => (pinoLogger.warn as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
-  error: (msg: any, ...args: any[]) => (pinoLogger.error as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
-  debug: (msg: any, ...args: any[]) => (pinoLogger.debug as any)(sanitizeLog(msg), ...args.map(sanitizeLog)),
+  info: (msg: any, ...args: any[]) =>
+    (pinoLogger.info as any)(typeof msg === 'string' ? msg.replace(/\n|\r/g, ' ') : msg, ...args.map(sanitize)),
+  warn: (msg: any, ...args: any[]) =>
+    (pinoLogger.warn as any)(typeof msg === 'string' ? msg.replace(/\n|\r/g, ' ') : msg, ...args.map(sanitize)),
+  error: (msg: any, ...args: any[]) =>
+    (pinoLogger.error as any)(typeof msg === 'string' ? msg.replace(/\n|\r/g, ' ') : msg, ...args.map(sanitize)),
+  debug: (msg: any, ...args: any[]) =>
+    (pinoLogger.debug as any)(typeof msg === 'string' ? msg.replace(/\n|\r/g, ' ') : msg, ...args.map(sanitize)),
 };
 
+export default logger;

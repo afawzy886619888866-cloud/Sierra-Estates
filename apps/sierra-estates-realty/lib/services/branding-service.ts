@@ -99,7 +99,7 @@ export class BrandingService {
       return brandedUrl;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      console.error('Branding Engine Failure:', errMsg.replace(/[\r\n]/g, ' '));
+      console.error('Branding Engine Failure:', encodeURIComponent(errMsg));
       return sourceUrl; // Fallback to original if branding fails
     }
   }

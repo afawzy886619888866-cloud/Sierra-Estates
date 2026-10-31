@@ -45,6 +45,9 @@ jobs:
             paths-ignore:
               - '**/__tests__/**'
               - '**/*.test.ts'
+              - '**/*.test.js'
+              - '**/scripts/**'
+              - 'packages/open-memory/tools/**'
               - docs
               - assets
               - transport

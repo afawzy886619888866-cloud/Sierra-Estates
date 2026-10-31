@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: 'success', received: true });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ [Telegram Webhook Error]:', errMsg.replace(/[\r\n]/g, ' '));
+    console.error('❌ [Telegram Webhook Error]:', encodeURIComponent(errMsg));
     return NextResponse.json({ status: 'error', message: 'Internal Webhook Processing Failure' }, { status: 500 });
   }
 }

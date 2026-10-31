@@ -228,15 +228,14 @@ async function run() {
     fs.writeFileSync(jsonPath, JSON.stringify(normalizedListings, null, 2), 'utf8');
     console.log(`💾 Saved ${normalizedListings.length} normalized listings to ${jsonPath}`);
 
-    // Update public/client-page/data.js for client portal
+    // Update public/client-page/data.js for client portal (atomic try/catch without TOCTOU race)
     const clientDataJsPath = path.resolve(__dirname, '../public/client-page/data.js');
-    if (fs.existsSync(clientDataJsPath)) {
+    try {
       let content = fs.readFileSync(clientDataJsPath, 'utf8');
       const startTag = 'listings: [';
       const startIdx = content.indexOf(startTag);
       if (startIdx !== -1) {
         const endTag = '],';
-        // find closing bracket for listings array
         const searchFrom = startIdx + startTag.length;
         const endIdx = content.indexOf(endTag, searchFrom);
         if (endIdx !== -1) {
@@ -246,6 +245,8 @@ async function run() {
           console.log(`✨ Successfully updated public/client-page/data.js with all ${normalizedListings.length} live Property Finder listings!`);
         }
       }
+    } catch (_) {
+      // File does not exist or not accessible
     }
 
     // Print statistics

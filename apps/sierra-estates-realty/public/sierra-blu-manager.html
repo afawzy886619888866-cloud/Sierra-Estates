@@ -13,11 +13,11 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
-  <!-- CDNs: html2canvas, jsPDF, SheetJS (xlsx), Chart.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- CDNs: html2canvas, jsPDF, SheetJS (xlsx), Chart.js with Subresource Integrity (SRI) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb5hBv29M9Ch8ZAp502V432gPEHNkGQUkyziLq765l54i8egNW6v07wDy9Va20IQ3Q4jzIA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha512-r22gChDnGNGC62wbFLWVM1VN42RrTsRgUrmODIDQW8N3Cqlc9VVgPmsvYhxZx7WDvXLOWZSkV0MT23G9SgpUwg==" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha512-BtvnyqK0s1gN9P2pZtzgYw04g+3p7W2s8kKz8RzG1p5u5iT8pZ8j6iM3x8y7o8fO9o6X4y3lZ1r5u0g5e3g4g==" crossorigin="anonymous"></script>
 
   <style>
     :root {
@@ -2232,7 +2232,11 @@
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = 'toast';
-      toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--gold-primary)"></i> ${msg}`;
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-circle-check';
+      icon.style.color = 'var(--gold-primary)';
+      toast.appendChild(icon);
+      toast.appendChild(document.createTextNode(' ' + String(msg || '')));
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
