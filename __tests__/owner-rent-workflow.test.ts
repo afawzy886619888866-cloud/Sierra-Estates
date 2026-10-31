@@ -74,6 +74,8 @@ describe('Owner Rent Workflow & Property Finder Rent Ad Suite', () => {
     const readyUnit = {
       compound: 'Mivida',
       price: 55000,
+      bedrooms: 3,
+      areaSqm: 180,
       photoCount: 6,
       images: [
         'https://cdn.example.com/1.jpg',
@@ -144,5 +146,42 @@ describe('Owner Rent Workflow & Property Finder Rent Ad Suite', () => {
     expect(parsePrice('مطلوب 40,000 ج.م')).toBe(40000);
     expect(parsePrice('الايجار بـ 50000')).toBe(50000);
     expect(parsePrice('السعر 1.5 مليون')).toBe(1500000);
+  });
+
+  it('normalizes helpline and owner phone into valid WhatsApp links without 20+20 duplication', () => {
+    const scriptWithPlus20 = generateRentMarketingScript({
+      compound: 'Mivida',
+      price: 40000,
+      phone: '+201092048333',
+    });
+    expect(scriptWithPlus20.whatsappBroadcast).toContain('https://wa.me/201092048333?text=');
+    expect(scriptWithPlus20.whatsappBroadcast).not.toContain('20+20');
+
+    const scriptDefault = generateRentMarketingScript({
+      compound: 'Villette',
+      price: 70000,
+    });
+    expect(scriptDefault.whatsappBroadcast).toContain('https://wa.me/201092048333?text=');
+  });
+
+  it('rejects listings with missing area or bedrooms, and filters placeholder photos', () => {
+    const missingSpecs = validateRentListingForPropertyFinder({
+      compound: 'Mivida',
+      price: 50000,
+      photoCount: 6,
+      images: [
+        'https://cdn.example.com/1.jpg',
+        'https://cdn.example.com/2.jpg',
+        'https://cdn.example.com/3.jpg',
+        'https://cdn.example.com/4.jpg',
+        'https://cdn.example.com/5.jpg',
+        'https://cdn.example.com/placeholder-property.jpg',
+      ],
+    });
+    expect(missingSpecs.valid).toBe(false);
+    expect(missingSpecs.errors.some(e => e.includes('area in sqm'))).toBe(true);
+    expect(missingSpecs.errors.some(e => e.includes('bedroom count'))).toBe(true);
+    // Placeholder was filtered out so clean photo count is 5
+    expect(missingSpecs.photoCount).toBe(5);
   });
 });

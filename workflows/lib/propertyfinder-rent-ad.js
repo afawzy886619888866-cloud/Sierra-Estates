@@ -10,6 +10,15 @@
 
 const { COMPOUND_PROFILES, PROPERTY_TYPE_NAMES, generateInstitutionalCopy } = require('./listing-copywriter');
 
+/**
+ * Normalizes phone numbers to standard WhatsApp format without international prefix artifacts.
+ */
+function formatWaPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return '201092048333';
+  return digits.startsWith('20') ? digits : `20${digits.replace(/^0+/, '')}`;
+}
+
 // Compound shorthand codes for canonical naming
 const COMPOUND_CODES = {
   'Mivida': 'MI',
@@ -114,7 +123,7 @@ function generateRentMarketingScript(unit) {
     `💰 القيمة الإيجارية الشهرية: ${priceFormatted}`,
     `─────────────────────────────`,
     `📲 للحجز والمعاينة المباشرة:`,
-    `واتساب: https://wa.me/20${phone.replace(/^0+/, '')}?text=معاينة_إيجار_كود_${code}`,
+    `واتساب: https://wa.me/${formatWaPhone(phone)}?text=معاينة_إيجار_كود_${code}`,
     `هاتف: ${phone}`,
     `✦ SIERRA ESTATES • PRIVATE CLIENT ADVISORY ✦`
   ].join('\n');
@@ -132,7 +141,7 @@ function generateRentMarketingScript(unit) {
 /**
  * Validates whether a Rent unit meets all Property Finder Atlas publishing standards:
  *  1. Asking Price > 0 EGP
- *  2. At least 6 clean photos >= 800x600 px
+ *  2. At least 6 clean photos >= 800x600 px (rejects placeholders and low-res)
  *  3. Non-empty bedrooms & area
  *  4. Valid compound name
  */
@@ -143,12 +152,38 @@ function validateRentListingForPropertyFinder(unit) {
     errors.push('Missing asking rental price (price <= 0)');
   }
 
+  const area = Number(unit.area_sqm || unit.areaSqm || unit.area) || 0;
+  if (area <= 0) {
+    errors.push('Missing or invalid unit area in sqm (must be > 0)');
+  }
+
+  const bedroomsRaw = unit.bedrooms;
+  const bedrooms = bedroomsRaw !== undefined && bedroomsRaw !== null && bedroomsRaw !== '' ? Number(bedroomsRaw) : NaN;
+  if (isNaN(bedrooms) || bedrooms < 0) {
+    errors.push('Missing verified bedroom count');
+  }
+
   const rawImages = unit.images || [];
   const cleanPhotos = (Array.isArray(rawImages) ? rawImages : [])
     .map(u => String(typeof u === 'string' ? u : (u.url || u.original?.url || '')).trim())
-    .filter(u => /^https?:\/\//i.test(u));
+    .filter(u => {
+      if (!/^https?:\/\//i.test(u)) return false;
+      const lower = u.toLowerCase();
+      if (lower.includes('placeholder') || lower.includes('no-image') || lower.includes('default-property')) {
+        return false;
+      }
+      return true;
+    });
 
-  const photoCount = Number(unit.photoCount) || cleanPhotos.length;
+  // Verify dimensions if photo dimension metadata is present
+  const lowRes = (Array.isArray(rawImages) ? rawImages : []).filter(
+    img => img && typeof img === 'object' && ((img.width && img.width < 800) || (img.height && img.height < 600))
+  );
+  if (lowRes.length > 0) {
+    errors.push(`Found ${lowRes.length} photos below minimum resolution 800x600 px`);
+  }
+
+  const photoCount = cleanPhotos.length;
   if (photoCount < 6) {
     errors.push(`Requires at least 6 photos for Property Finder compliance (current: ${photoCount})`);
   }
@@ -163,6 +198,8 @@ function validateRentListingForPropertyFinder(unit) {
     errors,
     cleanPhotos,
     photoCount,
+    area,
+    bedrooms: isNaN(bedrooms) ? null : bedrooms,
   };
 }
 
@@ -177,7 +214,9 @@ function buildPropertyFinderRentPayload(unit) {
   const typeCode = PF_PROPERTY_TYPES[pType] || PF_PROPERTY_TYPES[String(pType).toLowerCase()] || 'AP';
 
   const priceNum = Math.max(0, Number(unit.price) || 0);
-  const areaNum = Math.max(0, Number(unit.area_sqm || unit.areaSqm || unit.area) || 150);
+  const areaNum = Number(unit.area_sqm || unit.areaSqm || unit.area) || null;
+  const bedroomsNum = unit.bedrooms !== undefined && unit.bedrooms !== null && unit.bedrooms !== '' ? Number(unit.bedrooms) : null;
+  const bathroomsNum = unit.bathrooms !== undefined && unit.bathrooms !== null && unit.bathrooms !== '' ? Number(unit.bathrooms) : null;
 
   const titleAr = (unit.title_ar || unit.titleAr || script.titleAr || '').slice(0, 80);
   const titleEn = (unit.title || unit.titleEn || script.titleEn || '').slice(0, 80);
@@ -199,8 +238,8 @@ function buildPropertyFinderRentPayload(unit) {
       ]
     },
     specs: {
-      bedrooms: Math.max(1, Number(unit.bedrooms) || 3),
-      bathrooms: Math.max(1, Number(unit.bathrooms) || 2),
+      bedrooms: bedroomsNum,
+      bathrooms: bathroomsNum,
       area: {
         value: areaNum,
         unit: 'sqm',
@@ -237,6 +276,7 @@ function buildPropertyFinderRentPayload(unit) {
 }
 
 module.exports = {
+  formatWaPhone,
   generateCanonicalRentCode,
   generateRentMarketingScript,
   validateRentListingForPropertyFinder,

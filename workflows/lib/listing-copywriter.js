@@ -11,7 +11,12 @@
  *      only when enabled, with concise prompt & structured output.
  *   3. Full Automation & Tested — Works offline or online seamlessly.
  */
-const { GoogleGenAI } = require('@google/genai');
+let GoogleGenAI = null;
+try {
+  ({ GoogleGenAI } = require('@google/genai'));
+} catch (_) {
+  // Optional dependency: graceful fallback to deterministic institutional templates
+}
 
 /**
  * Compound English -> Arabic translation and prestige highlights.
@@ -142,7 +147,7 @@ async function generateListingContent(unit, options = {}) {
   const baseline = generateInstitutionalCopy(unit);
 
   const apiKey = options.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-  if (!apiKey || options.skipAi) {
+  if (!apiKey || options.skipAi || !GoogleGenAI) {
     return baseline;
   }
 
