@@ -15,6 +15,11 @@ on:
 permissions:
   contents: read
   security-events: write
+  # actions: read — required by the codeql-action status report (it queries
+  # GET /repos/{owner}/{repo}/actions/runs/{id}); without it the analyze step
+  # fails with "Resource not accessible by integration" even though the scan
+  # itself completed and the SARIF was exported.
+  actions: read
 
 concurrency:
   group: codeql
