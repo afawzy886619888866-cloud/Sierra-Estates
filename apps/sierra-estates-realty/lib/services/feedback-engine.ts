@@ -11,7 +11,8 @@ import { sendTelegramMessage } from './telegram-controller';
  * Triggers the post-sale feedback process.
  */
 export async function initiateFeedbackLoop(leadId: string, saleId: string) {
-  console.log(`[FeedbackLoop] Initiating for Lead: ${leadId}`);
+  const safeLeadId = String(leadId || '').replace(/[\r\n]/g, '');
+  console.log(`[FeedbackLoop] Initiating for Lead: ${safeLeadId}`);
   
   // 1. Send Survey (Simulated via automated log).
   // `automation` and `orchestrationState` are single JSONB columns, so what

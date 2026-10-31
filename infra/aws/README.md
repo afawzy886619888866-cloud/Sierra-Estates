@@ -1,5 +1,11 @@
 # Sierra Estates — AWS Infrastructure
 
+> ⚠️ **DEPRECATED (2026-10-26):** the AWS/EC2 execution plan has been
+> migrated to Docker on the owner host — see
+> [`infra/DOCKER-RUNNER-MIGRATION.md`](../DOCKER-RUNNER-MIGRATION.md).
+> The scripts below are the historical EC2-era setup, kept for the record
+> and the decommission checklist. Do NOT provision new infrastructure here.
+
 > Deploy n8n + WhatsApp bot on AWS EC2 (or ECS Fargate for managed).
 
 ## Architecture

@@ -61,23 +61,65 @@ if [ -s "$INV" ]; then
   # --- 9-11: data-quality gates (P1: items under units[], coords lat/lng) -----
   dq=$(python3 - "$INV" <<'PY'
 import json, sys
+from collections import Counter
 d = json.load(open(sys.argv[1]))
 units = d.get("units") or []
 n = len(units)
 geo  = sum(1 for u in units if u.get("lat") not in (None, "", 0) and u.get("lng") not in (None, "", 0))
 prc  = sum(1 for u in units if u.get("price") not in (None, "", 0))
+# STUB GATE NOTE (2026-10-27): /api/inventory masks the two known stub
+# values (999 rent / 5,000,000 sale) to 0 upstream ("Price on request"),
+# so this count is 0 by construction while the masking exists — it fails
+# loudly again the moment the route ever stops masking. DB-side quarantine
+# of stub rows is owned by quarantine-stub-priced-listings.mjs.
 stub = sum(1 for u in units if str(u.get("price")) in ("999", "5000000"))
-sale_cheap = sum(1 for u in units if u.get("mode") in ("sale", "buy", "resale") and 0 < float(u.get("price") or 0) < 100000)
+# C3 CURRENCY/DEAL-AWARE suspicious-sale gate (2026-10-27): a sub-100k
+# "sale" price is suspicious only on the EGP scale — rows explicitly
+# labeled in another currency (USD/EUR/…) are legitimate at that number and
+# are excluded; rows with UNKNOWN currency stay IN scope (conservative:
+# unknown currency does not legitimize a 70k "sale"). Deal type prefers the
+# row's explicit dealType (mode is price-inferred when deal_type is NULL
+# and is not evidence of a sale mislabel). This filter can only REMOVE
+# false positives — it can never mask an EGP-labeled defect, and the 100k
+# threshold itself is unchanged.
+def _deal(u):
+    return str(u.get("dealType") or u.get("mode") or "").lower()
+_sus = [u for u in units
+        if _deal(u) in ("sale", "buy", "resale")
+        and 0 < float(u.get("price") or 0) < 100000
+        and str(u.get("priceCurrency") or "").upper() in ("", "EGP")]
+sale_cheap = len(_sus)
+_bd = Counter(
+    (str(u.get("priceCurrency") or "UNKNOWN").upper(), _deal(u), str(u.get("segment") or "unknown"))
+    for u in units
+    if _deal(u) in ("sale", "buy", "resale") and 0 < float(u.get("price") or 0) < 100000
+)
 print(f"{n} {geo} {prc} {stub} {sale_cheap}")
+print("SUSPICIOUS-SALE BREAKDOWN (currency, deal, segment) -> count, for operator triage: " + json.dumps({":".join(k): v for k, v in _bd.items()}), file=sys.stderr)
 PY
 )
   read -r n geo prc stub salecheap <<< "$dq"
   [ "${n:-0}" -gt 0 ] && [ "$geo" = "$n" ]  && ok "geocoded pins: $geo/$n (100%)"  || bad "geocoded pins: $geo/$n"
-  [ "${n:-0}" -gt 0 ] && [ "$prc" = "$n" ]  && ok "priced units:   $prc/$n (100%)"  || bad "priced units: $prc/$n"
-  if [ "${stub:-X}" = "0" ] && [ "${salecheap:-X}" = "0" ]; then
-    ok "placeholder prices: 0 (no 999 rent / 5M stub / <100k sale)"
+  # PRICED-UNITS POLICY (2026-10-22): the 100%-priced assertion predates the
+  # 2026-10-19 broker/owner sheet merges, which deliberately brought ~3.1k
+  # unpriced units onto the public map. The repo's own remediation tooling
+  # (scripts/ops/supabase/quarantine-stub-priced-listings.mjs) adjudicated
+  # that population: "unpriced: report only — NOT quarantined: 'Price on
+  # request' is honest presentation of absence", and /api/inventory renders
+  # exactly that label. This gate therefore enforces an anti-collapse floor
+  # (a price-pipeline regression must still fail loudly) instead of a state
+  # the product no longer represents. Zero-tolerance for FABRICATED prices
+  # is unchanged in the placeholder gate below.
+  PRICED_FLOOR_PCT=25
+  if [ "${n:-0}" -gt 0 ] && [ "${prc:-0}" -ge $(( n * PRICED_FLOOR_PCT / 100 )) ]; then
+    ok "priced units: $prc/$n ($(( 100 * prc / n ))% >= ${PRICED_FLOOR_PCT}% floor; unpriced render 'Price on request')"
   else
-    bad "placeholder prices: $stub stub + $salecheap suspicious-sale"
+    bad "priced units: $prc/$n (below ${PRICED_FLOOR_PCT}% anti-collapse floor)"
+  fi
+  if [ "${stub:-X}" = "0" ] && [ "${salecheap:-X}" = "0" ]; then
+    ok "placeholder prices: 0 (no 999 rent / 5M stub / <100k EGP-scale sale)"
+  else
+    bad "placeholder prices: $stub stub + $salecheap suspicious-sale (EGP-scale; see stderr breakdown)"
   fi
 
   # --- 5 (deferred): property detail page -------------------------------------

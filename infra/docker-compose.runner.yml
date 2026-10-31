@@ -1,0 +1,102 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Sierra Estates — Workflow Runner Control Plane (Docker migration of the
+# AWS EC2 runner path — see infra/DOCKER-RUNNER-MIGRATION.md)
+# ═══════════════════════════════════════════════════════════════════════════
+# Runs workflows/runner.js (the 24/7 scheduler behind the admin Workflow
+# Studio) as a container on the SAME Docker host + network as the 8-line
+# RAG station, so the whole Phase-1 loop (outreach, sentinel, digest,
+# units-sync) executes with zero AWS dependency.
+#
+# Topology:
+#   whatsapp-rag-station (gateway :2785)  ← defined in docker-compose.rag-station.yml
+#   workflow-runner      (control :2786)  ← this file
+#   Both on network sierra-rag-network; the runner drives the gateway at
+#   http://whatsapp-rag-station:2785 (service DNS, never leaves the host).
+#
+# KEYS ARE REQUIRED: the control API guards manual triggers, pairing and
+# the tracker export. RUNNER_API_KEY must be set in infra/.env (compose
+# refuses to start without it — fail-loud, no public defaults).
+# The port publish is 127.0.0.1-only: the control plane is host-local by
+# design; the public tunnel fronts the gateway, never the runner.
+#
+# Supabase telemetry (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) is what
+# writes the public.workflows rows — the G3 acceptance evidence. Leave the
+# Supabase vars empty to run without telemetry (runner still schedules +
+# logs locally, labels runs honestly as unconfigured).
+#
+# Start:  docker compose -f infra/docker-compose.runner.yml up -d
+#         (from the repo root; infra/.env is auto-loaded as the project env)
+# Or use the one-click launcher: start-docker-runner.bat
+# ═══════════════════════════════════════════════════════════════════════════
+
+services:
+  workflow-runner:
+    build:
+      context: ../workflows
+      dockerfile: Dockerfile
+    container_name: sierra-workflow-runner
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2786:2786"
+    environment:
+      - NODE_ENV=production
+      - TZ=Africa/Cairo
+      # Honest telemetry label — Workflow Studio rows will read
+      # "docker-runner:ok" so the EC2 era is never confused with this path.
+      - RUNNER_LABEL=docker-runner
+      # ── Control API auth (required) ──
+      - RUNNER_API_KEY=${RUNNER_API_KEY:?Set RUNNER_API_KEY in infra/.env (strong random value) — the runner control API fails closed without it}
+      # ── Gateway wiring (same network as the RAG station) ──
+      - WHATSAPP_API_URL=http://whatsapp-rag-station:2785
+      - WHATSAPP_API_TOKEN=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY in infra/.env — the runner cannot drive the gateway without a key}
+      - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY}
+      - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8}
+      # ── 8-line outreach era (matches start-sierra.bat & outreach.js env contract) ──
+      - WF_PARALLEL_LINES=${WF_PARALLEL_LINES:-8}
+      - WF_HOST_SIDE=${WF_HOST_SIDE:-split}
+      - WF_SLOT_BATCH=${WF_SLOT_BATCH:-30}
+      - WF_SLOT_DEADLINE_MS=${WF_SLOT_DEADLINE_MS:-3000000}
+      - WF_OWNER_CONTACT_DAILY_CAP=${WF_OWNER_CONTACT_DAILY_CAP:-40}
+      - WF_OUTREACH_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-10-20}
+      - WF_ACTIVE_HOURS=${WF_OUTREACH_ACTIVE_HOURS:-10-20}
+      - WF_RECONTACT_AFTER_DAYS=${WF_RECONTACT_AFTER_DAYS:-0}
+      # ── Master Inventory Sheet & Writeback Integration ──
+      - UNITS_SHEET_ID=${UNITS_SHEET_ID:-1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk}
+      - UNITS_SHEET_GID=${UNITS_SHEET_GID:-1127958606}
+      - BROKER_INBOX_SHEET_ID=${BROKER_INBOX_SHEET_ID:-}
+      - WF_SHEET_WRITE_URL=${WF_SHEET_WRITE_URL:-}
+      - WF_SHEET_WRITE_SECRET=${WF_SHEET_WRITE_SECRET:-}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+      # ── Property Finder Enterprise Atlas Credentials (optional) ──
+      - PROPERTY_FINDER_API_KEY=${PROPERTY_FINDER_API_KEY:-}
+      - PROPERTY_FINDER_API_SECRET=${PROPERTY_FINDER_API_SECRET:-}
+      # ── Supabase telemetry & CRM sync (G3 evidence; optional — empty = no telemetry) ──
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+    volumes:
+      # Run-state (overlap locks, last-run summaries, opt-out ledger) survives rebuilds.
+      - runner-state:/app/.state
+      # OPTIONAL Google service-account key file for private-sheet workflows
+      # (if not using inline GOOGLE_SERVICE_ACCOUNT_JSON above).
+      # Uncomment ONLY after the file exists on the host (a missing bind
+      # source would be created as a directory by Docker):
+      # - ../workflows/service-account-key.json:/app/service-account-key.json:ro
+      # and set in infra/.env:  GOOGLE_SERVICE_ACCOUNT_KEY=/app/service-account-key.json
+    networks:
+      - sierra-rag-net
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:2786/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  sierra-rag-net:
+    external: true
+    name: sierra-rag-network
+
+volumes:
+  runner-state:

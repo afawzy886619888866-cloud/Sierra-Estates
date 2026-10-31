@@ -1,4 +1,12 @@
-# Two-Host Parallel Outreach — "2 lines here + 2 lines on the other side"
+# Two-Host Parallel Outreach — "N lines here + N lines on the other side"
+
+> **STATUS (2026-10-25):** the default topology is now the SINGLE-HOST
+> 8-line split walk — `start-sierra.bat` runs `WF_HOST_SIDE=split` with all
+> 8 gateway lines and dispatches every workflow on one PC (zero-AWS,
+> local-first; the old EC2 host A is decommissioned). The two-host pattern
+> below remains valid for splitting across two local machines — with the
+> 8-line pool, host A takes **lines 1–4 (top)** and host B takes
+> **lines 5–8 (bottom)**, `WF_PARALLEL_LINES=4` on each.
 
 Two runner hosts text the SAME owner inventory sheet simultaneously, from
 opposite ends, on different WhatsApp lines. They converge in the middle and
@@ -12,10 +20,10 @@ never double-text an owner.
               walks rows 1 → …    │    … → row 207 (back→front)
                  TOP half         │        BOTTOM half
         ┌─────────────────────────┴─────────────────────────┐
-        │ HOST A — EC2 (systemd)      │ HOST B — Windows    │
+        │ HOST A — Linux (systemd)    │ HOST B — Windows    │
         │ WF_HOST_SIDE=top            │ start-sierra.bat    │
-        │ lines 1-2 (2 parallel lanes)│ WF_HOST_SIDE=bottom │
-        │ runs ALL other workflows too│ lines 3-4 (2 lanes) │
+        │ lines 1-4 (4 parallel lanes)│ WF_HOST_SIDE=bottom │
+        │ runs ALL other workflows too│ lines 5-8 (4 lanes) │
         │ RUNNER_WORKFLOWS unset      │ RUNNER_WORKFLOWS=   │
         │                             │   owner-outreach    │
         └──────────────┬──────────────┴─────────┬───────────┘
@@ -35,14 +43,15 @@ never double-text an owner.
 | Night sends | 10:00–20:00 Cairo gate in the script itself, on BOTH hosts |
 | Number ban | Per-LINE pacing stays 45–55 s regardless of how many lines run in parallel |
 
-## Host A — EC2 (TOP side, lines 1-2, full control plane)
+## Host A — Linux host (TOP side, lines 1-4, full control plane)
 
-`/opt/se/workflows/workflows.env` — add/adjust:
+`/opt/se/workflows/workflows.env` (any local Linux box with systemd —
+the old EC2 instance is decommissioned) — add/adjust:
 
 ```ini
 WF_HOST_SIDE=top
-WF_PARALLEL_LINES=2
-OPENWA_SESSION_IDS=line-1,line-2      # your real gateway session names
+WF_PARALLEL_LINES=4
+OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4   # your gateway session names
 # WF_SLOT_BATCH / WF_SLOT_DEADLINE_MS optional — defaults 30 / 23 min
 # RUNNER_WORKFLOWS stays UNSET — this host dispatches everything
 ```
@@ -60,14 +69,16 @@ systemctl restart se-workflow-runner
 2. Make sure `workflows\.env` exists with `SUPABASE_URL` and
    `SUPABASE_SERVICE_ROLE_KEY` (the runner is fail-closed without them —
    the scheduler stays idle, nothing dispatches).
-3. Double-click **`start-sierra.bat`** at the repo root. It is preconfigured:
+3. Double-click **`start-sierra.bat`** at the repo root — it ships in
+   SINGLE-HOST 8-line split mode, so for the host-B role edit these lines:
 
-   - `WF_HOST_SIDE=bottom`, `WF_PARALLEL_LINES=2`, `OPENWA_SESSION_IDS=line-3,line-4`
+   - `WF_HOST_SIDE=bottom`, `WF_PARALLEL_LINES=4`,
+     `OPENWA_SESSION_IDS=line-5,line-6,line-7,line-8`
    - `RUNNER_WORKFLOWS=owner-outreach` — this host dispatches ONLY outreach
-     (sentinel / digest / units-sync keep running on EC2 — nothing
+     (sentinel / digest / units-sync keep running on host A — nothing
      double-dispatches)
-   - gateway at `http://54.89.162.250:2785` (switch to `127.0.0.1:2785` only
-     if you run a local gateway on the PC — see the commented block in the bat)
+   - gateway at `http://127.0.0.1:2785` (both hosts share the one local
+     multi-session gateway — or point at the other machine's LAN address)
 
 4. Keep the window open (the engine runs in a minimized `cmd` titled
    "Sierra Engine B"). For boot persistence, schedule the bat via Task

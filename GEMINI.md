@@ -1,4 +1,4 @@
-# Antigravity Project Guidelines · Sierra Estates (`SE-Vercel-deploy-main`)
+# Antigravity Project Guidelines · Sierra Estates (`Sierra-Estates`)
 
 ## 1. Authoritative Backend & Architecture
 
@@ -18,13 +18,14 @@
 - **Aesthetics & Polish**: Use the `impeccable` and `frontend-design` skills for UI work. Ensure high-polish luxury real estate aesthetic, responsive layouts, smooth transitions, and accessible contrast.
 - **Tailwind CSS**: Follow `tailwind-patterns`. Do not write ad-hoc utility soups where reusable component patterns or CVA tokens are established.
 
-## 4. Installed Local & Global Skills
+## 4. Installed Local & Global Skills (4-Engine Architecture)
 
-For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`](file:///H:/last/Main/SE-Vercel-deploy-main/docs/SKILLS_REGISTRY.md). Key active skills include:
+For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`](docs/SKILLS_REGISTRY.md). Active skills are structured directly into the **4-Engine Machine**:
 
-- **Real Estate Intelligence & Automation**: `sierra-closer-agent`, `concierge-lead-agent`, `whatsapp-inventory-harvester`, `real-estate-valuation-analyzer`, `ecc-memory-engine`, `excel-archive-processor`, `inventory-csv-merger`.
-- **UI/UX & Design (Anti-Slop)**: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend` (`taste-skill`), `high-end-visual-design` (`soft-skill`), `stitch-design-taste`, `minimalist-ui`, `industrial-brutalist-ui`, `gpt-taste`.
-- **Code & Architecture**: `clean-code`, `code-reviewer`, `database-design`, `nextjs-supabase-auth`, `sierra-deployment-ops`.
+- **Engine 1 · Memory & Learning**: `ecc-memory-engine`, `context-engineering`, `openai-agents`, `database-design`, `supabase`, `supabase-postgres-best-practices`.
+- **Engine 2 · RAG & GIS Map Matching**: `sierra-map-agent`, `rag-implementation`, `whatsapp-inventory-harvester`, `real-estate-excel-processor`.
+- **Engine 3 · Valuation & Reasoning**: `real-estate-valuation-analyzer`, `vertex-omni-agent`, `notebookllm-agent`, `karpathy-guidelines`, `security-reviewer`, `code-reviewer`, `clean-code`, `code-review-and-quality`.
+- **Engine 4 · Workflows, Closer & UI/UX**: `sierra-closer-agent`, `openclaw-architect`, `nodejs-backend-patterns`, `ci-cd-and-automation`, `ui-ux-pro-max`, `impeccable`, `taste-skill`, `gpt-tasteskill`, `stitch-design-taste`, `tailwind-patterns`, `react-state-management`, `vercel-react-view-transitions`, `using-agent-skills`.
 
 <!-- BEGIN AWS Agent Toolkit rules -->
 

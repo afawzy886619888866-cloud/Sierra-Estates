@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Multi-agent framework and orchestration",
   "main": "src/index.ts",
+  "type": "module",
   "types": "src/index.ts",
   "private": true,
   "dependencies": {
@@ -10,10 +11,11 @@
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/db": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
+    "server-only": "^0.0.1",
     "pino": "^10.4",
     "react": "19.3.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26",

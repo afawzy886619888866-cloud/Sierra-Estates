@@ -2079,10 +2079,12 @@ a:hover{color:var(--pri-d);}
     }).join('');
 
     // Bind click on each item
-    compoundDropdown.querySelectorAll('.hmf-cpd-item').forEach(function (item) {
+    compoundDropdown.querySelectorAll('.hmf-cpd-item').forEach(function (item, itemIdx) {
       item.addEventListener('click', function (e) {
         e.stopPropagation();
-        var name = this.getAttribute('data-cpd');
+        var targetCompound = items[itemIdx];
+        if (!targetCompound) return;
+        var name = targetCompound.n;
         var idx = filterState.compounds.indexOf(name);
         if (idx >= 0) {
           filterState.compounds.splice(idx, 1); // deselect
@@ -2105,22 +2107,27 @@ a:hover{color:var(--pri-d);}
 
   // ── Render selected compound chips ──
   function renderChips() {
+    compoundChips.textContent = '';
     if (!filterState.compounds.length) {
-      compoundChips.innerHTML = '';
       compoundChips.style.minHeight = '0';
       return;
     }
     compoundChips.style.minHeight = '32px';
-    compoundChips.innerHTML = filterState.compounds.map(function (name) {
-      return '<span class="hmf-chip is-inline-190" data-cpd="' + name + '">' +
-        '<span>' + name + '</span>' +
-        '<button type="button" data-remove="' + name + '" aria-label="Remove ' + name + '" class="is-inline-191">×</button>' +
-      '</span>';
-    }).join('');
-    // Bind remove buttons
-    compoundChips.querySelectorAll('[data-remove]').forEach(function (btn) {
+    filterState.compounds.forEach(function (name) {
+      var chip = document.createElement('span');
+      chip.className = 'hmf-chip is-inline-190';
+      chip.setAttribute('data-cpd', name);
+
+      var label = document.createElement('span');
+      label.textContent = name;
+      chip.appendChild(label);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'is-inline-191';
+      btn.setAttribute('aria-label', 'Remove ' + name);
+      btn.textContent = '×';
       btn.addEventListener('click', function () {
-        var name = this.getAttribute('data-remove');
         var idx = filterState.compounds.indexOf(name);
         if (idx >= 0) filterState.compounds.splice(idx, 1);
         renderCompoundDropdown(compoundInput.value);
@@ -2128,6 +2135,9 @@ a:hover{color:var(--pri-d);}
         applyFilter();
         updateActiveBadge();
       });
+      chip.appendChild(btn);
+
+      compoundChips.appendChild(chip);
     });
   }
 

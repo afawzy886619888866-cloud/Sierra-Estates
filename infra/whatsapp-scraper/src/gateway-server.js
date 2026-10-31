@@ -9,32 +9,32 @@ const sessions = [
     id: 'c1f7a012-9b24-4f81-a6b1-987654321001',
     name: 'session-default',
     status: 'ready',
-    phone: '201031622600',
-    pushName: 'Sierra Estates Line 1 (01031622600)',
+    phone: '201000000001',
+    pushName: 'Sierra Estates Line 1 (demo)',
     engineLoaded: true,
   },
   {
     id: 'c2f7a012-9b24-4f81-a6b1-987654321002',
     name: 'line-2',
     status: 'ready',
-    phone: '201092048333',
-    pushName: 'Sierra Estates Line 2 (01092048333)',
+    phone: '201000000002',
+    pushName: 'Sierra Estates Line 2 (demo)',
     engineLoaded: true,
   },
   {
     id: 'c3f7a012-9b24-4f81-a6b1-987654321003',
     name: 'line-3',
     status: 'ready',
-    phone: '201061399688',
-    pushName: 'Sierra Estates Line 3 (01061399688)',
+    phone: '201000000003',
+    pushName: 'Sierra Estates Line 3 (demo)',
     engineLoaded: true,
   },
   {
     id: 'c4f7a012-9b24-4f81-a6b1-987654321004',
     name: 'line-4',
     status: 'ready',
-    phone: '201032206443',
-    pushName: 'Sierra Estates Line 4 (01032206443)',
+    phone: '201000000004',
+    pushName: 'Sierra Estates Line 4 (demo)',
     engineLoaded: true,
   },
 ];
@@ -113,7 +113,7 @@ const server = http.createServer(async (req, res) => {
       id: `c${Date.now()}-9b24-4f81-a6b1-000000000000`,
       name: body.name || `line-${sessions.length + 1}`,
       status: 'ready',
-      phone: body.name === 'line-2' ? '201092048333' : '201031622600',
+      phone: `20100000000${(sessions.length + 1) % 10}`,
       pushName: 'Sierra WhatsApp',
       engineLoaded: true,
     };
@@ -133,7 +133,10 @@ const server = http.createServer(async (req, res) => {
   const sendMatch = pathname.match(/^\/api\/sessions\/([^/]+)\/messages\/send-text$/);
   if (sendMatch && req.method === 'POST') {
     const body = await parseBody(req);
-    console.log(`[Gateway 2785] Session ${sendMatch[1]} -> sending to ${body.chatId}: ${body.text?.slice(0, 60)}...`);
+    const safeSession = String(sendMatch[1] || '').replace(/[\r\n]/g, '');
+    const safeChat = String(body.chatId || '').replace(/[\r\n]/g, '');
+    const safeText = String(body.text?.slice(0, 60) || '').replace(/[\r\n]/g, '');
+    console.log(`[Gateway 2785] Session ${safeSession} -> sending to ${safeChat}: ${safeText}...`);
     return sendJson(res, 200, {
       ok: true,
       messageId: `BAE5${Date.now().toString(16).toUpperCase()}`,
@@ -145,7 +148,8 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/webhooks' && req.method === 'POST') {
     const body = await parseBody(req);
     webhooks.push(body);
-    console.log('[Gateway 2785] Registered webhook:', body);
+    const safeWebhook = JSON.stringify(body).replace(/[\r\n]/g, ' ');
+    console.log('[Gateway 2785] Registered webhook:', safeWebhook);
     return sendJson(res, 200, { ok: true, webhook: body });
   }
 
@@ -165,5 +169,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[Sierra WhatsApp Gateway] Listening on http://127.0.0.1:${PORT}`);
-  console.log(`[Sierra WhatsApp Gateway] Sessions active (${sessions.length}): ` + sessions.map(s => `${s.name} (${s.phone})`).join(', '));
+  const safeSessionList = sessions.map(s => `${String(s.name).replace(/[\r\n]/g, '')} (${String(s.phone).replace(/[\r\n]/g, '')})`).join(', ');
+  console.log(`[Sierra WhatsApp Gateway] Sessions active (${sessions.length}): ` + safeSessionList);
 });

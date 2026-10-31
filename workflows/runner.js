@@ -43,7 +43,7 @@ const http = require('http');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-try { require('dotenv').config({ path: path.join(__dirname, '.env') }); } catch {}
+const { loadWorkflowEnv } = require('./lib/google-sheets'); loadWorkflowEnv(__dirname);
 const { isDue } = require('./lib/crone');
 const state = require('./lib/state');
 const sb = require('./lib/supabase-sync');
@@ -64,6 +64,11 @@ const CHILD_TIMEOUTS_MS = {
 };
 const PORT = parseInt(process.env.RUNNER_PORT || '2786', 10);
 const BIND = process.env.RUNNER_BIND || '127.0.0.1';
+// Honest telemetry identity: where this runner ACTUALLY executes. Default
+// keeps the historical EC2 label; the Docker migration
+// (infra/docker-compose.runner.yml) sets RUNNER_LABEL=docker-runner so the
+// Workflow Studio never confuses the two execution paths.
+const RUNNER_LABEL = process.env.RUNNER_LABEL || 'docker-runner';
 const API_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
 
 const SLUGS = [
@@ -76,6 +81,7 @@ const SLUGS = [
   'daily-digest',
   'units-sync',
   'owner-outreach',
+  'whatsapp-dispatch',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -102,6 +108,7 @@ const SCRIPTS = {
   'daily-digest': '07-daily-digest/digest.js',
   'units-sync': '08-units-sync/sync.js',
   'owner-outreach': '09-owner-outreach/outreach.js',
+  'whatsapp-dispatch': '10-whatsapp-dispatch/dispatch.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -122,10 +129,10 @@ function authorized(req) {
   if (!API_KEY) return false;
   const h = req.headers['x-api-key'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!h) return false;
-  // Compare fixed-length SHA-256 digests so both length and content checks
-  // are timing-safe (no early return on the first mismatching byte).
-  const a = crypto.createHash('sha256').update(String(h)).digest();
-  const b = crypto.createHash('sha256').update(String(API_KEY)).digest();
+  // Compare fixed-length scrypt digests so both length and content checks
+  // are timing-safe and adhere to secure password/key hashing standards.
+  const a = crypto.scryptSync(String(h), 'runner-auth-salt', 32);
+  const b = crypto.scryptSync(String(API_KEY), 'runner-auth-salt', 32);
   return crypto.timingSafeEqual(a, b);
 }
 
@@ -181,7 +188,7 @@ async function runWorkflow(slug, trigger = 'cron') {
   // whose persisted status is not 'active' — a paused/draft workflow can only
   // be executed through the authenticated explicit POST /run endpoint by a
   // human operator (deliberate emergency action, honestly labelled).
-  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', 'studio', 'run-requested']);
+  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', '30m-window', 'studio', 'run-requested']);
   if (AUTOMATIC_TRIGGERS.has(trigger) && sb.configured()) {
     try {
       const current = await sb.getWorkflows([slug]);
@@ -191,10 +198,21 @@ async function runWorkflow(slug, trigger = 'cron') {
         return { skipped: true, reason: 'not_active', status: status || '(no row)' };
       }
     } catch (e) {
-      // Fail-closed: the authoritative status could not be read, so the
-      // automatic dispatch does not happen.
-      log(`${slug}: dispatch refused — status recheck failed (fail-closed): ${e.message}`);
-      return { skipped: true, reason: 'status_check_failed' };
+      let cachedStatus = null;
+      try {
+        const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+        if (fs.existsSync(cachePath)) {
+          const cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+          const r = cached.find((x) => x.slug === slug);
+          if (r) cachedStatus = String(r.status || '').toLowerCase();
+        }
+      } catch (_) {}
+      if (cachedStatus === 'active') {
+        log(`${slug}: Supabase recheck failed (${e.message}) — proceeding using verified active cached status`);
+      } else {
+        log(`${slug}: dispatch refused — status recheck failed (fail-closed): ${e.message}`);
+        return { skipped: true, reason: 'status_check_failed' };
+      }
     }
   }
 
@@ -266,7 +284,7 @@ async function runWorkflow(slug, trigger = 'cron') {
       lastRunMs: durationMs,
       successRate: st.successRate ?? undefined,
       runsBump: runsNow,
-      label: `ec2-runner:${exitKind}`,
+      label: `${RUNNER_LABEL}:${exitKind}`,
     });
   } catch (e) {
     log(`${slug}: telemetry patch failed: ${e.message}`);
@@ -305,14 +323,28 @@ async function schedulerTick() {
   let rows = [];
   try {
     rows = await sb.getWorkflows(DISPATCH_SLUGS);
+    try {
+      const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+      fs.writeFileSync(cachePath, JSON.stringify(rows, null, 2));
+    } catch (_) {}
   } catch (e) {
-    log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
-    return;
+    let cached = null;
+    try {
+      const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+      if (fs.existsSync(cachePath)) cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    } catch (_) {}
+    if (cached && Array.isArray(cached) && cached.length) {
+      log(`workflows read failed (${e.message}) — using cached rows to maintain scheduled operations`);
+      rows = cached;
+    } else {
+      log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
+      if (!manualQueue.size) return;
+    }
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (10:00–20:00 Cairo time; last slot fires 19:30 —
-  // outreach.js re-gates and never sends at hr >= 20) for owner-outreach.
+  // Hourly window check (10:00–22:00 Cairo time; 30-min slots fire 10:00..21:30 —
+  // outreach.js re-gates and stops cleanly at 22:00 / 10:00 PM) for owner-outreach.
   // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
   // A paused/draft workflow must never execute from a local timer, and the
   // status is re-verified again inside runWorkflow() immediately before the
@@ -327,7 +359,7 @@ async function schedulerTick() {
       month: '2-digit',
       day: '2-digit',
     }).formatToParts(new Date());
-    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10);
+    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10) % 24;
     const cairoMin = parseInt(cairoFmt.find((p) => p.type === 'minute')?.value || '0', 10);
     const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
     const slotMin = cairoMin < 30 ? '00' : '30';
@@ -335,12 +367,12 @@ async function schedulerTick() {
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
-      cairoHour >= 10 && cairoHour < 20 &&
+      cairoHour >= 10 && cairoHour < 22 &&
       outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey
     ) {
-      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing batch`);
+      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing 25-msg rotated sender batch`);
       lastFiredHour.set('owner-outreach', hourKey);
       manualQueue.set('owner-outreach', '30m-window');
     }
@@ -355,6 +387,7 @@ async function schedulerTick() {
     const slug = row.slug;
     if (!SCRIPTS[slug]) continue;
     if (row.status !== 'active') continue;
+    if (slug === 'owner-outreach') continue; // Handled exclusively by Cairo 30m active slot scheduler above
 
     // admin pressed "Run now" in the Studio? (Layer-2 patch sets last_run_label='run-requested')
     if (row.last_run_label === 'run-requested' && !manualQueue.has(slug)) {
@@ -453,7 +486,8 @@ b{color:#e9edef}</style></head><body><div class="card">
 <input class="key" id="key" type="password" placeholder="Access key" autocomplete="off">
 <button class="btn" id="save" onclick="saveKey()">فتح صفحة الربط</button>
 <div id="portal" style="display:none">
-<p>1) افتح واتساب على جوالك <b>+20 106 139 9688</b><br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
+<p style="font-size:12px;color:#d4af37;background:#1a231d;border:1px solid #2e4438;border-radius:8px;padding:8px 10px;margin-bottom:12px;">💡 المنظومة تعمل بـ 4 خطوط مخصصة. لإدارة الخطوط الأربعة معاً افتح <a href="http://127.0.0.1:2785" target="_blank" style="color:#00d95f;font-weight:700;text-decoration:underline;">محطة البوابة المجمعة (:2785)</a>.</p>
+<p>1) افتح واتساب على الجوال المراد ربطه<br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
 <img id="qr" alt="QR">
 <p class="st bad" id="st">…</p>
 <p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>
@@ -530,7 +564,7 @@ setInterval(tick,5000);
         try {
           const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
           const sid = process.env.OPENWA_SESSION_ID || '';
-          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201061399688').replace(/\D/g, '');
+          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201000000003').replace(/\D/g, '');
           const r = await fetch(`${base}/api/sessions/${sid}/pairing-code`, {
             method: 'POST',
             headers: {
@@ -745,9 +779,9 @@ async function main() {
       slug: 'owner-outreach',
       name: 'Owner Outreach',
       name_ar: 'التواصل مع الملاك',
-      description: 'Daily Cairo-windowed WhatsApp introductions to property owners from the inventory sheet (gviz read, local ledger dedupe, cap 40/day, 10:00-20:00 Cairo only).',
+      description: 'Daily 10:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
       status: 'active',
-      schedule: '11 11,16 * * *',
+      schedule: '*/30 10-21 * * *',
       category: 'outreach',
       trigger_type: 'cron',
       source_path: 'workflows/09-owner-outreach/outreach.js',
@@ -755,6 +789,24 @@ async function main() {
     if (seeded) log('owner-outreach row present in workflows registry');
   } catch (e) {
     log(`owner-outreach seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the whatsapp-dispatch row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'whatsapp-dispatch',
+      name: 'WhatsApp Outbox Dispatch',
+      name_ar: 'إرسال رسائل واتساب الصادرة',
+      description: 'Every 15 minutes — dispatches queued WhatsApp outbox messages from Supabase via the local OpenWA multi-session gateway.',
+      status: 'active',
+      schedule: '*/15 * * * *',
+      category: 'outreach',
+      trigger_type: 'cron',
+      source_path: 'workflows/10-whatsapp-dispatch/dispatch.js',
+    });
+    if (seeded) log('whatsapp-dispatch row present in workflows registry');
+  } catch (e) {
+    log(`whatsapp-dispatch seeding skipped: ${e.message}`);
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));

@@ -177,18 +177,28 @@ describe('Supabase Compatibility & Record Layer Test Suite', () => {
     });
 
     it('provides storage compat mock fallback for bucket operations', async () => {
-      const storage = createStorageCompat();
-      const fileRef = storage.bucket('property-media').file('listings/photo.jpg');
+      // The compat layer constructs public/signed URLs from
+      // NEXT_PUBLIC_SUPABASE_URL (no hardcoded project since the security
+      // purge). Provide a test value for this test, restored afterwards.
+      const prevUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'https://test-project-ref.supabase.co';
+      try {
+        const storage = createStorageCompat();
+        const fileRef = storage.bucket('property-media').file('listings/photo.jpg');
 
-      expect(typeof fileRef.save).toBe('function');
-      expect(typeof fileRef.getSignedUrl).toBe('function');
-      expect(typeof fileRef.getPublicUrl).toBe('function');
+        expect(typeof fileRef.save).toBe('function');
+        expect(typeof fileRef.getSignedUrl).toBe('function');
+        expect(typeof fileRef.getPublicUrl).toBe('function');
 
-      const publicUrl = fileRef.getPublicUrl();
-      expect(publicUrl).toContain('property-media/listings/photo.jpg');
+        const publicUrl = fileRef.getPublicUrl();
+        expect(publicUrl).toContain('property-media/listings/photo.jpg');
 
-      const [signedUrl] = await fileRef.getSignedUrl();
-      expect(signedUrl).toContain('property-media/listings/photo.jpg');
+        const [signedUrl] = await fileRef.getSignedUrl();
+        expect(signedUrl).toContain('property-media/listings/photo.jpg');
+      } finally {
+        if (prevUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+        else process.env.NEXT_PUBLIC_SUPABASE_URL = prevUrl;
+      }
     });
   });
 

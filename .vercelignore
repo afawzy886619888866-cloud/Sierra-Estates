@@ -58,6 +58,38 @@ apps/sierra-estates-realty/public/feeds/*.csv
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
 
+# ============================================================================
+# 2026-10-21 cleanup — orphaned assets with zero code references (audited)
+# ============================================================================
+
+# Large cairo-plaza PNGs with no source references (ai-concept-* already excluded above).
+# The real-*-ai-enhanced.jpg files ARE used by CairoPlazaScene / CairoPlazaExperience — kept.
+apps/sierra-estates-realty/public/cairo-plaza/real-entrance-enhanced.png
+apps/sierra-estates-realty/public/cairo-plaza/real-frontage-enhanced.png
+apps/sierra-estates-realty/public/cairo-plaza/real-tower-enhanced.png
+apps/sierra-estates-realty/public/cairo-plaza/tower-frontage-detail.png
+
+# Root dev-preview HTML files — no app code references them
+sierra-map-preview.html
+
+# Orphaned public/ standalone files (whatsapp_qr.html + whatsapp_qr.png are USED by AdminPortal)
+apps/sierra-estates-realty/public/hero-banner-showcase.html
+apps/sierra-estates-realty/public/whatsapp_qr_active.png
+
+# Redundant downloads — no code references; kept: owners-all/rent/resale.csv (API routes),
+# Sierra_Estates_Owners_Rent_Master.xlsx (ListingsView.tsx download link)
+apps/sierra-estates-realty/public/downloads/owners_rent_with_photos.csv
+apps/sierra-estates-realty/public/downloads/owners_rent.xlsx
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_All_Owners_Units.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_All_Owners_Units.xlsx
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Rent.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Rent_Master.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Resale.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Sale.csv
+apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_Units_Rent_and_Resale.xlsx
+apps/sierra-estates-realty/public/downloads/whatsapp_garden_owners_campaign.csv
+apps/sierra-estates-realty/public/downloads/whatsapp_garden_owners_campaign.xlsx
+
 # Tool artifacts and redundant local clones
 .amazonq
 .amazonq/**

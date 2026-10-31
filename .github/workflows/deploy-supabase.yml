@@ -1,0 +1,96 @@
+name: Deploy Supabase (schema + migrations)
+
+# Canonical backend deployment: applies supabase/schema.sql plus the ordered
+# migration chain to the Supabase project, reconciled against the live
+# migration ledger (supabase_migrations.schema_migrations). Pinned by
+# __tests__/extensions-and-tooling.test.ts (explicit permissions block with
+# contents: read) and __tests__/deployment.test.ts (deploy-supabase.yml must
+# exist; Firebase deployment paths must stay retired).
+#
+# 2026-10-25 rework: the old job applied ONLY schema.sql while advertising
+# "schema + migrations" — migrations 031–036 could never reach production
+# through this workflow. The apply step now runs BOTH:
+#   1. scripts/apply-supabase-schema.mjs      (canonical baseline)
+#   2. scripts/apply-supabase-migrations.mjs  (ordered chain + ledger)
+# The credential gate moved into the APPLY branch only, so the default
+# dry_run (chain validation) runs without secrets — static validation
+# should never be blocked on credentials it does not use.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Validate migration chain without applying'
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-supabase
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Apply schema + migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Validate migration chain (dry run — no credentials needed)
+        # Push events have no inputs context: an absent boolean coerces to
+        # false, which used to route pushes into the apply path and fail the
+        # credential gate on every supabase/** push. Pushes now validate the
+        # chain only; applying requires an explicit dispatch with dry_run=false.
+        if: ${{ github.event_name == 'push' || inputs.dry_run != false }}
+        run: |
+          echo "Dry run — statically validating schema + migration chain only."
+          node scripts/apply-supabase-migrations.mjs --dry-run
+
+      - name: Verify Supabase credentials (fail loudly — apply path only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_URL }}" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN and SUPABASE_DB_URL are required to apply the canonical backend schema. Never run destructive schema work unauthenticated."
+            exit 1
+          fi
+
+      - name: Apply schema and migrations (authorized path)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+        run: |
+          node scripts/apply-supabase-schema.mjs
+          node scripts/apply-supabase-migrations.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          # Two-key authorization: the platform token executes the queries;
+          # SUPABASE_DB_URL (checked above) is the operator's declared
+          # authorization that the DATABASE connection target is correct.
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          # Production project ref — same default as the outreach workflow's
+          # NEXT_PUBLIC_SUPABASE_URL; override via the SUPABASE_PROJECT_REF
+          # repository variable if the project ever moves.
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'gaxfqcietzoonlmatiot' }}

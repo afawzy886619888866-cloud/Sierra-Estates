@@ -16,16 +16,17 @@ export const runCloser = async (
   collection: keyof typeof COLLECTIONS,
   stage: OrchestrationStage
 ) => {
+  const safeDocId = String(docId || '').replace(/[\r\n]/g, '');
   return instrumentAgent('closer', stage, docId, async () => {
     if (stage === 'S9') {
-      console.log(`[CLOSER] S9: Asset Finalization for ${docId}`);
+      console.log(`[CLOSER] S9: Asset Finalization for ${safeDocId}`);
       await StateManager.completeStage(docId, collection, 'S10', {
         'status': 'published',
       });
     }
 
     if (stage === 'S10') {
-      console.log(`[CLOSER] S10: Optimization Feedback for ${docId}`);
+      console.log(`[CLOSER] S10: Optimization Feedback for ${safeDocId}`);
 
       if (collection === 'stakeholders') {
         const leadData = await StateManager.getDocument(docId, collection);

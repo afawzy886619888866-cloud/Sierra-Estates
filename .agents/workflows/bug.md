@@ -1,6 +1,6 @@
 ---
 name: bug
-description: "Run MCD BUG command for Sierra"
+description: "Run MCD BUG command for ierra"
 ---
 
 # BUG

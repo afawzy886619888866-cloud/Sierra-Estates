@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sierra Estates · Ultra-HD Multi-Layer Dark Masterplan Map</title>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  
+  <!-- Leaflet 1.9.4 CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <style>
+    :root {
+      --font-en: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-ar: 'Cairo', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --gold: #c8961a;
+      --gold-lt: #e9c176;
+      --gold-glow: rgba(233, 193, 118, 0.45);
+      --ice-blue: #93c5fd;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --lime: #84cc16;
+      --amber: #f59e0b;
+      
+      --bg-glass: rgba(6, 17, 34, 0.90);
+      --bg-card: rgba(11, 23, 42, 0.82);
+      --border-glass: rgba(233, 193, 118, 0.22);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-en);
+      background: #030712;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body[dir="rtl"] {
+      font-family: var(--font-ar);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #050b14;
+      z-index: 1;
+    }
+
+    /* Glassmorphism primitives */
+    .glass-panel {
+      background: var(--bg-glass);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Top Floating Navigation */
+    .top-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 18px;
+      gap: 14px;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo-svg {
+      width: 32px;
+      height: 22px;
+      color: var(--gold-lt);
+    }
+    .brand-title {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .brand-subtitle {
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: var(--gold-lt);
+      text-transform: uppercase;
+    }
+
+    /* Layer Switcher */
+    .layer-switcher {
+      display: flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(4, 11, 22, 0.85);
+      border: 1px solid var(--border-glass);
+    }
+    .layer-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .layer-btn.active {
+      background: linear-gradient(135deg, var(--gold-lt), var(--gold));
+      color: #050b14;
+      font-weight: 800;
+      box-shadow: 0 0 16px var(--gold-glow);
+    }
+
+    .lang-toggle {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-toggle:hover {
+      border-color: var(--gold-lt);
+      color: var(--gold-lt);
+    }
+
+    /* Left Control Drawer */
+    .controls-deck {
+      position: absolute;
+      top: 80px;
+      left: 16px;
+      width: 320px;
+      max-height: calc(100vh - 100px);
+      z-index: 1000;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .controls-deck::-webkit-scrollbar {
+      width: 6px;
+    }
+    .controls-deck::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .controls-deck::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 4px;
+    }
+
+    body[dir="rtl"] .controls-deck {
+      left: auto;
+      right: 16px;
+    }
+
+    .section-eyebrow {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ice-blue);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Zone Teleport Chips */
+    .zone-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .zone-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      color: var(--text-muted);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .zone-pill:hover, .zone-pill.active {
+      background: rgba(200, 150, 26, 0.15);
+      border-color: var(--gold-lt);
+      color: var(--gold-lt);
+    }
+
+    /* Subfeatures Toggles */
+    .subfeatures-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .feat-toggle {
+      background: rgba(11, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .feat-toggle:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .feat-toggle.active {
+      border-color: currentColor;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+    }
+    .feat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Right Property & Financial HUD */
+    .property-hud {
+      position: absolute;
+      top: 80px;
+      right: 16px;
+      width: 360px;
+      max-height: calc(100vh - 100px);
+      z-index: 1000;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .property-hud::-webkit-scrollbar {
+      width: 6px;
+    }
+    .property-hud::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .property-hud::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 4px;
+    }
+
+    body[dir="rtl"] .property-hud {
+      right: auto;
+      left: 16px;
+    }
+
+    .unit-hero-img {
+      position: relative;
+      width: 100%;
+      height: 155px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #08121e;
+    }
+    .unit-hero-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .unit-badge-tag {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 4px 8px;
+      background: rgba(6, 17, 34, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-glass);
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--gold-lt);
+    }
+    .unit-ai-score {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(59, 130, 246, 0.9));
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    /* Financial ROI Bento */
+    .fin-tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 3px;
+      border-radius: 8px;
+    }
+    .fin-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .fin-tab-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--gold-lt);
+    }
+
+    .fin-matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .fin-metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .fin-metric-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .fin-metric-val {
+      font-size: 13.5px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .cta-wa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: #059669;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);
+    }
+    .cta-wa-btn:hover {
+      background: #10b981;
+      transform: translateY(-1px);
+    }
+
+    /* Custom Leaflet Markers */
+    .se-pin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(7, 15, 28, 0.94);
+      border: 1.5px solid var(--gold);
+      color: var(--gold-lt);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .se-pin-badge:hover, .se-pin-badge.selected {
+      transform: translate(-50%, -50%) scale(1.15);
+      border-color: #fff;
+      box-shadow: 0 0 20px var(--gold-glow);
+    }
+    .se-pin-badge.selected {
+      background: linear-gradient(135deg, var(--gold-lt), var(--gold));
+      color: #050b14;
+    }
+
+    /* Floating Legend */
+    .legend-box {
+      position: absolute;
+      bottom: 24px;
+      left: 16px;
+      z-index: 1000;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    body[dir="rtl"] .legend-box {
+      left: auto;
+      right: 16px;
+    }
+
+    /* Mobile handling */
+    @media (max-width: 768px) {
+      .controls-deck, .property-hud {
+        width: calc(100% - 32px);
+        max-height: 240px;
+      }
+      .property-hud {
+        top: auto;
+        bottom: 16px;
+      }
+      .legend-box {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Floating Header -->
+  <header class="top-bar glass-panel">
+    <div class="brand-cluster">
+      <svg class="brand-logo-svg" viewBox="0 0 100 65" fill="none">
+        <path d="M14 50 L38 18 L54 38" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M38 50 L60 12 L82 44" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 50 L84 10" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M68 9.5 L84.5 9.5 L84.5 26" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="brand-title">
+        <span>SIERRA ESTATES</span>
+        <span class="brand-subtitle" id="txt-sub">Ultra-HD Masterplan Map</span>
+      </div>
+    </div>
+
+    <!-- Multi-Layer Mode Switcher -->
+    <div class="layer-switcher">
+      <button class="layer-btn active" id="btn-layer-dark" onclick="switchLayer('dark')">
+        <span>🌙</span> <span id="lbl-dark">Obsidian Dark @2x</span>
+      </button>
+      <button class="layer-btn" id="btn-layer-sat" onclick="switchLayer('satellite')">
+        <span>🛰️</span> <span id="lbl-sat">4K Satellite Hybrid</span>
+      </button>
+      <button class="layer-btn" id="btn-layer-light" onclick="switchLayer('light')">
+        <span>☀️</span> <span id="lbl-light">Voyager Light</span>
+      </button>
+    </div>
+
+    <!-- Bilingual Toggle -->
+    <button class="lang-toggle" onclick="toggleLanguage()">
+      <span id="lang-label">عربي (AR)</span>
+    </button>
+  </header>
+
+  <!-- Left Controls: Zones & Masterplan Subfeatures -->
+  <aside class="controls-deck glass-panel">
+    <div>
+      <div class="section-eyebrow" id="eyebrow-zones">
+        <span>📍</span> <span>District Quick-Teleport</span>
+      </div>
+      <div class="zone-pills">
+        <button class="zone-pill active" onclick="teleportZone([30.025, 31.54], 13, this)">All New Cairo</button>
+        <button class="zone-pill" onclick="teleportZone([30.015, 31.605], 14, this)">Golden Square</button>
+        <button class="zone-pill" onclick="teleportZone([30.005, 31.520], 14, this)">South 90th</button>
+        <button class="zone-pill" onclick="teleportZone([29.988, 31.425], 14, this)">Katameya</button>
+        <button class="zone-pill" onclick="teleportZone([30.065, 31.650], 14, this)">Mostakbal City</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-eyebrow" id="eyebrow-features">
+        <span>✨</span> <span>Masterplan GPS Subfeatures</span>
+      </div>
+      <div class="subfeatures-grid">
+        <button class="feat-toggle active" id="feat-lagoons" onclick="toggleFeature('lagoon')">
+          <span class="feat-dot" style="background: var(--cyan); box-shadow: 0 0 8px var(--cyan);"></span>
+          <span id="feat-lagoons-txt">Crystal Lagoons</span>
+        </button>
+        <button class="feat-toggle active" id="feat-spines" onclick="toggleFeature('park')">
+          <span class="feat-dot" style="background: var(--emerald); box-shadow: 0 0 8px var(--emerald);"></span>
+          <span id="feat-spines-txt">Green Spines</span>
+        </button>
+        <button class="feat-toggle active" id="feat-golf" onclick="toggleFeature('golf')">
+          <span class="feat-dot" style="background: var(--lime); box-shadow: 0 0 8px var(--lime);"></span>
+          <span id="feat-golf-txt">Golf Courses</span>
+        </button>
+        <button class="feat-toggle active" id="feat-club" onclick="toggleFeature('club')">
+          <span class="feat-dot" style="background: var(--amber); box-shadow: 0 0 8px var(--amber);"></span>
+          <span id="feat-club-txt">Clubhouses</span>
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-eyebrow" id="eyebrow-polygons">
+        <span>📐</span> <span>Verified Compound Footprints</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer;">
+          <input type="checkbox" id="chk-polygons" checked onchange="toggleFootprints(this.checked)" style="accent-color: var(--gold);" />
+          <span id="lbl-show-polygons">Render GPS Bounding Polygons</span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Floating Property & ROI HUD -->
+  <aside class="property-hud glass-panel" id="property-card">
+    <div class="unit-hero-img">
+      <img id="unit-img" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=720&q=80" alt="Selected Unit" />
+      <div class="unit-badge-tag" id="unit-badge">DIRECT OWNER · EXCLUSIVE</div>
+      <div class="unit-ai-score" id="unit-ai">AI SCORE 9.8</div>
+    </div>
+
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="font-size: 11px; color: var(--gold-lt); font-weight: 700;" id="unit-code">SE-MIV-V280</div>
+          <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 2px;" id="unit-compound">Mivida</h3>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 17px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="unit-price">EGP 24,500,000</div>
+          <div style="font-size: 10px; color: var(--ice-blue); font-family: var(--font-mono);" id="unit-usd">$510,000 USD</div>
+        </div>
+      </div>
+      <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px;" id="unit-specs">
+        Standalone Villa · 4 Beds · 5 Baths · 360 m² · Garden View
+      </div>
+    </div>
+
+    <!-- Financial ROI / Installment Tabs -->
+    <div class="glass-card" style="padding: 10px;">
+      <div class="fin-tabs">
+        <button class="fin-tab-btn active" onclick="switchFinTab('installments', this)" id="tab-inst-btn">Installments</button>
+        <button class="fin-tab-btn" onclick="switchFinTab('roi', this)" id="tab-roi-btn">ROI & Yield</button>
+        <button class="fin-tab-btn" onclick="switchFinTab('lifestyle', this)" id="tab-life-btn">Lifestyle</button>
+      </div>
+
+      <div id="fin-tab-installments">
+        <div class="fin-matrix-grid">
+          <div class="fin-metric-box">
+            <div class="fin-metric-lbl" id="lbl-dp">10% Down Payment</div>
+            <div class="fin-metric-val" id="val-dp">2,450,000 EGP</div>
+          </div>
+          <div class="fin-metric-box">
+            <div class="fin-metric-lbl" id="lbl-qtr">Quarterly (7 Yrs)</div>
+            <div class="fin-metric-val" id="val-qtr">787,500 EGP</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="fin-tab-roi" style="display: none;">
+        <div class="fin-matrix-grid">
+          <div class="fin-metric-box">
+            <div class="fin-metric-lbl" id="lbl-yield">Projected Yield</div>
+            <div class="fin-metric-val" style="color: var(--emerald);" id="val-yield">8.4% / Yr</div>
+          </div>
+          <div class="fin-metric-box">
+            <div class="fin-metric-lbl" id="lbl-growth">5-Yr Appreciation</div>
+            <div class="fin-metric-val" style="color: var(--cyan);" id="val-growth">+124%</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="fin-tab-lifestyle" style="display: none;">
+        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.5; padding: 4px;" id="val-lifestyle">
+          Direct walk to Lake District lagoon, 300m to International School, private clubhouse membership included.
+        </div>
+      </div>
+    </div>
+
+    <!-- WhatsApp VIP Concierge Action -->
+    <a href="https://wa.me/201092048333?text=Hello%20Sierra%20Estates%2C%20I%20am%20inquiring%20about%20the%20Mivida%20Standalone%20Villa%20(SE-MIV-V280)." target="_blank" rel="noopener noreferrer" class="cta-wa-btn" id="btn-wa">
+      <span>💬</span> <span id="txt-wa">Instant WhatsApp Private Viewing</span>
+    </a>
+  </aside>
+
+  <!-- Bottom Legend -->
+  <div class="legend-box glass-panel">
+    <span style="color: var(--gold-lt);">⚡ Sierra GIS Radar</span>
+    <span>·</span>
+    <span style="color: var(--cyan);">● Lagoon</span>
+    <span style="color: var(--emerald);">● Spine</span>
+    <span style="color: var(--lime);">● Golf</span>
+    <span style="color: var(--amber);">● Club</span>
+  </div>
+
+  <!-- Leaflet Map Container -->
+  <div id="map"></div>
+
+  <!-- Leaflet 1.9.4 JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    // ─── Data Definitions ──────────────────────────────────────────
+    let isAr = false;
+    let currentLayer = 'dark';
+    let mapInstance = null;
+
+    // Tile Layer URL Configs
+    const TILES = {
+      dark: {
+        base: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        labels: null,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      },
+      satellite: {
+        base: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        labels: 'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}@2x.png',
+        attribution: '&copy; Esri &mdash; Maxar, Earthstar Geographics &copy; CARTO'
+      },
+      light: {
+        base: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        labels: null,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      }
+    };
+
+    // Pre-configured GPS Bounding Polygons
+    const COMPOUND_POLYGONS = {
+      'Hyde Park': {
+        color: '#c8961a',
+        coords: [
+          [30.021, 31.562],
+          [30.018, 31.588],
+          [29.997, 31.586],
+          [30.000, 31.560]
+        ]
+      },
+      'Mivida': {
+        color: '#10b981',
+        coords: [
+          [30.028, 31.525],
+          [30.025, 31.547],
+          [30.008, 31.544],
+          [30.011, 31.522]
+        ]
+      },
+      'Mountain View iCity': {
+        color: '#06b6d4',
+        coords: [
+          [30.064, 31.550],
+          [30.062, 31.572],
+          [30.047, 31.569],
+          [30.049, 31.547]
+        ]
+      },
+      'Palm Hills New Cairo': {
+        color: '#8b5cf6',
+        coords: [
+          [30.031, 31.571],
+          [30.029, 31.591],
+          [30.013, 31.589],
+          [30.015, 31.569]
+        ]
+      },
+      'The Waterway': {
+        color: '#3b82f6',
+        coords: [
+          [30.045, 31.488],
+          [30.043, 31.503],
+          [30.031, 31.501],
+          [30.033, 31.486]
+        ]
+      }
+    };
+
+    // Masterplan Subfeatures with real coordinates
+    const SUBFEATURES = [
+      {
+        name: 'Hyde Park 600,000 m² Central Green Spine',
+        nameAr: 'الحديقة المركزية 600 ألف م² (هايد بارك)',
+        compound: 'Hyde Park',
+        type: 'park',
+        color: '#10b981',
+        coords: [
+          [30.012, 31.568],
+          [30.010, 31.580],
+          [30.003, 31.578],
+          [30.005, 31.566]
+        ]
+      },
+      {
+        name: 'HydeOut Lifestyle Concourse & Club',
+        nameAr: 'نادي وممشى هايد آوت الرياضي',
+        compound: 'Hyde Park',
+        type: 'club',
+        color: '#f59e0b',
+        coords: [
+          [30.018, 31.570],
+          [30.017, 31.577],
+          [30.013, 31.575],
+          [30.014, 31.568]
+        ]
+      },
+      {
+        name: 'iCity Crystal Lagoon Beach Park',
+        nameAr: 'كريستال لاجون بيتش بارك (ماونتن فيو)',
+        compound: 'Mountain View iCity',
+        type: 'lagoon',
+        color: '#06b6d4',
+        coords: [
+          [30.058, 31.554],
+          [30.057, 31.565],
+          [30.051, 31.563],
+          [30.052, 31.552]
+        ]
+      },
+      {
+        name: 'Mivida Lake District Water Feature',
+        nameAr: 'بحيرة ميفيدا ليك ديستريكت',
+        compound: 'Mivida',
+        type: 'lagoon',
+        color: '#06b6d4',
+        coords: [
+          [30.025, 31.533],
+          [30.024, 31.539],
+          [30.021, 31.538],
+          [30.022, 31.532]
+        ]
+      },
+      {
+        name: 'Mivida Central Greens & Valley',
+        nameAr: 'الحديقة النباتية المركزية (ميفيدا)',
+        compound: 'Mivida',
+        type: 'park',
+        color: '#10b981',
+        coords: [
+          [30.022, 31.530],
+          [30.020, 31.542],
+          [30.014, 31.540],
+          [30.016, 31.528]
+        ]
+      },
+      {
+        name: 'Palm Hills Golf Enclave & Lakes',
+        nameAr: 'ملاعب جولف وبحيرات بالم هيلز',
+        compound: 'Palm Hills New Cairo',
+        type: 'golf',
+        color: '#84cc16',
+        coords: [
+          [30.025, 31.576],
+          [30.023, 31.587],
+          [30.017, 31.585],
+          [30.019, 31.574]
+        ]
+      }
+    ];
+
+    // Sample Curated Properties for Map Points
+    const PROPERTIES = [
+      {
+        id: 'p1',
+        code: 'SE-MIV-V280',
+        compound: 'Mivida',
+        compoundAr: 'ميفيدا',
+        price: 'EGP 24,500,000',
+        priceAr: '24,500,000 ج.م',
+        usd: '$510,000 USD',
+        type: 'Standalone Villa',
+        typeAr: 'فيلا مستقلة',
+        specs: '4 Beds · 5 Baths · 360 m²',
+        specsAr: '4 غرف · 5 حمامات · 360 م²',
+        lat: 30.018,
+        lng: 31.535,
+        dp: '2,450,000 EGP',
+        qtr: '787,500 EGP',
+        yield: '8.4%',
+        growth: '+124%',
+        lifestyle: 'Direct walk to Lake District lagoon, 300m to International School, private clubhouse membership included.',
+        lifestyleAr: 'خطوات من بحيرات ليك ديستريكت، 300 متر من المدرسة الدولية، اشتراك النادي الرياضي مشمول.',
+        img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=720&q=80',
+        ai: '9.8'
+      },
+      {
+        id: 'p2',
+        code: 'SE-HYD-T110',
+        compound: 'Hyde Park',
+        compoundAr: 'هايد بارك',
+        price: 'EGP 13,800,000',
+        priceAr: '13,800,000 ج.م',
+        usd: '$287,500 USD',
+        type: 'Townhouse',
+        typeAr: 'تاون هاوس',
+        specs: '3 Beds · 3 Baths · 210 m²',
+        specsAr: '3 غرف · 3 حمامات · 210 م²',
+        lat: 30.011,
+        lng: 31.574,
+        dp: '1,380,000 EGP',
+        qtr: '443,000 EGP',
+        yield: '9.1%',
+        growth: '+142%',
+        lifestyle: 'Overlooking the 600k sqm central park, 2 mins from HydeOut restaurant and padel courts.',
+        lifestyleAr: 'إطلالة مباشرة على الحديقة المركزية 600 ألف م²، دقيقتان من هايد آوت وملاعب البادل.',
+        img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=720&q=80',
+        ai: '9.6'
+      },
+      {
+        id: 'p3',
+        code: 'SE-MV-IC145',
+        compound: 'Mountain View iCity',
+        compoundAr: 'ماونتن فيو آي سيتي',
+        price: 'EGP 9,200,000',
+        priceAr: '9,200,000 ج.م',
+        usd: '$191,000 USD',
+        type: 'iVilla Sky Garden',
+        typeAr: 'آي فيلا مع حديقة سماوية',
+        specs: '3 Beds · 3 Baths · 235 m²',
+        specsAr: '3 غرف · 3 حمامات · 235 م²',
+        lat: 30.055,
+        lng: 31.560,
+        dp: '920,000 EGP',
+        qtr: '295,000 EGP',
+        yield: '8.8%',
+        growth: '+135%',
+        lifestyle: 'Direct access to Lagoon Beach Club with sandy beach cabanas and smart Ring Road access.',
+        lifestyleAr: 'دخول مباشر لنادي الشاطئ الرملي للكريستال لاجون وموقع استراتيجي على الطريق الدائري الأوسطي.',
+        img: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=720&q=80',
+        ai: '9.4'
+      },
+      {
+        id: 'p4',
+        code: 'SE-WW-A090',
+        compound: 'The Waterway',
+        compoundAr: 'ذا ووتر واي',
+        price: 'EGP 16,500,000',
+        priceAr: '16,500,000 ج.م',
+        usd: '$343,000 USD',
+        type: 'Luxury Apartment',
+        typeAr: 'شقة فاخرة فندقية',
+        specs: '2 Beds · 2 Baths · 165 m²',
+        specsAr: '2 غرف · 2 حمام · 165 م²',
+        lat: 30.038,
+        lng: 31.494,
+        dp: '1,650,000 EGP',
+        qtr: '530,000 EGP',
+        yield: '9.8%',
+        growth: '+95%',
+        lifestyle: 'Directly on the Waterway commercial strip, walkable to luxury boutiques, banks, and gourmet dining.',
+        lifestyleAr: 'مباشرة على ممشى ووتر واي التجاري، سيراً على الأقدام إلى البوتيكات العالمية والمطاعم الفاخرة.',
+        img: 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=720&q=80',
+        ai: '9.9'
+      }
+    ];
+
+    // Active map layers
+    let baseTileLayer = null;
+    let labelTileLayer = null;
+    let polygonLayers = [];
+    let subfeatureLayers = [];
+    let propertyMarkers = [];
+    let activeFeatureTypes = new Set(['lagoon', 'park', 'golf', 'club']);
+
+    // ─── Initialize Map ───────────────────────────────────────────
+    function initMap() {
+      mapInstance = L.map('map', {
+        center: [30.025, 31.54],
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      // Custom Zoom Control at bottom right
+      L.control.zoom({ position: 'bottomright' }).addTo(mapInstance);
+
+      switchLayer('dark');
+      renderFootprints();
+      renderSubfeatures();
+      renderPropertyMarkers();
+    }
+
+    // ─── Layer Switcher Logic ─────────────────────────────────────
+    function switchLayer(layerKey) {
+      currentLayer = layerKey;
+
+      if (baseTileLayer) mapInstance.removeLayer(baseTileLayer);
+      if (labelTileLayer) mapInstance.removeLayer(labelTileLayer);
+
+      const cfg = TILES[layerKey];
+      baseTileLayer = L.tileLayer(cfg.base, {
+        maxZoom: 20,
+        detectRetina: true,
+        attribution: cfg.attribution
+      }).addTo(mapInstance);
+
+      if (cfg.labels) {
+        labelTileLayer = L.tileLayer(cfg.labels, {
+          maxZoom: 20,
+          detectRetina: true,
+          zIndex: 500
+        }).addTo(mapInstance);
+      }
+
+      // Update button active state
+      ['dark', 'satellite', 'light'].forEach(k => {
+        const btn = document.getElementById(`btn-layer-${k === 'satellite' ? 'sat' : k}`);
+        if (btn) {
+          if (k === layerKey) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+    }
+
+    // ─── Footprint Polygons ───────────────────────────────────────
+    function renderFootprints() {
+      // Clear existing
+      polygonLayers.forEach(l => mapInstance.removeLayer(l));
+      polygonLayers = [];
+
+      Object.entries(COMPOUND_POLYGONS).forEach(([name, data]) => {
+        const poly = L.polygon(data.coords, {
+          color: data.color,
+          weight: 2,
+          opacity: 0.85,
+          fillColor: data.color,
+          fillOpacity: 0.12,
+          dashArray: '5, 5'
+        }).addTo(mapInstance);
+
+        poly.bindTooltip(name, {
+          permanent: false,
+          direction: 'center',
+          className: 'se-poly-tooltip'
+        });
+
+        poly.on('mouseover', () => {
+          poly.setStyle({ fillOpacity: 0.28, weight: 3 });
+        });
+        poly.on('mouseout', () => {
+          poly.setStyle({ fillOpacity: 0.12, weight: 2 });
+        });
+        poly.on('click', () => {
+          mapInstance.fitBounds(poly.getBounds(), { padding: [50, 50], maxZoom: 15 });
+          const match = PROPERTIES.find(p => p.compound === name);
+          if (match) selectProperty(match);
+        });
+
+        polygonLayers.push(poly);
+      });
+    }
+
+    function toggleFootprints(show) {
+      polygonLayers.forEach(l => {
+        if (show) mapInstance.addLayer(l);
+        else mapInstance.removeLayer(l);
+      });
+    }
+
+    // ─── Masterplan Subfeatures ───────────────────────────────────
+    function renderSubfeatures() {
+      subfeatureLayers.forEach(l => mapInstance.removeLayer(l));
+      subfeatureLayers = [];
+
+      SUBFEATURES.forEach(f => {
+        if (!activeFeatureTypes.has(f.type)) return;
+
+        const poly = L.polygon(f.coords, {
+          color: f.color,
+          weight: 2,
+          opacity: 0.95,
+          fillColor: f.color,
+          fillOpacity: 0.35
+        }).addTo(mapInstance);
+
+        const title = isAr ? f.nameAr : f.name;
+        poly.bindTooltip(`<b>${title}</b><br><span style="font-size:10px;opacity:0.8">${f.compound}</span>`, {
+          direction: 'top',
+          offset: [0, -10]
+        });
+
+        subfeatureLayers.push(poly);
+      });
+    }
+
+    function toggleFeature(type) {
+      const btn = document.getElementById(`feat-${type === 'lagoon' ? 'lagoons' : type === 'park' ? 'spines' : type}`);
+      if (activeFeatureTypes.has(type)) {
+        activeFeatureTypes.delete(type);
+        if (btn) btn.classList.remove('active');
+      } else {
+        activeFeatureTypes.add(type);
+        if (btn) btn.classList.add('active');
+      }
+      renderSubfeatures();
+    }
+
+    // ─── Property Markers ─────────────────────────────────────────
+    function renderPropertyMarkers() {
+      propertyMarkers.forEach(m => mapInstance.removeLayer(m));
+      propertyMarkers = [];
+
+      PROPERTIES.forEach(p => {
+        const icon = L.divIcon({
+          className: 'se-map-icon',
+          html: `<div class="se-pin-badge" id="pin-${p.id}">
+                  <span>💎</span>
+                  <span>${isAr ? p.compoundAr : p.compound}</span>
+                 </div>`,
+          iconSize: [0, 0]
+        });
+
+        const marker = L.marker([p.lat, p.lng], { icon }).addTo(mapInstance);
+        marker.on('click', () => selectProperty(p));
+        propertyMarkers.push({ id: p.id, marker });
+      });
+    }
+
+    function selectProperty(p) {
+      document.querySelectorAll('.se-pin-badge').forEach(b => b.classList.remove('selected'));
+      const badge = document.getElementById(`pin-${p.id}`);
+      if (badge) badge.classList.add('selected');
+
+      document.getElementById('unit-img').src = p.img;
+      document.getElementById('unit-code').innerText = p.code;
+      document.getElementById('unit-compound').innerText = isAr ? p.compoundAr : p.compound;
+      document.getElementById('unit-price').innerText = isAr ? p.priceAr : p.price;
+      document.getElementById('unit-usd').innerText = p.usd;
+      document.getElementById('unit-specs').innerText = isAr ? `${p.typeAr} · ${p.specsAr}` : `${p.type} · ${p.specs}`;
+      document.getElementById('unit-ai').innerText = `AI SCORE ${p.ai}`;
+
+      document.getElementById('val-dp').innerText = p.dp;
+      document.getElementById('val-qtr').innerText = p.qtr;
+      document.getElementById('val-yield').innerText = `${p.yield} / Yr`;
+      document.getElementById('val-growth').innerText = p.growth;
+      document.getElementById('val-lifestyle').innerText = isAr ? p.lifestyleAr : p.lifestyle;
+
+      const waMsg = encodeURIComponent(
+        isAr
+          ? `مرحباً سييرا العقارية، أود الاستفسار عن وحدة [${p.code}] في كمبوند ${p.compoundAr} (${p.priceAr}) وتنسيق موعد معاينة.`
+          : `Hello Sierra Estates, I am inquiring about unit [${p.code}] in ${p.compound} (${p.price}). I would like to schedule a private VIP viewing.`
+      );
+      document.getElementById('btn-wa').href = `https://wa.me/201092048333?text=${waMsg}`;
+
+      mapInstance.flyTo([p.lat, p.lng], 15, { duration: 0.8 });
+    }
+
+    // ─── Financial Tabs ───────────────────────────────────────────
+    function switchFinTab(tab, btn) {
+      document.querySelectorAll('.fin-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      ['installments', 'roi', 'lifestyle'].forEach(t => {
+        const el = document.getElementById(`fin-tab-${t}`);
+        if (el) el.style.display = (t === tab) ? 'block' : 'none';
+      });
+    }
+
+    // ─── Zone Teleport ────────────────────────────────────────────
+    function teleportZone(coords, zoom, btn) {
+      document.querySelectorAll('.zone-pill').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      mapInstance.flyTo(coords, zoom, { duration: 0.9 });
+    }
+
+    // ─── Bilingual Toggle ─────────────────────────────────────────
+    function toggleLanguage() {
+      isAr = !isAr;
+      document.body.dir = isAr ? 'rtl' : 'ltr';
+      document.documentElement.lang = isAr ? 'ar' : 'en';
+
+      document.getElementById('lang-label').innerText = isAr ? 'English (EN)' : 'عربي (AR)';
+      document.getElementById('txt-sub').innerText = isAr ? 'خريطة المخطط العام فائق الدقة' : 'Ultra-HD Masterplan Map';
+      document.getElementById('lbl-dark').innerText = isAr ? 'الوضع الليلي عالي الدقة' : 'Obsidian Dark @2x';
+      document.getElementById('lbl-sat').innerText = isAr ? 'قمر صناعي 4K هايبرد' : '4K Satellite Hybrid';
+      document.getElementById('lbl-light').innerText = isAr ? 'الوضع النهاري' : 'Voyager Light';
+
+      document.getElementById('eyebrow-zones').innerHTML = `<span>📍</span> <span>${isAr ? 'الانتقال السريع للأحياء' : 'District Quick-Teleport'}</span>`;
+      document.getElementById('eyebrow-features').innerHTML = `<span>✨</span> <span>${isAr ? 'معالم المخطط العام الحصرية' : 'Masterplan GPS Subfeatures'}</span>`;
+      document.getElementById('eyebrow-polygons').innerHTML = `<span>📐</span> <span>${isAr ? 'حدود الكمبوندات المعتمدة' : 'Verified Compound Footprints'}</span>`;
+      document.getElementById('lbl-show-polygons').innerText = isAr ? 'عرض مضلعات الحدود الجغرافية' : 'Render GPS Bounding Polygons';
+
+      document.getElementById('feat-lagoons-txt').innerText = isAr ? 'كريستال لاجونز' : 'Crystal Lagoons';
+      document.getElementById('feat-spines-txt').innerText = isAr ? 'المساحات الخضراء' : 'Green Spines';
+      document.getElementById('feat-golf-txt').innerText = isAr ? 'ملاعب الجولف' : 'Golf Courses';
+      document.getElementById('feat-club-txt').innerText = isAr ? 'النوادي والخدمات' : 'Clubhouses';
+
+      document.getElementById('tab-inst-btn').innerText = isAr ? 'أقساط' : 'Installments';
+      document.getElementById('tab-roi-btn').innerText = isAr ? 'العائد الاستثماري' : 'ROI & Yield';
+      document.getElementById('tab-life-btn').innerText = isAr ? 'نمط الحياة' : 'Lifestyle';
+
+      document.getElementById('lbl-dp').innerText = isAr ? '10% مقدم تعاقد' : '10% Down Payment';
+      document.getElementById('lbl-qtr').innerText = isAr ? 'القسط الربع سنوي (7 سنوات)' : 'Quarterly (7 Yrs)';
+      document.getElementById('lbl-yield').innerText = isAr ? 'العائد الإيجاري المتوقع' : 'Projected Yield';
+      document.getElementById('lbl-growth').innerText = isAr ? 'نمو رأس المال (5 سنوات)' : '5-Yr Appreciation';
+      document.getElementById('txt-wa').innerText = isAr ? 'حجز موعد معاينة VIP عبر واتساب' : 'Instant WhatsApp Private Viewing';
+
+      renderSubfeatures();
+      renderPropertyMarkers();
+    }
+
+    // Auto-launch on load
+    window.addEventListener('DOMContentLoaded', initMap);
+  </script>
+</body>
+</html>

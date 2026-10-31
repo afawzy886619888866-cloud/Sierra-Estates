@@ -1,7 +1,7 @@
 # Sierra 2027 — API Documentation
 
 **Base URL:** `https://sierra-estates.net` (Production)  
-**Authentication:** `Authorization: Bearer {firebase_token}` + `X-SBR-SECRET-KEY` header  
+**Authentication:** `Authorization: Bearer {supabase_token}` / `sierra_sess` session cookie + `X-SBR-SECRET-KEY` header  
 **Response Format:** JSON
 
 ---

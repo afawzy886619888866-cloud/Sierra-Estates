@@ -16,8 +16,8 @@ let count = 0;
 for (const item of rawReal) {
   const code = item.code || item.id || `SE-${count + 1}`;
   const id = `listing-${code.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`;
-  const compound = item.compound || 'New Cairo';
-  const type = item.type || 'Apartment';
+  const compound = item.compound || '';
+  const type = item.type || '';
 
   await obsidian.set(id, {
     sierraCode: code,
@@ -31,7 +31,7 @@ for (const item of rawReal) {
     currency: 'EGP',
     status: item.status || 'Available',
     mode: item.mode || 'sale',
-    agent: item.agent || 'Sierra Estates Advisor',
+    agent: item.agent || '',
     source: 'Master Owner Google Sheet',
     updatedAt: new Date().toISOString()
   }, [

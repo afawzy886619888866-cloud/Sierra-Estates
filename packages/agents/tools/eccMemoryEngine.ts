@@ -32,7 +32,8 @@ export type EpisodeType =
   | 'objection_handled'
   | 'due_diligence_verified'
   | 'lead_scored'
-  | 'owner_listing_drop';
+  | 'owner_listing_drop'
+  | 'arbitrage_detected';
 
 export interface PriceNormalizationOptions {
   propertyType?: string | null;
@@ -755,12 +756,10 @@ export class EpisodicContextCache {
   private persistAsync(): void {
     try {
       let currentData: Record<string, any> = {};
-      if (fs.existsSync(this.storagePath)) {
-        try {
-          currentData = JSON.parse(fs.readFileSync(this.storagePath, 'utf-8'));
-        } catch {
-          currentData = {};
-        }
+      try {
+        currentData = JSON.parse(fs.readFileSync(this.storagePath, 'utf-8'));
+      } catch {
+        currentData = {};
       }
 
       currentData['ecc_memory'] = {
@@ -772,7 +771,7 @@ export class EpisodicContextCache {
         entities: Object.fromEntries(this.entityGraph.entries()),
       };
 
-      fs.writeFileSync(this.storagePath, JSON.stringify(currentData, null, 2), 'utf-8');
+      fs.writeFileSync(this.storagePath, JSON.stringify(currentData, null, 2), { encoding: 'utf-8', mode: 0o600 });
     } catch {
       // Non-blocking fail-safe in memory
     }
@@ -780,18 +779,21 @@ export class EpisodicContextCache {
 
   private loadFromStorage(): void {
     try {
-      if (fs.existsSync(this.storagePath)) {
-        const raw = fs.readFileSync(this.storagePath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (parsed['ecc_memory']) {
-          const ecc = parsed['ecc_memory'];
-          if (Array.isArray(ecc.recent_episodes)) {
-            this.episodicJournal = ecc.recent_episodes;
-          }
-          if (ecc.entities && typeof ecc.entities === 'object') {
-            for (const [k, v] of Object.entries(ecc.entities)) {
-              this.entityGraph.set(k, v as EntityProfile);
-            }
+      let raw = '';
+      try {
+        raw = fs.readFileSync(this.storagePath, 'utf-8');
+      } catch {
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (parsed['ecc_memory']) {
+        const ecc = parsed['ecc_memory'];
+        if (Array.isArray(ecc.recent_episodes)) {
+          this.episodicJournal = ecc.recent_episodes;
+        }
+        if (ecc.entities && typeof ecc.entities === 'object') {
+          for (const [k, v] of Object.entries(ecc.entities)) {
+            this.entityGraph.set(k, v as EntityProfile);
           }
         }
       }

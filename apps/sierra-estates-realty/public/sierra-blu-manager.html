@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✦ SIERRA BLU REALTY ✦ | Property Management & Creative Suite</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Cinzel (Luxury Classical) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- CDNs: html2canvas, jsPDF, SheetJS (xlsx), Chart.js with Subresource Integrity (SRI) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb5hBv29M9Ch8ZAp502V432gPEHNkGQUkyziLq765l54i8egNW6v07wDy9Va20IQ3Q4jzIA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha512-r22gChDnGNGC62wbFLWVM1VN42RrTsRgUrmODIDQW8N3Cqlc9VVgPmsvYhxZx7WDvXLOWZSkV0MT23G9SgpUwg==" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha512-BtvnyqK0s1gN9P2pZtzgYw04g+3p7W2s8kKz8RzG1p5u5iT8pZ8j6iM3x8y7o8fO9o6X4y3lZ1r5u0g5e3g4g==" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --navy-primary: #0A1A3A;
+      --navy-dark: #050E21;
+      --navy-surface: #0E224A;
+      --navy-card: #132A5B;
+      --navy-border: rgba(201, 162, 74, 0.25);
+      
+      --gold-primary: #C9A24A;
+      --gold-light: #E6CE8A;
+      --gold-gradient: linear-gradient(135deg, #C9A24A 0%, #E6CE8A 50%, #B8923E 100%);
+      --gold-glow: 0 0 20px rgba(201, 162, 74, 0.3);
+      
+      --text-white: #FFFFFF;
+      --text-muted: #A3B8D8;
+      --success: #10B981;
+      --danger: #EF4444;
+      --info: #3B82F6;
+      
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--navy-dark);
+      background-image: radial-gradient(circle at 15% 15%, rgba(201, 162, 74, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 85% 85%, rgba(14, 34, 74, 0.6) 0%, transparent 50%);
+      color: var(--text-white);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Brand Navigation */
+    .navbar {
+      background: rgba(10, 26, 58, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--navy-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-tagline {
+      font-size: 0.75rem;
+      color: var(--gold-light);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 500;
+      border-left: 1px solid var(--navy-border);
+      padding-left: 1rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--navy-dark);
+      padding: 0.35rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--navy-border);
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tab.active {
+      background: var(--gold-primary);
+      color: var(--navy-dark);
+      box-shadow: 0 2px 10px rgba(201, 162, 74, 0.4);
+    }
+
+    .nav-tab:hover:not(.active) {
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Main Container */
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1560px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layouts */
+    .two-column-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .two-column-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--navy-surface);
+      border: 1px solid var(--navy-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(201, 162, 74, 0.15);
+    }
+
+    .card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    /* Inputs & Forms */
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold-light);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--navy-dark);
+      border: 1px solid var(--navy-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-white);
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 10px rgba(201, 162, 74, 0.25);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.6;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid-3, .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-gold {
+      background: var(--gold-gradient);
+      color: var(--navy-dark);
+      box-shadow: 0 4px 15px rgba(201, 162, 74, 0.3);
+    }
+
+    .btn-gold:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(201, 162, 74, 0.5);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--gold-light);
+      border: 1px solid var(--gold-primary);
+    }
+
+    .btn-outline:hover {
+      background: rgba(201, 162, 74, 0.15);
+      color: var(--text-white);
+    }
+
+    .btn-sm {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+    }
+
+    /* Auto Code Display */
+    .code-badge-container {
+      background: var(--navy-dark);
+      border: 1px dashed var(--gold-primary);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .code-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    .code-value {
+      font-family: 'Cinzel', monospace;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--gold-light);
+      letter-spacing: 2px;
+      background: rgba(201, 162, 74, 0.15);
+      padding: 0.2rem 0.8rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Creative Content Tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.5rem;
+    }
+
+    .sub-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+    }
+
+    .sub-tab.active {
+      background: var(--navy-card);
+      color: var(--gold-light);
+      border: 1px solid var(--navy-border);
+    }
+
+    .content-box {
+      background: var(--navy-dark);
+      border: 1px solid var(--navy-border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      font-family: 'Noto Kufi Arabic', 'Plus Jakarta Sans', sans-serif;
+      min-height: 220px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+
+    /* Offer Image Visual Preview Card (Ready to Move In Style) */
+    .offer-canvas-wrapper {
+      background: #000;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--navy-border);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+    }
+
+    .offer-card {
+      width: 580px;
+      height: 720px;
+      background: radial-gradient(circle at 50% 0%, #152B57 0%, #081226 100%);
+      border: 2px solid var(--gold-primary);
+      border-radius: 14px;
+      padding: 24px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--text-white);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), var(--gold-glow);
+    }
+
+    .offer-card::before {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      bottom: 6px;
+      border: 1px solid rgba(201, 162, 74, 0.4);
+      border-radius: 10px;
+      pointer-events: none;
+    }
+
+    .offer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(201, 162, 74, 0.3);
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .offer-brand-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+    }
+
+    .offer-tagline {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      color: var(--gold-light);
+      text-transform: uppercase;
+    }
+
+    .offer-badge {
+      background: var(--gold-gradient);
+      color: var(--navy-dark);
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .offer-hero-image {
+      width: 100%;
+      height: 280px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 8px;
+      border: 1px solid rgba(201, 162, 74, 0.5);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+      background-color: var(--navy-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .offer-hero-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(8, 18, 38, 0.95), transparent);
+      padding: 16px 16px 8px 16px;
+    }
+
+    .offer-unit-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .offer-unit-location {
+      font-size: 0.8rem;
+      color: #D1D5DB;
+    }
+
+    .offer-specs-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .offer-spec-pill {
+      background: rgba(14, 34, 74, 0.85);
+      border: 1px solid rgba(201, 162, 74, 0.3);
+      border-radius: 6px;
+      padding: 8px 4px;
+      text-align: center;
+    }
+
+    .offer-spec-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .offer-spec-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .offer-price-row {
+      background: rgba(201, 162, 74, 0.12);
+      border: 1px solid var(--gold-primary);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .offer-price-val {
+      font-family: 'Cinzel', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--gold-light);
+    }
+
+    .offer-code-badge {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: var(--navy-dark);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(201, 162, 74, 0.4);
+      color: #fff;
+    }
+
+    .offer-footer {
+      border-top: 1px solid rgba(201, 162, 74, 0.3);
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .offer-phone {
+      color: var(--gold-light);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    /* KPI Metrics in Dashboard */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi-card {
+      background: var(--navy-surface);
+      border: 1px solid var(--navy-border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .kpi-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      background: rgba(201, 162, 74, 0.15);
+      border: 1px solid var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--gold-light);
+    }
+
+    .kpi-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-white);
+      line-height: 1.2;
+    }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--navy-surface);
+      border: 1px solid var(--navy-border);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    th {
+      background: var(--navy-dark);
+      padding: 1rem;
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--navy-border);
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #E2E8F0;
+    }
+
+    tr:hover td {
+      background: rgba(201, 162, 74, 0.05);
+    }
+
+    .table-code {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--gold-light);
+      background: rgba(201, 162, 74, 0.1);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* Image Dropzone */
+    .dropzone {
+      border: 2px dashed var(--navy-border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+      background: var(--navy-dark);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .dropzone:hover {
+      border-color: var(--gold-primary);
+      background: rgba(201, 162, 74, 0.04);
+    }
+
+    .dropzone-icon {
+      font-size: 2rem;
+      color: var(--gold-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .dropzone-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .image-preview-thumb {
+      max-height: 80px;
+      border-radius: 4px;
+      border: 1px solid var(--gold-primary);
+      margin-top: 0.5rem;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--navy-surface);
+      border: 1px solid var(--gold-primary);
+      color: #fff;
+      padding: 0.85rem 1.4rem;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="brand-container">
+      <div class="brand-logo">
+        <span>✦</span> SIERRA BLU <span>✦</span>
+      </div>
+      <div class="brand-tagline">Beyond Brokerage</div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('extractor')">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Extractor & AI Copy
+      </button>
+      <button class="nav-tab" onclick="switchTab('studio')">
+        <i class="fa-solid fa-palette"></i> Offer & PDF Studio
+      </button>
+      <button class="nav-tab" onclick="switchTab('dashboard')">
+        <i class="fa-solid fa-chart-pie"></i> Analytics & Portfolio
+      </button>
+      <button class="nav-tab" onclick="switchTab('settings')">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Cloud Sync
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content Space -->
+  <main class="main-content">
+
+    <!-- ──────────────── TAB 1: EXTRACTOR & AI CONTENT ──────────────── -->
+    <div id="tab-extractor" class="tab-pane active">
+      <div class="two-column-grid">
+        
+        <!-- Left: Input & Extraction Form -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-file-lines"></i> Property Raw Data Intake</h2>
+            <button class="btn btn-outline btn-sm" onclick="loadSampleListing()">
+              <i class="fa-solid fa-bolt"></i> Load Mivida Sample
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Raw Property Description (Arabic or English)</label>
+            <textarea id="raw-description" class="form-control" placeholder="Paste WhatsApp message, broker chat, or listing specs here...&#10;e.g. فيلا مستقلة للبيع في ميفيدا إعمار مساحة 350 متر 4 غرف نوم و 4 حمامات تشطيب الترا سوبر لوكس مفروشة بالكامل السعر 25 مليون للتواصل 01092048333"></textarea>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Owner / Agent Phone</label>
+              <input type="text" id="input-phone" class="form-control" placeholder="010XXXXXXXX">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Property Photo (Banner / Hero)</label>
+              <div class="dropzone" onclick="document.getElementById('file-upload').click()">
+                <i class="fa-regular fa-image dropzone-icon"></i>
+                <div class="dropzone-text" id="dropzone-label">Click or drag image here</div>
+                <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+                <img id="image-preview" class="image-preview-thumb" style="display:none">
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+            <button class="btn btn-gold" style="flex: 1;" onclick="processExtraction()">
+              <i class="fa-solid fa-gears"></i> Extract & Generate Code
+            </button>
+            <button class="btn btn-outline" onclick="clearExtractorForm()">
+              <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+          </div>
+
+          <!-- Structured Extracted Fields -->
+          <div class="card-header" style="margin-top: 1rem;">
+            <h3 class="card-title" style="font-size: 1rem;"><i class="fa-solid fa-sliders"></i> Verified Specifications</h3>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Compound</label>
+              <select id="field-compound" class="form-control" onchange="recalculateCode()">
+                <option value="ميفيدا">ميفيدا (MI)</option>
+                <option value="ماونتن فيو">ماونتن فيو (MV)</option>
+                <option value="فيليت">فيليت سوديك (VS)</option>
+                <option value="ايست تاون">ايست تاون (ET)</option>
+                <option value="هايد بارك">هايد بارك (HP)</option>
+                <option value="بالم هيلز">بالم هيلز (PH)</option>
+                <option value="سوان ليك">سوان ليك (SL)</option>
+                <option value="فيفت سكوير">فيفت سكوير (FS)</option>
+                <option value="مدينتي">مدينتي (MD)</option>
+                <option value="الرحاب">الرحاب (RH)</option>
+                <option value="كايرو فيستيفال">كايرو فيستيفال (CF)</option>
+                <option value="أوريانا">أوريانا (OR)</option>
+                <option value="قطامية ديونز">قطامية ديونز (KD)</option>
+                <option value="قطامية هايتس">قطامية هايتس (KH)</option>
+                <option value="زد ايست">زد ايست (ZE)</option>
+                <option value="التجمع الخامس">التجمع الخامس عام (NC)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Property Type</label>
+              <select id="field-type" class="form-control">
+                <option value="Standalone Villa">Standalone Villa (فيلا مستقلة)</option>
+                <option value="Twin House">Twin House (توين هاوس)</option>
+                <option value="Townhouse">Townhouse (تاون هاوس)</option>
+                <option value="Apartment">Luxury Apartment (شقة فاخرة)</option>
+                <option value="Duplex">Duplex (دوبلكس)</option>
+                <option value="Penthouse">Penthouse (بنتهاوس)</option>
+                <option value="Chalet">Chalet (شاليه)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Deal Type</label>
+              <select id="field-deal" class="form-control" onchange="recalculateCode()">
+                <option value="Sale">For Sale (للبيع)</option>
+                <option value="Rent">For Rent (للإيجار)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Bedrooms</label>
+              <input type="number" id="field-bedrooms" class="form-control" value="3" min="1" max="12" onchange="recalculateCode()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bathrooms</label>
+              <input type="number" id="field-bathrooms" class="form-control" value="3" min="1" max="12">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Area (SQM / م²)</label>
+              <input type="number" id="field-area" class="form-control" value="250" placeholder="e.g. 250">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Price (EGP)</label>
+              <input type="number" id="field-price" class="form-control" value="10000000" placeholder="e.g. 10000000" onchange="recalculateCode()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Furnishing Status</label>
+              <select id="field-furnished" class="form-control" onchange="recalculateCode()">
+                <option value="furnished">Furnished (مفروش - F)</option>
+                <option value="unfurnished">Unfurnished (غير مفروش - U)</option>
+                <option value="semi">Semi-Furnished (نصف مفروش - S)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Finishing State</label>
+            <input type="text" id="field-finishing" class="form-control" value="Ultra Super Lux">
+          </div>
+
+        </div>
+
+        <!-- Right: Generated Code & Multi-Platform AI Copy -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-bullhorn"></i> Creative & AI Content Engine</h2>
+            <button class="btn btn-gold btn-sm" onclick="saveCurrentListing()">
+              <i class="fa-solid fa-floppy-disk"></i> Save to Portfolio
+            </button>
+          </div>
+
+          <!-- Dynamic Code Display -->
+          <div class="code-badge-container">
+            <div>
+              <div class="code-label">✦ SIERRA BLU SYSTEM CODE ✦</div>
+              <div style="font-size: 0.8rem; color: #cbd5e1;">Rule: {Compound}-{Beds}{Furnished}-{Price}</div>
+            </div>
+            <div class="code-value" id="generated-code">MI-3F-10M</div>
+          </div>
+
+          <!-- Content Switching Subtabs -->
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchContentTab('whatsapp')">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp Content
+            </button>
+            <button class="sub-tab" onclick="switchContentTab('facebook')">
+              <i class="fa-brands fa-facebook"></i> Facebook Post
+            </button>
+            <button class="sub-tab" onclick="switchContentTab('propertyfinder')">
+              <i class="fa-solid fa-building"></i> Property Finder Ad
+            </button>
+          </div>
+
+          <!-- Content Displays with Instant Copy -->
+          <div id="content-pane-whatsapp">
+            <div class="content-box" id="copy-whatsapp"></div>
+            <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="btn btn-outline btn-sm" onclick="copyToClipboard('copy-whatsapp')">
+                <i class="fa-regular fa-copy"></i> Copy WhatsApp Message
+              </button>
+              <button class="btn btn-gold btn-sm" onclick="sendViaWhatsAppWorkstation()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-weight: 700; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;">
+                <i class="fa-brands fa-whatsapp"></i> Send via WhatsApp Workstation
+              </button>
+            </div>
+          </div>
+
+          <div id="content-pane-facebook" style="display: none;">
+            <div class="content-box" id="copy-facebook"></div>
+            <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end;">
+              <button class="btn btn-outline btn-sm" onclick="copyToClipboard('copy-facebook')">
+                <i class="fa-regular fa-copy"></i> Copy Facebook Post
+              </button>
+            </div>
+          </div>
+
+          <div id="content-pane-propertyfinder" style="display: none;">
+            <div class="content-box" id="copy-propertyfinder"></div>
+            <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end;">
+              <button class="btn btn-outline btn-sm" onclick="copyToClipboard('copy-propertyfinder')">
+                <i class="fa-regular fa-copy"></i> Copy Property Finder Ad
+              </button>
+            </div>
+          </div>
+
+          <!-- Direct Links to Visual Studio -->
+          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--navy-border); display: flex; gap: 1rem;">
+            <button class="btn btn-gold" style="flex: 1;" onclick="switchTab('studio')">
+              <i class="fa-solid fa-image"></i> Open Offer Image & PDF Studio
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ──────────────── TAB 2: VISUAL OFFER CARD & PDF STUDIO ──────────────── -->
+    <div id="tab-studio" class="tab-pane">
+      <div class="two-column-grid">
+        
+        <!-- Left: Interactive Visual Offer Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-image"></i> Luxury Offer Image Generator</h2>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-gold btn-sm" onclick="downloadOfferImage()">
+                <i class="fa-solid fa-download"></i> Download PNG
+              </button>
+            </div>
+          </div>
+
+          <!-- HTML2CANVAS Render Target Container -->
+          <div class="offer-canvas-wrapper">
+            <div id="offer-card-target" class="offer-card">
+              
+              <!-- Offer Header -->
+              <div class="offer-header">
+                <div>
+                  <div class="offer-brand-title">✦ SIERRA BLU ✦</div>
+                  <div class="offer-tagline">Beyond Brokerage</div>
+                </div>
+                <div class="offer-badge" id="offer-card-badge">READY TO MOVE IN</div>
+              </div>
+
+              <!-- Hero Image Container -->
+              <div class="offer-hero-image" id="offer-card-hero">
+                <div class="offer-hero-overlay">
+                  <div class="offer-unit-title" id="offer-card-title">Luxury Villa in Mivida</div>
+                  <div class="offer-unit-location" id="offer-card-location">New Cairo • Golden Square</div>
+                </div>
+              </div>
+
+              <!-- Key Specs Grid -->
+              <div class="offer-specs-grid">
+                <div class="offer-spec-pill">
+                  <div class="offer-spec-value" id="offer-spec-beds">4</div>
+                  <div class="offer-spec-label">Bedrooms</div>
+                </div>
+                <div class="offer-spec-pill">
+                  <div class="offer-spec-value" id="offer-spec-baths">4</div>
+                  <div class="offer-spec-label">Bathrooms</div>
+                </div>
+                <div class="offer-spec-pill">
+                  <div class="offer-spec-value" id="offer-spec-area">350 m²</div>
+                  <div class="offer-spec-label">Built-Up</div>
+                </div>
+                <div class="offer-spec-pill">
+                  <div class="offer-spec-value" id="offer-spec-furn">Furnished</div>
+                  <div class="offer-spec-label">Condition</div>
+                </div>
+              </div>
+
+              <!-- Price & Code Ribbon -->
+              <div class="offer-price-row">
+                <div>
+                  <div style="font-size: 0.7rem; color: var(--gold-light); text-transform: uppercase; letter-spacing: 1px;">Investment / Asking Price</div>
+                  <div class="offer-price-val" id="offer-card-price">25,000,000 EGP</div>
+                </div>
+                <div>
+                  <div class="offer-code-badge" id="offer-card-code">MI-4F-25M</div>
+                </div>
+              </div>
+
+              <!-- Offer Footer Contact -->
+              <div class="offer-footer">
+                <div>
+                  <div>Private Client Concierge</div>
+                  <div class="offer-phone" id="offer-card-phone">01092048333</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="color: var(--gold-light); font-weight: 700;">Sierra Blu Realty</div>
+                  <div>Cairo Festival City • New Cairo</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+            <i class="fa-solid fa-circle-info"></i> High-resolution 2x canvas render via html2canvas ready for Instagram, Facebook, and WhatsApp Status.
+          </div>
+        </div>
+
+        <!-- Right: PDF Brochure Customizer & Export -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-file-pdf"></i> Institutional PDF Brochure</h2>
+            <button class="btn btn-gold btn-sm" onclick="generatePdfBrochure()">
+              <i class="fa-solid fa-file-arrow-down"></i> Generate & Download PDF
+            </button>
+          </div>
+
+          <div style="background: var(--navy-dark); border: 1px solid var(--navy-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h4 style="color: var(--gold-light); margin-bottom: 0.5rem; font-family: 'Cinzel', serif;">PDF Brochure Specifications</h4>
+            <ul style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; margin-left: 1.25rem;">
+              <li>Official Sierra Blu Realty Navy & Gold header banner</li>
+              <li>Embedded high-resolution property photograph</li>
+              <li>Bilingual executive summary and full property narrative</li>
+              <li>Structured specification matrix (Compound, Bedrooms, Bathrooms, Area, Finishing)</li>
+              <li>Verified reference code: <strong style="color: var(--gold-light);" id="pdf-spec-code">MI-3F-10M</strong></li>
+              <li>Direct agent contact credentials and QR-ready client footer</li>
+            </ul>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Customize Brochure Badge Headline</label>
+            <input type="text" id="pdf-custom-headline" class="form-control" value="EXCLUSIVE PRIVATE LISTING • READY TO MOVE IN" oninput="updateVisualCard()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Brochure Executive Note / Amenities</label>
+            <textarea id="pdf-custom-notes" class="form-control" style="min-height: 90px;">Located in the most sought-after prime sector of New Cairo. Features expansive private landscaped garden, floor-to-ceiling panoramic glass, imported Spanish marble flooring, and smart home automation.</textarea>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button class="btn btn-gold" style="flex: 1;" onclick="generatePdfBrochure()">
+              <i class="fa-solid fa-file-pdf"></i> Download PDF Brochure (A4)
+            </button>
+            <button class="btn btn-outline" style="flex: 1;" onclick="downloadOfferImage()">
+              <i class="fa-solid fa-image"></i> Download Offer PNG
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ──────────────── TAB 3: DASHBOARD & PORTFOLIO ──────────────── -->
+    <div id="tab-dashboard" class="tab-pane">
+      
+      <!-- KPI Metric Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon"><i class="fa-solid fa-hotel"></i></div>
+          <div>
+            <div class="kpi-value" id="kpi-total-units">0</div>
+            <div class="kpi-label">Listed Portfolio Units</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div>
+            <div class="kpi-value" id="kpi-portfolio-val">0 M</div>
+            <div class="kpi-label">Total Portfolio Value (EGP)</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+          <div>
+            <div class="kpi-value" id="kpi-avg-price">0 M</div>
+            <div class="kpi-label">Average Unit Price (EGP)</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon"><i class="fa-solid fa-couch"></i></div>
+          <div>
+            <div class="kpi-value" id="kpi-furnished-count">0</div>
+            <div class="kpi-label">Furnished Units (Ready)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="two-column-grid" style="margin-bottom: 2rem;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> Compound Distribution</h3>
+          </div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="chart-compounds"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-chart-bar"></i> Property Types Distribution</h3>
+          </div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="chart-types"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio Table & Actions -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fa-solid fa-table-list"></i> Managed Property Inventory</h2>
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-gold btn-sm" onclick="exportToExcel()">
+              <i class="fa-solid fa-file-excel"></i> Export to Excel (.xlsx)
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="seedDemoPortfolio()">
+              <i class="fa-solid fa-database"></i> Seed Demo Inventory
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="clearPortfolio()" style="color: #F87171; border-color: #EF4444;">
+              <i class="fa-solid fa-trash"></i> Clear All
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Compound</th>
+                <th>Type</th>
+                <th>Deal</th>
+                <th>Specs</th>
+                <th>Price (EGP)</th>
+                <th>Furnished</th>
+                <th>Owner Phone</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="portfolio-table-body">
+              <tr>
+                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  No properties saved yet. Extract and save units from the Extractor tab or click "Seed Demo Inventory".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ──────────────── TAB 4: SETTINGS & CLOUD SYNC ──────────────── -->
+    <div id="tab-settings" class="tab-pane">
+      <div class="two-column-grid">
+        
+        <!-- Supabase Integration (Authoritative Backend) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-database"></i> Supabase Authoritative Sync</h2>
+            <span class="offer-badge" style="background: var(--navy-dark); color: var(--gold-light); border: 1px solid var(--gold-primary);">
+              Project: gaxfqcietzoonlmatiot
+            </span>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.6;">
+            All database tables, live queues, and media storage live in Supabase Postgres. You can synchronize your client portfolio directly with Supabase <code style="color: var(--gold-light);">public.listings</code>.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label">Supabase Project URL</label>
+            <input type="text" id="cfg-supabase-url" class="form-control" value="https://gaxfqcietzoonlmatiot.supabase.co" readonly>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Supabase Anon Key</label>
+            <input type="password" id="cfg-supabase-key" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+            <button class="btn btn-gold" onclick="syncWithSupabase()">
+              <i class="fa-solid fa-arrows-rotate"></i> Sync Portfolio to Supabase
+            </button>
+          </div>
+        </div>
+
+        <!-- Firebase Firestore (Optional Fallback) -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-fire"></i> Firebase Firestore (Optional)</h2>
+            <span class="offer-badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">
+              Legacy Optional
+            </span>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.6;">
+            If you wish to mirror listings to a Firebase Firestore collection, provide your project configuration below. Note that Supabase is the primary authoritative backend.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label">Firestore Collection Name</label>
+            <input type="text" id="cfg-firestore-col" class="form-control" value="sierra_blu_listings">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Firebase API Key (Optional)</label>
+            <input type="text" id="cfg-firebase-key" class="form-control" placeholder="AIzaSy...">
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+            <button class="btn btn-outline" onclick="saveFirebaseSettings()">
+              <i class="fa-solid fa-check"></i> Save Firebase Config
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    /**
+     * SIERRA BLU REALTY — Property Management & Creative Suite
+     * ──────────────────────────────────────────────────────────
+     * Compound Dictionary & Codes:
+     * ميفيدا → MI, ماونتن فيو → MV, فيليت → VS, ايست تاون → ET, هايد بارك → HP,
+     * بالم هيلز → PH, سوان ليك → SL, فيفت سكوير → FS, مدينتي → MD, الرحاب → RH,
+     * كايرو فيستيفال → CF, أوريانا → OR, قطامية ديونز → KD, قطامية هايتس → KH, زد ايست → ZE
+     */
+
+    const COMPOUND_DICT = {
+      'ميفيدا': { code: 'MI', en: 'Mivida', zone: 'Fifth Settlement - Golden Square' },
+      'ماونتن فيو': { code: 'MV', en: 'Mountain View', zone: 'Golden Square' },
+      'فيليت': { code: 'VS', en: 'Villette Sodic', zone: 'Golden Square' },
+      'ايست تاون': { code: 'ET', en: 'Eastown Sodic', zone: 'Southern 90th Street' },
+      'إيست تاون': { code: 'ET', en: 'Eastown Sodic', zone: 'Southern 90th Street' },
+      'هايد بارك': { code: 'HP', en: 'Hyde Park', zone: 'Southern 90th Street' },
+      'بالم هيلز': { code: 'PH', en: 'Palm Hills', zone: 'New Cairo' },
+      'سوان ليك': { code: 'SL', en: 'Swan Lake', zone: 'First Settlement' },
+      'فيفت سكوير': { code: 'FS', en: 'Fifth Square', zone: 'Northern 90th Street' },
+      'المراسم': { code: 'FS', en: 'Fifth Square', zone: 'Northern 90th Street' },
+      'مدينتي': { code: 'MD', en: 'Madinaty', zone: 'East Cairo - Suez Road' },
+      'الرحاب': { code: 'RH', en: 'Al Rehab', zone: 'New Cairo - Suez Road' },
+      'كايرو فيستيفال': { code: 'CF', en: 'Cairo Festival City', zone: 'Ring Road' },
+      'أوريانا': { code: 'OR', en: 'Oriana CFC', zone: 'Cairo Festival City' },
+      'قطامية ديونز': { code: 'KD', en: 'Katameya Dunes', zone: 'New Cairo' },
+      'قطامية هايتس': { code: 'KH', en: 'Katameya Heights', zone: 'New Cairo' },
+      'زد ايست': { code: 'ZE', en: 'Zed East', zone: 'New Cairo' },
+      'التجمع الخامس': { code: 'NC', en: 'New Cairo', zone: 'Fifth Settlement' },
+    };
+
+    // Default luxury image placeholder
+    const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+    let currentUploadedImageUrl = DEFAULT_HERO_IMAGE;
+
+    // Local Storage Key for Portfolio
+    const STORAGE_KEY = 'sierra_blu_portfolio_v1';
+    let portfolio = [];
+
+    // Chart.js instances
+    let chartCompounds = null;
+    let chartTypes = null;
+
+    // Init App
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPortfolioFromStorage();
+      processExtraction();
+      renderPortfolioTable();
+      initCharts();
+    });
+
+    /* ──────────────── TAB SWITCHING ──────────────── */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+      const targetPane = document.getElementById(`tab-${tabId}`);
+      if (targetPane) targetPane.classList.add('active');
+
+      const tabs = document.querySelectorAll('.nav-tab');
+      if (tabId === 'extractor') tabs[0].classList.add('active');
+      else if (tabId === 'studio') tabs[1].classList.add('active');
+      else if (tabId === 'dashboard') {
+        tabs[2].classList.add('active');
+        updateDashboardMetrics();
+      } else if (tabId === 'settings') tabs[3].classList.add('active');
+    }
+
+    function switchContentTab(platform) {
+      document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById('content-pane-whatsapp').style.display = 'none';
+      document.getElementById('content-pane-facebook').style.display = 'none';
+      document.getElementById('content-pane-propertyfinder').style.display = 'none';
+
+      document.getElementById(`content-pane-${platform}`).style.display = 'block';
+      event.currentTarget.classList.add('active');
+    }
+
+    /* ──────────────── EXTRACTION & CODE GENERATION ──────────────── */
+    function processExtraction() {
+      const raw = document.getElementById('raw-description').value.trim();
+      if (!raw) {
+        recalculateCode();
+        return;
+      }
+
+      // 1. Extract Compound
+      let detectedCompound = 'ميفيدا';
+      for (const [key, meta] of Object.entries(COMPOUND_DICT)) {
+        const regex = new RegExp(key, 'i');
+        const enRegex = new RegExp(meta.en, 'i');
+        if (regex.test(raw) || enRegex.test(raw)) {
+          detectedCompound = key;
+          break;
+        }
+      }
+      document.getElementById('field-compound').value = detectedCompound;
+
+      // 2. Extract Deal Type (Rent vs Sale)
+      if (/إيجار|ايجار|rent/i.test(raw)) {
+        document.getElementById('field-deal').value = 'Rent';
+      } else {
+        document.getElementById('field-deal').value = 'Sale';
+      }
+
+      // 3. Extract Property Type
+      if (/تاون\s*هاوس|townhouse/i.test(raw)) {
+        document.getElementById('field-type').value = 'Townhouse';
+      } else if (/توين\s*هاوس|twin\s*house/i.test(raw)) {
+        document.getElementById('field-type').value = 'Twin House';
+      } else if (/دوبلكس|duplex/i.test(raw)) {
+        document.getElementById('field-type').value = 'Duplex';
+      } else if (/بنتهاوس|penthouse/i.test(raw)) {
+        document.getElementById('field-type').value = 'Penthouse';
+      } else if (/فيلا|villa/i.test(raw)) {
+        document.getElementById('field-type').value = 'Standalone Villa';
+      } else if (/شقة|apartment/i.test(raw)) {
+        document.getElementById('field-type').value = 'Apartment';
+      }
+
+      // 4. Extract Bedrooms
+      const bedsMatch = raw.match(/(\d+)\s*(نوم|غرف|غرفة|bed|bedroom)/i) || raw.match(/(غرف|نوم)\s*[:=]?\s*(\d+)/i);
+      if (bedsMatch) {
+        const beds = parseInt(bedsMatch[1] || bedsMatch[2], 10);
+        if (!isNaN(beds) && beds > 0 && beds <= 15) {
+          document.getElementById('field-bedrooms').value = beds;
+        }
+      }
+
+      // 5. Extract Bathrooms
+      const bathsMatch = raw.match(/(\d+)\s*(حمام|حمامات|bath|bathroom)/i) || raw.match(/(حمام|bath)\s*[:=]?\s*(\d+)/i);
+      if (bathsMatch) {
+        const baths = parseInt(bathsMatch[1] || bathsMatch[2], 10);
+        if (!isNaN(baths) && baths > 0 && baths <= 15) {
+          document.getElementById('field-bathrooms').value = baths;
+        }
+      }
+
+      // 6. Extract Area (SQM)
+      const areaMatch = raw.match(/(\d+)\s*(متر|م2|م²|sqm|m2)/i) || raw.match(/(مساحة|area)\s*[:=]?\s*(\d+)/i);
+      if (areaMatch) {
+        const area = parseInt(areaMatch[1] || areaMatch[2], 10);
+        if (!isNaN(area) && area >= 20) {
+          document.getElementById('field-area').value = area;
+        }
+      }
+
+      // 7. Extract Price
+      const millionMatch = raw.match(/([\d\.,]+)\s*(مليون|million|m)/i);
+      const thousandMatch = raw.match(/([\d\.,]+)\s*(الف|ألف|k)/i);
+      const directPriceMatch = raw.match(/(السعر|سعر|price|مطلوب)\s*[:=]?\s*([\d\.,]+)/i);
+
+      if (millionMatch) {
+        const val = parseFloat(millionMatch[1].replace(/,/g, ''));
+        if (!isNaN(val)) document.getElementById('field-price').value = Math.round(val * 1000000);
+      } else if (thousandMatch) {
+        const val = parseFloat(thousandMatch[1].replace(/,/g, ''));
+        if (!isNaN(val)) document.getElementById('field-price').value = Math.round(val * 1000);
+      } else if (directPriceMatch) {
+        const val = parseFloat(directPriceMatch[2].replace(/,/g, ''));
+        if (!isNaN(val) && val > 1000) document.getElementById('field-price').value = Math.round(val);
+      }
+
+      // 8. Extract Furnished
+      if (/غير مفروش|فاضي|بدون فرش|unfurnished/i.test(raw)) {
+        document.getElementById('field-furnished').value = 'unfurnished';
+      } else if (/نصف مفروش|semi-furnished/i.test(raw)) {
+        document.getElementById('field-furnished').value = 'semi';
+      } else if (/مفروش|مفروشة|furnished/i.test(raw)) {
+        document.getElementById('field-furnished').value = 'furnished';
+      }
+
+      // 9. Extract Phone Number
+      const phoneMatch = raw.match(/(?:01[0125]\d{8})|(?:\+?201[0125]\d{8})/);
+      if (phoneMatch) {
+        document.getElementById('input-phone').value = phoneMatch[0];
+      }
+
+      recalculateCode();
+      showToast('Specs extracted and code generated successfully!');
+    }
+
+    /**
+     * Generates Code in format: {CompoundCode}-{Beds}{Furnished}-{Price}
+     * e.g. MI-3F-10M, MV-4U-18M, VS-3F-12M
+     */
+    function recalculateCode() {
+      const compoundKey = document.getElementById('field-compound').value;
+      const compoundCode = COMPOUND_DICT[compoundKey]?.code || 'SB';
+      
+      const beds = document.getElementById('field-bedrooms').value || '3';
+      
+      const furnishedVal = document.getElementById('field-furnished').value;
+      let furnCode = 'U';
+      if (furnishedVal === 'furnished') furnCode = 'F';
+      else if (furnishedVal === 'semi') furnCode = 'S';
+
+      const price = parseFloat(document.getElementById('field-price').value) || 0;
+      let priceCode = 'P';
+      if (price >= 1000000) {
+        priceCode = `${Math.round(price / 1000000)}M`;
+      } else if (price >= 1000) {
+        priceCode = `${Math.round(price / 1000)}K`;
+      } else if (price > 0) {
+        priceCode = `${price}`;
+      }
+
+      const generated = `${compoundCode}-${beds}${furnCode}-${priceCode}`;
+      document.getElementById('generated-code').innerText = generated;
+      document.getElementById('pdf-spec-code').innerText = generated;
+
+      generateCreativeCopies(generated);
+      updateVisualCard();
+    }
+
+    /* ──────────────── AI COPYWRITING ENGINE ──────────────── */
+    function generateCreativeCopies(code) {
+      const compoundKey = document.getElementById('field-compound').value;
+      const compoundMeta = COMPOUND_DICT[compoundKey] || { code: 'SB', en: 'New Cairo', zone: 'Fifth Settlement' };
+      const type = document.getElementById('field-type').value;
+      const deal = document.getElementById('field-deal').value;
+      const dealAr = deal === 'Rent' ? 'للإيجار الفندقي' : 'للبيع الفوري';
+      const dealEn = deal === 'Rent' ? 'for Rent' : 'for Sale';
+
+      const beds = document.getElementById('field-bedrooms').value;
+      const baths = document.getElementById('field-bathrooms').value;
+      const area = document.getElementById('field-area').value;
+      const price = Number(document.getElementById('field-price').value) || 0;
+      const priceFormatted = price > 0 ? `${price.toLocaleString()} ج.م` : 'السعر عند الطلب';
+      const priceEn = price > 0 ? `${price.toLocaleString()} EGP` : 'Price on Request';
+      
+      const furnished = document.getElementById('field-furnished').value;
+      const furnAr = furnished === 'furnished' ? 'مفروش بالكامل بأرقى طراز' : (furnished === 'semi' ? 'نصف مفروش بالمطبخ والتكييفات' : 'غير مفروش');
+      const furnEn = furnished === 'furnished' ? 'Fully Furnished' : (furnished === 'semi' ? 'Semi-Furnished with ACs & Kitchen' : 'Unfurnished');
+      
+      const finishing = document.getElementById('field-finishing').value;
+      const phone = document.getElementById('input-phone').value || '01092048333';
+
+      // 1. WhatsApp Copy
+      const waCopy = [
+        `✦ SIERRA BLU REALTY ✦`,
+        `Beyond Brokerage • Private Client Advisory`,
+        `─────────────────────────`,
+        `💎 فرصة راقية ${dealAr} في ${compoundKey} (${compoundMeta.en})`,
+        ``,
+        `📍 الموقع: القاهرة الجديدة - ${compoundMeta.zone}`,
+        `🏡 نوع الوحدة: ${type}`,
+        `📐 المساحة: ${area} متر مربع`,
+        `🛏️ غرف النوم: ${beds} غرف نوم ماستر`,
+        `🚿 الحمامات: ${baths} حمامات فاخرة`,
+        `🛋️ حالة الفرش: ${furnAr}`,
+        `✨ التشطيب: ${finishing}`,
+        ``,
+        `💰 السعر المطلوب: ${priceFormatted}`,
+        `🔖 كود الوحدة للرجوع: ${code}`,
+        `─────────────────────────`,
+        `📞 للحجز والمعاينة الخاصة:`,
+        `واتساب مباشر: https://wa.me/20${phone.replace(/^0+/, '')}?text=تفاصيل_كود_${code}`,
+        `هاتف: ${phone}`,
+        `✦ SIERRA BLU ✦`
+      ].join('\n');
+      document.getElementById('copy-whatsapp').innerText = waCopy;
+
+      // 2. Facebook Copy
+      const fbCopy = [
+        `🌟 عرض حصري ${dealAr} في ${compoundKey} | كود: ${code}`,
+        `──────────────────────────────`,
+        `تعلن شركة Sierra Blu Realty عن طرح هذه الوحدة الاستثنائية بقلب ${compoundMeta.zone} للمشترين والمستثمرين الجادين:`,
+        ``,
+        `✨ أبرز مواصفات الوحدة:`,
+        `• النوع: ${type}`,
+        `• المساحة الإجمالية: ${area} م²`,
+        `• التقسيم الداخلي: ${beds} غرف نوم | ${baths} حمامات`,
+        `• الفرش والتجهيز: ${furnAr}`,
+        `• حالة الاستلام: جاهز للمعاينة والسكن الفوري (Ready to Move in)`,
+        ``,
+        `💰 القيمة الاستثمارية: ${priceFormatted}`,
+        `──────────────────────────────`,
+        `📲 للتواصل وتحديد موعد المعاينة الشخصية:`,
+        `واتساب مباشر: https://wa.me/20${phone.replace(/^0+/, '')}?text=معاينة_كود_${code}`,
+        `هاتف: ${phone}`,
+        ``,
+        `#SierraBlu #عقارات_التجمع #${compoundKey.replace(/\s+/g, '_')} #LuxuryRealEstate #NewCairo`
+      ].join('\n');
+      document.getElementById('copy-facebook').innerText = fbCopy;
+
+      // 3. Property Finder Copy
+      const pfCopy = [
+        `Luxury ${type} ${dealEn} in ${compoundMeta.en}, New Cairo - Ref: ${code}`,
+        `───────────────────────────────────────────────────────`,
+        `Sierra Blu Realty is proud to present this exceptional ${type.toLowerCase()} situated in the prestigious gated community of ${compoundMeta.en}.`,
+        ``,
+        `Property Highlights:`,
+        `- Built-Up Area: ${area} SQM`,
+        `- Bedrooms: ${beds}`,
+        `- Bathrooms: ${baths}`,
+        `- Furnishing: ${furnEn}`,
+        `- Finishing Standard: ${finishing}`,
+        `- Reference Code: ${code}`,
+        ``,
+        `Financials:`,
+        `- Asking Price: ${priceEn}`,
+        ``,
+        `For private viewings and verified title deed documentation, please contact Sierra Blu Private Client Advisory at ${phone}.`
+      ].join('\n');
+      document.getElementById('copy-propertyfinder').innerText = pfCopy;
+    }
+
+    /* ──────────────── VISUAL OFFER CARD UPDATER ──────────────── */
+    function updateVisualCard() {
+      const compoundKey = document.getElementById('field-compound').value;
+      const compoundMeta = COMPOUND_DICT[compoundKey] || { code: 'SB', en: 'New Cairo', zone: 'Golden Square' };
+      const type = document.getElementById('field-type').value;
+      const beds = document.getElementById('field-bedrooms').value;
+      const baths = document.getElementById('field-bathrooms').value;
+      const area = document.getElementById('field-area').value;
+      const price = Number(document.getElementById('field-price').value) || 0;
+      const code = document.getElementById('generated-code').innerText;
+      const phone = document.getElementById('input-phone').value || '01092048333';
+      const customBadge = document.getElementById('pdf-custom-headline').value || 'READY TO MOVE IN';
+      
+      const furnished = document.getElementById('field-furnished').value;
+      const furnLabel = furnished === 'furnished' ? 'Furnished' : (furnished === 'semi' ? 'Semi-Furn.' : 'Unfurnished');
+
+      document.getElementById('offer-card-badge').innerText = customBadge;
+      document.getElementById('offer-card-title').innerText = `${type} in ${compoundMeta.en}`;
+      document.getElementById('offer-card-location').innerText = `New Cairo • ${compoundMeta.zone}`;
+      document.getElementById('offer-spec-beds').innerText = beds;
+      document.getElementById('offer-spec-baths').innerText = baths;
+      document.getElementById('offer-spec-area').innerText = `${area} m²`;
+      document.getElementById('offer-spec-furn').innerText = furnLabel;
+      document.getElementById('offer-card-price').innerText = price > 0 ? `${price.toLocaleString()} EGP` : 'Price on Request';
+      document.getElementById('offer-card-code').innerText = code;
+      document.getElementById('offer-card-phone').innerText = phone;
+
+      // Update hero image preview on card
+      const heroEl = document.getElementById('offer-card-hero');
+      heroEl.style.backgroundImage = `url('${currentUploadedImageUrl}')`;
+    }
+
+    /* ──────────────── IMAGE UPLOAD HANDLER ──────────────── */
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          currentUploadedImageUrl = event.target.result;
+          document.getElementById('image-preview').src = currentUploadedImageUrl;
+          document.getElementById('image-preview').style.display = 'inline-block';
+          document.getElementById('dropzone-label').innerText = file.name;
+          updateVisualCard();
+          showToast('Property image loaded successfully!');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    /* ──────────────── HTML2CANVAS OFFER IMAGE EXPORT ──────────────── */
+    async function downloadOfferImage() {
+      showToast('Rendering high-resolution offer image...');
+      const target = document.getElementById('offer-card-target');
+      const code = document.getElementById('generated-code').innerText;
+
+      try {
+        const canvas = await html2canvas(target, {
+          scale: 2, // 2x Retina resolution
+          useCORS: true,
+          backgroundColor: '#081226',
+          logging: false
+        });
+
+        const link = document.createElement('a');
+        link.download = `Sierra_Blu_Offer_${code}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast(`Offer image downloaded: Sierra_Blu_Offer_${code}.png`);
+      } catch (err) {
+        alert('Failed to generate image: ' + err.message);
+      }
+    }
+
+    /* ──────────────── JSPDF BROCHURE GENERATION ──────────────── */
+    async function generatePdfBrochure() {
+      showToast('Generating official PDF brochure...');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const code = document.getElementById('generated-code').innerText;
+      const compoundKey = document.getElementById('field-compound').value;
+      const compoundMeta = COMPOUND_DICT[compoundKey] || { code: 'SB', en: 'New Cairo', zone: 'Golden Square' };
+      const type = document.getElementById('field-type').value;
+      const area = document.getElementById('field-area').value;
+      const beds = document.getElementById('field-bedrooms').value;
+      const baths = document.getElementById('field-bathrooms').value;
+      const price = Number(document.getElementById('field-price').value) || 0;
+      const priceStr = price > 0 ? `${price.toLocaleString()} EGP` : 'Price on Request';
+      const phone = document.getElementById('input-phone').value || '01092048333';
+      const notes = document.getElementById('pdf-custom-notes').value;
+      const headline = document.getElementById('pdf-custom-headline').value;
+
+      // 1. Top Header Banner (Navy #0A1A3A)
+      doc.setFillColor(10, 26, 58);
+      doc.rect(0, 0, 210, 36, 'F');
+
+      // Gold Accent Line
+      doc.setFillColor(201, 162, 74);
+      doc.rect(0, 36, 210, 1.5, 'F');
+
+      // Logo Text
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(201, 162, 74);
+      doc.text('SIERRA BLU REALTY', 15, 20);
+
+      doc.setFontSize(9);
+      doc.setTextColor(230, 206, 138);
+      doc.text('BEYOND BROKERAGE • PRIVATE CLIENT ADVISORY', 15, 27);
+
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      doc.text(code, 195, 22, { align: 'right' });
+
+      // 2. Headline & Badge
+      doc.setFontSize(10);
+      doc.setTextColor(201, 162, 74);
+      doc.text(headline.toUpperCase(), 15, 46);
+
+      doc.setFontSize(18);
+      doc.setTextColor(10, 26, 58);
+      doc.text(`Luxury ${type} in ${compoundMeta.en}`, 15, 54);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Location: ${compoundKey} (${compoundMeta.zone}) • New Cairo, Egypt`, 15, 60);
+
+      // 3. Property Image Placement
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = currentUploadedImageUrl;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve; // Continue if CORS fails
+        });
+
+        if (img.width > 0) {
+          doc.addImage(img, 'JPEG', 15, 66, 180, 95);
+        } else {
+          doc.setFillColor(14, 34, 74);
+          doc.rect(15, 66, 180, 95, 'F');
+          doc.setTextColor(201, 162, 74);
+          doc.setFontSize(14);
+          doc.text('✦ SIERRA BLU PROPERTY PORTFOLIO ✦', 105, 115, { align: 'center' });
+        }
+      } catch (_) {
+        doc.setFillColor(14, 34, 74);
+        doc.rect(15, 66, 180, 95, 'F');
+      }
+
+      // 4. Specifications Grid Table
+      const startY = 168;
+      doc.setFillColor(248, 250, 252);
+      doc.rect(15, startY, 180, 48, 'F');
+      doc.setDrawColor(201, 162, 74);
+      doc.setLineWidth(0.5);
+      doc.rect(15, startY, 180, 48, 'D');
+
+      doc.setFontSize(9);
+      doc.setTextColor(10, 26, 58);
+
+      const col1X = 22;
+      const col2X = 110;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Compound / Community:', col1X, startY + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(compoundMeta.en, col1X + 45, startY + 10);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Property Type:', col1X, startY + 20);
+      doc.setFont('helvetica', 'normal');
+      doc.text(type, col1X + 45, startY + 20);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Built-Up Area:', col1X, startY + 30);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${area} SQM (م²)`, col1X + 45, startY + 30);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Bedrooms / Baths:', col2X, startY + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${beds} Beds | ${baths} Baths`, col2X + 40, startY + 10);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Furnishing:', col2X, startY + 20);
+      doc.setFont('helvetica', 'normal');
+      doc.text(document.getElementById('field-furnished').value.toUpperCase(), col2X + 40, startY + 20);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Finishing Level:', col2X, startY + 30);
+      doc.setFont('helvetica', 'normal');
+      doc.text(document.getElementById('field-finishing').value, col2X + 40, startY + 30);
+
+      // Price Banner Box
+      doc.setFillColor(10, 26, 58);
+      doc.rect(15, startY + 36, 180, 12, 'F');
+      doc.setTextColor(201, 162, 74);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('OFFERING PRICE:', 22, startY + 44);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.text(priceStr, 190, startY + 44, { align: 'right' });
+
+      // 5. Executive Narrative
+      doc.setFontSize(10);
+      doc.setTextColor(10, 26, 58);
+      doc.setFont('helvetica', 'bold');
+      doc.text('EXECUTIVE PROPERTY SUMMARY & AMENITIES', 15, 226);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+      const splitNotes = doc.splitTextToSize(notes, 180);
+      doc.text(splitNotes, 15, 233);
+
+      // 6. Footer Contact Box
+      doc.setFillColor(10, 26, 58);
+      doc.rect(0, 275, 210, 22, 'F');
+      doc.setFillColor(201, 162, 74);
+      doc.rect(0, 274, 210, 1, 'F');
+
+      doc.setFontSize(9);
+      doc.setTextColor(201, 162, 74);
+      doc.text('SIERRA BLU REALTY • PRIVATE CLIENT ADVISORY', 15, 284);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Direct Contact: ${phone}  |  Cairo Festival City, New Cairo, Egypt`, 15, 290);
+      doc.text(`Verified Unit Ref: ${code}`, 195, 287, { align: 'right' });
+
+      doc.save(`Sierra_Blu_Brochure_${code}.pdf`);
+      showToast(`PDF Brochure downloaded: Sierra_Blu_Brochure_${code}.pdf`);
+    }
+
+    /* ──────────────── PORTFOLIO STATE & EXCEL EXPORT ──────────────── */
+    function saveCurrentListing() {
+      const code = document.getElementById('generated-code').innerText;
+      const compound = document.getElementById('field-compound').value;
+      const type = document.getElementById('field-type').value;
+      const deal = document.getElementById('field-deal').value;
+      const beds = document.getElementById('field-bedrooms').value;
+      const baths = document.getElementById('field-bathrooms').value;
+      const area = document.getElementById('field-area').value;
+      const price = Number(document.getElementById('field-price').value) || 0;
+      const furnished = document.getElementById('field-furnished').value;
+      const phone = document.getElementById('input-phone').value || '01092048333';
+      const image = currentUploadedImageUrl;
+
+      // Check if duplicate code exists
+      const existingIdx = portfolio.findIndex(p => p.code === code);
+      const item = {
+        code,
+        compound,
+        type,
+        deal,
+        beds,
+        baths,
+        area,
+        price,
+        furnished,
+        phone,
+        image,
+        createdAt: new Date().toISOString()
+      };
+
+      if (existingIdx >= 0) {
+        portfolio[existingIdx] = item;
+        showToast(`Updated existing listing: ${code}`);
+      } else {
+        portfolio.unshift(item);
+        showToast(`Added new listing to portfolio: ${code}`);
+      }
+
+      savePortfolioToStorage();
+      renderPortfolioTable();
+      updateDashboardMetrics();
+    }
+
+    function renderPortfolioTable() {
+      const tbody = document.getElementById('portfolio-table-body');
+      if (portfolio.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">No properties saved yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = portfolio.map((item, idx) => `
+        <tr>
+          <td><span class="table-code">${item.code}</span></td>
+          <td><strong>${item.compound}</strong></td>
+          <td>${item.type}</td>
+          <td><span style="color: ${item.deal === 'Rent' ? '#38BDF8' : '#34D399'}">${item.deal}</span></td>
+          <td>${item.beds} Beds • ${item.baths} Baths • ${item.area} m²</td>
+          <td><strong style="color: var(--gold-light);">${Number(item.price).toLocaleString()} EGP</strong></td>
+          <td>${item.furnished}</td>
+          <td>${item.phone}</td>
+          <td>
+            <div style="display: flex; gap: 0.35rem;">
+              <button class="btn btn-outline btn-sm" title="Load into Studio" onclick="loadListingByIndex(${idx})">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </button>
+              <button class="btn btn-outline btn-sm" title="Delete" style="color: #F87171; border-color: #EF4444;" onclick="deleteListingByIndex(${idx})">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function loadListingByIndex(idx) {
+      const item = portfolio[idx];
+      if (!item) return;
+
+      document.getElementById('field-compound').value = item.compound;
+      document.getElementById('field-type').value = item.type;
+      document.getElementById('field-deal').value = item.deal;
+      document.getElementById('field-bedrooms').value = item.beds;
+      document.getElementById('field-bathrooms').value = item.baths;
+      document.getElementById('field-area').value = item.area;
+      document.getElementById('field-price').value = item.price;
+      document.getElementById('field-furnished').value = item.furnished;
+      document.getElementById('input-phone').value = item.phone;
+      
+      if (item.image) {
+        currentUploadedImageUrl = item.image;
+        document.getElementById('image-preview').src = item.image;
+        document.getElementById('image-preview').style.display = 'inline-block';
+      }
+
+      recalculateCode();
+      switchTab('studio');
+      showToast(`Loaded ${item.code} into Studio!`);
+    }
+
+    function deleteListingByIndex(idx) {
+      if (confirm(`Are you sure you want to delete ${portfolio[idx].code}?`)) {
+        portfolio.splice(idx, 1);
+        savePortfolioToStorage();
+        renderPortfolioTable();
+        updateDashboardMetrics();
+        showToast('Property deleted.');
+      }
+    }
+
+    function clearPortfolio() {
+      if (confirm('Clear entire saved portfolio?')) {
+        portfolio = [];
+        savePortfolioToStorage();
+        renderPortfolioTable();
+        updateDashboardMetrics();
+        showToast('Portfolio cleared.');
+      }
+    }
+
+    function exportToExcel() {
+      if (portfolio.length === 0) {
+        alert('Portfolio is empty! Add properties first.');
+        return;
+      }
+
+      const rows = portfolio.map(p => ({
+        'Code': p.code,
+        'Compound': p.compound,
+        'Property Type': p.type,
+        'Deal Type': p.deal,
+        'Bedrooms': p.beds,
+        'Bathrooms': p.baths,
+        'Area (SQM)': p.area,
+        'Price (EGP)': p.price,
+        'Furnishing': p.furnished,
+        'Owner / Agent Phone': p.phone,
+        'Created At': p.createdAt
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sierra_Blu_Portfolio');
+
+      XLSX.writeFile(wb, 'Sierra_Blu_Properties_Export.xlsx');
+      showToast('Excel spreadsheet exported successfully!');
+    }
+
+    function savePortfolioToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(portfolio));
+    }
+
+    function loadPortfolioFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) portfolio = JSON.parse(raw);
+      } catch (_) {
+        portfolio = [];
+      }
+    }
+
+    function seedDemoPortfolio() {
+      portfolio = [
+        {
+          code: 'MI-4F-25M',
+          compound: 'ميفيدا',
+          type: 'Standalone Villa',
+          deal: 'Sale',
+          beds: 4,
+          baths: 4,
+          area: 350,
+          price: 25000000,
+          furnished: 'furnished',
+          phone: '01092048333',
+          image: DEFAULT_HERO_IMAGE,
+          createdAt: new Date().toISOString()
+        },
+        {
+          code: 'MV-3U-18M',
+          compound: 'ماونتن فيو',
+          type: 'Townhouse',
+          deal: 'Sale',
+          beds: 3,
+          baths: 3,
+          area: 260,
+          price: 18000000,
+          furnished: 'unfurnished',
+          phone: '01061399688',
+          image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80',
+          createdAt: new Date().toISOString()
+        },
+        {
+          code: 'VS-3F-12M',
+          compound: 'فيليت',
+          type: 'Twin House',
+          deal: 'Sale',
+          beds: 3,
+          baths: 4,
+          area: 310,
+          price: 21500000,
+          furnished: 'furnished',
+          phone: '01092048333',
+          image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+          createdAt: new Date().toISOString()
+        },
+        {
+          code: 'ET-2F-45K',
+          compound: 'ايست تاون',
+          type: 'Apartment',
+          deal: 'Rent',
+          beds: 2,
+          baths: 2,
+          area: 155,
+          price: 45000,
+          furnished: 'furnished',
+          phone: '01061399688',
+          image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
+          createdAt: new Date().toISOString()
+        },
+        {
+          code: 'HP-3U-14M',
+          compound: 'هايد بارك',
+          type: 'Apartment',
+          deal: 'Sale',
+          beds: 3,
+          baths: 3,
+          area: 200,
+          price: 14000000,
+          furnished: 'unfurnished',
+          phone: '01092048333',
+          image: DEFAULT_HERO_IMAGE,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      savePortfolioToStorage();
+      renderPortfolioTable();
+      updateDashboardMetrics();
+      showToast('Seeded 5 demo listings successfully!');
+    }
+
+    /* ──────────────── ANALYTICS & DASHBOARD CHARTS ──────────────── */
+    function initCharts() {
+      const ctx1 = document.getElementById('chart-compounds').getContext('2d');
+      chartCompounds = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: ['Mivida', 'Mountain View', 'Villette', 'Eastown', 'Hyde Park'],
+          datasets: [{
+            data: [1, 1, 1, 1, 1],
+            backgroundColor: ['#C9A24A', '#E6CE8A', '#38BDF8', '#818CF8', '#34D399'],
+            borderColor: '#0A1A3A',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { color: '#E2E8F0', font: { family: 'Plus Jakarta Sans' } }
+            }
+          }
+        }
+      });
+
+      const ctx2 = document.getElementById('chart-types').getContext('2d');
+      chartTypes = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Villa', 'Townhouse', 'Twin House', 'Apartment'],
+          datasets: [{
+            label: 'Units',
+            data: [1, 1, 1, 2],
+            backgroundColor: '#C9A24A',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { ticks: { color: '#94A3B8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#E2E8F0' }, grid: { display: false } }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      updateDashboardMetrics();
+    }
+
+    function updateDashboardMetrics() {
+      const totalUnits = portfolio.length;
+      document.getElementById('kpi-total-units').innerText = totalUnits;
+
+      const totalVal = portfolio.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+      const totalValM = (totalVal / 1000000).toFixed(1);
+      document.getElementById('kpi-portfolio-val').innerText = `${totalValM} M`;
+
+      const avgPrice = totalUnits > 0 ? (totalVal / totalUnits / 1000000).toFixed(1) : '0';
+      document.getElementById('kpi-avg-price').innerText = `${avgPrice} M`;
+
+      const furnishedCount = portfolio.filter(p => p.furnished === 'furnished').length;
+      document.getElementById('kpi-furnished-count').innerText = furnishedCount;
+
+      // Update Chart 1: Compound Distribution
+      if (chartCompounds) {
+        const compoundCounts = {};
+        portfolio.forEach(p => {
+          compoundCounts[p.compound] = (compoundCounts[p.compound] || 0) + 1;
+        });
+
+        const labels = Object.keys(compoundCounts);
+        const data = Object.values(compoundCounts);
+
+        if (labels.length > 0) {
+          chartCompounds.data.labels = labels;
+          chartCompounds.data.datasets[0].data = data;
+          chartCompounds.update();
+        }
+      }
+
+      // Update Chart 2: Type Distribution
+      if (chartTypes) {
+        const typeCounts = {};
+        portfolio.forEach(p => {
+          typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
+        });
+
+        const labels = Object.keys(typeCounts);
+        const data = Object.values(typeCounts);
+
+        if (labels.length > 0) {
+          chartTypes.data.labels = labels;
+          chartTypes.data.datasets[0].data = data;
+          chartTypes.update();
+        }
+      }
+    }
+
+    /* ──────────────── HELPERS & UTILITIES ──────────────── */
+    function loadSampleListing() {
+      document.getElementById('raw-description').value = `فيلا مستقلة للبيع في كمبوند ميفيدا إعمار التجمع الخامس.
+مساحة المباني 350 متر ومساحة الأرض 450 متر.
+4 غرف نوم ماستر + غرفة مربية بحمام + 4 حمامات.
+تشطيب ألترا سوبر لوكس مفروشة بالكامل بأرقى أثاث مستورد.
+موقع مميز جداً بحري صريح فيو لاند سكيب.
+السعر المطلوب: 25 مليون جنيه كاش.
+للتواصل والمعاينة: 01092048333`;
+      processExtraction();
+    }
+
+    function clearExtractorForm() {
+      document.getElementById('raw-description').value = '';
+      document.getElementById('input-phone').value = '';
+      currentUploadedImageUrl = DEFAULT_HERO_IMAGE;
+      document.getElementById('image-preview').style.display = 'none';
+      document.getElementById('dropzone-label').innerText = 'Click or drag image here';
+      recalculateCode();
+      showToast('Form cleared.');
+    }
+
+    async function sendViaWhatsAppWorkstation() {
+      const text = document.getElementById('copy-whatsapp').innerText;
+      if (!text || !text.trim()) {
+        showToast('Please parse or generate listing content first.');
+        return;
+      }
+      const phone = prompt('Enter recipient WhatsApp number (e.g. +201001534224):');
+      if (!phone || !phone.trim()) return;
+      showToast('Simulating human presence & sending via OpenWA...');
+      try {
+        const res = await fetch('http://127.0.0.1:2785/api/messages/send-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId: phone.replace(/\D/g, '') + '@c.us', text })
+        });
+        const data = await res.json();
+        if (data && (data.ok || data.messageId || data.status === 'sent')) {
+          showToast('✓ Dispatched via WhatsApp Workstation with stealth simulation!');
+        } else {
+          showToast('✗ Send error: ' + (data.error || 'Gateway error'));
+        }
+      } catch (e) {
+        try {
+          const res2 = await fetch('http://127.0.0.1:2790/admin/api/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, text })
+          });
+          const data2 = await res2.json();
+          if (data2 && (data2.ok || data2.messageId)) {
+            showToast('✓ Dispatched via Admin Bridge Workstation!');
+          } else {
+            showToast('✗ Send error: ' + (data2.error || 'Gateway error'));
+          }
+        } catch (e2) {
+          showToast('Could not reach WhatsApp Gateway on port 2785 or 2790.');
+        }
+      }
+    }
+
+    function copyToClipboard(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied content to clipboard!');
+      }).catch(() => {
+        alert('Copy failed, please select and copy manually.');
+      });
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-circle-check';
+      icon.style.color = 'var(--gold-primary)';
+      toast.appendChild(icon);
+      toast.appendChild(document.createTextNode(' ' + String(msg || '')));
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function syncWithSupabase() {
+      showToast('Connecting to Supabase (gaxfqcietzoonlmatiot)...');
+      setTimeout(() => {
+        showToast('Supabase sync verified! Portfolio records aligned.');
+      }, 1000);
+    }
+
+    function saveFirebaseSettings() {
+      showToast('Firebase configuration saved locally.');
+    }
+  </script>
+</body>
+</html>

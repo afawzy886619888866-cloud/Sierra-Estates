@@ -1,0 +1,12 @@
+node_modules/
+whatsapp-auth/
+.tmp/
+qr_*.png
+.env
+*.log
+
+# managed
+**.data.json
+**.node-persist**
+**_IGNORE_**
+# end managed

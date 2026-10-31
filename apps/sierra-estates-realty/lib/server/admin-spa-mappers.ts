@@ -43,6 +43,15 @@ export function mapLeadToSpa(id: string, data: Record<string, any>) {
     source: data.source || (isPF ? 'property-finder' : 'website'),
     interest: data.notes || data.preferredPropertyType || data.interestedProjectIds?.[0] || (isPF ? `Property Finder Inquiry (${data.notes || 'Inquiry'})` : 'General Inquiry'),
     stage: leadStageToLabel(data.stage || (isPF ? 'inbound' : undefined)),
+    // Command-center additions (additive — the SPA ignores them): the RAW
+    // pipeline_stage (inbound..closed-won) and the 0..100 lead score, read by
+    // /admin/pipeline and /admin/leads.
+    pipelineStage: labelToLeadStage(leadStageToLabel(data.stage || (isPF ? 'inbound' : undefined))),
+    score: typeof data.leadScore === 'number' ? data.leadScore : num0(data.leadScore),
+    aiProfiling: data.aiProfiling ?? null,
+    budgetMax: data.budgetMax ?? null,
+    targetCompound: data.targetCompound ?? data.compound ?? null,
+    channel: data.channel ?? null,
     color: data.color || (isPF ? '#f97316' : undefined),
     hot: data.hot ?? (isPF ? true : (typeof data.aiProfiling?.score === 'number' && data.aiProfiling.score >= 7)),
     archived: data.archived ?? false,
@@ -52,6 +61,12 @@ export function mapLeadToSpa(id: string, data: Record<string, any>) {
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };
+}
+
+/** Numeric columns arrive from Postgres as strings — coerce to a number. */
+function num0(v: unknown): number {
+  const n = typeof v === 'string' ? parseFloat(v) : (v as number);
+  return Number.isFinite(n) ? n : 50;
 }
 
 export function mapSpaToLeadPatch(patch: Record<string, any>) {

@@ -1,5 +1,5 @@
 /**
- * 4-line sender pool — gateway-client.js rotation contract tests.
+ * Multi-line sender pool (4 → 8 lines) — gateway-client.js rotation contract tests.
  *
  * Spins a local stub of the OpenWA gateway:
  *   GET  /api/sessions                       → session registry (name → uuid)
@@ -28,13 +28,24 @@ type Stub = {
   server: http.Server;
   url: string;
   hits: string[]; // "POST <uuid>" / "LIST"
+  registry: { id: string; name: string }[]; // session registry served by GET /api/sessions
   script: (uuid: string, method: string) => { status: number; body: unknown };
 };
 
 function startStub(script: Stub['script']): Promise<Stub> {
   return new Promise((resolve) => {
     const hits: string[] = [];
-    const state = { server: null as unknown as http.Server, url: '', hits, script };
+    const state = {
+      server: null as unknown as http.Server,
+      url: '',
+      hits,
+      registry: [
+        { id: UUID.line1, name: 'line1' },
+        { id: UUID.line2, name: 'line2' },
+        { id: UUID.line3, name: 'line3' },
+      ],
+      script,
+    };
     const server = http.createServer((req, res) => {
       let body = '';
       req.on('data', (d) => (body += d));
@@ -43,11 +54,7 @@ function startStub(script: Stub['script']): Promise<Stub> {
         if (req.url === '/api/sessions' && req.method === 'GET') {
           hits.push('LIST');
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify([
-            { id: UUID.line1, name: 'line1' },
-            { id: UUID.line2, name: 'line2' },
-            { id: UUID.line3, name: 'line3' },
-          ]));
+          res.end(JSON.stringify(state.registry));
           return;
         }
         if (m && req.method === 'GET') {
@@ -100,7 +107,7 @@ function client(pool: string, sessionId = '') {
   });
 }
 
-describe('gateway-client 4-line sender pool', () => {
+describe('gateway-client multi-line sender pool', () => {
   it('resolves pool names to UUIDs and round-robins across healthy sessions', async () => {
     stub.script = (uuid) => OK(uuid);
     const gw = client('line1,line2,line3');
@@ -109,6 +116,26 @@ describe('gateway-client 4-line sender pool', () => {
     const r3 = await gw.sendText('201012345678@c.us', 'hi');
     expect(r1.ok && r2.ok && r3.ok).toBe(true);
     expect([r1.session, r2.session, r3.session]).toEqual(['line1', 'line2', 'line3']);
+  });
+
+  it('rotates across a full 8-line pool (8-line gateway regression)', async () => {
+    stub.script = (uuid) => OK(uuid);
+    stub.registry = Array.from({ length: 8 }, (_, i) => ({
+      id: `${String(i + 1).repeat(8)}-${String(i + 1).repeat(4)}-4${String(i + 1).repeat(3)}-8${String(i + 1).repeat(3)}-${String(i + 1).repeat(12)}`,
+      name: `line-${i + 1}`,
+    }));
+    const gw = client('line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8');
+    const rs = [];
+    for (let i = 0; i < 8; i++) {
+      rs.push(await gw.sendText('201012345678@c.us', 'hi'));
+    }
+    expect(rs.every((r) => r.ok)).toBe(true);
+    expect(rs.map((r) => r.session)).toEqual([
+      'line-1', 'line-2', 'line-3', 'line-4', 'line-5', 'line-6', 'line-7', 'line-8',
+    ]);
+    // 9th send wraps around to the first line (cursor modulo pool size)
+    const r9 = await gw.sendText('201012345678@c.us', 'hi');
+    expect(r9.session).toBe('line-1');
   });
 
   it('benches a 400 "not active" session and the next line takes the send', async () => {

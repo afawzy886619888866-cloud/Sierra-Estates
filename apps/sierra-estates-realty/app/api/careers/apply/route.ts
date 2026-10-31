@@ -18,6 +18,10 @@ const applicationSchema = z.object({
   realEstateKnowledge: z.string().trim().max(120).default(''),
   availability: z.string().trim().max(80).default(''),
   notes: z.string().trim().max(4000).default(''),
+  // Migration 037: optional CV/portfolio link inspected in /admin/applicants.
+  cvUrl: z
+    .union([z.string().trim().url().max(500), z.literal('')])
+    .optional(),
 });
 
 type Application = z.infer<typeof applicationSchema>;
@@ -78,6 +82,7 @@ export async function POST(request: Request) {
       fullName,
       role: _role,
       position,
+      cvUrl,
 
       notes,
       hasVehicle,
@@ -95,6 +100,7 @@ export async function POST(request: Request) {
       biggest_achievements: biggestAchievements,
       expected_salary: expectedSalary,
       real_estate_knowledge: realEstateKnowledge,
+      cv_url: cvUrl || null,
     });
     applicationId = created.id;
     persisted = true;

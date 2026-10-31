@@ -101,7 +101,7 @@ PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--d
 
 ### 4.4 Capacity rule of thumb
 
-Per line budget ≈ 700 MB (engine + browser) + 300 MB process base. Do not run more lines than `RAM − 1.5 GB headroom` supports. For more than 3–4 lines, isolate blast radius with one OpenWA container per line (`infra/openwa/docker-compose.yml` pattern) using `mem_limit` per service instead of scaling a single process.
+Per line budget ≈ 700 MB (engine + browser) + 300 MB process base. Do not run more lines than `RAM − 1.5 GB headroom` supports. For more than 3–4 lines, isolate blast radius with one OpenWA container per line (`infra/openwa/docker-compose.yml` pattern) using `mem_limit` per service instead of scaling a single process. The 8-line production pool (`apps/agents/whatsapp-multi-session`, `line-1`..`line-8`) therefore needs ≈ 8 GB for the engines + ≈ 1.5 GB headroom — budget **10–12 GB RAM** for the gateway host, and keep the staggered spin-up (3 s/line, already built into the worker) so 8 Chromium profiles never launch simultaneously.
 
 ### 4.5 Network exposure (both ports currently answer 0.0.0.0/0)
 

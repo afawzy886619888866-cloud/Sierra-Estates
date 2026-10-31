@@ -1,13 +1,16 @@
 /**
- * SIERRA ESTATES — INVENTORY SNAPSHOT HYGIENE
- * 
- * To keep the git repository weight low and Vercel upload limits healthy,
- * 48MB+ snapshot.json files are no longer tracked in version control.
- * 
- * Instead, they live in Supabase Storage (`inventory-snapshots` bucket).
- * This script runs during the Vercel Build Step (`pnpm prebuild` or similar)
- * to securely pull down the latest canonical snapshot into the build context
- * so Next.js static generation can succeed.
+ * SIERRA ESTATES — INVENTORY SNAPSHOT REFRESH (from Supabase Storage)
+ *
+ * POLICY (2026-10-19 reconciliation): snapshot.json IS deliberately tracked
+ * in git — four routes statically import it and the public map serves it as
+ * the offline fallback on clean checkouts (see the NOTE in .gitignore; the
+ * old "no longer tracked" comment here was superseded by that decision).
+ * scripts/ensure-snapshot.mjs stubs it when absent so builds stay green.
+ *
+ * This script runs during the build to refresh the tracked snapshot with the
+ * latest canonical copy from the Supabase Storage `inventory-snapshots`
+ * bucket when credentials exist, so Next.js static generation serves fresh
+ * inventory.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -18,6 +21,7 @@ import * as path from 'path';
 if (fs.existsSync(path.resolve('.env.local'))) {
   const dotenv = await import('dotenv');
   dotenv.config({ path: '.env.local' });
+  dotenv.config({ path: '.env' });
 }
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -41,9 +45,7 @@ async function syncSnapshot() {
   
   try {
     // Ensure target directory exists
-    if (!fs.existsSync(TARGET_DIR)) {
-      fs.mkdirSync(TARGET_DIR, { recursive: true });
-    }
+    fs.mkdirSync(TARGET_DIR, { recursive: true });
 
     const { data, error } = await supabase
       .storage
@@ -56,10 +58,10 @@ async function syncSnapshot() {
         console.warn(`Static generation may fail if the app expects this file.`);
         // Don't fail the build outright if it's the first time and the bucket is empty,
         // but generate an empty valid JSON to prevent build crashes.
-        if (!fs.existsSync(TARGET_PATH)) {
-          fs.writeFileSync(TARGET_PATH, JSON.stringify({ units: [], lastUpdated: new Date().toISOString() }));
+        try {
+          fs.writeFileSync(TARGET_PATH, JSON.stringify({ units: [], lastUpdated: new Date().toISOString() }), { flag: 'wx' });
           console.log(`[Snapshot Sync] Created empty stub at ${TARGET_PATH}`);
-        }
+        } catch (_) {}
         return;
       }
       throw error;

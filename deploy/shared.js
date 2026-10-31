@@ -233,7 +233,7 @@
     return '' +
     '<nav class="nav" id="main-nav"><div class="wrap">' +
       '<a href="index.html" class="brand">' +
-        '<span class="mark logo"><img src="' + logoSrc() + '" alt="Sierra Estates"/></span>' +
+        '<span class="mark logo"><img class="hzp-brand-logo" src="logo-gold.png" alt="Sierra Estates"/></span>' +
         '<span><b>Sierra Estates</b><small data-i18n="brandSub">' + t('brandSub') + '</small></span>' +
       '</a>' +
       '<div class="menu">' +
@@ -271,7 +271,7 @@
       '<div class="foot-grid">' +
         '<div>' +
           '<a href="index.html" class="brand">' +
-            '<span class="mark logo"><img src="' + logoSrc() + '" alt="Sierra Estates"/></span>' +
+            '<span class="mark logo"><img class="hzp-brand-logo" src="logo-gold.png" alt="Sierra Estates"/></span>' +
             '<span><b>Sierra Estates</b><small data-i18n="brandSub">' + t('brandSub') + '</small></span>' +
           '</a>' +
           '<p class="blurb" data-i18n="footBlurb">' + t('footBlurb') + '</p>' +
@@ -412,6 +412,12 @@
     if (top) top.innerHTML = chromeHTML(active);
     var foot = document.getElementById('site-footer');
     if (foot) foot.innerHTML = footerHTML();
+    var resolvedLogo = logoSrc();
+    if (resolvedLogo) {
+      document.querySelectorAll('.hzp-brand-logo').forEach(function (img) {
+        img.src = resolvedLogo;
+      });
+    }
 
     document.getElementById('theme-toggle').addEventListener('click', function () {
       theme = theme === 'light' ? 'dark' : 'light';

@@ -166,8 +166,15 @@ describe.each(CASES)('$name — fail-closed shared-secret guard', (c) => {
 
     expect(parseMessage).not.toHaveBeenCalled();
     expect(processIncomingMessage).not.toHaveBeenCalled();
-    expect(insertRecordMock).not.toHaveBeenCalled();
     expect(recordHeartbeat).not.toHaveBeenCalled();
+    // The inbound ledger (migration 037) deliberately records rejected calls
+    // to webhook_logs for the /admin/bots ops desk. The fail-closed contract
+    // forbids handler DATA writes: every insertRecord call, if any, must
+    // target webhook_logs only (routes without the ledger make zero calls).
+    const nonLedgerWrites = insertRecordMock.mock.calls.filter(
+      ([table]) => table !== 'webhook_logs',
+    );
+    expect(nonLedgerWrites).toEqual([]);
   });
 
   it('returns 401 for a wrong secret', async () => {
@@ -202,8 +209,15 @@ describe.each(CASES)('$name — fail-closed shared-secret guard', (c) => {
 
     expect(parseMessage).not.toHaveBeenCalled();
     expect(processIncomingMessage).not.toHaveBeenCalled();
-    expect(insertRecordMock).not.toHaveBeenCalled();
     expect(recordHeartbeat).not.toHaveBeenCalled();
+    // The inbound ledger (migration 037) deliberately records rejected calls
+    // to webhook_logs for the /admin/bots ops desk. The fail-closed contract
+    // forbids handler DATA writes: every insertRecord call, if any, must
+    // target webhook_logs only (routes without the ledger make zero calls).
+    const nonLedgerWrites = insertRecordMock.mock.calls.filter(
+      ([table]) => table !== 'webhook_logs',
+    );
+    expect(nonLedgerWrites).toEqual([]);
   });
 
   it('proceeds past the guard with the correct secret', async () => {

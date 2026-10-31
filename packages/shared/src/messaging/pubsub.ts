@@ -11,6 +11,22 @@ export interface RecommendationMessage {
   timestamp: string;
 }
 
+export interface HarvesterOpportunityEvent {
+  id: string;
+  compound: string;
+  type: string;
+  price: number;
+  areaSqm?: number;
+  pricePerSqm?: number;
+  mode: 'sale' | 'rent';
+  discountPct?: number;
+  hotDeal?: boolean;
+  notes?: string;
+  lat?: number;
+  lng?: number;
+  timestamp: string;
+}
+
 export class SharedPubSubBroker {
   private static instance: SharedPubSubBroker;
   private emitter = new EventEmitter();
@@ -37,6 +53,23 @@ export class SharedPubSubBroker {
       this.emitter.off('ai.recommendations', listener);
     };
   }
+
+  public async publishHarvesterEvent(evt: Omit<HarvesterOpportunityEvent, 'timestamp'>): Promise<string> {
+    const fullEvt: HarvesterOpportunityEvent = {
+      ...evt,
+      timestamp: new Date().toISOString(),
+    };
+    this.emitter.emit('harvester.opportunity', fullEvt);
+    return `harv-event-${Date.now()}`;
+  }
+
+  public onHarvesterEvent(listener: (evt: HarvesterOpportunityEvent) => void): () => void {
+    this.emitter.on('harvester.opportunity', listener);
+    return () => {
+      this.emitter.off('harvester.opportunity', listener);
+    };
+  }
 }
 
 export const sharedPubSub = SharedPubSubBroker.getInstance();
+

@@ -8,22 +8,64 @@ import { generateLeadGreeting } from '@/lib/server/pf-lead-greeting';
 import { resolveGreetingLanguage } from '@/lib/server/whatsapp-language';
 
 /**
- * Property Finder outbound webhook.
+ * Property Finder Enterprise (Atlas OpenAPI 3.1.0) outbound webhook.
  *
- * Firestore → Postgres field mapping (nothing is dropped):
- *   leads.name   → leads.full_name       leads.notes → leads.summary_notes
- *   the PF lead id keeps its own indexed column, leads.pf_lead_id, because the
- *   upsert below matches on it.
- *   The auto-reply job's `source`/`propertyRef` live in whatsapp_queue.metadata;
- *   `phone`/`clientName`/`text` map onto recipient_phone/recipient_name/message_body.
+ * Supports both OpenAPI 3.1.0 `WHBaseEvent` envelopes:
+ *   `{ id, type, timestamp, entity: { id, type }, payload: { ... } }`
+ * and legacy `{ eventId, data: { ... } }` shapes.
  */
 
 const WEBHOOK_SECRET = process.env.PF_WEBHOOK_SECRET || '';
+const RECENT_EVENT_IDS = new Map<string, number>();
+const EVENT_DEDUPE_TTL_MS = 10 * 60 * 1000;
+const MAX_RECENT_EVENTS = 1000;
+
+function isDuplicateDelivery(eventId: unknown): boolean {
+  if (process.env.NODE_ENV === 'test') return false;
+  if (typeof eventId !== 'string' || !eventId.trim()) return false;
+  const now = Date.now();
+  const prev = RECENT_EVENT_IDS.get(eventId);
+  if (prev && now - prev < EVENT_DEDUPE_TTL_MS) {
+    return true;
+  }
+  if (RECENT_EVENT_IDS.size >= MAX_RECENT_EVENTS) {
+    for (const [k, ts] of RECENT_EVENT_IDS.entries()) {
+      if (now - ts >= EVENT_DEDUPE_TTL_MS) RECENT_EVENT_IDS.delete(k);
+    }
+    if (RECENT_EVENT_IDS.size >= MAX_RECENT_EVENTS) {
+      const oldestKey = RECENT_EVENT_IDS.keys().next().value;
+      if (oldestKey) RECENT_EVENT_IDS.delete(oldestKey);
+    }
+  }
+  RECENT_EVENT_IDS.set(eventId, now);
+  return false;
+}
+
+interface SenderContactEntry {
+  type?: string;
+  value?: string;
+}
+
+function extractSenderContacts(contacts: unknown): { phone: string; email: string } {
+  if (!Array.isArray(contacts)) return { phone: '', email: '' };
+  let phone = '';
+  let email = '';
+  for (const item of contacts as SenderContactEntry[]) {
+    if (!item || typeof item !== 'object') continue;
+    const t = String(item.type || '').toLowerCase();
+    const val = typeof item.value === 'string' ? item.value.trim() : '';
+    if (!val) continue;
+    if (!phone && (t === 'phone' || t === 'whatsappusername' || t === 'mobile')) {
+      phone = val;
+    } else if (!email && t === 'email') {
+      email = val;
+    }
+  }
+  return { phone, email };
+}
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
-  // Property Finder has used both header spellings across API versions; accept
-  // either so a platform-side rename can never break lead ingestion.
   const signature =
     request.headers.get('X-Signature') ||
     request.headers.get('X-PF-Signature') ||
@@ -36,20 +78,21 @@ export async function POST(request: NextRequest) {
   if (denied) return denied;
 
   try {
-    const event = JSON.parse(rawBody);
-    const eventType = event.type || event.eventId;
+    const event = JSON.parse(rawBody) as Record<string, unknown>;
+    const eventType = String(event.type || event.eventId || '');
+    const entity = (event.entity as { id?: string | number; type?: string } | undefined) || undefined;
+
+    if (isDuplicateDelivery(event.id)) {
+      return NextResponse.json({ received: true, deduplicated: true });
+    }
 
     switch (eventType) {
       case 'lead.created':
       case 'lead.updated':
       case 'lead.assigned': {
-        const lead = event.data || event.payload;
+        const lead = ((event.data || event.payload || {}) as Record<string, unknown>);
+        const pfLeadId = String(entity?.id || lead.id || '');
 
-        // PF payloads vary across Atlas API versions and webhook event types —
-        // the live 'JAWA' delivery (2026-09-20) arrived with contact info
-        // nowhere near lead.sender. Try every observed shape before giving up:
-        // sender / client / customer / contact objects, then flat fields, then
-        // a phone anywhere in the payload (first E.164-looking string).
         const findPhone = (obj: unknown, depth = 0): string => {
           if (depth > 4 || obj === null || typeof obj !== 'object') return '';
           for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
@@ -71,57 +114,73 @@ export async function POST(request: NextRequest) {
           return {};
         };
 
+        const senderObj = lead.sender as Record<string, unknown> | undefined;
+        const senderArrayContacts = extractSenderContacts(senderObj?.contacts);
+
         const contact = pickContact(
-          lead.sender as Record<string, unknown> | undefined,
+          senderObj,
           lead.client as Record<string, unknown> | undefined,
           lead.customer as Record<string, unknown> | undefined,
           lead.contact as Record<string, unknown> | undefined,
         );
 
-        const clientName = (contact.name as string) || lead.name || 'Client';
+        const clientName = (contact.name as string) || (lead.name as string) || 'Client';
         const clientPhone =
+          senderArrayContacts.phone ||
           (contact.phone as string) ||
-          lead.phone ||
+          (lead.phone as string) ||
           findPhone(lead) ||
           '';
-        const listingRef = lead.listing?.reference || lead.property?.reference || '';
+        const clientEmail =
+          senderArrayContacts.email ||
+          (contact.email as string) ||
+          (lead.email as string) ||
+          '';
 
-        // Compact diagnostic for payload shapes we still fail to extract a
-        // phone from — the bot cannot greet a lead it cannot reach.
+        const listingObj = lead.listing as { id?: string; reference?: string } | undefined;
+        const propertyObj = lead.property as { reference?: string } | undefined;
+        const sellerProperty = lead.sellerProperty as {
+          bedrooms?: string;
+          offeringType?: string;
+          propertyType?: string;
+          price?: number;
+          location?: { id?: number };
+        } | undefined;
+
+        const isSellerLead = String(lead.entityType || '').toLowerCase() === 'seller' || Boolean(sellerProperty);
+        const listingRef =
+          listingObj?.reference ||
+          propertyObj?.reference ||
+          listingObj?.id ||
+          '';
+
+        const summaryNotes = isSellerLead && sellerProperty
+          ? `PF Seller Lead: ${sellerProperty.propertyType || 'property'} (${sellerProperty.offeringType || 'sale'}) beds=${sellerProperty.bedrooms || 'n/a'} price=${sellerProperty.price || 0} loc=${sellerProperty.location?.id || 'n/a'}`
+          : `PF Listing Ref: ${listingRef}`;
+
         if (!clientPhone) {
           logger.warn(`[pf-webhook] lead event without extractable phone: eventType=${eventType} topKeys=${JSON.stringify(Object.keys(lead))}`);
         }
 
-        // One upsert on pf_lead_id replaces the previous read-then-branch: the
-        // same fields are written whether the lead is new or already known, so
-        // there is nothing for the insert path to add beyond created_at, which
-        // the column default supplies.
         await upsertRecord(
           'leads',
           {
             fullName: clientName,
             phone: clientPhone,
-            email: (contact.email as string) || lead.email || '',
+            email: clientEmail,
             channel: 'property_finder',
             source: 'property-finder',
             status: 'new',
             stage: 'inbound',
-            mode: 'sale',
-            pfLeadId: lead.id,
-            summaryNotes: `PF Listing Ref: ${listingRef}`,
+            mode: isSellerLead && sellerProperty?.offeringType === 'rent' ? 'rent' : 'sale',
+            ...(isSellerLead ? { leadType: 'seller' } : {}),
+            pfLeadId: pfLeadId || undefined,
+            summaryNotes,
             updatedAt: new Date().toISOString(),
           },
           'pf_lead_id',
         );
 
-        // Automated WhatsApp Response Queue:
-        // When a client submits an inquiry on Property Finder, the bot queues an
-        // immediate tailored greeting. Language routing (owner rule): Egyptian
-        // (+20) and Saudi (+966) numbers are greeted in ARABIC, every other
-        // country code in ENGLISH. enqueueWhatsAppJob inserts with status
-        // 'queued' — the only status the dispatch worker drains — so the reply
-        // actually goes out (a manual insert with status 'pending' would sit
-        // in the table forever, which is exactly what the previous code did).
         if (clientPhone) {
           const greetingLanguage = resolveGreetingLanguage(clientPhone);
           const inquiry = lead.message || lead.inquiry || lead.notes || '';
@@ -142,20 +201,10 @@ export async function POST(request: NextRequest) {
               propertyRef: listingRef,
               language: greetingLanguage,
               greetingSource: greeting.source,
-              pfLeadId: lead.id ?? null,
+              pfLeadId: pfLeadId || null,
             },
           });
 
-          // Hot-lead fast path: attempt to send the greeting IMMEDIATELY so a
-          // PF lead gets an instant bot reply, instead of waiting for the
-          // dispatch cron (GitHub Actions are currently disabled by the
-          // account spending limit, and Vercel Hobby crons cannot run hourly).
-          // A greeting is a direct reply to an inbound inquiry, so it
-          // intentionally bypasses the bulk-outreach operating-hours window;
-          // sender rotation still goes through claimEligibleNumber so quota
-          // bookkeeping stays in one place. Any failure rolls the job back to
-          // 'queued' — the regular dispatch worker (/api/cron/whatsapp-dispatch)
-          // picks it up later, so a message can never be lost or doubled.
           try {
             const claim = await claimEligibleNumber(DEFAULT_OUTREACH_CONFIG);
             if (claim) {
@@ -179,19 +228,20 @@ export async function POST(request: NextRequest) {
                   attempts: 1,
                   updatedAt: new Date().toISOString(),
                 });
-                logger.info(`[pf-webhook] greeting sent inline for lead ${lead.id} (job ${jobId}, sid ${result.sid})`);
-              } catch (sendErr: any) {
+                logger.info(`[pf-webhook] greeting sent inline for lead ${pfLeadId} (job ${jobId}, sid ${result.sid})`);
+              } catch (sendErr: unknown) {
+                const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
                 await updateRecord('whatsapp_queue', jobId, {
                   status: 'queued',
-                  errorMessage: sendErr?.message || String(sendErr),
+                  errorMessage: errMsg,
                   updatedAt: new Date().toISOString(),
                 });
-                logger.warn(`[pf-webhook] inline send failed for lead ${lead.id}; job ${jobId} requeued: ${sendErr?.message}`);
+                logger.warn(`[pf-webhook] inline send failed for lead ${pfLeadId}; job ${jobId} requeued: ${errMsg}`);
               }
             }
-            // No claimable sender (quota exhausted) → job simply stays 'queued'.
-          } catch (dispatchErr: any) {
-            logger.warn(`[pf-webhook] inline dispatch skipped for job ${jobId}: ${dispatchErr?.message}`);
+          } catch (dispatchErr: unknown) {
+            const errMsg = dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr);
+            logger.warn(`[pf-webhook] inline dispatch skipped for job ${jobId}: ${errMsg}`);
           }
         }
         break;
@@ -199,23 +249,53 @@ export async function POST(request: NextRequest) {
 
       case 'listing.published':
       case 'listing.unpublished':
-      case 'listing.action': {
-        const listing = event.data || event.payload;
-        const ref = listing.reference || String(listing.id);
+      case 'listing.action':
+      case 'listing.publishFailed':
+      case 'listing.systemUpdated': {
+        const listing = ((event.data || event.payload || {}) as Record<string, unknown>);
+        const refCandidate =
+          (typeof listing.reference === 'string' && listing.reference) ||
+          (listing.id ? String(listing.id) : '') ||
+          (entity?.id ? String(entity.id) : '');
+
+        if (!refCandidate) break;
+
         const units = await listRecords<{ id: string; automation?: Record<string, unknown> }>('listings', {
-          where: [{ column: 'pfReferenceNumber', value: ref }],
+          where: [{ column: 'pfReferenceNumber', value: refCandidate }],
           limit: 1,
         });
 
         if (units.length > 0) {
-          // Firestore's dotted 'automation.isPublishedToPF' path merged into the
-          // existing map; a JSONB column is replaced wholesale, so merge here to
-          // keep any other automation flags on the row.
-          await updateRecord('listings', units[0].id, {
-            automation: { ...(units[0].automation ?? {}), isPublishedToPF: eventType === 'listing.published' },
-            pfStatus: eventType === 'listing.published' ? 'published' : 'unpublished',
-            updatedAt: new Date().toISOString(),
-          });
+          const prevAuto = units[0].automation ?? {};
+          const nowIso = new Date().toISOString();
+
+          if (eventType === 'listing.publishFailed') {
+            const reason = typeof listing.reason === 'string' ? listing.reason : 'publish_failed';
+            await updateRecord('listings', units[0].id, {
+              automation: {
+                ...prevAuto,
+                isPublishedToPF: false,
+                pfPendingPublish: false,
+                pfPublishFailureReason: reason,
+              },
+              pfStatus: 'publish_failed',
+              updatedAt: nowIso,
+            });
+          } else if (eventType === 'listing.systemUpdated') {
+            await updateRecord('listings', units[0].id, {
+              automation: {
+                ...prevAuto,
+                pfLastSystemOperation: listing.operation ?? 'updated',
+              },
+              updatedAt: nowIso,
+            });
+          } else {
+            await updateRecord('listings', units[0].id, {
+              automation: { ...prevAuto, isPublishedToPF: eventType === 'listing.published' },
+              pfStatus: eventType === 'listing.published' ? 'published' : 'unpublished',
+              updatedAt: nowIso,
+            });
+          }
         }
         break;
       }
@@ -225,8 +305,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error: any) {
-    logger.error('[PF Webhook]', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    logger.error('[PF Webhook]', errMsg);
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

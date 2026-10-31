@@ -91,4 +91,93 @@ describe('Unified Memory Brain Engine RAG (Obsidian + ECC)', () => {
     expect(matches[0].title).toBe('Hyde Park Resale Policy');
     expect(matches[0].content).toContain('transfer fees must be settled');
   });
+
+  // ── 2026-10-19 mandate: durable strategic-goal resolution from the vault ──
+
+  it('resolves the active strategic goal from an ACTIVE mandate note in the vault', () => {
+    fs.writeFileSync(
+      path.join(tempVaultDir, 'Active-Execution-Mandate.md'),
+      `# 🎯 Active Execution Mandate: Owner Acquisition → Verified Inventory\n>\n> **Issued:** 2026-10-19 · **Status:** ACTIVE\n\n## 🧭 Strategic Goal (recovers after any context loss)\n\nOperate the Sierra Estates inventory machine end to end: discover, contact owners, verify, code, sync downstream.\n\n## ⚖️ Operating Rules\n\nNo fabricated data.\n`,
+      'utf-8'
+    );
+
+    const fleet = new MemoryBrainEngine({ vaultDir: tempVaultDir, storePath: tempStorePath });
+    expect(fleet.getActiveGoal()).toBe(
+      'Operate the Sierra Estates inventory machine end to end: discover, contact owners, verify, code, sync downstream.'
+    );
+  });
+
+  it('ignores a mandate note that is not ACTIVE (e.g. completed/archived)', () => {
+    fs.writeFileSync(
+      path.join(tempVaultDir, 'Active-Execution-Mandate.md'),
+      `# 🎯 Active Execution Mandate\n> **Status:** COMPLETED\n\n## 🧭 Strategic Goal (recovers after any context loss)\n\nStale goal text that must NOT drive the fleet.\n`,
+      'utf-8'
+    );
+
+    const fleet = new MemoryBrainEngine({ vaultDir: tempVaultDir, storePath: tempStorePath });
+    expect(fleet.getActiveGoal()).not.toBe('Stale goal text that must NOT drive the fleet.');
+  });
+
+  it('keeps the constructor default when no mandate note exists', () => {
+    const fleet = new MemoryBrainEngine({ vaultDir: tempVaultDir, storePath: tempStorePath });
+    expect(fleet.getActiveGoal()).toBe(
+      'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo'
+    );
+  });
+
+  it('an explicitly pinned goal always wins over the vault note', () => {
+    fs.writeFileSync(
+      path.join(tempVaultDir, 'Active-Execution-Mandate.md'),
+      `# 🎯 Active Execution Mandate\n> **Status:** ACTIVE\n\n## 🧭 Strategic Goal (recovers after any context loss)\n\nVault-derived goal text.\n`,
+      'utf-8'
+    );
+
+    const fleet = new MemoryBrainEngine({
+      vaultDir: tempVaultDir,
+      storePath: tempStorePath,
+      activeGoal: 'Explicit operator override',
+    });
+    expect(fleet.getActiveGoal()).toBe('Explicit operator override');
+  });
+});
+
+// ── 2026-10-19: startup strategic-goal resolver (mandate persistence) ──────
+describe('MemoryBrainEngine — vault goal persistence (2026-10-19)', () => {
+  it('resolves the active goal from the vault Active Execution Plan marker when no explicit goal is given', () => {
+    const vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sierra-vault-goal-'));
+    fs.writeFileSync(
+      path.join(vaultDir, 'Active Execution Plan.md'),
+      '# Active Execution Plan\n\n**Active Strategic Goal:** Run the primary operating loop end-to-end with zero fabricated data.\n',
+      'utf-8'
+    );
+    const brain = new MemoryBrainEngine({
+      vaultDir,
+      storePath: path.join(os.tmpdir(), `sierra-store-goal-${Date.now()}.json`),
+    });
+    expect(brain.getActiveGoal()).toBe('Run the primary operating loop end-to-end with zero fabricated data.');
+  });
+
+  it('an explicit options.activeGoal overrides the vault marker', () => {
+    const vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sierra-vault-goal-2-'));
+    fs.writeFileSync(
+      path.join(vaultDir, 'Active Execution Plan.md'),
+      '**Active Strategic Goal:** vault goal\n',
+      'utf-8'
+    );
+    const brain = new MemoryBrainEngine({
+      vaultDir,
+      storePath: path.join(os.tmpdir(), `sierra-store-goal-2-${Date.now()}.json`),
+      activeGoal: 'explicit goal wins',
+    });
+    expect(brain.getActiveGoal()).toBe('explicit goal wins');
+  });
+
+  it('a vault without the marker falls back to the standing default (never throws)', () => {
+    const vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sierra-vault-goal-3-'));
+    const brain = new MemoryBrainEngine({
+      vaultDir,
+      storePath: path.join(os.tmpdir(), `sierra-store-goal-3-${Date.now()}.json`),
+    });
+    expect(brain.getActiveGoal()).toContain('deterministic closure in New Cairo');
+  });
 });

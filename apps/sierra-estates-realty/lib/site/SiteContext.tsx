@@ -20,20 +20,32 @@ interface SiteState {
 
 const SiteCtx = createContext<SiteState | null>(null);
 
-export function SiteProvider({ children }: { children: React.ReactNode }) {
+export function SiteProvider({
+  children,
+  defaultTheme = 'dark',
+}: {
+  children: React.ReactNode;
+  defaultTheme?: Theme;
+}) {
   const [lang, setLang] = useState<Lang>('en');
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
 
   // Read persisted theme/language before the browser paints so users with a
-  // saved dark mode or Arabic preference never see a light/English flash on load.
-  // useLayoutEffect (rather than useEffect) runs synchronously before paint,
-  // while keeping the initial state at the server-rendered defaults to avoid a
-  // React hydration mismatch on the client-provided text.
+  // saved dark mode or Arabic preference never see a flash on load.
+  // Defaults strictly to Obsidian Quiet Luxury ("dark").
   useLayoutEffect(() => {
     const storedLang = window.localStorage.getItem('hzp-lang');
     const storedTheme = window.localStorage.getItem('hzp-theme');
     if (storedLang === 'ar' || storedLang === 'en') setLang(storedLang);
-    if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
+    // Force Obsidian Quiet Luxury dark mode as the strict default for all sessions
+    if (storedTheme === 'dark') {
+      setTheme('dark');
+    } else {
+      setTheme('dark');
+      try {
+        window.localStorage.setItem('hzp-theme', 'dark');
+      } catch {}
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -76,7 +88,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
 
 const defaultSiteState: SiteState = {
   lang: 'en',
-  theme: 'light',
+  theme: 'dark',
   isAr: false,
   t: (key: string) => (I18N.en as Record<string, string>)?.[key] ?? key,
   toggleLang: () => {},

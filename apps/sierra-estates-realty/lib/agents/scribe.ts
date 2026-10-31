@@ -17,19 +17,20 @@ export const runScribe = async (
   collection: keyof typeof COLLECTIONS,
   stage: OrchestrationStage
 ) => {
+  const safeDocId = String(docId || '').replace(/[\r\n]/g, '');
   return instrumentAgent('scribe', stage, docId, async () => {
     // Verify document exists
     const doc = await StateManager.getDocument(docId, collection);
-    if (!doc) throw new Error(`Document ${docId} not found`);
+    if (!doc) throw new Error(`Document ${safeDocId} not found`);
 
     if (stage === 'S1') {
-      console.log(`[SCRIBE] S1: Raw Data Intake for ${docId}`);
+      console.log(`[SCRIBE] S1: Raw Data Intake for ${safeDocId}`);
       // In production, S1 handles deduplication and initial validation
       await StateManager.completeStage(docId, collection, 'S2');
     }
 
     if (stage === 'S2') {
-      console.log(`[SCRIBE] S2: Logical Normalization for ${docId}`);
+      console.log(`[SCRIBE] S2: Logical Normalization for ${safeDocId}`);
 
       const rawText = doc?.rawMessage || doc?.description || JSON.stringify(doc || {});
 

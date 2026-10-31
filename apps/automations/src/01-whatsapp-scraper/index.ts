@@ -35,9 +35,11 @@ export async function processIncomingWhatsAppWebhook(payload: any): Promise<Webh
 
   // Idempotency: compute unique key for this message
   const idempotencyKey = rawId ? `wa-msg:${rawId}` : `wa-hash:${IdempotencyCache.hashPayload({ sender, messageBody })}`;
+  const safeKey = String(idempotencyKey || '').replace(/[\r\n]/g, '');
+  const safeSender = String(sender || '').replace(/[\r\n]/g, '');
 
   if (globalIdempotencyCache.isDuplicate(idempotencyKey)) {
-    console.log(`[WhatsApp Scraper] Duplicate message skipped: ${idempotencyKey}`);
+    console.log(`[WhatsApp Scraper] Duplicate message skipped: ${safeKey}`);
     return { status: 'duplicate_skipped', messageId: idempotencyKey };
   }
 
@@ -59,7 +61,7 @@ export async function processIncomingWhatsAppWebhook(payload: any): Promise<Webh
     await withBoundedRetry(
       async (attempt) => {
         if (attempt > 0) {
-          console.log(`[WhatsApp Scraper] Retrying broker_listings insert (attempt ${attempt}) for ${sender}`);
+          console.log(`[WhatsApp Scraper] Retrying broker_listings insert (attempt ${attempt}) for ${safeSender}`);
         }
         return await insertRecord('broker_listings', {
           senderInfo: sender,
@@ -79,7 +81,7 @@ export async function processIncomingWhatsAppWebhook(payload: any): Promise<Webh
     );
 
     globalIdempotencyCache.markProcessed(idempotencyKey);
-    console.log(`[WhatsApp Scraper] Lead captured from ${sender} (Key: ${idempotencyKey})`);
+    console.log(`[WhatsApp Scraper] Lead captured from ${safeSender} (Key: ${safeKey})`);
     return { status: 'ok', messageId: idempotencyKey, leadCaptured: true };
   } catch (error: unknown) {
     const classified = classifyError(error);

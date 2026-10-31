@@ -4,7 +4,7 @@ import { initializeMCPServers } from '@/lib/mcp-registry';
 import {
   TOOL_DEFINITIONS,
   getToolJsonSchema,
-  validateAndAuthorizeTool,
+  checkToolExecutionScope,
 } from '@/lib/mcp/tool-bridge';
 import { logger } from '@/lib/logger';
 
@@ -246,7 +246,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const check = validateAndAuthorizeTool(toolName, toolArgs, auth.token?.scope || 'mcp:read');
+    const check = checkToolExecutionScope(toolName, toolArgs, auth.token?.scope || 'mcp:read');
 
     // 1. Tool not found
     if (!check.tool) {

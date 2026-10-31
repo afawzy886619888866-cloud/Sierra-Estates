@@ -36,11 +36,17 @@ describe('Admin Page & Portal Architecture Test Suite', () => {
   });
 
   describe('Admin Role-Based Access Control (RBAC)', () => {
-    it('allows an owner role into the staff portal but not an unapproved role', () => {
+    it('allows an owner role into the staff portal; viewer is admitted read-only (3.0), customers are not', () => {
       expect(isAdminPortalRole('owner')).toBe(true);
       expect(isAdminPortalRole('Owner')).toBe(true);
-      expect(isAdminPortalRole('viewer')).toBe(false);
+      // Sierra Estates 3.0: approved viewer accounts enter the portal in
+      // READ-ONLY mode — permission-driven nav filtering
+      // (lib/admin-nav-access.ts) plus server-side default-deny on every
+      // mutating API (see ADMIN_PORTAL_ROLES comment in lib/types.ts).
+      expect(isAdminPortalRole('viewer')).toBe(true);
+      // Genuinely unapproved roles stay out.
       expect(isAdminPortalRole('customer')).toBe(false);
+      expect(isAdminPortalRole('guest')).toBe(false);
     });
 
     it('defines consistent ADMIN_CONSOLE_ROLES admitting manager, admin, superadmin', () => {

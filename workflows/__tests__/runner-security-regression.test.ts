@@ -37,7 +37,12 @@ describe('runner.js — control-plane security contract (P0 2.1–2.3)', () => {
 
   it('2.1: the API key comparison is timing-safe', () => {
     expect(runnerSource).toContain('crypto.timingSafeEqual');
-    expect(runnerSource).toMatch(/createHash\('sha256'\)/);
+    // 2026-10-27: the fixed-length digest is derived with scryptSync
+    // (CodeQL insufficient-password-hash remediation, commit 2cdbd531)
+    // instead of createHash('sha256') — the timing-safe comparison
+    // contract is unchanged, only the KDF mechanism moved.
+    expect(runnerSource).toMatch(/scryptSync\(/);
+    expect(runnerSource).not.toMatch(/createHash\('sha256'\)/);
   });
 
   it('2.1: a non-loopback bind without an API key refuses to start', () => {

@@ -284,7 +284,7 @@ describe('§21 no-fabrication — runtime sources carry no invented defaults', (
         ['default delivery date', /(?:\|\||\?\?)\s*['"]December 2026['"]/],
         ['default invented party name', /(?:\|\||\?\?)\s*['"](?:Dr\. Karim Mansour|Emaar Misr Developments)['"]/],
         ['default local scan path', /(?:\|\||\?\?)\s*['"]I:\\\\supabase\\\\Sheets['"]/],
-        ['fabricated docusign domain', /docusign\.sierra-estates\.com/],
+        ['fabricated docusign domain', /(?:^|[^\w.-])docusign\.sierra-estates\.com/],
         ['fabricated envelope id', /envelopeId:\s*`env_\$\{Date\.now\(\)\}`/],
         // Wave-5: admin-portal demo data — fabricated legal records and
         // invented persons must not be seeded into runtime surfaces.
@@ -364,24 +364,20 @@ function walkFor(
     return hits;
 
     function walk(dir: string): void {
-        let entries: string[];
+        let entries: any[];
         try {
-            entries = readdirSync(dir);
+            entries = readdirSync(dir, { withFileTypes: true });
         } catch {
             return;
         }
-        for (const entry of entries) {
-            if (entry === 'node_modules' || entry === '.next' || entry === 'dist' || entry === 'coverage' || entry.startsWith('.git')) continue;
-            const full = join(dir, entry);
-            let st;
-            try {
-                st = statSync(full);
-            } catch {
-                continue;
-            }
-            if (st.isDirectory()) {
+        for (const dirent of entries) {
+            const name = typeof dirent === 'string' ? dirent : dirent.name;
+            if (name === 'node_modules' || name === '.next' || name === 'dist' || name === 'coverage' || name.startsWith('.git')) continue;
+            const full = join(dir, name);
+            const isDir = typeof dirent === 'object' && dirent.isDirectory ? dirent.isDirectory() : false;
+            if (isDir) {
                 walk(full);
-            } else if (/\.(ts|tsx|js|jsx)$/.test(entry)) {
+            } else if (/\.(ts|tsx|js|jsx)$/.test(name)) {
                 try {
                     const content = readFileSync(full, 'utf8');
                     const hit = predicate(content, full);

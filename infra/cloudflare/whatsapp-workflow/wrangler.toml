@@ -1,0 +1,24 @@
+name = "sierra-whatsapp-workflow"
+main = "src/index.ts"
+compatibility_date = "2024-04-01"
+
+# Scheduled Cron Trigger: Runs every 30 mins during Cairo business hours (10:00 - 20:00 Cairo = 08:00 - 18:00 UTC)
+[triggers]
+crons = ["*/30 8-18 * * *"]
+
+[vars]
+SUPABASE_URL = "https://gaxfqcietzoonlmatiot.supabase.co"
+SHEET_ID = "1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk"
+SHEET_GID = "1127958606"
+ACTIVE_HOURS_START = "10"
+ACTIVE_HOURS_END = "20"
+TIMEZONE = "Africa/Cairo"
+BATCH_SIZE = "25"
+DAILY_CAP = "80"
+# Set this to your Cloudflare Tunnel URL or Gateway URL (e.g. https://whatsapp-gw.sierra-estates.com)
+WHATSAPP_API_URL = "http://127.0.0.1:2785"
+OPENWA_SESSION_ID = "session-default"
+
+# Secrets (Set via: npx wrangler secret put <NAME>)
+# SUPABASE_SERVICE_ROLE_KEY
+# WHATSAPP_API_TOKEN

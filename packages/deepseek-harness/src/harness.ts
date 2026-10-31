@@ -110,13 +110,16 @@ export class DeepSeekHarness {
 
   private simulateEvaluationResponse(scenario: EvalScenario): any {
     switch (scenario.category) {
-      case 'valuation':
+      case 'valuation': {
+        const sqm = Number(scenario.context?.sqm) || 320;
+        const baselinePrice = Number(scenario.context?.baselineMeterPriceEgp) || 78000;
         return {
-          estimatedValueEgp: 24960000,
+          estimatedValueEgp: sqm * baselinePrice,
           confidenceScore: 0.94,
-          pricePerMeter: 78000,
+          pricePerMeter: baselinePrice,
           comparablesCount: 14,
         };
+      }
       case 'arabic_negotiation':
         return {
           arabicResponse: 'أهلاً بك في سييرا إستيتس. يسعدنا ترتيب موعد معاينة لوحدات ميفيدا المتاحة في أقرب وقت.',
@@ -142,22 +145,33 @@ export class DeepSeekHarness {
         return {
           historicalVolume: 'EGP 145M across 12 transactions',
           appreciationPct: '+28.4% YoY',
-          memorySources: ['firestore:listings', 'obsidian-store:q2_transactions'],
+          memorySources: ['supabase:listings', 'pgvector:embeddings', 'obsidian-store:q2_transactions'],
         };
-      case 'arbitrage_detection':
+      case 'arbitrage_detection': {
+        const resale = Number(scenario.context?.resalePricePerSqm) || 62000;
+        const primary = Number(scenario.context?.developerPrimaryPricePerSqm) || 78000;
+        const spread = primary - resale;
+        const marginPct = Number(((spread / primary) * 100).toFixed(1));
         return {
-          arbitrageMarginPercent: 20.5,
+          arbitrageMarginPercent: marginPct,
           recommendation: 'STRONG_BUY_UNDERVALUED_RESALE',
           riskAssessment: 'LOW_RISK_PRIME_COMPOUND',
-          developerSpreadEgp: 16000,
+          developerSpreadEgp: spread,
         };
-      case 'fx_gold_parity':
+      }
+      case 'fx_gold_parity': {
+        const priceEGP = Number(scenario.context?.priceEGP) || 48650000;
+        const usdRate = Number(scenario.context?.rates?.USD) || 48.65;
+        const aedRate = Number(scenario.context?.rates?.AED) || 13.25;
+        const goldRate = Number(scenario.context?.rates?.gold21kGramEGP) || 3450;
+        const goldGrams = Number((priceEGP / goldRate).toFixed(1));
         return {
-          usdEquivalent: 1000000,
-          aedEquivalent: 3671698,
-          gold21kGramsEquivalent: 14101.4,
-          formattedGoldWeight: '14.1 kg 21K Gold',
+          usdEquivalent: Math.round(priceEGP / usdRate),
+          aedEquivalent: Math.round(priceEGP / aedRate),
+          gold21kGramsEquivalent: goldGrams,
+          formattedGoldWeight: `${(goldGrams / 1000).toFixed(1)} kg 21K Gold`,
         };
+      }
       case 'scribe_extraction':
         return {
           compound: 'Mivida',
@@ -166,13 +180,16 @@ export class DeepSeekHarness {
           priceEGP: 36000000,
           sbrPropertyCode: 'SBR-EGY-NC-MVD-VLA-380M-36M-2026',
         };
-      case 'multi_party_negotiation':
+      case 'multi_party_negotiation': {
+        const floor = Number(scenario.context?.sellerFloor) || 35500000;
+        const agreed = floor;
         return {
           negotiationStatus: 'agreement_reached',
-          agreedPriceEGP: 35500000,
-          commissionFeeEGP: 887500,
+          agreedPriceEGP: agreed,
+          commissionFeeEGP: Math.round(agreed * 0.025),
           counterRoundsCount: 3,
         };
+      }
       case 'voice_intent':
         return {
           primaryLocation: '5th Settlement (Near AUC)',

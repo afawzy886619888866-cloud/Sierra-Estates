@@ -23,7 +23,7 @@
         "./packages/exchange/exchange-client.ts"
       ],
       "@sierra-estates/agents": [
-        "./packages/agents/index.ts"
+        "./packages/agents/src/index.ts"
       ],
       "@sierra-estates/agents-core": [
         "./packages/agents-core/src/index.ts"
@@ -36,6 +36,9 @@
       ],
       "@sierra-estates/db": [
         "./packages/db/lib/index.ts"
+      ],
+      "@sierra-estates/deepseek-harness": [
+        "./packages/deepseek-harness/src/index.ts"
       ]
     }
   },

@@ -1,6 +1,6 @@
 ---
 name: evaluate
-description: "Run MCD EVALUATE command for Sierra"
+description: "Run MCD EVALUATE command for ierra"
 ---
 
 # EVALUATE
@@ -8,7 +8,7 @@ description: "Run MCD EVALUATE command for Sierra"
 This workflow invokes the canonical MCD EVALUATE command.
 
 1. Read the command instructions:
-[EVALUATE.md](../../.amphion/control-plane/mcd/EVALUATE.md)
+[EVALUATE.md](file:///${projectRoot}/.amphion/control-plane/mcd/EVALUATE.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

@@ -46,21 +46,21 @@ export class InstallmentCalculator {
     let maintenancePercent = 8;
 
     // 1. Down payment detection (مقدم / down payment)
-    const downMatch = text.match(/(?:مقدم|down(?: payment)?)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*%/i) ||
-                      text.match(/(\d+(?:\.\d+)?)\s*%\s*(?:مقدم|down)/i);
+    const downMatch = text.match(/(?:مقدم|down(?: payment)?)\s*(?:[:=]\s*)?([0-9]{1,3}(?:\.[0-9]{1,2})?)\s*%/i) ||
+                      text.match(/([0-9]{1,3}(?:\.[0-9]{1,2})?)\s*%\s*(?:مقدم|down)/i);
     if (downMatch && downMatch[1]) {
       downPaymentPercent = parseFloat(downMatch[1]);
     }
 
     // 2. Installment tenure detection (سنين / سنوات / years)
-    const tenureMatch = text.match(/(?:على|over|up to)\s*(\d+)\s*(?:سنين|سنوات|سنة|years?)/i) ||
-                        text.match(/(\d+)\s*(?:سنين|سنوات|سنة|years?)\s*(?:اقساط|تقسيط|installments)/i);
+    const tenureMatch = text.match(/(?:على|over|up to)\s*([0-9]{1,2})\s*(?:سنين|سنوات|سنة|years?)/i) ||
+                        text.match(/([0-9]{1,2})\s*(?:سنين|سنوات|سنة|years?)\s*(?:اقساط|تقسيط|installments)/i);
     if (tenureMatch && tenureMatch[1]) {
       tenureYears = parseInt(tenureMatch[1], 10);
     }
 
     // 3. Delivery year detection (استلام / delivery)
-    const deliveryMatch = text.match(/(?:استلام|delivery)\s*[:=]?\s*(202[4-9]|203[0-5]|فورى|immediate)/i);
+    const deliveryMatch = text.match(/(?:استلام|delivery)\s*(?:[:=]\s*)?(202[4-9]|203[0-5]|فورى|immediate)/i);
     if (deliveryMatch && deliveryMatch[1]) {
       if (/فورى|immediate/i.test(deliveryMatch[1])) {
         deliveryYear = new Date().getFullYear();
@@ -70,7 +70,7 @@ export class InstallmentCalculator {
     }
 
     // 4. Maintenance detection (صيانة / maintenance)
-    const maintMatch = text.match(/(?:صيانة|وديعة|maintenance)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*%/i);
+    const maintMatch = text.match(/(?:صيانة|وديعة|maintenance)\s*(?:[:=]\s*)?([0-9]{1,3}(?:\.[0-9]{1,2})?)\s*%/i);
     if (maintMatch && maintMatch[1]) {
       maintenancePercent = parseFloat(maintMatch[1]);
     }

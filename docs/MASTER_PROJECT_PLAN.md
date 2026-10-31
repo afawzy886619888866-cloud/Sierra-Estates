@@ -12,8 +12,9 @@
 - **Dual-Domain Frontend**: Next.js 16 (App Router) serving the buyer client experience at `https://sierra-estates.net` and the administrative command deck at `https://admin.sierra-estates.net`.
 - **7-Layer Autonomous Agent Fleet**: Coordinated AI agents (Matchmaker, Closer, Valuation Scorer, Concierge, Voice Transcriber, Legal Contract Generator, Orchestrator).
 - **Shared Memory Brain Engine**: A unified RAG engine fusing the **Obsidian Knowledge Vault** (`docs/obsidian-vault/`) and the **Episodic Context Cache (ECC)** for fleet-wide active goal alignment.
-- **Real-Time Omnichannel Gateway**: OpenWA WhatsApp Gateway and n8n engine hosted on dedicated AWS EC2 (`18.232.148.172`), enforcing strict owner privacy via fallback to helpline `+201092048333`.
+- **Real-Time Omnichannel Gateway**: OpenWA WhatsApp Multi-Session Gateway (`:2785`, 4 lines) paired with Workflow Runner (`:2786`, 10 automated workflows), enforcing strict owner privacy via fallback to helpline `+201092048333`.
 - **Spatial Intelligence Masterplan Engine**: Interactive Leaflet map featuring precision GPS bounding polygons and subfeatures (Crystal Lagoons, Green Spines, Golf Courses) for all 18 top New Cairo compounds.
+- **Repository Automation & Workflow Master Plan**: Authoritative specification at [docs/REPOSITORY_AUTOMATION_AND_WORKFLOW_PLAN.md](REPOSITORY_AUTOMATION_AND_WORKFLOW_PLAN.md).
 
 ---
 
@@ -34,6 +35,7 @@ timeline
     Milestone M10 : Remote MCP Endpoint with OAuth 2.1 Authorization (Completed)
     Milestone M11 : Worker Orchestration Hardening & MemoryBrainEngine RAG (Completed)
     Milestone M12 : Realtime Voice Briefings & Video Tours (Active / In Planning)
+    Milestone M13 : Master Ingestion V3, Rent-First Outreach & Chat Learning (Completed)
 ```
 
 ### Detailed Milestone Breakdown
@@ -50,6 +52,7 @@ timeline
 | **M10** | **Remote MCP & OAuth 2.1 Server** | Streamable-HTTP MCP endpoint, RFC 7591 dynamic registration, PKCE flow | ✅ **Completed** |
 | **M11** | **Worker Reliability & MemoryBrainEngine** | Bounded retries, error classification, deduplication cache, Obsidian + ECC RAG | ✅ **Completed** |
 | **M12** | **Voice Briefings & Automated Video Tours** | Realtime WebRTC audio briefings, video teaser synthesis, self-healing telemetry | 🟡 **In Planning** |
+| **M13** | **Master Ingestion V3 & Rent Outreach** | Google Sheet v3 1-click organizer, 6 dropdown menus, clean Excel workbook, Rent-First owner verification, missing info inquiries & WhatsApp chat learning engine | ✅ **Completed** |
 
 ---
 
@@ -62,31 +65,35 @@ flowchart TD
         LP["Lead Inquiries (/api/leads)"]
         PF["PropertyFinder Sync Engine"]
         WA_IN["Inbound WhatsApp Webhooks"]
+        GS["Master Sheet Ingestion v3 (gid=1127958606)"]
     end
 
     subgraph Intelligence ["2. Unified Memory Brain & Reasoning"]
         BRAIN["MemoryBrainEngine (Obsidian + ECC)"]
         GOAL["Active Strategic Fleet Goal"]
         AGENTS["7-Layer Agent Fleet (Matchmaker, Closer, Scribe)"]
+        HARVEST["WhatsApp Harvester & Chat Learning Engine"]
     end
 
     subgraph Core ["3. Authoritative Datastore (Supabase)"]
         DB[(PostgreSQL & pgvector)]
         WQ[("whatsapp_outbound_queue")]
-        STORE[("Media Storage Buckets")]
+        TG_OUT["Telegram Bot Queue"]
     end
 
-    subgraph Outbound ["4. Outbound Automation & Client UX"]
-        WA_OUT["AWS EC2 OpenWA Gateway (18.232.148.172)"]
-        TG_OUT["Telegram Agency Bot (@sierra_estates_bot)"]
-        PORTAL["Client Web Experience & Spatial Masterplan Map"]
+    subgraph Delivery ["4. Client & Broker Delivery Surfaces"]
+        PORTAL["Buyer Portal (sierra-estates.net)"]
+        ADMIN["Admin Command Deck (admin.sierra-estates.net)"]
+        WA_OUT["WhatsApp Paced Dispatcher"]
+        PF_PUB["Property Finder Ad Syndicator"]
     end
 
-    EL --> AGENTS
-    LP --> AGENTS
-    PF --> DB
-    WA_IN --> AGENTS
-
+    Intake --> Intelligence
+    WA_IN --> HARVEST
+    HARVEST --> BRAIN
+    Intelligence --> Core
+    Core --> Delivery
+    
     AGENTS <--> BRAIN
     BRAIN <--> GOAL
     AGENTS --> DB
@@ -95,6 +102,8 @@ flowchart TD
 
     WQ --> WA_OUT
     DB --> PORTAL
+    DB --> ADMIN
+    DB --> PF_PUB
 ```
 
 ---
@@ -108,13 +117,25 @@ Every commit and release is gated by automated verification:
 3. **Strict Privacy Policy**: Zero real owner phone numbers in client bundles (strict fallback to `+201092048333`).
 4. **TypeScript & Bundles**: Clean `tsc --noEmit` and `next build` across all 105 routes.
 5. **Test Coverage**: 152 test suites and 1,592 automated tests passing with zero failures.
+6. **Data Normalization & Validation**: Master sheet schema enforced with 6 native dropdowns and anti-overwrite sync gates.
 
 ---
 
-## 5. Active Roadmap: Milestone M12 Details
+## 5. Active Roadmap: Milestones M12 & M13 Details
 
-### Focus Areas
+### Milestone M13: Master Ingestion V3, Rent-First Outreach & Chat Learning (Completed)
+- **M13.1 Master Inventory Schema & Validation**:
+  - 19 canonical columns structured across 2,580 inventory records.
+  - 6 Data Validation dropdowns: Location (30+ compounds), Bedrooms (Studio..6+, Unknown), Availability, Deal Type, Property Type, Furnishing.
+  - In-sheet Google Apps Script v3 (`scripts/google_apps_script_master.js`) + standalone Excel generator (`sierra-estates-master-inventory-clean.xlsx`).
+- **M13.2 Rent-First Owner Verification**:
+  - Focuses on fast-moving rental properties, querying owners for missing bedrooms, photos, and current rent.
+  - Automatically timestamps verified contacts in column S (`تاريخ اخر تواصل`).
+- **M13.3 WhatsApp Chat Learning Engine**:
+  - Gateway Harvester on `:2785` safely ingests broker chatter and customer interactions.
+  - ECC memory learns real-world buyer objections, pricing resistance, and natural Egyptian phrasing.
 
+### Milestone M12: Voice Briefings & Automated Video Tours (In Planning)
 - **M12.1 Realtime Egyptian-Arabic Audio Briefings**:
   - Live conversational audio overview using Gemini Live API / WebRTC.
   - Generates instant 60-second spoken summaries of rental yields, location perks, and payment schedules.

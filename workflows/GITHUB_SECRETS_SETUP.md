@@ -129,59 +129,35 @@ noreply@sierra-estates.com
 
 ---
 
-### 9. FIREBASE_PROJECT_ID
+### 9. NEXT_PUBLIC_SUPABASE_URL
 
-**Type:** Project ID  
-**How to get:**
-
-1. Go to: <https://console.firebase.google.com>
-2. Select sierra-blu
-3. Project Settings → General
-4. Copy "Project ID"
-
-**Example:**
-
+**Type:** Supabase API URL  
+**Value:**
 ```
-sierra-blu
+https://gaxfqcietzoonlmatiot.supabase.co
 ```
 
 ---
 
-### 10. FIREBASE_PRIVATE_KEY
+### 10. NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-**Type:** Private key (with newlines)  
+**Type:** Supabase Anon / Public Key  
 **How to get:**
-
-1. Go to: <https://console.firebase.google.com/project/sierra-blu/settings/serviceaccounts/adminsdk>
-2. Click "Generate new private key"
-3. Open the downloaded JSON file
-4. Copy the value of `"private_key"`
-5. Paste into GitHub secret
-
-**Should start/end with:**
-
-```
------BEGIN PRIVATE KEY-----
-... (lots of characters)
------END PRIVATE KEY-----
-```
+1. Go to Supabase Dashboard: <https://app.supabase.com>
+2. Project Settings → API
+3. Copy `anon` `public` key
+4. Paste into GitHub secret
 
 ---
 
-### 11. FIREBASE_CLIENT_EMAIL
+### 11. SUPABASE_SERVICE_ROLE_KEY
 
-**Type:** Email  
+**Type:** Supabase Service Role Secret Key  
 **How to get:**
-
-1. Open the Firebase private key JSON file
-2. Copy the `"client_email"` value
-3. Paste into GitHub secret
-
-**Example:**
-
-```
-firebase-adminsdk-xxxxx@sierra-blu.iam.gserviceaccount.com
-```
+1. Go to Supabase Dashboard: <https://app.supabase.com>
+2. Project Settings → API
+3. Copy `service_role` `secret` key
+4. Paste into GitHub secret (DO NOT expose in client code)
 
 ---
 

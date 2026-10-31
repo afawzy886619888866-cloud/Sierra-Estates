@@ -552,6 +552,10 @@ export const NEW_CAIRO_ZONES: ZonePreset[] = [
   { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 1.65, bounds: [[30.01, 31.60], [30.12, 31.71]], panX: -28, panY: 5 },
   { key: 'Madinaty', label: 'Madinaty & Shorouk', center: [30.105, 31.64], zoom: 1.7, bounds: [[30.04, 31.57], [30.18, 31.72]], panX: -32, panY: 30 },
   { key: 'Uptown', label: 'Uptown Cairo', center: [30.026, 31.307], zoom: 1.75, bounds: [[29.99, 31.27], [30.06, 31.35]], panX: 35, panY: -10 },
+  // Cairo Plaza El-Mataria commercial/transit cluster — same coordinates as
+  // the HZDATA compound entry and the CairoPlaza route family
+  // (center [30.129, 31.312]). Pinned by __tests__/map-filters-sync.test.ts.
+  { key: 'Transit', label: 'Cairo Plaza Metro Transit', center: [30.129, 31.312], zoom: 1.7, bounds: [[30.09, 31.26], [30.17, 31.36]], panX: 0, panY: 0 },
 ];
 
 export interface MapPricePreset {
@@ -995,6 +999,8 @@ export interface CompoundsMapProps {
   filterBed?: number | 'any';
   isAr?: boolean;
   selectedOnly?: boolean;
+  theme?: 'dark' | 'light';
+  onThemeChange?: (theme: 'dark' | 'light') => void;
 }
 
 export default function CompoundsMap({
@@ -1011,19 +1017,31 @@ export default function CompoundsMap({
   filterBed,
   isAr = false,
   selectedOnly = false,
+  theme: externalTheme,
+  onThemeChange,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
   const site = useSite();
   const siteTheme = site?.theme;
 
-  // Visual Theme: Synchronized with site theme ("light for light mode and vice versa"), with manual toggle
-  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>(siteTheme === 'light' ? 'light' : 'dark');
+  // Visual Theme: Synchronized with external prop or site theme with manual toggle
+  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>(
+    externalTheme || (siteTheme === 'light' ? 'light' : 'dark')
+  );
 
   useEffect(() => {
-    if (siteTheme === 'light' || siteTheme === 'dark') {
+    if (externalTheme) {
+      setMapTheme(externalTheme);
+    } else if (siteTheme === 'light' || siteTheme === 'dark') {
       setMapTheme(siteTheme);
     }
-  }, [siteTheme]);
+  }, [externalTheme, siteTheme]);
+
+  const toggleMapTheme = () => {
+    const next = mapTheme === 'dark' ? 'light' : 'dark';
+    setMapTheme(next);
+    onThemeChange?.(next);
+  };
 
   // Masterplan Viewport Canvas Transformation
   const [zoom, setZoom] = useState(1);
@@ -1500,7 +1518,7 @@ export default function CompoundsMap({
               opacity: mapTheme === 'dark' ? 1 : 0,
               transition: 'opacity 0.4s ease',
               pointerEvents: 'none',
-              imageRendering: '-webkit-optimize-contrast',
+              
               transform: 'translateZ(0)',
               filter: 'contrast(1.15) brightness(1.05) saturate(1.12) drop-shadow(0 0 1px rgba(223, 173, 58, 0.2))',
               backfaceVisibility: 'hidden',
@@ -1522,7 +1540,7 @@ export default function CompoundsMap({
               opacity: mapTheme === 'light' ? 1 : 0,
               transition: 'opacity 0.4s ease',
               pointerEvents: 'none',
-              imageRendering: '-webkit-optimize-contrast',
+              
               transform: 'translateZ(0)',
               filter: 'contrast(1.12) brightness(1.03) saturate(1.08)',
               backfaceVisibility: 'hidden',
@@ -1842,7 +1860,7 @@ export default function CompoundsMap({
 
         <button
           type="button"
-          onClick={() => setMapTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+          onClick={toggleMapTheme}
           title={mapTheme === 'dark' ? 'Switch to Light Masterplan' : 'Switch to Dark Masterplan'}
           style={{
             display: 'inline-flex',

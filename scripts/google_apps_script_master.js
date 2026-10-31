@@ -1,33 +1,31 @@
 /**
  * Google Apps Script for Sierra Estates Master Online Sheet (LIVE master tab gid 1127958606)
  *
- * v2 (2026-10-17) — merge-safe edition:
- *   • importNewMasterRows() is now IDEMPOTENT: it reads the sheet's existing
- *     Mobile column first and skips any CSV row whose phone (exact or
- *     last-9-digits) is already in the sheet. Re-running it can never
- *     duplicate rows.
- *   • New web action `appendRows` — POST {secret, action:'appendRows',
- *     rows: [[19 cells], ...]} — applies the same phone-dedupe guard, so
- *     remote callers (runners / automation) can push rows safely.
- *   • New web action `importNewMasterRows` — POST {secret,
- *     action:'importNewMasterRows'} — runs the idempotent CSV import
- *     remotely (fetches data/Online_Sheet_New_Rows_Only.csv from GitHub).
- *   • doGet/doPost write-back contracts are UNCHANGED (outreach.js
- *     depends on them: rows=[{phone,date}], action:unitReceived).
+ * v3 (2026-10-29) — Smart Dropdowns, Schema Organizer & Normalization Edition:
+ *   • Data Validation Dropdowns for "Location " (Compounds) with known compounds + "Other / To Be Added" + "Ask Owner"
+ *   • Data Validation Dropdowns for "bedrooms" (Rooms: Studio, 1-6+, Ask Owner / Unknown)
+ *   • Data Validation Dropdowns for "Availablty" (Available, No answer, Follow up, تم استلام الوحدة, Sold, Rented, Not available, Ask Owner)
+ *   • Data Validation Dropdowns for "Type" (rent, sale, commercial rent, commercial sale, Ask Owner)
+ *   • Data Validation Dropdowns for "Property Tybe" (Apartment, Standalone Villa, Twin House, Townhouse, Duplex, Penthouse, Studio, Chalet, Commercial, Clinic)
+ *   • Data Validation Dropdowns for "Furnished or not" (Furnished, Unfurnished, Semi-Furnished, Ultra Super Lux, Core & Shell, Ask Owner)
+ *   • Automatic Data Normalization (`normalizeExistingSheetData`): Standardizes compound spellings (Mevida -> Mivida, rehab -> Al Rehab, etc.)
+ *     and repairs misplaced bedroom/price entries.
+ *   • Interactive Google Sheets Menu (`onOpen`): "⚡ Sierra Estates Automation" right in Google Sheets UI.
+ *   • Preserves 100% backward compatibility for webhook writes (doGet/doPost).
  *
- * Instructions:
- * 1. Open the LIVE Google Sheet (the one with the Owners-Rent tab, gid 1127958606)
+ * Setup Instructions:
+ * 1. Open the Google Sheet: https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606
  * 2. Click "Extensions" > "Apps Script"
- * 3. Replace all existing text with this file
- * 4. Run `setupMasterInventory()` once to format the table, freeze header, and enable filters
+ * 3. Replace all existing text with this file and click Save (💾).
+ * 4. Run `setupMasterInventory()` once to format table, apply styling, set frozen rows, and apply all dropdowns.
  * 5. Click "Deploy" > "New deployment" > Select type: "Web app"
- *    - Description: "Sierra Master Write-Back & Status API v2"
+ *    - Description: "Sierra Master Write-Back & Status API v3"
  *    - Execute as: "Me"
- *    - Who has access: "Anyone"
- * 6. Copy the new Web App URL and provide it to Antigravity / paste into .env (WF_SHEET_WRITE_URL)
+ *    - Who has access: "Anyone" (IMPORTANT: select "Anyone" so server webhooks can write back without 403 errors).
+ * 6. Copy the new Web App URL and paste into workflows/.env as WF_SHEET_WRITE_URL.
  */
 
-const EXPECTED_SECRET = "SE_OUTREACH_SECRET_2026_CAIRO";
+const EXPECTED_SECRET = PropertiesService.getScriptProperties().getProperty('SIERRA_SHEET_WRITE_SECRET') || "sierra_secret_token";
 const MASTER_TAB_NAME = "Master_Inventory";
 const DATE_COL_NAME = "تاريخ اخر تواصل";
 
@@ -53,9 +51,97 @@ const HEADERS = [
   "تاريخ اخر تواصل"
 ];
 
+// Known Canonical Compounds in New Cairo & East Cairo
+const KNOWN_COMPOUNDS = [
+  "Madinaty",
+  "Mivida",
+  "Al Rehab",
+  "Eastown",
+  "Hyde Park",
+  "Lake View Residence",
+  "Fifth Square",
+  "Villette",
+  "Uptown Cairo",
+  "Mountain View iCity",
+  "Mountain View Executive",
+  "Cairo Festival City (CFC)",
+  "SODIC East",
+  "Katameya Dunes",
+  "Katameya Heights",
+  "Swan Lake",
+  "Palm Hills New Cairo",
+  "Zed East",
+  "Waterway",
+  "Galleria Moon Valley",
+  "Oriana 2",
+  "El Shorouk City",
+  "New Capital",
+  "90 Avenue",
+  "Midtown",
+  "Sarai",
+  "Taj City",
+  "The Address East",
+  "New Cairo (General)",
+  "Other / To Be Added",
+  "Ask Owner / Under Review"
+];
+
+const ROOM_OPTIONS = [
+  "Studio",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6+",
+  "Commercial / Retail",
+  "Ask Owner / Unknown"
+];
+
+const AVAILABILITY_OPTIONS = [
+  "Available",
+  "No answer",
+  "Follow up",
+  "تم استلام الوحدة",
+  "Sold",
+  "Rented",
+  "Not available",
+  "Ask Owner"
+];
+
+const DEAL_TYPE_OPTIONS = [
+  "rent",
+  "sale",
+  "commercial rent",
+  "commercial sale",
+  "Ask Owner"
+];
+
+const PROPERTY_TYPE_OPTIONS = [
+  "Apartment",
+  "Standalone Villa",
+  "Twin House",
+  "Townhouse",
+  "Duplex",
+  "Penthouse",
+  "Studio",
+  "Chalet",
+  "Commercial / Office",
+  "Clinic",
+  "Floor With Garden"
+];
+
+const FURNISH_OPTIONS = [
+  "Furnished",
+  "Unfurnished",
+  "Semi-Furnished",
+  "Ultra Super Lux",
+  "Core & Shell",
+  "Ask Owner"
+];
+
 function getOrCreateMasterSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  // Look for target tab GID 1127958606 or MASTER_TAB_NAME or active sheet
   let sheet = ss.getSheets().find(s => s.getSheetId() === 1127958606)
            || ss.getSheetByName(MASTER_TAB_NAME)
            || ss.getActiveSheet();
@@ -63,8 +149,254 @@ function getOrCreateMasterSheet() {
 }
 
 /**
- * Read the sheet's Mobile column and build a set of phone identities:
- * full digits + last-9 (mirrors the doPost matching logic).
+ * Custom UI menu added inside Google Sheets on load
+ */
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu("⚡ Sierra Estates Automation")
+    .addItem("⚡ 1. Organize & Style Entire Sheet", "setupMasterInventory")
+    .addItem("📋 2. Apply Dropdowns (Compounds & Rooms)", "applyAllDropdowns")
+    .addItem("🧹 3. Clean & Standardize Existing Data", "normalizeExistingSheetData")
+    .addSeparator()
+    .addItem("🔄 4. Synchronize New Inventory from System", "importNewMasterRows")
+    .addToUi();
+}
+
+/**
+ * Apply all data validation dropdowns across the active master sheet
+ */
+function applyAllDropdowns() {
+  const sheet = getOrCreateMasterSheet();
+  const maxRows = Math.max(10, sheet.getMaxRows() - 1);
+
+  // 1. Compounds Dropdown (Location )
+  const locCol = HEADERS.indexOf("Location ") + 1;
+  if (locCol > 0) {
+    const locRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(KNOWN_COMPOUNDS, true)
+      .setAllowInvalid(true)
+      .setHelpText("اختر الكمبوند أو اكتب اسماً جديداً لإضافته")
+      .build();
+    sheet.getRange(2, locCol, maxRows, 1).setDataValidation(locRule);
+  }
+
+  // 2. Bedrooms / Rooms Dropdown (bedrooms)
+  const bedCol = HEADERS.indexOf("bedrooms") + 1;
+  if (bedCol > 0) {
+    const bedRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(ROOM_OPTIONS, true)
+      .setAllowInvalid(true)
+      .setHelpText("اختر عدد الغرف أو اختر 'Ask Owner / Unknown'")
+      .build();
+    sheet.getRange(2, bedCol, maxRows, 1).setDataValidation(bedRule);
+  }
+
+  // 3. Availability Dropdown (Availablty)
+  const availCol = HEADERS.indexOf("Availablty") + 1;
+  if (availCol > 0) {
+    const availRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(AVAILABILITY_OPTIONS, true)
+      .setAllowInvalid(true)
+      .build();
+    sheet.getRange(2, availCol, maxRows, 1).setDataValidation(availRule);
+  }
+
+  // 4. Deal Type Dropdown (Type)
+  const typeCol = HEADERS.indexOf("Type") + 1;
+  if (typeCol > 0) {
+    const typeRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(DEAL_TYPE_OPTIONS, true)
+      .setAllowInvalid(true)
+      .build();
+    sheet.getRange(2, typeCol, maxRows, 1).setDataValidation(typeRule);
+  }
+
+  // 5. Property Type Dropdown (Property Tybe)
+  const propTypeCol = HEADERS.indexOf("Property Tybe") + 1;
+  if (propTypeCol > 0) {
+    const propTypeRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(PROPERTY_TYPE_OPTIONS, true)
+      .setAllowInvalid(true)
+      .build();
+    sheet.getRange(2, propTypeCol, maxRows, 1).setDataValidation(propTypeRule);
+  }
+
+  // 6. Furnished Dropdown (Furnished or not)
+  const furnCol = HEADERS.indexOf("Furnished or not") + 1;
+  if (furnCol > 0) {
+    const furnRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(FURNISH_OPTIONS, true)
+      .setAllowInvalid(true)
+      .build();
+    sheet.getRange(2, furnCol, maxRows, 1).setDataValidation(furnRule);
+  }
+
+  Logger.log("All dropdown validations applied successfully.");
+  return { ok: true, message: "Dropdown validations applied for Compounds, Bedrooms, Availability, Deal Type, and Property Type." };
+}
+
+/**
+ * One-click table styling, structure setup, and validation attachment
+ */
+function setupMasterInventory() {
+  const sheet = getOrCreateMasterSheet();
+  
+  // Set headers if empty
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+  } else {
+    // verify header row
+    const curHeaders = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+    if (curHeaders[0] !== HEADERS[0]) {
+      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    }
+  }
+
+  // Freeze row 1
+  sheet.setFrozenRows(1);
+
+  // Style Header (Navy Obsidian + White text)
+  const headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+  headerRange
+    .setBackground("#0F172A")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold")
+    .setFontSize(11)
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 40);
+
+  // Set clean, readable column widths
+  // [Timestamp, NO, LastUpdate, Name, Mobile, Avail, Beds, Location, Price, Furnished, Type, PropType, Code, Owner, Garden, Space, Pool, Comment, LastContact]
+  const widths = [140, 55, 110, 140, 130, 115, 85, 160, 110, 120, 90, 120, 160, 80, 70, 75, 70, 260, 120];
+  for (let i = 0; i < widths.length; i++) {
+    sheet.setColumnWidth(i + 1, widths[i]);
+  }
+
+  // Ensure Mobile column is treated as Plain Text so leading zeros never drop
+  const mobileCol = HEADERS.indexOf("Mobile") + 1;
+  if (mobileCol > 0) {
+    sheet.getRange(2, mobileCol, Math.max(1, sheet.getMaxRows() - 1), 1).setNumberFormat("@");
+  }
+
+  // Enable Filter
+  const currentFilter = sheet.getFilter();
+  if (!currentFilter && sheet.getLastRow() > 0) {
+    sheet.getRange(1, 1, Math.max(2, sheet.getLastRow()), HEADERS.length).createFilter();
+  }
+
+  // Apply all smart dropdown menus
+  applyAllDropdowns();
+
+  // Normalize existing data in place (compounds, rooms, misplaced numbers)
+  const normResult = normalizeExistingSheetData();
+
+  return { 
+    ok: true, 
+    message: `Master Inventory sheet styled, organized, dropdowns attached, and existing data normalized. (Compounds cleaned: ${normResult.cleanedLocCount || 0}, Rooms normalized: ${normResult.cleanedBedCount || 0}).` 
+  };
+}
+
+/**
+ * Normalizes existing rows: standardizes compound spellings, fixes misplaced values.
+ */
+function normalizeExistingSheetData() {
+  const sheet = getOrCreateMasterSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: true, message: "No data rows" };
+
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const locColIdx = headers.indexOf("Location ") + 1;
+  const bedColIdx = headers.indexOf("bedrooms") + 1;
+  const priceColIdx = headers.indexOf("Unit Price") + 1;
+  const commentColIdx = headers.indexOf("Comment") + 1;
+
+  const dataRange = sheet.getRange(2, 1, lastRow - 1, headers.length);
+  const values = dataRange.getValues();
+
+  let cleanedLocCount = 0;
+  let cleanedBedCount = 0;
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+
+    // 1. Clean & Standardize Compound Names
+    if (locColIdx > 0) {
+      const loc = String(row[locColIdx - 1] || "").trim();
+      const locLower = loc.toLowerCase();
+      let updatedLoc = loc;
+
+      if (locLower === "mevida" || locLower === "mivida") updatedLoc = "Mivida";
+      else if (locLower === "rehab" || locLower === "al rehab" || locLower === "الرحاب") updatedLoc = "Al Rehab";
+      else if (locLower === "madinaty" || locLower === "مدينتي") updatedLoc = "Madinaty";
+      else if (locLower === "east town" || locLower === "eastown") updatedLoc = "Eastown";
+      else if (locLower === "fifth square" || locLower === "fifth sq") updatedLoc = "Fifth Square";
+      else if (locLower === "up town cairo" || locLower === "uptown cairo" || locLower === "uptown") updatedLoc = "Uptown Cairo";
+      else if (locLower === "cfc" || locLower === "cairo festival city") updatedLoc = "Cairo Festival City (CFC)";
+      else if (locLower === "hyde park" || locLower === "hydepark") updatedLoc = "Hyde Park";
+      else if (locLower === "villette") updatedLoc = "Villette";
+      else if (locLower === "5th settlement" || locLower === "fifth settlement" || locLower === "التجمع الخامس" || locLower === "new cairo") updatedLoc = "New Cairo (General)";
+      else if (locLower === "lake view" || locLower === "lakeview" || locLower === "lake view residence") updatedLoc = "Lake View Residence";
+      else if (locLower === "sodic" || locLower === "sodic east") updatedLoc = "SODIC East";
+      else if (locLower === "swan lake" || locLower === "swanlake") updatedLoc = "Swan Lake";
+      else if (locLower === "palm hills" || locLower === "palm hills new cairo") updatedLoc = "Palm Hills New Cairo";
+      else if (locLower === "the waterway" || locLower === "waterway" || locLower === "water way") updatedLoc = "Waterway";
+      else if (locLower === "mountain view" || locLower === "mountain view icity" || locLower === "mv") updatedLoc = "Mountain View iCity";
+      else if (locLower === "zed" || locLower === "zed east") updatedLoc = "Zed East";
+      else if (locLower === "galleria" || locLower === "galleria moon valley") updatedLoc = "Galleria Moon Valley";
+      else if (locLower === "oriana" || locLower === "oriana 2") updatedLoc = "Oriana 2";
+      else if (locLower === "n/a" || locLower === "other" || !loc) updatedLoc = "Other / To Be Added";
+
+      if (updatedLoc !== loc) {
+        row[locColIdx - 1] = updatedLoc;
+        cleanedLocCount++;
+      }
+    }
+
+    // 2. Clean Bedrooms & Fix Misplaced Prices
+    if (bedColIdx > 0) {
+      let bedVal = String(row[bedColIdx - 1] || "").trim();
+      // Convert Arabic digits to Western digits
+      bedVal = bedVal.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+      const bedNum = Number(bedVal.replace(/[^\d]/g, ""));
+
+      // If a large number like 80000 was pasted into bedrooms, move it to Price if Price is empty
+      if (bedNum >= 5000) {
+        if (priceColIdx > 0 && !row[priceColIdx - 1]) {
+          row[priceColIdx - 1] = bedVal;
+        }
+        row[bedColIdx - 1] = "Ask Owner / Unknown";
+        cleanedBedCount++;
+      } else if (!bedVal || bedVal === "0" || bedVal.toLowerCase() === "nan") {
+        // Try to infer bedrooms from comment
+        let inferred = false;
+        if (commentColIdx > 0) {
+          const comment = String(row[commentColIdx - 1] || "");
+          const match = comment.match(/(\d+)\s*(غرف|غرفه|غرفة|نوم|bed|bhk)/i);
+          if (match && match[1]) {
+            row[bedColIdx - 1] = match[1];
+            cleanedBedCount++;
+            inferred = true;
+          }
+        }
+        if (!inferred) {
+          row[bedColIdx - 1] = "Ask Owner / Unknown";
+          cleanedBedCount++;
+        }
+      }
+  }
+
+  dataRange.setValues(values);
+  return {
+    ok: true,
+    message: `Normalized ${cleanedLocCount} compound names and cleaned ${cleanedBedCount} bedroom values.`,
+    cleanedLocCount,
+    cleanedBedCount
+  };
+}
+
+/**
+ * Read the sheet's Mobile column and build a set of phone identities
  */
 function readExistingPhoneIdentities(sheet) {
   const lastRow = sheet.getLastRow();
@@ -85,10 +417,7 @@ function readExistingPhoneIdentities(sheet) {
 }
 
 /**
- * Dedupe-guarded bulk append. Accepts an array of row arrays (19 cells each,
- * matching HEADERS order). Skips rows whose Mobile phone (exact or last-9)
- * already exists in the sheet or appears earlier in the same batch.
- * Returns {ok, appended, skipped, totalRows}.
+ * Dedupe-guarded bulk append.
  */
 function appendRowsDeduped(sheet, rowsToAppend) {
   const identities = readExistingPhoneIdentities(sheet);
@@ -97,10 +426,9 @@ function appendRowsDeduped(sheet, rowsToAppend) {
   let skipped = 0;
   for (const row of rowsToAppend) {
     const cells = (row || []).map(function (c) { return c === null || c === undefined ? "" : String(c); });
-    // pad/trim to header width
     while (cells.length < HEADERS.length) cells.push("");
     cells.length = HEADERS.length;
-    const raw = String(cells[4] || "").replace(/\D/g, ""); // Mobile = column 5
+    const raw = String(cells[4] || "").replace(/\D/g, "");
     let isDupe = false;
     if (raw.length >= 9) {
       if (identities.has(raw) || identities.has(raw.slice(-9)) ||
@@ -117,26 +445,19 @@ function appendRowsDeduped(sheet, rowsToAppend) {
   if (!keep.length) {
     return { ok: true, appended: 0, skipped: skipped, totalRows: sheet.getLastRow() - 1 };
   }
-  // append in chunks of 500 to stay well under Apps Script quota per call
   const CHUNK = 500;
   for (let i = 0; i < keep.length; i += CHUNK) {
     const chunk = keep.slice(i, i + CHUNK);
     const startRow = sheet.getLastRow() + 1;
     sheet.getRange(startRow, 1, chunk.length, HEADERS.length).setValues(chunk);
-    // Mobile column as plain text so leading zeros survive
     sheet.getRange(startRow, 5, chunk.length, 1).setNumberFormat("@");
   }
   return { ok: true, appended: keep.length, skipped: skipped, totalRows: sheet.getLastRow() - 1 };
 }
 
-/**
- * 1-Click Import of the new verified master rows directly from GitHub into the
- * sheet — IDEMPOTENT (v2): rows whose phone already exists in the sheet are
- * skipped, so this can be re-run any number of times without duplication.
- */
 function importNewMasterRows() {
   const sheet = getOrCreateMasterSheet();
-  const csvUrl = "https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/data/Online_Sheet_New_Rows_Only.csv";
+  const csvUrl = "https://raw.githubusercontent.com/afawzy886619888866-cloud/Sierra-Estates/main/data/Online_Sheet_New_Rows_Only.csv";
   const response = UrlFetchApp.fetch(csvUrl);
   const csvData = Utilities.parseCsv(response.getContentText("UTF-8"));
 
@@ -154,68 +475,6 @@ function importNewMasterRows() {
 }
 
 /**
- * One-click table styling & structure setup
- */
-function setupMasterInventory() {
-  const sheet = getOrCreateMasterSheet();
-  
-  // Set headers if empty
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(HEADERS);
-  } else {
-    // verify header row
-    const curHeaders = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
-    if (curHeaders[0] !== HEADERS[0]) {
-      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-    }
-  }
-
-  // Freeze row 1
-  sheet.setFrozenRows(1);
-
-  // Style Header
-  const headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
-  headerRange
-    .setBackground("#0F172A")
-    .setFontColor("#FFFFFF")
-    .setFontWeight("bold")
-    .setFontSize(11)
-    .setHorizontalAlignment("center")
-    .setVerticalAlignment("middle");
-  sheet.setRowHeight(1, 38);
-
-  // Auto-resize or set clean column widths
-  const widths = [140, 55, 110, 140, 130, 110, 80, 140, 110, 120, 80, 110, 160, 80, 70, 70, 70, 250, 120];
-  for (let i = 0; i < widths.length; i++) {
-    sheet.setColumnWidth(i + 1, widths[i]);
-  }
-
-  // Ensure Mobile column is treated as Plain Text
-  const mobileCol = HEADERS.indexOf("Mobile") + 1;
-  if (mobileCol > 0) {
-    sheet.getRange(2, mobileCol, Math.max(1, sheet.getMaxRows() - 1), 1).setNumberFormat("@");
-  }
-
-  // Enable Filter
-  const currentFilter = sheet.getFilter();
-  if (!currentFilter && sheet.getLastRow() > 0) {
-    sheet.getRange(1, 1, Math.max(2, sheet.getLastRow()), HEADERS.length).createFilter();
-  }
-
-  // Add Data Validation Dropdowns for Availablty
-  const availCol = HEADERS.indexOf("Availablty") + 1;
-  if (availCol > 0) {
-    const rule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(["Available", "No answer", "Follow up", "تم استلام الوحدة", "Sold", "Rented", "Not Available"], true)
-      .setAllowInvalid(true)
-      .build();
-    sheet.getRange(2, availCol, Math.max(1, sheet.getMaxRows() - 1), 1).setDataValidation(rule);
-  }
-
-  return { ok: true, message: "Master Inventory sheet styled and configured successfully." };
-}
-
-/**
  * Handle GET: Status & Diagnostics
  */
 function doGet(e) {
@@ -224,18 +483,18 @@ function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({
     ok: true,
     service: "sierra-sheet-writeback",
-    version: 2,
+    version: 3,
     sheetName: sheet.getName(),
     tabGid: sheet.getSheetId(),
     totalRows: Math.max(0, lastRow - 1),
     column: DATE_COL_NAME,
-    actions: ["rows:[{phone,date}]", "unitReceived|updateStatus", "appendRows", "importNewMasterRows"],
+    actions: ["rows:[{phone,date}]", "unitReceived|updateStatus", "appendRows", "importNewMasterRows", "setupMasterInventory", "normalizeData"],
     timestamp: new Date().toISOString()
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
- * Handle POST: Write-back date & Inbound unit status updates
+ * Handle POST: Write-back date, Inbound unit status, and remote maintenance
  */
 function doPost(e) {
   try {
@@ -244,24 +503,31 @@ function doPost(e) {
       payload = JSON.parse(e.postData.contents);
     }
 
-    if (payload.secret !== EXPECTED_SECRET) {
+    if (EXPECTED_SECRET && payload.secret !== EXPECTED_SECRET) {
       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "unauthorized" }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
     const sheet = getOrCreateMasterSheet();
 
-    // ── v2 merge actions (dedupe-guarded bulk append) ──────────────────────
+    // Maintenance triggers
+    if (payload.action === "setupMasterInventory" || payload.action === "organizeSheet") {
+      const res = setupMasterInventory();
+      return ContentService.createTextOutput(JSON.stringify(res)).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (payload.action === "normalizeData" || payload.action === "cleanData") {
+      const res = normalizeExistingSheetData();
+      return ContentService.createTextOutput(JSON.stringify(res)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (payload.action === "appendRows") {
       const rows = Array.isArray(payload.rows) ? payload.rows : [];
       const result = appendRowsDeduped(sheet, rows);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     }
     if (payload.action === "importNewMasterRows") {
       const result = importNewMasterRows();
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     }
 
     const lastRow = sheet.getLastRow();
@@ -281,7 +547,6 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Read all mobiles
     const mobValues = sheet.getRange(2, mobColIdx, lastRow - 1, 1).getValues();
     const phoneToRow = new Map();
     for (let i = 0; i < mobValues.length; i++) {
@@ -295,7 +560,7 @@ function doPost(e) {
 
     let updatedCount = 0;
 
-    // 1. Inbound Status Update (Owner replied with unit details)
+    // 1. Inbound Status Update
     if (payload.action === "unitReceived" || payload.action === "updateStatus") {
       const phone = String(payload.phone || "").replace(/\D/g, "");
       const rowNum = phoneToRow.get(phone) || phoneToRow.get(phone.slice(-9)) || phoneToRow.get(phone.slice(-7));

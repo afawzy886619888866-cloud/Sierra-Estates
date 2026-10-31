@@ -3,12 +3,10 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import {
   EpisodicContextCache,
-  HOT_DEAL_THRESHOLD_PCT,
   type Episode,
   type EntityProfile,
-  type WorkingMemorySession,
 } from '../../../packages/agents/tools/eccMemoryEngine';
-import { ObsidianMemory, type MemoryEntry } from '@sierra-estates/obsidian';
+import { ObsidianMemory } from '@sierra-estates/obsidian';
 
 export interface VaultNote {
   title: string;
@@ -75,9 +73,53 @@ export class MemoryBrainEngine {
 
     this.ecc = new EpisodicContextCache(storePath);
     this.obsidian = new ObsidianMemory(storePath);
-    this.activeGoal = options.activeGoal || 'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
+    // Goal precedence (2026-10-19, mandate persistence rule — reconciled):
+    //   1. explicit options.activeGoal (caller knows best)
+    //   2. the vault's Active-Execution-Mandate note (Status: ACTIVE gated,
+    //      docs/obsidian-vault/Active-Execution-Mandate.md) — the canonical
+    //      mandate memory
+    //   3. the vault's Active Execution Plan note
+    //      (docs/obsidian-vault/Active Execution Plan.md) — legacy fallback
+    //   4. the standing default
+    // Both vault reads survive restarts and context loss, so the owner-approved
+    // mandate keeps steering the fleet without anyone re-setting it.
+    this.activeGoal =
+      options.activeGoal ||
+      this.resolveActiveGoalFromVault() ||
+      this.resolveVaultGoal() ||
+      'Deliver transparent, high-yield luxury real estate advisory with deterministic closure in New Cairo';
 
     this.scanVault();
+  }
+
+  /**
+   * Resolve the fleet's active strategic goal from the durable vault note
+   * (docs/obsidian-vault/Active-Execution-Mandate.md). Returns null when no
+   * ACTIVE mandate note exists — the constructor default then stands.
+   *
+   * Format contract (see the note): a `**Issued:** ... **Status:** ACTIVE`
+   * marker line and a `## 🧭 Strategic Goal (recovers after any context
+   * loss)` section whose first paragraph is the goal text.
+   */
+  public resolveActiveGoalFromVault(): string | null {
+    this.scanVault();
+    const note = this.vaultCache.get('active-execution-mandate.md');
+    if (!note) return null;
+
+    // Only an ACTIVE mandate drives the fleet.
+    if (!/\*\*Status:\*\*\s*ACTIVE/i.test(note.content)) return null;
+
+    const section = note.content.match(
+      /##\s*🧭\s*Strategic Goal[^\n]*\n+([\s\S]*?)(?=\n## |\n---|$)/,
+    );
+    if (!section) return null;
+
+    // First non-empty, non-heading, non-blockquote line of the section.
+    const goalLine = section[1]
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#') && !l.startsWith('>'))[0];
+    return goalLine || null;
   }
 
   private resolveVaultDir(): string {
@@ -91,6 +133,26 @@ export class MemoryBrainEngine {
   }
 
   /**
+   * Startup strategic-goal resolver (mandate 2026-10-19): reads the active
+   * goal from the vault's Active Execution Plan note so the owner-approved
+   * mandate survives process restarts and context loss. Marker format:
+   *   **Active Strategic Goal:** <goal text>
+   * Unreadable/missing marker → undefined (default applies). Never throws —
+   * a goal-lookup failure must not take the engine down.
+   */
+  private resolveVaultGoal(): string | undefined {
+    try {
+      const goalNote = path.join(this.vaultDir, 'Active Execution Plan.md');
+      if (!fs.existsSync(goalNote)) return undefined;
+      const content = fs.readFileSync(goalNote, 'utf8');
+      const match = content.match(/^\s*\*\*Active Strategic Goal:\*\*\s*(.+)$/m);
+      return match?.[1]?.trim() || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
    * Scans and indexes the Obsidian markdown vault.
    */
   public scanVault(force: boolean = false): void {
@@ -100,34 +162,40 @@ export class MemoryBrainEngine {
     }
 
     try {
-      if (!fs.existsSync(this.vaultDir)) {
+      let files: string[] = [];
+      try {
+        files = fs.readdirSync(this.vaultDir);
+      } catch {
         return;
       }
 
-      const files = fs.readdirSync(this.vaultDir);
       for (const file of files) {
         if (!file.endsWith('.md')) continue;
 
         const filePath = path.join(this.vaultDir, file);
-        const stat = fs.statSync(filePath);
-        const content = fs.readFileSync(filePath, 'utf-8');
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const stat = fs.statSync(filePath);
 
-        // Extract inline or frontmatter tags (#tag or tags: [...])
-        const tags: string[] = [];
-        const tagMatches = content.match(/#([a-zA-Z0-9_\u0600-\u06FF-]+)/g);
-        if (tagMatches) {
-          tags.push(...tagMatches.map((t) => t.substring(1).toLowerCase()));
+          // Extract inline or frontmatter tags (#tag or tags: [...])
+          const tags: string[] = [];
+          const tagMatches = content.match(/#([a-zA-Z0-9_\u0600-\u06FF-]+)/g);
+          if (tagMatches) {
+            tags.push(...tagMatches.map((t) => t.substring(1).toLowerCase()));
+          }
+
+          const title = file.replace('.md', '');
+          this.vaultCache.set(file.toLowerCase(), {
+            title,
+            filename: file,
+            path: filePath,
+            content,
+            tags: Array.from(new Set(tags)),
+            lastModified: stat.mtimeMs,
+          });
+        } catch {
+          continue;
         }
-
-        const title = file.replace('.md', '');
-        this.vaultCache.set(file.toLowerCase(), {
-          title,
-          filename: file,
-          path: filePath,
-          content,
-          tags: Array.from(new Set(tags)),
-          lastModified: stat.mtimeMs,
-        });
       }
 
       this.lastVaultScan = now;
@@ -172,7 +240,7 @@ export class MemoryBrainEngine {
         // Tag matches
         if (note.tags.some((t) => t.includes(token))) score += 4;
         // Body matches
-        const count = (lowerContent.match(new RegExp(token, 'g')) || []).length;
+        const count = Math.max(0, lowerContent.split(token).length - 1);
         score += Math.min(count, 5);
       }
 

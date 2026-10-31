@@ -1,5 +1,12 @@
 # Sierra Estates — Active EC2 Instance Configuration
 
+> ⚠️ **DEPRECATED (2026-10-26):** the EC2 runner path is superseded by the
+> Docker migration — see [`infra/DOCKER-RUNNER-MIGRATION.md`](../DOCKER-RUNNER-MIGRATION.md).
+> The 8-line gateway + workflow runner now run as Docker services on the
+> owner host. This file is retained as the historical record of the EC2 era
+> and as the decommission reference (instance/IP identifiers below).
+> Do NOT build new automation on this path.
+
 This document records the exact configuration, credentials, and connection instructions for the running AWS EC2 server.
 
 ---
@@ -50,7 +57,7 @@ Once logged in via SSH:
 
 ```bash
 # Download and execute the automated Amazon Linux 2023 setup
-curl -sSL https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/infra/aws/setup-al2023-ec2.sh | bash
+curl -sSL https://raw.githubusercontent.com/afawzy886619888866-cloud/Sierra-Estates/main/infra/aws/setup-al2023-ec2.sh | bash
 ```
 
 Or step-by-step:
