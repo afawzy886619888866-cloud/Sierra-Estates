@@ -31,8 +31,8 @@ Current "All Master Listings" sheet has only 15 columns:
 | Defect                                                              | Example                                                   | Count (est.)                | Impact                         |
 | ------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------- | ------------------------------ |
 | **Deal-type/price mismatch** — Rent rows carrying sale-scale prices | Row 1: `Madinaty, Rent, 8,500,000 EGP`                    | To be quantified in Phase 1 | Bot would present absurd rents |
-| **Phone numbers stored as floats**                                  | `1022844661.0`                                            | Most rows                   | Unusable for dial/WhatsApp     |
-| **Malformed WhatsApp URLs**                                         | `https://wa.me/228446610` (missing `20` country code)     | Many rows                   | Broken CTA links               |
+| **Phone numbers stored as floats**                                  | `+201092048333.0`                                            | Most rows                   | Unusable for dial/WhatsApp     |
+| **Malformed WhatsApp URLs**                                         | `https://wa.me/201092048333` (missing `20` country code)     | Many rows                   | Broken CTA links               |
 | **Mixed AR/EN** in compound, furnishing, notes                      | `تشطيبات شركه`                                            | Widespread                  | Search/filter misses           |
 | Missing area/beds/baths                                             | Row 2/3 have None                                         | Majority of broker sheets   | Weak matching                  |
 | **No verification date** on any row                                 | —                                                         | 100%                        | No freshness possible          |

@@ -97,6 +97,6 @@
 
 1. **Column-shift corruption** in source sheets: person names in code columns, postal codes (`46126`) in compound, phone numbers (`12001400200`) in price, dates in compound.
 2. **Two different price storage conventions** (millions with decimals vs. absolute EGP) and **two currencies** (EGP/USD) mixed in one column with no unit marker.
-3. **Phones stored as floats** (`1022844661.0`) and **WhatsApp URLs built by dropping digits** (`wa.me/228446610`).
+3. **Phones stored as floats** (`+201092048333.0`) and **WhatsApp URLs built by dropping digits** (`wa.me/228446610`).
 4. **Four overlapping status vocabularies** (`Available`, `active`, `Pending`, `No answer`, free-text Arabic).
 5. **Zero photos** in the master XLSX — photos exist only in the 302-row owner TSV.

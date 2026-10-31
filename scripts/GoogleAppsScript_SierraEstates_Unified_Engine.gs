@@ -806,7 +806,7 @@ function showBotGuidanceDialog() {
       "<pre style='background:#0F172A;color:#38BDF8;padding:12px;border-radius:6px;font-size:11px;'>" +
       JSON.stringify({
         "secret": "SE_OUTREACH_SECRET_2026_CAIRO",
-        "mobile": "01022844661",
+        "mobile": "+201092048333",
         "compound": "cfc",
         "deal_type": "Rent",
         "price": 35000,

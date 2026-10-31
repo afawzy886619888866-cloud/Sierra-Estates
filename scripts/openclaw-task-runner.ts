@@ -67,19 +67,19 @@ const SAMPLE_WHATSAPP_MESSAGES = [
   {
     group: 'New Cairo Elite Brokers (VIP)',
     groupId: 'broker-elite-001@g.us',
-    sender: '+201001234567 (Broker Karim)',
+    sender: '+201092048333 (Broker Karim)',
     text: '🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم ماستر، تشطيب الترا سوبر لوكس مع حديقة خاصة وحمام سباحة Private Pool. السعر 38 مليون كاش. لقطة وسعر محروق للتنفيذ الفوري.',
   },
   {
     group: 'East Cairo Commercial & Luxury Network',
     groupId: 'broker-commercial@g.us',
-    sender: '+201119876543 (Advisor Mostafa)',
+    sender: '+201092048333 (Advisor Mostafa)',
     text: 'للبيع في كمبوند هايد بارك Hyde Park التجمع الخامس بنتهاوس Penthouse مساحة 280م + روف 120م، 3 غرف نوم، نصف تشطيب، فيو بحيرات Lake View مباشرة. إجمالي السعر 16.5 مليون بمقدم 30% وأقساط على 5 سنوات.',
   },
   {
     group: 'Owners August 2026',
     groupId: '120363044918239011@g.us',
-    sender: '+20 100 882 1490 (Owner Direct)',
+    sender: '+201092048333 (Owner Direct)',
     text: 'متاحه مدينتي الشقه فيو مميز جدا ايجار مفروش تشطيب سوبر لوكس مكيفة بالكامل بالفرش والأجهزة الحديثة جاهزة للسكن الفوري السعر 35000 شهري.',
   },
 ];

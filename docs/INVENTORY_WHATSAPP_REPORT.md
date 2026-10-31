@@ -29,7 +29,7 @@
 - **Operation:** **Rent** — `35,000 EGP / Month`
 - **Location:** Madinaty B10, New Cairo
 - **Specs:** 140 m² · 3 Bedrooms · 2 Bathrooms · 3rd Floor · Prime Green View · Fully Furnished & ACs
-- **Sender / Owner:** `+20 100 882 1490 (Owner Direct)`
+- **Sender / Owner:** `+201092048333 (Owner Direct)`
 - **Photos Attached:** 📸 2 High-Res Photos Included
 - **Original Message Description:**
   > *"متاحه مدينتي الشقه فيو مميز جدا ايجار مفروش تشطيب سوبر لوكس مكيفة بالكامل بالفرش والأجهزة الحديثة جاهزة للسكن الفوري"*
@@ -43,7 +43,7 @@
 - **Operation:** **Sale** — `6,800,000 EGP`
 - **Location:** Al Rehab City (Phase 4), New Cairo
 - **Specs:** 127 m² Built-Up + 60 m² Private Garden · 3 Bedrooms · 2 Bathrooms · Ground Floor · Fully North-Facing (بحري)
-- **Sender / Owner:** `+20 109 451 9022 (Verified Owner)`
+- **Sender / Owner:** `+201092048333 (Verified Owner)`
 - **Photos Attached:** 📸 2 Garden & Interior Photos Included
 - **Original Message Description:**
   > *"للبيع شقة أرضي بحديقة في الرحاب 4 مساحة 127م + 60م حديقة تشطيب خاص بحري بالكامل موقع مميز بالقرب من السوق الشرقي والنادي"*
@@ -57,7 +57,7 @@
 - **Operation:** **Sale** — `42,000,000 EGP`
 - **Location:** Mivida (Emaar), Golden Square, Fifth Settlement
 - **Specs:** 450 m² Built-Up · 620 m² Land Plot · 5 Bedrooms · 6 Bathrooms · G + 1 + Roof · Panoramic Central Park View
-- **Sender / Owner:** `+20 114 772 0019 (Sierra Portfolio Lead)`
+- **Sender / Owner:** `+201092048333 (Sierra Portfolio Lead)`
 - **Photos Attached:** 📸 2 Facade & Park View Photos Included
 - **Original Message Description:**
   > *"فيلا مستقلة للبيع بميفيدا إعمار مساحة أرض 620م مباني 450م استلام فوري نص تشطيب موقع بانوراما مباشر على سنترال بارك"*
@@ -85,7 +85,7 @@
 - **Operation:** **Sale** — `9,200,000 EGP` (Equal Installments available)
 - **Location:** Hyde Park, Golden Square, New Cairo
 - **Specs:** 185 m² · 3 Bedrooms (Master with Dressing) · 3 Bathrooms · 2nd Floor · Park View
-- **Sender / Owner:** `+20 122 390 1845 (Owner Group Intake)`
+- **Sender / Owner:** `+201092048333 (Owner Group Intake)`
 - **Photos Attached:** 📸 1 Master Plan / Unit Photo Included
 - **Original Message Description:**
   > *"متاح شقة للبيع في هايد بارك التجمع 185 متر 3 غرف نوم (منهم ماستر بدريسنج) + 3 حمام استلام فوري اقساط متساوية بدون عمولة"*
@@ -99,7 +99,7 @@
 - **Operation:** **Sale** — `38,000,000 EGP`
 - **Location:** Swan Lake Residences (Hassan Allam), First Settlement
 - **Specs:** 375 m² Built-Up · 420 m² Land · 4 Bedrooms · 5 Bathrooms · Crystal Lagoon Frontline View
-- **Sender / Owner:** `+20 101 993 4401 (Project Admin)`
+- **Sender / Owner:** `+201092048333 (Project Admin)`
 - **Photos Attached:** 📸 2 Lagoon View & Elevation Photos Included
 - **Original Message Description:**
   > *"توين هاوس للبيع سوان ليك ريزيدنس التجمع الأول تشطيب كامل الترا مودرن جاهز للسكن بحري صريح موقع مميز جدا على اللاجون"*
@@ -113,7 +113,7 @@
 - **Operation:** **Sale** — `14,200,000 EGP` (Installments to 2030)
 - **Location:** Badya (Palm Hills), 6th of October / Oasis Road
 - **Specs:** 240 m² Built-Up · 290 m² Corner Land Plot · 3 Bedrooms · 4 Bathrooms · G + 1 + Roof
-- **Sender / Owner:** `+20 155 019 4481 (Owner Inventory Archive)`
+- **Sender / Owner:** `+201092048333 (Owner Inventory Archive)`
 - **Photos Attached:** 📸 1 Corner Elevation Photo Included
 - **Original Message Description:**
   > *"تاون هاوس كورنر للبيع في بادية بالم هيلز استلام قريب مساحة مباني 240م أرض 290م مدفوع جزء ومتبقي اقساط مريحة حتى 2030"*

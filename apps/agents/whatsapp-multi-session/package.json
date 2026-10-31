@@ -18,7 +18,10 @@
   "overrides": {
     "basic-ftp": ">=6.2.3",
     "image-size": ">=2.0.4",
-    "body-parser": ">=1.20.9"
+    "body-parser": ">=1.20.9",
+    "@open-wa/client": {
+      "axios": "^1.12.2"
+    }
   },
   "engines": {
     "node": ">=18.0.0"

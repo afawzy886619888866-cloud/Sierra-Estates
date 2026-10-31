@@ -561,7 +561,7 @@ function showBotIngestionHelp() {
       "bedrooms": "2",
       "finishing": "Furnished",
       "contact_name": "Dr. Mohamed",
-      "mobile": "01022844661", // STRICTLY REQUIRED
+      "mobile": "+201092048333", // STRICTLY REQUIRED
       "availability": "Available",
       "notes": "Owner called, ready for immediate viewing."
     }, null, 2) +
