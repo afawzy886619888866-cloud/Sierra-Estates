@@ -44,8 +44,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import consolidatedRaw from "@/data/consolidated-master-inventory.json";
-import realListingsRaw from "@/data/real-listings.json";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { exportCSV } from "./admin-shared";
 import {
@@ -68,41 +66,7 @@ const LiveMap = dynamic(() => import("@/components/Maps/LiveMap"), {
 /* ── Baseline: committed JSON + live Supabase merge ─────────────────── */
 
 function buildUnifiedBaseline(): any[] {
-  const map = new Map<string, any>();
-
-  if (Array.isArray(realListingsRaw)) {
-    realListingsRaw.forEach((item: any) => {
-      const code = item.sierraCode || item.code || `SE-${item.id}`;
-      map.set(code, {
-        ...item,
-        sierraCode: code,
-        photos:
-          item.photos ||
-          (item.image ? [item.image] : item.img ? [item.img] : []),
-        hasPhotos: Boolean(
-          (item.photos && item.photos.length > 0) || item.image || item.img,
-        ),
-        status: item.status || "Available",
-      });
-    });
-  }
-
-  if (Array.isArray(consolidatedRaw)) {
-    consolidatedRaw.forEach((item: any) => {
-      const code = item.sierraCode || item.code || `SE-${item.id}`;
-      if (!map.has(code)) {
-        map.set(code, {
-          ...item,
-          sierraCode: code,
-          photos: item.photos || [],
-          hasPhotos: Boolean(item.photos && item.photos.length > 0),
-          status: item.status || "Available",
-        });
-      }
-    });
-  }
-
-  return Array.from(map.values());
+  return [];
 }
 
 /* ── Status model ───────────────────────────────────────────────────── */

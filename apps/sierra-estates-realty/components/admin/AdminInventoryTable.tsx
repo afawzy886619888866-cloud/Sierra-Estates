@@ -26,7 +26,6 @@ import {
   ChevronsRight,
   Sparkles,
 } from 'lucide-react';
-import defaultOnlineUnits from '@/data/online-sheet-units.json';
 
 export const ACCOUNT_MANAGERS = [
   'Ahmed Fawzy',
@@ -204,7 +203,7 @@ type SortDirection = 'asc' | 'desc';
 export default function AdminInventoryTable({ units }: AdminInventoryTableProps) {
   // Master data state initialized from merged dataset or props
   const [data, setData] = useState<InventoryUnitRow[]>(() => {
-    const raw = units && units.length > 0 ? units : (defaultOnlineUnits as InventoryUnitRow[]);
+    const raw = units && units.length > 0 ? units : [];
     return raw.map((u, i) => {
       const comp = u.compound || (u as any).location || 'القاهرة الجديدة';
       const clusterKey = resolveClusterKey(comp);

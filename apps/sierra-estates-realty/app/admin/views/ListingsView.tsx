@@ -25,8 +25,6 @@ import {
   Smartphone,
 } from 'lucide-react';
 
-import consolidatedRaw from '@/data/consolidated-master-inventory.json';
-import realListingsRaw from '@/data/real-listings.json';
 
 // Stock luxury community presets for 1-click photo matching
 const COMMUNITY_PHOTO_PRESETS: Record<string, string[]> = {
@@ -78,43 +76,7 @@ function getCommunityPreset(compound: string): string[] {
 
 // Build unified baseline merging real-listings and consolidated master inventory
 function buildUnifiedBaseline(): any[] {
-  const map = new Map<string, any>();
-
-  // Load real listings (with verified photos)
-  if (Array.isArray(realListingsRaw)) {
-    realListingsRaw.forEach((item: any) => {
-      const code = item.sierraCode || item.code || `SE-${item.id}`;
-      map.set(code, {
-        ...item,
-        sierraCode: code,
-        photos: item.photos || (item.image ? [item.image] : item.img ? [item.img] : []),
-        hasPhotos: Boolean((item.photos && item.photos.length > 0) || item.image || item.img),
-        status: item.status || 'Available',
-        publishToClient: item.publishToClient ?? true,
-        syndicatedToPf: item.syncSource === 'property-finder' || Boolean(item.syndicatedToPf),
-      });
-    });
-  }
-
-  // Merge consolidated units
-  if (Array.isArray(consolidatedRaw)) {
-    consolidatedRaw.forEach((item: any) => {
-      const code = item.sierraCode || item.code || `SE-${item.id}`;
-      if (!map.has(code)) {
-        map.set(code, {
-          ...item,
-          sierraCode: code,
-          photos: item.photos || [],
-          hasPhotos: Boolean(item.photos && item.photos.length > 0),
-          status: item.status || 'Available',
-          publishToClient: item.publishToClient ?? false,
-          syndicatedToPf: item.syncSource === 'property-finder' || Boolean(item.syndicatedToPf),
-        });
-      }
-    });
-  }
-
-  return Array.from(map.values());
+  return [];
 }
 
 export default function ListingsView({ lang = 'en', restricted = false }: { lang?: string; restricted?: boolean }) {

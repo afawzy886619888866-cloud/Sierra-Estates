@@ -1,5 +1,17 @@
 # Two-Host Parallel Outreach — "N lines here + N lines on the other side"
 
+
+> [!IMPORTANT]
+> **RESERVED FLAGSHIP LINE RULE (line-2 / 201092048333):**
+> The primary business line `201092048333` (`line-2`) is strictly reserved for:
+> 1. Inbound client conversations & concierge
+> 2. The 03:00 Cairo daily morning briefing
+> 
+> **NEVER** include `line-2` in `OPENWA_SESSION_IDS` for owner outreach or campaign rotation.
+> The outreach rotation pool uses only `line-1,line-3,line-4,line-5,line-6,line-7,line-8`.
+> Never pair `201031622600`.
+
+
 > **STATUS (2026-10-25):** the default topology is now the SINGLE-HOST
 > 8-line split walk — `start-sierra.bat` runs `WF_HOST_SIDE=split` with all
 > 8 gateway lines and dispatches every workflow on one PC (zero-AWS,
@@ -51,7 +63,7 @@ the old EC2 instance is decommissioned) — add/adjust:
 ```ini
 WF_HOST_SIDE=top
 WF_PARALLEL_LINES=4
-OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4   # your gateway session names
+OPENWA_SESSION_IDS=line-1,line-3,line-4   # your gateway session names
 # WF_SLOT_BATCH / WF_SLOT_DEADLINE_MS optional — defaults 30 / 23 min
 # RUNNER_WORKFLOWS stays UNSET — this host dispatches everything
 ```

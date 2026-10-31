@@ -52,11 +52,13 @@ services:
       - WHATSAPP_API_URL=http://whatsapp-rag-station:2785
       - WHATSAPP_API_TOKEN=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY in infra/.env — the runner cannot drive the gateway without a key}
       - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY}
-      - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8}
-      # ── 8-line outreach era (matches start-sierra.bat & outreach.js env contract) ──
+      # ⚠ NEVER add line-2 (201092048333, the flagship concierge) to this pool.
+      # line-2 is reserved EXCLUSIVELY for inbound client convos & the 03:00 morning briefing.
+      - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-3,line-4,line-5,line-6,line-7,line-8}
+      # ── 7-line outreach era (line-2 deliberately excluded) (matches start-sierra.bat & outreach.js env contract) ──
       # Lane opens 09:00 Cairo (owner requirement: WhatsApp lane open at least
       # 9am-9pm; PR #37). Keep this default in sync with outreach.js ACTIVE_HOURS.
-      - WF_PARALLEL_LINES=${WF_PARALLEL_LINES:-8}
+      - WF_PARALLEL_LINES=${WF_PARALLEL_LINES:-7}
       - WF_HOST_SIDE=${WF_HOST_SIDE:-split}
       - WF_SLOT_BATCH=${WF_SLOT_BATCH:-30}
       - WF_SLOT_DEADLINE_MS=${WF_SLOT_DEADLINE_MS:-3000000}

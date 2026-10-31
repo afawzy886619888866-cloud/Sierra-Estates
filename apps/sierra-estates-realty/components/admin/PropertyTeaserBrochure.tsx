@@ -106,7 +106,7 @@ export function PropertyTeaserBrochure({ initialData: _initialData, lang: _lang 
         installmentTenureYears: '5',
         deliveryYear: '2026',
         brokerName: 'Sierra Estates Desk',
-        brokerPhone: '+201061399688',
+        brokerPhone: '+201092048333',
       });
     }
     setErrorMsg('');

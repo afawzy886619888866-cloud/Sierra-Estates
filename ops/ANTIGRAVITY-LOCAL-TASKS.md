@@ -60,6 +60,14 @@ Both `sierra-whatsapp-rag-station` and `sierra-workflow-runner` must be
 
 ## Task 3 — Pair the WhatsApp business line
 
+
+> [!IMPORTANT]
+> **FLAGSHIP LINE PROTECTION:** `line-2` (`201092048333`) is reserved exclusively for
+> client conversations and the 03:00 morning briefing. It is completely removed from
+> the campaign outreach rotation (`OPENWA_SESSION_IDS=line-1,line-3,line-4,line-5,line-6,line-7,line-8`).
+> Never add line-2 to outreach. Never pair `201031622600`.
+
+
 Open `http://localhost:2785` (pairing dashboard) and scan the QR **with the
 phone that owns 01092048333** — that is `line-2` / `201092048333`, the
 business line, the one to scan.

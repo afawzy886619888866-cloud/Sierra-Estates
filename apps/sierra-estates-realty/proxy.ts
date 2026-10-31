@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
 import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
+import { isAdminPortalRole } from '@/lib/types';
 import { createClient as createSupabaseMiddlewareClient } from '@/utils/supabase/middleware';
 
 /**
@@ -71,11 +72,41 @@ async function handleProxy(request: NextRequest) {
     // 0b) Host split: if on dedicated admin host root, rewrite to /admin
     // /admin is directly accessible across all domains without host redirect
 
-    // 0c) Direct Admin Portal and Login access
+    // 0c) Direct Admin Portal and Login access — SERVER GATED (FIX 4)
     if (targetPath.startsWith('/admin')) {
-      return isRewritten
+      // Always allow /admin/login without gating
+      if (targetPath === '/admin/login' || targetPath.startsWith('/admin/login/')) {
+        const res = isRewritten
+          ? NextResponse.rewrite(new URL(targetPath, request.url))
+          : NextResponse.next();
+        res.headers.set('x-pathname', targetPath);
+        return res;
+      }
+
+      const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+      let isAuthorized = false;
+      if (sessionToken) {
+        try {
+          const sess = await verifySession(sessionToken);
+          if (sess && isAdminPortalRole(sess.role)) {
+            isAuthorized = true;
+          }
+        } catch {
+          isAuthorized = false;
+        }
+      }
+
+      if (!isAuthorized) {
+        const loginUrl = new URL('/admin/login', request.url);
+        loginUrl.searchParams.set('redirect', targetPath);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      const res = isRewritten
         ? NextResponse.rewrite(new URL(targetPath, request.url))
         : NextResponse.next();
+      res.headers.set('x-pathname', targetPath);
+      return res;
     }
 
     // 1) CORS Preflight Handling for API routes

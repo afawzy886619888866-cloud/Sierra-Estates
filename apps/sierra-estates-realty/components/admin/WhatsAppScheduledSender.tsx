@@ -298,9 +298,9 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                   className="w-full p-2.5 rounded-xl bg-slate-900 border border-emerald-600/40 text-white text-xs focus:outline-none focus:border-emerald-400 font-mono"
                 >
                   <option value="auto">🔄 Auto Round-Robin (All Ready SIM Lines)</option>
-                  <option value="line-1">📱 Line 1: Ahmed Fawzy (+201032206443)</option>
+                  <option value="line-1">📱 Line 1: Ahmed Fawzy (+201092048333)</option>
                   <option value="line-2">📱 Line 2: Ahmed Fawzy (+201092048333)</option>
-                  <option value="line-3">📱 Line 3: Sierra Estates (+201061399688)</option>
+                  <option value="line-3">📱 Line 3: Sierra Estates (+201092048333)</option>
                 </select>
                 <p className="text-[10px] text-slate-400 leading-relaxed">
                   {isAr
@@ -348,14 +348,14 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                   <Users className="w-3.5 h-3.5 text-[#E9C176]" />
                   <span>{isAr ? 'أرقام المستلمين (مفصولة بفواصل أو سطور)' : 'Recipients (E.164 phone numbers)'}</span>
                 </label>
-                <span className="text-[10px] text-slate-500 font-mono">e.g. +201001534224</span>
+                <span className="text-[10px] text-slate-500 font-mono">e.g. +201092048333</span>
               </div>
 
               {/* Quick Recipient Presets */}
               <div className="flex flex-wrap gap-1.5 mb-2">
                 <button
                   type="button"
-                  onClick={() => setRecipientInput('+201001534224, +201228774975, +201013995871, +201022844661, +201092048333')}
+                  onClick={() => setRecipientInput('+201092048333, +201092048333, +201092048333, +201092048333, +201092048333')}
                   className="clay-stat-badge bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 text-[10px] py-1 px-2.5 cursor-pointer"
                 >
                   <span>👥</span>
@@ -363,7 +363,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRecipientInput('+201001234567, +201098765432, +201123456789, +201201122334')}
+                  onClick={() => setRecipientInput('+201092048333, +201092048333, +201092048333, +201092048333')}
                   className="clay-stat-badge bg-blue-950/80 hover:bg-blue-900 border border-blue-700/60 text-blue-300 text-[10px] py-1 px-2.5 cursor-pointer"
                 >
                   <span>🔥</span>
