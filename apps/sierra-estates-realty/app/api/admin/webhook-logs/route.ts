@@ -48,6 +48,21 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ rows });
   } catch (error) {
+    // Pre-migration: the ledger arrives with migration 037. Point the operator
+    // at the dispatch path instead of a bare 500.
+    const message = String(error instanceof Error ? error.message : error);
+    if (/webhook_logs/i.test(message)) {
+      return NextResponse.json(
+        {
+          error:
+            'The webhook ledger is not provisioned yet — apply migration 037 ' +
+            '(supabase/migrations/20261031_037_unified_command_center.sql) via the ' +
+            'runtime applier (/api/cron/apply-migrations) or the Supabase SQL editor.',
+          code: 'MIGRATION_037_PENDING',
+        },
+        { status: 503 },
+      );
+    }
     logger.error('[ADMIN_WEBHOOK_LOGS_API_ERROR]', error);
     return NextResponse.json(
       { error: 'Failed to load webhook ledger.' },

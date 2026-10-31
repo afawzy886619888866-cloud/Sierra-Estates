@@ -74,6 +74,8 @@ interface PropertiesResponse {
     freshOver90: number;
     compounds: string[];
     windowSize: number;
+    /** Set while migration 037 has not been applied to this database. */
+    migrationPending?: boolean;
   };
 }
 
@@ -122,6 +124,7 @@ export default function PropertiesConsole() {
 
   const rows = data?.rows ?? [];
   const summary = data?.summary;
+  const migrationPending = Boolean(data?.summary?.migrationPending);
 
   async function act(row: PropertyRow, action: 'verify' | 'mark-stale' | 'restore' | 'mark-sold') {
     setBusyId(row.id);
@@ -280,6 +283,16 @@ export default function PropertiesConsole() {
               </div>
             </div>
           </CcCard>
+
+          {migrationPending && (
+            <div className="mt-4 rounded-xl border border-gold-500/40 bg-gold-500/10 px-4 py-2.5 text-xs text-gold-300" role="status">
+              Migration 037 is pending on this database — freshness scores and SE codes are not
+              provisioned yet. Dispatch the runtime applier
+              (<span className="cc-num">/api/cron/apply-migrations</span>) or apply
+              <span className="cc-num"> supabase/migrations/20261031_037_unified_command_center.sql </span>
+              in the Supabase SQL editor.
+            </div>
+          )}
 
           {notice && (
             <div

@@ -29,6 +29,43 @@ Public surface:
 | `components/LeadForm.tsx` | Public advisory capture → `POST /api/leads` → `public.leads` |
 | `components/ApplicantForm.tsx` | Careers application (with CV **link**, not a dead file picker) → `POST /api/careers/apply` → `public.career_applications` |
 
+## Deployment & the admin domain
+
+`admin.sierra-estates.net` is a separate Vercel project linked to this repo
+(same `main`). The edge proxy (`proxy.ts`) makes the console the site on that
+host: `/` rewrites to `/admin` (this Command Center), `/login` to
+`/admin/login`. The legacy Intelligence OS portal remains at `/admin/console`
+and is linked from the overview. Sign-in lands on `/admin` — the Command
+Center overview — after authentication.
+
+Both Vercel projects build from every push to `main`, and the build-time
+migration applier (`scripts/apply-pending-migrations.mjs`) applies pending
+`supabase/migrations/` files whenever `POSTGRES_URL` is present in the build
+environment; the runtime half (`/api/cron/apply-migrations`, CRON_SECRET
+gated) picks the migration up if it was not.
+
+### Dispatching migration 037 manually
+
+The runtime applier is deliberately manual-dispatch only. If the build did not
+apply it (no `POSTGRES_URL` at build), pick one:
+
+```bash
+# 1) Runtime applier (CRON_SECRET from Vercel env)
+curl -H "x-cron-secret: $CRON_SECRET" https://admin.sierra-estates.net/api/cron/apply-migrations
+
+# 2) GitHub Actions "Automations" workflow → run the apply-migrations dispatch
+#    (requires CRON_SECRET as a repository secret)
+
+# 3) Supabase SQL editor — paste supabase/migrations/20261031_037_unified_command_center.sql
+#    (idempotent; safe to paste twice)
+```
+
+Until 037 lands, the consoles degrade honestly: the properties console reads
+without freshness/SE-code columns (and shows a "migration pending" banner),
+applicants read from `career_applications` without CV links, the webhook ledger
+returns a 503 pointing at the migration, and the Curator recompute reports the
+missing RPC.
+
 ## Migration 037 (`supabase/migrations/20261031_037_unified_command_center.sql`)
 
 Additive and idempotent; mirrored into `apps/sierra-estates-realty/supabase/migrations/`
@@ -62,6 +99,26 @@ Executed server-side against Supabase, ledgered in `bot_runs`, heartbeating
 - **Curator** — `refresh_all_listing_freshness()` RPC: freshness recompute + stale SLA.
 - **Stage-9 Closer** — late-pipeline leads quiet for 3+ days get high-priority `followups` + WhatsApp nudges (capped at 10 messages per run).
 - **Matchmaker** — bulk `runMatchingForLead` over the newest new/contacted leads.
+
+## Migration validation
+
+`scripts/validate-migration-037.mjs` replays the production migration chain on
+a real embedded PostgreSQL 18 (platform stubs for auth/roles/pgvector/PostGIS,
+then consolidated `schema.sql` + migrations 011/013/020, then 037 twice, then
+functional and hazard probes). It caught and now guards against:
+
+- a `COMMENT ON VIEW` breaking when a manually created `applicants` TABLE
+  already exists (the view creation is guarded),
+- the se_code backfill violating its own unique index on re-run when
+  duplicate legacy codes share `created_at` (deterministic id-tiebreak),
+- the freshness backfill restarting every row's `updated_at` clock through the
+  shared `handle_updated_at` trigger (transaction-scoped `app.skip_updated_at`
+  opt-out — the repo's `app.actor` GUC pattern),
+- a column `DEFAULT 100` fabricating perfect scores for all existing rows
+  (NULL-default add → heal → then default).
+
+Run it per the header comment; 15/15 checks must pass before shipping changes
+to this migration.
 
 ## Tests
 

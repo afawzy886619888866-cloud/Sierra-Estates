@@ -64,6 +64,8 @@ interface ApplicantsResponse {
   rows: ApplicantRow[];
   counts: Record<string, number>;
   total: number;
+  /** Set while migration 037 has not been applied to this database. */
+  migrationPending?: boolean;
 }
 
 const STATUS_TONES: Record<string, 'gold' | 'azure' | 'amber' | 'green' | 'red' | 'neutral'> = {
@@ -102,6 +104,8 @@ export default function ApplicantsConsole() {
   }, [status]);
 
   const { data, loading, error, unauthorized, reload } = useAdminApi<ApplicantsResponse>(url);
+
+  const migrationPending = Boolean(data?.migrationPending);
 
   const rows = useMemo(() => {
     const all = data?.rows ?? [];
@@ -212,6 +216,15 @@ export default function ApplicantsConsole() {
               </div>
             </div>
           </CcCard>
+
+          {migrationPending && (
+            <div className="mt-4 rounded-xl border border-gold-500/40 bg-gold-500/10 px-4 py-2.5 text-xs text-gold-300" role="status">
+              Migration 037 is pending — the <span className="cc-num">applicants</span> view and CV
+              links are not provisioned yet. Applications still read from
+              <span className="cc-num"> career_applications</span>; apply migration 037 to light up
+              the full console.
+            </div>
+          )}
 
           {notice && (
             <div

@@ -21,6 +21,16 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/** Full projection (migration 037 applied — the applicants view + cv_url). */
+const SELECT_COLUMNS =
+  'id,name,phone,email,position,experience,hasVehicle,biggestAchievements,' +
+  'expectedSalary,realEstateKnowledge,availability,cvUrl,message,source,status,createdAt,updatedAt';
+
+/** Fallback projection for databases that have not applied migration 037 yet. */
+const SELECT_COLUMNS_PRE_MIGRATION =
+  'id,name,phone,email,position,experience,hasVehicle,biggestAchievements,' +
+  'expectedSalary,realEstateKnowledge,availability,message,source,status,createdAt,updatedAt';
+
 const APPLICANT_STATUSES = new Set([
   'new',
   'pending_review',
@@ -47,14 +57,31 @@ export async function GET(req: NextRequest) {
 
     // The view carries the base table's columns; the records layer returns
     // them camelCased, identical to reading career_applications directly.
-    const rows = (await listRecords('applicants', {
-      select:
-        'id,name,phone,email,position,experience,hasVehicle,biggestAchievements,' +
-        'expectedSalary,realEstateKnowledge,availability,cvUrl,message,source,status,createdAt,updatedAt',
-      where,
-      limit,
-      orderBy: { column: 'createdAt', ascending: false },
-    })) as Record<string, unknown>[];
+    // Pre-migration degrade: before 037 lands, the `applicants` view (and
+    // cv_url) do not exist — fall back to the base table without the CV
+    // column so the console stays usable.
+    let migrationPending = false;
+    let rows: Record<string, unknown>[];
+    try {
+      rows = (await listRecords('applicants', {
+        select: SELECT_COLUMNS,
+        where,
+        limit,
+        orderBy: { column: 'createdAt', ascending: false },
+      })) as Record<string, unknown>[];
+    } catch (err) {
+      const message = String(err instanceof Error ? err.message : err);
+      if (!/applicants|cv_url|cvUrl/i.test(message)) {
+        throw err;
+      }
+      migrationPending = true;
+      rows = (await listRecords('career_applications', {
+        select: SELECT_COLUMNS_PRE_MIGRATION,
+        where,
+        limit,
+        orderBy: { column: 'createdAt', ascending: false },
+      })) as Record<string, unknown>[];
+    }
 
     const filtered = q
       ? rows.filter((row) =>
@@ -76,7 +103,12 @@ export async function GET(req: NextRequest) {
       counts[s] = (counts[s] ?? 0) + 1;
     }
 
-    return NextResponse.json({ rows: filtered, counts, total: rows.length });
+    return NextResponse.json({
+      rows: filtered,
+      counts,
+      total: rows.length,
+      ...(migrationPending ? { migrationPending: true } : {}),
+    });
   } catch (error) {
     logger.error('[ADMIN_APPLICANTS_API_ERROR]', error);
     return NextResponse.json(

@@ -2535,7 +2535,8 @@ CREATE POLICY "service_role_all" ON public.broker_sessions
 --      under the spec's "applicants" name (public insert stays on the base
 --      table; staff read flows through the base table's RLS).
 --
--- Design rules honoured: 100% additive & idempotent (safe to re-run), no
+-- Design rules honoured: 100% additive & idempotent (safe to re-run — verified
+-- against a real PostgreSQL in scripts/validate-migration-037.mjs), no
 -- fabricated data (§21 — freshness is derived from updated_at, never invented),
 -- no destructive changes to the listing status state machine from migrations
 -- 011/035 (verified/stale/sold toggles ride the existing publish_status,
@@ -2545,8 +2546,12 @@ CREATE POLICY "service_role_all" ON public.broker_sessions
 -- ============================================================================
 
 -- ─── 1. Inventory freshness score ──────────────────────────────────────────
+-- Added NULL-defaulted: a column DEFAULT of 100 would retro-fill every EXISTING
+-- row with a fabricated perfect score (a 60-day-old listing must not read 100%
+-- fresh). Real values come from the backfill below; only NEW rows default 100
+-- (a row created now IS fresh).
 ALTER TABLE public.listings
-  ADD COLUMN IF NOT EXISTS freshness_score INTEGER DEFAULT 100;
+  ADD COLUMN IF NOT EXISTS freshness_score INTEGER;
 
 DO $$
 BEGIN
@@ -2563,19 +2568,50 @@ COMMENT ON COLUMN public.listings.freshness_score IS
   'Inventory freshness 0..100 (command center). 100 = updated today; decays 2/day (floor 20). Public verified showcase requires >= 90. Recomputed by public.refresh_all_listing_freshness().';
 
 -- Freshness from a timestamp: 100 - 2*days, floored at 20.
+-- STABLE (not IMMUTABLE): the result depends on NOW(), so it must never be
+-- usable in an index expression — computing it per-row keeps semantics honest.
 CREATE OR REPLACE FUNCTION public.compute_listing_freshness(p_updated_at TIMESTAMPTZ)
 RETURNS INTEGER
 LANGUAGE sql
-IMMUTABLE
+STABLE
 SET search_path = public
 AS $$
   SELECT GREATEST(20, 100 - 2 * COALESCE(FLOOR(EXTRACT(EPOCH FROM (NOW() - p_updated_at)) / 86400)::INT, 0))::INT;
 $$;
 
 -- Backfill every row once (idempotent: only rows without a score are touched).
+--
+-- handle_updated_at gains a transaction-scoped opt-out first (the repo already
+-- uses custom GUCs — see app.actor in migration 011): freshness_score is
+-- DERIVED from updated_at, so writing it must never restart the clock. Without
+-- the opt-out the backfill would stamp NOW() onto every listing at once —
+-- wiping the real edit history and making the whole inventory instantly
+-- "fresh". Every other caller behaves exactly as before (the GUC is never set
+-- outside these derived writes).
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF current_setting('app.skip_updated_at', true) = 'on' THEN
+        RETURN NEW;
+    END IF;
+    NEW.updated_at = TIMEZONE('utc'::text, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Heal semantics (not just backfill): recompute any row whose stored score
+-- disagrees with its clock — covers both never-scored NULLs AND rows
+-- fabricated by an earlier DEFAULT-100 apply of this migration (a 60-day-old
+-- listing must never read 100% fresh). Idempotent: a re-run is a no-op.
+SET app.skip_updated_at = 'on';
 UPDATE public.listings
    SET freshness_score = public.compute_listing_freshness(updated_at)
- WHERE freshness_score IS NULL;
+ WHERE freshness_score IS DISTINCT FROM public.compute_listing_freshness(updated_at);
+RESET app.skip_updated_at;
+
+-- Future rows default to 100 (created now = fresh); set AFTER the heal so
+-- the default never fabricates scores for existing inventory.
+ALTER TABLE public.listings ALTER COLUMN freshness_score SET DEFAULT 100;
 
 CREATE INDEX IF NOT EXISTS idx_listings_freshness_score ON public.listings(freshness_score);
 
@@ -2608,6 +2644,10 @@ DECLARE
   v_avg         NUMERIC;
   v_over_90     BIGINT;
 BEGIN
+  -- Derived writes only — the freshness clock must not restart (see
+  -- handle_updated_at above). Transaction-local, restored before returning.
+  PERFORM set_config('app.skip_updated_at', 'on', true);
+
   UPDATE public.listings
      SET freshness_score = public.compute_listing_freshness(updated_at)
    WHERE freshness_score IS DISTINCT FROM public.compute_listing_freshness(updated_at);
@@ -2624,6 +2664,8 @@ BEGIN
        AND updated_at < NOW() - INTERVAL '30 days';
     GET DIAGNOSTICS v_stale_count = ROW_COUNT;
   END IF;
+
+  PERFORM set_config('app.skip_updated_at', 'off', true);
 
   SELECT COALESCE(ROUND(AVG(freshness_score)), 0), COUNT(*) FILTER (WHERE freshness_score >= 90)
     INTO v_avg, v_over_90
@@ -2645,7 +2687,12 @@ COMMENT ON COLUMN public.listings.se_code IS
   'Canonical Sierra Estates inventory code (e.g. SE-SUB-123456). UNIQUE when present; backfilled from legacy code/reference_code.';
 
 -- Backfill: one owner per code so the unique index can never fail on legacy
--- duplicates (DISTINCT ON keeps the earliest row per code, by created_at).
+-- duplicates. The pick is DETERMINISTIC — code, created_at, then id as the
+-- final tiebreaker — so a re-run always selects the same row (bulk imports
+-- share created_at; without the id tiebreak a re-run could pick the other
+-- duplicate and violate idx_listings_se_code_unique). Bookkeeping only: the
+-- clock is not restarted (see handle_updated_at above).
+SET app.skip_updated_at = 'on';
 UPDATE public.listings l
    SET se_code = src.code
   FROM (
@@ -2655,10 +2702,11 @@ UPDATE public.listings l
       FROM public.listings c
      WHERE COALESCE(c.code, c.reference_code) IS NOT NULL
        AND TRIM(COALESCE(c.code, c.reference_code)) <> ''
-    ORDER BY TRIM(COALESCE(c.code, c.reference_code)), c.created_at ASC
+    ORDER BY TRIM(COALESCE(c.code, c.reference_code)), c.created_at ASC, c.id ASC
   ) AS src
  WHERE l.id = src.id
    AND l.se_code IS NULL;
+RESET app.skip_updated_at;
 
 -- Partial unique index: enforces uniqueness for every SET value while any
 -- number of rows may still have NULL (not yet coded).
@@ -2708,7 +2756,10 @@ DO $$
 BEGIN
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.webhook_logs;
-  EXCEPTION WHEN duplicate_object THEN NULL;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;  -- already streamed
+    WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
+  END;
 END $$;
 
 -- ─── 4. Recruitment: CV link ───────────────────────────────────────────────
@@ -2721,13 +2772,32 @@ COMMENT ON COLUMN public.career_applications.cv_url IS
 -- ─── 5. applicants VIEW (spec alias over career_applications) ──────────────
 -- security_invoker = the caller's own RLS rights on career_applications apply:
 -- staff read flows through "career_applications_staff_access", the public
--- intake keeps INSERTing into the base table directly.
-CREATE OR REPLACE VIEW public.applicants
+-- intake keeps INSERTing into career_applications directly.
+-- Guarded: if ANY relation named applicants already exists (e.g. a manually
+-- created table), the view AND its comment are skipped — CREATE OR REPLACE
+-- VIEW cannot replace a table, and the command-center reads fall back to
+-- career_applications.
+DO $guard$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'applicants'
+  ) THEN
+    EXECUTE $view$CREATE OR REPLACE VIEW public.applicants
 WITH (security_invoker = on) AS
-SELECT * FROM public.career_applications;
+SELECT * FROM public.career_applications$view$;
+    EXECUTE $cmt$COMMENT ON VIEW public.applicants IS
+'Command-center alias for public.career_applications (single source of truth for recruitment). Reads are subject to the base table''s RLS via security_invoker.'$cmt$;
+  END IF;
+END
+$guard$;
 
-COMMENT ON VIEW public.applicants IS
-  'Command-center alias for public.career_applications (single source of truth for recruitment). Reads are subject to the base table''s RLS via security_invoker.';
+-- security_invoker executes with the INVOKER's privileges, so the base table
+-- needs an explicit SELECT grant for the viewing role. Supabase's default
+-- privileges usually cover this; the explicit grant keeps the view functional
+-- on any Postgres. Reads stay staff-only through the base table's RLS.
+GRANT SELECT ON public.career_applications TO authenticated;
 
 GRANT SELECT ON public.applicants TO authenticated;
 
@@ -2736,5 +2806,8 @@ DO $$
 BEGIN
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.career_applications;
-  EXCEPTION WHEN duplicate_object THEN NULL;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;  -- already streamed
+    WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
+  END;
 END $$;

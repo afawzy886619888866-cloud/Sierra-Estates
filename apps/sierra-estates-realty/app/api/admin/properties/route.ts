@@ -33,6 +33,12 @@ const SELECT_COLUMNS =
   'price,priceCurrency,bedrooms,bathrooms,areaSqm,status,publishStatus,verified,' +
   'publishToClient,stale,freshnessScore,img,agent,tag,updatedAt,createdAt';
 
+/** Fallback projection for databases that have not applied migration 037 yet. */
+const SELECT_COLUMNS_PRE_MIGRATION =
+  'id,code,referenceCode,title,compound,developer,propertyType,dealType,' +
+  'price,priceCurrency,bedrooms,bathrooms,areaSqm,status,publishStatus,verified,' +
+  'publishToClient,stale,img,agent,tag,updatedAt,createdAt';
+
 function num(v: unknown): number {
   const n = typeof v === 'string' ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : 0;
@@ -57,21 +63,43 @@ export async function GET(req: NextRequest) {
 
     const where: { column: string; op?: 'eq' | 'gte' | 'lte' | 'ilike'; value: unknown }[] = [];
     if (compound) where.push({ column: 'compound', op: 'ilike', value: `%${compound}%` });
-    if (Number.isFinite(minFreshness)) {
-      where.push({ column: 'freshnessScore', op: 'gte', value: minFreshness });
-    }
 
-    const rows = (await listRecords('listings', {
-      select: SELECT_COLUMNS,
-      where,
-      limit: order === 'freshness' ? 2000 : limit,
-      orderBy:
-        order === 'freshness'
-          ? { column: 'freshnessScore', ascending: true }
-          : order === 'price'
+    // Pre-migration degrade: before 037 lands, se_code / freshness_score do
+    // not exist — retry without them so the console stays usable (scores read
+    // as unknown; the console prompts the operator to dispatch 037).
+    let migrationPending = false;
+    let rows: Record<string, unknown>[];
+
+    try {
+      rows = (await listRecords('listings', {
+        select: SELECT_COLUMNS,
+        where: Number.isFinite(minFreshness)
+          ? [...where, { column: 'freshnessScore', op: 'gte' as const, value: minFreshness }]
+          : where,
+        limit: order === 'freshness' ? 2000 : limit,
+        orderBy:
+          order === 'freshness'
+            ? { column: 'freshnessScore', ascending: true }
+            : order === 'price'
+              ? { column: 'price', ascending: false }
+              : { column: 'updatedAt', ascending: false },
+      })) as Record<string, unknown>[];
+    } catch (err) {
+      const message = String(err instanceof Error ? err.message : err);
+      if (!/se_code|freshness_score|seCode|freshnessScore/i.test(message)) {
+        throw err;
+      }
+      migrationPending = true;
+      rows = (await listRecords('listings', {
+        select: SELECT_COLUMNS_PRE_MIGRATION,
+        where,
+        limit: order === 'freshness' ? 2000 : limit,
+        orderBy:
+          order === 'price'
             ? { column: 'price', ascending: false }
-            : { column: 'updatedAt', ascending: false },
-    })) as Record<string, unknown>[];
+            : { column: 'updatedAt', ascending: order === 'freshness' },
+      })) as Record<string, unknown>[];
+    }
 
     // Bucket + free-text filters run post-read (the stale bucket is an OR of
     // two columns, which the AND-only records layer cannot express).
@@ -133,6 +161,7 @@ export async function GET(req: NextRequest) {
         freshOver90,
         compounds,
         windowSize: rows.length,
+        ...(migrationPending ? { migrationPending: true } : {}),
       },
     });
   } catch (error) {
