@@ -873,6 +873,44 @@ export default function InventoryCommandView({
               </button>
             ))}
           </div>
+          {/* Sync from Google Sheet Button */}
+          <button
+            type="button"
+            onClick={async () => {
+              setSyncingSheet(true);
+              setSheetSyncMsg(null);
+              try {
+                const res = await fetch('/api/sync/master-sheet', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sheetId: '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk' }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                  setSheetSyncMsg(`✓ ${data.count || 0} units synced from Google Sheet`);
+                  await fetch('/api/inventory', { method: 'DELETE', headers: { 'x-admin-secret': '' } }).catch(() => {});
+                  loadLive();
+                } else {
+                  setSheetSyncMsg(`✗ Sync failed: ${data.error || res.statusText}`);
+                }
+              } catch (e: unknown) {
+                setSheetSyncMsg(`✗ ${e instanceof Error ? e.message : 'network error'}`);
+              } finally {
+                setSyncingSheet(false);
+                setTimeout(() => setSheetSyncMsg(null), 8000);
+              }
+            }}
+            disabled={syncingSheet}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0f3460] border border-[#1d6fa5] text-[#7dd3fc] hover:bg-[#1e4976] hover:text-white transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+            title="Pull latest inventory from Google Sheet → Supabase"
+          >
+            {syncingSheet ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Database className="w-3.5 h-3.5" />
+            )}
+            <span className="hidden sm:inline">{syncingSheet ? 'Syncing…' : 'Sync Sheet'}</span>
+          </button>
           <button
             type="button"
             onClick={loadLive}
@@ -3046,4 +3084,15 @@ function StyledSelect({
       {children}
     </select>
   );
+      {sheetSyncMsg && (
+        <div className="fixed bottom-16 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border text-sm font-semibold transition-all animate-bounce"
+          style={{
+            background: sheetSyncMsg.startsWith('✓') ? '#052e16' : '#3b0764',
+            borderColor: sheetSyncMsg.startsWith('✓') ? '#16a34a' : '#9333ea',
+            color: sheetSyncMsg.startsWith('✓') ? '#4ade80' : '#e879f9',
+          }}
+        >
+          {sheetSyncMsg}
+        </div>
+      )}
 }

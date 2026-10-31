@@ -78,17 +78,45 @@ export default function SierraMasterRegistryApp({
     }
 
     // Wire with live /api/inventory endpoint and hydrate registry
-    fetch('/api/inventory?limit=500')
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (data && Array.isArray(data.units)) {
-          setLiveUnits(data.units);
-          const { unitListings } = hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
-          setLiveInventoryCount(data.count || unitListings.length);
+    const loadInventory = () => {
+      fetch('/api/inventory?limit=500')
+        .then(res => (res.ok ? res.json() : null))
+        .then(data => {
+          if (data && Array.isArray(data.units)) {
+            setLiveUnits(data.units);
+            const { unitListings } = hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
+            setLiveInventoryCount(data.count || unitListings.length);
+          }
+        })
+        .catch(() => {});
+    };
+    loadInventory();
+
+    // Supabase Realtime listener for live cross-surface updates
+    let rtChannel: any = null;
+    const setupRealtime = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+        if (sbUrl && sbAnon) {
+          const client = createClient(sbUrl, sbAnon);
+          rtChannel = client
+            .channel('public-listings-map')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, () => {
+              loadInventory();
+            })
+            .subscribe();
         }
-      })
-      .catch(() => {});
-  }, []);
+      } catch {
+        // Fallback or offline
+      }
+    };
+    setupRealtime();
+
+    return () => {
+      if (rtChannel) rtChannel.unsubscribe();
+    };
 
   // Selected unit for detail inspection
   const [inspectedUnit, setInspectedUnit] = useState<UnitListing | null>(null);

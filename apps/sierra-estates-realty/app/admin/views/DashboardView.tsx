@@ -401,7 +401,16 @@ export default function DashboardView({
     fetchTelemetry();
     const handleTelemetryEvent = () => fetchTelemetry();
     window.addEventListener('sierra:refresh-telemetry', handleTelemetryEvent);
-    return () => window.removeEventListener('sierra:refresh-telemetry', handleTelemetryEvent);
+
+    // Auto-refresh live dashboard & inventory metrics every 30s
+    const timer = setInterval(() => {
+      fetchTelemetry();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('sierra:refresh-telemetry', handleTelemetryEvent);
+      clearInterval(timer);
+    };
   }, [fetchTelemetry]);
 
   const metrics = useMemo(() => {
