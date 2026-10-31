@@ -9,6 +9,13 @@
  * failed at the credential gate because the SUPABASE_DB_URL secret does not
  * exist in the repository.
  *
+ * 2026-10-31 completion: runs #8–#10 (Oct 27–31) proved the event-aware
+ * routing was never actually wired — push events still took the apply path
+ * because an absent inputs.dry_run coerces to false. The step conditions are
+ * now explicitly event-aware (push = validate-only; apply requires an
+ * explicit workflow_dispatch with dry_run=false), and this contract pins
+ * that routing so it cannot silently regress.
+ *
  * Pinned here:
  *   · the new chain applier (apply-supabase-migrations.mjs) derives ledger
  *     versions with G2 parity — 031/032/033 map to the versions already
@@ -98,13 +105,13 @@ describe('deploy-supabase.yml — workflow contract', () => {
   it('validates the chain with NO credentials in dry-run mode', () => {
     const wf = fs.readFileSync(WORKFLOW, 'utf8');
     expect(wf).toContain('Validate migration chain (dry run — no credentials needed)');
-    expect(wf).toContain("if: ${{ inputs.dry_run != false }}");
+    expect(wf).toContain("if: ${{ github.event_name == 'push' || inputs.dry_run != false }}");
   });
 
   it('keeps the loud two-credential gate on the APPLY branch only', () => {
     const wf = fs.readFileSync(WORKFLOW, 'utf8');
     expect(wf).toContain('SUPABASE_ACCESS_TOKEN and SUPABASE_DB_URL are required');
-    expect(wf).toContain("if: ${{ inputs.dry_run == false }}");
+    expect(wf).toContain("if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}");
   });
 });
 

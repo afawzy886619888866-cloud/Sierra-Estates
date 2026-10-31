@@ -62,13 +62,17 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Validate migration chain (dry run — no credentials needed)
-        if: ${{ inputs.dry_run != false }}
+        # Push events have no inputs context: an absent boolean coerces to
+        # false, which used to route pushes into the apply path and fail the
+        # credential gate on every supabase/** push. Pushes now validate the
+        # chain only; applying requires an explicit dispatch with dry_run=false.
+        if: ${{ github.event_name == 'push' || inputs.dry_run != false }}
         run: |
           echo "Dry run — statically validating schema + migration chain only."
           node scripts/apply-supabase-migrations.mjs --dry-run
 
       - name: Verify Supabase credentials (fail loudly — apply path only)
-        if: ${{ inputs.dry_run == false }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
         run: |
           if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_URL }}" ]; then
             echo "::error::SUPABASE_ACCESS_TOKEN and SUPABASE_DB_URL are required to apply the canonical backend schema. Never run destructive schema work unauthenticated."
@@ -76,7 +80,7 @@ jobs:
           fi
 
       - name: Apply schema and migrations (authorized path)
-        if: ${{ inputs.dry_run == false }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
         run: |
           node scripts/apply-supabase-schema.mjs
           node scripts/apply-supabase-migrations.mjs
