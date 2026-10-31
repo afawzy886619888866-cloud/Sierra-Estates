@@ -359,15 +359,41 @@ async function processQueue(sessionId) {
   s.sendStartedAt = Date.now();
   const { chatId, text, resolve, reject } = s.messageQueue.shift();
 
-  if (String(chatId).includes('@g.us') || String(chatId).startsWith('120363') || String(chatId).replace(/\D/g, '').length > 15) {
+  let cleanChatId = String(chatId || '').trim();
+  if (cleanChatId.includes('@g.us') || cleanChatId.startsWith('120363')) {
     console.warn(`[${sessionId}] 🛑 Safety guard: blocked send to group/invalid recipient ${chatId}`);
     resolve({ ok: false, error: 'blocked_group_recipient_safety_guard' });
     s.isSending = false;
     return;
   }
 
+  // Normalize chatId to standard WhatsApp format (digits only before @c.us)
+  let userPortion = cleanChatId.includes('@') ? cleanChatId.split('@')[0] : cleanChatId;
+  let digits = userPortion.replace(/[^\d]/g, '');
+  while (digits.startsWith('00')) digits = digits.slice(2);
+
+  // Auto-cure common Egyptian number representations (Excel/User input):
+  // 202010... (duplicate 20) -> 2010...
+  if (/^20201[0125]\d{8}$/.test(digits)) digits = digits.slice(2);
+  // 22010... (duplicate 2) -> 2010...
+  else if (/^2201[0125]\d{8}$/.test(digits)) digits = digits.slice(1);
+  // 20010... (duplicate 0) -> 2010...
+  else if (/^2001[0125]\d{8}$/.test(digits)) digits = '20' + digits.slice(3);
+  // 01[0125]xxxxxxxx (11 digits local Egyptian) -> 201xxxxxxxx
+  else if (/^01[0125]\d{8}$/.test(digits)) digits = '20' + digits.slice(1);
+  // 1[0125]xxxxxxxx (10 digits Excel stripped 0) -> 201xxxxxxxx
+  else if (/^1[0125]\d{8}$/.test(digits)) digits = '20' + digits;
+
+  if (!digits || digits.length < 8 || digits.length > 15) {
+    console.warn(`[${sessionId}] 🛑 Safety guard: unusable phone digits "${digits}" from input "${chatId}"`);
+    resolve({ ok: false, error: `invalid_recipient_phone: "${chatId}"` });
+    s.isSending = false;
+    return;
+  }
+
+  const formattedChatId = `${digits}@c.us`;
+
   try {
-    const formattedChatId = chatId.includes('@') ? chatId : `${chatId}@c.us`;
     const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage().catch(() => null) : null);
     let res = null;
 
