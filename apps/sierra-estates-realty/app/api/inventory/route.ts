@@ -454,6 +454,23 @@ export async function GET(request: Request) {
 }
 
 /**
+ * DELETE /api/inventory
+ * Internal cache-bust hook. Called by admin mutations (listing status changes,
+ * sheet-webhook write-backs) to clear the in-memory TTL cache immediately
+ * without waiting for the 60-second natural expiry.
+ * Security: requires the last 12 chars of SUPABASE_SERVICE_ROLE_KEY in x-admin-secret header.
+ */
+export async function DELETE(request: Request) {
+  const secret = request.headers.get('x-admin-secret');
+  const expected = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(-12);
+  if (!secret || !expected || secret !== expected) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  cachedSupabaseListings = null;
+  logger.info('[inventory:DELETE] In-memory cache cleared by admin signal');
+  return NextResponse.json({ ok: true, message: 'Inventory cache cleared' });
+}
+/**
  * POST /api/inventory → Append newly submitted listing to Excel inventory sheet and Supabase
  */
 export async function POST(request: Request) {

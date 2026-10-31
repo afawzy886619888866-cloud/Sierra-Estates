@@ -4,6 +4,7 @@ import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db'
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { logger } from '@/lib/logger';
+import { revalidateTag } from 'next/cache';
 
 // Force dynamic rendering — uses Supabase/auth at runtime
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
+    // Revalidate the public inventory cache so the Client Page Map reflects
+    // status/publish_status changes immediately without waiting for cache TTL.
+    revalidateTag('inventory');
+
     return NextResponse.json({ success: true, listing: mapListingToSpa(id, rowToListingDoc(updated)) });
   } catch (err) {
     logger.error('Error updating listing:', err);
@@ -61,6 +66,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     await deleteRecord('listings', id);
+
+    // Revalidate inventory cache after deletion
+    revalidateTag('inventory');
+
     return NextResponse.json({ success: true });
   } catch (err) {
     logger.error('Error deleting listing:', err);

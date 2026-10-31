@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T09:05:31.606Z",
+  "generatedAt": "2026-10-31T04:45:16.425Z",
   "specVersion": "3.1.0",
   "mediaQualityPolicy": {
     "minPhotos": 6,
@@ -10,7 +10,7 @@
   "pfGateway": {
     "environment": "production",
     "connected": true,
-    "currentlyLiveAdsExcluded": 311,
+    "currentlyLiveAdsExcluded": 335,
     "defaultAssignedPublicProfileId": 79509,
     "activeProfiles": [
       {
@@ -36,20 +36,20 @@
     ]
   },
   "inventorySummary": {
-    "totalSupabaseListings": 21748,
-    "priorityCohortEvaluated": 1688,
+    "totalSupabaseListings": 22831,
+    "priorityCohortEvaluated": 2389,
     "excludedBreakdown": {
-      "inactive_status": 343,
-      "already_live_on_pf": 185,
-      "unmapped_property_type": 60,
-      "below_market_price_floor": 306,
-      "missing_area_sqm": 113,
-      "duplicate_unit_fingerprint": 253,
-      "unresolved_pf_location_id": 73
+      "inactive_status": 477,
+      "unresolved_pf_location_id": 95,
+      "unmapped_property_type": 168,
+      "missing_area_sqm": 375,
+      "duplicate_unit_fingerprint": 82,
+      "below_market_price_floor": 655,
+      "already_live_on_pf": 186
     },
     "tier1aGateReadyCount": 0,
-    "tier1bPrimePhotoUnitsCount": 11,
-    "tier2SheetAvailableOwnersCount": 41
+    "tier1bPrimePhotoUnitsCount": 7,
+    "tier2SheetAvailableOwnersCount": 40
   },
   "tier1aGateReadyAds": [],
   "tier1bPrimePhotoUnits": [
@@ -122,87 +122,6 @@
         },
         "description": {
           "en": "Verified villa for sale in Mivida. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": [
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 77,
-      "id": "e17dd330-0d8e-4ad2-b825-1440ab77ba4a",
-      "reference": "UNIT-WA-003",
-      "compound": "Mivida",
-      "pfLocationId": 2751,
-      "propertyType": "villa",
-      "offeringType": "sale",
-      "priceEgp": 42000000,
-      "areaSqm": 450,
-      "bedrooms": "5",
-      "bathrooms": "6",
-      "titleEn": "Villa in Mivida (RESALE)",
-      "titleAr": null,
-      "descriptionEn": "Verified villa for sale in Mivida. Features 5 bedrooms, 6 bathrooms, 450 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 1,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 5,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1179,
-          "height": 803,
-          "format": "jpeg",
-          "byteSize": 74441,
-          "qualifying": true,
-          "issue": null
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_5_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "UNIT-WA-003",
-        "category": "residential",
-        "type": "villa",
-        "offeringType": "sale",
-        "location": {
-          "id": 2751
-        },
-        "size": 450,
-        "bedrooms": "5",
-        "bathrooms": "6",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 42000000
-          }
-        },
-        "title": {
-          "en": "Villa in Mivida (RESALE)"
-        },
-        "description": {
-          "en": "Verified villa for sale in Mivida. Features 5 bedrooms, 6 bathrooms, 450 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
         },
         "media": {
           "images": [
@@ -298,87 +217,6 @@
     },
     {
       "tier": "tier1b_prime_photo_units",
-      "adScore": 77,
-      "id": "b6e70ff6-e95b-44df-807f-b089a629e0f3",
-      "reference": "UNIT-WA-008",
-      "compound": "Eastown",
-      "pfLocationId": 2752,
-      "propertyType": "apartment",
-      "offeringType": "sale",
-      "priceEgp": 16500000,
-      "areaSqm": 220,
-      "bedrooms": "3",
-      "bathrooms": "3",
-      "titleEn": "Apartment in Eastown (RESALE)",
-      "titleAr": null,
-      "descriptionEn": "Verified apartment for sale in Eastown. Features 3 bedrooms, 3 bathrooms, 220 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 1,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 5,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d8b70cdc-ed1e-11ef-9c46-0a0bf5daed27-16749c88-9c47-471b-91a0-37841318e1a8.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1179,
-          "height": 803,
-          "format": "jpeg",
-          "byteSize": 39501,
-          "qualifying": true,
-          "issue": null
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_5_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "UNIT-WA-008",
-        "category": "residential",
-        "type": "apartment",
-        "offeringType": "sale",
-        "location": {
-          "id": 2752
-        },
-        "size": 220,
-        "bedrooms": "3",
-        "bathrooms": "3",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 16500000
-          }
-        },
-        "title": {
-          "en": "Apartment in Eastown (RESALE)"
-        },
-        "description": {
-          "en": "Verified apartment for sale in Eastown. Features 3 bedrooms, 3 bathrooms, 220 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": [
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d8b70cdc-ed1e-11ef-9c46-0a0bf5daed27-16749c88-9c47-471b-91a0-37841318e1a8.png"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
       "adScore": 65,
       "id": "e6e9ec08-b669-4ca1-a318-8afc16bc09ff",
       "reference": "ET-R90-4S-18.5M",
@@ -447,82 +285,6 @@
         },
         "description": {
           "en": "Verified duplex for sale in Eastown. Features 4 bedrooms, 4 bathrooms, 310 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": []
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 65,
-      "id": "4bf40f61-85b4-431d-8cf4-69c410efe2dc",
-      "reference": "HY-P-3S-16.5M+R+L",
-      "compound": "Hyde Park",
-      "pfLocationId": 2790,
-      "propertyType": "penthouse",
-      "offeringType": "sale",
-      "priceEgp": 16500000,
-      "areaSqm": 200,
-      "bedrooms": "3",
-      "bathrooms": "2",
-      "titleEn": "Penthouse in Hyde Park (RESALE)",
-      "titleAr": null,
-      "descriptionEn": "Verified penthouse for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 0,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 6,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 668,
-          "height": 455,
-          "format": "jpeg",
-          "byteSize": 30774,
-          "qualifying": false,
-          "issue": "Resolution 668x455px below minimum 800x600px"
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_6_more_qualifying_photos_min_800x600px",
-        "1_photo_below_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "HY-P-3S-16.5M+R+L",
-        "category": "residential",
-        "type": "penthouse",
-        "offeringType": "sale",
-        "location": {
-          "id": 2790
-        },
-        "size": 200,
-        "bedrooms": "3",
-        "bathrooms": "2",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 16500000
-          }
-        },
-        "title": {
-          "en": "Penthouse in Hyde Park (RESALE)"
-        },
-        "description": {
-          "en": "Verified penthouse for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
         },
         "media": {
           "images": []
@@ -675,82 +437,6 @@
         },
         "description": {
           "en": "Verified apartment for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": []
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 65,
-      "id": "f36488e4-ca38-4de1-944a-6f046e803322",
-      "reference": "SET-2B-140M-110K",
-      "compound": "Eastown",
-      "pfLocationId": 2752,
-      "propertyType": "apartment",
-      "offeringType": "rent",
-      "priceEgp": 110000,
-      "areaSqm": 140,
-      "bedrooms": "2",
-      "bathrooms": "none",
-      "titleEn": "Apartment in Eastown (RENT)",
-      "titleAr": null,
-      "descriptionEn": "Verified apartment for rent in Eastown. Features 2 bedrooms, 140 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 0,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 6,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/da58296a-ed1e-11ef-9c46-0a0bf5daed27-bf30c487-1959-4b13-8ae8-67e42d7658c1.png",
-          "reachable": false,
-          "httpStatus": 403,
-          "width": null,
-          "height": null,
-          "format": "unknown",
-          "byteSize": null,
-          "qualifying": false,
-          "issue": "Unreachable HTTP 403"
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_6_more_qualifying_photos_min_800x600px",
-        "1_photo_url_unreachable",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "SET-2B-140M-110K",
-        "category": "residential",
-        "type": "apartment",
-        "offeringType": "rent",
-        "location": {
-          "id": 2752
-        },
-        "size": 140,
-        "bedrooms": "2",
-        "bathrooms": "none",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "monthly",
-          "amounts": {
-            "monthly": 110000
-          }
-        },
-        "title": {
-          "en": "Apartment in Eastown (RENT)"
-        },
-        "description": {
-          "en": "Verified apartment for rent in Eastown. Features 2 bedrooms, 140 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
         },
         "media": {
           "images": []
@@ -999,39 +685,6 @@
       "titleEn": "Villa — rehab",
       "titleAr": null,
       "descriptionEn": "Verified villa for sale in rehab. Features studio layout, 210 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 0,
-      "qualifyingPhotoCount": 0,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 6,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [],
-      "isDirectOwner": true,
-      "isSheetSynced": true,
-      "onClientMap": false,
-      "publishStatus": "REVIEW_REQUIRED",
-      "status": "available",
-      "missingForGate": [
-        "needs_6_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ]
-    },
-    {
-      "tier": "tier2_sheet_available_owners",
-      "adScore": 65,
-      "id": "1c203dda-63d4-498d-b504-be1832d24746",
-      "reference": "MT-B14-3U-8.34M-D3",
-      "compound": "Madinaty",
-      "pfLocationId": 42270,
-      "propertyType": "apartment",
-      "offeringType": "rent",
-      "priceEgp": 8500000,
-      "areaSqm": 108,
-      "bedrooms": "3",
-      "bathrooms": "none",
-      "titleEn": "Apartment — Madinaty",
-      "titleAr": null,
-      "descriptionEn": "Verified apartment for rent in Madinaty. Features 3 bedrooms, 108 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
       "realPhotoCount": 0,
       "qualifyingPhotoCount": 0,
       "requiredPhotoCount": 6,
@@ -1712,19 +1365,19 @@
     {
       "tier": "tier2_sheet_available_owners",
       "adScore": 65,
-      "id": "a60f3a29-f33c-4bdf-80c8-f72315bafd60",
-      "reference": "121-42-31-D3",
-      "compound": "rehab",
-      "pfLocationId": 2284,
+      "id": "e509c9f9-4a0e-4df7-9e2d-4ba08bf8ee56",
+      "reference": "BS4-3F-35K+A-D3",
+      "compound": "Fifth square",
+      "pfLocationId": 41671,
       "propertyType": "apartment",
       "offeringType": "rent",
       "priceEgp": 35000,
-      "areaSqm": 99,
-      "bedrooms": "2",
+      "areaSqm": 190,
+      "bedrooms": "3",
       "bathrooms": "none",
-      "titleEn": "Apartment — rehab",
+      "titleEn": "Apartment — Fifth square",
       "titleAr": null,
-      "descriptionEn": "Verified apartment for rent in rehab. Features 2 bedrooms, 99 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "descriptionEn": "Verified apartment for rent in Fifth square. Features 3 bedrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
       "realPhotoCount": 0,
       "qualifyingPhotoCount": 0,
       "requiredPhotoCount": 6,
@@ -1745,19 +1398,52 @@
     {
       "tier": "tier2_sheet_available_owners",
       "adScore": 65,
-      "id": "e509c9f9-4a0e-4df7-9e2d-4ba08bf8ee56",
-      "reference": "BS4-3F-35K+A-D3",
-      "compound": "Fifth square",
-      "pfLocationId": 41671,
+      "id": "7217da93-d9af-44bf-8b13-8a7193641c65",
+      "reference": "MD-2F-700USD-D3",
+      "compound": "Madinaty",
+      "pfLocationId": 42270,
       "propertyType": "apartment",
       "offeringType": "rent",
       "priceEgp": 35000,
-      "areaSqm": 190,
+      "areaSqm": 117,
+      "bedrooms": "2",
+      "bathrooms": "none",
+      "titleEn": "Apartment — Madinaty",
+      "titleAr": null,
+      "descriptionEn": "Verified apartment for rent in Madinaty. Features 2 bedrooms, 117 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "realPhotoCount": 0,
+      "qualifyingPhotoCount": 0,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 6,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [],
+      "isDirectOwner": true,
+      "isSheetSynced": true,
+      "onClientMap": false,
+      "publishStatus": "REVIEW_REQUIRED",
+      "status": "available",
+      "missingForGate": [
+        "needs_6_more_qualifying_photos_min_800x600px",
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ]
+    },
+    {
+      "tier": "tier2_sheet_available_owners",
+      "adScore": 65,
+      "id": "7ea7d327-56cb-4b0e-9740-cefcf5b43b4a",
+      "reference": "MT-3R-35K+G-D3",
+      "compound": "Madinaty",
+      "pfLocationId": 42270,
+      "propertyType": "apartment",
+      "offeringType": "rent",
+      "priceEgp": 35000,
+      "areaSqm": 108,
       "bedrooms": "3",
       "bathrooms": "none",
-      "titleEn": "Apartment — Fifth square",
+      "titleEn": "Apartment — Madinaty",
       "titleAr": null,
-      "descriptionEn": "Verified apartment for rent in Fifth square. Features 3 bedrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "descriptionEn": "Verified apartment for rent in Madinaty. Features 3 bedrooms, 108 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
       "realPhotoCount": 0,
       "qualifyingPhotoCount": 0,
       "requiredPhotoCount": 6,

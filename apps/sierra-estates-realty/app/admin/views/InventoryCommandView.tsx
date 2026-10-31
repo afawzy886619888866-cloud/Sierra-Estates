@@ -304,6 +304,9 @@ export default function InventoryCommandView({
   const [allUnits, setAllUnits] = useState<any[]>(() => buildUnifiedBaseline());
   const [liveMerged, setLiveMerged] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // Sheet sync state
+  const [syncingSheet, setSyncingSheet] = useState(false);
+  const [sheetSyncMsg, setSheetSyncMsg] = useState<string | null>(null);
   const [notice, setNotice] = useState<{
     type: "ok" | "err";
     text: string;
