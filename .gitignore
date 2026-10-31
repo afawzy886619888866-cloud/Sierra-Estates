@@ -118,6 +118,7 @@ Thumbs.db
 *.sql.zip
 *.db.dump
 testrun/
+scripts/test-results/
 output/
 work-items-out/
 temp/
