@@ -78,10 +78,23 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Format E.164 style or Egypt default if missing prefix
+      // Format E.164 style or Egypt default if missing prefix (never duplicate 00 or country code)
       let normalizedDigits = cleanDigits;
-      if (normalizedDigits.startsWith('01') && normalizedDigits.length === 11) {
+      while (normalizedDigits.startsWith('00')) {
+        normalizedDigits = normalizedDigits.slice(2);
+      }
+
+      // Egyptian prefix normalizations (Excel, duplicate 20, local 01):
+      if (/^20201[0125]\d{8}$/.test(normalizedDigits)) {
+        normalizedDigits = normalizedDigits.slice(2);
+      } else if (/^2201[0125]\d{8}$/.test(normalizedDigits)) {
+        normalizedDigits = normalizedDigits.slice(1);
+      } else if (/^2001[0125]\d{8}$/.test(normalizedDigits)) {
+        normalizedDigits = `20${normalizedDigits.slice(3)}`;
+      } else if (/^01[0125]\d{8}$/.test(normalizedDigits)) {
         normalizedDigits = `20${normalizedDigits.slice(1)}`;
+      } else if (/^1[0125]\d{8}$/.test(normalizedDigits)) {
+        normalizedDigits = `20${normalizedDigits}`;
       }
 
       const chatId = `${normalizedDigits}@c.us`;

@@ -324,6 +324,44 @@ export default function BotsDesk() {
             )}
           </section>
 
+          {/* ── WhatsApp 8-Line Fleet & Gateway Operator Bar ── */}
+          <div className="mt-8 rounded-2xl border border-gold-500/30 bg-gradient-to-r from-gold-500/10 via-black/40 to-blue-500/10 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-500/20 text-xl text-gold-300">
+                  📱
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#f5f3ec]">WhatsApp 8-Line Multi-Session Gateway</h3>
+                    <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-emerald-400">
+                      Active Fleet (Port 2785)
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[#f5f3ec]/60">
+                    Dedicated SIM pool with automatic phone normalization, anti-ban typing emulation, and real-time QR linking.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/admin?tab=whatsapp_outreach"
+                  className="rounded-xl border border-gold-500/40 bg-gold-500/20 px-3.5 py-2 text-xs font-bold text-gold-200 transition hover:bg-gold-500/30"
+                >
+                  📡 Open 8-Line Operator Console
+                </a>
+                <a
+                  href="http://127.0.0.1:2785/map"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl border border-blue-500/40 bg-blue-500/20 px-3.5 py-2 text-xs font-bold text-blue-200 transition hover:bg-blue-500/30"
+                >
+                  🗺️ Live Map Station
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* ── Fleet cards ────────────────────────────────────────────────── */}
           <section aria-label="Bot fleet" className="mt-8">
             <h2 className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[#f5f3ec]/40">

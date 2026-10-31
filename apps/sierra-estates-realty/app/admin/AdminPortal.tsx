@@ -2290,7 +2290,7 @@ function AdminApp() {
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
-    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach' | 'outbox'>('scan');
+    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach' | 'outbox'>('outbox');
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
@@ -2304,6 +2304,26 @@ function AdminApp() {
             flexWrap: 'wrap',
           }}
         >
+          <button
+            onClick={() => setSubTab('outbox')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outbox' ? '1px solid #D4AF37' : '1px solid var(--bd)',
+              background: subTab === 'outbox' ? 'rgba(212, 175, 55, 0.18)' : 'var(--bg-e)',
+              color: subTab === 'outbox' ? '#D4AF37' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📡</span>
+            <span>{isArabic ? 'غرفة عمليات الخطوط الـ 8 والبوابة الحية' : '8-Line Gateway & Operator Console'}</span>
+          </button>
+
           <button
             onClick={() => setSubTab('scan')}
             style={{
@@ -2325,6 +2345,26 @@ function AdminApp() {
           </button>
 
           <button
+            onClick={() => setSubTab('outreach')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outreach' ? '1px solid #60A5FA' : '1px solid var(--bd)',
+              background: subTab === 'outreach' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'outreach' ? '#60A5FA' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>🚀</span>
+            <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
+          </button>
+
+          <button
             onClick={() => setSubTab('qr')}
             style={{
               padding: '8px 18px',
@@ -2341,47 +2381,7 @@ function AdminApp() {
             }}
           >
             <span>📱</span>
-            <span>{isArabic ? 'ربط الموبايل المباشر (QR وكود الاقتران)' : 'Live Mobile Gateway (QR & Code)'}</span>
-          </button>
-
-          <button
-            onClick={() => setSubTab('outreach')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: subTab === 'outreach' ? '1px solid #D4AF37' : '1px solid var(--bd)',
-              background: subTab === 'outreach' ? 'rgba(212, 175, 55, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'outreach' ? '#D4AF37' : 'var(--tx-m)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>🚀</span>
-            <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
-          </button>
-
-          <button
-            onClick={() => setSubTab('outbox')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: subTab === 'outbox' ? '1px solid #60A5FA' : '1px solid var(--bd)',
-              background: subTab === 'outbox' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'outbox' ? '#60A5FA' : 'var(--tx-m)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>📤</span>
-            <span>{isArabic ? 'صندوق الإرسال وحالة البوابة' : 'Outbox & Gateway Status'}</span>
+            <span>{isArabic ? 'ربط الموبايل المباشر (Legacy Single QR)' : 'Legacy Mobile QR'}</span>
           </button>
         </div>
 
