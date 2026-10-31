@@ -74,7 +74,24 @@ jobs:
       - name: Verify Cline CLI installation
         run: pnpm cline:check
 
+      - name: Gate on Cline credentials (scheduled runs skip cleanly)
+        # Run #1 (2026-10-26) burned the full install cycle and then failed
+        # inside the Cline CLI with "Unauthorized: ... re-authenticate your
+        # Cline account" — the ANTHROPIC_API_KEY fallback is NOT a valid Cline
+        # account credential. Until the CLINE_API_KEY repository secret is set
+        # (Cline account key), scheduled runs exit green with a notice instead
+        # of failing weekly, and manual dispatches fail loudly with guidance.
+        if: ${{ secrets.CLINE_API_KEY == '' }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "::notice::CLINE_API_KEY is not configured — skipping the scheduled Cline audit. Set the CLINE_API_KEY repository secret (Cline account key), then re-run."
+            exit 0
+          fi
+          echo "::error::CLINE_API_KEY is not configured. The ANTHROPIC_API_KEY fallback cannot authenticate the Cline service (run #1, 2026-10-26). Set the CLINE_API_KEY repository secret, then re-run."
+          exit 1
+
       - name: Run Cline workflow
+        if: ${{ secrets.CLINE_API_KEY != '' }}
         env:
           CLINE_API_KEY: ${{ secrets.CLINE_API_KEY || secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
