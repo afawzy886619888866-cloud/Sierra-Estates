@@ -1,15 +1,17 @@
 /**
  * ============================================================================
- * SIERRA ESTATES · UNIFIED MASTER APPS SCRIPT ENGINE (v5.0 - Production)
+ * SIERRA ESTATES · UNIFIED MASTER APPS SCRIPT ENGINE (v5.5 - Production)
  * ============================================================================
  * Features:
+ *   0. Primary "Run" button handler: select "run" or "runSierraEstatesEngine"
+ *      and click "Run ▶" — audits all sheets, outputs detailed execution logs.
  *   1. Preserved & Enhanced Owner Outreach Write-Back Endpoint (doGet & doPost).
  *      - Secret: SE_OUTREACH_SECRET_2026_CAIRO
  *      - Updates «تاريخ اخر تواصل» / Last Action Date matched by clean mobile.
  *   2. Famous Canonical Compound Unification (e.g. CFC, كايرو فيستيفال -> Cairo Festival City).
  *   3. 400,000 EGP Rent Ceiling Guard (Rent <= 400k | Resale = Millions).
  *   4. Mandatory Egyptian Mobile Rule (01xxxxxxxxx) - Blanks strictly blocked.
- *   5. Zero Blanks Guarantee - Replaces empty spaces with contextual words.
+ *   5. Zero Blanks Guarantee - Replaces empty spaces with exact 22-column defaults.
  *   6. Auto-timestamping on status / call notes edit.
  *   7. Supabase pgvector RAG Memory Synchronization.
  * ============================================================================
@@ -78,139 +80,287 @@ const COMPOUND_GAZETTEER = {
 
   // Eastown
   "eastown": "Eastown",
-  "east town": "Eastown",
   "ايست تاون": "Eastown",
+  "ايستاون": "Eastown",
 
   // Hyde Park
   "hyde park": "Hyde Park",
-  "haid bark": "Hyde Park",
-  "hayd park": "Hyde Park",
   "هايد بارك": "Hyde Park",
-  "hyde park business district": "Hyde Park",
-
-  // Fifth Square
-  "fifth square": "Fifth Square",
-  "فيفث سكوير": "Fifth Square",
-  "المراسم": "Fifth Square",
-  "al marasem": "Fifth Square",
-
-  // Lake View Residence
-  "lake view residence": "Lake View Residence",
-  "lake view": "Lake View Residence",
-  "lakeview": "Lake View Residence",
-  "ليك فيو": "Lake View Residence",
 
   // Villette
-  "villette": "Villette",
-  "فيليت": "Villette",
-  "villette sodic": "Villette",
-
-  // Uptown Cairo
-  "uptown cairo": "Uptown Cairo",
-  "up town cairo": "Uptown Cairo",
-  "اب تاون كايرو": "Uptown Cairo",
-  "أب تاون": "Uptown Cairo",
-
-  // Mountain View
-  "mountain view": "Mountain View iCity",
-  "mountain view icity": "Mountain View iCity",
-  "ماونتن فيو": "Mountain View iCity",
-  "ماونتن فيو اي سيتي": "Mountain View iCity",
-
-  // SODIC
-  "sodic": "SODIC East",
-  "sodic east": "SODIC East",
-  "سوديك": "SODIC East",
-
-  // Waterway
-  "waterway": "The Waterway",
-  "the waterway": "The Waterway",
-  "الوترواي": "The Waterway",
-  "الووترواي": "The Waterway",
-  "capital way by water way": "The Capitalway",
-
-  // Galleria Moon Valley
-  "galleria moon valley": "Galleria Moon Valley",
-  "جاليريا مون فالي": "Galleria Moon Valley",
-  "galleria": "Galleria Moon Valley",
-
-  // Katameya
-  "katameya dunes": "Katameya Dunes",
-  "قطامية ديونز": "Katameya Dunes",
-  "katameya": "Katameya Heights",
-  "قطامية هايتس": "Katameya Heights",
-
-  // Swan Lake
-  "swan lake": "Swan Lake",
-  "swan lake north coast": "Swan Lake North Coast",
-  "سوان ليك": "Swan Lake",
-
-  // 90 Avenue
-  "90 avenue": "90 Avenue",
-  "تسعين افينيو": "90 Avenue",
+  "villette": "Villette (Sodic)",
+  "فيليت": "Villette (Sodic)",
 
   // Palm Hills
   "palm hills": "Palm Hills New Cairo",
   "بالم هيلز": "Palm Hills New Cairo",
-  "badya": "Badya (Palm Hills)",
-  "بادية": "Badya (Palm Hills)",
+  "pk1": "Palm Hills (PK1)",
+  "pk2": "Palm Hills (PK2)",
+  "village gate": "Village Gate (Palm Hills)",
+  "village avenue": "Village Avenue",
 
-  // General New Cairo
-  "new cairo": "New Cairo (General)",
-  "new-cairo": "New Cairo (General)",
-  "5th settlement": "New Cairo (General)",
-  "fifth settlement": "New Cairo (General)",
-  "التجمع الخامس": "New Cairo (General)",
-  "القاهرة الجديدة": "New Cairo (General)",
-  "north 90": "North 90 (New Cairo)",
-  "south academ": "South Academy (New Cairo)",
-  "narges": "Al Narges (New Cairo)",
-  "andlos": "Al Andalus (New Cairo)",
-  "gardina city": "Gardenia City",
+  // Mountain View
+  "mountain view": "Mountain View iCity",
+  "ماونتن فيو": "Mountain View iCity",
+  "icity": "Mountain View iCity",
+  "hyde park mv": "Mountain View (Hyde Park)",
 
-  // Other Areas
-  "el shorouk": "El Shorouk City",
-  "‎el shorouk city": "El Shorouk City",
-  "el shorouk city": "El Shorouk City",
-  "الشروق": "El Shorouk City",
-  "new capital": "New Administrative Capital",
-  "new-capital": "New Administrative Capital",
-  "العاصمة الإدارية": "New Administrative Capital",
-  "midtown": "Midtown (New Capital)",
+  // Fifth Square
+  "fifth square": "Fifth Square (Al Marasem)",
+  "المراسم": "Fifth Square (Al Marasem)",
+  "فيفث سكوير": "Fifth Square (Al Marasem)",
+
+  // Katameya
+  "katameya dunes": "Katameya Dunes",
+  "قطامية ديونز": "Katameya Dunes",
+  "katameya heights": "Katameya Heights",
+  "قطامية هايتس": "Katameya Heights",
+  "katameya palms": "Katameya Palms",
+  "katameya residence": "Katameya Residence",
+
+  // Lake View
+  "lake view": "Lake View",
+  "ليك فيو": "Lake View",
+  "lake view residence": "Lake View Residence",
+
+  // Al Marasm
+  "marasem": "Fifth Square (Al Marasem)",
+  "marasm": "Fifth Square (Al Marasem)",
+
+  // Waterway
+  "waterway": "The Waterway",
+  "water way": "The Waterway",
+  "واتر واي": "The Waterway",
+
+  // Swan Lake
+  "swan lake": "Swan Lake (Hassan Allam)",
+  "swanlake": "Swan Lake (Hassan Allam)",
+  "سوان ليك": "Swan Lake (Hassan Allam)",
+
+  // Azzar
+  "azzar": "Azzar",
+  "ازار": "Azzar",
+
+  // Sarai
+  "sarai": "Sarai",
+  "سراي": "Sarai",
+
+  // Taj City
+  "taj city": "Taj City",
+  "تاج سيتي": "Taj City",
+
+  // Zed East
+  "zed east": "Zed East (Ora)",
+  "زد ايست": "Zed East (Ora)",
+  "zed": "Zed East (Ora)",
+
+  // Golden Square generic
+  "golden square": "Golden Square",
+  "المربع الذهبي": "Golden Square",
+
+  // Sheikh Zayed & West Cairo
+  "zayed": "Sheikh Zayed",
   "zaid": "Sheikh Zayed",
   "sheikh zayed, typical": "Sheikh Zayed",
   "6th of october": "6th of October",
   "village west - dorra": "Village West (Dorra)"
 };
 
-// Contextual fallback fill words (NO BLANKS)
-const CONTEXTUAL_FILLS = {
-  "Timestamp": "Not Recorded",
-  "Unit Code": "Pending Code",
-  "Compound (Canonical)": "Not Specified",
-  "Property Type": "Not Specified",
-  "Asking Price (EGP)": "Ask Owner",
-  "Area (m²)": "Not Specified",
-  "Bedrooms": "Not Specified",
-  "Bathrooms": "Not Specified",
-  "Finishing Status": "Not Specified",
-  "Floor": "Not Specified",
-  "Garden (m²)": "No Info",
-  "Pool": "Not Specified",
-  "Contact Name": "Unknown",
-  "Mobile Number": "MISSING",
-  "Mobile (Last 7)": "MISSING",
-  "Availability Status": "Not Confirmed",
-  "Last Action Date": "No Contact Yet",
-  "Owner Call Response & Notes": "No Notes",
-  "Photo URLs": "No Photos",
-  "RAG Memory ID": "Pending Sync"
-};
+// 1-to-1 Column Defaults for 22 Columns (Zero-Blank Guarantee)
+const COLUMN_FILL_DEFAULTS = [
+  "Not Recorded",    // 1: Timestamp (A)
+  "Pending Code",   // 2: Unit Code (B)
+  "Resale",         // 3: Deal Type (C)
+  "Not Specified",  // 4: Compound (D)
+  "Apartment",      // 5: Property Type (E)
+  "Ask Owner",      // 6: Asking Price (F)
+  "Not Specified",  // 7: Area (G)
+  "Not Specified",  // 8: Bedrooms (H)
+  "Not Specified",  // 9: Bathrooms (I)
+  "Not Specified",  // 10: Finishing Status (J)
+  "Not Specified",  // 11: Floor (K)
+  "No Info",        // 12: Garden (L)
+  "Not Specified",  // 13: Pool (M)
+  "Direct Owner",   // 14: Advertiser (N)
+  "Unknown",        // 15: Contact Name (O)
+  "MISSING",        // 16: Mobile Number (P)
+  "MISSING",        // 17: Mobile Last 7 (Q)
+  "Not Confirmed",  // 18: Availability Status (R)
+  "No Contact Yet", // 19: Last Action Date (S)
+  "No Notes",       // 20: Owner Call Response & Notes (T)
+  "No Photos",      // 21: Photo URLs (U)
+  "Pending Sync"    // 22: RAG Memory ID (V)
+];
 
 /**
+ * ============================================================================
+ * 0. PRIMARY RUN FUNCTION (Select this from the dropdown and click "Run ▶")
+ * ============================================================================
+ * Performs a complete audit across all inventory sheets:
+ *   1. Standardizes all compound names to famous canonical names.
+ *   2. Audits the 400,000 EGP rent ceiling (Rent <= 400k, moves millions to Resale).
+ *   3. Validates and formats all mobile numbers (01xxxxxxxxx with leading zero preserved).
+ *   4. Fills all empty cells contextually (Zero-Blank Guarantee).
+ *   5. Prints a complete audit summary to the Execution Log.
+ */
+function run() {
+  return runSierraEstatesEngine();
+}
+
+function runSierraEstatesEngine() {
+  Logger.log("====================================================");
+  Logger.log("🚀 SIERRA ESTATES AI ENGINE · MASTER AUDIT & CLEANUP");
+  Logger.log("====================================================");
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const targetSheets = ["Owners_Rent_Master", "Owners_Resale_Master", "Brokers_Inventory", "Owners-Rent"];
+  let totalCompUpdated = 0;
+  let totalRentAudited = 0;
+  let totalMobilesFormatted = 0;
+  let totalBlanksFilled = 0;
+  let sheetsProcessed = 0;
+
+  for (const sheetName of targetSheets) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      Logger.log(`ℹ️ Sheet '${sheetName}' not found in active workbook. Skipping.`);
+      continue;
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 2) {
+      Logger.log(`ℹ️ Sheet '${sheetName}' has no data rows. Skipping.`);
+      continue;
+    }
+
+    Logger.log(`🔍 Processing '${sheetName}' (${lastRow - 2} data rows)...`);
+    sheetsProcessed++;
+
+    // 1. Compound Canonicalization
+    try {
+      const compRange = sheet.getRange(3, CONFIG.COLUMNS.COMPOUND, lastRow - 2, 1);
+      const compVals = compRange.getValues();
+      let compUpdated = 0;
+      for (let i = 0; i < compVals.length; i++) {
+        const raw = String(compVals[i][0] || "").trim();
+        if (raw) {
+          const canon = resolveFamousCompound(raw);
+          if (canon !== raw) {
+            compVals[i][0] = canon;
+            compUpdated++;
+          }
+        }
+      }
+      if (compUpdated > 0) compRange.setValues(compVals);
+      totalCompUpdated += compUpdated;
+    } catch (e) {
+      Logger.log(`⚠️ Compound standardization warning in '${sheetName}': ${e.message}`);
+    }
+
+    // 2. Rent Ceiling Audit (Rent <= 400k, moves millions to Resale)
+    try {
+      const pRange = sheet.getRange(3, CONFIG.COLUMNS.PRICE, lastRow - 2, 1);
+      const dRange = sheet.getRange(3, CONFIG.COLUMNS.DEAL_TYPE, lastRow - 2, 1);
+      const pVals = pRange.getValues();
+      const dVals = dRange.getValues();
+      let rentAudited = 0;
+      for (let i = 0; i < pVals.length; i++) {
+        const p = parseFloat(String(pVals[i][0]).replace(/,/g, "")) || 0;
+        const d = String(dVals[i][0] || "").toLowerCase();
+        if (d === "rent" && p > CONFIG.PRICE_RENT_MAX) {
+          dVals[i][0] = "Resale";
+          rentAudited++;
+        }
+      }
+      if (rentAudited > 0) dRange.setValues(dVals);
+      totalRentAudited += rentAudited;
+    } catch (e) {
+      Logger.log(`⚠️ Rent ceiling audit warning in '${sheetName}': ${e.message}`);
+    }
+
+    // 3. Mobile Number Validation & Leading Zero Formatting ('01xxxxxxxxx)
+    try {
+      const mobRange = sheet.getRange(3, CONFIG.COLUMNS.MOBILE, lastRow - 2, 1);
+      const l7Range = sheet.getRange(3, CONFIG.COLUMNS.MOBILE_LAST7, lastRow - 2, 1);
+      const mVals = mobRange.getValues();
+      const lVals = l7Range.getValues();
+      let mobFormatted = 0;
+      for (let i = 0; i < mVals.length; i++) {
+        let r = String(mVals[i][0] || "").replace(/\D/g, "");
+        if (r.startsWith("20") && r.length === 12) r = r.slice(2);
+        if (r.length === 10 && r.startsWith("1")) r = "0" + r;
+        if (/^01[0125][0-9]{8}$/.test(r)) {
+          mVals[i][0] = "'" + r;
+          lVals[i][0] = "'" + r.slice(-7);
+          mobFormatted++;
+        }
+      }
+      if (mobFormatted > 0) {
+        mobRange.setValues(mVals);
+        l7Range.setValues(lVals);
+      }
+      totalMobilesFormatted += mobFormatted;
+    } catch (e) {
+      Logger.log(`⚠️ Mobile format warning in '${sheetName}': ${e.message}`);
+    }
+
+    // 4. Zero-Blank Guarantee: Fill empty spaces contextually
+    try {
+      const allRange = sheet.getRange(3, 1, lastRow - 2, 22);
+      const allVals = allRange.getValues();
+      let blanksFilled = 0;
+      for (let r = 0; r < allVals.length; r++) {
+        for (let c = 0; c < 22; c++) {
+          const v = allVals[r][c];
+          if (v === "" || v === null || v === undefined) {
+            allVals[r][c] = COLUMN_FILL_DEFAULTS[c] || "Not Specified";
+            blanksFilled++;
+          }
+        }
+      }
+      if (blanksFilled > 0) allRange.setValues(allVals);
+      totalBlanksFilled += blanksFilled;
+    } catch (e) {
+      Logger.log(`⚠️ Blank fill warning in '${sheetName}': ${e.message}`);
+    }
+  }
+
+  Logger.log("====================================================");
+  Logger.log("✅ SIERRA ESTATES AI ENGINE · AUDIT COMPLETE");
+  Logger.log(`📊 Sheets Processed        : ${sheetsProcessed}`);
+  Logger.log(`🔄 Compounds Standardized   : ${totalCompUpdated}`);
+  Logger.log(`💰 Rent Ceiling Moved Resale: ${totalRentAudited}`);
+  Logger.log(`📱 Mobiles Formatted        : ${totalMobilesFormatted}`);
+  Logger.log(`🛡️ Empty Spaces Filled      : ${totalBlanksFilled}`);
+  Logger.log("====================================================");
+
+  try {
+    ss.toast(
+      `Audit Complete! ${totalCompUpdated} compounds unified, ${totalRentAudited} rent capped, ${totalBlanksFilled} blanks filled.`,
+      "⚡ Sierra Estates AI Engine",
+      6
+    );
+  } catch (e) {
+    // UI toast ignored in background runs
+  }
+
+  return {
+    ok: true,
+    sheetsProcessed,
+    totalCompUpdated,
+    totalRentAudited,
+    totalMobilesFormatted,
+    totalBlanksFilled,
+  };
+}
+
+/**
+ * ============================================================================
  * 1. OWNER OUTREACH WRITE-BACK ENDPOINT (doGet)
+ * ============================================================================
  */
 function doGet(e) {
+  Logger.log("doGet health check ping received.");
   return ContentService.createTextOutput(JSON.stringify({
     ok: true,
     service: "sierra-sheet-writeback-and-rag-engine",
@@ -221,12 +371,20 @@ function doGet(e) {
 }
 
 /**
+ * ============================================================================
  * 2. OWNER OUTREACH WRITE-BACK ENDPOINT (doPost)
+ * ============================================================================
  * Handles both the outreach write-back payload AND new unit bot ingestion.
  */
 function doPost(e) {
+  // If run manually via Apps Script "Run" button without an HTTP event
+  if (!e || !e.postData) {
+    Logger.log("doPost called manually from code editor with no HTTP payload. Running master engine audit instead.");
+    return runSierraEstatesEngine();
+  }
+
   try {
-    const rawData = e.postData ? e.postData.contents : "{}";
+    const rawData = e.postData.contents || "{}";
     const payload = JSON.parse(rawData);
 
     // Validate Secret
@@ -250,125 +408,128 @@ function doPost(e) {
         })).setMimeType(ContentService.MimeType.JSON);
       }
 
-      // Sheets to search across: Priority to Owners_Rent_Master, Owners_Resale_Master, then GID 1127958606
-      const targetSheets = [
-        ss.getSheetByName("Owners_Rent_Master"),
-        ss.getSheetByName("Owners_Resale_Master"),
-        ss.getSheets().find(s => s.getSheetId() === CONFIG.TARGET_GID)
-      ].filter(Boolean);
+      const sheets = ss.getSheets();
+      let sheet = sheets.find(s => s.getSheetId() === CONFIG.TARGET_GID) || sheets[0];
 
-      let totalUpdated = 0;
+      const data = sheet.getDataRange().getValues();
+      if (data.length < 2) {
+        return ContentService.createTextOutput(JSON.stringify({ ok: true, updated: 0 })).setMimeType(ContentService.MimeType.JSON);
+      }
 
-      for (const sheet of targetSheets) {
-        const data = sheet.getDataRange().getValues();
-        if (data.length < 2) continue;
+      const headers = data[0].map(h => String(h).trim());
+      let mobileColIdx = headers.findIndex(h => h.toLowerCase() === "mobile" || h === "الموبايل" || h === "Mobile Number");
+      let dateColIdx = headers.findIndex(h => h === CONFIG.DATE_COL_NAME || h === "Last Action Date");
 
-        const headers = data[0].map(h => String(h).trim());
-        let mobileColIdx = headers.findIndex(h => h.toLowerCase() === "mobile" || h.toLowerCase() === "mobile number" || h === "الموبايل");
-        let dateColIdx = headers.findIndex(h => h === CONFIG.DATE_COL_NAME || h === "Last Action Date" || h === "تاريخ اخر تحديث");
+      if (dateColIdx === -1) {
+        dateColIdx = headers.length;
+        sheet.getRange(1, dateColIdx + 1).setValue(CONFIG.DATE_COL_NAME);
+      }
 
-        if (mobileColIdx === -1) continue;
-        if (dateColIdx === -1) {
-          dateColIdx = headers.length;
-          sheet.getRange(1, dateColIdx + 1).setValue(CONFIG.DATE_COL_NAME);
-        }
+      if (mobileColIdx === -1) {
+        return ContentService.createTextOutput(JSON.stringify({
+          ok: false,
+          error: "Mobile column not found in target sheet"
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
 
-        // Build index by clean digits
-        const phoneToRowIdx = new Map();
-        for (let r = 1; r < data.length; r++) {
-          const rawVal = String(data[r][mobileColIdx] || "").replace(/\D/g, "");
-          if (rawVal) {
-            phoneToRowIdx.set(rawVal, r + 1);
-            if (rawVal.startsWith("20")) {
-              phoneToRowIdx.set(rawVal.slice(2), r + 1);
-            } else if (rawVal.startsWith("0")) {
-              phoneToRowIdx.set("2" + rawVal, r + 1);
-              phoneToRowIdx.set(rawVal.slice(1), r + 1);
-            }
+      // Build row index by cleaned phone
+      const phoneToRowIdx = new Map();
+      for (let r = 1; r < data.length; r++) {
+        const rawVal = String(data[r][mobileColIdx] || "").replace(/\D/g, "");
+        if (rawVal) {
+          phoneToRowIdx.set(rawVal, r + 1);
+          if (rawVal.startsWith("20")) {
+            phoneToRowIdx.set(rawVal.slice(2), r + 1);
+          } else if (rawVal.startsWith("0")) {
+            phoneToRowIdx.set("2" + rawVal, r + 1);
+            phoneToRowIdx.set(rawVal.slice(1), r + 1);
           }
         }
+      }
 
-        for (const item of rows) {
-          const cleanPhone = String(item.phone || item.mobile || "").replace(/\D/g, "");
-          const dateVal = item.date || item.lastContact || Utilities.formatDate(new Date(), "Africa/Cairo", "dd/MM/yyyy");
-          const targetRow = phoneToRowIdx.get(cleanPhone);
-          if (targetRow) {
-            sheet.getRange(targetRow, dateColIdx + 1).setValue(dateVal);
-            totalUpdated++;
-          }
+      let updatedCount = 0;
+      for (const item of rows) {
+        const cleanPhone = String(item.phone || item.mobile || "").replace(/\D/g, "");
+        const dateVal = item.date || item.lastContact || Utilities.formatDate(new Date(), "Africa/Cairo", "dd/MM/yyyy");
+
+        const targetRow = phoneToRowIdx.get(cleanPhone);
+        if (targetRow) {
+          sheet.getRange(targetRow, dateColIdx + 1).setValue(dateVal);
+          updatedCount++;
         }
       }
 
       return ContentService.createTextOutput(JSON.stringify({
         ok: true,
-        updated: totalUpdated,
+        updated: updatedCount,
         totalReceived: rows.length
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Mode B: Single Unit Ingestion via Bot (unit payload)
-    if (payload.mobile) {
-      const cleanMob = String(payload.mobile).replace(/\D/g, "");
-      if (!cleanMob || cleanMob.length < 10) {
-        return ContentService.createTextOutput(JSON.stringify({
-          ok: false,
-          error: "Strict Rule Violation: Valid 11-digit mobile number is mandatory."
-        })).setMimeType(ContentService.MimeType.JSON);
-      }
-
-      const digits = (cleanMob.length === 10 && cleanMob.startsWith("1")) ? "0" + cleanMob : cleanMob;
-      const last7 = digits.slice(-7);
-      const rawPrice = parseFloat(payload.price) || 0;
-      const canonicalCompound = resolveFamousCompound(payload.compound || "");
-
-      // Route: Rent <= 400k | Resale = Millions / Sale
-      const isResale = (payload.deal_type && /sale|sell|resale|بيع/i.test(payload.deal_type)) || (rawPrice > CONFIG.PRICE_RENT_MAX);
-      const targetSheetName = isResale ? "Owners_Resale_Master" : "Owners_Rent_Master";
-      const sheet = ss.getSheetByName(targetSheetName) || ss.getSheetByName("Owners_Rent_Master");
-
-      const code = payload.unit_code || ("SE-" + last7);
-      const newRow = [
-        Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss"),
-        code,
-        isResale ? "Resale" : "Rent",
-        canonicalCompound,
-        payload.property_type || "Apartment",
-        rawPrice > 0 ? rawPrice : "Ask Owner",
-        payload.area || "Not Specified",
-        payload.bedrooms || "Not Specified",
-        payload.bathrooms || "Not Specified",
-        payload.finishing || "Fully Finished",
-        payload.floor || "Not Specified",
-        payload.garden || "No Info",
-        payload.pool || "Not Specified",
-        payload.advertiser_type || "Direct Owner",
-        payload.contact_name || "Unknown",
-        "'" + digits,
-        "'" + last7,
-        payload.availability || "Available",
-        Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd"),
-        payload.notes || "Added via API Bot Ingestion",
-        payload.photo_urls || "No Photos",
-        "rag-" + code
-      ];
-
-      sheet.appendRow(newRow);
-
+    // Mode B: Single Unit Ingestion via WhatsApp Bot / Harvester
+    const mobile = String(payload.mobile || "").replace(/\D/g, "");
+    if (!mobile || !/^01[0125][0-9]{8}$/.test(mobile.length === 12 && mobile.startsWith("20") ? mobile.slice(2) : mobile)) {
       return ContentService.createTextOutput(JSON.stringify({
-        ok: true,
-        sheet: targetSheetName,
-        unit_code: code,
-        compound: canonicalCompound,
-        deal_type: isResale ? "Resale" : "Rent"
+        ok: false,
+        error: "Missing or invalid Egyptian mobile number (must be 01xxxxxxxxx)"
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
+    const cleanMobile = mobile.startsWith("20") ? mobile.slice(2) : mobile;
+    const isRent = String(payload.deal_type || payload.mode || "").toLowerCase().includes("rent");
+    let price = parseFloat(String(payload.price || "0").replace(/,/g, "")) || 0;
+
+    // Strict 400k Rent Ceiling Guard
+    let dealType = isRent ? "Rent" : "Resale";
+    if (dealType === "Rent" && price > CONFIG.PRICE_RENT_MAX) {
+      dealType = "Resale";
+    }
+
+    const compound = resolveFamousCompound(String(payload.compound || payload.compound_name || ""));
+    const targetSheetName = dealType === "Rent" ? "Owners_Rent_Master" : "Owners_Resale_Master";
+    const sheet = ss.getSheetByName(targetSheetName) || ss.getSheets()[0];
+
+    const timestamp = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss");
+    const code = payload.unit_code || payload.code || ("SE-" + Math.floor(1000 + Math.random() * 9000));
+
+    const newRow = [
+      timestamp,
+      code,
+      dealType,
+      compound || "Not Specified",
+      payload.property_type || "Apartment",
+      price || "Ask Owner",
+      payload.area || payload.area_sqm || "Not Specified",
+      payload.bedrooms || "Not Specified",
+      payload.bathrooms || "Not Specified",
+      payload.finishing || "Not Specified",
+      payload.floor || "Not Specified",
+      payload.garden || "No Info",
+      payload.pool || "Not Specified",
+      payload.advertiser || "Direct Owner",
+      payload.contact_name || payload.owner_name || "Unknown",
+      "'" + cleanMobile,
+      "'" + cleanMobile.slice(-7),
+      payload.availability || "Confirmed Available",
+      Utilities.formatDate(new Date(), "Africa/Cairo", "dd/MM/yyyy"),
+      payload.notes || "Added via WhatsApp Ingestion Bot",
+      payload.photos || "No Photos",
+      "rag-" + code + "-" + Date.now().toString(36)
+    ];
+
+    sheet.appendRow(newRow);
+
     return ContentService.createTextOutput(JSON.stringify({
-      ok: false,
-      error: "Unsupported payload structure. Send 'rows' array for outreach write-back or unit object for ingestion."
+      ok: true,
+      unit_code: code,
+      deal_type: dealType,
+      compound: compound,
+      target_sheet: targetSheetName,
+      message: `Unit ${code} appended cleanly to ${targetSheetName}`
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    Logger.log("doPost error: " + err.message);
     return ContentService.createTextOutput(JSON.stringify({
       ok: false,
       error: err.message
@@ -377,29 +538,39 @@ function doPost(e) {
 }
 
 /**
- * 3. CUSTOM UI MENU ON SPREADSHEET OPEN
+ * ============================================================================
+ * 3. SPREADSHEET CUSTOM MENU (Appears automatically when opening Sheet)
+ * ============================================================================
  */
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu("Sierra Estates AI Engine ⚡")
-    .addItem("🔄 Unify All Compounds (Famous Names)", "standardizeAllCompounds")
-    .addItem("💰 Audit Rent Ceiling (Max 400,000 LE)", "auditRentCeiling")
-    .addItem("📱 Validate & Format Mobiles", "validateAndFormatAllMobiles")
-    .addItem("🛡️ Fill Any Empty Spaces (No Blanks)", "fillAllBlanksContextually")
-    .addSeparator()
-    .addItem("🧠 Sync Verified Units to Supabase RAG", "syncCurrentSheetToSupabaseRAG")
-    .addItem("🤖 Bot API & Webhook Guidance", "showBotGuidanceDialog")
-    .addToUi();
+  try {
+    SpreadsheetApp.getUi().createMenu("Sierra Estates AI Engine ⚡")
+      .addItem("🚀 Run Complete Master Audit", "runSierraEstatesEngine")
+      .addSeparator()
+      .addItem("🔄 Unify All Compounds (Famous Names)", "standardizeAllCompounds")
+      .addItem("💰 Audit Rent Ceiling (Max 400,000 LE)", "auditRentCeiling")
+      .addItem("📱 Validate & Format Mobiles", "validateAndFormatAllMobiles")
+      .addItem("🛡️ Fill Any Empty Spaces (No Blanks)", "fillAllBlanksContextually")
+      .addSeparator()
+      .addItem("🧠 Sync Verified Units to Supabase RAG", "syncCurrentSheetToSupabaseRAG")
+      .addItem("🤖 Bot API & Webhook Guidance", "showBotGuidanceDialog")
+      .addToUi();
+  } catch (e) {
+    Logger.log("onOpen UI initialization: " + e.message);
+  }
 }
 
 /**
+ * ============================================================================
  * 4. REAL-TIME onEdit EVENT LISTENER
+ * ============================================================================
  */
 function onEdit(e) {
   if (!e || !e.range) return;
   const sheet = e.range.getSheet();
   const name = sheet.getName();
 
-  if (name !== "Owners_Rent_Master" && name !== "Owners_Resale_Master" && name !== "Brokers_Inventory") {
+  if (name !== "Owners_Rent_Master" && name !== "Owners_Resale_Master" && name !== "Brokers_Inventory" && name !== "Owners-Rent") {
     return;
   }
 
@@ -414,7 +585,9 @@ function onEdit(e) {
     const canonical = resolveFamousCompound(val);
     if (canonical !== val) {
       e.range.setValue(canonical);
-      SpreadsheetApp.getActiveSpreadsheet().toast(`Compound unified to: ${canonical}`, "Famous Name Normalizer", 3);
+      try {
+        SpreadsheetApp.getActiveSpreadsheet().toast(`Compound unified to: ${canonical}`, "Famous Name Normalizer", 3);
+      } catch (err) {}
     }
   }
 
@@ -425,54 +598,47 @@ function onEdit(e) {
 
     if (dealType.toLowerCase() === "rent" && price > CONFIG.PRICE_RENT_MAX) {
       sheet.getRange(row, CONFIG.COLUMNS.DEAL_TYPE).setValue("Resale");
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        `Rent ceiling exceeded (${price.toLocaleString()} EGP > 400,000 LE). Changed Deal Type to Resale.`,
-        "400k Rent Ceiling Guard", 5
-      );
+      try {
+        SpreadsheetApp.getActiveSpreadsheet().toast(
+          `Rent ceiling exceeded (${price.toLocaleString()} EGP > 400,000 LE). Changed Deal Type to Resale.`,
+          "400k Rent Ceiling Guard", 5
+        );
+      } catch (err) {}
     }
   }
 
-  // C. Mobile Validation & Last 7 (Column P)
-  if (col === CONFIG.COLUMNS.MOBILE) {
-    const mobCell = sheet.getRange(row, CONFIG.COLUMNS.MOBILE);
-    const last7Cell = sheet.getRange(row, CONFIG.COLUMNS.MOBILE_LAST7);
+  // C. Mobile Validation & Formatting (Column P)
+  if (col === CONFIG.COLUMNS.MOBILE && val) {
+    let clean = val.replace(/\D/g, "");
+    if (clean.startsWith("20") && clean.length === 12) clean = clean.slice(2);
+    if (clean.length === 10 && clean.startsWith("1")) clean = "0" + clean;
 
-    if (!val || val === "MISSING" || val === "0") {
-      mobCell.setBackground("#FEE2E2");
-      SpreadsheetApp.getUi().alert("⚠️ MANDATORY FIELD VIOLATION:\n\nUnits cannot be accepted without a valid Egyptian mobile number (01xxxxxxxxx)!");
-      return;
+    if (/^01[0125][0-9]{8}$/.test(clean)) {
+      e.range.setValue("'" + clean);
+      sheet.getRange(row, CONFIG.COLUMNS.MOBILE_LAST7).setValue("'" + clean.slice(-7));
+    } else {
+      e.range.setBackground("#fee2e2");
+      try {
+        SpreadsheetApp.getActiveSpreadsheet().toast("Invalid Egyptian mobile! Must be 01xxxxxxxxx", "Mobile Error", 5);
+      } catch (err) {}
     }
-
-    let digits = val.replace(/\D/g, "");
-    if (digits.startsWith("20") && digits.length === 12) digits = digits.slice(2);
-    if (digits.length === 10 && digits.startsWith("1")) digits = "0" + digits;
-
-    if (!/^01[0125][0-9]{8}$/.test(digits)) {
-      mobCell.setBackground("#FEE2E2");
-      SpreadsheetApp.getUi().alert(`⚠️ INVALID MOBILE:\n\n'${val}' is not a valid 11-digit Egyptian mobile number.`);
-      return;
-    }
-
-    mobCell.setValue("'" + digits);
-    mobCell.setBackground("#FFFFFF");
-    last7Cell.setValue("'" + digits.slice(-7));
   }
 
-  // D. Last Action Timestamp (Column R: Availability or Column T: Notes)
+  // D. Auto-Timestamp Last Action Date (Column S)
   if (col === CONFIG.COLUMNS.AVAILABILITY || col === CONFIG.COLUMNS.NOTES) {
-    const now = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm");
-    sheet.getRange(row, CONFIG.COLUMNS.LAST_ACTION).setValue(now);
-    SpreadsheetApp.getActiveSpreadsheet().toast(`Last action stamped: ${now}`, "Outreach Tracker", 2);
+    const today = Utilities.formatDate(new Date(), "Africa/Cairo", "dd/MM/yyyy");
+    sheet.getRange(row, CONFIG.COLUMNS.LAST_ACTION).setValue(today);
   }
 }
 
 /**
- * 5. HELPER FUNCTIONS
+ * ============================================================================
+ * 5. HELPER AUDIT FUNCTIONS (Also accessible via custom menu)
+ * ============================================================================
  */
 function resolveFamousCompound(raw) {
-  if (!raw || /^(n\/a|null|0|none)$/i.test(raw)) return "New Cairo (General)";
-  const low = raw.toLowerCase().trim();
-  if (COMPOUND_GAZETTEER[low]) return COMPOUND_GAZETTEER[low];
+  if (!raw) return "";
+  const low = String(raw).trim().toLowerCase();
   for (const k in COMPOUND_GAZETTEER) {
     if (low.includes(k)) return COMPOUND_GAZETTEER[k];
   }
@@ -496,8 +662,10 @@ function standardizeAllCompounds() {
       }
     }
   }
-  range.setValues(values);
-  SpreadsheetApp.getActiveSpreadsheet().toast(`Standardized ${updated} compounds to famous canonical names.`, "Complete", 5);
+  if (updated > 0) range.setValues(values);
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(`Standardized ${updated} compounds to famous canonical names.`, "Complete", 5);
+  } catch (e) {}
 }
 
 function auditRentCeiling() {
@@ -515,8 +683,10 @@ function auditRentCeiling() {
       count++;
     }
   }
-  sheet.getRange(3, CONFIG.COLUMNS.DEAL_TYPE, lastRow - 2, 1).setValues(dVals);
-  SpreadsheetApp.getActiveSpreadsheet().toast(`Audited rent ceiling: ${count} units moved to Resale.`, "Complete", 5);
+  if (count > 0) sheet.getRange(3, CONFIG.COLUMNS.DEAL_TYPE, lastRow - 2, 1).setValues(dVals);
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(`Audited rent ceiling: ${count} units moved to Resale.`, "Complete", 5);
+  } catch (e) {}
 }
 
 function validateAndFormatAllMobiles() {
@@ -538,9 +708,13 @@ function validateAndFormatAllMobiles() {
       count++;
     }
   }
-  mobR.setValues(m);
-  l7R.setValues(l);
-  SpreadsheetApp.getActiveSpreadsheet().toast(`Formatted ${count} mobile numbers with leading zeros.`, "Complete", 5);
+  if (count > 0) {
+    mobR.setValues(m);
+    l7R.setValues(l);
+  }
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(`Formatted ${count} mobile numbers with leading zeros.`, "Complete", 5);
+  } catch (e) {}
 }
 
 function fillAllBlanksContextually() {
@@ -549,19 +723,20 @@ function fillAllBlanksContextually() {
   if (lastRow <= 2) return;
   const range = sheet.getRange(3, 1, lastRow - 2, 22);
   const data = range.getValues();
-  const colKeys = Object.keys(CONTEXTUAL_FILLS);
   let filled = 0;
   for (let r = 0; r < data.length; r++) {
     for (let c = 0; c < 22; c++) {
       const v = data[r][c];
       if (v === "" || v === null || v === undefined) {
-        data[r][c] = colKeys[c] ? CONTEXTUAL_FILLS[colKeys[c]] : "Not Specified";
+        data[r][c] = COLUMN_FILL_DEFAULTS[c] || "Not Specified";
         filled++;
       }
     }
   }
-  range.setValues(data);
-  SpreadsheetApp.getActiveSpreadsheet().toast(`Zero-Blank Guarantee: Filled ${filled} empty spaces.`, "Complete", 5);
+  if (filled > 0) range.setValues(data);
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(`Zero-Blank Guarantee: Filled ${filled} empty spaces.`, "Complete", 5);
+  } catch (e) {}
 }
 
 function syncCurrentSheetToSupabaseRAG() {
@@ -580,27 +755,33 @@ function syncCurrentSheetToSupabaseRAG() {
       count++;
     }
   }
-  SpreadsheetApp.getActiveSpreadsheet().toast(`RAG Memory Sync: ${count} units synchronized with Supabase vector store.`, "RAG Synced", 5);
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(`RAG Memory Sync: ${count} units synchronized with Supabase vector store.`, "RAG Synced", 5);
+  } catch (e) {}
 }
 
 function showBotGuidanceDialog() {
-  const html = HtmlService.createHtmlOutput(
-    "<h3>Sierra Estates Bot Webhook Specification</h3>" +
-    "<p>Send JSON POST to this script's Web App URL:</p>" +
-    "<pre style='background:#0F172A;color:#38BDF8;padding:12px;border-radius:6px;font-size:11px;'>" +
-    JSON.stringify({
-      "secret": "SE_OUTREACH_SECRET_2026_CAIRO",
-      "mobile": "01022844661", // Mandatory
-      "compound": "cfc", // Auto -> Cairo Festival City
-      "deal_type": "Rent", // Or Resale
-      "price": 35000,
-      "property_type": "Apartment",
-      "bedrooms": "3",
-      "contact_name": "Dr. Mohamed",
-      "notes": "Owner called. Ready for viewing."
-    }, null, 2) +
-    "</pre>" +
-    "<p><b>Outreach Write-Back:</b> Send <code>{ secret, rows: [{ phone, date }] }</code>.</p>"
-  ).setTitle("Bot Ingestion API").setWidth(520).setHeight(420);
-  SpreadsheetApp.getUi().showModalDialog(html, "Sierra Estates Bot Guidance");
+  try {
+    const html = HtmlService.createHtmlOutput(
+      "<h3>Sierra Estates Bot Webhook Specification</h3>" +
+      "<p>Send JSON POST to this script's Web App URL:</p>" +
+      "<pre style='background:#0F172A;color:#38BDF8;padding:12px;border-radius:6px;font-size:11px;'>" +
+      JSON.stringify({
+        "secret": "SE_OUTREACH_SECRET_2026_CAIRO",
+        "mobile": "01022844661",
+        "compound": "cfc",
+        "deal_type": "Rent",
+        "price": 35000,
+        "property_type": "Apartment",
+        "bedrooms": "3",
+        "contact_name": "Dr. Mohamed",
+        "notes": "Owner called. Ready for viewing."
+      }, null, 2) +
+      "</pre>" +
+      "<p><b>Outreach Write-Back:</b> Send <code>{ secret, rows: [{ phone, date }] }</code>.</p>"
+    ).setTitle("Bot Ingestion API").setWidth(520).setHeight(420);
+    SpreadsheetApp.getUi().showModalDialog(html, "Sierra Estates Bot Guidance");
+  } catch (e) {
+    Logger.log("showBotGuidanceDialog: " + e.message);
+  }
 }
