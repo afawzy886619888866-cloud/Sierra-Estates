@@ -38,7 +38,7 @@ if not exist "%REPO_DIR%infra\.env" (
     echo        Registration continues; fix .env before the next logon.
     echo.
 )
-if not exist "C:\Program Files\Docker\Docker\Docker Desktop.exe" (
+if not exist "C:\Program Files\Docker\Docker\Docker Desktop.exe" if not exist "%LOCALAPPDATA%\Programs\DockerDesktop\Docker Desktop.exe" (
     echo [WARN] Docker Desktop not found at the default install path.
     echo        The boot script will report this at logon until it is installed.
     echo.

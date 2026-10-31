@@ -1,4 +1,4 @@
-FROM node:22-bullseye-slim
+FROM node:22-bookworm-slim
 
 # ─────────────────────────────────────────────────────────────────────────
 # Sierra Estates — Workflow Runner Control Plane (runner.js)

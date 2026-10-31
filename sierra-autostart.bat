@@ -39,6 +39,9 @@ if %ERRORLEVEL% EQU 0 (
 if exist "C:\Program Files\Docker\Docker\Docker Desktop.exe" (
     echo [%date% %time%] Launching Docker Desktop...
     start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+) else if exist "%LOCALAPPDATA%\Programs\DockerDesktop\Docker Desktop.exe" (
+    echo [%date% %time%] Launching Docker Desktop...
+    start "" "%LOCALAPPDATA%\Programs\DockerDesktop\Docker Desktop.exe"
 ) else (
     echo [%date% %time%] ERROR: Docker Desktop not found at the default path.
     echo                         Install it, or adjust this script, then re-run.
