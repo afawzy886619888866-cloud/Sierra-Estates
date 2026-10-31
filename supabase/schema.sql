@@ -361,6 +361,13 @@ CREATE INDEX IF NOT EXISTS idx_listings_embedding ON public.listings USING hnsw 
 CREATE INDEX IF NOT EXISTS listings_geo_idx ON public.listings USING gist (location_coords);
 
 -- Admin Portal & Dashboard Performance Optimization Indexes (database-design skill)
+-- Live-DB reconciliation: the production public.listings table predates the
+-- agent / ai_score columns (canonical in the CREATE TABLE baseline since
+-- 2026-09-17). CREATE TABLE IF NOT EXISTS cannot add columns to an existing
+-- table, so reconcile idempotently before indexing — same guard pattern the
+-- migration-037 section below already uses for freshness_score / se_code.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS ai_score NUMERIC(4, 2) DEFAULT 0;
 CREATE INDEX IF NOT EXISTS idx_listings_agent ON public.listings(agent) WHERE agent IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_listings_status_ai_score ON public.listings(status, ai_score DESC);
 CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON public.inquiries(created_at DESC);
