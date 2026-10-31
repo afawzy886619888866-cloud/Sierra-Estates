@@ -16,6 +16,7 @@
     "units-sync": "node 08-units-sync/sync.js",
     "owner-outreach": "node 09-owner-outreach/outreach.js",
     "whatsapp-dispatch": "node 10-whatsapp-dispatch/dispatch.js",
+    "telegram-intake": "node 12-telegram-intake/bot.js",
     "all": "npm run owner-search && npm run owner-contact && npm run email-sender && npm run unit-adder"
   },
   "dependencies": {
