@@ -39,6 +39,17 @@ const SELECT_COLUMNS_PRE_MIGRATION =
   'price,priceCurrency,bedrooms,bathrooms,areaSqm,status,publishStatus,verified,' +
   'publishToClient,stale,img,agent,tag,updatedAt,createdAt';
 
+/**
+ * Second fallback for listings tables shaped by the sync/registry pipelines
+ * that never received the base schema's Firestore-compat columns (verified /
+ * publish_to_client — see migration 038). Bucketing is unaffected: it rides
+ * publish_status / status / stale, which always exist.
+ */
+const SELECT_COLUMNS_MINIMAL =
+  'id,code,referenceCode,title,compound,developer,propertyType,dealType,' +
+  'price,priceCurrency,bedrooms,bathrooms,areaSqm,status,publishStatus,' +
+  'stale,img,agent,tag,updatedAt,createdAt';
+
 function num(v: unknown): number {
   const n = typeof v === 'string' ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : 0;
@@ -86,19 +97,43 @@ export async function GET(req: NextRequest) {
       })) as Record<string, unknown>[];
     } catch (err) {
       const message = String(err instanceof Error ? err.message : err);
-      if (!/se_code|freshness_score|seCode|freshnessScore/i.test(message)) {
+      if (
+        !/se_code|freshness_score|seCode|freshnessScore|verified|publish_to_client|publishToClient/i.test(
+          message,
+        )
+      ) {
         throw err;
       }
       migrationPending = true;
-      rows = (await listRecords('listings', {
-        select: SELECT_COLUMNS_PRE_MIGRATION,
-        where,
-        limit: order === 'freshness' ? 2000 : limit,
-        orderBy:
-          order === 'price'
-            ? { column: 'price', ascending: false }
-            : { column: 'updatedAt', ascending: order === 'freshness' },
-      })) as Record<string, unknown>[];
+      try {
+        rows = (await listRecords('listings', {
+          select: SELECT_COLUMNS_PRE_MIGRATION,
+          where,
+          limit: order === 'freshness' ? 2000 : limit,
+          orderBy:
+            order === 'price'
+              ? { column: 'price', ascending: false }
+              : { column: 'updatedAt', ascending: order === 'freshness' },
+        })) as Record<string, unknown>[];
+      } catch (err2) {
+        // Pre-038 degrade: long-lived registry-shaped listings tables carry
+        // the migration-020 model only — verified / publish_to_client are
+        // missing. Retry without them so the console still renders (the two
+        // columns read as unknown; dispatch 038 to reconcile).
+        const message2 = String(err2 instanceof Error ? err2.message : err2);
+        if (!/verified|publish_to_client|publishToClient/i.test(message2)) {
+          throw err2;
+        }
+        rows = (await listRecords('listings', {
+          select: SELECT_COLUMNS_MINIMAL,
+          where,
+          limit: order === 'freshness' ? 2000 : limit,
+          orderBy:
+            order === 'price'
+              ? { column: 'price', ascending: false }
+              : { column: 'updatedAt', ascending: order === 'freshness' },
+        })) as Record<string, unknown>[];
+      }
     }
 
     // Bucket + free-text filters run post-read (the stale bucket is an OR of
