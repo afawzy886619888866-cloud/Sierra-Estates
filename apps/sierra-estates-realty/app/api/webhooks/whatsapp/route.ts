@@ -10,6 +10,11 @@ import {
   downloadOpenwaMedia,
   embeddedMediaFromEnvelope,
 } from '@/lib/server/openwa-media-adapter';
+import {
+  logWebhookReceived,
+  finalizeWebhookLog,
+  type WebhookFinalStatus,
+} from '@/lib/server/webhook-log';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -67,7 +72,44 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
   return false;
 }
 
-export async function POST(req: NextRequest) {
+/**
+ * Ledgered entry point (public.webhook_logs — migration 037). The wrapper
+ * records the inbound event, delegates to the real handler and finalizes the
+ * ledger row with the processing outcome. Logging is best-effort and can
+ * never alter the handler's response contract (see lib/server/webhook-log.ts).
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const startedAt = performance.now();
+  const logId = await logWebhookReceived(req, { source: 'whatsapp' });
+
+  let res: NextResponse;
+  try {
+    res = await handleWhatsAppWebhook(req);
+  } catch (err) {
+    console.error('[WhatsApp Webhook] Unhandled error:', err);
+    res = NextResponse.json({ error: 'Internal processing error' }, { status: 500 });
+  }
+
+  let finalStatus: WebhookFinalStatus;
+  if (res.status >= 500) {
+    finalStatus = 'error';
+  } else if (res.status >= 400) {
+    finalStatus = 'rejected';
+  } else {
+    finalStatus = 'processed';
+    try {
+      const peek = res.clone();
+      const body = (await peek.json()) as { status?: string; duplicate?: boolean } | null;
+      if (body?.status === 'duplicate' || body?.duplicate === true) finalStatus = 'duplicate';
+    } catch {
+      // Non-JSON or empty body — keep 'processed'.
+    }
+  }
+  await finalizeWebhookLog(logId, finalStatus, startedAt);
+  return res;
+}
+
+async function handleWhatsAppWebhook(req: NextRequest) {
   // Shared-secret verification. This used to be `if (SECRET_KEY) { ...check... }`,
   // i.e. FAIL-OPEN: with SBR_SECRET_KEY unset the webhook accepted anything from
   // anyone and fed it straight into the listing parser. `verifySharedSecret`

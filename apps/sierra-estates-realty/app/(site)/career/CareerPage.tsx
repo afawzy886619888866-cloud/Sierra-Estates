@@ -2,14 +2,15 @@
 
 import React, { useState, useRef } from 'react';
 import {
-  Send, Mail, Phone, Briefcase, Clock, MapPin, ArrowRight, Rocket, ChevronDown,
-  CheckCircle, GraduationCap, Coffee, Palmtree, HeartPulse, Sparkles, Award, DollarSign, Building,
+  Mail, Phone, Briefcase, Clock, MapPin, ArrowRight, Rocket, ChevronDown,
+  GraduationCap, Coffee, Palmtree, HeartPulse, Sparkles, Award, DollarSign, Building,
   CheckCircle2, MessageSquare,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import SiteShell from '@/components/site/SiteShell';
+import ApplicantForm from '@/components/ApplicantForm';
 import { useSite } from '@/lib/site/SiteContext';
 
 if (typeof window !== 'undefined') {
@@ -441,23 +442,6 @@ export default function CareerPage() {
   const [deptFilter, setDeptFilter] = useState<'all' | 'sales' | 'admin'>('all');
   const [selectedPosition, setSelectedPosition] = useState('');
   const [expandedJob, setExpandedJob] = useState<string | null>('sales-senior-consultant');
-  const [isSent, setIsSent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Form inputs
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    experience: '2',
-    position: '',
-    hasVehicle: '',
-    biggestAchievements: '',
-    expectedSalary: '',
-    message: '',
-  });
-
   const filteredJobs = deptFilter === 'all'
     ? JOBS
     : JOBS.filter((j) => j.dept === deptFilter);
@@ -533,51 +517,6 @@ export default function CareerPage() {
       ? `مرحباً سييرا استيتس، أود التقدم لشغل وظيفة (${jobTitle}). أرجو إفادتي بالخطوات التالية وإرسال السيرة الذاتية.`
       : `Hello Sierra Estates, I would like to apply for the position: (${jobTitle}). Please let me know the next steps to share my CV.`;
     window.open(`https://wa.me/201092048333?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    const position = formData.position || selectedPosition;
-
-    try {
-      const res = await fetch('/api/careers/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: JOBS.find((j) =>
-            j.titleEn === position || j.titleAr === position
-          )?.dept === 'admin' ? 'admin' : 'sales',
-          fullName: formData.name,
-          phone: formData.phone,
-          email: formData.email,
-          position,
-          experience: formData.experience || '',
-          hasVehicle: formData.hasVehicle === 'yes',
-          biggestAchievements: formData.biggestAchievements,
-          expectedSalary: formData.expectedSalary,
-          realEstateKnowledge: '',
-          availability: 'Immediately',
-          notes: formData.message || `Applied for: ${position}`,
-        }),
-      });
-
-      const json = await res.json().catch(() => ({ success: false, error: 'Unexpected server response.' }));
-
-      if (!res.ok || !json.success) {
-        setSubmitError(json.error || (isAr ? 'حدث خطأ. يرجى المحاولة لاحقاً.' : 'Submission failed. Please try again.'));
-        setIsSubmitting(false);
-        return;
-      }
-
-      setIsSent(true);
-    } catch {
-      setSubmitError(isAr ? 'تعذّر الاتصال بالخادم. تحقق من اتصالك بالإنترنت.' : 'Network error. Check your connection and try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -826,7 +765,6 @@ export default function CareerPage() {
                             href="#apply"
                             onClick={() => {
                               setSelectedPosition(isAr ? j.titleAr : j.titleEn);
-                              setFormData((prev) => ({ ...prev, position: isAr ? j.titleAr : j.titleEn }));
                             }}
                             className="cr-job-apply-form"
                           >
@@ -907,174 +845,17 @@ export default function CareerPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="cr-form-row">
-                  <div className="cr-form-group">
-                    <label htmlFor="f-name">{isAr ? 'الاسم بالكامل' : 'Full Name'}</label>
-                    <input
-                      type="text"
-                      id="f-name"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder={isAr ? 'مثال: أحمد فوزي' : 'e.g. Ahmed Fawzy'}
-                    />
-                  </div>
-                  <div className="cr-form-group">
-                    <label htmlFor="f-phone">{isAr ? 'رقم الهاتف / الواتساب' : 'Phone / WhatsApp'}</label>
-                    <input
-                      type="tel"
-                      id="f-phone"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+2 01XXXXXXXXX"
-                    />
-                  </div>
-                </div>
-
-                <div className="cr-form-row">
-                  <div className="cr-form-group">
-                    <label htmlFor="f-email">{isAr ? 'البريد الإلكتروني' : 'Email Address'}</label>
-                    <input
-                      type="email"
-                      id="f-email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                  <div className="cr-form-group">
-                    <label htmlFor="f-position">{isAr ? 'الوظيفة المتقدم لها' : 'Position'}</label>
-                    <select
-                      id="f-position"
-                      required
-                      value={formData.position || selectedPosition}
-                      onChange={(e) => {
-                        setSelectedPosition(e.target.value);
-                        setFormData({ ...formData, position: e.target.value });
-                      }}
-                    >
-                      <option value="">{isAr ? 'اختر الوظيفة...' : 'Select a position...'}</option>
-                      {JOBS.map((j) => (
-                        <option key={j.id} value={isAr ? j.titleAr : j.titleEn}>
-                          {isAr ? j.titleAr : j.titleEn}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="cr-form-group">
-                  <label htmlFor="f-experience">{isAr ? 'سنوات الخبرة في العقارات أو المجال' : 'Years of Experience'}</label>
-                  <input
-                    type="number"
-                    id="f-experience"
-                    required
-                    min={0}
-                    max={35}
-                    value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    placeholder="2"
-                  />
-                </div>
-
-                <div className="cr-form-row">
-                  <div className="cr-form-group">
-                    <label htmlFor="f-vehicle">{isAr ? 'هل لديك سيارة؟' : 'Do you have a personal vehicle?'}</label>
-                    <select
-                      id="f-vehicle"
-                      required
-                      value={formData.hasVehicle}
-                      onChange={(e) => setFormData({ ...formData, hasVehicle: e.target.value })}
-                    >
-                      <option value="">{isAr ? 'اختر إجابة...' : 'Select an answer...'}</option>
-                      <option value="yes">{isAr ? 'نعم' : 'Yes'}</option>
-                      <option value="no">{isAr ? 'لا' : 'No'}</option>
-                    </select>
-                  </div>
-                  <div className="cr-form-group">
-                    <label htmlFor="f-salary">{isAr ? 'الراتب المتوقع' : 'Expected Salary'}</label>
-                    <input
-                      type="text"
-                      id="f-salary"
-                      required
-                      value={formData.expectedSalary}
-                      onChange={(e) => setFormData({ ...formData, expectedSalary: e.target.value })}
-                      placeholder={isAr ? 'مثال: ٢٠,٠٠٠ جنيه' : 'e.g. EGP 20,000'}
-                    />
-                  </div>
-                </div>
-
-                <div className="cr-form-group">
-                  <label htmlFor="f-achievements">{isAr ? 'أكبر إنجازاتك المهنية' : 'Biggest Professional Achievements'}</label>
-                  <textarea
-                    id="f-achievements"
-                    rows={4}
-                    required
-                    value={formData.biggestAchievements}
-                    onChange={(e) => setFormData({ ...formData, biggestAchievements: e.target.value })}
-                    placeholder={isAr ? 'اذكر إنجازاتك أو أهم الصفقات والنتائج التي حققتها...' : 'Share your strongest results, deals closed, or operational wins...'}
-                  />
-                </div>
-
-                <div className="cr-form-group">
-                  <label htmlFor="f-message">{isAr ? 'رسالة إضافية (اختياري)' : 'Additional message (optional)'}</label>
-                  <textarea
-                    id="f-message"
-                    rows={4}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder={isAr ? 'اذكر أهم الشركات التي عملت بها أو الصفقات التي قمت بإغلاقها...' : 'Mention past companies, key deals closed, or administrative achievements...'}
-                  />
-                </div>
-
-                <div className="cr-form-group">
-                  <label htmlFor="f-cv">{isAr ? 'السيرة الذاتية (CV / Resume)' : 'CV / Resume File'}</label>
-                  <input type="file" id="f-cv" accept=".pdf,.doc,.docx" className="cr-file-input" />
-                </div>
-
-                <button type="submit" className="cr-submit-btn" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 16, height: 16, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-                      {isAr ? 'جاري الإرسال...' : 'Sending...'}
-                    </span>
-                  ) : (
-                    <>
-                      <Send style={{ width: 16, height: 16 }} />
-                      {isAr ? 'إرسال طلب التوظيف الآن' : 'Submit Application'}
-                    </>
-                  )}
-                </button>
-
-                {submitError && (
-                  <div className="cr-success-msg" style={{ background: 'rgba(220, 38, 38, 0.12)', borderColor: 'rgba(220, 38, 38, 0.4)', color: '#f87171' }}>
-                    ⚠️ {submitError}
-                  </div>
-                )}
-
-                {isSent && (
-                  <div className="cr-success-msg">
-                    <CheckCircle style={{ width: 20, height: 20 }} />
-                    <span>
-                      {isAr
-                        ? 'تم استلام طلبك بنجاح! سيتواصل معك مسؤول التوظيف خلال 48 ساعة.'
-                        : 'Application submitted successfully! Our recruitment team will contact you within 48 hours.'}
-                      <br />
-                      <a
-                        href="https://chat.whatsapp.com/BTjxkLJFO6m7lgaS4dzh1F"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cr-success-link"
-                      >
-                        {isAr ? 'انضم إلى مجموعة واتساب للمتقدمين' : 'Join the applicants WhatsApp group'}
-                      </a>
-                    </span>
-                  </div>
-                )}
-              </form>
+              <ApplicantForm
+                key={selectedPosition}
+                positions={JOBS.map((j) => ({
+                  value: isAr ? j.titleAr : j.titleEn,
+                  label: isAr ? j.titleAr : j.titleEn,
+                  role: j.dept === 'admin' ? 'admin' : 'sales',
+                }))}
+                isAr={isAr}
+                defaultPosition={selectedPosition}
+                whatsappApplyHref="https://chat.whatsapp.com/BTjxkLJFO6m7lgaS4dzh1F"
+              />
             </div>
 
             {/* Direct HR Contacts */}

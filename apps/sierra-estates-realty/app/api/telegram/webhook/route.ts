@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { countRecords, getSupabaseAdmin, insertRecord, listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
+import {
+  logWebhookReceived,
+  finalizeWebhookLog,
+  type WebhookFinalStatus,
+} from '@/lib/server/webhook-log';
 
 /**
  * TELEGRAM WEBHOOK (Phase 6 rework)
@@ -18,7 +23,45 @@ import { verifySharedSecret } from '@/lib/server/webhook-auth';
  * 4. HONEST: no mock/demo data. Without database credentials the bot says so.
  */
 
-export async function POST(req: NextRequest) {
+/**
+ * Ledgered entry point (public.webhook_logs — migration 037). Records the
+ * inbound Telegram update, delegates to the real handler and finalizes the
+ * ledger row with the processing outcome (duplicates surface as 'duplicate',
+ * secret rejections as 'rejected'). Best-effort: logging can never alter the
+ * handler's response contract (see lib/server/webhook-log.ts).
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const startedAt = performance.now();
+  const logId = await logWebhookReceived(req, { source: 'telegram' });
+
+  let res: NextResponse;
+  try {
+    res = await handleTelegramWebhook(req);
+  } catch (err) {
+    logger.error('[telegram] unhandled webhook error', err);
+    res = NextResponse.json({ ok: false, error: 'internal' }, { status: 500 });
+  }
+
+  let finalStatus: WebhookFinalStatus;
+  if (res.status >= 500) {
+    finalStatus = 'error';
+  } else if (res.status >= 400) {
+    finalStatus = 'rejected';
+  } else {
+    finalStatus = 'processed';
+    try {
+      const peek = res.clone();
+      const body = (await peek.json()) as { deduplicated?: boolean } | null;
+      if (body?.deduplicated === true) finalStatus = 'duplicate';
+    } catch {
+      // Non-JSON or empty body — keep 'processed'.
+    }
+  }
+  await finalizeWebhookLog(logId, finalStatus, startedAt);
+  return res;
+}
+
+async function handleTelegramWebhook(req: NextRequest) {
   // Telegram sends X-Telegram-Bot-Api-Secret-Token when the webhook was registered
   // with a secret_token (setWebhook). Register the webhook with a secret and set
   // TELEGRAM_WEBHOOK_SECRET — in production an unset secret fails closed (503).
