@@ -29,6 +29,13 @@
  *        GET  /api/workflows/:slug/logs?n=10 run history tails
  *        POST /pair/code                     pairing-code mint (auth + rate-limited)
  *        GET  /pair/qr                       pairing QR (auth)
+ *        GET  /api/fleet                     fleet task registry + config (auth)
+ *        POST /api/fleet/run                 dispatch the GitHub Production
+ *                              agent fleet via workflow_dispatch (auth +
+ *                              rate-limited + cooldown; fail-closed without
+ *                              FLEET_GITHUB_TOKEN — secrets stay on GitHub)
+ *        GET  /api/fleet/status              live status of the latest fleet
+ *                              run on GitHub (auth)
  *        GET  /tracker.csv                   outreach ledger export (auth ONLY —
  *                              the legacy hard-coded query key was removed)
  *
@@ -48,6 +55,7 @@ const { isDue } = require('./lib/crone');
 const state = require('./lib/state');
 const sb = require('./lib/supabase-sync');
 const inbox = require('./lib/inbox');
+const fleet = require('./lib/fleet-dispatch');
 const { GatewayClient } = require('./lib/gateway-client');
 
 const WF_DIR = __dirname;
@@ -70,6 +78,13 @@ const BIND = process.env.RUNNER_BIND || '127.0.0.1';
 // Workflow Studio never confuses the two execution paths.
 const RUNNER_LABEL = process.env.RUNNER_LABEL || 'docker-runner';
 const API_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
+
+// Local → GitHub fleet dispatch anti-hammer guard. The agent-fleet workflow
+// itself refuses to cancel a run mid-flight (concurrency cancel-in-progress:
+// false), so stacking dispatches during a run buys nothing — the cooldown
+// keeps an excited operator (or a retry loop) from queueing a stampede.
+const FLEET_COOLDOWN_MS = parseInt(process.env.FLEET_DISPATCH_COOLDOWN_MS || '600000', 10);
+let fleetDispatchedInFlight = false;
 
 const SLUGS = [
   'whatsapp-scraper',
@@ -468,6 +483,7 @@ function server() {
           tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
           supabase: sb.configured(),
           running: [...running],
+          fleet: fleet.fleetConfig(), // configured + repo/workflow only — no token material
           gateway,
           gatewayHealth: gh,
         });
@@ -646,6 +662,70 @@ setInterval(tick,5000);
         manualQueue.set(slug, 'manual');
         setImmediate(() => schedulerTick().catch((e) => log(`manual tick error: ${e.message}`)));
         return json(res, 202, { ok: true, accepted: slug });
+      }
+
+      // ── Local → GitHub fleet dispatch bridge (Production agent fleet) ──
+      // The fleet's secrets (Property Finder / DeepSeek / Cline keys) live
+      // ONLY as GitHub secrets, so the bridge dispatches the already-green
+      // agent-fleet workflow instead of re-plumbing keys into this container.
+      // Fail-closed: without FLEET_GITHUB_TOKEN these routes answer honestly
+      // and dispatch nothing.
+      if (p === '/api/fleet' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const fleetState = fleet.loadFleetState();
+        return json(res, 200, {
+          ok: true,
+          ...fleet.fleetConfig(),
+          tasks: fleet.FLEET_TASKS,
+          runAll: fleet.FLEET_RUN_ALL,
+          lastDispatch: fleetState.lastDispatch || null,
+          recentDispatches: (fleetState.history || []).slice(0, 5),
+          cooldownSec: Math.round(FLEET_COOLDOWN_MS / 1000),
+        });
+      }
+
+      if (p === '/api/fleet/run' && req.method === 'POST') {
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        if (rateLimited('fleetrun', clientIp(req), 6, 10 * 60 * 1000)) {
+          return json(res, 429, { ok: false, error: 'rate_limited', retryAfterMin: 10 });
+        }
+        if (fleetDispatchedInFlight) {
+          return json(res, 409, { ok: false, error: 'dispatch_in_flight' });
+        }
+        const fsLast = fleet.loadFleetState().lastDispatch;
+        if (fsLast && Date.now() - Date.parse(fsLast.at || 0) < FLEET_COOLDOWN_MS) {
+          const waitSec = Math.ceil((FLEET_COOLDOWN_MS - (Date.now() - Date.parse(fsLast.at))) / 1000);
+          return json(res, 429, { ok: false, error: 'cooldown', retryAfterSec: waitSec, lastDispatch: fsLast });
+        }
+        let body = null;
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) { body = null; }
+        const tasksInput = body ? (body.tasks !== undefined ? body.tasks : body.task) : null;
+        if (!tasksInput) return json(res, 400, { ok: false, error: 'missing_tasks', hint: 'Send {"tasks":"briefing:daily,check-thresholds"} or {"tasks":["fleet:run-all"]}.' });
+        fleetDispatchedInFlight = true;
+        try {
+          const out = await fleet.dispatchFleet(tasksInput);
+          if (!out.ok && out.error === 'invalid_tasks') {
+            return json(res, 400, { ok: false, error: 'invalid_tasks', unknown: out.unknown, allowed: [...fleet.FLEET_TASKS, fleet.FLEET_RUN_ALL] });
+          }
+          if (!out.ok) return json(res, 502, out);
+          log(`fleet dispatch accepted: ${out.dispatched.tasks.join(',')} → ${fleet.fleetConfig().repo}#${fleet.fleetConfig().workflow}`);
+          return json(res, 202, { ok: true, accepted: true, dispatch: out.dispatched, note: 'Track via GET /api/fleet/status (GitHub run starts within ~30s).' });
+        } finally {
+          fleetDispatchedInFlight = false;
+        }
+      }
+
+      if (p === '/api/fleet/status' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const out = await fleet.fleetRunStatus();
+        const fleetState = fleet.loadFleetState();
+        if (!out.ok) return json(res, out.configured === false ? 503 : 502, out);
+        return json(res, 200, { ok: true, live: out.run, lastLocalDispatch: fleetState.lastDispatch || null });
       }
 
       const logsMatch = p.match(/^\/api\/workflows\/([\w-]+)\/logs$/);

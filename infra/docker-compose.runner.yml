@@ -79,6 +79,18 @@ services:
       # ── Supabase telemetry & CRM sync (G3 evidence; optional — empty = no telemetry) ──
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      # ── Local → GitHub fleet dispatch bridge (optional — fail-closed) ──
+      # Enables POST /api/fleet/run on the control plane: dispatches the
+      # Production agent fleet (.github/workflows/agent-fleet.yml) through the
+      # GitHub workflow_dispatch API so the fleet's secrets (Property Finder /
+      # DeepSeek / Cline keys) stay on GitHub and never enter this container.
+      # Needs a fine-grained PAT with Actions: read+write on this repo only.
+      # Empty (default) → /api/fleet routes answer honestly and dispatch nothing.
+      - FLEET_GITHUB_TOKEN=${FLEET_GITHUB_TOKEN:-}
+      - FLEET_GITHUB_REPO=${FLEET_GITHUB_REPO:-afawzy886619888866-cloud/Sierra-Estates}
+      - FLEET_GITHUB_WORKFLOW=${FLEET_GITHUB_WORKFLOW:-agent-fleet.yml}
+      - FLEET_GITHUB_REF=${FLEET_GITHUB_REF:-main}
+      - FLEET_DISPATCH_COOLDOWN_MS=${FLEET_DISPATCH_COOLDOWN_MS:-600000}
       # ── Morning briefing delivery (07-daily-digest, 03:00 Cairo) ──
       # WF_DIGEST_TO wins; empty falls back to LEAD_NOTIFY_WHATSAPP_NUMBER,
       # then to the gateway session's own number ("message yourself" chat).
