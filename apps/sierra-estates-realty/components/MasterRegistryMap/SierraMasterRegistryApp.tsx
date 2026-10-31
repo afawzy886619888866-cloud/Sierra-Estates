@@ -117,6 +117,7 @@ export default function SierraMasterRegistryApp({
     return () => {
       if (rtChannel) rtChannel.unsubscribe();
     };
+  }, []);
 
   // Selected unit for detail inspection
   const [inspectedUnit, setInspectedUnit] = useState<UnitListing | null>(null);
