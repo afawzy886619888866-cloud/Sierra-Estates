@@ -256,3 +256,6 @@ tools/autoclaw/Inbox/
 
 
 apps/sierra-estates-realty/public/downloads/*.xlsx
+
+# Quarantined dumps and raw spreadsheets
+quarantine/
