@@ -388,7 +388,12 @@ export default function PipelineBoard() {
                           {stageLeads.map((lead, index) => {
                             const leadDeals = dealsByLead.get(lead.id) ?? [];
                             return (
-                              <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                              <Draggable
+                                key={lead.id}
+                                draggableId={lead.id}
+                                index={index}
+                                disableInteractiveElementBlocking
+                              >
                                 {(dragProvided, dragSnapshot) => (
                                   <button
                                     ref={dragProvided.innerRef}
