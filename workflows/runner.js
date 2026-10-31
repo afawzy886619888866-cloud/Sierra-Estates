@@ -343,8 +343,10 @@ async function schedulerTick() {
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (10:00–22:00 Cairo time; 30-min slots fire 10:00..21:30 —
+  // Hourly window check (09:00–22:00 Cairo time; 30-min slots fire 09:00..21:30 —
   // outreach.js re-gates and stops cleanly at 22:00 / 10:00 PM) for owner-outreach.
+  // Owner requirement 2026-10-31: the WhatsApp lane must be open AT LEAST
+  // 09:00–21:00 Cairo; slots therefore start at 09:00 sharp.
   // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
   // A paused/draft workflow must never execute from a local timer, and the
   // status is re-verified again inside runWorkflow() immediately before the
@@ -367,7 +369,7 @@ async function schedulerTick() {
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
-      cairoHour >= 10 && cairoHour < 22 &&
+      cairoHour >= 9 && cairoHour < 22 &&
       outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey
@@ -741,11 +743,11 @@ async function main() {
   try {
     const seeded = await sb.upsertWorkflowRow({
       slug: 'daily-digest',
-      name: 'Daily Ops Digest',
-      name_ar: 'الملخص اليومي للعمليات',
-      description: '08:00 Cairo — Arabic WhatsApp digest to the ops number: gateway health, workflow run stats, new leads and units from the last 24h.',
+      name: 'Morning Ops Briefing',
+      name_ar: 'التقرير الصباحي للعمليات',
+      description: '03:00 Cairo — Arabic WhatsApp morning briefing to the ops number: gateway health, workflow run stats, campaign results (owner-outreach sends from owner_outreach_log), new leads and units from the last 24h.',
       status: 'active',
-      schedule: '0 8 * * *',
+      schedule: '0 3 * * *',
       category: 'operations',
       trigger_type: 'cron',
       source_path: 'workflows/07-daily-digest/digest.js',
@@ -753,6 +755,36 @@ async function main() {
     if (seeded) log('daily-digest row present in workflows registry');
   } catch (e) {
     log(`daily-digest seeding skipped: ${e.message}`);
+  }
+
+  // One-time default migration (2026-10-31, owner decision "B"): the digest
+  // moved 08:00 -> 03:00 Cairo and the outreach lane opens 10:00 -> 09:00.
+  // upsertWorkflowRow is insert-if-missing, so rows that already exist in
+  // Supabase keep their OLD defaults — migrate ONLY rows still carrying an
+  // old default; a schedule customized by the operator is never touched.
+  try {
+    const rows = await sb.getWorkflows(['daily-digest', 'owner-outreach']);
+    const bySlug = new Map(rows.map((r) => [r.slug, r]));
+    const digestRow = bySlug.get('daily-digest');
+    if (digestRow && String(digestRow.schedule || '').trim() === '0 8 * * *') {
+      const ok = await sb.patchWorkflowRow('daily-digest', {
+        schedule: '0 3 * * *',
+        name: 'Morning Ops Briefing',
+        name_ar: 'التقرير الصباحي للعمليات',
+        description: '03:00 Cairo — Arabic WhatsApp morning briefing to the ops number: gateway health, workflow run stats, campaign results (owner-outreach sends from owner_outreach_log), new leads and units from the last 24h.',
+      });
+      if (ok) log('daily-digest schedule migrated 08:00 -> 03:00 Cairo (owner morning briefing)');
+    }
+    const outreachRow = bySlug.get('owner-outreach');
+    if (outreachRow && String(outreachRow.schedule || '').trim() === '*/30 10-21 * * *') {
+      const ok = await sb.patchWorkflowRow('owner-outreach', {
+        schedule: '*/30 9-21 * * *',
+        description: 'Daily 09:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
+      });
+      if (ok) log('owner-outreach registry schedule migrated 10:00 -> 09:00 Cairo lane opening');
+    }
+  } catch (e) {
+    log(`schedule default migration skipped: ${e.message}`);
   }
 
   // ensure one-shot seeding of the units-sync row (idempotent)
@@ -779,9 +811,9 @@ async function main() {
       slug: 'owner-outreach',
       name: 'Owner Outreach',
       name_ar: 'التواصل مع الملاك',
-      description: 'Daily 10:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
+      description: 'Daily 09:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
       status: 'active',
-      schedule: '*/30 10-21 * * *',
+      schedule: '*/30 9-21 * * *',
       category: 'outreach',
       trigger_type: 'cron',
       source_path: 'workflows/09-owner-outreach/outreach.js',
