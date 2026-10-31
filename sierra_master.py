@@ -79,7 +79,7 @@ def get_cairo_time():
 
 def is_day_shift():
     now = get_cairo_time()
-    return 10 <= now.hour < 21
+    return 9 <= now.hour < 21
 
 def clean_phone(raw):
     if pd.isna(raw) or raw is None:
@@ -353,11 +353,11 @@ def run_cycle():
                 print(f"[Day Shift] Quota finished for [{connected_inst}]. Cooling down for {int(rem / 60)} minutes...")
                 time.sleep(rem)
     else:
-        print("[Night Shift] Outside Cairo daytime window (10:00-21:00). Inventory coding completed; outbound messaging paused.")
+        print("[Night Shift] Outside Cairo daytime window (09:00-21:00). Inventory coding completed; outbound messaging paused.")
         save_checkpoint(last_row, inst_idx, contacted, failed_dlq)
         if not IS_CI:
             now = get_cairo_time()
-            target = (now + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0) if now.hour >= 21 else now.replace(hour=10, minute=0, second=0, microsecond=0)
+            target = (now + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0) if now.hour >= 21 else now.replace(hour=9, minute=0, second=0, microsecond=0)
             sleep_sec = int((target - now).total_seconds())
             print(f"[Night Shift] Resuming outbound shifts in {round(sleep_sec / 3600, 1)} hours...")
             time.sleep(min(sleep_sec, 1800))
