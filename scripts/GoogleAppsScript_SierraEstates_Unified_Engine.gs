@@ -1,10 +1,11 @@
 /**
  * ============================================================================
- * SIERRA ESTATES · UNIFIED MASTER APPS SCRIPT ENGINE (v5.5 - Production)
+ * SIERRA ESTATES · UNIFIED MASTER APPS SCRIPT ENGINE (v6.0 - Robust Production)
  * ============================================================================
  * Features:
  *   0. Primary "Run" button handler: select "run" or "runSierraEstatesEngine"
  *      and click "Run ▶" — audits all sheets, outputs detailed execution logs.
+ *      WORKS IN BOTH CONTAINER-BOUND AND STANDALONE APPS SCRIPT EDITORS.
  *   1. Preserved & Enhanced Owner Outreach Write-Back Endpoint (doGet & doPost).
  *      - Secret: SE_OUTREACH_SECRET_2026_CAIRO
  *      - Updates «تاريخ اخر تواصل» / Last Action Date matched by clean mobile.
@@ -19,6 +20,7 @@
 
 // Core Configuration
 const CONFIG = {
+  SPREADSHEET_ID: "1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk",
   OUTREACH_SECRET: "SE_OUTREACH_SECRET_2026_CAIRO",
   TARGET_GID: 1127958606, // Original Owners-Rent GID
   DATE_COL_NAME: "تاريخ اخر تواصل",
@@ -50,6 +52,33 @@ const CONFIG = {
     RAG_MEMORY_ID: 22  // V
   }
 };
+
+/**
+ * Robust Spreadsheet Resolver:
+ * Works whether the script is container-bound OR standalone at script.google.com!
+ */
+function getSpreadsheet() {
+  try {
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch (e) {
+    Logger.log("getActiveSpreadsheet not available: " + e.message);
+  }
+  return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+}
+
+/**
+ * Safe toast that never throws an exception if UI is not attached.
+ */
+function safeToast(ss, message, title, timeoutSec) {
+  try {
+    if (ss && ss.toast) {
+      ss.toast(message, title || "Sierra Estates", timeoutSec || 5);
+    }
+  } catch (e) {
+    // UI toast ignored in headless execution
+  }
+}
 
 // Canonical Famous Names Gazetteer
 const COMPOUND_GAZETTEER = {
@@ -197,13 +226,18 @@ const COLUMN_FILL_DEFAULTS = [
  * 0. PRIMARY RUN FUNCTION (Select this from the dropdown and click "Run ▶")
  * ============================================================================
  * Performs a complete audit across all inventory sheets:
- *   1. Standardizes all compound names to famous canonical names.
- *   2. Audits the 400,000 EGP rent ceiling (Rent <= 400k, moves millions to Resale).
- *   3. Validates and formats all mobile numbers (01xxxxxxxxx with leading zero preserved).
- *   4. Fills all empty cells contextually (Zero-Blank Guarantee).
- *   5. Prints a complete audit summary to the Execution Log.
+ *   1. Resolves spreadsheet safely by ID if getActiveSpreadsheet() is null.
+ *   2. Standardizes all compound names to famous canonical names.
+ *   3. Audits the 400,000 EGP rent ceiling (Rent <= 400k, moves millions to Resale).
+ *   4. Validates and formats all mobile numbers (01xxxxxxxxx with leading zero preserved).
+ *   5. Fills all empty cells contextually (Zero-Blank Guarantee).
+ *   6. Prints a complete audit summary to the Execution Log.
  */
 function run() {
+  return runSierraEstatesEngine();
+}
+
+function test() {
   return runSierraEstatesEngine();
 }
 
@@ -212,7 +246,15 @@ function runSierraEstatesEngine() {
   Logger.log("🚀 SIERRA ESTATES AI ENGINE · MASTER AUDIT & CLEANUP");
   Logger.log("====================================================");
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let ss;
+  try {
+    ss = getSpreadsheet();
+    Logger.log("📄 Connected to spreadsheet: " + ss.getName() + " (" + ss.getId() + ")");
+  } catch (err) {
+    Logger.log("❌ Fatal: Failed to open spreadsheet: " + err.message);
+    return { ok: false, error: err.message };
+  }
+
   const targetSheets = ["Owners_Rent_Master", "Owners_Resale_Master", "Brokers_Inventory", "Owners-Rent"];
   let totalCompUpdated = 0;
   let totalRentAudited = 0;
@@ -223,13 +265,13 @@ function runSierraEstatesEngine() {
   for (const sheetName of targetSheets) {
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) {
-      Logger.log(`ℹ️ Sheet '${sheetName}' not found in active workbook. Skipping.`);
+      Logger.log(`ℹ️ Sheet '${sheetName}' not found in workbook. Skipping.`);
       continue;
     }
 
     const lastRow = sheet.getLastRow();
     if (lastRow <= 2) {
-      Logger.log(`ℹ️ Sheet '${sheetName}' has no data rows. Skipping.`);
+      Logger.log(`ℹ️ Sheet '${sheetName}' has no data rows (lastRow=${lastRow}). Skipping.`);
       continue;
     }
 
@@ -334,15 +376,12 @@ function runSierraEstatesEngine() {
   Logger.log(`🛡️ Empty Spaces Filled      : ${totalBlanksFilled}`);
   Logger.log("====================================================");
 
-  try {
-    ss.toast(
-      `Audit Complete! ${totalCompUpdated} compounds unified, ${totalRentAudited} rent capped, ${totalBlanksFilled} blanks filled.`,
-      "⚡ Sierra Estates AI Engine",
-      6
-    );
-  } catch (e) {
-    // UI toast ignored in background runs
-  }
+  safeToast(
+    ss,
+    `Audit Complete! ${totalCompUpdated} compounds unified, ${totalRentAudited} rent capped, ${totalBlanksFilled} blanks filled.`,
+    "⚡ Sierra Estates AI Engine",
+    6
+  );
 
   return {
     ok: true,
@@ -395,7 +434,7 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSpreadsheet();
 
     // Mode A: Batch Outreach Write-Back (Rows of Phone + Date)
     if (payload.rows && Array.isArray(payload.rows)) {
@@ -544,7 +583,9 @@ function doPost(e) {
  */
 function onOpen() {
   try {
-    SpreadsheetApp.getUi().createMenu("Sierra Estates AI Engine ⚡")
+    const ui = SpreadsheetApp.getUi();
+    if (!ui) return;
+    ui.createMenu("Sierra Estates AI Engine ⚡")
       .addItem("🚀 Run Complete Master Audit", "runSierraEstatesEngine")
       .addSeparator()
       .addItem("🔄 Unify All Compounds (Famous Names)", "standardizeAllCompounds")
@@ -556,7 +597,7 @@ function onOpen() {
       .addItem("🤖 Bot API & Webhook Guidance", "showBotGuidanceDialog")
       .addToUi();
   } catch (e) {
-    Logger.log("onOpen UI initialization: " + e.message);
+    Logger.log("onOpen UI initialization skipped: " + e.message);
   }
 }
 
@@ -585,9 +626,7 @@ function onEdit(e) {
     const canonical = resolveFamousCompound(val);
     if (canonical !== val) {
       e.range.setValue(canonical);
-      try {
-        SpreadsheetApp.getActiveSpreadsheet().toast(`Compound unified to: ${canonical}`, "Famous Name Normalizer", 3);
-      } catch (err) {}
+      safeToast(sheet.getParent(), `Compound unified to: ${canonical}`, "Famous Name Normalizer", 3);
     }
   }
 
@@ -598,12 +637,11 @@ function onEdit(e) {
 
     if (dealType.toLowerCase() === "rent" && price > CONFIG.PRICE_RENT_MAX) {
       sheet.getRange(row, CONFIG.COLUMNS.DEAL_TYPE).setValue("Resale");
-      try {
-        SpreadsheetApp.getActiveSpreadsheet().toast(
-          `Rent ceiling exceeded (${price.toLocaleString()} EGP > 400,000 LE). Changed Deal Type to Resale.`,
-          "400k Rent Ceiling Guard", 5
-        );
-      } catch (err) {}
+      safeToast(
+        sheet.getParent(),
+        `Rent ceiling exceeded (${price.toLocaleString()} EGP > 400,000 LE). Changed Deal Type to Resale.`,
+        "400k Rent Ceiling Guard", 5
+      );
     }
   }
 
@@ -618,9 +656,7 @@ function onEdit(e) {
       sheet.getRange(row, CONFIG.COLUMNS.MOBILE_LAST7).setValue("'" + clean.slice(-7));
     } else {
       e.range.setBackground("#fee2e2");
-      try {
-        SpreadsheetApp.getActiveSpreadsheet().toast("Invalid Egyptian mobile! Must be 01xxxxxxxxx", "Mobile Error", 5);
-      } catch (err) {}
+      safeToast(sheet.getParent(), "Invalid Egyptian mobile! Must be 01xxxxxxxxx", "Mobile Error", 5);
     }
   }
 
@@ -646,7 +682,9 @@ function resolveFamousCompound(raw) {
 }
 
 function standardizeAllCompounds() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet() || ss.getSheetByName("Owners_Rent_Master");
+  if (!sheet) return;
   const lastRow = sheet.getLastRow();
   if (lastRow <= 2) return;
   const range = sheet.getRange(3, CONFIG.COLUMNS.COMPOUND, lastRow - 2, 1);
@@ -663,13 +701,13 @@ function standardizeAllCompounds() {
     }
   }
   if (updated > 0) range.setValues(values);
-  try {
-    SpreadsheetApp.getActiveSpreadsheet().toast(`Standardized ${updated} compounds to famous canonical names.`, "Complete", 5);
-  } catch (e) {}
+  safeToast(ss, `Standardized ${updated} compounds to famous canonical names.`, "Complete", 5);
 }
 
 function auditRentCeiling() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet() || ss.getSheetByName("Owners_Rent_Master");
+  if (!sheet) return;
   const lastRow = sheet.getLastRow();
   if (lastRow <= 2) return;
   const pVals = sheet.getRange(3, CONFIG.COLUMNS.PRICE, lastRow - 2, 1).getValues();
@@ -684,13 +722,13 @@ function auditRentCeiling() {
     }
   }
   if (count > 0) sheet.getRange(3, CONFIG.COLUMNS.DEAL_TYPE, lastRow - 2, 1).setValues(dVals);
-  try {
-    SpreadsheetApp.getActiveSpreadsheet().toast(`Audited rent ceiling: ${count} units moved to Resale.`, "Complete", 5);
-  } catch (e) {}
+  safeToast(ss, `Audited rent ceiling: ${count} units moved to Resale.`, "Complete", 5);
 }
 
 function validateAndFormatAllMobiles() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet() || ss.getSheetByName("Owners_Rent_Master");
+  if (!sheet) return;
   const lastRow = sheet.getLastRow();
   if (lastRow <= 2) return;
   const mobR = sheet.getRange(3, CONFIG.COLUMNS.MOBILE, lastRow - 2, 1);
@@ -712,13 +750,13 @@ function validateAndFormatAllMobiles() {
     mobR.setValues(m);
     l7R.setValues(l);
   }
-  try {
-    SpreadsheetApp.getActiveSpreadsheet().toast(`Formatted ${count} mobile numbers with leading zeros.`, "Complete", 5);
-  } catch (e) {}
+  safeToast(ss, `Formatted ${count} mobile numbers with leading zeros.`, "Complete", 5);
 }
 
 function fillAllBlanksContextually() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet() || ss.getSheetByName("Owners_Rent_Master");
+  if (!sheet) return;
   const lastRow = sheet.getLastRow();
   if (lastRow <= 2) return;
   const range = sheet.getRange(3, 1, lastRow - 2, 22);
@@ -734,13 +772,13 @@ function fillAllBlanksContextually() {
     }
   }
   if (filled > 0) range.setValues(data);
-  try {
-    SpreadsheetApp.getActiveSpreadsheet().toast(`Zero-Blank Guarantee: Filled ${filled} empty spaces.`, "Complete", 5);
-  } catch (e) {}
+  safeToast(ss, `Zero-Blank Guarantee: Filled ${filled} empty spaces.`, "Complete", 5);
 }
 
 function syncCurrentSheetToSupabaseRAG() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet() || ss.getSheetByName("Owners_Rent_Master");
+  if (!sheet) return;
   const lastRow = sheet.getLastRow();
   if (lastRow <= 2) return;
   const data = sheet.getRange(3, 1, lastRow - 2, 22).getValues();
@@ -755,13 +793,13 @@ function syncCurrentSheetToSupabaseRAG() {
       count++;
     }
   }
-  try {
-    SpreadsheetApp.getActiveSpreadsheet().toast(`RAG Memory Sync: ${count} units synchronized with Supabase vector store.`, "RAG Synced", 5);
-  } catch (e) {}
+  safeToast(ss, `RAG Memory Sync: ${count} units synchronized with Supabase vector store.`, "RAG Synced", 5);
 }
 
 function showBotGuidanceDialog() {
   try {
+    const ui = SpreadsheetApp.getUi();
+    if (!ui) return;
     const html = HtmlService.createHtmlOutput(
       "<h3>Sierra Estates Bot Webhook Specification</h3>" +
       "<p>Send JSON POST to this script's Web App URL:</p>" +
@@ -780,8 +818,8 @@ function showBotGuidanceDialog() {
       "</pre>" +
       "<p><b>Outreach Write-Back:</b> Send <code>{ secret, rows: [{ phone, date }] }</code>.</p>"
     ).setTitle("Bot Ingestion API").setWidth(520).setHeight(420);
-    SpreadsheetApp.getUi().showModalDialog(html, "Sierra Estates Bot Guidance");
+    ui.showModalDialog(html, "Sierra Estates Bot Guidance");
   } catch (e) {
-    Logger.log("showBotGuidanceDialog: " + e.message);
+    Logger.log("showBotGuidanceDialog skipped: " + e.message);
   }
 }
