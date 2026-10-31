@@ -43,6 +43,11 @@ jobs:
     name: Execute Cline autonomous workflow
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Job-level env is the only place the secrets context may be evaluated for
+    # step gating (the secrets context is NOT available in step-level `if`).
+    # CLINE_KEY_SET serializes to 'true'/'false' without exposing the key.
+    env:
+      CLINE_KEY_SET: ${{ secrets.CLINE_API_KEY != '' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -81,7 +86,7 @@ jobs:
         # account credential. Until the CLINE_API_KEY repository secret is set
         # (Cline account key), scheduled runs exit green with a notice instead
         # of failing weekly, and manual dispatches fail loudly with guidance.
-        if: ${{ secrets.CLINE_API_KEY == '' }}
+        if: ${{ env.CLINE_KEY_SET != 'true' }}
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "::notice::CLINE_API_KEY is not configured — skipping the scheduled Cline audit. Set the CLINE_API_KEY repository secret (Cline account key), then re-run."
@@ -91,7 +96,7 @@ jobs:
           exit 1
 
       - name: Run Cline workflow
-        if: ${{ secrets.CLINE_API_KEY != '' }}
+        if: ${{ env.CLINE_KEY_SET == 'true' }}
         env:
           CLINE_API_KEY: ${{ secrets.CLINE_API_KEY || secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

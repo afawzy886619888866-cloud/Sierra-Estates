@@ -71,14 +71,20 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_KEY: ${{ steps.jira_key.outputs.key }}
+          # Untrusted PR metadata MUST flow through env vars, never inline
+          # script interpolation (script-injection hardening).
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_ACTOR: ${{ github.actor }}
         run: |
           CLEAN_URL=$(echo "$JIRA_BASE_URL" | sed 's:/*$::')
           AUTH_HEADER="Basic $(echo -n "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" | base64 -w 0)"
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            MSG="GitHub PR #${{ github.event.pull_request.number }} linked by @${{ github.actor }}: ${{ github.event.pull_request.html_url }}\nTitle: ${{ github.event.pull_request.title }}"
+            MSG="GitHub PR #${PR_NUMBER} linked by @${PR_ACTOR}: ${PR_URL}\nTitle: ${PR_TITLE}"
           else
-            MSG="GitHub commit ${{ github.sha }} pushed to main by @${{ github.actor }}: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}\nCommit: $(git log -1 --pretty=%s)"
+            MSG="GitHub commit ${{ github.sha }} pushed to main by @${PR_ACTOR}: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}\nCommit: $(git log -1 --pretty=%s)"
           fi
 
           PAYLOAD=$(cat <<EOF
