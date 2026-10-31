@@ -564,7 +564,7 @@ setInterval(tick,5000);
         try {
           const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
           const sid = process.env.OPENWA_SESSION_ID || '';
-          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201061399688').replace(/\D/g, '');
+          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201000000003').replace(/\D/g, '');
           const r = await fetch(`${base}/api/sessions/${sid}/pairing-code`, {
             method: 'POST',
             headers: {

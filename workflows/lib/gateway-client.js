@@ -6,7 +6,7 @@
  *   Base:   WHATSAPP_API_URL (server-side workflows use http://127.0.0.1:2785)
  *   Auth:   X-API-Key header (operator key for sends, admin key for status)
  *   Send:   POST {base}/api/sessions/{sessionId}/messages/send-text
- *           body: { chatId, text }            → chatId like "201061399688@c.us"
+ *           body: { chatId, text }            → chatId like "201000000003@c.us"
  *   Status: GET  {base}/api/sessions/{sessionId}
  *           → { status: 'ready'|..., phone, pushName, lastActive, engineLoaded }
  *
