@@ -5271,7 +5271,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: NC-4U-95M+V | property_type: SALE | rooms: 4.0 | furnishing: Fully Finished | price: 95000000.0 | contact: +201092048333.0 | name: Kareem | price_header: Unit Price"
+    "comment": "code: NC-4U-95M+V | property_type: SALE | rooms: 4.0 | furnishing: Fully Finished | price: 95000000.0 | contact: +201092048333 | name: Kareem | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-2",
@@ -5325,7 +5325,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: FP-25R-11.5M | location: rehab | property_type: تحت التشطيب | furnishing: Not Furnished | price: 11500000.0 | contact: +201092048333.0 | name: ا.ليلى فريد | price_header: Unit Price"
+    "comment": "code: FP-25R-11.5M | location: rehab | property_type: تحت التشطيب | furnishing: Not Furnished | price: 11500000.0 | contact: +201092048333 | name: ا.ليلى فريد | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-5",
@@ -5505,7 +5505,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: OR2-5R-2M$ | location: CFC | property_type: sale | rooms: 6.0 | furnishing: Not Furnished | price: 2000000.0 | contact: +201092048333.0 | name: L | listing_date: 2025-09-18 17:13 | price_header: Unit Price"
+    "comment": "code: OR2-5R-2M$ | location: CFC | property_type: sale | rooms: 6.0 | furnishing: Not Furnished | price: 2000000.0 | contact: +201092048333 | name: L | listing_date: 2025-09-18 17:13 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-16",
@@ -5703,7 +5703,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: OLG204 | location: Up Town Cairo | property_type: rent | furnishing: Furnished | price: 120000.0 | contact: +201092048333.0 | name: Gamal hassan | listing_date: 2025-09-09 01:21 | price_header: Unit Price"
+    "comment": "code: OLG204 | location: Up Town Cairo | property_type: rent | furnishing: Furnished | price: 120000.0 | contact: +201092048333 | name: Gamal hassan | listing_date: 2025-09-09 01:21 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-30",
@@ -5937,7 +5937,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | property_type: rent | furnishing: Fully Finished | price: 60000.0 | contact: +201092048333.0 | name: mostafa | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | property_type: rent | furnishing: Fully Finished | price: 60000.0 | contact: +201092048333 | name: mostafa | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-46",
@@ -6135,7 +6135,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: OSA445 | location: Sodic | property_type: rent | furnishing: Half Furnished | price: 40000.0 | contact: +201092048333.0 | name: احمد | listing_date: 2025-11-08 00:26 | price_header: Unit Price"
+    "comment": "code: OSA445 | location: Sodic | property_type: rent | furnishing: Half Furnished | price: 40000.0 | contact: +201092048333 | name: احمد | listing_date: 2025-11-08 00:26 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-60",
@@ -6621,7 +6621,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: waterway | property_type: rent | furnishing: semi furnished | price: 1300 $ | contact: +201092048333.0 | name: Fayek | price_header: Unit Price"
+    "comment": "location: waterway | property_type: rent | furnishing: semi furnished | price: 1300 $ | contact: +201092048333 | name: Fayek | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-91",
@@ -6639,7 +6639,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: CFC | property_type: rent | furnishing: Fully Finished | price: 1200 $ | contact: +201092048333.0 | name: Dr. emad | price_header: Unit Price"
+    "comment": "location: CFC | property_type: rent | furnishing: Fully Finished | price: 1200 $ | contact: +201092048333 | name: Dr. emad | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-92",
@@ -6657,7 +6657,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Lake View Residence | property_type: rent | furnishing: fully furnished | price: 1200 / 1400 /200 $ | contact: +201092048333.0 | name: Fatma | price_header: Unit Price"
+    "comment": "location: Lake View Residence | property_type: rent | furnishing: fully furnished | price: 1200 / 1400 /200 $ | contact: +201092048333 | name: Fatma | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-93",
@@ -6675,7 +6675,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Lake View Residence | property_type: rent | furnishing: Fully Finished | price: 1100 $ | contact: +201092048333.0 | name: karem | price_header: Unit Price"
+    "comment": "location: Lake View Residence | property_type: rent | furnishing: Fully Finished | price: 1100 $ | contact: +201092048333 | name: karem | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-94",
@@ -6693,7 +6693,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Hyde Park | property_type: rent | furnishing: core & shell | price: 500 per meter negotiable | contact: +201092048333.0 | name: Ahmed | price_header: Unit Price"
+    "comment": "location: Hyde Park | property_type: rent | furnishing: core & shell | price: 500 per meter negotiable | contact: +201092048333 | name: Ahmed | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-95",
@@ -6711,7 +6711,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2192 | location: East town | property_type: Furnished rent | rooms: 3.0 | furnishing: تشطيبات خاصه | price: 3.0 | contact: +201092048333.0 | name: amr weheba | price_header: Unit Price"
+    "comment": "code: REH-FR-2192 | location: East town | property_type: Furnished rent | rooms: 3.0 | furnishing: تشطيبات خاصه | price: 3.0 | contact: +201092048333 | name: amr weheba | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-96",
@@ -6765,7 +6765,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2442 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | name: ahmed hussein | price_header: Unit Price"
+    "comment": "code: REH-FR-2442 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | name: ahmed hussein | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-100",
@@ -6783,7 +6783,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2203 | location: rehab | property_type: Furnished rent | furnishing: Super Lux | contact: +201092048333.0 | name: haitham | price_header: Unit Price"
+    "comment": "code: REH-FR-2203 | location: rehab | property_type: Furnished rent | furnishing: Super Lux | contact: +201092048333 | name: haitham | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-101",
@@ -6801,7 +6801,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2443 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | name: ahmed ashraf | price_header: Unit Price"
+    "comment": "code: REH-FR-2443 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | name: ahmed ashraf | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-102",
@@ -6819,7 +6819,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2017 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-FR-2017 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-104",
@@ -6837,7 +6837,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-R-2175 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-R-2175 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-105",
@@ -6855,7 +6855,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2183 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ahmed | price_header: Unit Price"
+    "comment": "code: REH-FR-2183 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ahmed | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-106",
@@ -6873,7 +6873,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2361 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ا.بوسينة رشيد | price_header: Unit Price"
+    "comment": "code: REH-FR-2361 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ا.بوسينة رشيد | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-107",
@@ -6891,7 +6891,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2088 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-FR-2088 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-108",
@@ -6909,7 +6909,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2444 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: mohamed hammad | price_header: Unit Price"
+    "comment": "code: REH-FR-2444 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: mohamed hammad | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-110",
@@ -6927,7 +6927,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2250 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات شركة | contact: +201092048333.0 | name: احمى محى | price_header: Unit Price"
+    "comment": "code: REH-FR-2250 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات شركة | contact: +201092048333 | name: احمى محى | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-111",
@@ -6945,7 +6945,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2190 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: REDA | price_header: Unit Price"
+    "comment": "code: REH-FR-2190 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: REDA | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-112",
@@ -6963,7 +6963,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2201 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: فاطمه زياد | price_header: Unit Price"
+    "comment": "code: REH-FR-2201 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: فاطمه زياد | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-113",
@@ -6981,7 +6981,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2208 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ا.مينا | price_header: Unit Price"
+    "comment": "code: REH-FR-2208 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ا.مينا | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-114",
@@ -6999,7 +6999,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-R-2174 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: No name 2 | price_header: Unit Price"
+    "comment": "code: REH-R-2174 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: No name 2 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-116",
@@ -7017,7 +7017,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2339 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: نهي 3 | price_header: Unit Price"
+    "comment": "code: REH-FR-2339 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: نهي 3 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-117",
@@ -7035,7 +7035,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-R-2393 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-R-2393 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-118",
@@ -7053,7 +7053,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-R-2173 | location: rehab | property_type: rent | furnishing: Not Furnished | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-R-2173 | location: rehab | property_type: rent | furnishing: Not Furnished | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-119",
@@ -7071,7 +7071,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2439 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-FR-2439 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-121",
@@ -7089,7 +7089,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2188 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ahmed abbas | price_header: Unit Price"
+    "comment": "code: REH-FR-2188 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ahmed abbas | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-122",
@@ -7107,7 +7107,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2176 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ايناس سعيد | price_header: Unit Price"
+    "comment": "code: REH-FR-2176 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ايناس سعيد | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-124",
@@ -7125,7 +7125,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2438 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-FR-2438 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-125",
@@ -7143,7 +7143,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2437 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: انمار | price_header: Unit Price"
+    "comment": "code: REH-FR-2437 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: انمار | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-127",
@@ -7161,7 +7161,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2246 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: حسام شعراوى 6 | price_header: Unit Price"
+    "comment": "code: REH-FR-2246 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: حسام شعراوى 6 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-128",
@@ -7179,7 +7179,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: MAD-FR-2169 | location: rehab | property_type: Furnished sale | furnishing: Fully Finished | contact: +201092048333.0 | name: رو | price_header: Unit Price"
+    "comment": "code: MAD-FR-2169 | location: rehab | property_type: Furnished sale | furnishing: Fully Finished | contact: +201092048333 | name: رو | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-130",
@@ -7197,7 +7197,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2196 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ESRAA | price_header: Unit Price"
+    "comment": "code: REH-FR-2196 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ESRAA | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-131",
@@ -7215,7 +7215,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2243 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-FR-2243 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-132",
@@ -7233,7 +7233,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-R-2304 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: mohaned | price_header: Unit Price"
+    "comment": "code: REH-R-2304 | location: rehab | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: mohaned | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-133",
@@ -7251,7 +7251,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2193 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | name: مروه كامل 3 | price_header: Unit Price"
+    "comment": "code: REH-FR-2193 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | name: مروه كامل 3 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-134",
@@ -7269,7 +7269,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2008 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: REH-FR-2008 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-135",
@@ -7287,7 +7287,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2298 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: منال 2 | price_header: Unit Price"
+    "comment": "code: REH-FR-2298 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: منال 2 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-136",
@@ -7305,7 +7305,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2211 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات شركة | contact: +201092048333.0 | name: محمد صلاح | price_header: Unit Price"
+    "comment": "code: REH-FR-2211 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات شركة | contact: +201092048333 | name: محمد صلاح | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-138",
@@ -7323,7 +7323,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2365 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: هنا اسامه | price_header: Unit Price"
+    "comment": "code: REH-FR-2365 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: هنا اسامه | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-139",
@@ -7341,7 +7341,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2186 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: vico | price_header: Unit Price"
+    "comment": "code: REH-FR-2186 | location: rehab | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: vico | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-140",
@@ -7359,7 +7359,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: REH-FR-2007 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | name: MONER | price_header: Unit Price"
+    "comment": "code: REH-FR-2007 | location: rehab | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | name: MONER | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-141",
@@ -7377,7 +7377,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: East town | property_type: rent | contact: +201092048333.0 | name: M | price_header: Unit Price"
+    "comment": "location: East town | property_type: rent | contact: +201092048333 | name: M | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-142",
@@ -7431,7 +7431,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: SHR-R-2413 | location: El Shorouk City | property_type: rent | furnishing: Super Lux | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: SHR-R-2413 | location: El Shorouk City | property_type: rent | furnishing: Super Lux | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-145",
@@ -7449,7 +7449,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: SHR-R-2068 | location: El Shorouk City | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | price_header: Unit Price"
+    "comment": "code: SHR-R-2068 | location: El Shorouk City | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-186",
@@ -7539,7 +7539,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: MIV-FR-2072 | location: Mevida | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333.0 | name: هبه | price_header: Unit Price"
+    "comment": "code: MIV-FR-2072 | location: Mevida | property_type: Furnished rent | furnishing: Fully Finished | contact: +201092048333 | name: هبه | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-221",
@@ -7557,7 +7557,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "property_type: rent | contact: 20966571025.0 | name: Dr. mohamed | price_header: Unit Price"
+    "comment": "property_type: rent | contact: +201092048333 | name: Dr. mohamed | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-235",
@@ -7575,7 +7575,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "property_type: rent | contact: 17843405829.0 | name: مروان | price_header: Unit Price"
+    "comment": "property_type: rent | contact: +201092048333 | name: مروان | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-245",
@@ -7593,7 +7593,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "property_type: rent | contact: 16802350764.0 | name: احمد | price_header: Unit Price"
+    "comment": "property_type: rent | contact: +201092048333 | name: احمد | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-247",
@@ -7665,7 +7665,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "property_type: rent | contact: 19925515960.0 | name: بودا | price_header: Unit Price"
+    "comment": "property_type: rent | contact: +201092048333 | name: بودا | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-268",
@@ -7683,7 +7683,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: NC-R-2357 | location: new-capital | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ahmed | price_header: Unit Price"
+    "comment": "code: NC-R-2357 | location: new-capital | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ahmed | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-269",
@@ -7701,7 +7701,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: NAC-R-2352 | location: new-capital | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: dr engy | price_header: Unit Price"
+    "comment": "code: NAC-R-2352 | location: new-capital | furnishing: تشطيبات خاصه | contact: +201092048333 | name: dr engy | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-270",
@@ -7719,7 +7719,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: NAC-FR-2295 | location: new-capital | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: bassem | price_header: Unit Price"
+    "comment": "code: NAC-FR-2295 | location: new-capital | property_type: Furnished rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: bassem | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-272",
@@ -7737,7 +7737,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: NAC-R-2381 | location: new-capital | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: ali hegazy | price_header: Unit Price"
+    "comment": "code: NAC-R-2381 | location: new-capital | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: ali hegazy | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-273",
@@ -7755,7 +7755,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "code: UNK-R-2181 | location: palm-hills | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333.0 | name: No name 2 | price_header: Unit Price"
+    "comment": "code: UNK-R-2181 | location: palm-hills | property_type: rent | furnishing: تشطيبات خاصه | contact: +201092048333 | name: No name 2 | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-274",
@@ -7773,7 +7773,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Maha | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Maha | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-275",
@@ -7791,7 +7791,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Magdy | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Magdy | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-276",
@@ -7809,7 +7809,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: salem | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: salem | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-277",
@@ -7827,7 +7827,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Wassim | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Wassim | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-278",
@@ -7845,7 +7845,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Nahla morsy | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Nahla morsy | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-279",
@@ -7881,7 +7881,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: دكتور علي | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: دكتور علي | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-281",
@@ -7935,7 +7935,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Mohamed Bakr | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Mohamed Bakr | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-284",
@@ -7953,7 +7953,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Gamal hassan | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Gamal hassan | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-285",
@@ -7971,7 +7971,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Islam | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Islam | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-286",
@@ -7989,7 +7989,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Amal Sabry | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Amal Sabry | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-287",
@@ -8007,7 +8007,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Eslam | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Eslam | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-288",
@@ -8025,7 +8025,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Hisham | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Hisham | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-289",
@@ -8043,7 +8043,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Mrs.Heba Abd El Rahman Mohamed El Kady | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Mrs.Heba Abd El Rahman Mohamed El Kady | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-290",
@@ -8061,7 +8061,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Mr. Mohamed Sayed Mohamed Ismail | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Mr. Mohamed Sayed Mohamed Ismail | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-291",
@@ -8079,7 +8079,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Mohamed Bakr | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Mohamed Bakr | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-292",
@@ -8133,7 +8133,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Sherif Elmasry | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Sherif Elmasry | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-295",
@@ -8151,7 +8151,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | contact: +201092048333.0 | name: Islam | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | contact: +201092048333 | name: Islam | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-296",
@@ -8187,7 +8187,7 @@
     "deal": "Rent",
     "advertiserType": "Owner",
     "source": "Direct Owner Intake",
-    "comment": "location: Up Town Cairo | rooms: 3.0 | furnishing: 3 beds 3 baths | contact: +201092048333.0 | name: Fatma | price_header: Unit Price"
+    "comment": "location: Up Town Cairo | rooms: 3.0 | furnishing: 3 beds 3 baths | contact: +201092048333 | name: Fatma | price_header: Unit Price"
   },
   {
     "id": "UNIT-OWN-298",
@@ -10635,7 +10635,7 @@
     "deal": "Sale",
     "advertiserType": "Owner",
     "source": "Direct Intake",
-    "comment": "code: FP-25R-11.5M | location: rehab | property_type: تحت التشطيب | furnishing: Not Furnished | price: 11500000.0 | contact: +201092048333.0 | name: ا.ليلى فريد | price_header: Unit Price"
+    "comment": "code: FP-25R-11.5M | location: rehab | property_type: تحت التشطيب | furnishing: Not Furnished | price: 11500000.0 | contact: +201092048333 | name: ا.ليلى فريد | price_header: Unit Price"
   },
   {
     "id": "UNIT-MST-14",
@@ -19545,7 +19545,7 @@
     "deal": "Sale",
     "advertiserType": "Owner",
     "source": "Direct Intake",
-    "comment": "code: OOA775 | location: Oriana | property_type: rent | furnishing: Furnished | price: 225000.0 | contact: +201092048333.0 | name: أحمد السيد | listing_date: 2025-10-20 03:40 | price_header: Unit Price"
+    "comment": "code: OOA775 | location: Oriana | property_type: rent | furnishing: Furnished | price: 225000.0 | contact: +201092048333 | name: أحمد السيد | listing_date: 2025-10-20 03:40 | price_header: Unit Price"
   },
   {
     "id": "UNIT-MST-525",

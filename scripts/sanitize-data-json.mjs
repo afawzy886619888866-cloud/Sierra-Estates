@@ -11,11 +11,21 @@
  *      lib/inventory/ — v1 silently skipped it (12k+ rows kept raw numbers).
  *   2. EG_MOBILE_RE matched no separators, so spaced/dashed/parenthesized
  *      forms ("+20 100 882 1490 (Owner Direct)") survived untouched.
+
  *   3. Only phone-named KEY fields were scrubbed — numbers embedded in free
  *      text under other keys (contactName, notes, descriptions) survived.
  *   4. packages/whatsapp-shared/*.json (outreach queue: 108 real numbers)
  *      and the public/downloads CSVs were not targeted at all.
  *   5. No verification pass — v1 reported "sanitized" without proving it.
+ * v3 blind spots fixed (fleet-dispatch session, 2026-10-31):
+ *   - labeled-context malformed contacts — 11-digit mistypes
+ *     ("contact: 11155953366") and 9-digit truncations
+ *     ("رقم المالك: +20 10 2924495") sat outside the strict 10-digit
+ *     pattern BY DESIGN (to protect prices/ids); a digit run under an
+ *     explicit contact label (رقم المالك / contact / phone / tel …) is
+ *     contact material BY INTENT and is now scrubbed + verified at
+ *     9–13 digits, and JSON numbers under phone-ish keys get the same
+ *     treatment.
  *
  * v2 guarantees:
  *   - Scrubs EVERY string value (JSON walk) / whole file (text) with a
@@ -93,7 +103,54 @@ function scrubText(s) {
     }
     return CONCIERGE;
   });
-  return out;
+  return scrubLabeledContacts(out);
+}
+
+// ── v3: labeled-context malformed contacts ────────────────────────────────
+// Real sheets carry mistyped owner contacts the strict 10-digit PHONE_RE
+// refuses BY DESIGN (to protect prices, ids, UUIDs): an 11-digit run with an
+// extra leading 1 ("contact: 11155953366"), a 9-digit run with a dropped
+// digit ("رقم المالك: +20 10 2924495"), doubled prefixes. When a digit run
+// sits DIRECTLY under an explicit contact label it is contact material BY
+// INTENT — malformed or not — and becomes the concierge number. The label
+// must be the last token before the digits (so "contact price: 1100000000"
+// is safe: the nearest label-candidate there is "price", not a contact word).
+const LABEL_BEFORE_RE = new RegExp(
+  String.raw`(?<![A-Za-z])(?:` +
+    String.raw`رقم\s*(?:المالك|الهاتف|التليفون)|اتصل|موبايل|هاتف|واتساب|تواصل|` +
+    String.raw`contact|phone|mobile|whatsapp|tel` +
+    String.raw`)(?![A-Za-z])[\s>:=#_()'"\-\u200e\u200f\u202a-\u202e]*$`,
+  'i',
+);
+const LABEL_WINDOW = 28; // preceding chars inspected for the label
+const LABELED_DIGITS_RE = /\+?\d[\d\s\-().\u200e\u200f\u202a-\u202e]{7,16}\d/g;
+
+/** Malformed-but-labeled contact → concierge. Idempotent, bounded 9–13 digits. */
+function scrubLabeledContacts(s) {
+  return s.replace(LABELED_DIGITS_RE, (match, offset) => {
+    const before = s.slice(Math.max(0, offset - LABEL_WINDOW), offset);
+    if (!LABEL_BEFORE_RE.test(before)) return match;
+    const digits = match.replace(/\D/g, '');
+    if (digits.length < 9 || digits.length > 13) return match; // real phones ± typos only
+    if (isConcierge(digits) || isAllowedId(digits)) return match;
+    if (before.includes('photo-')) return match; // unsplash id under an unlucky label
+    return CONCIERGE;
+  });
+}
+
+/** Verification twin of scrubLabeledContacts — returns labeled leftovers. */
+function labeledLeftovers(s) {
+  const left = [];
+  for (const m of s.matchAll(LABELED_DIGITS_RE)) {
+    const before = s.slice(Math.max(0, (m.index || 0) - LABEL_WINDOW), m.index || 0);
+    if (!LABEL_BEFORE_RE.test(before)) continue;
+    const digits = m[0].replace(/\D/g, '');
+    if (digits.length < 9 || digits.length > 13) continue;
+    if (isConcierge(digits) || isAllowedId(digits)) continue;
+    if (before.includes('photo-')) continue;
+    left.push(m[0]);
+  }
+  return [...new Set(left)];
 }
 
 // ── JSON walk (key-aware price guard) ─────────────────────────────────────
@@ -112,7 +169,13 @@ function walk(node, key) {
   }
   if (typeof node === 'number') {
     // A raw number in a phone column can be a phone — stringify & scrub.
-    if (PHONE_KEY_RE.test(key || '')) return scrubText(String(node));
+    if (PHONE_KEY_RE.test(key || '')) {
+      const digits = String(node).replace(/\D/g, '');
+      if (digits.length >= 9 && digits.length <= 13 && !isConcierge(digits) && !isAllowedId(digits)) {
+        return CONCIERGE; // malformed-but-labeled (key IS the label): 9–13 digits
+      }
+      return scrubText(String(node));
+    }
     return node;
   }
   if (Array.isArray(node)) return node.map((v) => walk(v, key));
@@ -254,6 +317,7 @@ const CSV_DIRS = ['apps/sierra-estates-realty/public/downloads'];
 function phoneLeftoversRaw(raw) {
   const matches = [...raw.matchAll(PHONE_RE)];
   return [
+    ...labeledLeftovers(raw),
     ...new Set(
       matches
         .map((m) => m[0])
@@ -278,6 +342,7 @@ function jsonPhoneLeftovers(raw) {
         const digits = m.replace(/\D/g, '');
         if (!isConcierge(digits) && !isAllowedId(digits)) left.push(m);
       }
+      left.push(...labeledLeftovers(node));
     } else if (Array.isArray(node)) node.forEach(visit);
     else if (node && typeof node === 'object') Object.values(node).forEach(visit);
   };
@@ -306,6 +371,7 @@ function csvPhoneLeftovers(raw) {
         const digits = m.replace(/\D/g, '');
         if (!isConcierge(digits) && !isAllowedId(digits)) left.push(`${header[i]}:${m}`);
       }
+      for (const m of labeledLeftovers(v)) left.push(`${header[i]}:${m}`);
     }
   }
   return [...new Set(left)];
