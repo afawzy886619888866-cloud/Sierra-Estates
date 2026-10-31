@@ -1620,6 +1620,7 @@
     }
 
     _onMessage(e) {
+      if (e.origin && e.origin !== window.location.origin) return;
       const d = e.data;
       if (d && typeof d.__omelette_presenting === 'boolean') {
         // Unchanged value → idempotent re-delivery (the guest bundle

@@ -81,7 +81,7 @@
 | B8 | **No `last_verified_at` in base schema**; freshness only partially via 011 `verified_at`; `flag_stale_listings()` exists but is never scheduled. Availability SLA is in-memory. | schema.sql |
 | B9 | **Dedupe fragmentation**: ≥5 competing keys (`ref_id`, `code`, `sync_hash`, `dupe_check_hash` — written never read, `sbr_code`, 011 `listing_fingerprint` — never backfilled). Same unit entering via 15 paths can duplicate. | Multiple scripts |
 | B10 | **Root TSVs have no importer at all**; `Inventory_with_Photos.xlsx` referenced but absent from repo; `harvest-all-whatsapp-inventory.mjs` has hardcoded `H:/Sheets/...` Windows paths. | Data layer |
-| B11 | **Data quality in the master XLSX is poor** (verified by direct inspection): sale-scale prices on rent rows (8.5M on a Rent listing), phone numbers as floats (`1022844661.0`), malformed WhatsApp URLs (`wa.me/228446610` — missing country code), mixed AR/EN values, missing area/beds/baths on most rows. | `data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx` |
+| B11 | **Data quality in the master XLSX is poor** (verified by direct inspection): sale-scale prices on rent rows (8.5M on a Rent listing), phone numbers as floats (`+201092048333.0`), malformed WhatsApp URLs (`wa.me/228446610` — missing country code), mixed AR/EN values, missing area/beds/baths on most rows. | `data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx` |
 | B12 | **Admin CRM sends `Authorization: Bearer <CRON_SECRET>` from the browser** (PF sync button) — secret exposure; fallback literal `'sierra-cron'`. | `AdminPortal.tsx:792-794` |
 | B13 | **Web AI concierge nearly invisible**: only on `/explore`; site-wide floating widget is a plain wa.me link; `HomePortal.tsx` is dead code. | `app/client/` |
 

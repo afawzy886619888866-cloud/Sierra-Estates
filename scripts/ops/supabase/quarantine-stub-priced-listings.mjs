@@ -118,19 +118,26 @@ async function main() {
     by: 'quarantine-stub-priced-listings.mjs',
   };
   let done = 0;
-  for (const r of toQuarantine) {
-    const history = Array.isArray(r.status_history) ? r.status_history : [];
-    await rest(
-      `listings?id=eq.${encodeURIComponent(r.id)}`,
-      'PATCH',
-      {
-        publish_status: 'REVIEW_REQUIRED',
-        status_history: [...history, { ...NOTE, at: new Date().toISOString() }],
-      },
-    );
-    done++;
-    if (done % 50 === 0) console.log(`  … ${done}/${toQuarantine.length}`);
+  const CONCURRENCY = 15;
+  let cursor = 0;
+  async function worker() {
+    while (cursor < toQuarantine.length) {
+      const idx = cursor++;
+      const r = toQuarantine[idx];
+      const history = Array.isArray(r.status_history) ? r.status_history : [];
+      await rest(
+        `listings?id=eq.${encodeURIComponent(r.id)}`,
+        'PATCH',
+        {
+          publish_status: 'REVIEW_REQUIRED',
+          status_history: [...history, { ...NOTE, at: new Date().toISOString() }],
+        },
+      );
+      done++;
+      if (done % 100 === 0 || done === toQuarantine.length) console.log(`  ... ${done}/${toQuarantine.length}`);
+    }
   }
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
   console.log(`\nAPPLIED: ${done} rows quarantined to REVIEW_REQUIRED (price/status untouched).`);
   console.log('The public map + PF feed now exclude them until human re-verification.');
 }

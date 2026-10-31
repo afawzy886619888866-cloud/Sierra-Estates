@@ -31,6 +31,6 @@ export function mentionsCairoPlaza(text: string | null | undefined): boolean {
 
 /** Append the mandatory notice (bottom, visually separated) to a reply. */
 export function withCairoPlazaNotice(reply: string): string {
-  const body = reply.replace(/\s+$/, '');
+  const body = (reply || '').trimEnd();
   return `${body}\n\n———\n*${NOTICE_LABEL_AR}:*\n${CAIRO_PLAZA_DISCLAIMER_AR}`;
 }

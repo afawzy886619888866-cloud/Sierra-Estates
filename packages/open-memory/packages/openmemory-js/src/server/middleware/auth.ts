@@ -111,10 +111,8 @@ function validate_api_key(provided: string, expected: string): boolean {
  */
 function derive_tenant_id(api_key: string): string {
     return crypto
-        .createHmac("sha256", "om-tenant-scope-salt")
-        .update(api_key)
-        .digest("hex")
-        .slice(0, 16);
+        .scryptSync(api_key, "om-tenant-scope-salt", 16)
+        .toString("hex");
 }
 
 function check_rate_limit(client_id: string): {

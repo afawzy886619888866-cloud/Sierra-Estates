@@ -26,6 +26,7 @@ Dedicated multi-session worker and HTTP gateway built directly on `@open-wa/wa-a
 4. Once connected, each card turns **GREEN (READY)** and displays the phone number.
 
 Alternatively, from the terminal:
+
 ```bash
 # Install dependencies
 pnpm openwa:8lines:install
@@ -48,6 +49,7 @@ WF_OWNER_CONTACT_DAILY_CAP=40
 ```
 
 When [`workflows/09-owner-outreach/outreach.js`](file:///h:/Sierra%20Estates/workflows/09-owner-outreach/outreach.js) or [`workflows/10-whatsapp-dispatch/dispatch.js`](file:///h:/Sierra%20Estates/workflows/10-whatsapp-dispatch/dispatch.js) runs:
+
 - It queries `GET http://127.0.0.1:2785/api/sessions`
 - It resolves all 8 lines (`line-1` .. `line-8`)
 - It distributes owner outreach in parallel across the ready lines while adhering to safe per-line pacing and daily caps.
@@ -60,7 +62,7 @@ The worker forwards **every inbound message** (DMs and broker groups) to the
 Sierra Estates production webhook and pulses the app heartbeat — no EC2
 gateway box in the path:
 
-```
+```text
 WhatsApp line ──► worker (this app, :2785)
                     ├─► POST https://admin.sierra-estates.net/api/webhooks/whatsapp
                     │      header: x-sbr-secret-key = ADMIN SBR_SECRET_KEY
@@ -101,4 +103,3 @@ repo's cloudflared setup and set `OPENWA_HOST`/`OPENWA_PORT` (or
 `WHATSAPP_API_URL`) on **both Vercel projects** to the tunnel's public URL.
 Until then, inbound flows and is stored, but auto-replies fall back to the
 graceful simulation provider.
-

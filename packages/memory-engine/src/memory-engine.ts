@@ -85,7 +85,8 @@ export class MemoryEngine {
   logExecution(execution: ExecutionLog): void {
     this.executionLogs.push(execution)
     if (this.config.auditTrail) {
-      console.log(`[Memory] Logged execution: ${execution.agentId}:${execution.action}`)
+      const safeMsg = `[Memory] Logged execution: ${execution.agentId}:${execution.action}`.replace(/[\r\n]/g, '')
+      console.log(safeMsg)
     }
     this.publish('execution:logged', execution)
 

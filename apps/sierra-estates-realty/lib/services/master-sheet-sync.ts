@@ -225,7 +225,7 @@ function canTransition(fromRaw?: string | null, toRaw?: string | null): boolean 
 }
 
 export async function syncMasterOwnerSheet(sheetId?: string) {
-  const spreadsheetId = sheetId || process.env.MASTER_SHEET_ID || MASTER_SHEET_ID_DEFAULT;
+  const spreadsheetId = sheetId || process.env.UNITS_SHEET_ID || process.env.OWNER_UNITS_SHEET_ID || MASTER_SHEET_ID_DEFAULT;
   logger.info(`[MasterSheetSync] Starting sync for sheet ID: ${spreadsheetId}`);
 
   try {

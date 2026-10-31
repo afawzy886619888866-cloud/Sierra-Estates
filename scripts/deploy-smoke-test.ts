@@ -5,6 +5,7 @@
  */
 
 import http from 'http';
+import https from 'https';
 import path from 'path';
 import * as dotenv from 'dotenv';
 
@@ -51,7 +52,8 @@ async function runProbe(p: Probe): Promise<boolean> {
       const url = new URL(p.path, BASE_URL);
       const postData = p.body ? JSON.stringify(p.body) : null;
 
-      const req = http.request(
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.request(
         url,
         {
           method: p.method,
@@ -74,7 +76,7 @@ async function runProbe(p: Probe): Promise<boolean> {
       );
 
       req.on('error', (err) => {
-        console.log(`  ⚠️ ${p.name} -> Error (${err.message})`);
+        console.log(`  ⚠️ ${p.name} -> Error (${err.message.replace(/[\r\n]/g, '')})`);
         finish(false);
       });
 

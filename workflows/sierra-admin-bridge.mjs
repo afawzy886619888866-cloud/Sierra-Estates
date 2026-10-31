@@ -156,14 +156,14 @@ async function getWorkflowsData() {
 }
 
 const server = http.createServer(async (req, res) => {
-  // Read-only method filter
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    res.writeHead(405, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ ok: false, error: 'Method Not Allowed — Bridge is read-only' }));
-  }
-
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = url.pathname;
+
+  // Allowed methods: GET/HEAD for status/pages, POST for workstation send
+  if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.method === 'POST' && pathname === '/admin/api/send')) {
+    res.writeHead(405, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    return res.end(JSON.stringify({ ok: false, error: 'Method Not Allowed' }));
+  }
 
   // Route 1: /admin -> HTML page
   if (pathname === '/admin' || pathname === '/admin/') {
@@ -213,6 +213,54 @@ const server = http.createServer(async (req, res) => {
       'Cache-Control': 'no-cache'
     });
     return res.end(JSON.stringify(statusPayload, null, 2));
+  }
+
+  // Route 3: POST /admin/api/send -> Dispatch message through OpenWA gateway
+  if (req.method === 'POST' && pathname === '/admin/api/send') {
+    let bodyStr = '';
+    req.on('data', chunk => { bodyStr += chunk; });
+    req.on('end', async () => {
+      try {
+        const body = JSON.parse(bodyStr || '{}');
+        const { phone, text, sessionId = 'auto' } = body;
+
+        if (!phone || !text) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          return res.end(JSON.stringify({ ok: false, error: 'phone and text are required' }));
+        }
+
+        const cleanDigits = String(phone).replace(/\D/g, '');
+        let normalizedDigits = cleanDigits;
+        if (normalizedDigits.startsWith('01') && normalizedDigits.length === 11) {
+          normalizedDigits = `20${normalizedDigits.slice(1)}`;
+        }
+        const chatId = `${normalizedDigits}@c.us`;
+
+        if (chatId.includes('@g.us') || chatId.startsWith('120363')) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          return res.end(JSON.stringify({ ok: false, error: 'Group messaging blocked by safety guard' }));
+        }
+
+        const targetEndpoint = sessionId && sessionId !== 'auto'
+          ? `${GATEWAY_URL}/api/sessions/${sessionId}/messages/send-text`
+          : `${GATEWAY_URL}/api/messages/send-text`;
+
+        const gwRes = await fetch(targetEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId, text }),
+          signal: AbortSignal.timeout(45000)
+        });
+
+        const gwData = await gwRes.json().catch(() => ({}));
+        res.writeHead(gwRes.status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify(gwData));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ ok: false, error: err.message }));
+      }
+    });
+    return;
   }
 
   // Fallback 404

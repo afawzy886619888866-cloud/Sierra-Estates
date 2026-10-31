@@ -13,6 +13,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     'dependency-review.yml',
     'deploy-supabase.yml',
     'deploy-vercel.yml',
+    'whatsapp-outreach.yml',
   ];
 
   it('all expected workflows must exist in .github/workflows', () => {
@@ -28,6 +29,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
         'ci.yml',
         'deploy-vercel.yml',
         'agent-fleet.yml',
+        'whatsapp-outreach.yml',
       ];
 
       for (const wf of nodeWorkflows) {
@@ -41,6 +43,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
         'ci.yml',
         'deploy-vercel.yml',
         'agent-fleet.yml',
+        'whatsapp-outreach.yml',
       ];
 
       for (const wf of submodulesWorkflows) {
@@ -50,15 +53,15 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     });
   });
 
-  describe('Workflow Concurrency & Permission Scopes', () => {
+  describe('Workflow Concurrency, Retired EC2 Decommission & Permission Scopes', () => {
     it('production agent fleet must validate Supabase and select tasks explicitly', () => {
       const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'agent-fleet.yml'), 'utf-8');
       expect(content).toContain('name: Production agent fleet');
       expect(content).toContain('pnpm check:backend');
       expect(content).toContain('pnpm check:legacy-runtime');
       expect(content).toContain('workflow_dispatch:');
-      expect(content).toContain("briefing:daily");
-      expect(content).toContain("fleet:run-all");
+      expect(content).toContain('briefing:daily');
+      expect(content).toContain('fleet:run-all');
       expect(content).toContain('concurrency:');
       expect(content).toContain('cancel-in-progress: false');
     });
@@ -81,11 +84,22 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     });
 
     it('Cron scheduled workflows must not cancel in-progress runs', () => {
-      const cronWorkflows: string[] = [];
+      const cronWorkflows: string[] = [
+        'agent-fleet.yml',
+        'whatsapp-outreach.yml',
+      ];
 
       for (const wf of cronWorkflows) {
         const content = fs.readFileSync(path.join(WORKFLOWS_DIR, wf), 'utf-8');
         expect(content, `${wf} should have cancel-in-progress: false`).toContain('cancel-in-progress: false');
+      }
+    });
+
+    it('no GitHub Actions workflow may reference the retired AWS EC2 IP 54.89.162.250', () => {
+      const files = fs.readdirSync(WORKFLOWS_DIR).filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
+      for (const wf of files) {
+        const content = fs.readFileSync(path.join(WORKFLOWS_DIR, wf), 'utf-8');
+        expect(content, `${wf} must not reference retired EC2 IP`).not.toContain('54.89.162.250');
       }
     });
 
@@ -96,5 +110,4 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       }
     });
   });
-
 });

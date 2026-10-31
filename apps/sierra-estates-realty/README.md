@@ -51,4 +51,4 @@ pnpm migrate:supabase
 
 ## Notes
 
-This is not a Firebase-hosted web app. The active architecture is Vercel + Supabase with isolated worker automation.
+This is not a Firebase-hosted web app. The active architecture is Vercel + Supabase with isolated worker automation.

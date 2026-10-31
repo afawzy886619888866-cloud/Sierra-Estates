@@ -259,11 +259,13 @@ export async function GET() {
 
     xml += `  <property>\n`;
     xml += `    <reference_number>${xmlEscape(reference)}</reference_number>\n`;
+    xml += `    <offering_type>RS</offering_type>\n`;
     xml += `    <title_en>${xmlEscape(`${type} in ${compound}`)}</title_en>\n`;
     xml += `    <description_en>${xmlEscape(
       `${type} for sale in ${compound}${u.zone ? `, ${u.zone}` : ''}. ${Number(beds)} bedrooms, ${Number(area)} sqm. Sierra Estates inventory.`
     )}</description_en>\n`;
     xml += `    <price>${price}</price>\n`;
+    xml += `    <currency>EGP</currency>\n`;
     xml += `    <bedroom>${Number(beds)}</bedroom>\n`;
     xml += `    <bathroom>${Number(baths)}</bathroom>\n`;
     xml += `    <size>${Number(area)}</size>\n`;
@@ -297,7 +299,7 @@ export async function GET() {
   return new NextResponse(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=300, s-maxage=600',
+      'Cache-Control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600',
     },
   });
 }

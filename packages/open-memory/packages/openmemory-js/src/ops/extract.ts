@@ -130,7 +130,7 @@ export async function extractAudio(
     const tempFilePath = path.join(tempDir, `audio-${Date.now()}${ext}`);
 
     try {
-        fs.writeFileSync(tempFilePath, buffer);
+        fs.writeFileSync(tempFilePath, buffer, { mode: 0o600 });
 
         const openai = new OpenAI({ apiKey });
 
@@ -176,7 +176,7 @@ export async function extractVideo(buffer: Buffer): Promise<ExtractionResult> {
     const audioPath = path.join(tempDir, `audio-${Date.now()}.mp3`);
 
     try {
-        fs.writeFileSync(videoPath, buffer);
+        fs.writeFileSync(videoPath, buffer, { mode: 0o600 });
 
         await new Promise<void>((resolve, reject) => {
             ffmpeg(videoPath)

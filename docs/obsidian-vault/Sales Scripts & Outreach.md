@@ -13,7 +13,7 @@ When an owner lists a property on Dubizzle or Facebook, Leila sends this friendl
 
 ### Script 1: Initial Vetting & Photo Request (Arabic)
 
-```
+```text
 السلام عليكم يا فندم، أنا ليلى من شركة سييرا بلو العقارية بالتجمع الخامس. 
 
 شفت إعلان حضرتك بخصوص وحدة [نوع الوحدة: شقة/توين هاوس] المعروضة للبيع/الإيجار في [اسم الكومباوند/المنطقة، مثل: Lake View]. 
@@ -27,7 +27,7 @@ When an owner lists a property on Dubizzle or Facebook, Leila sends this friendl
 
 If our `[[Forecasting Engine]]` calculates that the owner's price per square meter is overpriced by more than 15% compared to the New Cairo market average:
 
-```
+```text
 أهلاً بحضرتك يا فندم. حابة أشكرك على التفاصيل والصور. 
 
 إحنا قمنا بتحليل متوسط أسعار المتر في [اسم المنطقة/الكومباوند] بناءً على الصفقات الفعلية الأخيرة. متوسط السعر الحالي للمتر نصف تشطيب هو [السعر العادل] ج.م، وده بيخلي سعر حضرتك أعلى بنسبة [النسبة]% تقريباً من متوسط السوق.
@@ -43,7 +43,7 @@ If the property listing belongs to another real estate broker, the AI bot handle
 
 ### Script 3: co-broke Proposal (Arabic/English Mixed)
 
-```
+```text
 السلام عليكم يا كوتش، معاك سييرا من سييرا بلو للتسويق العقاري.
 
 شفت الوحدة المعروضة من طرفك في [الكومباوند] بكود [الترميز، مثل: LV-3B-100K-F]. عندي عميل مباشر ومشتري كاش مهتم جداً بالوحدة دي وجاهز للمعاينة.
@@ -61,7 +61,7 @@ When a deal is closed or scheduled, the system sends an automation notification 
 
 ### Email Format: viewing Appointment Booked
 
-```
+```text
 Subject: 📅 [Sierra Estates AI] Viewing Scheduled - Compound: [Compound] - Unit Code: [Unit Code]
 
 Dear Ahmed Fawzy,

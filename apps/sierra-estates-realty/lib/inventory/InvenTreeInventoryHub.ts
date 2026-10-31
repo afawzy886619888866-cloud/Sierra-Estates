@@ -515,13 +515,14 @@ class InvenTreeInventoryHubService {
       }
 
       // Bedroom matches (e.g., "3 bedrooms", "3 beds")
-      const bedMatch = queryText.match(/(\d+)\s*(?:bed|bedroom)/i);
+      const safeQuery = (queryText || '').slice(0, 500);
+      const bedMatch = safeQuery.match(/(\d{1,3})\s*(?:bed|bedroom)/i);
       if (bedMatch && Number(bedMatch[1]) === item.parameters.bedrooms) {
         score += 10;
       }
 
       // Budget match (e.g., "under 15M", "under 10 million")
-      const budgetMatch = queryText.match(/(?:under|below|max)\s*(\d+(?:\.\d+)?)\s*(?:m|million)/i);
+      const budgetMatch = safeQuery.match(/(?:under|below|max)\s*(\d{1,5}(?:\.\d{1,3})?)\s*(?:m|million)/i);
       if (budgetMatch) {
         const maxBudget = parseFloat(budgetMatch[1]) * 1_000_000;
         if (item.parameters.totalPriceEgp <= maxBudget) {

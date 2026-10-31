@@ -1,4 +1,5 @@
 import 'server-only';
+import crypto from 'node:crypto';
 import { FEATURE_FLAGS } from '../config';
 import { insertRecord } from '@sierra-estates/db';
 import { logger } from '../logger';
@@ -141,7 +142,7 @@ export class PaymentService {
     }
 
     // Fallback/Sandbox session generator when Stripe key is test/absent
-    const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const mockSessionId = `cs_test_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
     const mockCheckoutUrl = `https://checkout.stripe.com/c/pay/${mockSessionId}?unit=${unitId}&amount=${amountInEGP}`;
 
     return {

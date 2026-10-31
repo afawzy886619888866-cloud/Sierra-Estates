@@ -81,9 +81,14 @@ export function isRealPhoto(url?: string | null): boolean {
   if (!url) return false;
   const s = String(url).trim().toLowerCase();
   if (!s.startsWith('http')) return false;
-  if (s.includes('unsplash.com')) return false;
   if (s.includes('placeholder')) return false;
-  if (s.includes('example.com')) return false;
+  try {
+    const h = new URL(s).hostname.toLowerCase();
+    if (h === 'unsplash.com' || h.endsWith('.unsplash.com')) return false;
+    if (h === 'example.com' || h.endsWith('.example.com')) return false;
+  } catch {
+    return false;
+  }
   return true;
 }
 
@@ -523,10 +528,10 @@ export async function appendToExcelInventory(
 
   try {
     let wb: XLSX.WorkBook;
-    if (fs.existsSync(filePath)) {
+    try {
       const buf = fs.readFileSync(filePath);
       wb = XLSX.read(buf, { type: 'buffer' });
-    } else {
+    } catch {
       wb = XLSX.utils.book_new();
     }
 
@@ -598,7 +603,7 @@ export async function appendToExcelInventory(
     }
 
     const outBuf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    fs.writeFileSync(filePath, outBuf);
+    fs.writeFileSync(filePath, outBuf, { mode: 0o600 });
     logger.info(`[ExcelInventory] Successfully appended unit ${recordId} to sheet "${sheetName}" in ${filePath}`);
 
     // Synchronize to Supabase — ONLY when the caller has not already

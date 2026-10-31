@@ -1,4 +1,4 @@
-FROM node:22-bullseye-slim
+FROM node:22-bookworm-slim
 
 # Install Chromium and system dependencies required for headless browser automation
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxtst6 \
     ca-certificates \
     curl \
+    zstd \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \

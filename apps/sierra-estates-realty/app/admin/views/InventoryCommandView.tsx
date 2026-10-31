@@ -44,8 +44,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import consolidatedRaw from "@/data/consolidated-master-inventory.json";
-import realListingsRaw from "@/data/real-listings.json";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { exportCSV } from "./admin-shared";
 import {
@@ -68,41 +66,7 @@ const LiveMap = dynamic(() => import("@/components/Maps/LiveMap"), {
 /* ── Baseline: committed JSON + live Supabase merge ─────────────────── */
 
 function buildUnifiedBaseline(): any[] {
-  const map = new Map<string, any>();
-
-  if (Array.isArray(realListingsRaw)) {
-    realListingsRaw.forEach((item: any) => {
-      const code = item.sierraCode || item.code || `SE-${item.id}`;
-      map.set(code, {
-        ...item,
-        sierraCode: code,
-        photos:
-          item.photos ||
-          (item.image ? [item.image] : item.img ? [item.img] : []),
-        hasPhotos: Boolean(
-          (item.photos && item.photos.length > 0) || item.image || item.img,
-        ),
-        status: item.status || "Available",
-      });
-    });
-  }
-
-  if (Array.isArray(consolidatedRaw)) {
-    consolidatedRaw.forEach((item: any) => {
-      const code = item.sierraCode || item.code || `SE-${item.id}`;
-      if (!map.has(code)) {
-        map.set(code, {
-          ...item,
-          sierraCode: code,
-          photos: item.photos || [],
-          hasPhotos: Boolean(item.photos && item.photos.length > 0),
-          status: item.status || "Available",
-        });
-      }
-    });
-  }
-
-  return Array.from(map.values());
+  return [];
 }
 
 /* ── Status model ───────────────────────────────────────────────────── */
@@ -304,6 +268,9 @@ export default function InventoryCommandView({
   const [allUnits, setAllUnits] = useState<any[]>(() => buildUnifiedBaseline());
   const [liveMerged, setLiveMerged] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // Sheet sync state
+  const [syncingSheet, setSyncingSheet] = useState(false);
+  const [sheetSyncMsg, setSheetSyncMsg] = useState<string | null>(null);
   const [notice, setNotice] = useState<{
     type: "ok" | "err";
     text: string;
@@ -870,6 +837,44 @@ export default function InventoryCommandView({
               </button>
             ))}
           </div>
+          {/* Sync from Google Sheet Button */}
+          <button
+            type="button"
+            onClick={async () => {
+              setSyncingSheet(true);
+              setSheetSyncMsg(null);
+              try {
+                const res = await fetch('/api/sync/master-sheet', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sheetId: '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk' }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                  setSheetSyncMsg(`✓ ${data.count || 0} units synced from Google Sheet`);
+                  await fetch('/api/inventory', { method: 'DELETE', headers: { 'x-admin-secret': '' } }).catch(() => {});
+                  loadLive();
+                } else {
+                  setSheetSyncMsg(`✗ Sync failed: ${data.error || res.statusText}`);
+                }
+              } catch (e: unknown) {
+                setSheetSyncMsg(`✗ ${e instanceof Error ? e.message : 'network error'}`);
+              } finally {
+                setSyncingSheet(false);
+                setTimeout(() => setSheetSyncMsg(null), 8000);
+              }
+            }}
+            disabled={syncingSheet}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0f3460] border border-[#1d6fa5] text-[#7dd3fc] hover:bg-[#1e4976] hover:text-white transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+            title="Pull latest inventory from Google Sheet → Supabase"
+          >
+            {syncingSheet ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Database className="w-3.5 h-3.5" />
+            )}
+            <span className="hidden sm:inline">{syncingSheet ? 'Syncing…' : 'Sync Sheet'}</span>
+          </button>
           <button
             type="button"
             onClick={loadLive}
@@ -2223,6 +2228,17 @@ export default function InventoryCommandView({
             <Globe className="w-3.5 h-3.5" />
           )}
           {notice.text}
+        </div>
+      )}
+      {sheetSyncMsg && (
+        <div className="fixed bottom-16 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border text-sm font-semibold transition-all animate-bounce"
+          style={{
+            background: sheetSyncMsg.startsWith('✓') ? '#052e16' : '#3b0764',
+            borderColor: sheetSyncMsg.startsWith('✓') ? '#16a34a' : '#9333ea',
+            color: sheetSyncMsg.startsWith('✓') ? '#4ade80' : '#e879f9',
+          }}
+        >
+          {sheetSyncMsg}
         </div>
       )}
     </div>

@@ -1,11 +1,14 @@
 /**
- * Workflow 07: Daily Ops Digest  (new 2026-10)
+ * Workflow 07: Morning Ops Briefing  (owner decision "B", 2026-10-31)
  * ────────────────────────────────────────────
- * Every morning (08:00 Africa/Cairo, per the workflows DB row) sends ONE
- * Arabic WhatsApp summary to the ops/owner number:
+ * Every morning (03:00 Africa/Cairo, per the workflows DB row) sends ONE
+ * Arabic WhatsApp briefing to the ops/owner number:
  *
  *   • Gateway health (session status, phone, engine)
  *   • Workflow estate: last exit + success rate for every registered slug
+ *   • Campaign results: REAL owner-outreach messages dispatched in the last
+ *     24 h, counted from Supabase `owner_outreach_log` (dry-run rows are
+ *     never written there, so the count is sends-only by construction)
  *   • New leads in the last 24 h (Supabase `leads`)
  *   • New units added in the last 24 h (Supabase `listings`)
  *
@@ -27,6 +30,10 @@
  *      LEAD_NOTIFY_WHATSAPP_NUMBER (optional)
  * Exit: 0 sent · 1 error · 2 unconfigured
  */
+const path = require('path');
+const { loadWorkflowEnv } = require('../lib/google-sheets'); loadWorkflowEnv(require('path').join(__dirname, '..'));
+try { require('dotenv').config({ path: path.join(__dirname, '..', 'workflows.env') }); } catch {}
+
 const { GatewayClient, requestJson, normalizeChatId } = require('../lib/gateway-client');
 const sb = require('../lib/supabase-sync');
 
@@ -58,20 +65,50 @@ async function countSince(table, isoSince) {
   }
 }
 
+/** REAL campaign sends in the window — one row per genuinely dispatched
+ *  opt-out message (migration 033 no-fabrication contract: dry-run never
+ *  writes here), so this count is the honest campaign output volume. */
+async function outreachSentSince(isoSince) {
+  if (!sb.configured()) return null;
+  const url = `${(process.env.SUPABASE_URL || '').replace(/\/+$/, '')}/rest/v1/owner_outreach_log` +
+    `?select=id&sent_at=gte.${encodeURIComponent(isoSince)}&dry_run=is.false&limit=1000`;
+  try {
+    const res = await requestJson(url, { headers: sb.headers(), timeoutMs: 12000 });
+    if (!res.ok) return null;
+    return Array.isArray(res.data) ? res.data.length : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function main() {
-  console.log('daily-digest: starting');
+  console.log('morning-briefing: starting');
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 
-  // 1. Gateway health
+  // 1. Gateway health (multi-session aware)
   const gw = new GatewayClient();
   let gwLine;
   let gwOk = false;
   try {
-    const st = await gw.status();
-    gwOk = st.status === 'ready';
-    gwLine = gwOk
-      ? `🟢 بوابة الواتساب: تعمل — ${st.phone || '?'} (${st.pushName || 'Sierra Estates'})`
-      : `🟡 بوابة الواتساب: الحالة ${st.status}`;
+    const poolRes = await requestJson(`${gw.baseUrl}/api/sessions`, {
+      headers: { 'X-API-Key': gw.adminKey },
+      timeoutMs: 6000
+    });
+    if (poolRes.ok && Array.isArray(poolRes.data) && poolRes.data.length) {
+      const readySessions = poolRes.data.filter(x => x.status === 'ready');
+      const totalSent = poolRes.data.reduce((sum, x) => sum + (x.totalSent || 0), 0);
+      gwOk = readySessions.length > 0;
+      const readyPhones = readySessions.map(x => x.phone || x.id).join(', ');
+      gwLine = gwOk
+        ? `🟢 بوابة الواتساب: تعمل (${readySessions.length}/${poolRes.data.length} خطوط جاهزة: ${readyPhones}) — تم إرسال ${totalSent} رسالة اليوم`
+        : `🟡 بوابة الواتساب: جميع الخطوط (${poolRes.data.length}) غير متصلة`;
+    } else {
+      const st = await gw.status();
+      gwOk = st.status === 'ready';
+      gwLine = gwOk
+        ? `🟢 بوابة الواتساب: تعمل — ${st.phone || '?'} (${st.pushName || 'Sierra Estates'})`
+        : `🟡 بوابة الواتساب: الحالة ${st.status}`;
+    }
   } catch (err) {
     gwLine = `🔴 بوابة الواتساب: غير متاحة (${err.message.slice(0, 60)})`;
   }
@@ -91,21 +128,25 @@ async function main() {
     wfLines = [`• تعذر قراءة سجل الأتمتة: ${err.message.slice(0, 60)}`];
   }
 
-  // 3. Supabase counters (24 h)
-  const [leads24, units24] = await Promise.all([
+  // 3. Supabase counters (24 h): campaign results + new leads + new units
+  const [leads24, units24, outreach24] = await Promise.all([
     countSince('leads', since),
     countSince('listings', since),
+    outreachSentSince(since),
   ]);
 
   // 4. Compose
   const today = new Date().toISOString().slice(0, 10);
   const parts = [
-    `🌇 ملخص Sierra Estates اليومي — ${today}`,
+    `🌅 التقرير الصباحي — Sierra Estates — ${today}`,
     '━━━━━━━━━━━━━━━━━━',
     gwLine,
     '',
     '📊 حالة الأتمتة:',
     ...wfLines,
+    '',
+    '📣 نتائج الحملات (24 ساعة):',
+    `• رسائل حملة التواصل مع الملاك المُرسلة: ${outreach24 === null ? 'غير متاح' : outreach24}`,
     '',
     `🎯 عملاء جدد (24 ساعة): ${leads24 === null ? 'غير متاح' : leads24}`,
     `🏢 وحدات مضافة (24 ساعة): ${units24 === null ? 'غير متاح' : units24}`,
@@ -136,16 +177,16 @@ async function main() {
   try {
     await gw.sendText(chatId, text, { retries: 2 });
   } catch (err) {
-    console.error(`daily-digest FAILED: send error: ${err.message}`);
+    console.error(`morning-briefing FAILED: send error: ${err.message}`);
     process.exit(1);
   }
 
-  console.log(`SUMMARY ${JSON.stringify({ sent: true, to: chatId, leads24, units24, gateway: gwOk })}`);
-  console.log('daily-digest: done');
+  console.log(`SUMMARY ${JSON.stringify({ sent: true, to: chatId, leads24, units24, outreach24, gateway: gwOk })}`);
+  console.log('morning-briefing: done');
   process.exit(0);
 }
 
 main().catch((err) => {
-  console.error(`daily-digest FAILED: ${err.message}`);
+  console.error(`morning-briefing FAILED: ${err.message}`);
   process.exit(1);
 });

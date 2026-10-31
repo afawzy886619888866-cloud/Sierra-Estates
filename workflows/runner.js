@@ -29,6 +29,13 @@
  *        GET  /api/workflows/:slug/logs?n=10 run history tails
  *        POST /pair/code                     pairing-code mint (auth + rate-limited)
  *        GET  /pair/qr                       pairing QR (auth)
+ *        GET  /api/fleet                     fleet task registry + config (auth)
+ *        POST /api/fleet/run                 dispatch the GitHub Production
+ *                              agent fleet via workflow_dispatch (auth +
+ *                              rate-limited + cooldown; fail-closed without
+ *                              FLEET_GITHUB_TOKEN — secrets stay on GitHub)
+ *        GET  /api/fleet/status              live status of the latest fleet
+ *                              run on GitHub (auth)
  *        GET  /tracker.csv                   outreach ledger export (auth ONLY —
  *                              the legacy hard-coded query key was removed)
  *
@@ -43,11 +50,12 @@ const http = require('http');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-try { require('dotenv').config({ path: path.join(__dirname, '.env') }); } catch {}
+const { loadWorkflowEnv } = require('./lib/google-sheets'); loadWorkflowEnv(__dirname);
 const { isDue } = require('./lib/crone');
 const state = require('./lib/state');
 const sb = require('./lib/supabase-sync');
 const inbox = require('./lib/inbox');
+const fleet = require('./lib/fleet-dispatch');
 const { GatewayClient } = require('./lib/gateway-client');
 
 const WF_DIR = __dirname;
@@ -64,7 +72,19 @@ const CHILD_TIMEOUTS_MS = {
 };
 const PORT = parseInt(process.env.RUNNER_PORT || '2786', 10);
 const BIND = process.env.RUNNER_BIND || '127.0.0.1';
+// Honest telemetry identity: where this runner ACTUALLY executes. Default
+// keeps the historical EC2 label; the Docker migration
+// (infra/docker-compose.runner.yml) sets RUNNER_LABEL=docker-runner so the
+// Workflow Studio never confuses the two execution paths.
+const RUNNER_LABEL = process.env.RUNNER_LABEL || 'docker-runner';
 const API_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
+
+// Local → GitHub fleet dispatch anti-hammer guard. The agent-fleet workflow
+// itself refuses to cancel a run mid-flight (concurrency cancel-in-progress:
+// false), so stacking dispatches during a run buys nothing — the cooldown
+// keeps an excited operator (or a retry loop) from queueing a stampede.
+const FLEET_COOLDOWN_MS = parseInt(process.env.FLEET_DISPATCH_COOLDOWN_MS || '600000', 10);
+let fleetDispatchedInFlight = false;
 
 const SLUGS = [
   'whatsapp-scraper',
@@ -124,10 +144,10 @@ function authorized(req) {
   if (!API_KEY) return false;
   const h = req.headers['x-api-key'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!h) return false;
-  // Compare fixed-length SHA-256 digests so both length and content checks
-  // are timing-safe (no early return on the first mismatching byte).
-  const a = crypto.createHash('sha256').update(String(h)).digest();
-  const b = crypto.createHash('sha256').update(String(API_KEY)).digest();
+  // Compare fixed-length scrypt digests so both length and content checks
+  // are timing-safe and adhere to secure password/key hashing standards.
+  const a = crypto.scryptSync(String(h), 'runner-auth-salt', 32);
+  const b = crypto.scryptSync(String(API_KEY), 'runner-auth-salt', 32);
   return crypto.timingSafeEqual(a, b);
 }
 
@@ -159,13 +179,24 @@ function clientIp(req) {
   return String(req.socket?.remoteAddress || 'unknown');
 }
 
+/** Module-level JSON responder shared by deny() and the server handler. */
+function sendJson(res, code, obj) {
+  const body = JSON.stringify(obj, null, 1);
+  res.writeHead(code, {
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(body),
+    'Cache-Control': 'no-store',
+  });
+  res.end(body);
+}
+
 /** Uniform 401/429 denial for protected routes (fail-closed + abuse guard). */
 function deny(res, req) {
   if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
-    json(res, 429, { ok: false, error: 'rate_limited' });
+    sendJson(res, 429, { ok: false, error: 'rate_limited' });
     return true;
   }
-  json(res, 401, { ok: false, error: 'unauthorized' });
+  sendJson(res, 401, { ok: false, error: 'unauthorized' });
   return true;
 }
 
@@ -183,7 +214,7 @@ async function runWorkflow(slug, trigger = 'cron') {
   // whose persisted status is not 'active' — a paused/draft workflow can only
   // be executed through the authenticated explicit POST /run endpoint by a
   // human operator (deliberate emergency action, honestly labelled).
-  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', 'studio', 'run-requested']);
+  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', '30m-window', 'studio', 'run-requested']);
   if (AUTOMATIC_TRIGGERS.has(trigger) && sb.configured()) {
     try {
       const current = await sb.getWorkflows([slug]);
@@ -279,7 +310,7 @@ async function runWorkflow(slug, trigger = 'cron') {
       lastRunMs: durationMs,
       successRate: st.successRate ?? undefined,
       runsBump: runsNow,
-      label: `ec2-runner:${exitKind}`,
+      label: `${RUNNER_LABEL}:${exitKind}`,
     });
   } catch (e) {
     log(`${slug}: telemetry patch failed: ${e.message}`);
@@ -338,8 +369,10 @@ async function schedulerTick() {
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (10:00–20:00 Cairo time; last slot fires 19:30 —
-  // outreach.js re-gates and never sends at hr >= 20) for owner-outreach.
+  // Hourly window check (09:00–22:00 Cairo time; 30-min slots fire 09:00..21:30 —
+  // outreach.js re-gates and stops cleanly at 22:00 / 10:00 PM) for owner-outreach.
+  // Owner requirement 2026-10-31: the WhatsApp lane must be open AT LEAST
+  // 09:00–21:00 Cairo; slots therefore start at 09:00 sharp.
   // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
   // A paused/draft workflow must never execute from a local timer, and the
   // status is re-verified again inside runWorkflow() immediately before the
@@ -354,7 +387,7 @@ async function schedulerTick() {
       month: '2-digit',
       day: '2-digit',
     }).formatToParts(new Date());
-    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10);
+    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10) % 24;
     const cairoMin = parseInt(cairoFmt.find((p) => p.type === 'minute')?.value || '0', 10);
     const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
     const slotMin = cairoMin < 30 ? '00' : '30';
@@ -362,12 +395,12 @@ async function schedulerTick() {
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
-      cairoHour >= 10 && cairoHour < 20 &&
+      cairoHour >= 9 && cairoHour < 22 &&
       outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey
     ) {
-      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing batch`);
+      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing 25-msg rotated sender batch`);
       lastFiredHour.set('owner-outreach', hourKey);
       manualQueue.set('owner-outreach', '30m-window');
     }
@@ -382,6 +415,7 @@ async function schedulerTick() {
     const slug = row.slug;
     if (!SCRIPTS[slug]) continue;
     if (row.status !== 'active') continue;
+    if (slug === 'owner-outreach') continue; // Handled exclusively by Cairo 30m active slot scheduler above
 
     // admin pressed "Run now" in the Studio? (Layer-2 patch sets last_run_label='run-requested')
     if (row.last_run_label === 'run-requested' && !manualQueue.has(slug)) {
@@ -449,6 +483,7 @@ function server() {
           tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
           supabase: sb.configured(),
           running: [...running],
+          fleet: fleet.fleetConfig(), // configured + repo/workflow only — no token material
           gateway,
           gatewayHealth: gh,
         });
@@ -480,7 +515,8 @@ b{color:#e9edef}</style></head><body><div class="card">
 <input class="key" id="key" type="password" placeholder="Access key" autocomplete="off">
 <button class="btn" id="save" onclick="saveKey()">فتح صفحة الربط</button>
 <div id="portal" style="display:none">
-<p>1) افتح واتساب على جوالك <b>+20 106 139 9688</b><br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
+<p style="font-size:12px;color:#d4af37;background:#1a231d;border:1px solid #2e4438;border-radius:8px;padding:8px 10px;margin-bottom:12px;">💡 المنظومة تعمل بـ 4 خطوط مخصصة. لإدارة الخطوط الأربعة معاً افتح <a href="http://127.0.0.1:2785" target="_blank" style="color:#00d95f;font-weight:700;text-decoration:underline;">محطة البوابة المجمعة (:2785)</a>.</p>
+<p>1) افتح واتساب على الجوال المراد ربطه<br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
 <img id="qr" alt="QR">
 <p class="st bad" id="st">…</p>
 <p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>
@@ -557,7 +593,7 @@ setInterval(tick,5000);
         try {
           const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
           const sid = process.env.OPENWA_SESSION_ID || '';
-          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201061399688').replace(/\D/g, '');
+          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201000000003').replace(/\D/g, '');
           const r = await fetch(`${base}/api/sessions/${sid}/pairing-code`, {
             method: 'POST',
             headers: {
@@ -626,6 +662,70 @@ setInterval(tick,5000);
         manualQueue.set(slug, 'manual');
         setImmediate(() => schedulerTick().catch((e) => log(`manual tick error: ${e.message}`)));
         return json(res, 202, { ok: true, accepted: slug });
+      }
+
+      // ── Local → GitHub fleet dispatch bridge (Production agent fleet) ──
+      // The fleet's secrets (Property Finder / DeepSeek / Cline keys) live
+      // ONLY as GitHub secrets, so the bridge dispatches the already-green
+      // agent-fleet workflow instead of re-plumbing keys into this container.
+      // Fail-closed: without FLEET_GITHUB_TOKEN these routes answer honestly
+      // and dispatch nothing.
+      if (p === '/api/fleet' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const fleetState = fleet.loadFleetState();
+        return json(res, 200, {
+          ok: true,
+          ...fleet.fleetConfig(),
+          tasks: fleet.FLEET_TASKS,
+          runAll: fleet.FLEET_RUN_ALL,
+          lastDispatch: fleetState.lastDispatch || null,
+          recentDispatches: (fleetState.history || []).slice(0, 5),
+          cooldownSec: Math.round(FLEET_COOLDOWN_MS / 1000),
+        });
+      }
+
+      if (p === '/api/fleet/run' && req.method === 'POST') {
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        if (rateLimited('fleetrun', clientIp(req), 6, 10 * 60 * 1000)) {
+          return json(res, 429, { ok: false, error: 'rate_limited', retryAfterMin: 10 });
+        }
+        if (fleetDispatchedInFlight) {
+          return json(res, 409, { ok: false, error: 'dispatch_in_flight' });
+        }
+        const fsLast = fleet.loadFleetState().lastDispatch;
+        if (fsLast && Date.now() - Date.parse(fsLast.at || 0) < FLEET_COOLDOWN_MS) {
+          const waitSec = Math.ceil((FLEET_COOLDOWN_MS - (Date.now() - Date.parse(fsLast.at))) / 1000);
+          return json(res, 429, { ok: false, error: 'cooldown', retryAfterSec: waitSec, lastDispatch: fsLast });
+        }
+        let body = null;
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) { body = null; }
+        const tasksInput = body ? (body.tasks !== undefined ? body.tasks : body.task) : null;
+        if (!tasksInput) return json(res, 400, { ok: false, error: 'missing_tasks', hint: 'Send {"tasks":"briefing:daily,check-thresholds"} or {"tasks":["fleet:run-all"]}.' });
+        fleetDispatchedInFlight = true;
+        try {
+          const out = await fleet.dispatchFleet(tasksInput);
+          if (!out.ok && out.error === 'invalid_tasks') {
+            return json(res, 400, { ok: false, error: 'invalid_tasks', unknown: out.unknown, allowed: [...fleet.FLEET_TASKS, fleet.FLEET_RUN_ALL] });
+          }
+          if (!out.ok) return json(res, 502, out);
+          log(`fleet dispatch accepted: ${out.dispatched.tasks.join(',')} → ${fleet.fleetConfig().repo}#${fleet.fleetConfig().workflow}`);
+          return json(res, 202, { ok: true, accepted: true, dispatch: out.dispatched, note: 'Track via GET /api/fleet/status (GitHub run starts within ~30s).' });
+        } finally {
+          fleetDispatchedInFlight = false;
+        }
+      }
+
+      if (p === '/api/fleet/status' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const out = await fleet.fleetRunStatus();
+        const fleetState = fleet.loadFleetState();
+        if (!out.ok) return json(res, out.configured === false ? 503 : 502, out);
+        return json(res, 200, { ok: true, live: out.run, lastLocalDispatch: fleetState.lastDispatch || null });
       }
 
       const logsMatch = p.match(/^\/api\/workflows\/([\w-]+)\/logs$/);
@@ -734,11 +834,11 @@ async function main() {
   try {
     const seeded = await sb.upsertWorkflowRow({
       slug: 'daily-digest',
-      name: 'Daily Ops Digest',
-      name_ar: 'الملخص اليومي للعمليات',
-      description: '08:00 Cairo — Arabic WhatsApp digest to the ops number: gateway health, workflow run stats, new leads and units from the last 24h.',
+      name: 'Morning Ops Briefing',
+      name_ar: 'التقرير الصباحي للعمليات',
+      description: '03:00 Cairo — Arabic WhatsApp morning briefing to the ops number: gateway health, workflow run stats, campaign results (owner-outreach sends from owner_outreach_log), new leads and units from the last 24h.',
       status: 'active',
-      schedule: '0 8 * * *',
+      schedule: '0 3 * * *',
       category: 'operations',
       trigger_type: 'cron',
       source_path: 'workflows/07-daily-digest/digest.js',
@@ -746,6 +846,36 @@ async function main() {
     if (seeded) log('daily-digest row present in workflows registry');
   } catch (e) {
     log(`daily-digest seeding skipped: ${e.message}`);
+  }
+
+  // One-time default migration (2026-10-31, owner decision "B"): the digest
+  // moved 08:00 -> 03:00 Cairo and the outreach lane opens 10:00 -> 09:00.
+  // upsertWorkflowRow is insert-if-missing, so rows that already exist in
+  // Supabase keep their OLD defaults — migrate ONLY rows still carrying an
+  // old default; a schedule customized by the operator is never touched.
+  try {
+    const rows = await sb.getWorkflows(['daily-digest', 'owner-outreach']);
+    const bySlug = new Map(rows.map((r) => [r.slug, r]));
+    const digestRow = bySlug.get('daily-digest');
+    if (digestRow && String(digestRow.schedule || '').trim() === '0 8 * * *') {
+      const ok = await sb.patchWorkflowRow('daily-digest', {
+        schedule: '0 3 * * *',
+        name: 'Morning Ops Briefing',
+        name_ar: 'التقرير الصباحي للعمليات',
+        description: '03:00 Cairo — Arabic WhatsApp morning briefing to the ops number: gateway health, workflow run stats, campaign results (owner-outreach sends from owner_outreach_log), new leads and units from the last 24h.',
+      });
+      if (ok) log('daily-digest schedule migrated 08:00 -> 03:00 Cairo (owner morning briefing)');
+    }
+    const outreachRow = bySlug.get('owner-outreach');
+    if (outreachRow && String(outreachRow.schedule || '').trim() === '*/30 10-21 * * *') {
+      const ok = await sb.patchWorkflowRow('owner-outreach', {
+        schedule: '*/30 9-21 * * *',
+        description: 'Daily 09:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
+      });
+      if (ok) log('owner-outreach registry schedule migrated 10:00 -> 09:00 Cairo lane opening');
+    }
+  } catch (e) {
+    log(`schedule default migration skipped: ${e.message}`);
   }
 
   // ensure one-shot seeding of the units-sync row (idempotent)
@@ -772,9 +902,9 @@ async function main() {
       slug: 'owner-outreach',
       name: 'Owner Outreach',
       name_ar: 'التواصل مع الملاك',
-      description: 'Daily Cairo-windowed WhatsApp introductions to property owners from the inventory sheet (gviz read, local ledger dedupe, cap 40/day, 10:00-20:00 Cairo only).',
+      description: 'Daily 09:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
       status: 'active',
-      schedule: '11 11,16 * * *',
+      schedule: '*/30 9-21 * * *',
       category: 'outreach',
       trigger_type: 'cron',
       source_path: 'workflows/09-owner-outreach/outreach.js',
@@ -782,6 +912,24 @@ async function main() {
     if (seeded) log('owner-outreach row present in workflows registry');
   } catch (e) {
     log(`owner-outreach seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the whatsapp-dispatch row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'whatsapp-dispatch',
+      name: 'WhatsApp Outbox Dispatch',
+      name_ar: 'إرسال رسائل واتساب الصادرة',
+      description: 'Every 15 minutes — dispatches queued WhatsApp outbox messages from Supabase via the local OpenWA multi-session gateway.',
+      status: 'active',
+      schedule: '*/15 * * * *',
+      category: 'outreach',
+      trigger_type: 'cron',
+      source_path: 'workflows/10-whatsapp-dispatch/dispatch.js',
+    });
+    if (seeded) log('whatsapp-dispatch row present in workflows registry');
+  } catch (e) {
+    log(`whatsapp-dispatch seeding skipped: ${e.message}`);
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));

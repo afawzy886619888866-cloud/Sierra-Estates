@@ -185,6 +185,9 @@ export interface Listing {
   featured?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  /** Command-center fields (migration 037): 0..100 freshness + canonical SE code. */
+  freshnessScore?: number | null;
+  seCode?: string | null;
 }
 
 export interface Agent {

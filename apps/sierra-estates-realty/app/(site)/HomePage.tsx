@@ -5,6 +5,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
+  FileSpreadsheet,
+  Sun,
+  Moon,
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search, Map as MapIcon,
   Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles,
 } from 'lucide-react';
@@ -26,8 +29,23 @@ import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { usePublicListings } from '@/lib/site/usePublicListings';
-import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import { getCuratedListingImage, isStockPhotoUrl } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
+
+const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
+  ssr: false,
+});
+import { UnitDetailModal } from '@/components/MasterRegistryMap/UnitDetailModal';
+import type { UnitListing as CadastralUnitListing } from '@/components/MasterRegistryMap/registryData';
+
+const CartographicMap = dynamic(() => import('@/components/site/CartographicMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
+      Loading Cartographic Masterplan…
+    </div>
+  ),
+});
 
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ssr: false,
@@ -321,7 +339,7 @@ export default function HomePage() {
             mode: u.mode || 'sale',
             agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
             img: getCuratedListingImage(u, i),
-            imgCurated: !u.img || u.img.includes('unsplash.com') || u.img.includes('placeholder'),
+            imgCurated: !u.img || isStockPhotoUrl(u.img) || u.img.includes('placeholder'),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
@@ -345,6 +363,10 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
+  const [sheetModalOpen, setSheetModalOpen] = useState(false);
+  const [inspectedMapUnit, setInspectedMapUnit] = useState<CadastralUnitListing | null>(null);
+  const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
+  const [homepageMapTheme, setHomepageMapTheme] = useState<'light' | 'dark'>('light');
   const [sent, setSent] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [form, setForm] = useState({
@@ -405,7 +427,7 @@ export default function HomePage() {
             mode: u.mode || 'sale',
             agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
             img: getCuratedListingImage(u, i),
-            imgCurated: !u.img || u.img.includes('unsplash.com') || u.img.includes('placeholder'),
+            imgCurated: !u.img || isStockPhotoUrl(u.img) || u.img.includes('placeholder'),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
@@ -830,27 +852,86 @@ export default function HomePage() {
                 {t('mapSub')}
               </p>
             </div>
-            <Link href="/compounds" className="sec-link" style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
-            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {/* Dual Map Theme Switcher: Light vs Dark Edition */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: 3,
+                  borderRadius: 12,
+                  background: 'rgba(200, 150, 26, 0.1)',
+                  border: '1px solid rgba(200, 150, 26, 0.3)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setHomepageMapTheme('light')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 9,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: homepageMapTheme === 'light' ? '#ffffff' : 'transparent',
+                    color: homepageMapTheme === 'light' ? '#0f172a' : '#8a6a2c',
+                    boxShadow: homepageMapTheme === 'light' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Sun style={{ width: 14, height: 14, color: '#f59e0b' }} />
+                  <span>{isAr ? 'النسخة الفاتحة' : 'Light Edition'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHomepageMapTheme('dark')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 9,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: homepageMapTheme === 'dark' ? '#071523' : 'transparent',
+                    color: homepageMapTheme === 'dark' ? '#f5d78e' : '#8a6a2c',
+                    boxShadow: homepageMapTheme === 'dark' ? '0 2px 6px rgba(0,0,0,0.3)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Moon style={{ width: 14, height: 14, color: '#e9c176' }} />
+                  <span>{isAr ? 'النسخة الداكنة (Obsidian)' : 'Dark Edition'}</span>
+                </button>
+              </div>
+
+              <Link href="/compounds" className="sec-link" style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
+              </Link>
+            </div>
           </div>
 
-          {/* Interactive Map Canvas */}
-          <div className="map-workspace rv">
-            <CompoundsMap
-              compounds={allCompounds}
-              featured={featuredCompounds}
-              selectedName={selectedMapCompound}
-              onSelectAction={(name) => {
-                setSelectedMapCompound(name);
-                setSearch((prev) => ({ ...prev, compound: name }));
+          {/* Interactive Master Cartographic Map Canvas */}
+          <div className="map-workspace rv" style={{ borderRadius: 16, overflow: 'hidden' }}>
+            <CartographicMap
+              lang={isAr ? 'ar' : 'en'}
+              isDarkMode={homepageMapTheme === 'dark'}
+              onToggleTheme={() => setHomepageMapTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+              onSelectCompoundToExcel={(compound) => {
+                setSelectedMapCompound(compound.nameEn);
+                setSearch((prev) => ({ ...prev, compound: compound.nameEn }));
+                setSheetModalCompound(compound.nameEn);
+                setSheetModalOpen(true);
               }}
-              showControls={true}
-              filterCompound={search.compound}
-              filterPrice={search.price}
-              filterType={search.type}
-              filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
-              isAr={isAr}
+              onSelectUnit={(unit) => {
+                setSelectedMapCompound(unit.compoundNameEn);
+                setInspectedMapUnit(unit);
+              }}
             />
           </div>
           <div className="map-status" role="status" aria-live="polite">
@@ -887,6 +968,30 @@ export default function HomePage() {
                     <span>{isAr ? `تصفح كل وحدات ${selectedMapCompound}` : `Browse All in ${selectedMapCompound}`}</span>
                     <ArrowRight style={{ width: 14, height: 14 }} />
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSheetModalCompound(selectedMapCompound);
+                      setSheetModalOpen(true);
+                    }}
+                    className="btn"
+                    style={{
+                      padding: '8px 18px',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      borderRadius: 10,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      background: 'linear-gradient(135deg, rgba(200, 150, 26, 0.25), rgba(200, 150, 26, 0.1))',
+                      border: '1px solid rgba(200, 150, 26, 0.5)',
+                      color: '#e9c176',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <FileSpreadsheet style={{ width: 15, height: 15 }} />
+                    <span>{isAr ? 'فتح كشف الإكسل للوحدات' : 'Open Excel Units Sheet'}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSelectedMapCompound(null)}
@@ -1358,6 +1463,29 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+    
+      {/* Interactive Compound Excel Sheet Modal */}
+      <CompoundExcelSheetModal
+        isOpen={sheetModalOpen}
+        onClose={() => setSheetModalOpen(false)}
+        compoundName={sheetModalCompound}
+        isAr={isAr}
+      />
+
+      {inspectedMapUnit && (
+        <UnitDetailModal
+          unit={inspectedMapUnit}
+          onClose={() => setInspectedMapUnit(null)}
+          lang={isAr ? 'ar' : 'en'}
+          isDarkMode={homepageMapTheme === 'dark'}
+          onBookViewing={(u) => {
+            const msg = encodeURIComponent(
+              `Hello Sierra Estates, I would like to book a viewing / inquire about unit ${u.unitCode} in ${u.compoundNameEn}.`
+            );
+            window.open(`https://wa.me/201092048333?text=${msg}`, '_blank', 'noopener,noreferrer');
+          }}
+        />
+      )}
     </SiteShell>
   );
 }

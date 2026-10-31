@@ -68,7 +68,15 @@ memoryApiRouter.post('/write', async (req: Request, res: Response): Promise<void
       res.status(400).json({ success: false, error: '`id` and `value` are required' })
       return
     }
-    const entry = await sharedMemory.write(id, value, { author, tags, ttl })
+    let safeTtl: number | undefined
+    if (typeof ttl === 'number') {
+      if (!Number.isFinite(ttl) || ttl <= 0 || ttl > 86400000) {
+        res.status(400).json({ success: false, error: '`ttl` must be a positive number up to 86400000 (24 hours)' })
+        return
+      }
+      safeTtl = ttl
+    }
+    const entry = await sharedMemory.write(id, value, { author, tags, ttl: safeTtl })
     res.json({ success: true, data: entry })
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message })
@@ -290,32 +298,16 @@ memoryApiRouter.get('/patterns', (_req: Request, res: Response): void => {
  */
 import fs from 'fs';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 
 // Rate limiting middleware to prevent abuse of backup endpoint (CodeQL js/missing-rate-limiting)
-const backupRateLimiter = (() => {
-  const requestCounts = new Map<string, { count: number; resetTime: number }>();
-  return (req: Request, res: Response, next: () => void) => {
-    const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    const now = Date.now();
-    const windowMs = 60 * 1000; // 1 minute window
-    const maxRequests = 5; // max 5 backups per minute
-
-    const record = requestCounts.get(ip) || { count: 0, resetTime: now + windowMs };
-    if (now > record.resetTime) {
-      record.count = 1;
-      record.resetTime = now + windowMs;
-    } else {
-      record.count += 1;
-    }
-    requestCounts.set(ip, record);
-
-    if (record.count > maxRequests) {
-      res.status(429).json({ success: false, error: 'Too many backup requests. Please wait a minute.' });
-      return;
-    }
-    next();
-  };
-})();
+const backupRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 5, // max 5 backups per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many backup requests. Please wait a minute.' },
+});
 
 memoryApiRouter.post('/backup', backupRateLimiter, (_req: Request, res: Response): void => {
   try {

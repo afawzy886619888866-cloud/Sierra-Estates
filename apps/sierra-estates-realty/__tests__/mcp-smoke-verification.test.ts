@@ -6,6 +6,19 @@ import { GET as authorizeRoute } from '../app/api/mcp/oauth/authorize/route';
 import { POST as tokenRoute } from '../app/api/mcp/oauth/token/route';
 import { POST as mcpPostRoute } from '../app/api/mcp/route';
 
+// ── Deterministic unit boundary (execution order Section E, 2026-10-27) ──
+// A standard unit test must not require production network availability.
+// This suite's ONLY live seam was step 7's tools/call, whose handler
+// dynamically imports @sierra-estates/db and performs a real Supabase HTTPS
+// request (tool-bridge.ts → getRecord). Mocked at the module boundary; the
+// opt-in LIVE smoke remains `pnpm mcp:smoke-test` (scripts/mcp-smoke-test.ts).
+jest.mock('@sierra-estates/db', async () => {
+  const actual = await jest.requireActual('@sierra-estates/db');
+  return { ...actual, getRecord: jest.fn(async () => null) };
+});
+
+let sharedToken = '';
+
 describe('MCP End-to-End Smoke Verification (M10.4)', () => {
   it('completes the entire end-to-end cutover smoke sequence', async () => {
     // 1. Probe Authorization Server Metadata (RFC 8414)
@@ -67,6 +80,7 @@ describe('MCP End-to-End Smoke Verification (M10.4)', () => {
     const tokenData = await tokenRes.json();
     expect(tokenData.access_token).toBeDefined();
     const accessToken = tokenData.access_token;
+    sharedToken = accessToken;
 
     // 5. MCP Handshake (initialize)
     const initReq = new Request('https://sierra-estates.net/api/mcp', {
@@ -152,5 +166,45 @@ describe('MCP End-to-End Smoke Verification (M10.4)', () => {
     expect(spendRes.status).toBe(403);
     const spendData = await spendRes.json();
     expect(spendData.error.code).toBe(-32003);
+  });
+});
+
+describe('MCP offline boundary cases (Section E)', () => {
+  it('rejects MCP calls without a bearer token (unauthorized ≠ empty success)', async () => {
+    const res = await mcpPostRoute(new Request('https://sierra-estates.net/api/mcp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 90, method: 'tools/list' }),
+    }));
+    expect([401, 403]).toContain(res.status);
+    const data = await res.json();
+    expect(data.error).toBeDefined();
+  });
+
+  it('answers a malformed JSON body with an HTTP error, not a fake success', async () => {
+    const res = await mcpPostRoute(new Request('https://sierra-estates.net/api/mcp', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${sharedToken}`, 'Content-Type': 'application/json' },
+      body: '<<< not json >>>',
+    }));
+    expect(res.status).toBeGreaterThanOrEqual(400);
+  });
+
+  it('get_pipeline_summary stays honest when the DB row is unavailable (mocked null)', async () => {
+    const res = await mcpPostRoute(new Request('https://sierra-estates.net/api/mcp', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${sharedToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 92,
+        method: 'tools/call',
+        params: { name: 'get_pipeline_summary', arguments: { pipelineId: 'missing_001' } },
+      }),
+    }));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // The tool answers with honest content (not-found text), never a
+    // fabricated pipeline row — DB unavailability is not empty success.
+    expect(data.result?.content?.[0]?.type).toBe('text');
   });
 });

@@ -11,13 +11,28 @@ export interface AgentProfile {
   isSkill?: boolean;
 }
 
+function resolveDefaultSrcDir(): string {
+  if (typeof __dirname === 'string' && __dirname.length > 0) {
+    return __dirname;
+  }
+  const candidates = [
+    path.resolve(process.cwd(), 'packages', 'agents-core', 'src'),
+    path.resolve(process.cwd(), '..', '..', 'packages', 'agents-core', 'src'),
+    path.resolve(process.cwd(), 'src'),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) return dir;
+  }
+  return process.cwd();
+}
+
 export class AgentRegistry {
   private srcDir: string;
   private rootDir: string;
   private profiles: Record<string, AgentProfile> = {};
 
   constructor(customSrcDir?: string) {
-    this.srcDir = customSrcDir || __dirname;
+    this.srcDir = customSrcDir || resolveDefaultSrcDir();
     this.rootDir = path.resolve(this.srcDir, '../../..');
     this.loadAllProfiles();
     this.loadAgentSkills();

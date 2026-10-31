@@ -5,6 +5,8 @@ name: CodeQL Security Scan
 # an explicit permissions block).
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     # Weekly, Sunday 03:30 UTC — off-peak for the Cairo working day.
@@ -13,6 +15,11 @@ on:
 permissions:
   contents: read
   security-events: write
+  # actions: read — required by the codeql-action status report (it queries
+  # GET /repos/{owner}/{repo}/actions/runs/{id}); without it the analyze step
+  # fails with "Resource not accessible by integration" even though the scan
+  # itself completed and the SARIF was exported.
+  actions: read
 
 concurrency:
   group: codeql
@@ -34,6 +41,22 @@ jobs:
         with:
           languages: javascript-typescript
           queries: security-extended
+          config: |
+            paths:
+              - apps
+              - packages
+              - workflows
+              - infra
+            paths-ignore:
+              - '**/__tests__/**'
+              - '**/*.test.ts'
+              - '**/*.test.js'
+              - '**/scripts/**'
+              - 'packages/open-memory/tools/**'
+              - docs
+              - assets
+              - transport
+              - node_modules
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

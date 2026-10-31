@@ -66,12 +66,26 @@
   "cSpell.ignoreRegExpList": [
     "[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]+"
   ],
+  "cSpell.ignorePaths": [
+    "**/docs/reference/**"
+  ],
   "cSpell.words": [
+    "autoclaw",
+    "analysed",
+    "exfiltrates",
+    "conv",
+    "EDITMODE",
+    "tweakchange",
+    "checkmarks",
+    "farida",
+    "Namecheap",
+    "namecheap",
     "Andrej",
     "authfail",
     "checkpointed",
     "claymorphism",
     "CLAYMORPHISM",
+    "findstr",
     "hdrs",
     "ilike",
     "journalctl",

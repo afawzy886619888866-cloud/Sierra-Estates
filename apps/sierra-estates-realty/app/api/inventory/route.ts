@@ -33,6 +33,7 @@ import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { hasPendingPhoto } from "@/lib/inventory/normalize";
 import { getSupabase } from "@sierra-estates/db";
 import { appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
+import { scrubOwnerContactText } from "@/lib/server/owner-privacy";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 
 export const runtime = "nodejs";
@@ -198,7 +199,7 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
         code: listing.code || listing.sbr_code || listing.ref_id || listing.id,
         title: listing.title || raw.title || undefined,
         titleAr: listing.title_ar || undefined,
-        descriptionAr: listing.description_ar || undefined,
+        descriptionAr: scrubOwnerContactText(listing.description_ar) || undefined,
         agent: listing.agent_name || raw.agent || undefined,
         tag: raw.tag || undefined,
         aiScore: typeof raw.aiScore === "number" ? raw.aiScore : undefined,
@@ -223,12 +224,22 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
         baths: listing.bathrooms,
         area: Number(listing.area_sqm) || null,
         price,
+        // C3 (2026-10-27): expose the row's real currency + deal type so
+        // consumers (production-smoke, map) can be currency-aware. The label
+        // never FABRICATES a currency: an unlabeled price renders as a bare
+        // number with currency left unknown (§21 — never assumed EGP).
+        priceCurrency: listing.price_currency || null,
+        dealType: listing.deal_type || null,
         priceLabel: price
-          ? `EGP ${price.toLocaleString("en-US")}`
+          ? listing.price_currency
+            ? `${listing.price_currency} ${price.toLocaleString("en-US")}`
+            : price.toLocaleString("en-US")
           : "Price on request",
         img: primaryImg ?? undefined,
         hasPhoto,
-        description: listing.description,
+        // Section D (2026-10-27): free text can embed owner phones — scrub to
+        // the concierge contact (same doctrine as the download route).
+        description: scrubOwnerContactText(listing.description),
         updatedAt: listing.updated_at,
       };
     });
@@ -442,6 +453,23 @@ export async function GET(request: Request) {
   }
 }
 
+/**
+ * DELETE /api/inventory
+ * Internal cache-bust hook. Called by admin mutations (listing status changes,
+ * sheet-webhook write-backs) to clear the in-memory TTL cache immediately
+ * without waiting for the 60-second natural expiry.
+ * Security: requires the last 12 chars of SUPABASE_SERVICE_ROLE_KEY in x-admin-secret header.
+ */
+export async function DELETE(request: Request) {
+  const secret = request.headers.get('x-admin-secret');
+  const expected = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(-12);
+  if (!secret || !expected || secret !== expected) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  cachedSupabaseListings = null;
+  logger.info('[inventory:DELETE] In-memory cache cleared by admin signal');
+  return NextResponse.json({ ok: true, message: 'Inventory cache cleared' });
+}
 /**
  * POST /api/inventory → Append newly submitted listing to Excel inventory sheet and Supabase
  */

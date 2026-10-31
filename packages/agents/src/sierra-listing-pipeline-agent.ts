@@ -1,9 +1,6 @@
 import pino from 'pino';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
-import { insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
+import { insertRecord } from '@sierra-estates/db';
 import { obsidian } from '@sierra-estates/obsidian';
 import { OpenClawAgent } from '../openclaw';
 
@@ -167,15 +164,15 @@ export class SierraListingPipelineAgent {
 
     // Price
     let rawPrice = 0;
-    const priceMillionMatch = raw.match(/(\d+(?:\.\d+)?)\s*(?:مليون|ملون|million)/i);
+    const priceMillionMatch = raw.match(/([0-9]{1,8}(?:\.[0-9]{1,4})?)\s*(?:مليون|ملون|million)/i);
     if (priceMillionMatch) {
       rawPrice = parseFloat(priceMillionMatch[1]) * 1_000_000;
     } else {
-      const priceThousandMatch = raw.match(/(\d+(?:\.\d+)?)\s*(?:الف|ألف|k\b)/i);
+      const priceThousandMatch = raw.match(/([0-9]{1,8}(?:\.[0-9]{1,4})?)\s*(?:الف|ألف|k\b)/i);
       if (priceThousandMatch) {
         rawPrice = parseFloat(priceThousandMatch[1]) * 1_000;
       } else {
-        const generalPrice = raw.match(/(?:سعر|ب|مطلوب|الايجار|الإيجار)?\s*(\d[\d,]{3,9})/);
+        const generalPrice = raw.match(/(?:(?:\b(?:سعر|ب|مطلوب|الايجار|الإيجار)\s+)|(?:\b))([0-9][0-9,]{3,9})/);
         if (generalPrice) {
           rawPrice = Number(generalPrice[1].replace(/,/g, ''));
         }

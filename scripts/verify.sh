@@ -32,6 +32,8 @@ run "action-routing" node scripts/verify-action-routing.mjs
 if [ "${SKIP_TESTS:-0}" = "1" ]; then
   printf '\n\033[33m⊘ tests skipped (SKIP_TESTS=1)\033[0m\n'
 else
+  run "ai-eval-harness"  pnpm exec tsx scripts/run-harness.ts
+  run "ported-engines"   pnpm exec tsx scripts/verify-ported-engines.mjs
   run "tests (packages)" pnpm turbo run test:ci
   run "tests (root)"     pnpm exec vitest run
 fi

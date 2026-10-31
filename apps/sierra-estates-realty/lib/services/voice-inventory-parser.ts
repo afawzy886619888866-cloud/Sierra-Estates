@@ -45,7 +45,8 @@ function normalizeArabicNumbers(text: string): string {
  * Extract structured real estate listing entities from Arabic speech transcript
  */
 export function extractEntitiesFromTranscript(transcriptText: string, senderPhone?: string): ExtractedVoiceListing {
-  const norm = normalizeArabicNumbers(transcriptText).toLowerCase();
+  const safeText = (transcriptText || '').slice(0, 1000);
+  const norm = normalizeArabicNumbers(safeText).toLowerCase();
 
   // Detect Compound
   let compound = 'New Cairo';
@@ -76,7 +77,7 @@ export function extractEntitiesFromTranscript(transcriptText: string, senderPhon
 
   // Bedrooms
   let bedrooms = 3;
-  const bedMatch = norm.match(/(\d+)\s*(غرف|غرفه|نوم|beds|bed)/i);
+  const bedMatch = norm.match(/(\d{1,3})\s*(?:غرف|غرفه|نوم|beds|bed)/i);
   if (bedMatch) {
     bedrooms = parseInt(bedMatch[1], 10);
   } else if (norm.includes('غرفتين') || norm.includes('اوضتين')) {
@@ -87,7 +88,7 @@ export function extractEntitiesFromTranscript(transcriptText: string, senderPhon
 
   // Bathrooms
   let bathrooms = Math.max(1, bedrooms - 1);
-  const bathMatch = norm.match(/(\d+)\s*(حمام|حمامات|baths)/i);
+  const bathMatch = norm.match(/(\d{1,3})\s*(?:حمام|حمامات|baths)/i);
   if (bathMatch) {
     bathrooms = parseInt(bathMatch[1], 10);
   } else if (norm.includes('حمامين')) {
@@ -96,24 +97,24 @@ export function extractEntitiesFromTranscript(transcriptText: string, senderPhon
 
   // Area
   let areaSqm = 150;
-  const areaMatch = norm.match(/(\d+)\s*(متر|م²|sqm|sq m)/i);
+  const areaMatch = norm.match(/(\d{1,5})\s*(?:متر|م²|sqm|sq m)/i);
   if (areaMatch) {
     areaSqm = parseInt(areaMatch[1], 10);
   }
 
   // Price
   let price = isRent ? 35000 : 7500000;
-  const millionMatch = norm.match(/(\d+(?:\.\d+)?)\s*(مليون|مليون جنيه|m|million)/i);
-  const thousandMatch = norm.match(/(\d+(?:\.\d+)?)\s*(الف|ألف|k|thousand)/i);
+  const millionMatch = norm.match(/(\d{1,4}(?:\.\d{1,4})?)\s*(?:مليون|مليون جنيه|m|million)/i);
+  const thousandMatch = norm.match(/(\d{1,6}(?:\.\d{1,4})?)\s*(?:الف|ألف|k|thousand)/i);
 
   if (millionMatch) {
     price = parseFloat(millionMatch[1]) * 1_000_000;
   } else if (thousandMatch) {
     price = parseFloat(thousandMatch[1]) * 1_000;
   } else {
-    const rawPriceMatch = norm.match(/(مطلوب|سعر|السعر)\s*[:=]?\s*(\d{4,9})/i);
+    const rawPriceMatch = norm.match(/(?:مطلوب|سعر|السعر)\s*[:=]?\s*(\d{4,9})/i);
     if (rawPriceMatch) {
-      price = parseFloat(rawPriceMatch[2]);
+      price = parseFloat(rawPriceMatch[1]);
     }
   }
 

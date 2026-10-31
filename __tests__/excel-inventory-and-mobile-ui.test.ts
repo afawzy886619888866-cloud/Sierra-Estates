@@ -18,122 +18,36 @@ import {
 // artifact from an earlier append-test run used to shadow the seed and flip
 // this suite red — the append test below now writes to a throwaway temp copy
 // and never creates a root artifact.
+//
+// 2026-10-31 quarantine update: the raw owner-data workbooks (root runtime
+// copy AND the committed data/ seed) were removed from the repo per the
+// owner-privacy doctrine (scripts/sanitize-public-downloads.mjs purge +
+// scripts/sanitize-data-json.mjs). The master now lives ONLY in Supabase
+// Storage on the runtime host. ExcelInventoryService itself degrades
+// gracefully in that state (readExcelListings -> []), so: structure pins run
+// only when a workbook is actually present, and the absence state gets its
+// own explicit contract below.
 describe('Excel Master Inventory & Real Data Integration Suite', () => {
-  const masterPath = getMasterExcelPath();
-  const loadWorkbook = (p: string) => XLSX.read(fs.readFileSync(p), { type: 'buffer' });
-
-  it('verifies that the master Inventory_with_Photos.xlsx exists and has valid size', () => {
-    expect(fs.existsSync(masterPath)).toBe(true);
-    const stat = fs.statSync(masterPath);
-    // Data-light strategy: the 7MB+ master workbook lives in Supabase Storage
-    // and is synced at build time; git (and fresh clones) carry a structural
-    // seed with the canonical sheets and columns. It only has to be a valid,
-    // non-trivial workbook — sheet/column structure is pinned by the tests
-    // below.
-    expect(stat.size).toBeGreaterThan(5_000);
-  });
-
-  it('contains the canonical sheets in Inventory_with_Photos.xlsx', () => {
-    const wb = loadWorkbook(masterPath);
-    expect(wb.SheetNames).toContain('Owners Rent');
-    expect(wb.SheetNames).toContain('Owners Buy');
-    expect(wb.SheetNames).toContain('Broker Rent');
-    expect(wb.SheetNames).toContain('Broker Buy');
-  }, 30000);
-
-  it('verifies canonical column headers exist in sheets', () => {
-    expect(EXCEL_COLUMNS).toContain('RecordID');
-    expect(EXCEL_COLUMNS).toContain('Compound');
-    expect(EXCEL_COLUMNS).toContain('Price (EGP)');
-
-    const wb = loadWorkbook(masterPath);
-    const sampleWs = wb.Sheets['Owners Rent'];
-    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sampleWs);
-    expect(rows.length).toBeGreaterThan(0);
-    const firstRow = rows[0];
-
-    expect(firstRow).toHaveProperty('RecordID');
-    expect(firstRow).toHaveProperty('Compound');
-    expect(firstRow).toHaveProperty('PropertyType');
-    expect(firstRow).toHaveProperty('Operation');
-    expect(firstRow).toHaveProperty('Price (EGP)');
-    expect(firstRow).toHaveProperty('Photo URLs');
-  }, 30000);
-
-  it('readExcelListings successfully loads and normalizes real units with photos', () => {
+  it('readExcelListings never throws — workbook present or quarantined', () => {
+    // Absence is a valid, doctrine-mandated state on CI/fresh clones.
     const units = readExcelListings({ limit: 25, stripPII: true });
-    expect(units.length).toBeGreaterThanOrEqual(1);
-
-    const first = units[0];
-    expect(first.id).toBeTruthy();
-    expect(first.compound).toBeTruthy();
-    expect(first.status).toBe('available');
-    expect(['rent', 'sale']).toContain(first.mode);
-    expect(typeof first.price).toBe('number');
-    expect(first.priceLabel).toBeTruthy();
-
-    // Verify PII is stripped by default
-    expect((first as any).contactPhone).toBeUndefined();
-    expect((first as any).contactName).toBeUndefined();
-    expect((first as any).whatsAppDirect).toBeUndefined();
-
-    // Verify at least one unit in the sample has a real photo URL
-    const withPhoto = units.find((u) => u.img && u.img.startsWith('http'));
-    expect(withPhoto).toBeDefined();
-    if (withPhoto && withPhoto.img) {
-      expect(withPhoto.img).toMatch(/^https?:\/\//);
-    }
-  }, 30000);
-
-  it('appendToExcelInventory appends new unit to correct sheet and updates workbook', async () => {
-    const testRecordId = `TEST-OWNER-${Date.now().toString(36).toUpperCase()}`;
-    // Test isolation: append to a throwaway copy of the resolved master so
-    // the run never mutates the real workbook and never leaves a root-level
-    // runtime artifact behind (which would shadow the structural seed for
-    // every later run — see the hazard note above).
-    const tmpPath = path.join(
-      os.tmpdir(),
-      `sierra-excel-append-${process.pid}-${Date.now()}.xlsx`,
-    );
-    fs.copyFileSync(masterPath, tmpPath);
-    try {
-      const result = await appendToExcelInventory(
-        {
-          recordId: testRecordId,
-          compound: 'Mivida',
-          location: 'New Cairo',
-          price: 14500000,
-          operation: 'Sale',
-          propertyType: 'Apartment',
-          bedrooms: 3,
-          bathrooms: 2,
-          areaSqm: 170,
-          description: 'Automated Vitest Verification Unit',
-          sourceType: 'owner',
-          photoUrls: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9'],
-        },
-        tmpPath,
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.recordId).toBe(testRecordId);
-      expect(result.sheetName).toBe('Owners Buy');
-
-      // Verify row was written to the temp copy's sheet
-      const wb = loadWorkbook(result.filePath);
-      const ws = wb.Sheets['Owners Buy'];
-      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
-      const found = rows.find((r) => r.RecordID === testRecordId);
-      expect(found).toBeDefined();
-      expect(found?.Compound).toBe('Mivida');
-      expect(found?.['Price (EGP)']).toBe(14500000);
-      expect(found?.['Photo URLs']).toContain('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9');
-    } finally {
-      try {
-        fs.unlinkSync(tmpPath);
-      } catch {
-        /* best-effort cleanup */
-      }
+    expect(Array.isArray(units)).toBe(true);
+    if (fs.existsSync(getMasterExcelPath())) {
+      expect(units.length).toBeGreaterThanOrEqual(1);
+      const first = units[0];
+      expect(first.id).toBeTruthy();
+      expect(first.compound).toBeTruthy();
+      expect(first.status).toBe('available');
+      expect(['rent', 'sale']).toContain(first.mode);
+      expect(typeof first.price).toBe('number');
+      expect(first.priceLabel).toBeTruthy();
+      // Verify PII is stripped by default
+      expect((first as any).contactPhone).toBeUndefined();
+      expect((first as any).contactName).toBeUndefined();
+      expect((first as any).whatsAppDirect).toBeUndefined();
+    } else {
+      // Quarantined: graceful empty result, never a crash, never invented rows.
+      expect(units).toEqual([]);
     }
   }, 30000);
 
@@ -208,3 +122,109 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     expect(cssContent).toContain('.mobile-drawer-overlay');
   });
 });
+
+// ── Structure pins — ONLY on a host that actually has the workbook ─────────
+// The runtime host syncs the master from Supabase Storage; when present, the
+// canonical sheets/columns and the append pipeline stay pinned. On CI and
+// fresh clones (workbook quarantined per the privacy doctrine) this whole
+// suite skips instead of failing.
+describe.skipIf(!fs.existsSync(getMasterExcelPath()))(
+  'Excel Master Workbook structure (requires the runtime workbook)',
+  () => {
+    const masterPath = getMasterExcelPath();
+    const loadWorkbook = (p: string) => XLSX.read(fs.readFileSync(p), { type: 'buffer' });
+
+    it('verifies that the master Inventory_with_Photos.xlsx exists and has valid size', () => {
+      expect(fs.existsSync(masterPath)).toBe(true);
+      const stat = fs.statSync(masterPath);
+      expect(stat.size).toBeGreaterThan(5_000);
+    });
+
+    it('contains the canonical sheets in Inventory_with_Photos.xlsx', () => {
+      const wb = loadWorkbook(masterPath);
+      expect(wb.SheetNames).toContain('Owners Rent');
+      expect(wb.SheetNames).toContain('Owners Buy');
+      expect(wb.SheetNames).toContain('Broker Rent');
+      expect(wb.SheetNames).toContain('Broker Buy');
+    }, 30000);
+
+    it('verifies canonical column headers exist in sheets', () => {
+      expect(EXCEL_COLUMNS).toContain('RecordID');
+      expect(EXCEL_COLUMNS).toContain('Compound');
+      expect(EXCEL_COLUMNS).toContain('Price (EGP)');
+
+      const wb = loadWorkbook(masterPath);
+      const sampleWs = wb.Sheets['Owners Rent'];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sampleWs);
+      expect(rows.length).toBeGreaterThan(0);
+      const firstRow = rows[0];
+
+      expect(firstRow).toHaveProperty('RecordID');
+      expect(firstRow).toHaveProperty('Compound');
+      expect(firstRow).toHaveProperty('PropertyType');
+      expect(firstRow).toHaveProperty('Operation');
+      expect(firstRow).toHaveProperty('Price (EGP)');
+      expect(firstRow).toHaveProperty('Photo URLs');
+    }, 30000);
+
+    it('normalizes real units with photos from the runtime workbook', () => {
+      const units = readExcelListings({ limit: 25, stripPII: true });
+      expect(units.length).toBeGreaterThanOrEqual(1);
+      const withPhoto = units.find((u) => u.img && u.img.startsWith('http'));
+      expect(withPhoto).toBeDefined();
+      if (withPhoto && withPhoto.img) {
+        expect(withPhoto.img).toMatch(/^https?:\/\//);
+      }
+    }, 30000);
+
+    it('appendToExcelInventory appends new unit to correct sheet and updates workbook', async () => {
+      const testRecordId = `TEST-OWNER-${Date.now().toString(36).toUpperCase()}`;
+      // Test isolation: append to a throwaway copy so the run never mutates
+      // the real workbook and never leaves a root-level runtime artifact
+      // behind (see the hazard note above).
+      const tmpPath = path.join(
+        os.tmpdir(),
+        `sierra-excel-append-${process.pid}-${Date.now()}.xlsx`,
+      );
+      fs.copyFileSync(masterPath, tmpPath);
+      try {
+        const result = await appendToExcelInventory(
+          {
+            recordId: testRecordId,
+            compound: 'Mivida',
+            location: 'New Cairo',
+            price: 14500000,
+            operation: 'Sale',
+            propertyType: 'Apartment',
+            bedrooms: 3,
+            bathrooms: 2,
+            areaSqm: 170,
+            description: 'Automated Vitest Verification Unit',
+            sourceType: 'owner',
+            photoUrls: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9'],
+          },
+          tmpPath,
+        );
+
+        expect(result.success).toBe(true);
+        expect(result.recordId).toBe(testRecordId);
+        expect(result.sheetName).toBe('Owners Buy');
+
+        const wb = loadWorkbook(result.filePath);
+        const ws = wb.Sheets['Owners Buy'];
+        const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
+        const found = rows.find((r) => r.RecordID === testRecordId);
+        expect(found).toBeDefined();
+        expect(found?.Compound).toBe('Mivida');
+        expect(found?.['Price (EGP)']).toBe(14500000);
+        expect(found?.['Photo URLs']).toContain('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9');
+      } finally {
+        try {
+          fs.unlinkSync(tmpPath);
+        } catch {
+          /* best-effort cleanup */
+        }
+      }
+    }, 30000);
+  },
+);

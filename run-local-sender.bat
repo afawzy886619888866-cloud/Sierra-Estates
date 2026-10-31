@@ -6,20 +6,17 @@ echo ========================================================
 cd /d "%~dp0"
 
 REM Check if local OpenWA is listening on port 2785
-set GATEWAY_URL=http://54.89.162.250:2785
+set GATEWAY_URL=http://127.0.0.1:2785
 curl -s --connect-timeout 2 http://127.0.0.1:2785/api/health >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
-    set GATEWAY_URL=http://127.0.0.1:2785
     echo [INFO] Detected LOCAL OpenWA running on http://127.0.0.1:2785 (Free Local Gateway)
 ) else (
-    echo [INFO] Local gateway not detected; using AWS EC2 gateway (%GATEWAY_URL%)
+    echo [WARN] Local gateway not yet listening on http://127.0.0.1:2785 — start start-openwa-8lines.bat or start-sierra.bat first!
 )
 
 set WHATSAPP_API_URL=%GATEWAY_URL%
-if not defined SIERRA_WHATSAPP_API_TOKEN exit /b 1
-set WHATSAPP_API_TOKEN=%SIERRA_WHATSAPP_API_TOKEN%
-if not defined SIERRA_OPENWA_ADMIN_API_KEY exit /b 1
-set OPENWA_ADMIN_API_KEY=%SIERRA_OPENWA_ADMIN_API_KEY%
+if defined SIERRA_WHATSAPP_API_TOKEN set WHATSAPP_API_TOKEN=%SIERRA_WHATSAPP_API_TOKEN%
+if defined SIERRA_OPENWA_ADMIN_API_KEY set OPENWA_ADMIN_API_KEY=%SIERRA_OPENWA_ADMIN_API_KEY%
 set WHATSAPP_PROVIDER=openwa
 
 echo Active Gateway: %WHATSAPP_API_URL%

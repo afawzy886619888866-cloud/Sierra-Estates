@@ -1,9 +1,9 @@
-
 // Authored against Vitest but this directory runs under Jest, so the import
 // threw at load and the whole suite never ran. Jest provides describe/it/expect
 // as globals — the assertions below are unchanged.
 import { NextRequest } from 'next/server';
 import { proxy } from '../proxy';
+import { SESSION_COOKIE, signSession } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 
 describe('Production & Deployment Architecture Tests', () => {
@@ -22,12 +22,30 @@ describe('Production & Deployment Architecture Tests', () => {
   });
 
   describe('1. Middleware Proxy & Admin Route Direct Access', () => {
-    it('allows direct access to /admin without session token', async () => {
+    // FIX 4 (2026-10-31): /admin is server-gated by the RBAC session wall —
+    // open access without a session token is no longer the contract.
+    it('gates /admin behind the login wall without a session token', async () => {
       const req = new NextRequest('https://sierra-estates.net/admin', {
         method: 'GET',
       });
       const res = await proxy(req);
-      // Status should be 200 / next() without redirect to /admin/login
+      expect(res.status).toBe(307);
+      const location = res.headers.get('location') ?? '';
+      expect(location).toContain('/admin/login');
+    });
+
+    it('admits an authenticated admin session to /admin', async () => {
+      const token = await signSession({
+        uid: 'prod-deploy-test-admin',
+        email: 'admin@sierra-estates.net',
+        role: 'admin',
+        name: 'Deploy Admin',
+      });
+      const req = new NextRequest('https://sierra-estates.net/admin', {
+        method: 'GET',
+        headers: { cookie: `${SESSION_COOKIE}=${token}` },
+      });
+      const res = await proxy(req);
       expect(res.status).toBe(200);
       expect(res.headers.get('location')).toBeNull();
     });

@@ -186,8 +186,8 @@ const HUMAN_ACTIVITIES = [
   {
     id: 'ev-5',
     agent: 'Leila · VIP Concierge',
-    action: 'Direct WhatsApp link dispatched to verified owner +201001534224',
-    actionAr: 'إرسال رابط المحادثة المباشرة للمالك المعتمد +201001534224',
+    action: 'Direct WhatsApp link dispatched to verified owner +201092048333',
+    actionAr: 'إرسال رابط المحادثة المباشرة للمالك المعتمد +201092048333',
     compound: 'New Cairo',
     status: 'Outreach Sent',
     time: '52m ago',

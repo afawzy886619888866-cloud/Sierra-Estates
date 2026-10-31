@@ -1,5 +1,7 @@
 node_modules/
 whatsapp-auth/
+.tmp/
+qr_*.png
 .env
 *.log
 

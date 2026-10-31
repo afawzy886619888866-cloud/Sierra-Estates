@@ -6,14 +6,14 @@
  *   Base:   WHATSAPP_API_URL (server-side workflows use http://127.0.0.1:2785)
  *   Auth:   X-API-Key header (operator key for sends, admin key for status)
  *   Send:   POST {base}/api/sessions/{sessionId}/messages/send-text
- *           body: { chatId, text }            → chatId like "201061399688@c.us"
+ *           body: { chatId, text }            → chatId like "201000000003@c.us"
  *   Status: GET  {base}/api/sessions/{sessionId}
  *           → { status: 'ready'|..., phone, pushName, lastActive, engineLoaded }
  *
  * The gateway engine registry resolves sessions by UUID ONLY — sending by
  * session name returns 400 "not active". Always pass OPENWA_SESSION_ID.
  *
- * 4-line sender pool (Oct 2026): pass `sessionPool` (or env OPENWA_SESSION_IDS,
+ * Multi-line sender pool (4 → 8 lines, Oct 2026): pass `sessionPool` (or env OPENWA_SESSION_IDS,
  * comma-separated names or UUIDs) and sendText() round-robins across healthy
  * sessions, resolving names → UUIDs via GET /api/sessions once (5-min cache).
  * A session that errors is benched for 2 minutes; an empty/unresolvable pool
@@ -22,23 +22,14 @@
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const { normalizePhone, normalizeChatId } = require('./phone-utils');
 
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 60000;
 const POOL_CACHE_MS = 5 * 60_000;
 const SESSION_BACKOFF_MS = 2 * 60_000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function normalizeChatId(phone) {
-  if (!phone) return '';
-  let p = String(phone).trim().replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-  if (p.includes('@')) return p; // already a chatId
-  p = p.replace(/[^\d+]/g, '');
-  if (p.startsWith('+')) p = p.slice(1);
-  // Egyptian local formats: 002010..., 2010..., 010... → full CC form
-  if (p.startsWith('00')) p = p.slice(2);
-  if (p.startsWith('0')) p = `20${p}`;
-  return `${p}@c.us`;
-}
+
 
 /** Low-level JSON request with timeout. Resolves {status, ok, data}. */
 function requestJson(urlStr, { method = 'GET', headers = {}, body = null, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
@@ -86,30 +77,57 @@ class GatewayClient {
     // gracefully when only one is provisioned.
     this.operatorKey = opts.operatorKey || process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_API_KEY || '';
     this.adminKey = opts.adminKey || process.env.OPENWA_ADMIN_API_KEY || this.operatorKey;
-    // 4-line pool: explicit opts.sessionPool wins, else OPENWA_SESSION_IDS env
+    // multi-line pool (8-line gateway): explicit opts.sessionPool wins, else OPENWA_SESSION_IDS env
     // (comma-separated session names or UUIDs, matching the Lines sheet).
-    this.sessionPool = (opts.sessionPool
-      || String(process.env.OPENWA_SESSION_IDS || '')).split(',').map((s) => s.trim()).filter(Boolean);
+    const rawPool = Array.isArray(opts.sessionPool)
+      ? opts.sessionPool
+      : (opts.sessionPool || String(process.env.OPENWA_SESSION_IDS || '')).split(',');
+    this.sessionPool = rawPool.map((s) => String(s).trim()).filter(Boolean);
     this._rr = 0;                 // round-robin cursor
     this._benchedUntil = new Map(); // uuid -> retry-after epoch ms
     this._poolCache = null;         // { at, entries: [{name, uuid}] }
   }
 
-  /** Live session status via admin key. */
+  /** Live session status via admin key (multi-session pool aware). */
   async status() {
-    const res = await requestJson(
-      `${this.baseUrl}/api/sessions/${this.sessionId}`,
-      { headers: { 'X-API-Key': this.adminKey }, timeoutMs: 6000 }
-    );
-    if (!res.ok) {
-      const err = new Error(`gateway status HTTP ${res.status}`);
-      err.httpStatus = res.status;
+    let sessionPath = this.sessionId ? ("/api/sessions/" + this.sessionId) : null;
+    let res = null;
+    if (sessionPath) {
+      res = await requestJson(
+        this.baseUrl + sessionPath,
+        { headers: { "X-API-Key": this.adminKey }, timeoutMs: 6000 }
+      );
+    }
+    if (!res || !res.ok || (res.data && res.data.status !== "ready")) {
+      const poolRes = await requestJson(
+        this.baseUrl + "/api/sessions",
+        { headers: { "X-API-Key": this.adminKey }, timeoutMs: 6000 }
+      );
+      if (poolRes.ok && Array.isArray(poolRes.data)) {
+        const readySession = poolRes.data.find((s) => s.status === "ready") || poolRes.data[0];
+        if (readySession) {
+          return {
+            reachable: true,
+            status: readySession.status || "unknown",
+            phone: readySession.phone,
+            pushName: readySession.pushName,
+            lastActive: readySession.lastActive,
+            engineLoaded: Boolean(readySession.engineLoaded),
+            poolCount: poolRes.data.length,
+            readyCount: poolRes.data.filter((s) => s.status === "ready").length,
+          };
+        }
+      }
+    }
+    if (!res || !res.ok) {
+      const err = new Error("gateway status HTTP " + (res ? res.status : 503));
+      err.httpStatus = res ? res.status : 503;
       throw err;
     }
     const d = res.data || {};
     return {
       reachable: true,
-      status: d.status || 'unknown',
+      status: d.status || "unknown",
       phone: d.phone,
       pushName: d.pushName,
       lastActive: d.lastActive,
@@ -148,29 +166,30 @@ class GatewayClient {
   async resolvePool() {
     if (this._poolCache && Date.now() - this._poolCache.at < POOL_CACHE_MS) return this._poolCache.entries;
     const entries = [];
-    const pending = []; // names needing resolution
-    for (const raw of this.sessionPool) {
-      if (UUID_RE.test(raw)) entries.push({ name: raw, uuid: raw });
-      else pending.push(raw);
-    }
-    if (pending.length) {
-      try {
-        const res = await requestJson(`${this.baseUrl}/api/sessions`, {
-          headers: { 'X-API-Key': this.adminKey },
-          timeoutMs: 8000,
-        });
-        if (res.ok && Array.isArray(res.data)) {
-          for (const name of pending) {
-            const found = res.data.find((s) => s && s.name === name);
-            if (found && found.id) entries.push({ name, uuid: found.id });
-            else console.warn(`[gateway-client] pool session "${name}" not found on gateway — skipped`);
+    try {
+      const res = await requestJson(`${this.baseUrl}/api/sessions`, {
+        headers: { 'X-API-Key': this.adminKey },
+        timeoutMs: 8000,
+      });
+      if (res.ok && Array.isArray(res.data)) {
+        for (const raw of this.sessionPool) {
+          const found = res.data.find((s) => s && (s.name === raw || s.id === raw));
+          if (found && found.id) {
+            const readyStatus = found.status || 'ready';
+            if (readyStatus === 'ready') {
+              entries.push({ name: found.name || raw, uuid: found.id, status: readyStatus, phone: found.phone });
+            } else {
+              console.warn(`[gateway-client] pool session "${raw}" is not ready (status: ${readyStatus}) — skipped`);
+            }
+          } else {
+            console.warn(`[gateway-client] pool session "${raw}" not found on gateway — skipped`);
           }
-        } else {
-          console.warn(`[gateway-client] /api/sessions list HTTP ${res.status} — names unresolved this run`);
         }
-      } catch (e) {
-        console.warn(`[gateway-client] /api/sessions list failed: ${e.message}`);
+      } else {
+        console.warn(`[gateway-client] /api/sessions list HTTP ${res.status} — names unresolved this run`);
       }
+    } catch (e) {
+      console.warn(`[gateway-client] /api/sessions list failed: ${e.message}`);
     }
     this._poolCache = { at: Date.now(), entries };
     return entries;
@@ -203,11 +222,51 @@ class GatewayClient {
    * With no pool: legacy behavior — retries transient failures (network/5xx)
    * up to `retries` times with linear backoff on the single session.
    */
+  /**
+   * Check if a phone number is registered on WhatsApp without sending a message.
+   * Resolves { ok: boolean, exists: boolean, chatId: string, session?: string }.
+   */
+  async checkNumber(phone, { sessionId = null, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+    if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
+    const target = normalizeChatId(phone);
+    if (!target) return { ok: false, exists: false, error: 'invalid phone' };
+
+    const targetPhone = target.replace(/@c\.us$/, '').replace(/\D/g, '');
+    let pool = sessionId
+      ? [{ name: sessionId, uuid: sessionId }]
+      : await this.healthyPool();
+    if (!pool.length) throw new Error('no gateway session available (pool empty)');
+    if (pool.length > 1 && targetPhone) {
+      const nonSelf = pool.filter((e) => !e.phone || !targetPhone.endsWith(String(e.phone).replace(/\D/g, '')));
+      if (nonSelf.length) pool = nonSelf;
+    }
+
+    for (const entry of pool) {
+      try {
+        const res = await requestJson(
+          `${this.baseUrl}/api/sessions/${entry.uuid}/check-number`,
+          {
+            method: 'POST',
+            headers: { 'X-API-Key': this.operatorKey || this.adminKey || '' },
+            body: { phone: target },
+            timeoutMs,
+          }
+        );
+        if (res.ok && res.data) {
+          return { ok: true, exists: Boolean(res.data.exists), chatId: target, session: entry.name, details: res.data };
+        }
+      } catch (e) {
+        // try next line
+      }
+    }
+    return { ok: false, exists: false, error: 'check-number failed across pool' };
+  }
+
   async sendText(chatId, text, { sessionId = null, retries = 2, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
     if (!this.operatorKey) throw new Error('no operator/API key configured');
     const target = normalizeChatId(chatId);
-    if (!/^\d+@c\.us$/.test(target)) {
+    if (target.endsWith('@g.us') || target.startsWith('120363') || !/^\d+@c\.us$/.test(target)) {
       const err = new Error(`unusable chatId after normalization: "${target}"`);
       err.permanent = true;
       throw err;

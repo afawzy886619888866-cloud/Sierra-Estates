@@ -1,19 +1,36 @@
-'use client';
-
 import React from 'react';
+import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { isAdminPortalRole } from '@/lib/types';
 
 /**
- * Admin Layout — Open Access
- * Direct navigation to the Admin Portal & Intelligence OS.
+ * Admin Layout — Server-Gated (Defense-in-Depth)
  *
- * Background: admin-console-map.svg is wired here as a low-opacity fixed
- * watermark so the "who does what" architecture picture is always visible
- * to staff. Regenerate the SVG whenever route/role/worker wiring changes.
- * See: docs/obsidian-vault/Admin Console Map.md §Visual background
+ * All admin routes require a verified admin session cookie (`sierra_sess`).
+ * Unauthenticated requests are redirected to `/admin/login`.
+ *
+ * Watermark: admin-console-map.svg is rendered as a low-opacity fixed
+ * background so the architectural wiring is visible to staff.
  */
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname') || '';
+  const isLoginPage = pathname === '/admin/login' || pathname.startsWith('/admin/login/');
+
+  if (!isLoginPage) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    const session = token ? await verifySession(token) : null;
+    const isAuthorized = session && isAdminPortalRole(session.role);
+
+    if (!isAuthorized && pathname) {
+      redirect(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
+    }
+  }
+
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
       {/* Admin Console Map — architectural watermark */}
@@ -39,4 +56,3 @@ export default function AdminLayout({
     </div>
   );
 }
-

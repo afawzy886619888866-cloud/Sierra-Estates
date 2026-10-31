@@ -21,9 +21,10 @@ import { execFileSync } from 'node:child_process';
 
 /** Twins that predate this check. Shrink this list; never grow it. */
 const ALLOWED = new Set([
-  'apps/automations/src/02-owner-search/index.js',
-  'apps/automations/src/03-owner-contact/index.js',
-  'apps/automations/src/04-email-sender/index.js',
+  // apps/automations twins REMOVED 2026-10-25 — the stale compiled mocks
+  // (placeholder-scraping owner-search, fake-success owner-contact, mock
+  // investor email-sender) were deleted and their .ts sources rewritten
+  // real-provider-only. Never re-add compiled twins here.
   'apps/sierra-estates-realty/config/views.js',
   'apps/sierra-estates-realty/data/houyez-properties.js',
   'apps/sierra-estates-realty/data/mock-properties.js',

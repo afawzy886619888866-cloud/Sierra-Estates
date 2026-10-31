@@ -6,6 +6,20 @@ version: '3.9'
 # Combines:
 #   1. whatsapp-rag-station : 8-Line WhatsApp multi-session harvester & gateway
 #   2. cloudflared-tunnel   : Cloudflare public tunnel for live webhooks & map
+#
+# RAM BUDGET (8 lines): plan 10-12 GB free on the host for this station
+# (see services/openwa/SECURITY_HARDENING.md). mem_reservation below is a
+# SOFT floor only - intentionally NO hard mem_limit: a hard cap OOM-kills the
+# gateway mid-session and drops live WhatsApp lines, which is far worse than
+# memory pressure handled by the host. The worker already staggers line
+# start-up (~3.5 s/line) to smooth peak demand.
+#
+# KEYS ARE REQUIRED on this path: cloudflared exposes the gateway on a PUBLIC
+# URL, and the legacy defaults (sierra-admin-secret / sierra-operator-secret)
+# are committed in a public repo - anyone could drive the lines with them.
+# Copy infra/.env.example to infra/.env and set strong values before
+# `docker compose up`. (Local Node.js mode keeps the worker's local fallback;
+# see SECURITY_HARDENING.md for the full TLS/proxy story.)
 # ═══════════════════════════════════════════════════════════════════════════
 
 services:
@@ -15,6 +29,8 @@ services:
       dockerfile: Dockerfile
     container_name: sierra-whatsapp-rag-station
     restart: unless-stopped
+    # Soft memory floor for the 8-line budget (see header) - not a hard cap.
+    mem_reservation: 10g
     ports:
       - "2785:2785"
     environment:
@@ -22,8 +38,8 @@ services:
       - NODE_ENV=production
       - TZ=Africa/Cairo
       - OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8
-      - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:-sierra-admin-secret}
-      - OPENWA_OPERATOR_KEY=${OPENWA_OPERATOR_KEY:-sierra-operator-secret}
+      - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY in infra/.env (copy infra/.env.example) - the legacy default is public knowledge and this path is tunnel-exposed}
+      - OPENWA_OPERATOR_KEY=${OPENWA_OPERATOR_KEY:-${OPENWA_ADMIN_API_KEY}}
       - SUPABASE_URL=${SUPABASE_URL:-https://gaxfqcietzoonlmatiot.supabase.co}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
     volumes:

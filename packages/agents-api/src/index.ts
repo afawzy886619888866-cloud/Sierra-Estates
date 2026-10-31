@@ -22,7 +22,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Simple in‑memory chat history per agent (for demo purposes)
-const chatHistory: Record<string, { role: string; content: string }[]> = {};
+const chatHistory = new Map<string, { role: string; content: string }[]>();
 
 // POST endpoint to receive a user message and forward to Antigravity (stubbed)
 app.post("/api/agents/:agentId/message", (req: Request<{ agentId: string }>, res: Response) => {
@@ -32,20 +32,21 @@ app.post("/api/agents/:agentId/message", (req: Request<{ agentId: string }>, res
     return res.status(400).json({ error: "Missing 'message' in request body" });
   }
   // Store user message
-  if (!chatHistory[agentId]) chatHistory[agentId] = [];
-  chatHistory[agentId].push({ role: "user", content: message });
+  if (!chatHistory.has(agentId)) chatHistory.set(agentId, []);
+  const history = chatHistory.get(agentId)!;
+  history.push({ role: "user", content: message });
   // No real Antigravity SDK call is wired up (needs ANTIGRAVITY_API_KEY handling +
   // the actual SDK client); this echoes the input so callers can see stubMode=true
   // rather than mistaking the echo for a real agent reply.
   const reply = `Echo from ${agentId}: ${message}`;
-  chatHistory[agentId].push({ role: "assistant", content: reply });
-  res.json({ reply, history: chatHistory[agentId], stubMode: true });
+  history.push({ role: "assistant", content: reply });
+  res.json({ reply, history, stubMode: true });
 });
 
 // GET chat history
 app.get("/api/agents/:agentId/history", (req: Request<{ agentId: string }>, res: Response) => {
   const { agentId } = req.params;
-  const history = chatHistory[agentId] || [];
+  const history = chatHistory.get(agentId) || [];
   res.json({ history });
 });
 

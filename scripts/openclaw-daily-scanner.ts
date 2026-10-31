@@ -159,25 +159,23 @@ export async function runOpenClawDailyScan(
 
   // 2. Add high-value live synthetic / webhook incoming messages if queue exists
   const incomingQueuePath = path.resolve(process.cwd(), 'packages/whatsapp-shared/incoming_queue.json');
-  if (fs.existsSync(incomingQueuePath)) {
-    try {
-      const queue = JSON.parse(fs.readFileSync(incomingQueuePath, 'utf-8'));
-      if (Array.isArray(queue)) {
-        for (const item of queue) {
-          rawMessages.push({
-            text: item.text,
-            sender: item.sender || '+201000000000',
-            groupName: item.groupName || targetGroupDef.name,
-            groupId: item.groupId || targetGroupDef.id,
-            timestamp: item.timestamp || new Date().toISOString(),
-            isOwnerGroup: true,
-          });
-        }
-        // clear processed queue
-        fs.writeFileSync(incomingQueuePath, '[]', 'utf-8');
+  try {
+    const queue = JSON.parse(fs.readFileSync(incomingQueuePath, 'utf-8'));
+    if (Array.isArray(queue)) {
+      for (const item of queue) {
+        rawMessages.push({
+          text: item.text,
+          sender: item.sender || '+201000000000',
+          groupName: item.groupName || targetGroupDef.name,
+          groupId: item.groupId || targetGroupDef.id,
+          timestamp: item.timestamp || new Date().toISOString(),
+          isOwnerGroup: true,
+        });
       }
-    } catch {}
-  }
+      // clear processed queue
+      fs.writeFileSync(incomingQueuePath, '[]', 'utf-8');
+    }
+  } catch {}
 
   console.log(`📂 Scanned ${filesScannedCount} chat files.`);
   console.log(`💬 Collected ${rawMessages.length} total raw messages.`);
@@ -189,12 +187,10 @@ export async function runOpenClawDailyScan(
 
   // Load existing units for deduplication
   let existingUnits: any[] = [];
-  if (fs.existsSync(EXTRACTED_UNITS_PATH)) {
-    try {
-      existingUnits = JSON.parse(fs.readFileSync(EXTRACTED_UNITS_PATH, 'utf-8'));
-    } catch {
-      existingUnits = [];
-    }
+  try {
+    existingUnits = JSON.parse(fs.readFileSync(EXTRACTED_UNITS_PATH, 'utf-8'));
+  } catch {
+    existingUnits = [];
   }
 
   const existingKeySet = new Set(

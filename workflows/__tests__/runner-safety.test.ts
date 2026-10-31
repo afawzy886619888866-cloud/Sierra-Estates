@@ -71,7 +71,7 @@ describe('08-units-sync — sheet sync cannot promote a record (P0 §4)', () => 
   });
 
   it('PATCH strips human verification fields (anti-overwrite)', () => {
-    expect(syncSource).toMatch(/const \{ publish_status, verified_at, verified_by, \.\.\.updatePayload \} = l;/);
+    expect(syncSource).toMatch(/const \{ publish_status, verified_at, verified_by,.*?\.\.\.updatePayload \} = l;/);
   });
 
   it('never writes verified_at / verified_by / source_verified_at', () => {

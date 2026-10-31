@@ -38,7 +38,7 @@ const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_S
 بعتذر جداً لحضرتك على الإزعاج، كنا حابين نستفسر لو متاح عند حضرتك وحدة معروضة للإيجار أو البيع {_LOCATION_}؟ وحابين نتأكد من التفاصيل الحالية من حضرتك مباشرة إذا مناسب نتعاون في تسويقها لعملائنا.
 
 لو الوحدة غير متاحة حالياً بنعتذر لحضرتك وشكراً جزيلاً لوقتك 🤝
-(لعدم استقبال رسائل أخرى أرسل كلمة "إلغاء")`;
+(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
 function buildMessage(r: OwnerCandidate): string {
   let salutation = 'يا فندم،';
@@ -252,8 +252,10 @@ async function runOutreachCycle(env: Env, opts: { dryRun?: boolean; limitOverrid
     if (eligible.length >= batchLimit) break;
   }
 
-  const results: Array<{ phone: string; code: string; ok: boolean; status?: string; error?: string }> = [];
-  const gatewayUrl = env.WHATSAPP_API_URL?.replace(/\/+$/, '') || 'http://127.0.0.1:2785';
+  let gatewayUrl = env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+  while (gatewayUrl.endsWith('/')) {
+    gatewayUrl = gatewayUrl.slice(0, -1);
+  }
   const gatewayToken = env.WHATSAPP_API_TOKEN || '';
   const sessionId = env.OPENWA_SESSION_ID || 'session-default';
 

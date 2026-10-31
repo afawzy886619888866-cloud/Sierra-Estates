@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
-import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE, safeEqual, parseCookies } from '@/lib/auth';
+import { isAdminPortalRole } from '@/lib/types';
 import { createClient as createSupabaseMiddlewareClient } from '@/utils/supabase/middleware';
+
+function getCookieValue(request: NextRequest, name: string): string | undefined {
+  return request.cookies.get(name)?.value ?? parseCookies(request.headers.get('cookie') ?? '')[name];
+}
 
 /**
  * Edge proxy (proxy.ts).
@@ -49,11 +54,11 @@ async function handleProxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const adminHost = process.env.ADMIN_HOST;
     const requestHost = request.headers.get('host') ?? request.nextUrl.hostname;
-    
+
     // Identify admin host: exact match for ADMIN_HOST, or Vercel generated URLs that start with admin/sierra-admin
-    const onAdminHost = 
-      (Boolean(adminHost) && requestHost === adminHost) || 
-      requestHost.startsWith('admin') || 
+    const onAdminHost =
+      (Boolean(adminHost) && requestHost === adminHost) ||
+      requestHost.startsWith('admin') ||
       requestHost.startsWith('sierra-admin');
 
     let targetPath = pathname;
@@ -71,11 +76,43 @@ async function handleProxy(request: NextRequest) {
     // 0b) Host split: if on dedicated admin host root, rewrite to /admin
     // /admin is directly accessible across all domains without host redirect
 
-    // 0c) Direct Admin Portal and Login access
+    // 0c) Direct Admin Portal and Login access — SERVER GATED (FIX 4)
     if (targetPath.startsWith('/admin')) {
-      return isRewritten
+      const isAdminLoginPath = targetPath === '/admin/login' || targetPath.startsWith('/admin/login/');
+
+      // Always allow /admin/login without gating
+      if (isAdminLoginPath) {
+        const res = isRewritten
+          ? NextResponse.rewrite(new URL(targetPath, request.url))
+          : NextResponse.next();
+        res.headers.set('x-pathname', targetPath);
+        return res;
+      }
+
+      const sessionToken = getCookieValue(request, SESSION_COOKIE);
+      let isAuthorized = false;
+      if (sessionToken) {
+        try {
+          const sess = await verifySession(sessionToken);
+          if (sess && isAdminPortalRole(sess.role)) {
+            isAuthorized = true;
+          }
+        } catch {
+          isAuthorized = false;
+        }
+      }
+
+      if (!isAuthorized) {
+        const loginUrl = new URL('/admin/login', request.url);
+        loginUrl.searchParams.set('redirect', targetPath);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      const res = isRewritten
         ? NextResponse.rewrite(new URL(targetPath, request.url))
         : NextResponse.next();
+      res.headers.set('x-pathname', targetPath);
+      return res;
     }
 
     // 1) CORS Preflight Handling for API routes
@@ -98,7 +135,7 @@ async function handleProxy(request: NextRequest) {
       if (pathname.startsWith('/api/internal/')) {
         const secretHeader = request.headers.get('x-sbr-secret-key');
         const expectedSecret = process.env.SBR_SECRET_KEY;
-        const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+        const sessionToken = getCookieValue(request, SESSION_COOKIE);
         let hasAdminSession = false;
 
         try {
@@ -188,7 +225,6 @@ async function handleProxy(request: NextRequest) {
     return NextResponse.next();
   }
 }
-
 
 export const config = {
   matcher: ['/', '/api/:path*', '/admin/:path*'],

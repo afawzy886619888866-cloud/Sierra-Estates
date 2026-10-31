@@ -1,7 +1,9 @@
 /**
  * Property Finder Enterprise API (Atlas) v1 TypeScript Definitions
- * Based on docs/property-finder-openapi.json
+ * Aligned with docs/property-finder-spec.json (OpenAPI 3.1.0)
  */
+
+export type PFEnvironment = 'production' | 'sandbox';
 
 export type PFOfferingType = 'sale' | 'rent';
 
@@ -41,7 +43,9 @@ export type PFPropertyType =
   | 'rest-house'
   | 'restaurant'
   | 'clinic'
-  | 'cafeteria';
+  | 'cafeteria'
+  | 'full-floor'
+  | 'half-floor';
 
 export type PFAmenity =
   | 'central-ac'
@@ -198,7 +202,7 @@ export interface PFListing {
 }
 
 /**
- * Request payload for creating/updating a listing
+ * Request payload for creating/updating a listing (`request-combined-flat`)
  */
 export interface PFListingRequest extends Partial<Omit<PFListing, 'id' | 'state' | 'createdAt' | 'updatedAt' | 'createdBy'>> {
   reference: string;
@@ -212,18 +216,30 @@ export interface PFListingRequest extends Partial<Omit<PFListing, 'id' | 'state'
   location: { id: number };
 }
 
+export interface PFLeadContact {
+  type: 'email' | 'phone' | 'whatsappUsername';
+  value: string;
+}
+
 export interface PFLead {
   id: string;
-  entityType: 'listing' | 'company' | 'agent' | 'project' | 'developer';
+  entityType: 'listing' | 'company' | 'agent' | 'project' | 'developer' | 'seller';
   channel: 'whatsapp' | 'email' | 'call';
   status: 'sent' | 'delivered' | 'read' | 'replied';
   sender: {
     name?: string;
-    contacts: Array<{ type: 'email' | 'phone'; value: string }>;
+    contacts: PFLeadContact[];
   };
   listing?: {
     id: string;
-    reference: string;
+    reference?: string;
+  };
+  sellerProperty?: {
+    bedrooms?: string;
+    location?: { id: number };
+    offeringType?: PFOfferingType;
+    propertyType?: PFPropertyType;
+    price?: number;
   };
   publicProfile?: {
     id: number;
@@ -234,10 +250,11 @@ export interface PFLead {
 }
 
 export interface PFPagination {
-  page: number;
-  perPage: number;
-  total: number;
-  totalPages: number;
+  page?: number;
+  perPage?: number;
+  total?: number;
+  totalPages?: number;
+  nextPage?: number;
 }
 
 export interface PFAuthToken {
@@ -248,22 +265,48 @@ export interface PFAuthToken {
 
 export interface PFUser {
   id: number;
+  firstName?: string;
+  lastName?: string;
   name?: string;
   email?: string;
   phone?: string;
-  role?: string;
+  mobile?: string;
+  role?: string | { id: number; name?: string };
   status?: 'active' | 'inactive';
   publicProfile?: {
     id: number;
     name?: string;
+    email?: string;
+    phone?: string;
   };
+}
+
+export interface PFProblemDetail {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  code?: string;
+  errors?: Array<{
+    pointer?: string;
+    field?: string;
+    detail?: string;
+    code?: string;
+  }>;
+}
+
+export interface PFWebhookSubscription {
+  eventId: string;
+  url: string;
+  createdAt?: string;
 }
 
 /**
  * Egypt-Specific Validation Rules
  */
 export interface EgyptComplianceRules {
-  permitRequired: boolean; // Currently false for EG in many PF setups, but can change
+  permitRequired: boolean;
   allowedCategories: PFPropertyCategory[];
   requiredImagesMin: number;
   titleLengthMin: number;

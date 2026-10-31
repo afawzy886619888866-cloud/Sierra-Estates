@@ -383,6 +383,18 @@ function hashString(str: string): number {
 
 import realPhotosBank from '../inventory/compound-real-photos.json';
 
+const STOCK_DOMAINS = ['unsplash.com', 'pexels.com', 'pixabay.com'];
+
+export function isStockPhotoUrl(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const hostname = new URL(url, 'https://dummy.local').hostname.toLowerCase();
+    return STOCK_DOMAINS.some((domain) => hostname === domain || hostname.endsWith('.' + domain));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Resolves a unique, high-quality photograph matching the unit's compound and type.
  * Avoids repetition by combining unit ID, code, compound hash, and optional index offset,
@@ -406,9 +418,7 @@ export function getCuratedListingImage(
     !unit.img.includes('default') &&
     !unit.img.includes('placeholder') &&
     !unit.img.includes('stock') &&
-    !unit.img.includes('unsplash.com') &&
-    !unit.img.includes('pexels.com') &&
-    !unit.img.includes('pixabay.com') &&
+    !isStockPhotoUrl(unit.img) &&
     !unit.img.includes('dummyimage')
   ) {
     return unit.img;

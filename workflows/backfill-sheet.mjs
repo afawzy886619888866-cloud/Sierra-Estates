@@ -69,7 +69,6 @@ function maskPhone(s) {
 function logBoth(msg) {
   const safe = maskPhone(msg);
   console.log(safe);
-  fs.appendFileSync(LOG_FILE, safe + '\n');
 }
 
 function isHttpsOrLoopback(u) {
@@ -139,7 +138,9 @@ export function parseCsvLine(line) {
 }
 
 function rejectRecord(rec, reason) {
-  fs.appendFileSync(REJECTS_FILE, JSON.stringify({ ...rec, reason, at: new Date().toISOString() }) + '\n');
+  const safeId = String(rec?.recordId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  const safeReason = String(reason || '').replace(/[^a-zA-Z0-9_\s-]/g, '');
+  fs.appendFileSync(REJECTS_FILE, JSON.stringify({ recordId: safeId, reason: safeReason, at: new Date().toISOString() }) + '\n');
 }
 
 function loadCheckpoint() {
@@ -344,8 +345,12 @@ async function main() {
 
       if (!res.ok) {
         failed += chunk.length;
-        fs.appendFileSync(FAILURES_FILE, chunk.map((r) => JSON.stringify({ recordId: r.recordId, error: `HTTP ${res.status} ${res.statusText}` })).join('\n') + '\n');
-        logBoth(`[backfill] Chunk ${Math.floor(i / CHUNK_SIZE) + 1} HTTP ${res.status}: ${res.statusText} — ${chunk.length} records queued for retry`);
+        const statusNum = Number(res.status) || 500;
+        fs.appendFileSync(FAILURES_FILE, chunk.map((r) => {
+          const safeId = String(r?.recordId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+          return JSON.stringify({ recordId: safeId, status: statusNum });
+        }).join('\n') + '\n');
+        logBoth(`[backfill] Chunk ${Math.floor(i / CHUNK_SIZE) + 1} HTTP ${statusNum} — ${chunk.length} records queued for retry`);
         continue;
       }
 

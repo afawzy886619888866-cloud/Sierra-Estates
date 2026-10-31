@@ -2,8 +2,7 @@
 // and workspace-only tooling. Importing it from a Client Component must fail
 // at build time with a clear message instead of the cryptic "Can't resolve
 // 'fs'" webpack error. Server routes and the agents barrel keep working.
-import 'server-only';
-
+if (typeof window !== 'undefined') { throw new Error("Server-only module"); }
 import pino from "pino";
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import * as XLSX from "xlsx";
@@ -172,7 +171,8 @@ export class OpenClawAgent {
   ): UnitListingData {
     // Normalize Arabic-Indic digits (٠-٩) to standard ASCII digits (0-9)
     const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-    const normalizedRawText = rawText.replace(/[٠-٩]/g, (char) =>
+    const safeRawText = (rawText || "").slice(0, 1000);
+    const normalizedRawText = safeRawText.replace(/[٠-٩]/g, (char) =>
       arabicDigits.indexOf(char).toString(),
     );
     const textLower = normalizedRawText.toLowerCase();
@@ -279,6 +279,7 @@ export class OpenClawAgent {
     }
 
     // 6. Extract Price with Advanced Arabic Idioms
+    const safeRaw = (normalizedRawText || "").slice(0, 500);
     let price = 0;
     let priceNeedsVerification = false;
 
@@ -291,8 +292,8 @@ export class OpenClawAgent {
       price = 2_000_000;
     } else {
       // Pattern B: Compound "X مليون و Y الف" (e.g. "11 مليون و 500 الف" -> 11,500,000)
-      const compoundPriceMatch = normalizedRawText.match(
-        /(\d+(?:\.\d+)?)\s*مليون\s*(?:و)?\s*(\d+)?\s*(?:الف|ألف)?/i,
+      const compoundPriceMatch = safeRaw.match(
+        /(\d{1,4}(?:\.\d{1,2})?)\s*مليون(?:\s*و\s*(\d{1,6})\s*(?:الف|ألف))?/i,
       );
       if (compoundPriceMatch && compoundPriceMatch[2]) {
         const millions = parseFloat(compoundPriceMatch[1]) * 1_000_000;
@@ -300,15 +301,15 @@ export class OpenClawAgent {
         price = millions + thousands;
       } else {
         // Pattern C: Standard Million match: "11.5 مليون" or "48M"
-        const priceMillionMatch = normalizedRawText.match(
-          /(\d+(?:\.\d+)?)\s*(?:مليون|million|m\b)/i,
+        const priceMillionMatch = safeRaw.match(
+          /(\d{1,4}(?:\.\d{1,4})?)\s*(?:مليون|million|m\b)/i,
         );
         if (priceMillionMatch) {
           price = parseFloat(priceMillionMatch[1]) * 1_000_000;
         } else {
           // Pattern D: Thousand match: "38 الف" or "45 ألف" or "45k" (frequent for rentals or installment amounts)
-          const priceThousandMatch = normalizedRawText.match(
-            /(\d+(?:\.\d+)?)\s*(?:الف|ألف|الاف|ألاف|k\b)/i,
+          const priceThousandMatch = safeRaw.match(
+            /(\d{1,6}(?:\.\d{1,4})?)\s*(?:الف|ألف|الاف|ألاف|k\b)/i,
           );
           if (
             priceThousandMatch &&
@@ -317,8 +318,8 @@ export class OpenClawAgent {
             price = parseFloat(priceThousandMatch[1]) * 1_000;
           } else {
             // Pattern E: Explicit price keyword label "سعر: 11,500,000"
-            const priceRawMatch = normalizedRawText.match(
-              /(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]+)/i,
+            const priceRawMatch = safeRaw.match(
+              /(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]{1,15})/i,
             );
             if (priceRawMatch) {
               price = parseFloat(priceRawMatch[1].replace(/,/g, ""));
@@ -382,14 +383,14 @@ export class OpenClawAgent {
     let paymentPlan:
       | { downpayment?: number; installments?: number; deliveryDate?: string }
       | undefined;
-    const dpMatch = normalizedRawText.match(
-      /(?:مقدم|دفعة اولى|down\s*payment)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(مليون|الف|ألف|%|k)?/i,
+    const dpMatch = safeRaw.match(
+      /(?:مقدم|دفعة اولى|down\s*payment)\s*[:=]?\s*(\d{1,4}(?:\.\d{1,4})?)\s*(مليون|الف|ألف|%|k)?/i,
     );
-    const instMatch = normalizedRawText.match(
-      /(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d+)\s*(?:سنوات|سنة|سنين|years)/i,
+    const instMatch = safeRaw.match(
+      /(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d{1,2})\s*(?:سنوات|سنة|سنين|years)/i,
     );
-    const delivMatch = normalizedRawText.match(
-      /(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d+\s*شهور|immediate)/i,
+    const delivMatch = safeRaw.match(
+      /(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d{1,2}\s*شهور|immediate)/i,
     );
 
     if (dpMatch || instMatch || delivMatch) {

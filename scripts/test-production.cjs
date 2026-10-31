@@ -1,11 +1,15 @@
 /**
  * Sierra Estates — Production Verification Runner (Zero-overhead CJS)
  */
+try {
+  require('dotenv').config();
+} catch (_) {}
+
 const { createClient } = require('@supabase/supabase-js');
 
 const PROD_URL = process.env.PROD_URL || 'https://sierra-estates.net';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdheGZxY2lldHpvb25sbWF0aW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNjI3ODAsImV4cCI6MjEwMzczODc4MH0.Eb43G38s9ODOAkR2Nextp4mtVAa_XTyqJ8nQWgwCsnk';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const results = [];
 

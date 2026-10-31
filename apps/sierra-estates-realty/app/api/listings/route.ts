@@ -33,6 +33,7 @@ import { toListingColumns, toListingRecord } from '@/lib/server/listing-columns'
 import { requireRole } from '@/lib/auth';
 import type { Listing } from '@/lib/types';
 import { calculateHaversineDistanceKm } from '@/lib/server/spatial-utils';
+import { scrubOwnerContactText } from '@/lib/server/owner-privacy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -158,10 +159,10 @@ async function readListings(): Promise<Listing[]> {
           aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
           tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
-          agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
+          agent: item.agent_name || '',
           img: raw.img || (item.images && item.images[0]) || '',
           status: item.status || 'available',
-          description: item.description || '',
+          description: scrubOwnerContactText(item.description) || '',
         } as Listing;
       });
     }
@@ -320,10 +321,10 @@ export async function GET(request: Request) {
               aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
               tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
               mode: item.deal_type === 'rent' ? 'rent' : 'sale',
-              agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
+              agent: item.agent_name || '',
               img: (item.images && item.images[0]) || '',
               status: item.status || 'available',
-              description: item.description || '',
+              description: scrubOwnerContactText(item.description) || '',
               distanceKm: dist,
               latitude: Number(item.latitude),
               longitude: Number(item.longitude),

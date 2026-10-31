@@ -89,6 +89,21 @@ const PURPOSE_LABELS: Record<string, { en: string; ar: string }> = {
   'custom-outreach': { en: 'Custom Outreach', ar: 'تواصل مخصص' },
 };
 
+function previewNormalizedPhone(raw: string): string {
+  let cleaned = String(raw || '').trim().replace(/[\s\-\(\)\.]/g, '');
+  if (cleaned.startsWith('+')) cleaned = cleaned.slice(1);
+  while (cleaned.startsWith('00')) cleaned = cleaned.slice(2);
+  cleaned = cleaned.replace(/\D/g, '');
+  if (cleaned.startsWith('2020') && cleaned.length >= 13) {
+    cleaned = cleaned.slice(2);
+  }
+  if (cleaned.startsWith('01') && cleaned.length === 11) {
+    cleaned = `20${cleaned.slice(1)}`;
+  } else if (/^1[0125]\d{8}$/.test(cleaned)) {
+    cleaned = `20${cleaned}`;
+  }
+  return cleaned ? `${cleaned}@c.us` : '—';
+}
 function statusBadge(status?: string, isAr = false): { label: string; bg: string; color: string; border: string } {
   switch (status) {
     case 'sent':
@@ -123,6 +138,10 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
   const [testPhone, setTestPhone] = useState('201092048333');
   const [testMsg, setTestMsg] = useState('Sierra Estates Luxury Property Ping');
   const [simulating, setSimulating] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
+  const [quickSessionId, setQuickSessionId] = useState('line-1');
+  const [quickPhone, setQuickPhone] = useState('201092048333');
+  const [quickText, setQuickText] = useState('مرحباً بك من سييرا استيتس — التحقق من جاهزية خط البوابة الذكية');
 
   const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
     setToast({ msg, type });
@@ -389,6 +408,298 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
         </div>
       </div>
 
+      {/* ── OPERATING INSTRUCTIONS (CONSTRUCTION FOR USE) & QUICK DISPATCHER ── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(9, 13, 22, 0.98))',
+          border: '1px solid rgba(212, 175, 55, 0.3)',
+          borderRadius: 16,
+          padding: '20px 24px',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>📖</span>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: '#f3e5ab', margin: 0 }}>
+                {isAr ? 'دليل التشغيل وتعليمات الاستخدام المعتمدة (Construction for Use)' : 'Approved Operator Manual & Construction for Use'}
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--tx-m, #94a3b8)', margin: '3px 0 0 0' }}>
+                {isAr
+                  ? 'بروتوكول إدارة خطوط الواتساب الـ 8، تطبيع أرقام الهواتف تلقائياً، وسياسات حماية الحسابات من الحظر'
+                  : '8-line WhatsApp fleet protocols, automated phone number normalization, and anti-ban safeguards'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            style={{
+              padding: '6px 14px',
+              fontSize: 11.5,
+              fontWeight: 700,
+              borderRadius: 8,
+              cursor: 'pointer',
+              border: '1px solid rgba(212, 175, 55, 0.4)',
+              background: showGuide ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
+              color: '#d4af37',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span>{showGuide ? '▲' : '▼'}</span>
+            <span>{showGuide ? (isAr ? 'طي الدليل' : 'Hide Manual') : (isAr ? 'عرض الدليل' : 'View Manual')}</span>
+          </button>
+        </div>
+
+        {showGuide && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 14,
+              marginTop: 18,
+              borderTop: '1px solid rgba(212, 175, 55, 0.15)',
+              paddingTop: 16,
+            }}
+          >
+            {/* Instruction Card 1 */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: 12,
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 16 }}>📱</span>
+                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#93c5fd', margin: 0 }}>
+                  {isAr ? '1. ربط الأجهزة ومسح الباركود' : '1. Device Pairing & QR Scan'}
+                </h4>
+              </div>
+              <ul style={{ fontSize: 11.5, color: '#cbd5e1', lineHeight: 1.6, paddingInlineStart: 18, margin: 0 }}>
+                <li>{isAr ? 'اضغط "عرض / View QR" على أي خط في حالة انتظار المسح (مثل SIM #4).' : 'Click "View QR" on any session awaiting pairing (e.g. SIM #4).'}</li>
+                <li>{isAr ? 'افتح واتساب في الهاتف > الأجهزة المرتبطة > ربط جهاز.' : 'Open WhatsApp on mobile > Linked Devices > Link a Device.'}</li>
+                <li>{isAr ? 'امسح رمز الاستجابة السريعة ليتحول الخط فوراً إلى READY باللون الأخضر.' : 'Scan the QR code to instantly achieve green READY status.'}</li>
+              </ul>
+            </div>
+
+            {/* Instruction Card 2 */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                borderRadius: 12,
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 16 }}>🔢</span>
+                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#34d399', margin: 0 }}>
+                  {isAr ? '2. التطبيع الذكي لأرقام الهواتف' : '2. Smart Phone Normalization'}
+                </h4>
+              </div>
+              <ul style={{ fontSize: 11.5, color: '#cbd5e1', lineHeight: 1.6, paddingInlineStart: 18, margin: 0 }}>
+                <li>{isAr ? 'لا حاجة لتعديل الأرقام يدوياً؛ النظام يحذف 00 والزائد + تلقائياً.' : 'No manual edits required; leading 00 and + are stripped automatically.'}</li>
+                <li>{isAr ? 'معالجة تكرار كود مصر 2020 الناتج عن دمج الإكسل وتصحيحه إلى 20.' : 'Double prefixes like 2020... from Excel are deduplicated to 20...'}</li>
+                <li>{isAr ? 'الأرقام المحلية (010...) أو الناقصة (10...) تُحوّل قياسياً إلى 201XXXXXXXXX.' : 'Local 010... or 10... numbers normalize cleanly to 201XXXXXXXXX@c.us.'}</li>
+              </ul>
+            </div>
+
+            {/* Instruction Card 3 */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                borderRadius: 12,
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 16 }}>🛡️</span>
+                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#fbbf24', margin: 0 }}>
+                  {isAr ? '3. حماية الأرقام ومنع الحظر' : '3. Anti-Ban & Human Emulation'}
+                </h4>
+              </div>
+              <ul style={{ fontSize: 11.5, color: '#cbd5e1', lineHeight: 1.6, paddingInlineStart: 18, margin: 0 }}>
+                <li>{isAr ? 'توزيع الإرسال بالتناوب (Round-Robin) على مصفوفة الـ 8 خطوط.' : 'Automated Round-Robin rotation across all ready lines in the pool.'}</li>
+                <li>{isAr ? 'محاكاة الكتابة البشرية (Typing Emulation) بفاصل 1.5 إلى 5 ثوانٍ.' : 'Human-like typing pauses (1.5s - 5s) before message dispatch.'}</li>
+                <li>{isAr ? 'حدود الأمان: 25 رسالة/ساعة و150 رسالة/يومياً لكل خط.' : 'Safe quotas: max 25 msgs/hour and 150 msgs/day per SIM.'}</li>
+              </ul>
+            </div>
+
+            {/* Instruction Card 4 */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                borderRadius: 12,
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 16 }}>⚡</span>
+                <h4 style={{ fontSize: 13, fontWeight: 700, color: '#d4af37', margin: 0 }}>
+                  {isAr ? '4. إعادة التنشيط والاختبار المباشر' : '4. Restart & Cross-Line Test'}
+                </h4>
+              </div>
+              <ul style={{ fontSize: 11.5, color: '#cbd5e1', lineHeight: 1.6, paddingInlineStart: 18, margin: 0 }}>
+                <li>{isAr ? 'في حال انقطاع أي خط، اضغط "🔄 إعادة تشغيل" لتنشيط المتصفح فوراً.' : 'Click "Restart" on any stuck card to refresh its engine safely.'}</li>
+                <li>{isAr ? 'يمكنك اختبار الإرسال المتبادل بين الخطوط المفعلة من لوحة الاختبار أدناه.' : 'Test send between active lines (e.g. Line 1 -> Line 2) to verify full loop.'}</li>
+                <li>{isAr ? 'راجع شارة المعرّف للتأكد من تنسيق رقم المستلم قبل الإرسال.' : 'Check the formatted JID preview badge to confirm recipient syntax.'}</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ── FAST OPERATOR DISPATCHER CONSOLE ── */}
+        <div
+          style={{
+            marginTop: 18,
+            padding: '14px 18px',
+            background: 'rgba(7, 11, 18, 0.95)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
+            borderRadius: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>🚀</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#f8fafc' }}>
+                {isAr ? 'لوحة الاختبار السريع والإرسال المباشر للمشغّل' : 'Fast Operator Dispatch & Test Console'}
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: '#93c5fd', fontFamily: 'monospace', background: 'rgba(59, 130, 246, 0.1)', padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              Target WhatsApp JID: <strong style={{ color: '#60a5fa' }}>{previewNormalizedPhone(quickPhone)}</strong>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--tx-m, #94a3b8)', marginBottom: 4 }}>
+                {isAr ? 'الخط المرسل (Sender Line):' : 'Sending Line:'}
+              </label>
+              <select
+                value={quickSessionId}
+                onChange={(e) => setQuickSessionId(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: '#111827',
+                  border: '1px solid #1f293d',
+                  color: '#f8fafc',
+                  padding: '7px 10px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              >
+                {fallback8Sessions.map((s) => (
+                  <option key={s.id} value={s.id} disabled={s.status !== 'ready'}>
+                    {s.name} ({s.status.toUpperCase()}) {s.phone ? '— +' + s.phone : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--tx-m, #94a3b8)', marginBottom: 4 }}>
+                {isAr ? 'رقم المستلم (بأي صيغة: 010... أو +20... أو 00966...):' : 'Recipient Phone (any format):'}
+              </label>
+              <input
+                type="text"
+                value={quickPhone}
+                onChange={(e) => setQuickPhone(e.target.value)}
+                placeholder="01092048333 or +2010... or 00966..."
+                style={{
+                  width: '100%',
+                  background: '#111827',
+                  border: '1px solid #1f293d',
+                  color: '#f8fafc',
+                  padding: '7px 10px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+            </div>
+
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--tx-m, #94a3b8)', marginBottom: 4 }}>
+                {isAr ? 'نص الرسالة أو اختر نموذجاً سريعاً:' : 'Message Text or Select Template:'}
+              </label>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+                {[
+                  { label: isAr ? 'فحص البوابة الذكية' : 'Gateway Verification', text: 'مرحباً بك من سييرا استيتس — التحقق من جاهزية خط البوابة الذكية' },
+                  { label: isAr ? 'مزامنة وحدة' : 'Listing Ingest', text: 'سييرا استيتس: تم استلام تفاصيل الوحدة وجاري المزامنة مع خريطة التجمع الخامس.' },
+                  { label: isAr ? 'تأكيد معاينة' : 'Viewing Confirm', text: 'تأكيد موعد المعاينة العقارية بالتجمع الخامس عبر سييرا استيتس.' },
+                  { label: isAr ? 'تحية VIP' : 'VIP Greeting', text: 'Hello from Sierra Estates — Dedicated Multi-Line WhatsApp Gateway Live Test.' },
+                ].map((tpl, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setQuickText(tpl.text)}
+                    style={{
+                      padding: '3px 8px',
+                      fontSize: 10,
+                      borderRadius: 6,
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      background: 'rgba(212, 175, 55, 0.08)',
+                      color: '#f3e5ab',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={quickText}
+                  onChange={(e) => setQuickText(e.target.value)}
+                  placeholder="Type message..."
+                  style={{
+                    flex: 1,
+                    background: '#111827',
+                    border: '1px solid #1f293d',
+                    color: '#f8fafc',
+                    padding: '7px 10px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => act('test_send', { sessionId: quickSessionId, phone: quickPhone, text: quickText })}
+                  disabled={busy}
+                  style={{
+                    background: 'linear-gradient(135deg, #d4af37, #997a15)',
+                    border: 'none',
+                    color: '#000',
+                    fontWeight: 800,
+                    padding: '7px 18px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span>🚀</span>
+                  <span>{isAr ? 'إرسال الرسالة الآن' : 'Dispatch Test'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── 8-LINE BENTO GRID ─────────────────────────────────────────── */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -649,8 +960,8 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
                       type="text"
                       value={testPhone}
                       onChange={(e) => setTestPhone(e.target.value)}
-                      placeholder="2010xxxxxxxx"
-                      style={{
+                      placeholder="010... or +20... or 00966..."
+                                            style={{
                         background: '#111827',
                         border: '1px solid #1f293d',
                         color: '#f8fafc',
@@ -659,6 +970,9 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
                         fontSize: 11,
                       }}
                     />
+                    <div style={{ fontSize: 9.5, color: '#93c5fd', fontFamily: 'monospace' }}>
+                      Target: {previewNormalizedPhone(testPhone)}
+                    </div>
                     <input
                       type="text"
                       value={testMsg}

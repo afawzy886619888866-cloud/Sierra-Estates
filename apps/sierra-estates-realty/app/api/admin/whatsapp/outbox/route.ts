@@ -57,12 +57,15 @@ function normalizeUrl(raw: string, defaultPort = '2785'): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `http://${url}`;
   }
-  url = url.replace(/\/+$/, '');
-  // If no port and not https / trycloudflare, check if we need port
-  if (!url.includes('trycloudflare.com') && !url.includes('.net') && !url.includes('.com') && !/:[0-9]+$/.test(url)) {
-    url = `${url}:${defaultPort}`;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.port && (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')) {
+      parsed.port = String(defaultPort);
+    }
+    return parsed.origin;
+  } catch {
+    return url.replace(/\/+$/, '');
   }
-  return url;
 }
 
 function getCandidateEndpoints(): string[] {
@@ -91,6 +94,23 @@ function getCandidateEndpoints(): string[] {
 
   return Array.from(new Set(endpoints.filter(Boolean)));
 }
+
+function normalizeWaPhone(raw: string): string {
+  let cleaned = String(raw || '').trim().replace(/[\s\-\(\)\.]/g, '');
+  if (cleaned.startsWith('+')) cleaned = cleaned.slice(1);
+  while (cleaned.startsWith('00')) cleaned = cleaned.slice(2);
+  cleaned = cleaned.replace(/\D/g, '');
+  if (cleaned.startsWith('2020') && cleaned.length >= 13) {
+    cleaned = cleaned.slice(2);
+  }
+  if (cleaned.startsWith('01') && cleaned.length === 11) {
+    cleaned = `20${cleaned.slice(1)}`;
+  } else if (/^1[0125]\d{8}$/.test(cleaned)) {
+    cleaned = `20${cleaned}`;
+  }
+  return cleaned;
+}
+
 
 async function fetchGatewayStatus(): Promise<GatewayInfo> {
   const endpoints = getCandidateEndpoints();
@@ -153,7 +173,15 @@ async function fetchGatewayStatus(): Promise<GatewayInfo> {
       const overallStatus = readySessions.length > 0 ? 'ready' : awaitingQrSessions.length > 0 ? 'scan_qr' : (sessions[0]?.status || 'starting');
 
       const primary = readySessions[0] || sessions[0];
-      const tunnelUrl = endpoints.find((e) => e.includes('trycloudflare.com')) || null;
+      const tunnelUrl =
+        endpoints.find((e) => {
+          try {
+            const h = new URL(e).hostname.toLowerCase();
+            return h === 'trycloudflare.com' || h.endsWith('.trycloudflare.com');
+          } catch {
+            return false;
+          }
+        }) || null;
 
       return {
         reachable: true,
@@ -272,11 +300,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: triggered, action, sessionId });
     }
 
-    // 3. Gateway Direct Action: test_send
+    // 3. Gateway Direct Action: test_send (auto-normalized & 20s timeout)
     if (action === 'test_send') {
       const { sessionId, phone, text } = body;
       if (!phone || !text) {
         return NextResponse.json({ success: false, error: 'phone and text are required' }, { status: 400 });
+      }
+      const normalizedPhone = normalizeWaPhone(phone);
+      if (!normalizedPhone) {
+        return NextResponse.json({ success: false, error: 'Invalid phone number format' }, { status: 400 });
       }
       const endpoints = getCandidateEndpoints();
       const key = process.env.OPENWA_ADMIN_API_KEY || 'sierra-admin-secret';
@@ -290,8 +322,8 @@ export async function POST(req: NextRequest) {
               'Content-Type': 'application/json',
               ...(key ? { 'X-API-Key': key } : {}),
             },
-            body: JSON.stringify({ chatId: phone, text }),
-            signal: AbortSignal.timeout(6000),
+            body: JSON.stringify({ chatId: normalizedPhone, text }),
+            signal: AbortSignal.timeout(20000),
           });
           if (res.ok) {
             sendResult = await res.json();
@@ -300,7 +332,7 @@ export async function POST(req: NextRequest) {
         } catch (_) {}
       }
       if (sendResult) {
-        return NextResponse.json({ success: true, action, result: sendResult });
+        return NextResponse.json({ success: true, action, normalizedPhone, result: sendResult });
       }
       return NextResponse.json({ success: false, error: 'Failed to send test message via active gateway' }, { status: 502 });
     }

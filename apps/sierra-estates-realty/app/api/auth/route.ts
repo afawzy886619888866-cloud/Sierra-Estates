@@ -88,22 +88,28 @@ export async function POST(req: Request) {
     return res;
   }
 
-  if (body.action === "signin") {
-    const { email, password, token: accessToken } = body;
-    if (!email && !accessToken) {
-      return NextResponse.json({ error: "Missing credentials" }, { status: 400, headers: NO_STORE_HEADERS });
-    }
+  if (body.action !== "signin") {
+    return NextResponse.json({ error: "Unknown action" }, { status: 400, headers: NO_STORE_HEADERS });
+  }
 
-    const targetEmail = (email || "").trim().toLowerCase();
+  const { email, password, token: accessToken } = body;
+  if (!email && !accessToken) {
+    return NextResponse.json({ error: "Missing credentials" }, { status: 400, headers: NO_STORE_HEADERS });
+  }
 
-    // Path A — verify the Supabase access token, then read the stored role.
-    if (accessToken) {
+  const targetEmail = (email || "").trim().toLowerCase();
+
+  // Path A — verify the Supabase access token, then read the stored role.
+  if (typeof accessToken === "string" && accessToken.trim().length > 0) {
       try {
         const { data, error } = await getSupabaseAdmin().auth.getUser(accessToken);
         const user = error ? null : data?.user;
 
         if (user) {
-          const verifiedEmail = (user.email || targetEmail || "").trim().toLowerCase();
+          const verifiedEmail = (user.email || "").trim().toLowerCase();
+        if (!verifiedEmail) {
+          return NextResponse.json({ error: "Access token user email missing" }, { status: 400, headers: NO_STORE_HEADERS });
+        }
           const profile = await getRecord<Partial<User> & { fullName?: string; role?: string; status?: string | null }>(
             "profiles",
             user.id
@@ -238,9 +244,6 @@ export async function POST(req: Request) {
     const res = NextResponse.json({ ok: true, role: demo.role }, { headers: NO_STORE_HEADERS });
     res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
     return res;
-  }
-
-  return NextResponse.json({ error: "Unknown action" }, { status: 400, headers: NO_STORE_HEADERS });
 }
 
 /**

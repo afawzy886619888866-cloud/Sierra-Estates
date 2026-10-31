@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         { status: 422 },
       );
     }
-    console.error('[PF API POST]', error.message);
+    console.error('[PF API POST]', (error.message || '').replace(/[\r\n]/g, ''));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

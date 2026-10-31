@@ -1,6 +1,6 @@
 ---
 name: contract
-description: "Run MCD CONTRACT command for Sierra"
+description: "Run MCD CONTRACT command for ierra"
 ---
 
 # CONTRACT
@@ -8,7 +8,7 @@ description: "Run MCD CONTRACT command for Sierra"
 This workflow invokes the canonical MCD CONTRACT command.
 
 1. Read the command instructions:
-[CONTRACT.md](../../.amphion/control-plane/mcd/CONTRACT.md)
+[CONTRACT.md](file:///${projectRoot}/.amphion/control-plane/mcd/CONTRACT.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

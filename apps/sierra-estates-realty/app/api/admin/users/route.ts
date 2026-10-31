@@ -113,7 +113,7 @@ export async function PUT(req: Request) {
   // a no-op rather than an insert, and is logged.
   const updated = await updateRecord("profiles", uid, columns);
   if (!updated) {
-    console.warn(`[admin/users] no profile row for uid ${uid}; update skipped`);
+    console.warn(`[admin/users] no profile row for uid ${String(uid).replace(/[\r\n]/g, '')}; update skipped`);
   }
 
   await insertRecord("audit_logs", {

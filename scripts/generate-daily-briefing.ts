@@ -5,6 +5,21 @@
  * Supabase PostgreSQL database engine. §21 no-fabrication: every figure
  * printed is derived from real rows — nothing is estimated, defaulted, or
  * invented when the data is missing.
+ *
+ * H1 TRUTHFULNESS CONTRACT (execution order 2026-10-27):
+ * A failed mandatory inventory query is NOT a factual zero, and an
+ * unavailable database is NOT an empty healthy inventory. The briefing now
+ * classifies its own data health BEFORE claiming readiness:
+ *   · OK       — both mandatory queries succeeded (a genuine zero-row
+ *                result is OK: the query succeeded and the table truly
+ *                has no matching records). Ready for broadcast, exit 0.
+ *   · DEGRADED — one mandatory query failed (missing metric named).
+ *                Document is created but NOT ready for broadcast, exit 2.
+ *   · BLOCKED  — both mandatory queries failed (DB unavailable / query
+ *                errors). Nothing is ready for broadcast, exit 1.
+ * Any downstream "sender" MUST gate on `readyForBroadcast` (or the final
+ * BRIEFING_RESULT JSON line / the exit code) before distributing a
+ * briefing as verified intelligence.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -22,8 +37,46 @@ const SUPABASE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdheGZxY2lldHpvb25sbWF0aW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNjI3ODAsImV4cCI6MjEwMzczODc4MH0.Eb43G38s9ODOAkR2Nextp4mtVAa_XTyqJ8nQWgwCsnk';
 
+export type BriefingQueryOutcome = 'ok' | 'error';
+export type BriefingDataStatus = 'OK' | 'DEGRADED' | 'BLOCKED';
+
+export interface BriefingQueryResults {
+  /** active-listings count query (mandatory) */
+  activeListingsCount: BriefingQueryOutcome;
+  /** inventory sample query (mandatory) */
+  inventorySample: BriefingQueryOutcome;
+}
+
+/** Exit codes: non-zero for DEGRADED/BLOCKED so CI/fleet badges tell the
+ * truth — a "successful" Actions result must never again coexist with an
+ * unavailable inventory query (observed in run 40332038097). */
+export const BRIEFING_EXIT_CODE: Record<BriefingDataStatus, number> = {
+  OK: 0,
+  DEGRADED: 2,
+  BLOCKED: 1,
+};
+
+/** Pure classification of data health from per-query outcomes. */
+export function computeBriefingStatus(
+  q: BriefingQueryResults,
+): { status: BriefingDataStatus; missingMetrics: string[]; readyForBroadcast: boolean } {
+  const missingMetrics: string[] = [];
+  if (q.activeListingsCount === 'error') missingMetrics.push('activeListingsCount');
+  if (q.inventorySample === 'error') missingMetrics.push('inventorySample');
+  if (missingMetrics.length === 0) {
+    return { status: 'OK', missingMetrics: [], readyForBroadcast: true };
+  }
+  if (missingMetrics.length === 2) {
+    return { status: 'BLOCKED', missingMetrics, readyForBroadcast: false };
+  }
+  return { status: 'DEGRADED', missingMetrics, readyForBroadcast: false };
+}
+
 interface DailyBriefingStats {
   date: string;
+  dataStatus: BriefingDataStatus;
+  missingMetrics: string[];
+  readyForBroadcast: boolean;
   totalActiveListings: number | null;
   totalMarketVolumeEGP: number | null;
   compoundDistribution: { compound: string; count: number; avgPriceEGP: number }[];
@@ -45,7 +98,11 @@ export async function generateDailyDigest(): Promise<DailyBriefingStats> {
   // query fails the briefing says so instead of quoting a made-up number.
   let totalCount: number | null = null;
   let rawListings: any[] = [];
+  let countOutcome: BriefingQueryOutcome = 'error';
+  let fetchOutcome: BriefingQueryOutcome = 'error';
 
+  // Each mandatory query is tracked independently so a partial outage is
+  // DEGRADED (named missing metric), never a fabricated healthy empty set.
   try {
     const { count, error: countErr } = await supabase
       .from('listings')
@@ -53,8 +110,13 @@ export async function generateDailyDigest(): Promise<DailyBriefingStats> {
 
     if (!countErr && typeof count === 'number') {
       totalCount = count;
+      countOutcome = 'ok';
     }
+  } catch (err) {
+    console.warn('[Briefing] count query failed:', (err as Error).message);
+  }
 
+  try {
     const { data, error: fetchErr } = await supabase
       .from('listings')
       .select('id, compound, property_type, price, deal_type, featured, is_hot_deal, area_sqm, bedrooms')
@@ -62,10 +124,16 @@ export async function generateDailyDigest(): Promise<DailyBriefingStats> {
 
     if (!fetchErr && Array.isArray(data)) {
       rawListings = data;
+      fetchOutcome = 'ok'; // a successful query with zero rows is a genuine empty
     }
   } catch (err) {
-    console.warn('[Briefing] Supabase fetch fallback:', err);
+    console.warn('[Briefing] inventory sample query failed:', (err as Error).message);
   }
+
+  const { status, missingMetrics, readyForBroadcast } = computeBriefingStatus({
+    activeListingsCount: countOutcome,
+    inventorySample: fetchOutcome,
+  });
 
   // Calculate volume & compound stats
   let totalSamplePrice = 0;
@@ -121,6 +189,9 @@ export async function generateDailyDigest(): Promise<DailyBriefingStats> {
 
   return {
     date: dateStr,
+    dataStatus: status,
+    missingMetrics,
+    readyForBroadcast,
     totalActiveListings: totalCount,
     totalMarketVolumeEGP: estimatedTotalVolume,
     compoundDistribution,
@@ -152,6 +223,14 @@ async function main() {
     }\n`
   );
 
+  if (digest.missingMetrics.includes('inventorySample')) {
+    // An empty section below must never be readable as "verified empty
+    // inventory" — say WHY the sample is missing (H1).
+    console.log(
+      '⚠️  Inventory sample UNAVAILABLE (query failed) — the compound/opportunity sections below are omitted, NOT an empty inventory.'
+    );
+  }
+
   console.log('🏘️  TOP COMPOUND INVENTORY HUBS:');
   digest.compoundDistribution.forEach((hub, i) => {
     console.log(`  ${i + 1}. ${hub.compound}: ${hub.count} units sampled | Avg Price: ${(hub.avgPriceEGP / 1e6).toFixed(1)}M EGP`);
@@ -164,10 +243,38 @@ async function main() {
     );
   });
 
-  console.log('\n✅ Daily Executive Intelligence Briefing generated successfully and ready for broadcast.\n');
+  // ── H1 broadcast gate ─────────────────────────────────────────────────
+  // Readiness is a function of data health, not of document creation.
+  if (digest.dataStatus === 'OK') {
+    console.log('\n✅ Daily Executive Intelligence Briefing generated successfully and ready for broadcast.\n');
+  } else if (digest.dataStatus === 'DEGRADED') {
+    console.log(
+      `\n⚠️  BRIEFING STATUS: DEGRADED — missing: ${digest.missingMetrics.join(', ')}. NOT ready for broadcast: an incomplete briefing must not be distributed as verified intelligence.\n`
+    );
+  } else {
+    console.log(
+      `\n🛑 BRIEFING STATUS: BLOCKED — mandatory inventory queries failed (${digest.missingMetrics.join(', ')}). No briefing is ready for broadcast.\n`
+    );
+  }
+
+  // Machine-readable gate for any sender/CI consumer.
+  console.log(
+    `BRIEFING_RESULT ${JSON.stringify({
+      status: digest.dataStatus,
+      readyForBroadcast: digest.readyForBroadcast,
+      missingMetrics: digest.missingMetrics,
+    })}`
+  );
+  process.exitCode = BRIEFING_EXIT_CODE[digest.dataStatus];
 }
 
-main().catch((err) => {
-  console.error('Fatal error generating daily briefing:', err);
-  process.exit(1);
-});
+/* Testability guard: importing this module must never execute main().
+ * Direct run (tsx, CJS): require.main === module. Under vitest (ESM):
+ * `require` is undefined → guard stays false. */
+const isDirectRun = typeof require !== 'undefined' && require.main === module;
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error('Fatal error generating daily briefing:', err);
+    process.exit(1);
+  });
+}

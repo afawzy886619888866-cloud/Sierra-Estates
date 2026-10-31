@@ -5,6 +5,8 @@
  * Generates spoken investment summaries, yield analytics, and streaming WebRTC / audio payloads.
  */
 
+import crypto from 'node:crypto';
+
 export interface VoiceBriefingRequest {
   sierraCode: string;
   compound: string;
@@ -186,7 +188,7 @@ export class VoiceBriefingEngine {
     const audioBuf = this.createSyntheticAudioBuffer(3);
     const audioBase64 = `data:audio/wav;base64,${audioBuf.toString('base64')}`;
 
-    const briefingId = `vb-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const briefingId = `vb-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
     const webrtcSessionId = `webrtc-sierra-${briefingId}`;
 
     return {

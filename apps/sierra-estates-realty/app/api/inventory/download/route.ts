@@ -1,12 +1,43 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import path from 'path';
 import fs from 'fs';
 import snapshot from '@/lib/inventory/snapshot.json';
+import { verifyPortalRequest } from '@/lib/server/auth-guard';
+import { logger } from '@/lib/logger';
+import {
+  CONCIERGE_CONTACT_NAME,
+  CONCIERGE_PHONE,
+  CONCIERGE_WA_LINK,
+  scrubOwnerContactText,
+} from '@/lib/server/owner-privacy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/**
+ * OWNER-PRIVACY GATE (2026-10-25):
+ *
+ * This route serves the master inventory as JSON/CSV/XLSX. Until now it
+ * exported the committed snapshot VERBATIM — including "Owner Contact
+ * Name", "Owner Phone" and "WhatsApp Direct" columns — to ANY anonymous
+ * caller (verified live: 12,334 rows exposing 10,755 Egyptian owner mobile
+ * numbers, no auth, CORS *). That is a publication-gate bypass: snapshot
+ * rows are not publish-gated rows, and owner contact data is private by
+ * the repo's own doctrine (scripts/sanitize-public-downloads.mjs replaces
+ * every owner phone in public assets with the concierge number).
+ *
+ * Contract now:
+ *   · PUBLIC callers receive the SAME doctrine-sanitized export the public
+ *     workbooks follow — owner contact columns replaced with the Sierra
+ *     Estates concierge contact, and any phone-like string inside free
+ *     text (description) scrubbed to the concierge number.
+ *   · AUTHENTICATED ADMIN callers (session cookie or secret key via
+ *     verifyPortalRequest) receive the full export including owner contact
+ *     columns — staff tooling is preserved.
+ *   · The route never invented listing data before and still does not —
+ *     this is a redaction gate, not a data change.
+ */
 function loadDataset(datasetName: string): any[] {
   if (datasetName === 'owners' || datasetName === 'verified' || datasetName === '585') {
     const snapshotData = snapshot as unknown;
@@ -80,7 +111,29 @@ function normalizeUnitRow(u: any) {
   };
 }
 
-export async function GET(request: Request) {
+/** Redact owner-identifying data for public output (concierge doctrine).
+ *
+ * Section D hardening (2026-10-27): free-text phones were previously
+ * scrubbed from Description only — live probing found mobile-like strings
+ * in OTHER string fields too (Unit Type, and numeric legacy Listing
+ * ID/Sierra Code values). In the EXPORT COPY these fields are not
+ * load-bearing (the DB identity is untouched; authenticated admin exports
+ * keep the real values), so EVERY string field is scrubbed — maximal
+ * containment for the public artifact. */
+function sanitizePublicRow<T extends Record<string, unknown>>(row: T): T {
+  const out: Record<string, unknown> = { ...row };
+  out['Owner Contact Name'] = CONCIERGE_CONTACT_NAME;
+  out['Owner Phone'] = CONCIERGE_PHONE;
+  out['WhatsApp Direct'] = CONCIERGE_WA_LINK;
+  for (const k of Object.keys(out)) {
+    if (typeof out[k] === 'string') {
+      out[k] = scrubOwnerContactText(out[k] as string);
+    }
+  }
+  return out as T;
+}
+
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const format = (searchParams.get('format') || 'xlsx').toLowerCase();
   const datasetParam = searchParams.get('dataset') || 'consolidated';
@@ -88,6 +141,20 @@ export async function GET(request: Request) {
   const filterDealType = searchParams.get('dealType')?.toLowerCase();
 
   let rawUnits = loadDataset(datasetParam);
+
+  // ── Owner-privacy gate: full export is admin-only. ─────────────────────
+  let isStaffAdmin = false;
+  try {
+    const auth = await verifyPortalRequest(request);
+    isStaffAdmin = auth.authenticated && auth.access === 'admin';
+  } catch (err) {
+    logger.warn('[inventory/download] auth check failed — treating as public:', err);
+  }
+  if (!isStaffAdmin && rawUnits.length) {
+    logger.info(
+      `[inventory/download] public/redacted export (dataset=${datasetParam}, ${rawUnits.length} rows) — owner contact data withheld`,
+    );
+  }
 
   if (filterCompound) {
     rawUnits = rawUnits.filter((u) =>
@@ -104,7 +171,8 @@ export async function GET(request: Request) {
     });
   }
 
-  const tableRows = rawUnits.map(normalizeUnitRow);
+  let tableRows = rawUnits.map(normalizeUnitRow);
+  if (!isStaffAdmin) tableRows = tableRows.map(sanitizePublicRow);
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',

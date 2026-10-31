@@ -19,6 +19,7 @@ interface VerifiedCaller {
  * itself may grant console access.
  */
 async function verifyCaller(token: string): Promise<VerifiedCaller | null> {
+  if (!token || typeof token !== 'string') return null;
   const { data, error } = await getSupabaseAdmin().auth.getUser(token);
   if (error || !data?.user) return null;
 
@@ -36,15 +37,15 @@ async function verifyCaller(token: string): Promise<VerifiedCaller | null> {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { token } = await req.json();
-
-    if (!token) {
-      return NextResponse.json({ error: 'Token required' }, { status: 400 });
-    }
+    const body = await req.json();
+    const token = typeof body?.token === 'string' ? body.token.trim() : '';
 
     const caller = await verifyCaller(token);
     if (!caller) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json(
+        { error: token ? 'Invalid token' : 'Token required' },
+        { status: token ? 401 : 400 },
+      );
     }
 
     if (!caller.role || !isAdminConsoleRole(caller.role)) {
@@ -69,11 +70,8 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   try {
-    const token = req.headers.get('authorization')?.split('Bearer ')[1];
-
-    if (!token) {
-      return NextResponse.json({ authorized: false }, { status: 401 });
-    }
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
 
     const caller = await verifyCaller(token);
     if (!caller) {

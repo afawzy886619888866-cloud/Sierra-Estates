@@ -26,7 +26,6 @@ import {
   ChevronsRight,
   Sparkles,
 } from 'lucide-react';
-import defaultOnlineUnits from '@/data/online-sheet-units.json';
 
 export const ACCOUNT_MANAGERS = [
   'Ahmed Fawzy',
@@ -72,7 +71,7 @@ export const MASTER_SHEET_URL =
   'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606';
 
 export const CLEAN_PROCESSED_SHEET_URL =
-  'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911';
+  'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606';
 
 // Canonical compound cluster dictionary with multilingual labels and all real-estate variations
 export const COMPOUND_CLUSTERS: Record<
@@ -139,10 +138,50 @@ export const COMPOUND_CLUSTERS: Record<
     labelAr: 'جاليريا مون فالي',
     aliases: ['galleria', 'جاليريا'],
   },
+  swan_lake: {
+    labelEn: 'Swan Lake (Hassan Allam)',
+    labelAr: 'سوان ليك (حسن علام)',
+    aliases: ['swan lake', 'سوان ليك'],
+  },
+  palm_hills: {
+    labelEn: 'Palm Hills New Cairo',
+    labelAr: 'بالم هيلز القاهرة الجديدة',
+    aliases: ['palm hills', 'بالم هيلز'],
+  },
+  sodic_east: {
+    labelEn: 'SODIC East',
+    labelAr: 'سوديك إيست',
+    aliases: ['sodic east', 'sodic', 'سوديك'],
+  },
+  katameya_dunes: {
+    labelEn: 'Katameya Dunes & Heights',
+    labelAr: 'قطامية ديونز وهايتس',
+    aliases: ['katameya', 'katameya dunes', 'katameya heights', 'القطامية'],
+  },
+  cfc: {
+    labelEn: 'Cairo Festival City (CFC)',
+    labelAr: 'كايرو فيستيفال سيتي',
+    aliases: ['cfc', 'cairo festival city', 'كايرو فستيفال'],
+  },
+  zed_east: {
+    labelEn: 'Zed East (Ora)',
+    labelAr: 'زد إيست (أورا)',
+    aliases: ['zed east', 'zed', 'زد'],
+  },
+  waterway: {
+    labelEn: 'The Waterway',
+    labelAr: 'ذا ووتر واي',
+    aliases: ['waterway', 'water way', 'ووتر واي'],
+  },
+  new_capital: {
+    labelEn: 'New Administrative Capital',
+    labelAr: 'العاصمة الإدارية الجديدة',
+    aliases: ['new capital', 'new-capital', 'العاصمة الإدارية'],
+  },
   other: {
-    labelEn: 'Other Enclaves',
-    labelAr: 'كمبوندات أخرى ومناطق التجمع',
-    aliases: ['stone', 'mirada', 'palm hills', 'capital gardens', 'porto', 'avenues', 'south academy', 'lotus', 'جايد'],
+    labelEn: 'Other Enclaves / To Be Added',
+    labelAr: 'كمبوندات أخرى / للاستفسار',
+    aliases: ['stone', 'mirada', 'capital gardens', 'porto', 'avenues', 'south academy', 'lotus', 'جايد', 'new cairo', '5th settlement'],
   },
 };
 
@@ -164,7 +203,7 @@ type SortDirection = 'asc' | 'desc';
 export default function AdminInventoryTable({ units }: AdminInventoryTableProps) {
   // Master data state initialized from merged dataset or props
   const [data, setData] = useState<InventoryUnitRow[]>(() => {
-    const raw = units && units.length > 0 ? units : (defaultOnlineUnits as InventoryUnitRow[]);
+    const raw = units && units.length > 0 ? units : [];
     return raw.map((u, i) => {
       const comp = u.compound || (u as any).location || 'القاهرة الجديدة';
       const clusterKey = resolveClusterKey(comp);
@@ -447,7 +486,10 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
 
       // Rooms filter
       if (selectedRooms !== 'all') {
-        if (selectedRooms === '1') {
+        if (selectedRooms === 'studio') {
+          const isStudio = String(row.rooms || '').toLowerCase().includes('studio') || String(row.propertyType || '').toLowerCase().includes('studio') || row.rooms === 0;
+          if (!isStudio) return false;
+        } else if (selectedRooms === '1') {
           if (row.rooms !== 1 && String(row.rooms) !== '1') return false;
         } else if (selectedRooms === '2') {
           if (row.rooms !== 2 && String(row.rooms) !== '2') return false;
@@ -455,6 +497,9 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
           if (row.rooms !== 3 && String(row.rooms) !== '3') return false;
         } else if (selectedRooms === '4+') {
           if (!row.rooms || Number(row.rooms) < 4) return false;
+        } else if (selectedRooms === 'unknown') {
+          const hasRooms = row.rooms != null && Number(row.rooms) > 0;
+          if (hasRooms) return false;
         }
       }
 
@@ -899,10 +944,12 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                 className="w-full px-2.5 py-2 bg-slate-950/90 border border-slate-800 focus:border-[#C9A84C] rounded-xl text-xs text-white outline-none cursor-pointer"
               >
                 <option value="all">🛏️ عدد الغرف (الكل)</option>
-                <option value="1">غرفة واحدة / استوديو</option>
+                <option value="studio">استوديو (Studio)</option>
+                <option value="1">غرفة واحدة (1 Bed)</option>
                 <option value="2">غرفتان (2 Beds)</option>
                 <option value="3">3 غرف (3 Beds)</option>
                 <option value="4+">4 غرف فأكثر (4+ Beds)</option>
+                <option value="unknown">❓ غير محدد / للاستفسار من المالك</option>
               </select>
             </div>
 

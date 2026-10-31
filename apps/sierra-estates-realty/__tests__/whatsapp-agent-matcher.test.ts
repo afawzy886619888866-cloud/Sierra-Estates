@@ -9,6 +9,36 @@
  */
 
 export {};
+
+// ── Deterministic DB boundary (execution order Section E, 2026-10-27) ──
+// The real supabase-service performs a LIVE HTTPS query whenever URL+key
+// env are present (setup.ts forces a service-role key), which made this
+// suite time out whenever the production Supabase failure wasn't
+// fail-fast. Mocked at the module boundary — a standard unit test must not
+// depend on production network/DB reachability. The mock state variables
+// are named with the `mock` prefix so jest's hoisting allows them.
+jest.mock('../../../packages/whatsapp-shared/src/supabase-service', () => ({
+  get adminDb() {
+    if (!mockAdminDbEnabled) return null;
+    return {
+      collection: () => ({
+        where: () => ({
+          limit: () => ({
+            get: async () => {
+              if (mockQueryError) throw new Error(mockQueryError);
+              return { empty: mockDocs.length === 0, docs: mockDocs };
+            },
+          }),
+        }),
+      }),
+    };
+  },
+}));
+
+let mockDocs = [];
+let mockQueryError = null;
+let mockAdminDbEnabled = true;
+
 const propertyEvaluator = require('../../../packages/whatsapp-shared/src/property-evaluator');
 const propertyMatcher = require('../../../packages/whatsapp-shared/src/property-matcher');
 const brochureManager = require('../../../packages/whatsapp-shared/src/brochure-manager');
@@ -122,6 +152,59 @@ describe('WhatsApp Agent Concierge Suite', () => {
       expect(cardAr).toContain('Mivida');
       expect(cardAr).toContain('52,000');
       expect(cardAr).toContain('3 غرف نوم');
+    });
+
+    it('returns REAL matches when the database has qualifying rows (deterministic stub)', async () => {
+      // Firestore-style snap.docs: each doc exposes .id + .data() — the shape
+      // supabase-service's adminDb adapter really returns.
+      mockDocs = [
+        {
+          id: 'L1',
+          data: () => ({
+            id: 'L1',
+            compound: 'Mivida',
+            title: 'Mivida 3BR',
+            price: 52000,
+            currency: 'EGP',
+            bedrooms: 3,
+            bathrooms: 3,
+            bua: 195,
+            type: 'Rent',
+            status: 'active',
+          }),
+        },
+      ];
+      try {
+        const matches = await propertyMatcher.findMatches({
+          locations: ['Mivida'],
+          bedrooms: 3,
+          budget: 60000,
+        });
+        expect(matches.length).toBeGreaterThan(0);
+        expect(matches[0].id).toBe('L1');
+        expect(matches[0].evaluation).toBeDefined();
+      } finally {
+        mockDocs = [];
+      }
+    });
+
+    it('REJECTS on database failure — an error is never a verified zero-inventory result', async () => {
+      mockQueryError = 'connection reset by peer';
+      try {
+        await expect(
+          propertyMatcher.findMatches({ locations: ['Mivida'], bedrooms: 3, budget: 60000 }),
+        ).rejects.toThrow(/inventory query failed/);
+      } finally {
+        mockQueryError = null;
+      }
+    });
+
+    it('REJECTS when the inventory DB is unconfigured — distinct from a genuine empty', () => {
+      mockAdminDbEnabled = false;
+      jest.resetModules();
+      const matcher = require('../../../packages/whatsapp-shared/src/property-matcher');
+      mockAdminDbEnabled = true; // restore for any later module state
+      return expect(matcher.findMatches({ locations: ['Mivida'] })).rejects.toThrow(/not configured/);
     });
   });
 

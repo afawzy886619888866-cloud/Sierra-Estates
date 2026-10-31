@@ -14,6 +14,11 @@ import {
   MessageCircle,
   RotateCcw,
   Send,
+  Scale,
+  Sparkles,
+  CheckCircle2,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import type { InventoryUnit } from "@/lib/inventory/types";
 
@@ -49,6 +54,10 @@ export default function ExcelInventorySheet({
   const [maxPrice, setMaxPrice] = useState<number>(100000000);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  // Compare Units State (Up to 3 Units Side-by-Side)
+  const [compareUnits, setCompareUnits] = useState<InventoryUnit[]>([]);
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+
   // Photo / Viewing Request dialog state
   const [selectedUnitForPhotos, setSelectedUnitForPhotos] = useState<InventoryUnit | null>(null);
   const [clientName, setClientName] = useState("");
@@ -58,6 +67,31 @@ export default function ExcelInventorySheet({
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
   const [leadSuccess, setLeadSuccess] = useState(false);
   const [formError, setFormError] = useState("");
+
+  // Toggle unit in 3-slot comparison
+  const getUnitKey = (u: InventoryUnit) => String(u.code || u.id);
+
+  const toggleCompareUnit = (unit: InventoryUnit) => {
+    const key = getUnitKey(unit);
+    setCompareUnits((prev) => {
+      const exists = prev.some((item) => getUnitKey(item) === key);
+      if (exists) {
+        return prev.filter((item) => getUnitKey(item) !== key);
+      }
+      if (prev.length >= 3) {
+        return [...prev.slice(1), unit];
+      }
+      return [...prev, unit];
+    });
+  };
+
+  const removeFromCompare = (unitKey: string) => {
+    setCompareUnits((prev) => prev.filter((item) => getUnitKey(item) !== unitKey));
+  };
+
+  const clearCompare = () => {
+    setCompareUnits([]);
+  };
 
   // Fetch or filter units when component mounts or compoundName changes
   useEffect(() => {
@@ -136,12 +170,10 @@ export default function ExcelInventorySheet({
   // Real-time Filtering
   const filteredRows = useMemo(() => {
     return units.filter((u) => {
-      // Category / Listing Type filter
       if (categoryFilter !== "all" && u.mode !== categoryFilter) {
         return false;
       }
 
-      // Bedrooms filter
       if (bedsFilter !== "all") {
         const beds = u.beds ?? 0;
         if (bedsFilter === "5+") {
@@ -151,13 +183,11 @@ export default function ExcelInventorySheet({
         }
       }
 
-      // Price Range filter
       const price = u.price ?? 0;
       if (price > 0) {
         if (price < minPrice || price > maxPrice) return false;
       }
 
-      // Free-text search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const code = (u.code || u.id || "").toLowerCase();
@@ -211,22 +241,27 @@ export default function ExcelInventorySheet({
       "Bathrooms",
       "Area (m2)",
       "Price (EGP)",
+      "Price/m2 (EGP)",
       "Finishing",
       "Advisory Desk Contact",
     ];
 
-    const rows = filteredRows.map((u) => [
-      `"${u.code || u.id}"`,
-      `"${u.compound || compoundName || ""}"`,
-      `"${u.propertyType || u.type || ""}"`,
-      `"${u.mode === "rent" ? "Rent" : "Resale"}"`,
-      `"${u.beds ?? ""}"`,
-      `"${u.bath ?? ""}"`,
-      `"${u.area ?? ""}"`,
-      `"${u.price || ""}"`,
-      `"${u.finishingQuality || ""}"`,
-      `"${SIERRA_CONTACT_PHONE}"`,
-    ]);
+    const rows = filteredRows.map((u) => {
+      const ppm = u.area && u.price ? Math.round(u.price / u.area) : "";
+      return [
+        `"${u.code || u.id}"`,
+        `"${u.compound || compoundName || ""}"`,
+        `"${u.propertyType || u.type || ""}"`,
+        `"${u.mode === "rent" ? "Rent" : "Resale"}"`,
+        `"${u.beds ?? ""}"`,
+        `"${u.bath ?? ""}"`,
+        `"${u.area ?? ""}"`,
+        `"${u.price || ""}"`,
+        `"${ppm}"`,
+        `"${u.finishingQuality || ""}"`,
+        `"${SIERRA_CONTACT_PHONE}"`,
+      ];
+    });
 
     const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -278,7 +313,6 @@ export default function ExcelInventorySheet({
         body: JSON.stringify(payload),
       });
 
-      // Direct WhatsApp link to Sierra Estates Desk (01092048333)
       const waText = isAr
         ? `مرحباً سييرا العقارية، قمت بطلب صور ومعاينة للوحدة كود (${code}) في ${cmp}.\nالسعر: ${price}\nالاسم: ${clientName}\nالهاتف: ${cleanPhone}\nالملاحظات: ${inquiryNotes || "طلب تصوير فوري"}`
         : `Hello Sierra Estates, I requested photos and inspection for Unit (${code}) in ${cmp}.\nPrice: ${price}\nName: ${clientName}\nPhone: ${cleanPhone}\nNote: ${inquiryNotes || "On-demand photos request"}`;
@@ -288,12 +322,35 @@ export default function ExcelInventorySheet({
       setLeadSuccess(true);
     } catch {
       setIsSubmittingLead(false);
-      // Fallback direct WhatsApp
       const waText = `Hello Sierra Estates, photo request for Unit ${code} in ${cmp} (${price}). Name: ${clientName}`;
       window.open(`https://wa.me/${SIERRA_WHATSAPP_PHONE}?text=${encodeURIComponent(waText)}`, "_blank");
       setLeadSuccess(true);
     }
   };
+
+  // Active comparison list (falls back to top 3 filtered rows if user clicks Compare with 0 selected)
+  const activeComparisonList =
+    compareUnits.length > 0 ? compareUnits : filteredRows.slice(0, Math.min(3, filteredRows.length));
+
+  const comparisonMetrics = useMemo(() => {
+    const items = activeComparisonList.map((u, idx) => {
+      const area = u.area && u.area > 0 ? u.area : 180;
+      const price = u.price && u.price > 0 ? u.price : 15000000;
+      const ppm = Math.round(price / area);
+      return {
+        unit: u,
+        key: getUnitKey(u),
+        slot: idx + 1,
+        area,
+        price,
+        ppm,
+      };
+    });
+    const validPpm = items.map((i) => i.ppm).filter((p) => p > 0);
+    const lowestPpm = validPpm.length > 0 ? Math.min(...validPpm) : 0;
+    const largestArea = items.length > 0 ? Math.max(...items.map((i) => i.area)) : 0;
+    return { items, lowestPpm, largestArea };
+  }, [activeComparisonList]);
 
   return (
     <div
@@ -332,7 +389,27 @@ export default function ExcelInventorySheet({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Compare Units (Up to 3) Trigger Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (compareUnits.length === 0 && filteredRows.length > 0) {
+                setCompareUnits(filteredRows.slice(0, Math.min(3, filteredRows.length)));
+              }
+              setIsCompareModalOpen(true);
+            }}
+            disabled={filteredRows.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 hover:bg-cyan-500/30 transition shadow-[0_0_15px_rgba(6,182,212,0.25)] disabled:opacity-40 cursor-pointer"
+          >
+            <Scale className="w-3.5 h-3.5 text-cyan-300" />
+            <span>
+              {isAr
+                ? `مقارنة الوحدات (${compareUnits.length}/3)`
+                : `Compare Units (${compareUnits.length}/3)`}
+            </span>
+          </button>
+
           {/* Toggle Sidebar Button */}
           <button
             type="button"
@@ -386,6 +463,76 @@ export default function ExcelInventorySheet({
         </div>
       </div>
 
+      {/* 3-SLOT COMPARE UNITS BAR */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-2 border-b border-cyan-500/25 bg-[#081b33] text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono font-bold text-cyan-300 flex items-center gap-1.5">
+            <Scale className="w-3.5 h-3.5 text-cyan-400" />
+            {isAr ? "مقارنة حتى ٣ وحدات جنباً إلى جنب:" : "COMPARE UP TO 3 UNITS:"}
+          </span>
+          {[0, 1, 2].map((slotIdx) => {
+            const slotUnit = compareUnits[slotIdx];
+            return slotUnit ? (
+              <span
+                key={getUnitKey(slotUnit)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-500/20 border border-cyan-400/40 font-mono text-[11px] text-white"
+              >
+                <span className="text-cyan-300 font-bold">#{slotIdx + 1}</span>
+                <span className="font-bold text-amber-300">{getUnitKey(slotUnit)}</span>
+                <button
+                  type="button"
+                  onClick={() => removeFromCompare(getUnitKey(slotUnit))}
+                  className="text-slate-300 hover:text-rose-400 font-bold ml-1 cursor-pointer"
+                >
+                  ×
+                </button>
+              </span>
+            ) : (
+              <span
+                key={`empty-${slotIdx}`}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg border border-dashed border-slate-700 text-slate-400 font-mono text-[10px]"
+              >
+                #{slotIdx + 1} {isAr ? "اختر من الجدول" : "Select unit"}
+              </span>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {compareUnits.length > 0 && (
+            <button
+              type="button"
+              onClick={clearCompare}
+              className="text-[11px] font-mono text-slate-400 hover:text-rose-400 transition cursor-pointer"
+            >
+              {isAr ? "مسح الاختيار" : "Clear"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (compareUnits.length === 0 && filteredRows.length > 0) {
+                setCompareUnits(filteredRows.slice(0, Math.min(3, filteredRows.length)));
+              }
+              setIsCompareModalOpen(true);
+            }}
+            disabled={filteredRows.length === 0}
+            className="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-[11px] flex items-center gap-1 transition cursor-pointer disabled:opacity-40"
+          >
+            <Sparkles className="w-3 h-3" />
+            <span>
+              {compareUnits.length > 0
+                ? isAr
+                  ? `عرض المقارنة (${compareUnits.length}/3)`
+                  : `View Side-by-Side (${compareUnits.length}/3)`
+                : isAr
+                ? "مقارنة أفضل ٣ وحدات"
+                : "Compare Top 3 Units"}
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* MAIN CONTAINER: SIDEBAR + DATA GRID */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* LUXURY COLLAPSIBLE FILTERING SIDEBAR */}
@@ -395,7 +542,7 @@ export default function ExcelInventorySheet({
             backdropFilter: "blur(20px)",
             width: isSidebarOpen ? "300px" : "0px",
           }}
-          className={`shrink-0 border-e border-slate-800/90 transition-all duration-300 ease-in-out overflow-hidden flex flex-col z-20 shadow-2xl`}
+          className="shrink-0 border-e border-slate-800/90 transition-all duration-300 ease-in-out overflow-hidden flex flex-col z-20 shadow-2xl"
         >
           <div className="w-75 h-full flex flex-col p-4 space-y-4 overflow-y-auto no-scrollbar">
             {/* Sidebar Header & Reset */}
@@ -511,7 +658,7 @@ export default function ExcelInventorySheet({
               </div>
             </div>
 
-            {/* Filter 3: Price Range Preset Pills & Sliders */}
+            {/* Filter 3: Price Range Preset Pills */}
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wide flex items-center justify-between">
                 <span>{isAr ? "نطاق السعر" : "Price Range"}</span>
@@ -520,7 +667,6 @@ export default function ExcelInventorySheet({
                 </span>
               </label>
 
-              {/* Quick Preset Pills */}
               <div className="flex flex-wrap gap-1.5">
                 {activePresets.map((p) => (
                   <button
@@ -538,18 +684,27 @@ export default function ExcelInventorySheet({
                 ))}
               </div>
 
-              {/* Min/Max Manual Display */}
               <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
                 <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800">
                   <span className="text-slate-500 block text-[9.5px]">Min</span>
                   <span className="font-mono text-cyan-300 font-bold">
-                    {minPrice > 0 ? (minPrice >= 1000000 ? `${(minPrice / 1000000).toFixed(1)}M` : `${(minPrice / 1000).toFixed(0)}K`) : "0"} EGP
+                    {minPrice > 0
+                      ? minPrice >= 1000000
+                        ? `${(minPrice / 1000000).toFixed(1)}M`
+                        : `${(minPrice / 1000).toFixed(0)}K`
+                      : "0"}{" "}
+                    EGP
                   </span>
                 </div>
                 <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800">
                   <span className="text-slate-500 block text-[9.5px]">Max</span>
                   <span className="font-mono text-amber-300 font-bold">
-                    {maxPrice < 100000000 ? (maxPrice >= 1000000 ? `${(maxPrice / 1000000).toFixed(1)}M` : `${(maxPrice / 1000).toFixed(0)}K`) : "Max"} EGP
+                    {maxPrice < 100000000
+                      ? maxPrice >= 1000000
+                        ? `${(maxPrice / 1000000).toFixed(1)}M`
+                        : `${(maxPrice / 1000).toFixed(0)}K`
+                      : "Max"}{" "}
+                    EGP
                   </span>
                 </div>
               </div>
@@ -602,6 +757,7 @@ export default function ExcelInventorySheet({
               <table className="w-full text-start text-xs border-collapse">
                 <thead className="sticky top-0 z-10 bg-[#091a30] border-b border-slate-700/80 text-slate-300 font-bold uppercase tracking-wider text-[10.5px]">
                   <tr>
+                    <th className="py-3 px-3 text-center text-cyan-400">VS</th>
                     <th className="py-3 px-4">{isAr ? "كود سييرا" : "Sierra Code"}</th>
                     <th className="py-3 px-3">{isAr ? "الكمبوند" : "Compound"}</th>
                     <th className="py-3 px-3">{isAr ? "النوع" : "Type"}</th>
@@ -616,13 +772,36 @@ export default function ExcelInventorySheet({
                 </thead>
                 <tbody className="divide-y divide-slate-800/80 font-mono text-[11px]">
                   {filteredRows.map((u, idx) => {
-                    const code = u.code || u.id;
+                    const code = getUnitKey(u);
                     const isRent = u.mode === "rent";
-                    const priceFormatted = u.priceLabel || (u.price ? `${u.price.toLocaleString()} EGP` : "Upon Call");
-                    const usdFormatted = u.usd ? `$${u.usd.toLocaleString()}` : (u.price ? `≈ $${Math.round(u.price / 49).toLocaleString()}` : "—");
+                    const priceFormatted =
+                      u.priceLabel || (u.price ? `${u.price.toLocaleString()} EGP` : "Upon Call");
+                    const usdFormatted = u.usd
+                      ? `$${u.usd.toLocaleString()}`
+                      : u.price
+                      ? `≈ $${Math.round(u.price / 49).toLocaleString()}`
+                      : "—";
+                    const compareIdx = compareUnits.findIndex((item) => getUnitKey(item) === code);
+                    const isComparing = compareIdx !== -1;
 
                     return (
-                      <tr key={code + idx} className="hover:bg-slate-800/50 transition-colors group">
+                      <tr
+                        key={code + idx}
+                        className={`hover:bg-slate-800/50 transition-colors group ${
+                          isComparing ? "bg-cyan-500/10" : ""
+                        }`}
+                      >
+                        {/* Compare Checkbox */}
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={isComparing}
+                            onChange={() => toggleCompareUnit(u)}
+                            className="w-4 h-4 rounded accent-cyan-500 cursor-pointer"
+                            title={isAr ? "مقارنة الوحدة (حتى 3 وحدات)" : "Select unit to compare (up to 3)"}
+                          />
+                        </td>
+
                         {/* Sierra Code */}
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
@@ -689,14 +868,27 @@ export default function ExcelInventorySheet({
                                 : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                             }`}
                           >
-                            {isRent ? (isAr ? "إيجار" : "Rent") : (isAr ? "إعادة بيع" : "Resale")}
+                            {isRent ? (isAr ? "إيجار" : "Rent") : isAr ? "إعادة بيع" : "Resale"}
                           </span>
                         </td>
 
-                        {/* Action Buttons: Request Photos + Direct WhatsApp */}
+                        {/* Action Buttons: Compare + Request Photos + Direct WhatsApp */}
                         <td className="py-2.5 px-4 whitespace-nowrap text-center">
                           <div className="inline-flex items-center gap-1.5">
-                            {/* Request Photos Button */}
+                            <button
+                              type="button"
+                              onClick={() => toggleCompareUnit(u)}
+                              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold border transition cursor-pointer ${
+                                isComparing
+                                  ? "bg-cyan-500 text-slate-950 border-cyan-300"
+                                  : "bg-slate-900 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20"
+                              }`}
+                              title={isAr ? "إضافة/إزالة من المقارنة" : "Toggle Compare"}
+                            >
+                              <Scale className="w-3 h-3" />
+                              <span>{isComparing ? `#${compareIdx + 1}` : "+VS"}</span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => {
@@ -710,7 +902,6 @@ export default function ExcelInventorySheet({
                               <span>{isAr ? "اطلب الصور" : "Photos"}</span>
                             </button>
 
-                            {/* Direct WhatsApp VIP Button */}
                             <button
                               type="button"
                               onClick={() => handleDirectWhatsApp(u)}
@@ -746,6 +937,265 @@ export default function ExcelInventorySheet({
           </div>
         </div>
       </div>
+
+      {/* SIDE-BY-SIDE UNIT COMPARISON MODAL (UP TO 3 UNITS) */}
+      {isCompareModalOpen && comparisonMetrics.items.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
+          onClick={() => setIsCompareModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-5xl rounded-2xl border border-cyan-500/40 bg-[#061122] text-slate-100 shadow-2xl overflow-hidden my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-[#061122] via-[#0b1f3a] to-[#061122] border-b border-cyan-500/30 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-400">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base font-extrabold text-white tracking-wide">
+                      {isAr
+                        ? "مقارنة مواصفات الوحدات جنباً إلى جنب (حتى ٣ وحدات)"
+                        : "SIDE-BY-SIDE UNIT SPECIFICATION COMPARISON"}
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                      {comparisonMetrics.items.length}/3 {isAr ? "وحدات" : "Units"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {isAr
+                      ? "مقارنة تفصيلية للمساحات، سعر المتر المربع، مستوى التشطيب، والأسعار"
+                      : "Side-by-side comparison of area, price per m², finishing, and typology"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCompareModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-slate-900 text-slate-400 hover:text-white border border-slate-700 flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Comparison Matrix Body */}
+            <div className="p-5 overflow-x-auto max-h-[75vh]">
+              <div className="min-w-[740px] space-y-4">
+                {/* Top 3 Unit Slot Cards */}
+                <div className="grid grid-cols-[180px_repeat(3,minmax(175px,1fr))] gap-3">
+                  <div className="p-4 rounded-xl bg-[#091930] border border-slate-800 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold block">
+                        {isAr ? "مصفوفة المقارنة" : "COMPARISON SLOTS"}
+                      </span>
+                      <div className="text-sm font-bold text-white mt-1">
+                        {isAr ? "المواصفات والأسعار" : "Unit Specifications"}
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-emerald-400 font-mono flex items-center gap-1 mt-3">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{isAr ? "أفضل سعر للمتر" : "Best Value / m²"}</span>
+                    </div>
+                  </div>
+
+                  {comparisonMetrics.items.map(({ unit, key, slot, area, price, ppm }) => {
+                    const isBestValue =
+                      ppm === comparisonMetrics.lowestPpm && comparisonMetrics.items.length > 1;
+                    return (
+                      <div
+                        key={key}
+                        className={`p-4 rounded-xl border-2 flex flex-col justify-between ${
+                          isBestValue
+                            ? "border-emerald-500 bg-emerald-950/20"
+                            : "border-slate-800 bg-[#091930]"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold">
+                              #{slot} · {key}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeFromCompare(key)}
+                              className="text-slate-400 hover:text-rose-400 cursor-pointer"
+                              title={isAr ? "إزالة" : "Remove"}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {isBestValue && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-mono font-bold text-[9px] mb-1.5">
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              {isAr ? "أفضل قيمة للمتر" : "BEST VALUE / M²"}
+                            </span>
+                          )}
+                          <div className="font-bold text-sm text-white truncate">
+                            {unit.compound || compoundName || "New Cairo"}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            {unit.propertyType || unit.type || "Residential Unit"} · {area} m²
+                          </div>
+                        </div>
+
+                        <div className="my-3 p-2.5 rounded-lg bg-slate-950/80 border border-cyan-500/30 text-center font-mono">
+                          <span className="text-[9px] text-slate-400 block uppercase">
+                            {isAr ? "سعر المتر المربع" : "Price / m²"}
+                          </span>
+                          <div className="text-base font-extrabold text-cyan-300">
+                            EGP {ppm.toLocaleString()} /m²
+                          </div>
+                          <div className="text-[11px] text-amber-400 font-bold mt-0.5">
+                            {unit.priceLabel || `EGP ${price.toLocaleString()}`}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCompareModalOpen(false);
+                              setSelectedUnitForPhotos(unit);
+                            }}
+                            className="py-1.5 px-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Camera className="w-3 h-3" />
+                            <span>{isAr ? "الصور" : "Photos"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDirectWhatsApp(unit)}
+                            className="py-1.5 px-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                            <span>WhatsApp</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Empty slots if < 3 units */}
+                  {Array.from({ length: Math.max(0, 3 - comparisonMetrics.items.length) }).map(
+                    (_, idx) => {
+                      const slotNumber = comparisonMetrics.items.length + idx + 1;
+                      const candidates = filteredRows.filter(
+                        (r) => !comparisonMetrics.items.some((i) => i.key === getUnitKey(r))
+                      );
+                      return (
+                        <div
+                          key={`empty-card-${slotNumber}`}
+                          className="p-4 rounded-xl border-2 border-dashed border-slate-800 bg-slate-950/40 flex flex-col items-center justify-center text-center gap-2"
+                        >
+                          <Plus className="w-5 h-5 text-cyan-400" />
+                          <div className="text-xs font-mono font-bold text-slate-300">
+                            {isAr ? `الخانة #${slotNumber} متاحة` : `Slot #${slotNumber} Open`}
+                          </div>
+                          {candidates.length > 0 && (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                const found = candidates.find(
+                                  (c) => getUnitKey(c) === e.target.value
+                                );
+                                if (found) toggleCompareUnit(found);
+                              }}
+                              className="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/40 text-[11px] text-white font-mono"
+                            >
+                              <option value="">
+                                {isAr ? "+ اختر وحدة للمقارنة..." : "+ Add unit to compare..."}
+                              </option>
+                              {candidates.slice(0, 30).map((c) => (
+                                <option key={getUnitKey(c)} value={getUnitKey(c)}>
+                                  {getUnitKey(c)} · {c.compound || compoundName} ({c.area || 180}m²)
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+
+                {/* Specification Rows */}
+                <div className="rounded-xl border border-slate-800 bg-[#08172c] divide-y divide-slate-800/80 text-xs">
+                  {[
+                    {
+                      label: isAr ? "الكمبوند / الموقع" : "Compound / Location",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        item.unit.compound || compoundName || "New Cairo",
+                    },
+                    {
+                      label: isAr ? "نوع الوحدة" : "Property Typology",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        item.unit.propertyType || item.unit.type || "Residential",
+                    },
+                    {
+                      label: isAr ? "المساحة المبنية (m²)" : "Built-Up Area (m²)",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        `${item.area} m²`,
+                    },
+                    {
+                      label: isAr ? "سعر المتر المربع" : "Price per m² (EGP)",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        `EGP ${item.ppm.toLocaleString()} / m²`,
+                    },
+                    {
+                      label: isAr ? "السعر الإجمالي (EGP)" : "Total Price (EGP)",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        item.unit.priceLabel || `EGP ${item.price.toLocaleString()}`,
+                    },
+                    {
+                      label: isAr ? "الغرف والحمامات" : "Bedrooms & Bathrooms",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        `${item.unit.beds ?? "—"} Beds / ${item.unit.bath ?? "—"} Baths`,
+                    },
+                    {
+                      label: isAr ? "مستوى التشطيب" : "Finishing Quality",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        item.unit.finishingQuality || "Fully Finished",
+                    },
+                    {
+                      label: isAr ? "نوع المعاملة" : "Listing Category",
+                      render: (item: (typeof comparisonMetrics.items)[number]) =>
+                        item.unit.mode === "rent"
+                          ? isAr
+                            ? "إيجار"
+                            : "Rent"
+                          : isAr
+                          ? "إعادة بيع"
+                          : "Resale",
+                    },
+                  ].map((row, rIdx) => (
+                    <div
+                      key={rIdx}
+                      className="grid grid-cols-[180px_repeat(3,minmax(175px,1fr))] gap-3 p-3 items-center font-mono"
+                    >
+                      <div className="font-sans font-semibold text-slate-400">{row.label}</div>
+                      {comparisonMetrics.items.map((item) => (
+                        <div key={item.key} className="font-bold text-slate-100">
+                          {row.render(item)}
+                        </div>
+                      ))}
+                      {Array.from({ length: Math.max(0, 3 - comparisonMetrics.items.length) }).map(
+                        (_, i) => (
+                          <div key={i} className="text-slate-600">
+                            —
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* "SEND PHOTOS" LEAD CAPTURE MODAL */}
       {selectedUnitForPhotos && (

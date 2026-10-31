@@ -2999,5 +2999,43 @@ textarea:focus-visible {
   transform: scale(1.06);
 }
 
+/* ── 6. ARCHIVE DESIGN TOKENS & FLUID MOTION CHOREOGRAPHY ────────── */
+@keyframes luxuryGoldSweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.live-tag,
+.laser-badge {
+  background-size: 200% 100% !important;
+  animation: luxuryGoldSweep 4s ease infinite !important;
+}
+
+@keyframes luxuryReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.rv {
+  animation: luxuryReveal 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rv.d1 { animation-delay: 80ms; }
+.rv.d2 { animation-delay: 160ms; }
+.rv.d3 { animation-delay: 240ms; }
+.rv.d4 { animation-delay: 320ms; }
+
+.btn-pri:active,
+.btn-hero-cinematic:active,
+.pcard-btn-whatsapp:active,
+#hero-search-btn:active {
+  transform: scale(0.965) translateY(1px) !important;
+}
+
 
 

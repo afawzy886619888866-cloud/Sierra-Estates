@@ -2,12 +2,11 @@
 /**
  * Sierra Estates — Production Agent Fleet Orchestrator & Activator
  * Activates and validates:
- *  1. OpenClaw Agent Fleet on AWS EC2 (18.232.148.172)
- *  2. The Scribe (NLP WhatsApp/Telegram Parsing & Ingestion)
- *  3. The Curator (Asset Branding & Valuation)
- *  4. The Matchmaker (Vector Embeddings & Buyer Match Engine)
- *  5. The Closer (Multi-stage negotiation & viewing dispatch)
- *  6. Supabase agents_registry table heartbeat
+ *  1. OpenWA Multi-Session Gateway (Docker / Local RAG Station :2785)
+ *  2. Workflow Control Plane Runner (:2786)
+ *  3. The Scribe (NLP WhatsApp/Telegram Parsing & Ingestion)
+ *  4. The Curator & Stage-9 Closer Engines
+ *  5. Supabase agents_registry table heartbeat
  */
 
 import http from 'http';
@@ -19,25 +18,28 @@ import { createClient } from '@supabase/supabase-js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../.env.local'), quiet: true });
+dotenv.config({ path: path.resolve(__dirname, '../.env'), quiet: true });
+dotenv.config({ path: path.resolve(__dirname, '../workflows/.env'), quiet: true });
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-const EC2_HOST = process.env.OPENWA_HOST || '54.89.162.250';
+const GATEWAY_HOST = process.env.OPENWA_HOST || '127.0.0.1';
 const OPENWA_PORT = process.env.OPENWA_PORT || '2785';
 
 async function checkHttp(url, timeoutMs = 4000) {
   return new Promise((resolve) => {
     const req = http.get(url, { timeout: timeoutMs }, (res) => {
       let data = '';
-      res.on('data', chunk => data += chunk);
+      res.on('data', (chunk) => (data += chunk));
       res.on('end', () => resolve({ ok: res.statusCode >= 200 && res.statusCode < 400, status: res.statusCode, data }));
     });
-    req.on('error', err => resolve({ ok: false, status: 0, error: err.message }));
-    req.on('timeout', () => { req.destroy(); resolve({ ok: false, status: 408, error: 'Timeout' }); });
+    req.on('error', (err) => resolve({ ok: false, status: 0, error: err.message }));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ ok: false, status: 408, error: 'Timeout' });
+    });
   });
 }
 
@@ -49,9 +51,9 @@ async function main() {
   let activeCount = 0;
   const totalAgents = 5;
 
-  // 1. Check AWS EC2 OpenWA Gateway Node
-  process.stdout.write(`1️⃣  Checking AWS EC2 OpenWA Gateway (${EC2_HOST}:${OPENWA_PORT})... `);
-  const openwa = await checkHttp(`http://${EC2_HOST}:${OPENWA_PORT}/api/health`);
+  // 1. Check OpenWA Gateway Node
+  process.stdout.write(`1️⃣  Checking OpenWA Gateway (${GATEWAY_HOST}:${OPENWA_PORT})... `);
+  const openwa = await checkHttp(`http://${GATEWAY_HOST}:${OPENWA_PORT}/api/health`);
   if (openwa.ok) {
     console.log('✅ ONLINE (Status: 200 OK)');
     activeCount++;
@@ -59,15 +61,14 @@ async function main() {
     console.log(`⚠️ OFFLINE (${openwa.error || openwa.status})`);
   }
 
-  // 2. Check AWS EC2 Workflow Ops Runner
-  process.stdout.write(`2️⃣  Checking AWS EC2 Workflow Runner (Port 2786)... `);
-  const runner = await checkHttp(`http://${EC2_HOST}:2786/api/health`);
+  // 2. Check Workflow Ops Runner
+  process.stdout.write(`2️⃣  Checking Workflow Control Runner (${GATEWAY_HOST}:2786)... `);
+  const runner = await checkHttp(`http://${GATEWAY_HOST}:2786/api/health`);
   if (runner.ok) {
     console.log('✅ ONLINE (Status: 200 OK)');
     activeCount++;
   } else {
-    console.log(`ℹ️ INTERNAL (Bound to 127.0.0.1 on EC2)`);
-    activeCount++;
+    console.log(`⚠️ OFFLINE (${runner.error || runner.status})`);
   }
 
   // 3. Verify Scribe Ingestion Engine
@@ -91,13 +92,15 @@ async function main() {
   process.stdout.write('5️⃣  Heartbeat sync to Supabase agents_registry... ');
   if (SUPABASE_KEY) {
     try {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
       const agents = [
         { id: 'scribe', name: 'The Scribe', role: 'Ingestion & OCR', status: 'active', updated_at: new Date().toISOString() },
         { id: 'curator', name: 'The Curator', role: 'Branding & Valuation', status: 'active', updated_at: new Date().toISOString() },
         { id: 'matchmaker', name: 'The Matchmaker', role: 'Vector Search', status: 'active', updated_at: new Date().toISOString() },
         { id: 'closer', name: 'The Closer', role: 'Deal Negotiation', status: 'active', updated_at: new Date().toISOString() },
-        { id: 'openclaw', name: 'OpenClaw Fleet', role: 'Autonomous Crawling', status: 'active', updated_at: new Date().toISOString() }
+        { id: 'openclaw', name: 'OpenClaw Fleet', role: 'Autonomous Worker Manager', status: 'active', updated_at: new Date().toISOString() },
       ];
 
       for (const ag of agents) {

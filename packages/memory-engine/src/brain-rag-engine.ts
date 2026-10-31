@@ -3,12 +3,10 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import {
   EpisodicContextCache,
-  HOT_DEAL_THRESHOLD_PCT,
   type Episode,
   type EntityProfile,
-  type WorkingMemorySession,
 } from '../../../packages/agents/tools/eccMemoryEngine';
-import { ObsidianMemory, type MemoryEntry } from '@sierra-estates/obsidian';
+import { ObsidianMemory } from '@sierra-estates/obsidian';
 
 export interface VaultNote {
   title: string;
@@ -164,34 +162,40 @@ export class MemoryBrainEngine {
     }
 
     try {
-      if (!fs.existsSync(this.vaultDir)) {
+      let files: string[] = [];
+      try {
+        files = fs.readdirSync(this.vaultDir);
+      } catch {
         return;
       }
 
-      const files = fs.readdirSync(this.vaultDir);
       for (const file of files) {
         if (!file.endsWith('.md')) continue;
 
         const filePath = path.join(this.vaultDir, file);
-        const stat = fs.statSync(filePath);
-        const content = fs.readFileSync(filePath, 'utf-8');
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const stat = fs.statSync(filePath);
 
-        // Extract inline or frontmatter tags (#tag or tags: [...])
-        const tags: string[] = [];
-        const tagMatches = content.match(/#([a-zA-Z0-9_\u0600-\u06FF-]+)/g);
-        if (tagMatches) {
-          tags.push(...tagMatches.map((t) => t.substring(1).toLowerCase()));
+          // Extract inline or frontmatter tags (#tag or tags: [...])
+          const tags: string[] = [];
+          const tagMatches = content.match(/#([a-zA-Z0-9_\u0600-\u06FF-]+)/g);
+          if (tagMatches) {
+            tags.push(...tagMatches.map((t) => t.substring(1).toLowerCase()));
+          }
+
+          const title = file.replace('.md', '');
+          this.vaultCache.set(file.toLowerCase(), {
+            title,
+            filename: file,
+            path: filePath,
+            content,
+            tags: Array.from(new Set(tags)),
+            lastModified: stat.mtimeMs,
+          });
+        } catch {
+          continue;
         }
-
-        const title = file.replace('.md', '');
-        this.vaultCache.set(file.toLowerCase(), {
-          title,
-          filename: file,
-          path: filePath,
-          content,
-          tags: Array.from(new Set(tags)),
-          lastModified: stat.mtimeMs,
-        });
       }
 
       this.lastVaultScan = now;
@@ -236,7 +240,7 @@ export class MemoryBrainEngine {
         // Tag matches
         if (note.tags.some((t) => t.includes(token))) score += 4;
         // Body matches
-        const count = (lowerContent.match(new RegExp(token, 'g')) || []).length;
+        const count = Math.max(0, lowerContent.split(token).length - 1);
         score += Math.min(count, 5);
       }
 

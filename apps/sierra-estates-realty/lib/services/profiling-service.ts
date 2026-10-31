@@ -215,7 +215,8 @@ export async function conductPrecisionInterview(leadId: string, transcript: stri
 
   // If high quality lead, trigger Concierge Page (S8)
   if (profile.score && profile.score >= 8) {
-    console.log(`🔥 HIGH VALUE LEAD DETECTED: ${leadId} (Score: ${profile.score}). Triggering S8 Concierge.`);
+    const safeLeadId = String(leadId || '').replace(/[\r\n]/g, '');
+    console.log(`🔥 HIGH VALUE LEAD DETECTED: ${safeLeadId} (Score: ${profile.score}). Triggering S8 Concierge.`);
   }
 
   return profile;

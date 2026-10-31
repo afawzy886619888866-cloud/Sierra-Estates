@@ -128,18 +128,33 @@ class BrokerHarvester {
 
     // Persist to local JSONL
     try {
-      fs.appendFileSync(this.logFile, JSON.stringify(parsed) + '\n');
+      const sanitizedPayload = JSON.stringify(parsed).replace(/[\r\n]/g, '');
+      const targetFile = path.resolve(__dirname, 'whatsapp-auth', 'harvested_units.jsonl');
+      if (targetFile.startsWith(path.resolve(__dirname, 'whatsapp-auth'))) {
+        fs.appendFileSync(targetFile, sanitizedPayload + '\n');
+      }
     } catch (_) {}
 
     // Broadcast live alert to map station!
-    console.log(`\n🔥 [HARVESTER] New Unit Grabbed from Line ${sessionId}:`);
-    console.log(`   Compound: ${parsed.compound} (${parsed.zone})`);
-    console.log(`   Type: ${parsed.unitType} · ${parsed.dealType} · ${parsed.priceText}`);
-    console.log(`   Broker: ${parsed.brokerPhone || 'Unknown'}\n`);
+    const safeSession = String(sessionId || '').replace(/[\r\n]/g, '');
+    const safeCompound = String(parsed.compound || '').replace(/[\r\n]/g, '');
+    const safeZone = String(parsed.zone || '').replace(/[\r\n]/g, '');
+    const safeType = String(parsed.unitType || '').replace(/[\r\n]/g, '');
+    const safeDeal = String(parsed.dealType || '').replace(/[\r\n]/g, '');
+    const safePrice = String(parsed.priceText || '').replace(/[\r\n]/g, '');
+    const safeBroker = String(parsed.brokerPhone || 'Unknown').replace(/[\r\n]/g, '');
 
+    console.log(`\n🔥 [HARVESTER] New Unit Grabbed from Line ${safeSession}:`);
+    console.log(`   Compound: ${safeCompound} (${safeZone})`);
+    console.log(`   Type: ${safeType} · ${safeDeal} · ${safePrice}`);
     this.broadcast('NEW_UNIT', {
       unit: parsed,
       stats: this.getStatsSummary()
+    });
+
+    // Ingest asynchronously to Sierra backend
+    this.syncToSierraBackend(parsed).catch((err) => {
+      console.warn(`[HARVESTER] Backend sync failed: ${err.message}`);
     });
 
     return parsed;
@@ -162,7 +177,8 @@ class BrokerHarvester {
   }
 
   parseListing(text, msg, sessionId) {
-    const t = text.toLowerCase();
+    const safeText = (text || '').slice(0, 1000);
+    const t = safeText.toLowerCase();
 
     // 1. Resolve Compound & Geo
     let location = DEFAULT_CENTER;
@@ -193,7 +209,7 @@ class BrokerHarvester {
     // 4. Price Extraction
     let priceEgp = 0;
     let priceText = 'Contact for Price';
-    const mMatch = t.match(/(\d+(?:[.,]\d+)?)\s*(?:مليون|ملون|million|\bm\b)/i);
+    const mMatch = t.match(/(\d{1,4}(?:[.,]\d{1,4})?)\s*(?:مليون|ملون|million|\bm\b)/i);
     if (mMatch) {
       const num = parseFloat(mMatch[1].replace(',', '.'));
       if (num > 0) {
@@ -202,7 +218,7 @@ class BrokerHarvester {
       }
     }
     if (!priceEgp) {
-      const kMatch = t.match(/(\d+(?:[.,]\d+)?)\s*(?:الف|ألف|الاف|k\b)/i);
+      const kMatch = t.match(/(\d{1,6}(?:[.,]\d{1,4})?)\s*(?:الف|ألف|الاف|k\b)/i);
       if (kMatch) {
         const num = parseFloat(kMatch[1].replace(',', '.'));
         if (num > 0) {
@@ -260,6 +276,50 @@ class BrokerHarvester {
       capturedByLine: sessionId,
       harvestedAt: new Date().toISOString()
     };
+  }
+
+  async syncToSierraBackend(parsed) {
+    const backendUrl = process.env.SIERRA_API_URL || 'http://localhost:3000';
+    const secretKey = process.env.SBR_SECRET_KEY || 'sierra-broker-relay-dev-secret';
+    try {
+      const payload = {
+        message: parsed.rawText,
+        sender: parsed.brokerPhone || parsed.brokerName || 'WhatsApp Broker',
+        groupName: parsed.sourceChat || 'Broker Group',
+        capturedByLine: parsed.capturedByLine,
+        isListing: true,
+        metadata: {
+          compound: parsed.compound,
+          zone: parsed.zone,
+          dealType: parsed.dealType,
+          unitType: parsed.unitType,
+          priceEgp: parsed.priceEgp,
+          areaSqm: parsed.areaSqm,
+          bedrooms: parsed.bedrooms,
+          lat: parsed.lat,
+          lng: parsed.lng,
+          harvestedAt: parsed.harvestedAt
+        }
+      };
+
+      const res = await fetch(`${backendUrl}/api/ingest/whatsapp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-sbr-secret-key': secretKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        console.warn(`[HARVESTER] Backend sync responded with status ${res.status}`);
+      } else {
+        const json = await res.json();
+        console.log(`[HARVESTER] Synced to Sierra backend: id=${json.id}, code=${json.sierraCode || 'N/A'}`);
+      }
+    } catch (err) {
+      console.warn(`[HARVESTER] Backend sync skipped or unavailable: ${err.message}`);
+    }
   }
 
   getStatsSummary() {
