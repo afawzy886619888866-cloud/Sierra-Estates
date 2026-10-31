@@ -164,13 +164,24 @@ function clientIp(req) {
   return String(req.socket?.remoteAddress || 'unknown');
 }
 
+/** Module-level JSON responder shared by deny() and the server handler. */
+function sendJson(res, code, obj) {
+  const body = JSON.stringify(obj, null, 1);
+  res.writeHead(code, {
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(body),
+    'Cache-Control': 'no-store',
+  });
+  res.end(body);
+}
+
 /** Uniform 401/429 denial for protected routes (fail-closed + abuse guard). */
 function deny(res, req) {
   if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
-    json(res, 429, { ok: false, error: 'rate_limited' });
+    sendJson(res, 429, { ok: false, error: 'rate_limited' });
     return true;
   }
-  json(res, 401, { ok: false, error: 'unauthorized' });
+  sendJson(res, 401, { ok: false, error: 'unauthorized' });
   return true;
 }
 
