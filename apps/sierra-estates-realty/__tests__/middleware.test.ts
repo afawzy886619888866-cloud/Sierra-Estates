@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Tests: Edge Proxy (proxy.ts)
  *
  * Target architecture (INTEGRATION.md — two-domain host split):
@@ -52,13 +52,6 @@ describe('proxy config', () => {
   });
 });
 
-<<<<<<< HEAD
-describe('proxy - admin / public host split & route gating', () => {
-  it('serves /admin on the client host for authenticated admin without redirecting to the admin host', async () => {
-    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
-    const token = await signSession({ uid: 'admin-1', email: 'admin@sierra-estates.net', role: 'admin', name: 'Admin' });
-    const res = await middleware(request('https://sierra-estates.net/admin', { headers: { cookie: `${SESSION_COOKIE}=${token}` } }));
-=======
 describe('proxy — admin / public host split', () => {
   // The host split was removed deliberately ("/admin is directly accessible
   // across all domains without host redirect") but the session wall (FIX 4)
@@ -82,16 +75,8 @@ describe('proxy — admin / public host split', () => {
         headers: { cookie: await adminSessionCookie() },
       }),
     );
->>>>>>> ea017dd86b0cbbd25bd53be73d76258836b09e28
     expect(res.status).toBe(200);
     expect(res.headers.get('location')).toBeNull();
-  });
-
-  it('redirects unauthenticated visitor requesting /admin to /admin/login', async () => {
-    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
-    const res = await middleware(request('https://sierra-estates.net/admin'));
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toContain('/admin/login');
   });
 
   it('serves /admin/login directly without redirecting away', async () => {
@@ -101,12 +86,6 @@ describe('proxy — admin / public host split', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-<<<<<<< HEAD
-  it('serves the admin-host root / as the console for authenticated admin', async () => {
-    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
-    const token = await signSession({ uid: 'admin-1', email: 'admin@sierra-estates.net', role: 'admin', name: 'Admin' });
-    const res = await middleware(request('https://admin.sierra-estates.net/', { headers: { cookie: `${SESSION_COOKIE}=${token}` } }));
-=======
   it('gates the admin-host root `/` behind the login wall when unauthenticated', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
     const res = await middleware(request('https://admin.sierra-estates.net/'));
@@ -121,18 +100,10 @@ describe('proxy — admin / public host split', () => {
         headers: { cookie: await adminSessionCookie() },
       }),
     );
->>>>>>> ea017dd86b0cbbd25bd53be73d76258836b09e28
     expect(res.status).toBe(200);
     expect(res.headers.get('location')).toBeNull();
     // Root rewrite to the console still happens behind the wall.
     expect(res.headers.get('x-pathname')).toBe('/admin');
-  });
-
-  it('redirects unauthenticated admin-host root / to /admin/login', async () => {
-    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
-    const res = await middleware(request('https://admin.sierra-estates.net/'));
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toContain('/admin/login');
   });
 
   it('leaves the client-host root / untouched', async () => {
@@ -143,11 +114,7 @@ describe('proxy — admin / public host split', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-<<<<<<< HEAD
-  it('redirects unauthenticated /admin to /admin/login when ADMIN_HOST is omitted', async () => {
-=======
   it('gates /admin behind the login wall when ADMIN_HOST is omitted (fail-closed)', async () => {
->>>>>>> ea017dd86b0cbbd25bd53be73d76258836b09e28
     delete process.env.ADMIN_HOST;
     const admin = await middleware(request('https://example.com/admin'));
     expect(admin.status).toBe(307);
@@ -156,6 +123,7 @@ describe('proxy — admin / public host split', () => {
     expect(root.status).toBe(200);
   });
 });
+
 describe('proxy — CORS preflight', () => {
   it('answers OPTIONS /api with 204', async () => {
     const res = await middleware(
