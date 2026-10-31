@@ -98,7 +98,8 @@ function generateRentMarketingScript(unit) {
 
   const compound = unit.compound || 'New Cairo';
   const priceFormatted = Number(unit.price) > 0 ? `${Number(unit.price).toLocaleString()} ج.م / شهرياً` : 'القيمة عند المعاينة';
-  const phone = unit.ownerPhone || unit.phone || '01061399688';
+  const phone = unit.ownerPhone || unit.phone
+    || process.env.DIRECT_MGMT_PHONE || '+201092048333';
 
   const whatsappBroadcast = [
     `💎 وحدة راقية للإيجار في ${compound} | كود: ${code}`,
@@ -225,7 +226,7 @@ function buildPropertyFinderRentPayload(unit) {
     },
     agent: {
       name: 'Sierra Estates Advisory',
-      phone: unit.ownerPhone || '01061399688',
+      phone: process.env.DIRECT_MGMT_PHONE || '+201092048333',
       email: 'advisory@sierra-estates.com',
     },
     compliance: {
