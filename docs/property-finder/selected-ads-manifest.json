@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T04:45:16.425Z",
+  "generatedAt": "2026-10-31T06:53:22.746Z",
   "specVersion": "3.1.0",
   "mediaQualityPolicy": {
     "minPhotos": 6,
@@ -36,20 +36,21 @@
     ]
   },
   "inventorySummary": {
-    "totalSupabaseListings": 22831,
+    "totalSupabaseListings": 22844,
     "priorityCohortEvaluated": 2389,
     "excludedBreakdown": {
       "inactive_status": 477,
-      "unresolved_pf_location_id": 95,
-      "unmapped_property_type": 168,
-      "missing_area_sqm": 375,
+      "unavailable_owner_status": 588,
       "duplicate_unit_fingerprint": 82,
-      "below_market_price_floor": 655,
-      "already_live_on_pf": 186
+      "unmapped_property_type": 53,
+      "below_market_price_floor": 452,
+      "missing_area_sqm": 140,
+      "already_live_on_pf": 186,
+      "unresolved_pf_location_id": 62
     },
     "tier1aGateReadyCount": 0,
     "tier1bPrimePhotoUnitsCount": 7,
-    "tier2SheetAvailableOwnersCount": 40
+    "tier2SheetAvailableOwnersCount": 38
   },
   "tier1aGateReadyAds": [],
   "tier1bPrimePhotoUnits": [
