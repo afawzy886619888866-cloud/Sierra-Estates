@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # Sierra Estates — Comprehensive Git Ignore Policy
 # ==============================================================================
 
@@ -254,3 +254,5 @@ docs/drafts/propertyfinder/propertyfinder-full-feed.xml
 
 tools/autoclaw/Inbox/
 
+
+apps/sierra-estates-realty/public/downloads/*.xlsx

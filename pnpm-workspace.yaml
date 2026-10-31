@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # SECURITY: Minimum release age for npm packages (supply-chain attack defense)
 # ============================================================================
 #
@@ -66,6 +66,7 @@ packages:
   - packages/obsidian
   - packages/property-finder-api
   - packages/ui
+  - packages/shared
   - packages/whatsapp-shared
   # packages/open-memory is a standalone third-party project — excluded from
   # workspace to prevent its heavy dependencies and vitest config from

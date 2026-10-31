@@ -1,0 +1,16 @@
+﻿{
+  "name": "@sierra-estates/config",
+  "version": "1.0.0",
+  "description": "Shared configuration and environment constants for Sierra Estates",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true,
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^6.0.3"
+  }
+}

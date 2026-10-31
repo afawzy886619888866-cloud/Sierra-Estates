@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tests: Edge Proxy (proxy.ts)
  *
  * Target architecture (INTEGRATION.md — two-domain host split):
@@ -15,6 +15,7 @@
  */
 import { NextRequest } from 'next/server';
 import { config, middleware } from '../proxy';
+import { SESSION_COOKIE, signSession } from '../lib/auth';
 
 const ORIGINAL_SBR = process.env.SBR_SECRET_KEY;
 const ORIGINAL_ADMIN_HOST = process.env.ADMIN_HOST;
@@ -39,15 +40,20 @@ describe('proxy config', () => {
   });
 });
 
-describe('proxy — admin / public host split', () => {
-  // The host split and the login wall were both removed deliberately: proxy.ts
-  // now states "/admin is directly accessible across all domains without host
-  // redirect". These assert that new contract, not the old redirect-to-login one.
-  it('serves /admin on the client host without redirecting to the admin host', async () => {
+describe('proxy - admin / public host split & route gating', () => {
+  it('serves /admin on the client host for authenticated admin without redirecting to the admin host', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
-    const res = await middleware(request('https://sierra-estates.net/admin'));
+    const token = await signSession({ uid: 'admin-1', email: 'admin@sierra-estates.net', role: 'admin', name: 'Admin' });
+    const res = await middleware(request('https://sierra-estates.net/admin', { headers: { cookie: `${SESSION_COOKIE}=${token}` } }));
     expect(res.status).toBe(200);
     expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('redirects unauthenticated visitor requesting /admin to /admin/login', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(request('https://sierra-estates.net/admin'));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/admin/login');
   });
 
   it('serves /admin/login directly without redirecting away', async () => {
@@ -57,14 +63,22 @@ describe('proxy — admin / public host split', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('serves the admin-host root `/` as the console, with no login redirect', async () => {
+  it('serves the admin-host root / as the console for authenticated admin', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
-    const res = await middleware(request('https://admin.sierra-estates.net/'));
+    const token = await signSession({ uid: 'admin-1', email: 'admin@sierra-estates.net', role: 'admin', name: 'Admin' });
+    const res = await middleware(request('https://admin.sierra-estates.net/', { headers: { cookie: `${SESSION_COOKIE}=${token}` } }));
     expect(res.status).toBe(200);
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('leaves the client-host root `/` untouched', async () => {
+  it('redirects unauthenticated admin-host root / to /admin/login', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(request('https://admin.sierra-estates.net/'));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/admin/login');
+  });
+
+  it('leaves the client-host root / untouched', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
     const res = await middleware(request('https://sierra-estates.net/'));
     expect(res.status).toBe(200);
@@ -72,16 +86,15 @@ describe('proxy — admin / public host split', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('serves /admin without a session when ADMIN_HOST is omitted', async () => {
+  it('redirects unauthenticated /admin to /admin/login when ADMIN_HOST is omitted', async () => {
     delete process.env.ADMIN_HOST;
     const admin = await middleware(request('https://example.com/admin'));
-    expect(admin.status).toBe(200);
-    expect(admin.headers.get('location')).toBeNull();
+    expect(admin.status).toBe(307);
+    expect(admin.headers.get('location')).toContain('/admin/login');
     const root = await middleware(request('https://example.com/'));
     expect(root.status).toBe(200);
   });
 });
-
 describe('proxy — CORS preflight', () => {
   it('answers OPTIONS /api with 204', async () => {
     const res = await middleware(

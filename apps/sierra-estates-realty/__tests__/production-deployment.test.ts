@@ -1,10 +1,11 @@
-
+﻿
 // Authored against Vitest but this directory runs under Jest, so the import
 // threw at load and the whole suite never ran. Jest provides describe/it/expect
 // as globals — the assertions below are unchanged.
 import { NextRequest } from 'next/server';
 import { proxy } from '../proxy';
 import { supabase } from '../lib/supabase';
+import { SESSION_COOKIE, signSession } from '../lib/auth';
 
 describe('Production & Deployment Architecture Tests', () => {
   // cors.ts builds its allowlist solely from ALLOWED_ORIGINS with no default, so
@@ -22,12 +23,27 @@ describe('Production & Deployment Architecture Tests', () => {
   });
 
   describe('1. Middleware Proxy & Admin Route Direct Access', () => {
-    it('allows direct access to /admin without session token', async () => {
+    it('redirects unauthenticated visitor requesting /admin to /admin/login', async () => {
       const req = new NextRequest('https://sierra-estates.net/admin', {
         method: 'GET',
       });
       const res = await proxy(req);
-      // Status should be 200 / next() without redirect to /admin/login
+      expect(res.status).toBe(307);
+      expect(res.headers.get('location')).toContain('/admin/login');
+    });
+
+    it('allows access to /admin with authenticated admin session', async () => {
+      const token = await signSession({
+        uid: 'prod-admin-1',
+        email: 'admin@sierra-estates.net',
+        role: 'admin',
+        name: 'Admin',
+      });
+      const req = new NextRequest('https://sierra-estates.net/admin', {
+        method: 'GET',
+        headers: { cookie: `${SESSION_COOKIE}=${token}` },
+      });
+      const res = await proxy(req);
       expect(res.status).toBe(200);
       expect(res.headers.get('location')).toBeNull();
     });
