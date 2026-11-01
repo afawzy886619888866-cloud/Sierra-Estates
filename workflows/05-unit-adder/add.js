@@ -45,9 +45,21 @@ function generateSBRCode(compound, bedrooms, furnishing, price) {
   return `${compoundAbbr}-${bedrooms}${furnishCode}-${priceAbbr}`;
 }
 
-// Dedup identity: compound + area + price + bedrooms (sheet-real fields).
-function computeSyncHash(compound, area, price, bedrooms) {
-  const key = `${compound}|${area}|${price}|${bedrooms}`;
+// Dedup identity: canonical compound + area + price + bedrooms + unit type
+// + deal type (sheet-real fields). 2026-11-01: widened from
+// compound|area|price|bedrooms so rent-vs-sale twins and type variants no
+// longer collide, and canonicalized via the shared gazetteer so "cfc" and
+// "Cairo Festival City" hash to the same identity.
+const { resolveCanonicalCompound } = require('../lib/compound-canonical');
+function computeSyncHash(compound, area, price, bedrooms, propertyType, dealType) {
+  const key = [
+    resolveCanonicalCompound(compound),
+    area,
+    price,
+    bedrooms,
+    String(propertyType || 'apartment').toLowerCase(),
+    String(dealType || 'sale').toLowerCase(),
+  ].join('|');
   return crypto.createHash('sha256').update(key).digest('hex');
 }
 
@@ -59,7 +71,10 @@ async function getPendingUnits() {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "'new_units'!A:L",
+      // M (Deal Type) is an optional 13th column written by the Telegram
+      // intake (2026-11-01); A:L rows without it keep the historical
+      // default. Never widen beyond M — column N+ is reserved.
+      range: "'new_units'!A:M",
     });
     const rows = response.data.values || [];
     return rows
@@ -93,6 +108,15 @@ async function addUnitToSupabase(unit, syncHash) {
   const sbrCode = generateSBRCode(unit.compound, bedrooms, unit.furnishing, price);
   const nowIso = new Date().toISOString();
 
+  // Deal type: column M when the intake wrote it, else honest inference —
+  // a <=400k EGP price in this market is a monthly RENT (the 400k ceiling
+  // guard mirrors the Apps Script price-logic rule); >=1M EGP is a resale.
+  // Between 400k and 1M the sheet silence is ambiguous → 'sale' keeps the
+  // historical default and REVIEW_REQUIRED keeps a human in the loop.
+  const dealType = String(unit.dealType || '').trim().toLowerCase() || (
+    price > 0 && price <= 400000 ? 'rent' : 'sale'
+  );
+
   const record = {
     code: sbrCode,
     dupe_check_hash: syncHash,
@@ -100,7 +124,7 @@ async function addUnitToSupabase(unit, syncHash) {
     compound: unit.compound || 'غير محدد',
     location_area: unit.address || unit.compound || null,
     property_type: unit.propertyType ? String(unit.propertyType).toLowerCase() : 'apartment',
-    deal_type: 'sale',
+    deal_type: dealType,
     price,
     bedrooms,
     bathrooms,
@@ -159,10 +183,11 @@ async function main() {
       address: row[8],
       lat: row[9],
       lng: row[10],
+      dealType: row[12], // optional column M (Telegram intake, 2026-11-01)
     };
 
     try {
-      const syncHash = computeSyncHash(unit.compound, unit.area, unit.price, unit.bedrooms);
+      const syncHash = computeSyncHash(unit.compound, unit.area, unit.price, unit.bedrooms, unit.propertyType, unit.dealType);
 
       if (await checkDuplicate(syncHash)) {
         await updateUnitStatus(sheetRow, 'DUPLICATE');

@@ -97,6 +97,7 @@ const SLUGS = [
   'units-sync',
   'owner-outreach',
   'whatsapp-dispatch',
+  'sheets-supabase-sync',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -124,6 +125,7 @@ const SCRIPTS = {
   'units-sync': '08-units-sync/sync.js',
   'owner-outreach': '09-owner-outreach/outreach.js',
   'whatsapp-dispatch': '10-whatsapp-dispatch/dispatch.js',
+  'sheets-supabase-sync': '14-sheets-supabase-sync/sync.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -926,10 +928,27 @@ async function main() {
       category: 'outreach',
       trigger_type: 'cron',
       source_path: 'workflows/10-whatsapp-dispatch/dispatch.js',
-    });
-    if (seeded) log('whatsapp-dispatch row present in workflows registry');
+    });    if (seeded) log('whatsapp-dispatch row present in workflows registry');
   } catch (e) {
     log(`whatsapp-dispatch seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the sheets-supabase-sync row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'sheets-supabase-sync',
+      name: 'Sheets ↔ Supabase Two-Way Sync',
+      name_ar: 'المزامنة ثنائية الاتجاه بين الشيت وقاعدة البيانات',
+      description: 'Mission 3 (2026-11-01): every 10 minutes — two-way responsive sync between the Master Google Sheet (Master_Inventory 23-col ledger + Real_Available_Units live view) and public.listings. Batched API calls with exponential backoff, strict validation (no-phone-reject, no blank cells, 400k rent gate, canonical compounds, smart coding), upsert-in-place, external-feed unpublish on dead units. Bulk reset: POST /api/workflows/sheets-supabase-sync/run with {"resetOutreach":true} or run `node 14-sheets-supabase-sync/sync.js --reset-outreach` (/reset_outreach_status).',
+      status: 'active',
+      schedule: '*/10 * * * *',
+      category: 'ingestion',
+      trigger_type: 'cron',
+      source_path: 'workflows/14-sheets-supabase-sync/sync.js',
+    });
+    if (seeded) log('sheets-supabase-sync row present in workflows registry');
+  } catch (e) {
+    log(`sheets-supabase-sync seeding skipped: ${e.message}`);
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));

@@ -179,6 +179,56 @@ services:
       retries: 3
       start_period: 90s
 
+  # ── Paced owner outreach daemon (13-paced-outreach) ───────────────────
+  # Mission 2 (2026-11-01): TWO dedicated outreach workers over the OpenWA
+  # pool — "active-renting" (availability checks) and "massive-owners"
+  # (secondary intro) — strictly inside Cairo business hours 12:00–20:00,
+  # 30 msgs / 2 h per bot (= 240/day combined), 45–55 s human typing
+  # simulation between sends. line-2 (flagship concierge) is hard-excluded.
+  # Pulses public.system_status/{paced-outreach-bot} for the Admin Bots Desk.
+  paced-outreach:
+    build:
+      context: ../workflows
+      dockerfile: Dockerfile
+    container_name: sierra-paced-outreach
+    restart: unless-stopped
+    command: ["node", "13-paced-outreach/paced-outreach.js"]
+    env_file:
+      - path: .secrets.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - TZ=Africa/Cairo
+      - RUNNER_LABEL=paced-outreach
+      # ── Gateway wiring (same network as the RAG station) ──
+      - WHATSAPP_API_URL=http://whatsapp-rag-station:2785
+      - WHATSAPP_API_TOKEN=${OPENWA_ADMIN_API_KEY:-}
+      - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:-}
+      - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-3,line-4,line-5,line-6,line-7,line-8}
+      # ── Pacing contract (Mission 2 defaults; override in infra/.secrets.env) ──
+      - PACE_WINDOW=${PACE_WINDOW:-12-20}
+      - PACE_SLOT_BUDGET=${PACE_SLOT_BUDGET:-30}
+      - PACE_SLOT_HOURS=${PACE_SLOT_HOURS:-2}
+      - PACE_TYPE_MIN_MS=${PACE_TYPE_MIN_MS:-45000}
+      - PACE_TYPE_JITTER_MS=${PACE_TYPE_JITTER_MS:-10000}
+      - PACE_DAILY_CAP_TOTAL=${PACE_DAILY_CAP_TOTAL:-240}
+      - PACE_DRY_RUN=${PACE_DRY_RUN:-0}
+      # ── Supabase (candidates + audit + availability write-back) ──
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+    volumes:
+      - runner-state:/app/.state
+    networks:
+      - sierra-rag-net
+    healthcheck:
+      # Liveness = heartbeat file younger than 10 minutes (the daemon wakes
+      # every 60 s; outside the business window it still heartbeats "idle").
+      test: ["CMD-SHELL", "node -e \"const fs=require('fs');try{const h=JSON.parse(fs.readFileSync('/app/.state/paced-outreach-heartbeat.json','utf8'));process.exit(Date.now()-Date.parse(h.at)<600000?0:1)}catch(e){process.exit(1)}\""]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 networks:
   sierra-rag-net:
     external: true

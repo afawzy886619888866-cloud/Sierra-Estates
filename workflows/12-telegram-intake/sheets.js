@@ -33,10 +33,10 @@ const INTAKE_HEADERS = [
   'Landlord Contact (Scrubbed)', 'Media Links', 'Status',
 ];
 
-// Column order contract of workflows/05-unit-adder/add.js (A–L).
+// Column order contract of workflows/05-unit-adder/add.js (A–L, optional M).
 const NEW_UNITS_HEADERS = [
   'Compound', 'Bedrooms', 'Bathrooms', 'Area', 'Price', 'Finishing Type',
-  'Furnishing', 'Property Type', 'Address', 'Lat', 'Lng', 'Status',
+  'Furnishing', 'Property Type', 'Address', 'Lat', 'Lng', 'Status', 'Deal Type',
 ];
 
 function log(...args) {
@@ -177,6 +177,55 @@ async function appendNewUnitsRow(row12) {
   return true;
 }
 
+/** Update an existing ledger row in place (Mission 2 dedup re-list path).
+ * Finds the row whose Reference Code (column B) matches, then updates the
+ * Price (M), Timestamp (A) and Status (T) cells. Returns the row number or
+ * null when the code is unknown (caller falls back to a fresh insert). */
+async function updateIntakeRowByCode(code, { priceDisplay, status } = {}) {
+  const ctx = client();
+  if (!ctx) return null;
+  const rows = await retry(async () => {
+    const res = await ctx.sheets.spreadsheets.values.get({
+      spreadsheetId: ctx.spreadsheetId,
+      range: `'${intakeTab()}'!A:T`,
+    });
+    return res.data.values || [];
+  }, 'readIntakeRows(update)');
+  const rowNumber = rows.findIndex((r) => String((r || [])[1] || '').trim() === String(code).trim());
+  if (rowNumber < 0) return null; // header is row 1 → data rows start at 2
+  const sheetRow = rowNumber + 1;
+  await retry(async () => ctx.sheets.spreadsheets.values.update({
+    spreadsheetId: ctx.spreadsheetId,
+    range: `'${intakeTab()}'!A${sheetRow}:T${sheetRow}`,
+    valueInputOption: 'RAW',
+    resource: {
+      values: [[
+        new Date().toISOString(), // A — refreshed timestamp
+        code, // B unchanged
+        rows[rowNumber][2] || '', // C unchanged
+        rows[rowNumber][3] || '', // D unchanged
+        rows[rowNumber][4] || '', // E unchanged
+        rows[rowNumber][5] || '', // F unchanged
+        rows[rowNumber][6] || '', // G unchanged
+        rows[rowNumber][7] ?? '', // H unchanged
+        rows[rowNumber][8] ?? '', // I unchanged
+        rows[rowNumber][9] ?? '', // J unchanged
+        rows[rowNumber][10] || '', // K unchanged
+        rows[rowNumber][11] || '', // L unchanged
+        priceDisplay || rows[rowNumber][12] || '—', // M — refreshed price
+        rows[rowNumber][13] || '', // N unchanged
+        rows[rowNumber][14] || '', // O unchanged
+        rows[rowNumber][15] || '', // P unchanged
+        rows[rowNumber][16] || '', // Q unchanged
+        rows[rowNumber][17] || '', // R unchanged
+        rows[rowNumber][18] || '', // S unchanged
+        status || 'Relisted — price refreshed', // T — new status
+      ]],
+    },
+  }), 'updateIntakeRowByCode');
+  return sheetRow;
+}
+
 module.exports = {
   INTAKE_HEADERS,
   NEW_UNITS_HEADERS,
@@ -185,6 +234,7 @@ module.exports = {
   readIntakeRows,
   appendIntakeRow,
   appendNewUnitsRow,
+  updateIntakeRowByCode,
   resolveSpreadsheetId,
   intakeTab,
   newUnitsTab,

@@ -114,6 +114,41 @@ function renderMissingFields(missing, gotPhotos) {
   ].join('\n');
 }
 
+/** Sub-500ms acknowledgement (Mission 2): the agent sees this instantly;
+ *  parsing, media download, AI extraction and sheet/DB writes continue in
+ *  the background. The final ✅ renderConfirmation follows. */
+function renderFastAck() {
+  return [
+    `⏳ Unit received — parsing & verifying...`,
+    `تم استلام الوحدة — جاري الفحص والمعالجة...`,
+  ].join('\n');
+}
+
+/** Confirmation for a re-list caught by the dedup index (same owner +
+ *  compound + type + area, price within ±5 %): the existing row is refreshed
+ *  in place, no duplicate is created. */
+function renderRelistRefresh(code, driftPct, rowNumber) {
+  const drift = Number.isFinite(driftPct) ? `${(driftPct * 100).toFixed(1)}%` : 'minor';
+  return [
+    `♻️ This looks like a re-list of <code>${escapeHtml(code)}</code> (price drift ${drift}).`,
+    `The existing Master Sheet row was refreshed in place — price, timestamp and status updated${rowNumber ? ` (row #${escapeHtml(String(rowNumber))})` : ''}. No duplicate row created.`,
+    `هذه الوحدة مسجلة مسبقاً — تم تحديث السعر والحالة في نفس الصف دون تكرار.`,
+  ].join('\n');
+}
+
+/** DQE notice: same identity key but the price moved MORE than ±5 % — the
+ *  unit is logged as a new row and flagged for human review. */
+function renderDqeFlag(code, existingPrice, newPrice, driftPct) {
+  const fmt = (n) => (Number.isFinite(n) ? Number(n).toLocaleString('en-US') : '—');
+  return [
+    `📊 Price variance detected for <code>${escapeHtml(code)}</code>.`,
+    `• Previously seen: ${fmt(existingPrice)} EGP`,
+    `• Now: ${fmt(newPrice)} EGP (${Number.isFinite(driftPct) ? `${(driftPct * 100).toFixed(1)}%` : '?'} change)`,
+    `Logged as a new row and flagged for verification — if this is a genuine price change on the same unit, the team will merge the rows.`,
+    `تم تسجيل الوحدة مع ملاحظة تغير السعر عن السابق — سيتم التحقق يدوياً.`,
+  ].join('\n');
+}
+
 /** Honest reply when the sheet sync failed: the unit is safe locally. */
 function renderSpooled(code) {
   return [
@@ -151,6 +186,9 @@ module.exports = {
   renderBroadcast,
   renderAlbumCaption,
   renderConfirmation,
+  renderFastAck,
+  renderRelistRefresh,
+  renderDqeFlag,
   renderMissingFields,
   renderSpooled,
   renderError,

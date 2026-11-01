@@ -53,6 +53,8 @@ const redact = require('./redact');
 const { assignCode, intakeHash } = require('./codes');
 const sheets = require('./sheets');
 const render = require('./render');
+const dedupIndex = require('../lib/dedup-index');
+const { resolveCanonicalCompound } = require('../lib/compound-canonical');
 
 // ── configuration ──────────────────────────────────────────────────────────
 const BOT_TOKEN = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
@@ -151,6 +153,25 @@ function ledgerCodeFor(hash) {
   return hit ? hit.code : null;
 }
 
+// ── update_id exactly-once (Mission 2: concurrent processing guard) ─────────
+// The poll loop dispatches updates WITHOUT awaiting them (sub-500 ms ack),
+// so Telegram redeliveries could otherwise double-process an update that
+// is still mid-flight. A bounded LRU of seen update_ids closes that hole.
+const seenUpdateIds = new Map(); // update_id → ts
+function updateSeen(updateId) {
+  const key = Number(updateId);
+  if (!Number.isFinite(key)) return false;
+  const now = Date.now();
+  if (seenUpdateIds.has(key)) return true;
+  seenUpdateIds.set(key, now);
+  if (seenUpdateIds.size > 2000) {
+    for (const [k, ts] of seenUpdateIds) {
+      if (now - ts > 24 * 60 * 60 * 1000) seenUpdateIds.delete(k);
+    }
+  }
+  return false;
+}
+
 // ── spool (sheet outage safety net) ────────────────────────────────────────
 function spoolPush(entry) {
   const spool = stateRead(SPOOL_FILE, { pending: [] });
@@ -245,11 +266,22 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     ).catch(() => {});
   }
 
+  // ═══ MISSION 2: SUB-500ms ACK ═══════════════════════════════════════════
+  // Everything above is local (rate limiter + ledger read). Acknowledge the
+  // agent NOW; parsing, media download, AI extraction, Sheets + Supabase
+  // writes and the broadcast all continue below, asynchronously.
+  const ackStart = Date.now();
+  const fastAckP = tg.sendMessage(chatKey, render.renderFastAck(),
+    replyToMessageId ? { reply_to_message_id: replyToMessageId } : {},
+  ).catch(() => {});
+  const ackSentMs = Date.now() - ackStart;
+
   // 1. Parse (deterministic; LLM gap-fill intentionally OFF by default —
   //    §21 no-fabrication: an explicit "missing" beats a guessed field).
   const listing = parseListing(text);
   const missing = missingFields(listing);
   if (missing.length) {
+    await fastAckP;
     return tg.sendMessage(chatKey, render.renderMissingFields(missing, photoFileIds.length > 0),
       replyToMessageId ? { reply_to_message_id: replyToMessageId } : {},
     ).catch(() => {});
@@ -259,6 +291,53 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
   const ownerPhones = redact.extractOwnerPhones(text);
   const landlordName = redact.extractLandlordName(text);
   const sanitizedDescription = redact.scrubForTeam(text).slice(0, 900);
+  // Canonical compound (Mission 3 normalization rule) — gazetteer-mapped.
+  if (listing.compound) listing.compoundCanonical = resolveCanonicalCompound(listing.compound);
+
+  // ═══ MISSION 2: IN-MEMORY DEDUP INDEX + ±5% PRICE DQE GATE ═══════════════
+  // Checked BEFORE any Sheets/Supabase write. Same owner + canonical
+  // compound + unit type + area bucket with a price within ±5% → re-list:
+  // refresh the existing row in place instead of creating a duplicate.
+  const dedupDecision = await dedupIndex.checkDuplicate({
+    ownerPhone: ownerPhones[0] || null,
+    compound: listing.compoundCanonical || listing.compound,
+    unitType: listing.propertyType,
+    areaSqm: listing.areaSqm,
+    price: listing.price ? listing.price.amount : null,
+    dealType: listing.listingType,
+  }).catch((e) => {
+    log(`dedup-index check failed (continuing as fresh): ${e.message}`);
+    return { duplicate: false };
+  });
+
+  if (dedupDecision.duplicate && dedupDecision.action === 'update_in_place') {
+    const priorCode = dedupDecision.match && dedupDecision.match.code;
+    let rowNumber = null;
+    if (priorCode && sheets.configured()) {
+      rowNumber = await sheets.updateIntakeRowByCode(priorCode, {
+        priceDisplay: listing.price
+          ? `${Number(listing.price.amount).toLocaleString('en-US')} ${listing.price.currency}${listing.listingType === 'rent' ? (listing.price.period === 'year' ? ' / year' : ' / month') : ''}`
+          : undefined,
+      }).catch((e) => {
+        log(`re-list sheet refresh failed for ${priorCode}: ${e.message}`);
+        return null;
+      });
+    }
+    await dedupIndex.record({
+      ownerPhone: ownerPhones[0] || null,
+      compound: listing.compoundCanonical || listing.compound,
+      unitType: listing.propertyType,
+      areaSqm: listing.areaSqm,
+      price: listing.price ? listing.price.amount : null,
+      dealType: listing.listingType,
+      code: priorCode,
+    }).catch(() => {});
+    await fastAckP;
+    log(`re-list refresh: ${priorCode} drift=${dedupDecision.drift} ackMs=${ackSentMs}`);
+    return tg.sendMessage(chatKey, render.renderRelistRefresh(priorCode, dedupDecision.drift, rowNumber),
+      replyToMessageId ? { reply_to_message_id: replyToMessageId } : {},
+    ).catch(() => {});
+  }
 
   // 3. Code assignment (sheet-led, mutex-guarded).
   const sheetRows = sheets.configured() ? await sheets.readIntakeRows().catch(() => null) : null;
@@ -277,8 +356,9 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     `agent: ${agentName}`,
     `received: ${nowIso}`,
     `code_source: ${source}`,
+    dedupDecision.dqeFlag ? `dqe: PRICE_OUT_OF_BAND existing=${dedupDecision.dqeFlag.existingPrice} drift=${dedupDecision.dqeFlag.drift}` : '',
     `raw: ${String(text).replace(/\s+/g, ' ').slice(0, 400)}`,
-  ].join(' | ');
+  ].filter(Boolean).join(' | ');
   const maskedContact = ownerPhones.length ? ownerPhones.map(redact.maskPhone).join(' , ') : '—';
   const mediaLinks = [
     photoFileIds.length ? `tg:${photoFileIds.join(',')}` : '',
@@ -287,17 +367,18 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
 
   const masterRow = [
     nowIso, code, listing.listingType === 'rent' ? 'Rent' : 'Sale', agentName,
-    listing.compound || '—', listing.district || '—',
+    listing.compoundCanonical || listing.compound || '—', listing.district || '—',
     listing.propertyType || 'Unit', listing.areaSqm ?? '—',
     listing.bedrooms ?? '—', listing.bathrooms ?? '—',
     listing.furnishing || '—', listing.finishing || '—',
     priceDisplay, listing.paymentTerms || '—', listing.deposit || '—',
-    sanitizedDescription, internalNotes, maskedContact, mediaLinks, 'Active',
+    sanitizedDescription, internalNotes, maskedContact, mediaLinks,
+    dedupDecision.dqeFlag ? 'DQE Flag — price variance' : 'Active',
   ];
 
   // 5. The new_units feed row (A–L contract of workflow 05 unit-adder).
   const newUnitsRow = [
-    listing.compound || '—',
+    listing.compoundCanonical || listing.compound || '—',
     String(listing.bedrooms ?? 0),
     String(listing.bathrooms ?? 0),
     String(listing.areaSqm ?? 0),
@@ -306,8 +387,9 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     (listing.furnishing || '').toLowerCase().includes('furnish') && !/un|empty|غير/i.test(listing.furnishing || '')
       ? 'furnished' : '',
     listing.propertyType || 'apartment',
-    [listing.district, listing.compound].filter(Boolean).join(', ') || '—',
+    [listing.district, listing.compoundCanonical || listing.compound].filter(Boolean).join(', ') || '—',
     '', '', 'PENDING',
+    listing.listingType === 'rent' ? 'Rent' : 'Sale', // M — deal type (05-unit-adder, 2026-11-01)
   ];
 
   // 6. Persist (spool on failure — never drop a unit).
@@ -332,6 +414,19 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
   }
   ledgerRecord(hash, code);
 
+  // 6b. Record in the dedup index so the NEXT intake of the same unit hits
+  //     the re-list gate (Mission 2).
+  await dedupIndex.record({
+    ownerPhone: ownerPhones[0] || null,
+    compound: listing.compoundCanonical || listing.compound,
+    unitType: listing.propertyType,
+    areaSqm: listing.areaSqm,
+    price: listing.price ? listing.price.amount : null,
+    dealType: listing.listingType,
+    code,
+    sheetRow: rowNumber,
+  }).catch(() => {});
+
   // 7. Archive photos to the state volume (file_ids already stored in the
   //    sheet; local copies survive even if Telegram prunes them).
   for (let i = 0; i < Math.min(photoFileIds.length, MAX_PHOTOS); i++) {
@@ -349,11 +444,18 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
 
   // 9. Confirmation in the agent's own group.
   const broadcastOk = await broadcastListing(listing, agentName, photoFileIds);
+  await fastAckP; // the ⏳ is on screen — replace it with the outcome
   await tg.sendMessage(chatKey, render.renderConfirmation(code, rowNumber, {
     broadcast: broadcastOk, landlordCount: ownerPhones.length,
   }), replyToMessageId ? { reply_to_message_id: replyToMessageId } : {}).catch(() => {});
+  if (dedupDecision.dqeFlag) {
+    await tg.sendMessage(chatKey, render.renderDqeFlag(code,
+      dedupDecision.dqeFlag.existingPrice, dedupDecision.dqeFlag.newPrice,
+      dedupDecision.dqeFlag.drift),
+      replyToMessageId ? { reply_to_message_id: replyToMessageId } : {}).catch(() => {});
+  }
 
-  log(`intake ok: ${code} row ${rowNumber} agent=${agentName} photos=${photoFileIds.length} phones=${ownerPhones.length}`);
+  log(`intake ok: ${code} row ${rowNumber} agent=${agentName} photos=${photoFileIds.length} phones=${ownerPhones.length} ackMs=${ackSentMs}${dedupDecision.dqeFlag ? ' dqe=PRICE_OUT_OF_BAND' : ''}`);
 }
 
 /** Broadcast the sanitized unit to General: text first (guaranteed), then
@@ -473,6 +575,9 @@ async function handleCommand(text, chatId, fromUser) {
 
 // ── dispatch one update ────────────────────────────────────────────────────
 async function handleUpdate(update) {
+  // Exactly-once: Telegram redelivers un-acked updates; with the poll loop
+  // no longer awaiting handlers, an in-flight update could be seen twice.
+  if (updateSeen(update.update_id)) return;
   const message = update.message || update.edited_message;
   if (!message) return;
   if (message.from && message.from.is_bot) return;
@@ -545,17 +650,18 @@ async function main() {
       const updates = await tg.getUpdates(offset, 30);
       for (const update of updates || []) {
         offset = update.update_id + 1;
-        try {
-          await handleUpdate(update);
-        } catch (e) {
+        // MISSION 2 (sub-500 ms ack): dispatch WITHOUT awaiting so one slow
+        // sheet write / photo album never delays the next unit's ack. The
+        // update_id guard + intake ledger + codes mutex keep this safe.
+        handleUpdate(update).catch((e) => {
           const incidentId = `tg-${new Date().toISOString().slice(11, 19)}-${crypto.randomBytes(3).toString('hex')}`;
           log(`update ${update.update_id} failed (${incidentId}): ${e.message}`);
           const message = update.message || update.edited_message;
           if (message && AGENT_GROUPS.has(String(message.chat.id))) {
-            await tg.sendMessage(String(message.chat.id), render.renderError(incidentId, 'processing'))
+            tg.sendMessage(String(message.chat.id), render.renderError(incidentId, 'processing'))
               .catch(() => {});
           }
-        }
+        });
       }
     } catch (e) {
       log(`poll cycle failed: ${e.message}`);
