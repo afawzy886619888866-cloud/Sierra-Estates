@@ -470,7 +470,11 @@ export async function semanticSearch(params: {
     const { supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase
       .from('listings')
-      .select('*')
+      // Least-columns select (2026-11-01 PII hardening): the anon role only
+      // holds column-level SELECT on public-safe listings columns.
+      .select(
+        'id,ref_id,title,title_ar,description,compound,location_area,city,price,price_currency,bedrooms,bathrooms,area_sqm,property_type,status,finishing_type,images,deal_type',
+      )
       .eq('status', 'active')
       .limit(300);
 

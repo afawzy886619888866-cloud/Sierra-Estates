@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { publicEndpointLimiter } from '@/lib/server/rate-limit';
-import { getSupabase, listRecords } from '@sierra-estates/db';
+import { getSupabaseAdmin, listRecords } from '@sierra-estates/db';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
 
@@ -39,9 +39,24 @@ function markUnitRequested(unitCode: string) {
 /** Resolve listing safely from Supabase or fallback record store. */
 async function resolveListing(unitCode: string, unitId?: string): Promise<Record<string, unknown> | null> {
   // 1. Direct Supabase query
+  //
+  // 2026-11-01 PII hardening: owner/broker contact columns are no longer
+  // grantable to the anon role, so this SERVER-SIDE resolver reads them with
+  // the service-role client. The explicit publish-gate filters below preserve
+  // exactly the row scope the anon client's RLS policy ("Public can view
+  // active listings": status='active' AND publish_status='PUBLISHABLE')
+  // enforced before — the route itself is the gate now (rate limit +
+  // cooldown + response that never carries PII).
   try {
-    const supabase = getSupabase();
-    let query = supabase.from('listings').select('*').limit(1);
+    const supabase = getSupabaseAdmin();
+    let query = supabase
+      .from('listings')
+      .select(
+        'id,code,ref_id,sbr_code,compound,location_area,owner_phone,owner_name,broker_phone,broker_name',
+      )
+      .eq('status', 'active')
+      .eq('publish_status', 'PUBLISHABLE')
+      .limit(1);
     if (unitId) {
       query = query.or(`code.eq.${unitCode},id.eq.${unitId},ref_id.eq.${unitCode},sbr_code.eq.${unitCode}`);
     } else {

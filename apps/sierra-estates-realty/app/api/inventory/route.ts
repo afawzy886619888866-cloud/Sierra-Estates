@@ -98,8 +98,11 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
     for (let from = 0; from < HARD_CAP; from += PAGE) {
       let query = supabase
         .from("listings")
+        // Least-columns select (2026-11-01 PII hardening): the anon role only
+        // holds column-level SELECT on public-safe listings columns — owner/
+        // broker contact and raw payloads are not grantable, so never select('*').
         .select(
-          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
+          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, img, tag, ai_score, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
         )
         .eq("status", "active")
         // PUBLISH GATE (Phase D): only verified rows may reach the public map.
@@ -179,17 +182,17 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
           : price > 0 && price < 1_000_000
           ? "rent"
           : "sale";
-      // img/tag/aiScore/publishToClient live in the raw_data JSONB blob on
-      // the deployed table (see lib/server/listing-columns.ts) — images[] is
-      // the only real photo column, with raw_data.img as the curated primary.
-      const raw = (listing.raw_data && typeof listing.raw_data === "object") ? listing.raw_data : {};
+      // img/tag/ai_score are REAL columns since migrations 039/020 — the
+      // raw_data parking convention is retired for public reads (raw_data
+      // is not grantable to the anon role). images[] is the photo array,
+      // with the curated img column as the primary.
       // Pick best available photo: curated img > first from images[] array.
       // Then check with hasPendingPhoto so stock images don't count as real.
       const imagesArr: string[] = Array.isArray(listing.images)
         ? listing.images.filter((x: unknown) => typeof x === "string" && String(x).startsWith("http"))
         : [];
       const primaryImg =
-        (raw.img && !hasPendingPhoto(raw.img as string) ? raw.img as string : null) ||
+        (listing.img && !hasPendingPhoto(listing.img as string) ? listing.img as string : null) ||
         imagesArr.find((u) => !hasPendingPhoto(u)) ||
         null;
       const hasPhoto = Boolean(primaryImg);
@@ -197,12 +200,12 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
       return {
         id: listing.id,
         code: listing.code || listing.sbr_code || listing.ref_id || listing.id,
-        title: listing.title || raw.title || undefined,
+        title: listing.title || undefined,
         titleAr: listing.title_ar || undefined,
         descriptionAr: scrubOwnerContactText(listing.description_ar) || undefined,
-        agent: listing.agent_name || raw.agent || undefined,
-        tag: raw.tag || undefined,
-        aiScore: typeof raw.aiScore === "number" ? raw.aiScore : undefined,
+        agent: listing.agent_name || undefined,
+        tag: listing.tag || undefined,
+        aiScore: typeof listing.ai_score === "number" ? listing.ai_score : undefined,
         featured: Boolean(listing.featured),
         finishing: listing.finishing_type || undefined,
         furnishing: listing.furnishing_status || undefined,

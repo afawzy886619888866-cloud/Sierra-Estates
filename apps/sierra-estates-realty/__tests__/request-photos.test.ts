@@ -15,6 +15,7 @@ jest.mock('@/lib/server/rate-limit', () => ({
 
 const mockSupabaseQuery = {
   select: jest.fn().mockReturnThis(),
+  eq: jest.fn().mockReturnThis(),
   limit: jest.fn().mockReturnThis(),
   or: jest.fn().mockResolvedValue({
     data: [
@@ -32,6 +33,12 @@ const mockSupabaseQuery = {
 };
 
 jest.mock('@sierra-estates/db', () => ({
+  // 2026-11-01 PII hardening: the route resolves owner contact server-side
+  // with the service-role client (getSupabaseAdmin) — owner/broker columns
+  // are no longer grantable to the anon role.
+  getSupabaseAdmin: jest.fn(() => ({
+    from: jest.fn(() => mockSupabaseQuery),
+  })),
   getSupabase: jest.fn(() => ({
     from: jest.fn(() => mockSupabaseQuery),
   })),

@@ -128,7 +128,12 @@ async function readListings(): Promise<Listing[]> {
     const { supabase } = await import('@/lib/supabase');
     const { data: supaListings, error: supaErr } = await supabase
       .from('listings')
-      .select('*')
+      // Least-columns select (2026-11-01 PII hardening): the anon role only
+      // holds column-level SELECT on public-safe listings columns — owner/
+      // broker contact and raw payloads are not grantable, so never select('*').
+      .select(
+        'id,ref_id,code,sbr_code,compound,location_area,property_type,bedrooms,bathrooms,area_sqm,price,images,featured,is_hot_deal,deal_type,agent_name,status,description,img,tag,ai_score,publish_to_client',
+      )
       .in('status', ['active', 'available'])
       .eq('publish_status', 'PUBLISHABLE')
       .limit(500);
@@ -139,12 +144,12 @@ async function readListings(): Promise<Listing[]> {
         const egpM = price > 100000 ? price / 1_000_000 : price;
         const usd = Math.round(price / 50);
 
-        // Presentation fields (img/tag/aiScore) are parked in raw_data on the
-        // deployed table — read them back through the same convention the
-        // write path uses (lib/server/listing-columns.ts).
+        // Presentation fields are REAL columns since migrations 039/020
+        // (img, tag) and the base schema (ai_score, publish_to_client) —
+        // the old raw_data parking convention is retired for public reads
+        // (raw_data is no longer grantable to the anon role).
         // ANTI-FABRICATION: missing values surface as empty/0 — never
         // invented defaults (no 'New Cairo', no ||3 beds, no ||1500 USD).
-        const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
         return {
           id: item.id || item.ref_id,
           code: item.code || item.sbr_code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
@@ -156,11 +161,11 @@ async function readListings(): Promise<Listing[]> {
           area: Number(item.area_sqm) || 0,
           egpM: Number(egpM.toFixed(2)),
           usd,
-          aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
-          tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
+          aiScore: typeof item.ai_score === 'number' ? item.ai_score : 0,
+          tag: item.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
           agent: item.agent_name || '',
-          img: raw.img || (item.images && item.images[0]) || '',
+          img: item.img || (item.images && item.images[0]) || '',
           status: item.status || 'available',
           description: scrubOwnerContactText(item.description) || '',
         } as Listing;
@@ -306,7 +311,8 @@ export async function GET(request: Request) {
 
             // ANTI-FABRICATION: no invented defaults (no 'New Cairo', no
             // ||3 beds, no ||1500 USD, no hardcoded 9.0/8.8 aiScore).
-            const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
+            // ai_score/tag/img are real columns (migrations 020/039) and the
+            // RPC returns them directly (migration 041 public-safe column set).
             return {
               id: item.id || item.ref_id,
               code: item.code || item.reference_code || `SE-${item.id?.substring(0, 4)}`,
@@ -318,11 +324,11 @@ export async function GET(request: Request) {
               area: Number(item.area_sqm) || 0,
               egpM: Number(egpM.toFixed(2)),
               usd,
-              aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
-              tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
+              aiScore: typeof item.ai_score === 'number' ? item.ai_score : 0,
+              tag: item.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
               mode: item.deal_type === 'rent' ? 'rent' : 'sale',
               agent: item.agent_name || '',
-              img: (item.images && item.images[0]) || '',
+              img: item.img || (item.images && item.images[0]) || '',
               status: item.status || 'available',
               description: scrubOwnerContactText(item.description) || '',
               distanceKm: dist,

@@ -127,7 +127,11 @@ export async function GET(request: Request) {
         const { supabase } = await import('@/lib/supabase');
         const { data: liveRows, error: liveErr } = await supabase
           .from('listings')
-          .select('*')
+          // Least-columns select (2026-11-01 PII hardening): the anon role
+          // only holds column-level SELECT on public-safe listings columns.
+          .select(
+            'id,ref_id,code,sbr_code,compound,location_area,city,property_type,deal_type,price,price_currency,bedrooms,bathrooms,area_sqm,status,description,title,images,img,latitude,longitude,featured,is_hot_deal,agent_name,source_channel,amenities,finishing_type,updated_at',
+          )
           .in('status', ['active', 'available'])
           .eq('publish_status', 'PUBLISHABLE')
           .limit(500);
@@ -137,14 +141,15 @@ export async function GET(request: Request) {
             .filter((r: any) => r.latitude != null && r.longitude != null)
             .map((r: any) => ({
               ...r,
-              // Presentation fields (img) are parked in raw_data on the live
-              // table; surface them through the images array the processor
-              // reads (lib/server/listing-columns.ts convention).
+              // img is a REAL column since migration 039 (backfilled from
+              // images[1] in SQL = first element); raw_data is no longer
+              // grantable to the anon role. Surface it through the images
+              // array the processor reads.
               images:
                 Array.isArray(r.images) && r.images.length > 0
                   ? r.images
-                  : r.raw_data?.img
-                    ? [r.raw_data.img]
+                  : r.img
+                    ? [r.img]
                     : [],
             }));
           isLive = true;
@@ -208,7 +213,8 @@ export async function GET(request: Request) {
       // ANTI-FABRICATION (activation plan Rule B): missing values surface as
       // empty/0 — no invented 'New Cairo', no ||150 area, no hardcoded
       // 9.2/8.9 aiScore, no 'Verified Location' tag on unverified rows.
-      const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
+      // ai_score/tag/img are real columns (migrations 020/039) present in
+      // both the RPC's public-safe column set and the direct gated read.
       processed.push({
         id: item.id || item.ref_id,
         code: item.code || item.reference_code || `SE-${String(item.id).substring(0, 4)}`,
@@ -220,11 +226,11 @@ export async function GET(request: Request) {
         area: Number(item.area_sqm) || 0,
         egpM: Number(egpM.toFixed(2)),
         usd,
-        aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
-        tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
+        aiScore: typeof item.ai_score === 'number' ? item.ai_score : 0,
+        tag: item.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
         mode: itemMode,
         agent: item.agent_name || '',
-        img: (item.images && item.images[0]) || '',
+        img: item.img || (item.images && item.images[0]) || '',
         status,
         description: scrubOwnerContactText(item.description) || '',
         distanceKm,

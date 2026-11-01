@@ -23,7 +23,12 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')) {
       const { data, error } = await supabase
         .from('listings')
-        .select('*')
+        // Least-columns select (2026-11-01 PII hardening): the anon role only
+        // holds column-level SELECT on public-safe listings columns — owner/
+        // broker contact and raw payloads are not grantable, so never select('*').
+        .select(
+          'id,ref_id,compound,title,property_type,area_sqm,bedrooms,bathrooms,price,images,deal_type,amenities,finishing_type,status',
+        )
         .eq('deal_type', dealType)
         .eq('status', 'active')
         .limit(50);

@@ -82,6 +82,16 @@ const LISTING_COLUMNS = new Set([
     // to write it so unverified rows are explicitly REVIEW_REQUIRED.
     'publishStatus',
     'dupeCheckHash',
+    // Real columns on the deployed table since migrations 020/037–040
+    // (unified command center, inventory console reconciliation, master
+    // inventory operational columns). These used to land in raw_data — the
+    // 2026-11-01 PII hardening retired that parking for public reads
+    // (raw_data is not grantable to the anon role), so writes MUST target
+    // the real columns now. Keep in lockstep with those ALTER TABLE lists.
+    'seCode', 'freshnessScore', 'agent', 'aiScore', 'verified',
+    'publishToClient', 'img', 'tag',
+    'contactStatus', 'listingStatus', 'verifiedAvailableDate', 'aiFairPrice',
+    'isFeaturedGem', 'sourcedByAgent', 'verifiedByEmployee',
 ]);
 
 /**

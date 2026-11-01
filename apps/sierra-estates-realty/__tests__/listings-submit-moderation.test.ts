@@ -86,11 +86,10 @@ describe('/api/listings/submit — moderation', () => {
 
     expect(written.status).toBe(LISTING_STATUS_PENDING_REVIEW);
     expect(written.status).not.toBe('Available');
-    // verified has no column on the deployed table, so the write path parks
-    // it in raw_data (see lib/server/listing-columns.ts); toListingRecord()
-    // spreads it back on read, so the moderation invariant is unchanged.
-    const rawData = (written.rawData ?? {}) as Record<string, unknown>;
-    expect(rawData.verified).toBe(false);
+    // verified is a REAL column on the deployed table since migration 020
+    // (2026-11-01 PII hardening moved it out of raw_data parking — see
+    // lib/server/listing-columns.ts); the moderation invariant is unchanged.
+    expect(written.verified).toBe(false);
   });
 
   it('keeps a submission out of the client feed and unranked', async () => {
@@ -98,11 +97,11 @@ describe('/api/listings/submit — moderation', () => {
     const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
 
     // A self-submitted listing must not arrive pre-scored at the top of the
-    // inventory, nor flagged for the public client page. Both fields ride in
-    // raw_data on the deployed table and are spread back on every read.
-    const rawData = (written.rawData ?? {}) as Record<string, unknown>;
-    expect(rawData.publishToClient).toBe(false);
-    expect(rawData.aiScore).toBe(0);
+    // inventory, nor flagged for the public client page. Both are REAL
+    // columns on the deployed table since migrations 020/039 (moved out of
+    // raw_data parking by the 2026-11-01 PII hardening).
+    expect(written.publishToClient).toBe(false);
+    expect(written.aiScore).toBe(0);
   });
 
   it('writes the submission exactly once — the dual-write collection is gone', async () => {
@@ -152,7 +151,9 @@ describe('/api/listings/submit — moderation', () => {
 
     // No hardcoded PropertyFinder CDN imagery may ride along with a
     // photo-less submission (§21: misrepresented the actual unit).
-    expect(rawData.img).toBeNull();
+    // img is a REAL column since migration 039; photos still parks in
+    // raw_data (no such column).
+    expect(written.img).toBeNull();
     expect(rawData.photos).toEqual([]);
     expect(written.images).toEqual([]);
     // Zone is not guessed from the compound name anymore.
