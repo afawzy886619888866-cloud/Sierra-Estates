@@ -93,7 +93,10 @@ export async function POST(req: NextRequest) {
         const { data, error } = await supabase
           .from('listings')
           .select('id')
-          .or(`phone.eq.${v},mobile.eq.${v}`)
+          // 2026-11-01 fix: the deployed table's column is owner_phone — the
+          // legacy `phone` / `mobile` references never existed (42703), so no
+          // row ever matched and last_contact_date was never written.
+          .or(`owner_phone.eq.${v}`)
           .limit(10);
 
         if (error) {
