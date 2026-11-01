@@ -58,7 +58,29 @@ jobs:
               - transport
               - node_modules
 
+      # 2026-11-01: GitHub Advanced Security / code scanning is NOT available on
+      # this repo (private repo owned by a personal account — GHAS is
+      # org/enterprise-only; the code-scanning API returns 403 "Code scanning
+      # is not enabled for this repository" and security_and_analysis exposes
+      # no advanced_security toggle). The scan itself runs clean — only the
+      # SARIF upload to the code scanning API fails, which broke EVERY run
+      # since 87d9a49 with a configuration-error red X and zero signal.
+      # Fix: upload 'never' + archive the SARIF as a workflow artifact so the
+      # scan stays green and manually reviewable.
+      # TO REVERT once GHAS/code scanning is enabled (org transfer or license):
+      # remove the upload/output inputs and the artifact step below.
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: '/language:javascript-typescript'
+          upload: never
+          output: ../codeql-results
+
+      - name: Archive CodeQL SARIF (code scanning disabled on this repo)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: ../codeql-results/
+          retention-days: 14
+          if-no-files-found: warn
