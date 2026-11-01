@@ -9,9 +9,13 @@ const path = require('path');
 
 function loadWorkflowEnv(workflowDir = path.resolve(__dirname, '..')) {
   const repoRoot = path.resolve(workflowDir, '..');
+  // infra/.secrets.env is the MASTER secrets file (2026-11-01 hardening):
+  // read FIRST so its values win over checked-in .env defaults. Optional.
+  const secretsFile = path.join(repoRoot, 'infra', '.secrets.env');
   try {
     const dotenv = require('dotenv');
     for (const candidate of [
+      secretsFile,
       path.join(workflowDir, '.env'),
       path.join(repoRoot, '.env.local'),
       path.join(repoRoot, '.env'),
@@ -23,6 +27,7 @@ function loadWorkflowEnv(workflowDir = path.resolve(__dirname, '..')) {
   } catch (err) {
     // Fallback minimal parser if dotenv is unavailable
     for (const candidate of [
+      secretsFile,
       path.join(workflowDir, '.env'),
       path.join(repoRoot, '.env.local'),
       path.join(repoRoot, '.env'),

@@ -46,17 +46,15 @@ minimumReleaseAgeExclude:
 
 packages:
   - apps/*
-  # SPA from the -19-6-AI repo, now deployed as a separate Vercel project
-  # (admin.sierra-estates.net). apps/frontend has no package.json and is
-  # skipped automatically by pnpm.
+  # deploy/ is the SPA from the -19-6-AI repo, deployed as a separate Vercel
+  # project (admin.sierra-estates.net) with its own vercel.json — outside the
+  # workspace. (The old apps/frontend note was stale: no such dir exists.)
   - packages/agents
   - packages/agents-api
   - packages/agents-core
   - packages/ai-agent-sdk
   - packages/ai-orchestrator
   - packages/api
-  - packages/auth
-  - packages/batch
   - packages/config
   - packages/db
   - packages/deepseek-harness

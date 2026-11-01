@@ -29,6 +29,10 @@ services:
       dockerfile: Dockerfile
     container_name: sierra-whatsapp-rag-station
     restart: unless-stopped
+    # infra/.secrets.env (MASTER secrets, 2026-11-01 hardening) — optional.
+    env_file:
+      - path: .secrets.env
+        required: false
     # Soft memory floor for the 8-line budget (see header) - not a hard cap.
     mem_reservation: 10g
     ports:

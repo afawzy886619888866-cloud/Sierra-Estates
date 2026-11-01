@@ -129,18 +129,18 @@ temp/
 .virtual_documents/
 
 # Data files — inventory lives in Supabase, NOT git
-# Data files — inventory lives in Supabase, NOT git
-# Allowlist: only lightweight owners exports for Google Sheets IMPORTDATA
+# 2026-11-01 hardening: the public/downloads CSV allowlist was REMOVED — the
+# owner exports carry raw owner mobiles (PII) and were publicly downloadable
+# from sierra-estates.net. They are quarantined to ./quarantine/ (ignored)
+# and the Master Sheet now ingests via the two-way API sync (workflow 14)
+# instead of IMPORTDATA over public CSV URLs.
 data/
 *.xlsx
 *.csv
-!apps/sierra-estates-realty/public/downloads/owners-*.csv
-!apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_*.csv
 Inventory_with_Photos_Airtable.csv
 inventory_*.csv
 memory_*.csv
 Sierra_Estates_*.csv
-!apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_*.csv
 owner_media_matches.json
 obsidian-store.json
 !apps/sierra-estates-realty/data/online-sheet-units.json
@@ -259,3 +259,28 @@ apps/sierra-estates-realty/public/downloads/*.xlsx
 
 # Quarantined dumps and raw spreadsheets
 quarantine/
+
+# ============================================================================
+# 2026-11-01 secrets & dump hardening (Mission 1)
+# ============================================================================
+# Master secrets file — loaded first by workflows/lib/google-sheets.js
+# loadWorkflowEnv() and by the compose env_file directives. NEVER commit.
+infra/.secrets.env
+**/infra/.secrets.env
+# Raw SQL dumps: a blanket *.sql with explicit negations for the tracked
+# migration sources (already-tracked files are unaffected by ignore rules;
+# the negations keep `git add` working for NEW migrations).
+*.sql
+!supabase/migrations/**/*.sql
+!infra/supabase/migrations/**/*.sql
+!packages/open-memory/**/*.sql
+!schema.sql
+!apps/sierra-estates-realty/supabase/schema.sql
+!apps/sierra-estates-realty/supabase/tests/*.sql
+# NOTE: apps/sierra-estates-realty/supabase/migrations/ is ignored by the
+# apps/ rule above on purpose — its files are FORCE-ADDED (git add -f) per
+# the documented mirror workflow; the *.sql blanket does not change that.
+# Tracked runtime artifacts of local AI tooling — never commit.
+.node-persist/
+.playwright-mcp/
+.reports/

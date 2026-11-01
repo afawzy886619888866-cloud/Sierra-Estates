@@ -274,7 +274,6 @@ const JSON_TARGETS = [
   'packages/whatsapp-shared/inventory_extracted_units.json',
   'packages/whatsapp-shared/pending_owner_outreach.json',
   'packages/whatsapp-shared/data/listings.json',
-  'packages/whatsapp-agent/data/listings.json', // same real owner data, second copy
 ];
 
 const TEXT_TARGETS = [

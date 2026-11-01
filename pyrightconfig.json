@@ -4,7 +4,7 @@
   "venvPath": "C:/Users/sierr/AppData/Local/Programs/Python/Python312",
   "include": [
     "apps/agents/sierra-estates-bot",
-    "apps/agents/stage-9-closer",
+    "apps/agents/vertex-omni-agent",
     "apps/agents/whatsapp-bot",
     "apps/agents/whatsapp-scraper"
   ],

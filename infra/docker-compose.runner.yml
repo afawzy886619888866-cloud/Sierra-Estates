@@ -40,6 +40,13 @@ services:
       dockerfile: Dockerfile
     container_name: sierra-workflow-runner
     restart: unless-stopped
+    # infra/.secrets.env (MASTER secrets, 2026-11-01 hardening) is loaded
+    # into the container when present. Explicit `environment:` entries above
+    # still win. `required: false` keeps `docker compose up` working on
+    # hosts that keep secrets only in infra/.env.
+    env_file:
+      - path: .secrets.env
+        required: false
     ports:
       - "127.0.0.1:2786:2786"
     environment:
@@ -134,6 +141,9 @@ services:
       dockerfile: Dockerfile
     container_name: sierra-telegram-intake
     restart: unless-stopped
+    env_file:
+      - path: .secrets.env
+        required: false
     command: ["node", "12-telegram-intake/bot.js"]
     environment:
       - NODE_ENV=production
