@@ -74,13 +74,15 @@ jobs:
         with:
           category: '/language:javascript-typescript'
           upload: never
-          output: ../codeql-results
+          # Inside the workspace — actions/upload-artifact rejects paths
+          # containing '..' ("Relative pathing '.' and '..' is not allowed").
+          output: codeql-results
 
       - name: Archive CodeQL SARIF (code scanning disabled on this repo)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codeql-sarif
-          path: ../codeql-results/
+          path: codeql-results/
           retention-days: 14
           if-no-files-found: warn
