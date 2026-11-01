@@ -42,6 +42,13 @@ const KNOWN_BOTS = [
   'matchmaker-agent',
   'property-finder-bot',
   'mass-blast-bot',
+  // ── Guardian fleet (Mission 4, 2026-11-01) ──
+  'paced-outreach-bot',
+  'scribe-guardian',
+  'curator-guardian',
+  'atlas-sync-guardian',
+  'antigravity-closer-guardian',
+  'ops-watchdog',
 ];
 
 const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
@@ -107,6 +114,48 @@ Format output as JSON: { type: "buy|sell|rent", propertyType: "apartment|villa",
     rateLimitPerMinute: 30,
     cooldownSeconds: 3,
     systemPrompt: `Dispatch scheduled bilingual WhatsApp property showcase campaigns with random human typing delays.`,
+  },
+  // ── Guardian fleet (Mission 4, 2026-11-01) ──
+  'paced-outreach-bot': {
+    window: '12:00–20:00 Africa/Cairo',
+    slotBudget: '30 msgs / 2h per bot (240/day combined)',
+    typingSimulation: '45–55s',
+    workers: ['active-renting', 'massive-owners'],
+    conciergeLineExcluded: 'line-2',
+  },
+  'scribe-guardian': {
+    cron: '*/30 * * * *',
+    gemDiscountThreshold: 0.15,
+    primeViews: ['sea', 'landscape', 'garden', 'pool', 'open'],
+    photoRequestTimeoutHours: 12,
+  },
+  'curator-guardian': {
+    cron: '5 * * * *',
+    avmScope: 'New Cairo compounds',
+    sanitizer: 'v3',
+    conciergeRouting: '+201092048333',
+  },
+  'atlas-sync-guardian': {
+    cron: '*/10 * * * *',
+    watermark: 'Navy #0A1F44 / Gold #C9A227',
+    broadcastTarget: 'Telegram General group',
+    syndication: 'Property Finder Atlas v1 + GIS map',
+  },
+  'antigravity-closer-guardian': {
+    cron: '*/15 * * * *',
+    advisoryScript: 'AI Discovers. We Advise. You Decide.',
+    ownerVerificationSla: '24h',
+    commissionDiscount: '25% (website form)',
+    matchTopN: 5,
+    goldenHourMinutes: 60,
+  },
+  'ops-watchdog': {
+    cron: '*/15 * * * *',
+    checks: ['docker', 'openwa-lines', 'supabase-rls', 'api-latency', 'queue-backlog'],
+    autoRestartAllowlist: ['whatsapp-dispatch', 'units-sync', 'sheets-supabase-sync'],
+    briefing: '03:00 Cairo daily (Telegram)',
+    latencyMaxMs: 15000,
+    queueBacklogMax: 250,
   },
 };
 

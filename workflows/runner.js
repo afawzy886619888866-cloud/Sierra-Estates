@@ -98,6 +98,11 @@ const SLUGS = [
   'owner-outreach',
   'whatsapp-dispatch',
   'sheets-supabase-sync',
+  'scribe-guardian',
+  'curator-guardian',
+  'atlas-sync-guardian',
+  'antigravity-closer-guardian',
+  'ops-watchdog',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -126,6 +131,11 @@ const SCRIPTS = {
   'owner-outreach': '09-owner-outreach/outreach.js',
   'whatsapp-dispatch': '10-whatsapp-dispatch/dispatch.js',
   'sheets-supabase-sync': '14-sheets-supabase-sync/sync.js',
+  'scribe-guardian': '15-scribe-guardian/scribe.js',
+  'curator-guardian': '16-curator-guardian/curator.js',
+  'atlas-sync-guardian': '17-atlas-sync-guardian/atlas.js',
+  'antigravity-closer-guardian': '18-antigravity-closer-guardian/closer.js',
+  'ops-watchdog': '19-ops-watchdog/watchdog.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -949,6 +959,68 @@ async function main() {
     if (seeded) log('sheets-supabase-sync row present in workflows registry');
   } catch (e) {
     log(`sheets-supabase-sync seeding skipped: ${e.message}`);
+  }
+
+  // ── Guardian fleet seeding (Mission 4, 2026-11-01) — idempotent ──────────
+  const GUARDIANS = [
+    {
+      slug: 'scribe-guardian',
+      name: 'Supply & Harvester Guardian',
+      name_ar: 'حارس المعروض والحصاد',
+      description: 'Mission 4 Bot 1: monitors agent Telegram groups, WhatsApp broker groups and owner responses; flags Featured/Gem units (💎 priced ≥15% below compound average or prime views); queues WhatsApp photo-requests for photo-less Featured/Direct-Owner units and alerts the Admin OS after 12h unanswered.',
+      schedule: '*/30 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'curator-guardian',
+      name: 'Data Quality, Pricing & Sanitizer Guardian',
+      name_ar: 'حارس جودة البيانات والتسعير والتعقيم',
+      description: 'Mission 4 Bot 2: studies daily incoming prices per New Cairo compound, updates the AI Fair-Market Price benchmark on every unit card, learns price trends into unified_memory; enforces Sanitizer v3 (owner mobiles redacted from public descriptions, inquiries routed to +201092048333).',
+      schedule: '5 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'atlas-sync-guardian',
+      name: 'Syndication & Broadcast Guardian',
+      name_ar: 'حارس النشر والبث',
+      description: 'Mission 4 Bot 3: watches Real_Available_Units; the instant a unit is Available+Verified — Navy/Gold watermark (Canvas engine), sanitized broadcast + photo album + Unit_Code to the General Telegram group, Property Finder Atlas v1 push, GIS map publish.',
+      schedule: '*/10 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'antigravity-closer-guardian',
+      name: 'Buyer Concierge, Matchmaker & Closer Guardian',
+      name_ar: 'حارس خدمة العملاء والمطابقة وإتمام الصفقات',
+      description: 'Mission 4 Bot 4: answers Property Finder + Website inquiries with the Sierra Advisory Script (AI Discovers. We Advise. You Decide.), 24h owner-availability verification notice, Client Request Form link + 25% website commission discount; matchPropertiesToLead Top 3-5 + sales-rep Telegram notification; viewing confirmation → Google Calendar booking + CEO/TL/Advisor invites + 60-minute Golden Hour tracker.',
+      schedule: '*/15 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'ops-watchdog',
+      name: 'System Supervisor & Self-Optimizer',
+      name_ar: 'المشرف العام للنظام',
+      description: 'Mission 4 Bot 5: every 15 minutes — Docker containers, OpenWA lines, Supabase RLS + latency, public/admin API health, WhatsApp queue backlog; auto-restarts stalled workers via the runner control plane; daily 03:00 Cairo executive briefing to Telegram; learns incidents into unified_memory.',
+      schedule: '*/15 * * * *',
+      category: 'guardian',
+    },
+  ];
+  for (const g of GUARDIANS) {
+    try {
+      const seeded = await sb.upsertWorkflowRow({
+        slug: g.slug,
+        name: g.name,
+        name_ar: g.name_ar,
+        description: g.description,
+        status: 'active',
+        schedule: g.schedule,
+        category: g.category,
+        trigger_type: 'cron',
+        source_path: `workflows/${SCRIPTS[g.slug]}`,
+      });
+      if (seeded) log(`${g.slug} row present in workflows registry`);
+    } catch (e) {
+      log(`${g.slug} seeding skipped: ${e.message}`);
+    }
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));

@@ -265,14 +265,16 @@ describe('Telegram intake pipeline — sheet contracts', () => {
     ]);
   });
 
-  it('keeps the new_units feed header identical to unit-adder\'s A–L contract', () => {
+  it('keeps the new_units feed header identical to unit-adder\'s A–M contract (Deal Type in M, 2026-11-01)', () => {
     expect(sheetsLib.NEW_UNITS_HEADERS).toEqual([
       'Compound', 'Bedrooms', 'Bathrooms', 'Area', 'Price', 'Finishing Type',
-      'Furnishing', 'Property Type', 'Address', 'Lat', 'Lng', 'Status',
+      'Furnishing', 'Property Type', 'Address', 'Lat', 'Lng', 'Status', 'Deal Type',
     ]);
-    // And the unit-adder itself still reads 'new_units'!A:L with PENDING rows.
+    // And the unit-adder itself still reads 'new_units'!A:M with PENDING rows
+    // (column M = Deal Type written by the Telegram intake so rent units are
+    // no longer mislabeled as sale — Mission 2 fix).
     const adder = fs.readFileSync(path.join(ROOT_DIR, 'workflows', '05-unit-adder', 'add.js'), 'utf-8');
-    expect(adder).toContain("'new_units'!A:L");
+    expect(adder).toContain("'new_units'!A:M");
     expect(adder).toContain("=== 'PENDING'");
   });
 
