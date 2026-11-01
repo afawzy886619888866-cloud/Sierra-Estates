@@ -293,6 +293,11 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
   const sanitizedDescription = redact.scrubForTeam(text).slice(0, 900);
   // Canonical compound (Mission 3 normalization rule) — gazetteer-mapped.
   if (listing.compound) listing.compoundCanonical = resolveCanonicalCompound(listing.compound);
+  // Mission 5: the structured 📥 card carries an explicit owner block —
+  // prefer it over label-extraction when present (never fabricated).
+  const cardOwner = listing.owner || null;
+  const ownerFirstName = (cardOwner && cardOwner.name) || landlordName;
+  const cardUnitNumber = cardOwner && cardOwner.unitNumber ? String(cardOwner.unitNumber) : null;
 
   // ═══ MISSION 2: IN-MEMORY DEDUP INDEX + ±5% PRICE DQE GATE ═══════════════
   // Checked BEFORE any Sheets/Supabase write. Same owner + canonical
@@ -351,11 +356,13 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     ? `${Number(listing.price.amount).toLocaleString('en-US')} ${listing.price.currency}${listing.listingType === 'rent' ? (listing.price.period === 'year' ? ' / year' : ' / month') : ''}`
     : '—';
   const internalNotes = [
-    `landlord: ${landlordName || '(not given)'}`,
+    `landlord: ${ownerFirstName || '(not given)'}`,
     `phones: ${ownerPhones.length ? ownerPhones.join(' , ') : '(none found)'}`,
     `agent: ${agentName}`,
     `received: ${nowIso}`,
     `code_source: ${source}`,
+    cardUnitNumber ? `unit_no(private): ${cardUnitNumber}` : '',
+    `shape: ${listing.__shape || 'free-text'}`,
     dedupDecision.dqeFlag ? `dqe: PRICE_OUT_OF_BAND existing=${dedupDecision.dqeFlag.existingPrice} drift=${dedupDecision.dqeFlag.drift}` : '',
     `raw: ${String(text).replace(/\s+/g, ' ').slice(0, 400)}`,
   ].filter(Boolean).join(' | ');
@@ -366,7 +373,7 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
   ].filter(Boolean).join(' | ') || '—';
 
   const masterRow = [
-    nowIso, code, listing.listingType === 'rent' ? 'Rent' : 'Sale', agentName,
+    nowIso, code, listing.dealTypeRaw || (listing.listingType === 'rent' ? 'Rent' : 'Sale'), agentName,
     listing.compoundCanonical || listing.compound || '—', listing.district || '—',
     listing.propertyType || 'Unit', listing.areaSqm ?? '—',
     listing.bedrooms ?? '—', listing.bathrooms ?? '—',

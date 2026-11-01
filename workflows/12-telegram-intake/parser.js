@@ -247,10 +247,20 @@ function ordinalEn(n) {
   return s[(v - 20) % 10] || s[v] || s[0];
 }
 
-/** Parse one intake text into the canonical listing shape. */
+/** Parse one intake text into the canonical listing shape.
+ * Mission 5 (2026-11-01): a structured 📥 [UNIT INTAKE] card (info-shapes)
+ * wins over the free-text extractor — every field is explicit — but any
+ * card field that is missing falls back to the regex extractor so a
+ * partially-filled card still parses as well as raw text. */
 function parseListing(rawText) {
   const text = normalize(rawText);
   if (!text) return emptyListing();
+
+  let card = null;
+  try {
+    const { parseUnitIntakeCard } = require('../lib/info-shapes');
+    card = parseUnitIntakeCard(text);
+  } catch (_) { card = null; }
 
   const price = parsePrice(text);
   let listingType = parseListingType(text);
@@ -281,23 +291,29 @@ function parseListing(rawText) {
     }
   }
 
+  const pick = (cardVal, fallback) => ((card && cardVal !== null && cardVal !== undefined && cardVal !== '') ? cardVal : fallback);
+
   return {
-    listingType,
-    propertyType: property ? property.value : null,
-    compound: parseCompound(text),
+    __shape: card ? 'UNIT_INTAKE_CARD' : undefined,
+    dealTypeRaw: card ? card.dealTypeRaw : undefined,
+    listingType: pick(card && card.listingType, listingType),
+    propertyType: pick(card && card.propertyType, property ? property.value : null),
+    compound: pick(card && card.compound, parseCompound(text)),
     district: districtHit ? districtHit.value : null,
-    floor: parseFloor(text),
+    floor: pick(card && card.floor, parseFloor(text)),
     finishing: finishingHit ? finishingHit.value : null,
-    furnishing: furnishingHit ? furnishingHit.value : null,
-    view: viewHit ? viewHit.value : null,
-    areaSqm: numOrNull(text.match(AREA_RE)),
-    bedrooms: countAfter(text, BEDS_RE),
-    bathrooms: countAfter(text, BATHS_RE),
+    furnishing: pick(card && card.furnishing, furnishingHit ? furnishingHit.value : null),
+    view: pick(card && card.view, viewHit ? viewHit.value : null),
+    areaSqm: pick(card && card.areaSqm, numOrNull(text.match(AREA_RE))),
+    bedrooms: pick(card && card.bedrooms, countAfter(text, BEDS_RE)),
+    bathrooms: pick(card && card.bathrooms, countAfter(text, BATHS_RE)),
     masterBedrooms: countAfter(text, MASTER_RE),
-    price,
-    paymentTerms: paymentHit ? paymentHit.value : null,
-    deposit,
+    price: pick(card && card.price, price),
+    paymentTerms: pick(card && card.paymentTerms, paymentHit ? paymentHit.value : null),
+    deposit: pick(card && card.deposit, deposit),
     availability,
+    owner: card ? card.owner : undefined,
+    notes: card ? card.notes : undefined,
   };
 }
 
