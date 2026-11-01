@@ -37,11 +37,22 @@ function readAsText(full: string): string {
 }
 
 describe('public/downloads — static owner-PII containment (Section D)', () => {
-  it('every tracked CSV/XLSX is free of raw owner mobiles (concierge only)', () => {
+  // 2026-11-01 (Mission 1): the git-tracked owner CSVs were QUARANTINED to
+  // ./quarantine/public-downloads-2026-11-01/ (ignored) — they carried
+  // hundreds of raw owner mobiles and were statically downloadable from
+  // sierra-estates.net. The containment doctrine is now: NO tracked PII
+  // spreadsheets may live in public/downloads at all; any file that DOES
+  // appear there at runtime must still be concierge-only.
+  it('no tracked CSV/XLSX owner dumps remain in public/downloads (quarantine doctrine)', () => {
+    const files = fs.existsSync(DIR)
+      ? fs.readdirSync(DIR).filter((f) => /\.(csv|xlsx)$/i.test(f))
+      : [];
+    expect(files, `public/downloads still carries tracked spreadsheets: ${files.join(', ')}`).toEqual([]);
+  });
+
+  it('any runtime-generated CSV/XLSX in public/downloads is free of raw owner mobiles (concierge only)', () => {
+    if (!fs.existsSync(DIR)) return; // nothing generated yet — nothing to leak
     const files = fs.readdirSync(DIR).filter((f) => /\.(csv|xlsx)$/i.test(f));
-    // 15 files were tracked at redaction time (2026-10-27); the guard floor
-    // catches an accidental drop of the directory.
-    expect(files.length).toBeGreaterThanOrEqual(10);
     for (const f of files) {
       const text = readAsText(path.join(DIR, f));
       const mobiles = (text.match(EGYPT_MOBILE) || []).map((m) => m.replace(/[^\d]/g, ''));
@@ -50,7 +61,8 @@ describe('public/downloads — static owner-PII containment (Section D)', () => 
     }
   });
 
-  it('every tracked CSV/XLSX is free of non-concierge wa.me deep links', () => {
+  it('any runtime-generated CSV/XLSX in public/downloads is free of non-concierge wa.me deep links', () => {
+    if (!fs.existsSync(DIR)) return;
     const files = fs.readdirSync(DIR).filter((f) => /\.(csv|xlsx)$/i.test(f));
     for (const f of files) {
       const text = readAsText(path.join(DIR, f));
