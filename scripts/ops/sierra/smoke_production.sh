@@ -54,9 +54,10 @@ if [ -s "$INV" ]; then
   src=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('source',''))" "$INV" 2>/dev/null)
   [ "$src" = "supabase" ] && ok "inventory.source == 'supabase'" || bad "inventory.source == '$src' (want supabase)"
 
-  # --- 8: live pin count ------------------------------------------------------
+  # --- 8: live pin count (calibrated post-quarantine & deduplication) --------
   cnt=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('count',0))" "$INV" 2>/dev/null)
-  if [ "${cnt:-0}" -ge 4000 ] 2>/dev/null; then ok "live pins on map: $cnt (>= 4000)"; else bad "live pins: $cnt (< 4000)"; fi
+  PIN_FLOOR=2500
+  if [ "${cnt:-0}" -ge "$PIN_FLOOR" ] 2>/dev/null; then ok "live pins on map: $cnt (>= $PIN_FLOOR)"; else bad "live pins: $cnt (< $PIN_FLOOR)"; fi
 
   # --- 9-11: data-quality gates (P1: items under units[], coords lat/lng) -----
   dq=$(python3 - "$INV" <<'PY'
