@@ -9,12 +9,13 @@ import { logger } from '@/lib/logger';
  *
  * Provider priority (V3.0 master workflow, 2026-10):
  *   · WHATSAPP_PROVIDER=openwa  → the OpenWA gateway is PRIMARY and Twilio only
- *     runs as an outage fallback. This is the live production posture: the
- *     gateway on 54.89.162.250:2785 is the paired Sierra Estates number, and
- *     the Twilio vars are placeholders.
+ *     runs as an outage fallback. The gateway is the local 8-line worker
+ *     (apps/agents/whatsapp-multi-session, :2785) exposed to production via
+ *     cloudflared tunnel — the legacy EC2 host 54.89.162.250 is retired
+ *     (dead since 2026-10-31), and the Twilio vars are placeholders.
  *   · anything else (legacy "try Twilio first"):
  *     1. Twilio WhatsApp REST API — primary, when real credentials are present
- *     2. OpenWA / custom gateway  — WHATSAPP_API_URL (EC2 WhatsApp Web bridge)
+ *     2. OpenWA / custom gateway  — WHATSAPP_API_URL (local WhatsApp Web worker)
  *     3. Graceful simulation      — dev/preview only, never throws
  *
  * Each real provider degrades to the next on failure, so a gateway outage or a

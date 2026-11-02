@@ -159,7 +159,9 @@ async function handleWhatsAppWebhook(req: NextRequest) {
     const body = rawBody ? JSON.parse(rawBody) : {};
 
     // ── OpenWA gateway adapter (V3.0 wiring) ──
-    // The OpenWA gateway on 54.89.162.250 posts event envelopes of the shape
+    // The OpenWA gateway — the local 8-line worker (apps/agents/whatsapp-multi-session,
+    // :2785, exposed via cloudflared tunnel; the legacy EC2 host is retired) — posts
+    // event envelopes of the shape
     //   { event: 'message.received', sessionId, data: { id, chatId, body, type, sender, hasMedia, mimetype, media } }
     // signed with X-OpenWA-Signature. The rest of this route speaks the Meta/
     // bridge shape (from/text/isGroup), so flatten the envelope ONCE here and
