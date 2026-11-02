@@ -37,6 +37,12 @@ jest.mock('@/lib/services/ExcelInventoryService', () => ({
   appendToExcelInventory: jest.fn(async () => undefined),
 }));
 
+jest.mock('@/lib/services/GoogleSheetSyncService', () => ({
+  // Hermetic: the Google Sheet mirror must never fire a real fetch in tests —
+  // it mirrors to the ops sheet only when env vars are configured in prod.
+  syncWebsiteSubmissionToSheet: jest.fn(async () => ({ ok: false, error: 'not-configured' })),
+}));
+
 jest.mock('@/lib/telegram', () => ({
   sendTelegramMessage: jest.fn(async () => undefined),
   escapeTelegramHtml: (s: string) => s,

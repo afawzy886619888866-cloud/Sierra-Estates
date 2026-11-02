@@ -23,6 +23,7 @@ import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { appendToExcelInventory } from '@/lib/services/ExcelInventoryService';
+import { syncWebsiteSubmissionToSheet } from '@/lib/services/GoogleSheetSyncService';
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
 export const runtime = 'nodejs';
@@ -152,6 +153,52 @@ export async function POST(request: Request) {
       logger.warn(`[LISTING_SUBMIT] Excel append error (non-fatal): ${(excelErr as Error).message}`);
     }
 
+    // Mirror the submission into the team's Google Sheet ops hub (Mode D —
+    // "Website_Listings" tab): آخر تحديث + full specs + لينك الموقع +
+    // لينك الخريطة + لينك الانفنتوري + photos uploaded to Google Drive.
+    // Server-to-server with the shared secret — it never reaches the browser.
+    // Skipped gracefully when SHEETS_WEBAPP_URL / SHEETS_WEBAPP_SECRET are
+    // not configured, so the public flow never breaks.
+    let sheetSync: Awaited<ReturnType<typeof syncWebsiteSubmissionToSheet>> = {
+      ok: false,
+      error: 'skipped',
+    };
+    try {
+      // Prefer the configured canonical site URL when it is a real https
+      // origin; otherwise fall back to the request's own origin (correct on
+      // Vercel for the custom domain) — never leak localhost into the sheet.
+      const configuredSite = process.env.NEXT_PUBLIC_SITE_URL || '';
+      const siteOrigin = (
+        configuredSite.startsWith('https://') && !configuredSite.includes('localhost')
+          ? configuredSite
+          : new URL(request.url).origin
+      ).replace(/\/+$/, '');
+      sheetSync = await syncWebsiteSubmissionToSheet({
+        code: listingCode,
+        supabaseId: id,
+        compound: data.compound,
+        propertyType: data.propertyType,
+        mode: data.mode,
+        beds: data.beds,
+        baths: data.baths,
+        area: data.area,
+        gardenArea: data.gardenArea,
+        price: data.price,
+        finishing: data.finishing,
+        ownerName: data.ownerName,
+        ownerType: data.ownerType,
+        mobile: data.mobile,
+        comment: data.comment,
+        photos: data.photos || data.images || [],
+        websiteUrl: `${siteOrigin}/property/${id}`,
+      });
+    } catch (gsErr) {
+      logger.warn('[LISTING_SUBMIT] Google Sheet sync error (non-fatal):', (gsErr as Error).message);
+    }
+    const sheetRowLine = sheetSync.inventoryUrl
+      ? `\n<b>Sheet row:</b> ${sheetSync.inventoryUrl}`
+      : '';
+
     // 1. Send immediate notification to the Agency Telegram Bot
     try {
       const telegramText = `
@@ -164,7 +211,7 @@ export async function POST(request: Request) {
 <b>Contact:</b> ${escapeTelegramHtml(data.ownerName)} (${data.ownerType || 'Owner'})
 <b>Phone:</b> ${escapeTelegramHtml(data.mobile)}
 <b>Code:</b> ${listingCode}
-<b>Notes:</b> ${escapeTelegramHtml(data.comment || 'None')}
+<b>Notes:</b> ${escapeTelegramHtml(data.comment || 'None')}${sheetRowLine}
       `.trim();
       await sendTelegramMessage(telegramText);
     } catch (telegramErr) {
@@ -175,10 +222,11 @@ export async function POST(request: Request) {
     const notifyNumber = process.env.LEAD_NOTIFY_WHATSAPP_NUMBER;
     if (notifyNumber) {
       try {
+        const sheetRowWa = sheetSync.inventoryUrl ? `\n📊 Sheet row: ${sheetSync.inventoryUrl}` : '';
         await enqueueWhatsAppJob({
           purpose: 'general-outreach',
           toPhone: notifyNumber,
-          body: `🏡 New Property Submitted via Easy Listing!\n📍 Compound: ${data.compound}\n🏠 Type: ${data.propertyType} (${data.mode.toUpperCase()})\n💰 Price: EGP ${Number(data.price).toLocaleString('en-US')}\n📐 Specs: ${data.beds}B / ${data.baths}B (${data.area} m²)\n👤 Owner/Broker: ${data.ownerName} (${data.ownerType || 'Owner'})\n📱 Contact: ${data.mobile}\n🔖 Code: ${listingCode}`,
+          body: `🏡 New Property Submitted via Easy Listing!\n📍 Compound: ${data.compound}\n🏠 Type: ${data.propertyType} (${data.mode.toUpperCase()})\n💰 Price: EGP ${Number(data.price).toLocaleString('en-US')}\n📐 Specs: ${data.beds}B / ${data.baths}B (${data.area} m²)\n👤 Owner/Broker: ${data.ownerName} (${data.ownerType || 'Owner'})\n📱 Contact: ${data.mobile}\n🔖 Code: ${listingCode}${sheetRowWa}`,
         });
       } catch (waErr) {
         logger.warn('[LISTING_SUBMIT] WhatsApp dispatch skipped:', waErr);
@@ -206,6 +254,7 @@ export async function POST(request: Request) {
         message: 'Listing submitted successfully and queued for verification',
         code: listingCode,
         id,
+        sheetSync,
         listing: { ...listingDocument, id },
       },
       { status: 201 }
