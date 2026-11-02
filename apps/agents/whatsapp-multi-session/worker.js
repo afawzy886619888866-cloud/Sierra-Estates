@@ -137,6 +137,13 @@ function checkAuth(req, res, next) {
     return next();
   }
 
+  // Mobile pairing portal — public by design (same trust level as the retired
+  // EC2 runner :2786/pair). It only exposes ephemeral QR codes and per-line
+  // ready/qr status; no phone numbers, no send capability.
+  if (req.path === '/pair' || req.path.startsWith('/api/pair/')) {
+    return next();
+  }
+
   // Allow localhost browser UI and dashboard polling ONLY from direct local machine
   if (isDirectLocal) {
     if (req.path === '/' || req.path === '/dashboard' || req.path === '/map') {
@@ -553,6 +560,21 @@ async function startAllSessions() {
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Capture the last public (tunnel) origin so /pair links and the pair-link QR
+// can point back to this worker from the outside world (phones, admin console).
+let publicPairBaseUrl = null;
+app.use((req, res, next) => {
+  try {
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const proto = req.headers['x-forwarded-proto'] || (req.headers['cf-ray'] || req.headers['cf-connecting-ip'] ? 'https' : req.protocol);
+    if (host && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(String(host))) {
+      publicPairBaseUrl = `${proto}://${host}`;
+    }
+  } catch (_) {}
+  next();
+});
+
 app.use(checkAuth);
 
 /**
@@ -633,6 +655,236 @@ app.get('/api/sessions/:sessionId/qr.png', (req, res) => {
   });
   res.end(imgBuf);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE PAIRING PORTAL (public, replaces the retired EC2 runner :2786/pair)
+// Exposes ONLY ephemeral pairing QR codes + ready/qr status per line — no
+// phone numbers, no send capability, no session detail.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/pair/status — minimal public status for the portal page.
+ */
+app.get('/api/pair/status', (req, res) => {
+  res.json({
+    ok: true,
+    lines: SESSION_IDS.map((id) => {
+      const s = sessions.get(id);
+      const st = !s ? 'starting' : (s.status === 'READY' ? 'ready' : (s.status === 'AWAITING_QR' ? 'await_qr' : String(s.status || 'starting').toLowerCase()));
+      return { id, status: st, hasQr: Boolean(s && s.qrDataUrl) };
+    })
+  });
+});
+
+/**
+ * GET /api/pair/qr/:sessionId.png — public QR PNG, only while awaiting scan.
+ */
+app.get('/api/pair/qr/:sessionId.png', (req, res) => {
+  const s = sessions.get(req.params.sessionId);
+  if (!s || !s.qrDataUrl) {
+    return res.status(404).send('No active QR for this line');
+  }
+  const imgBuf = Buffer.from(String(s.qrDataUrl).replace(/^data:image\/png;base64,/, ''), 'base64');
+  res.writeHead(200, {
+    'Content-Type': 'image/png',
+    'Content-Length': imgBuf.length,
+    'Cache-Control': 'no-cache, no-store, must-revalidate'
+  });
+  res.end(imgBuf);
+});
+
+/**
+ * GET /api/pair/info — the public base URL of this worker (for the admin
+ * console sidebar QR + "open portal" links).
+ */
+app.get('/api/pair/info', (req, res) => {
+  const envUrl = process.env.WHATSAPP_PUBLIC_URL || process.env.CLOUDFLARE_TUNNEL_URL || null;
+  const base = envUrl || publicPairBaseUrl || `http://localhost:${PORT}`;
+  res.json({ ok: true, pairUrl: `${base}/pair` });
+});
+
+/**
+ * GET /api/pair/link-qr.png — QR code PNG encoding the /pair portal URL so
+ * phones can jump straight to the pairing page (admin sidebar asset).
+ */
+app.get('/api/pair/link-qr.png', async (req, res) => {
+  const envUrl = process.env.WHATSAPP_PUBLIC_URL || process.env.CLOUDFLARE_TUNNEL_URL || null;
+  const base = envUrl || publicPairBaseUrl || `http://localhost:${PORT}`;
+  const pairUrl = `${base}/pair`;
+  if (!QRCode) {
+    return res.status(503).json({ error: 'qrcode dependency not installed' });
+  }
+  try {
+    const buf = await QRCode.toBuffer(pairUrl, { width: 320, margin: 2 });
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': buf.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    res.end(buf);
+  } catch (err) {
+    res.status(500).json({ error: `QR generation failed: ${err.message}` });
+  }
+});
+
+/**
+ * GET /pair — mobile-friendly pairing portal (self-contained page).
+ */
+app.get('/pair', (req, res) => {
+  res.send(renderPairPortalHtml());
+});
+
+function renderPairPortalHtml() {
+  const cards = SESSION_IDS.map((id, i) => `
+    <div class="card" id="card-${id}" data-line="${id}">
+      <div class="card-hd">
+        <span class="sim">SIM #${i + 1}</span>
+        <span class="lid">${id}</span>
+        <span class="st st-starting" id="st-${id}">…</span>
+      </div>
+      <div class="qrwrap" id="qrwrap-${id}">
+        <img id="qr-${id}" alt="QR ${id}" style="display:none" />
+        <div class="qrmsg" id="msg-${id}">…</div>
+      </div>
+      <div class="hint" id="hint-${id}">—</div>
+    </div>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sierra Estates — WhatsApp Pairing Portal</title>
+  <style>
+    :root {
+      --bg: #0a0e27; --panel: #131a2e; --card: #0f1629; --edge: rgba(148,163,184,.16);
+      --gold: #f0c040; --gold-hi: #ffd700; --text: #e8eef7; --dim: #8b96ad;
+      --ok: #34d399; --warn: #f5b33c; --bad: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: radial-gradient(900px 400px at 80% -10%, rgba(56,189,248,.06), transparent 60%), var(--bg);
+      color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh; padding: 18px 14px 30px;
+    }
+    header { text-align: center; margin-bottom: 16px; }
+    .logo {
+      width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 10px;
+      background: linear-gradient(135deg, var(--gold-hi), #d9a521); color: #071422;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px;
+      box-shadow: 0 0 22px rgba(255,215,0,.3); font-family: Consolas, monospace;
+    }
+    h1 { font-size: 16px; letter-spacing: .03em; }
+    h1 .sep { color: var(--gold); padding: 0 3px; }
+    .sub { font-size: 11px; color: var(--gold); margin-top: 3px; }
+    .langbar { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+    .langbar button {
+      padding: 5px 12px; font-size: 11px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--edge); background: transparent; color: var(--dim); font-family: inherit;
+    }
+    .langbar button.on { color: var(--gold-hi); border-color: var(--gold); background: rgba(240,192,64,.1); font-weight: 700; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
+    .card {
+      background: var(--card); border: 1px solid var(--edge); border-radius: 12px; padding: 13px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .card-hd { display: flex; align-items: center; gap: 8px; }
+    .sim { font-size: 12.5px; font-weight: 700; }
+    .lid { font-family: Consolas, monospace; font-size: 9px; color: #5d6880; }
+    .st { margin-left: auto; font-size: 9px; padding: 2px 8px; border-radius: 99px; border: 1px solid; font-family: Consolas, monospace; }
+    .st-ready { color: var(--ok); border-color: rgba(52,211,153,.4); background: rgba(52,211,153,.08); }
+    .st-await_qr, .st-await { color: var(--warn); border-color: rgba(245,179,60,.4); background: rgba(245,179,60,.08); }
+    .st-starting { color: var(--dim); border-color: var(--edge); }
+    .qrwrap {
+      background: #0b1120; border: 1px solid var(--edge); border-radius: 10px;
+      padding: 12px; display: flex; align-items: center; justify-content: center; min-height: 200px; position: relative;
+    }
+    .qrwrap img { width: 176px; height: 176px; background: #fff; border-radius: 8px; padding: 6px; }
+    .qrmsg { color: var(--dim); font-size: 11px; text-align: center; line-height: 1.6; padding: 10px; }
+    .hint { font-size: 10px; color: var(--dim); text-align: center; line-height: 1.55; }
+    footer { text-align: center; margin-top: 20px; font-size: 10px; color: #5d6880; font-family: Consolas, monospace; }
+    .pulse { animation: pulse 2.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">SE</div>
+    <h1><span data-i18n="t1">Pair</span><span class="sep">›</span><span data-i18n="t2">Scan</span><span class="sep">›</span><span data-i18n="t3">Connect</span></h1>
+    <div class="sub" data-i18n="sub">Sierra Estates 8-line WhatsApp pairing portal</div>
+    <div class="langbar">
+      <button id="btn-en" class="on" onclick="setLang('en')">🇬🇧 EN</button>
+      <button id="btn-ar" onclick="setLang('ar')">🇸🇦 ع</button>
+    </div>
+  </header>
+  <div class="grid">${cards}</div>
+  <footer>Sierra Estates WhatsApp Gateway · pairing portal v1.0</footer>
+
+  <script>
+    var L = 'en';
+    var I18N = {
+      en: {
+        t1: 'Pair', t2: 'Scan', t3: 'Connect',
+        sub: 'Sierra Estates 8-line WhatsApp pairing portal',
+        ready: 'CONNECTED', await: 'SCAN QR', starting: 'STARTING',
+        readyMsg: 'This line is paired and operating.',
+        awaitMsg: 'Scan this code: WhatsApp › Linked Devices › Link a Device',
+        startMsg: 'Waiting for the line to start…',
+        hint: 'The QR renews every few seconds — keep the scanner open.'
+      },
+      ar: {
+        t1: 'ربط', t2: 'امسح', t3: 'اتصل',
+        sub: 'بوابة ربط خطوط الواتساب الثمانية — سييرا إستيتس',
+        ready: 'متصل', await: 'امسح الكود', starting: 'يبدأ',
+        readyMsg: 'هذا الخط مرتبط ويعمل.',
+        awaitMsg: 'امسح هذا الكود: واتساب › الأجهزة المرتبطة › ربط جهاز',
+        startMsg: 'بانتظار بدء الخط…',
+        hint: 'يتجدد الكود كل ثوانٍ — أبقِ الماسح مفتوحًا.'
+      }
+    };
+    function setLang(l) { L = l; apply(); }
+    function T(k) { return I18N[L][k]; }
+    function apply() {
+      document.getElementById('btn-en').className = L === 'en' ? 'on' : '';
+      document.getElementById('btn-ar').className = L === 'ar' ? 'on' : '';
+      document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = T(el.getAttribute('data-i18n')); });
+      document.querySelector('.sub').textContent = T('sub');
+      refresh();
+    }
+    function refresh() {
+      fetch('/api/pair/status').then(function (r) { return r.json(); }).then(function (d) {
+        (d.lines || []).forEach(function (ln) {
+          var st = document.getElementById('st-' + ln.id);
+          var img = document.getElementById('qr-' + ln.id);
+          var msg = document.getElementById('msg-' + ln.id);
+          var hint = document.getElementById('hint-' + ln.id);
+          if (!st) return;
+          if (ln.status === 'ready') {
+            st.textContent = T('ready'); st.className = 'st st-ready';
+            img.style.display = 'none'; msg.className = 'qrmsg';
+            msg.textContent = '✓ ' + T('readyMsg'); hint.textContent = '';
+          } else if (ln.status === 'await_qr' && ln.hasQr) {
+            st.textContent = T('await'); st.className = 'st st-await_qr pulse';
+            msg.style.display = 'none';
+            img.style.display = 'block';
+            img.src = '/api/pair/qr/' + encodeURIComponent(ln.id) + '.png?ts=' + Date.now();
+            img.className = 'pulse';
+            hint.textContent = T('hint');
+          } else {
+            st.textContent = T('starting'); st.className = 'st st-starting';
+            img.style.display = 'none'; msg.className = 'qrmsg';
+            msg.textContent = T('startMsg'); hint.textContent = '';
+          }
+        });
+      }).catch(function () {});
+    }
+    setInterval(refresh, 4000);
+    apply();
+  </script>
+</body>
+</html>`;
+}
+
 
 app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
   const s = resolveSession(req.params.sessionId);

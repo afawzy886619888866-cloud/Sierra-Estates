@@ -2294,6 +2294,45 @@ function AdminApp() {
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
+        {/* ITQANE-style WhatsApp Command Center — standalone console at /admin/whatsapp */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            padding: '14px 18px',
+            marginBottom: 20,
+            borderRadius: 12,
+            background: 'linear-gradient(135deg, rgba(240,192,64,0.14), rgba(37,211,102,0.08))',
+            border: '1px solid rgba(240,192,64,0.45)',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ fontSize: 22 }}>💬</span>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#F0C040' }}>
+              {isArabic ? 'مركز تحكم الواتساب — الإصدار الجديد' : 'WhatsApp Command Center — new console'}
+            </div>
+            <div style={{ fontSize: 11.5, color: 'var(--tx-m)', marginTop: 3 }}>
+              {isArabic
+                ? 'جدار الخطوط الثمانية، ربط QR، محرر الرسائل، والصادر — بتصميم ITQANE التشخيصي.'
+                : '8-line live wall, QR pairing, message composer and outbox — in the ITQANE diagnostic design.'}
+            </div>
+          </div>
+          <button
+            className="btn btn-gold"
+            onClick={() => window.open('/admin/whatsapp', '_blank')}
+          >
+            🛰️ {isArabic ? 'افتح مركز التحكم' : 'Open Command Center'} ↗
+          </button>
+          <button
+            className="btn btn-ghost"
+            style={{ borderColor: 'rgba(148,163,184,.3)', color: 'var(--tx-m)' }}
+            onClick={() => window.open('/admin/apps', '_blank')}
+          >
+            🧩 {isArabic ? 'تطبيقات' : 'Apps Control'} ↗
+          </button>
+        </div>
         <div
           style={{
             display: 'flex',

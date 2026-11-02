@@ -103,3 +103,65 @@ repo's cloudflared setup and set `OPENWA_HOST`/`OPENWA_PORT` (or
 `WHATSAPP_API_URL`) on **both Vercel projects** to the tunnel's public URL.
 Until then, inbound flows and is stored, but auto-replies fall back to the
 graceful simulation provider.
+
+---
+
+## 5. Mobile Pairing Portal (`/pair`) — replaces the retired EC2 `:2786/pair`
+
+The worker now hosts its own mobile-friendly pairing page, so the WhatsApp
+role of the old EC2 runner is fully migrated to this local app:
+
+| Endpoint | Auth | Purpose |
+| --- | --- | --- |
+| `GET /pair` | public | Mobile portal — live QR cards for line-1 … line-8, EN/AR toggle |
+| `GET /api/pair/status` | public | Minimal `{lines:[{id,status,hasQr}]}` — no phone numbers |
+| `GET /api/pair/qr/:id.png` | public | Ephemeral pairing QR PNG (only while awaiting scan) |
+| `GET /api/pair/info` | public | `{pairUrl}` — the portal's public URL (env or captured tunnel host) |
+| `GET /api/pair/link-qr.png` | public | QR PNG encoding the portal URL (admin sidebar asset) |
+
+The portal page is self-contained (inline CSS/JS, no build step) and polls
+`/api/pair/status` every 4 s, swapping in fresh QR images only for lines that
+are awaiting a scan. It exposes **no** phone numbers and **no** send
+capability — pairing QR codes are ephemeral and only useful with physical
+access to the WhatsApp account.
+
+The **admin console** (`/admin/whatsapp`, ITQANE-style WhatsApp Command
+Center) renders the same portal URL as a QR code in its sidebar via the
+auth-guarded proxy route `GET /api/admin/whatsapp/qr?target=pair-link` —
+scan it with a phone to jump straight to the pairing portal.
+
+---
+
+## 6. Activation Runbook (local gateway → production)
+
+1. **Start the worker locally** (Windows):
+   `start-openwa-8lines.bat` (or `pnpm openwa:8lines`) → dashboard at
+   `http://localhost:2785`, pairing portal at `http://localhost:2785/pair`.
+2. **Pair the lines**: on each phone, WhatsApp → Linked Devices → Link a
+   Device → scan the QR at `/pair` (or from the admin console at
+   `/admin/whatsapp`). Sessions persist under `./whatsapp-auth/`.
+3. **Expose the worker** with the repo's cloudflared tunnel (see
+   `infra/google-cloud/` notes): note the `https://….trycloudflare.com` URL.
+4. **Point production at the tunnel** — on **both Vercel projects**
+   (`admin-dashboard` and `client-portal`) set:
+   ```ini
+   WHATSAPP_API_URL=https://<tunnel-host>          # replaces 127.0.0.1:2785
+   # optional pins:
+   CLOUDFLARE_TUNNEL_URL=https://<tunnel-host>
+   WHATSAPP_PUBLIC_URL=https://<tunnel-host>       # used by /api/pair/info
+   ```
+   Keep the header key in sync: the gateway expects
+   `X-API-Key: $OPENWA_ADMIN_API_KEY` (default `sierra-admin-secret`).
+5. **Verify**:
+   - `GET https://admin.sierra-estates.net/api/admin/whatsapp/outbox` →
+     `gateway.reachable: true`, `activeSessions: n/8`.
+   - `/admin/whatsapp` status wall turns green per paired line; the sidebar
+     QR opens `https://<tunnel-host>/pair` on the phone.
+   - `/api/whatsapp/health` on the client portal flips from `stale` to
+     `live` once ≥1 line is READY (honest heartbeat).
+
+> The legacy AWS EC2 host (`54.89.162.250`) is **retired** — runners, the
+> pairing portal, and the gateway now all live in this local worker plus the
+> Vercel app. Historical references to the old IP remain only in execution
+> reports.
+

@@ -693,7 +693,7 @@ export default function DashboardView({
                 <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
                   <div>
                     <span className="text-slate-500 block text-[9px] uppercase">Gateway Device</span>
-                    <span className="text-white font-bold">54.89.162.250</span>
+                    <span className="text-white font-bold">Local · :2785</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[9px] uppercase">Delivery Engine</span>
