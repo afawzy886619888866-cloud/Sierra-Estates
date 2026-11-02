@@ -34,41 +34,43 @@ const STEPS: { title: string; body: React.ReactNode }[] = [
         >
           افتح الشيت ↗
         </a>{' '}
-        — ده الداتا بيز المشترك لكل الفريق. الكود الجديد هيضيف تاب اسمه <b>Listings</b> جواه
+        — ده الداتا بيز المشترك لكل الفريق. الكود المدموج هيضيف تاب اسمه <b>Listings</b> جواه
         (بدون ما يلمس أي تابات قديمة عندك).
       </>
     ),
   },
   {
-    title: 'افتح Apps Script وامسح القديم',
+    title: 'افتح Apps Script (فيه كود المحرك القديم)',
     body: (
       <>
-        من قائمة الشيت: <b>Extensions ← Apps Script</b> — لو فيه كود قديم في الصفحة،{' '}
-        <b>امسحه بالكامل</b> (<span className="font-bold">نبدّل — مش نضيف</span>) عشان الكودين
-        متدخلش في بعض.
+        من قائمة الشيت: <b>Extensions ← Apps Script</b> — هتلاقي جوه كود المحرك القديم
+        بتاعكم (v5.5 Engine: بوت الواتساب + تحديث تاريخ التواصل + الأوديت).{' '}
+        <b>متمسحوش</b> — احنا بندمج مش بنبدّل.
       </>
     ),
   },
   {
-    title: 'الصق الكود الجديد واحفظ',
+    title: 'الصق الكود المدموج مكان القديم',
     body: (
       <>
-        انسخ الكود من البوكس تحت والصقه مكان القديم، واضغط <b>حفظ (Ctrl+S)</b>. الكود بيستقبل
-        بيانات الوحدات، بيضيف كل وحدة كصف جديد في تاب <b>Listings</b>، وبيرفع الصور على مجلد
-        اسمه <b>Easy Listing Images</b> في Google Drive بتاعك ويرجّع روابطها.
+        اعمل <b>تحديد للكل (Ctrl+A)</b> في محرر الكود، وبعدين الصق الكود من البوكس تحت
+        واحفظ (<b>Ctrl+S</b>). الكود المدموج = <b>المحرك القديم بتاعك كامل زي ما هو</b> +
+        إضافة Easy Listing في الآخر — يعني البوت وتحديث تواريخ التواصل والأوديت وonEdit
+        كلهم بيكموا شغالين، والصفحة الجديدة بتكتب في تاب <b>Listings</b> وترفع الصور على
+        مجلد <b>Easy Listing Images</b> في Google Drive بتاعك.
       </>
     ),
   },
   {
-    title: 'انشره كـ Web App',
+    title: 'انشره كـ Web App (بنفس اللينك القديم)',
     body: (
       <>
-        أول مرة: اضغط <b>Deploy ← New deployment</b>، اختار <b>Web app</b>، وخلي الإعدادات:
+        عندك Web App منشور قبل كده من نفس الشيت — ده اللي البوت شغال بيه:{' '}
+        <b>Deploy ← Manage deployments ← ✏️ ← Version: New ← Deploy</b> — كده اللينك
+        هيفضل زي ما هو والبوت مش هيتقطع.
         <br />
-        <b>Execute as: Me</b> — <b>Who has access: Anyone</b>
-        <br />
-        لو عندك Web App منشور قبل كده من نفس الشيت: <b>Deploy ← Manage deployments ← ✏️ ←
-        Version: New ← Deploy</b> — كده اللينك هيفضل زي ما هو.
+        (لو أول مرة تنشر: <b>Deploy ← New deployment ← Web app</b>، وخلي الإعدادات:{' '}
+        <b>Execute as: Me</b> — <b>Who has access: Anyone</b>)
         <br />
         وافق على الصلاحيات (Authorize ← اسم حسابك ← Advanced ← Go to project ← Allow).
       </>
@@ -78,10 +80,10 @@ const STEPS: { title: string; body: React.ReactNode }[] = [
     title: 'انسخ اللينك والصقه في الإعدادات',
     body: (
       <>
-        ه يظهرلك لينك شكله كده{' '}
+        هيظهرلك لينك شكله كده{' '}
         <code className="ltr-embed font-mono text-xs">https://script.google.com/macros/s/…/exec</code>{' '}
-        — انسخه وافتح <b>الإعدادات</b> في صفحة Easy Listing والصقه، واضغط{' '}
-        <b>اختبر الاتصال</b>.
+        — انسخه وافتح <b>الإعدادات</b> في صفحة Easy Listing والصقه (كلمة السر متضبطة
+        جاهزة)، واضغط <b>اختبر الاتصال</b>.
       </>
     ),
   },
@@ -118,7 +120,7 @@ export function SetupDialog({ open, onOpenChange }: SetupDialogProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-xs font-semibold">
-                <FileSpreadsheet className="h-4 w-4 text-primary" /> كود Apps Script (انسخه كله)
+                <FileSpreadsheet className="h-4 w-4 text-primary" /> كود Apps Script المدموج (انسخه كله)
               </p>
               <CopyButton text={APPS_SCRIPT_CODE} label="نسخ الكود" />
             </div>
@@ -132,10 +134,12 @@ export function SetupDialog({ open, onOpenChange }: SetupDialogProps) {
           <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-[#e8f5ee] p-3 text-xs leading-relaxed dark:bg-[#12241d]">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <p>
-              بعد الربط: كل وحدة هتحفظها هتتضاف كصف جديد في الشيت فيه الكود والتفاصيل والمحتوى
-              الثلاثة ولينك الخريطة وروابط الصور — والصور نفسها هتتخزن في مجلد على Google Drive
-              بتاع الشركة. وللعلم، الوحدات بتتحفظ كمان في قائمة «الوحدات المحفوظة» جوه الصفحة
-              نفسها.
+              الكود المدموج بيحافظ على كل حاجة شغالة عندك: بوت الواتساب (إضافة الوحدات)،
+              تحديث «تاريخ اخر تواصل»، الأوديت والمنيو، وتنسيق onEdit — وبيضيف عليهم Easy
+              Listing. بعد الربط: كل وحدة هتحفظها هتتضاف كصف جديد في تاب Listings فيه
+              الكود والتفاصيل والمحتوى الثلاثة ولينك الخريطة وروابط الصور، والصور نفسها
+              هتتخزن في مجلد على Google Drive بتاع الشركة. وللعلم، الوحدات بتتحفظ كمان في
+              قائمة «الوحدات المحفوظة» جوه الصفحة نفسها.
             </p>
           </div>
 

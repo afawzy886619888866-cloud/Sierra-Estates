@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DEFAULT_SECRET } from '@/lib/local-store'
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ export function SettingsDialog({ open, onOpenChange, settings, onSavedSettings, 
   const [appsScriptUrl, setAppsScriptUrl] = useState('')
   const [sheetLink, setSheetLink] = useState('')
   const [companyPhone, setCompanyPhone] = useState('')
+  const [secret, setSecret] = useState(DEFAULT_SECRET)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
@@ -38,6 +40,7 @@ export function SettingsDialog({ open, onOpenChange, settings, onSavedSettings, 
       setAppsScriptUrl(settings.appsScriptUrl)
       setSheetLink(settings.sheetLink)
       setCompanyPhone(settings.companyPhone)
+      setSecret(settings.secret || DEFAULT_SECRET)
       setTestResult(null)
     }
   }, [open, settings])
@@ -49,7 +52,12 @@ export function SettingsDialog({ open, onOpenChange, settings, onSavedSettings, 
       // so the tool works identically on any free host (Vercel, Netlify…).
       await new Promise((r) => setTimeout(r, 150))
       toast.success('تم حفظ الإعدادات على الجهاز ده ✅')
-      onSavedSettings({ appsScriptUrl: appsScriptUrl.trim(), sheetLink: sheetLink.trim(), companyPhone: companyPhone.trim() })
+      onSavedSettings({
+        appsScriptUrl: appsScriptUrl.trim(),
+        sheetLink: sheetLink.trim(),
+        companyPhone: companyPhone.trim(),
+        secret: secret.trim() || DEFAULT_SECRET,
+      })
       onOpenChange(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'تعذر حفظ الإعدادات')
@@ -133,6 +141,24 @@ export function SettingsDialog({ open, onOpenChange, settings, onSavedSettings, 
             />
             <p className="text-xs text-muted-foreground">
               ملاحظة: الإعدادات بتتحفظ على الجهاز/البراوزر — كل موظف بيدخلها مرة واحدة.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="s-secret" className="text-xs">
+              كلمة السر (Secret) — متضبطة جاهزة، متغيرهاش
+            </Label>
+            <Input
+              id="s-secret"
+              dir="ltr"
+              className="text-start text-xs"
+              placeholder="SE_OUTREACH_SECRET_2026_CAIRO"
+              value={secret}
+              onChange={(e) => setSecret(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              نفس السر اللي جوه كود السكريبت (CONFIG.OUTREACH_SECRET) — بيحمي الشيت من أي
+              طلب غريب. لو غيّرته في السكريبت غيّره هنا.
             </p>
           </div>
 

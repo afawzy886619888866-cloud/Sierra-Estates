@@ -23,6 +23,8 @@ export interface AppSettings {
   appsScriptUrl: string
   sheetLink: string
   companyPhone: string
+  /** Shared secret required by the team's Apps Script doPost (CONFIG.OUTREACH_SECRET) */
+  secret: string
 }
 
 export interface SavedProperty {

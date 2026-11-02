@@ -17,10 +17,18 @@ const MAX_SAVED = 200
 export const DEFAULT_SHEET_LINK =
   'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit'
 
+/**
+ * Shared secret of the team's Apps Script engine (CONFIG.OUTREACH_SECRET).
+ * The merged script rejects any POST without it, so it is prefilled —
+ * change it here only if you change it inside the script.
+ */
+export const DEFAULT_SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO'
+
 export const DEFAULT_SETTINGS: AppSettings = {
   appsScriptUrl: '',
   sheetLink: DEFAULT_SHEET_LINK,
   companyPhone: '',
+  secret: DEFAULT_SECRET,
 }
 
 export function loadSettings(): AppSettings {
@@ -33,6 +41,7 @@ export function loadSettings(): AppSettings {
       appsScriptUrl: String(parsed.appsScriptUrl ?? '').trim(),
       sheetLink: String(parsed.sheetLink ?? DEFAULT_SHEET_LINK).trim(),
       companyPhone: String(parsed.companyPhone ?? '').trim(),
+      secret: String(parsed.secret ?? DEFAULT_SECRET).trim(),
     }
   } catch {
     return { ...DEFAULT_SETTINGS }

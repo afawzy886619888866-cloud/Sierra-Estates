@@ -13,6 +13,7 @@ interface CopyButtonProps {
   size?: 'default' | 'sm' | 'icon'
   className?: string
   onCopied?: () => void
+  title?: string
 }
 
 export function CopyButton({
@@ -22,6 +23,7 @@ export function CopyButton({
   size = 'sm',
   className,
   onCopied,
+  title,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false)
 
@@ -41,6 +43,7 @@ export function CopyButton({
       size={size}
       onClick={handleCopy}
       aria-label={label}
+      title={title}
       className={cn('gap-1.5 shrink-0', className)}
     >
       {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}

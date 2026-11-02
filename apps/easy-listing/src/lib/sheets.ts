@@ -27,6 +27,10 @@ export interface SheetImage {
 }
 
 export interface SheetPayload {
+  /** shared secret required by the team's Apps Script (CONFIG.OUTREACH_SECRET) */
+  secret: string
+  /** routes the payload to the Easy Listing branch (Mode C) in the script */
+  mode: 'easy_listing'
   code: string
   compound: string
   bedrooms: number

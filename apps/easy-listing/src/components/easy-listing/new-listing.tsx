@@ -45,7 +45,7 @@ import { ImageUploader, type UploadedImage } from './image-uploader'
 
 import type { AppSettings, GeneratedContent, PropertyFields } from '@/lib/types'
 import { UNIT_TYPES, buildMapEmbedUrl, buildMapLink, formatPrice, generatePropertyCode } from '@/lib/listing'
-import { addSavedProperty, savedCodes } from '@/lib/local-store'
+import { addSavedProperty, DEFAULT_SECRET, savedCodes } from '@/lib/local-store'
 import { exportToSheet, type SheetPayload } from '@/lib/sheets'
 
 interface SaveResult {
@@ -195,6 +195,10 @@ export function NewListing({ settings, onOpenSettings, onOpenSetup, onSaved }: N
       }
 
       const payload: SheetPayload = {
+        // The merged Sierra engine requires the shared secret and routes
+        // easy-listing saves to the "Listings" tab (Mode C in doPost).
+        mode: 'easy_listing',
+        secret: settings.secret || DEFAULT_SECRET,
         code: finalCode,
         compound: fields.compound,
         bedrooms: fields.bedrooms,
