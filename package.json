@@ -6,6 +6,7 @@
   "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
   "scripts": {
     "dev": "pnpm --filter sierra-estates-client-page dev",
+    "commit:msg": "node scripts/generate-commit-msg.mjs",
     "tunnel": "node scripts/tunnel.mjs",
     "dev:web": "pnpm --filter sierra-estates-client-page dev",
     "build": "node scripts/sync-inventory-snapshot.mjs && turbo run build",
