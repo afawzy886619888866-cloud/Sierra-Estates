@@ -746,6 +746,18 @@ function doPost(e) {
 
     const ss = getSpreadsheet();
 
+    // Mode C / Easy Listing / Website Submission:
+    if (payload.mode === "easy_listing" || payload.mode === "website_submission") {
+      return handleEasyListing_(payload, ss);
+    }
+
+    // Direct Append to Master Inventory:
+    if (payload.action === "appendRows" && Array.isArray(payload.rows)) {
+      const targetSheet = ss.getSheetByName("Master_Inventory") || ss.getSheetByName("Owners-Rent") || ss.getSheets()[0];
+      const appendResults = appendRowsDeduped_(targetSheet, payload.rows);
+      return ContentService.createTextOutput(JSON.stringify(appendResults)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Mode A: Batch Outreach Write-Back (Rows of Phone + Date)
     if (payload.rows && Array.isArray(payload.rows)) {
       const rows = payload.rows;
@@ -1132,4 +1144,135 @@ function showBotGuidanceDialog() {
   } catch (e) {
     Logger.log("showBotGuidanceDialog skipped: " + e.message);
   }
+}
+
+/**
+ * ============================================================================
+ * 6. EASY LISTING & WEBSITE SUBMISSION HANDLER (Mode C & D)
+ * ============================================================================
+ */
+const EASY_LISTING = {
+  SHEET_NAME: "Listings",
+  WEBSITE_SHEET_NAME: "Website_Listings",
+  IMAGE_FOLDER: "Easy Listing Images",
+  MAX_IMAGES: 12
+};
+
+function handleEasyListing_(data, ss) {
+  const lock = LockService.getScriptLock();
+  try {
+    const targetSheetName = data.mode === "website_submission" ? EASY_LISTING.WEBSITE_SHEET_NAME : EASY_LISTING.SHEET_NAME;
+    const sheet = ensureTargetListingSheet_(ss, targetSheetName);
+
+    // ---- photos: base64 → Google Drive (permanent, shareable links) ----
+    const urls = [];
+    const images = (data.images || []).slice(0, EASY_LISTING.MAX_IMAGES);
+    if (images.length > 0) {
+      const folder = getEasyListingFolder_();
+      for (let i = 0; i < images.length; i++) {
+        try {
+          const img = images[i] || {};
+          const blob = Utilities.newBlob(
+            Utilities.base64Decode(String(img.data || "")),
+            String(img.mime || "image/jpeg"),
+            sanitizeEasyListingName_(img.name) || (String(data.code || "SE") + "-" + (i + 1) + ".jpg")
+          );
+          const file = folder.createFile(blob);
+          try {
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          } catch (err) { /* domain-restricted Drive — link still saved */ }
+          urls.push("https://drive.google.com/file/d/" + file.getId() + "/view?usp=sharing");
+        } catch (imgErr) {
+          Logger.log("Easy Listing image skipped: " + imgErr.message);
+        }
+      }
+    }
+    // allow pre-hosted URLs to be mixed in as well
+    const extra = (data.imageUrls || []).slice(0, EASY_LISTING.MAX_IMAGES);
+    for (let j = 0; j < extra.length; j++) {
+      if (urls.length >= EASY_LISTING.MAX_IMAGES) break;
+      urls.push(String(extra[j]));
+    }
+
+    // Unify the compound name with the same famous-name gazetteer
+    const compound = resolveFamousCompound(String(data.compound || "Not Specified"));
+
+    // Keep the Egyptian leading zero on the owner phone
+    let phoneDigits = String(data.ownerPhone || data.mobile || "").replace(/\D/g, "");
+    if (phoneDigits.startsWith("20") && phoneDigits.length === 12) phoneDigits = phoneDigits.slice(2);
+    if (phoneDigits.length === 10 && phoneDigits.startsWith("1")) phoneDigits = "0" + phoneDigits;
+
+    lock.waitLock(10000);
+    const lastRow = sheet.getLastRow();
+    sheet.appendRow([
+      data.code || "SE-PENDING",
+      compound,
+      data.bedrooms != null ? data.bedrooms : "Not Specified",
+      data.bathrooms != null ? data.bathrooms : "Not Specified",
+      data.area != null ? data.area : "Not Specified",
+      data.price != null ? data.price : "Ask Owner",
+      data.currency || "EGP",
+      data.furnished ? "Yes" : "No",
+      phoneDigits ? "'" + phoneDigits : "MISSING",
+      data.whatsappContent || "",
+      data.facebookContent || "",
+      data.pfContent || data.comment || "",
+      data.mapLink || "No Map",
+      urls.length ? urls.join(" , ") : "No Photos",
+      data.createdAt || data.submittedAt || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss")
+    ]);
+    const newRowNum = sheet.getLastRow();
+    lock.releaseLock();
+
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: true,
+      row: newRowNum,
+      urls: urls,
+      photoUrls: urls,
+      sheet: targetSheetName,
+      compound: compound
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    try { lock.releaseLock(); } catch (e2) {}
+    Logger.log("handleEasyListing_ error: " + err.message);
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: false,
+      error: String(err)
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function ensureTargetListingSheet_(ss, sheetName) {
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) sheet = ss.insertSheet(sheetName);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      "Code", "Compound", "Bedrooms", "Bathrooms", "Area (sqm)", "Price", "Currency",
+      "Furnished", "Owner Phone", "WhatsApp Content", "Facebook Content",
+      "Property Finder Content", "Map Link", "Images (URLs)", "Created At"
+    ]);
+    sheet.getRange(1, 1, 1, 15)
+      .setFontWeight("bold").setBackground("#0e5c46").setFontColor("#ffffff");
+    sheet.setFrozenRows(1);
+    if (sheet.getMaxColumns() > 15) sheet.hideColumns(16, sheet.getMaxColumns() - 15);
+  }
+  return sheet;
+}
+
+function getEasyListingFolder_() {
+  const it = DriveApp.getFoldersByName(EASY_LISTING.IMAGE_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(EASY_LISTING.IMAGE_FOLDER);
+}
+
+function sanitizeEasyListingName_(name) {
+  return String(name || "").replace(/[^\w\- .()]/g, "_").slice(0, 80);
+}
+
+function appendRowsDeduped_(sheet, rowsToAppend) {
+  let appended = 0;
+  for (const row of rowsToAppend) {
+    sheet.appendRow(row);
+    appended++;
+  }
+  return { ok: true, appended, totalRows: sheet.getLastRow() };
 }
