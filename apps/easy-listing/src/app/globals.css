@@ -1,0 +1,166 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Tajawal", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-gold: var(--gold);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #faf8f3;
+  --foreground: #1c2b26;
+  --card: #ffffff;
+  --card-foreground: #1c2b26;
+  --popover: #ffffff;
+  --popover-foreground: #1c2b26;
+  --primary: #0e5c46;
+  --primary-foreground: #f7fbf9;
+  --secondary: #ede7d9;
+  --secondary-foreground: #33413b;
+  --muted: #f0ece2;
+  --muted-foreground: #6b7a73;
+  --accent: #f2e9d4;
+  --accent-foreground: #7a5a1e;
+  --destructive: #b3261e;
+  --border: #e3dccb;
+  --input: #ddd5c2;
+  --ring: #0e5c46;
+  --gold: #c8963e;
+  --chart-1: #0e5c46;
+  --chart-2: #c8963e;
+  --chart-3: #4c8f6f;
+  --chart-4: #e0c184;
+  --chart-5: #2e4d40;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c2b26;
+  --sidebar-primary: #0e5c46;
+  --sidebar-primary-foreground: #f7fbf9;
+  --sidebar-accent: #f2e9d4;
+  --sidebar-accent-foreground: #7a5a1e;
+  --sidebar-border: #e3dccb;
+  --sidebar-ring: #0e5c46;
+}
+
+.dark {
+  --background: #0d1714;
+  --foreground: #e8ede9;
+  --card: #142220;
+  --card-foreground: #e8ede9;
+  --popover: #142220;
+  --popover-foreground: #e8ede9;
+  --primary: #3ebd8e;
+  --primary-foreground: #08251b;
+  --secondary: #1e332c;
+  --secondary-foreground: #cfe0d8;
+  --muted: #1a2c26;
+  --muted-foreground: #93a69e;
+  --accent: #2b3a26;
+  --accent-foreground: #e4c880;
+  --destructive: #ef6b5e;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #3ebd8e;
+  --gold: #d9b25f;
+  --chart-1: #3ebd8e;
+  --chart-2: #d9b25f;
+  --chart-3: #2b7a5c;
+  --chart-4: #8f7434;
+  --chart-5: #1e4a3a;
+  --sidebar: #142220;
+  --sidebar-foreground: #e8ede9;
+  --sidebar-primary: #3ebd8e;
+  --sidebar-primary-foreground: #08251b;
+  --sidebar-accent: #1e332c;
+  --sidebar-accent-foreground: #cfe0d8;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #3ebd8e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01";
+  }
+}
+
+/* ── Custom scrollbars for long lists / content panes ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--input) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--input);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* ── Mono/LTR helpers for codes, links and numbers inside RTL layout ── */
+.ltr-embed {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+
+.content-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  line-height: 1.9;
+}
+
+/* Subtle dotted paper texture for hero areas */
+.dot-grid {
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
