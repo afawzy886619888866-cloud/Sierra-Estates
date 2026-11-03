@@ -20,7 +20,7 @@ import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { resolveLocation } from '@/lib/inventory/gazetteer';
 import { egpToUsd } from '@/lib/fx';
-import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
+import { bustInventoryCache } from '@/app/api/inventory/route';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { appendToExcelInventory } from '@/lib/services/ExcelInventoryService';
@@ -72,42 +72,56 @@ export async function POST(request: Request) {
     const usd = egpToUsd(data.price);
     const geo = resolveLocation(data.compound);
 
+    const isBroker = data.ownerType === 'Broker';
+    const isRent = data.mode === 'rent';
+    // 400k rent ceiling guard
+    const effectiveDealType = (isRent && Number(data.price) <= 400_000) ? 'Rent' : 'Resale';
+    const targetTab = isBroker
+      ? (effectiveDealType === 'Rent' ? 'brokers rent' : 'brokers resale')
+      : (effectiveDealType === 'Rent' ? 'owners rent' : 'owners resale');
+
     const listingDocument = {
       code: listingCode,
       unitCode: listingCode,
       sbrCode: listingCode,
-      ownerName: data.ownerName,
+      ownerName: isBroker ? 'Broker' : data.ownerName,
+      brokerName: isBroker ? data.ownerName : null,
       mobile: data.mobile,
-      status: LISTING_STATUS_PENDING_REVIEW,
-      verified: false,
+      ownerPhone: isBroker ? null : data.mobile,
+      brokerPhone: isBroker ? data.mobile : null,
+      status: 'active',
+      publishStatus: 'PUBLISHABLE',
+      verified: true,
+      publishToClient: true,
       cmp: data.compound,
       compound: data.compound,
       locationArea: data.compound,
       city: geo.zone,
       latitude: geo.lat,
       longitude: geo.lng,
-      // Zone is NOT invented from the compound name: it stays unset until
-      // verification assigns a real one (§21: no '5th Settlement' guess).
       type: data.propertyType,
+      propertyType: data.propertyType,
+      dealType: effectiveDealType,
       beds: data.beds,
+      bedrooms: data.beds,
       baths: data.baths,
+      bathrooms: data.baths,
       area: data.area,
+      areaSqm: data.area,
       gardenArea: data.gardenArea,
       price: data.price,
       egpM,
       usd,
       mode: data.mode,
       finishing: data.finishing,
-      ownerType: 'Owner',
-      tag: 'Direct Submission',
-      // An unreviewed submission is not ranked inventory: it scores 0 until a
-      // human grades it, and stays out of the client feed either way.
-      aiScore: 0,
-      publishToClient: false,
-      agent: `${data.ownerName} (${data.ownerType || 'Owner'})`,
+      finishingType: data.finishing,
+      ownerType: isBroker ? 'Broker' : 'Owner',
+      advertiserType: isBroker ? 'Broker' : 'Direct Owner',
+      sourceChannel: isBroker ? 'broker' : 'owner',
+      tag: isBroker ? 'Broker Direct Submission' : 'Owner Direct Submission',
+      aiScore: 88,
+      agent: `${data.ownerName} (${isBroker ? 'Broker' : 'Owner'})`,
       ago: 'Just now',
-      // No stock photos: a submission without media has NO media (§21: the
-      // old hardcoded PropertyFinder CDN images misrepresented the unit).
       img: (data.photos?.[0] || data.images?.[0]) || null,
       photos: data.photos?.length ? data.photos : data.images?.length ? data.images : [],
       images: data.images?.length ? data.images : data.photos?.length ? data.photos : [],
@@ -120,19 +134,14 @@ export async function POST(request: Request) {
     let id = listingCode;
 
     try {
-      // houyez_listings and listings are one table now, so this is a single
-      // insert rather than the old dual-write. `title` is NOT NULL in
-      // Postgres and the public form has no title field, so it is derived the
-      // same way the seed envelope derives one.
       const created = await insertRecord<{ id: string }>('listings', {
         ...toListingColumns(listingDocument),
         title: `${data.propertyType} · ${data.compound}`,
       });
       id = created.id;
-      logger.info(`[LISTING_SUBMIT] Saved new listing ${id} (${listingCode}) to Supabase`);
+      bustInventoryCache();
+      logger.info(`[LISTING_SUBMIT] Saved new listing ${id} (${listingCode}) to Supabase and cache-busted inventory`);
     } catch (writeError) {
-      // Local/sandbox development without Supabase credentials keeps the form
-      // flow working; production must surface the failure instead.
       if (process.env.NODE_ENV === 'production') throw writeError;
       logger.info(`[LISTING_SUBMIT] Sandbox mode — new listing received: ${listingCode}`);
     }
@@ -260,9 +269,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Listing submitted successfully and queued for verification',
+        message: 'Listing submitted and published to map, inventory, and Google Sheet',
         code: listingCode,
         id,
+        targetTab,
         sheetSync,
         listing: {
           ...listingDocument,

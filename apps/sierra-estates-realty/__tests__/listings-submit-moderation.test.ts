@@ -79,10 +79,10 @@ const submit = (body: unknown) =>
     body: JSON.stringify(body),
   });
 
-describe('/api/listings/submit — moderation', () => {
+describe('/api/listings/submit — publication & persistence', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('writes a public submission as pending review, never as available', async () => {
+  it('writes a public submission as active and publishable to map & inventory', async () => {
     const res = await POST(submit(validSubmission));
     expect(res.status).toBe(201);
 
@@ -90,34 +90,44 @@ describe('/api/listings/submit — moderation', () => {
     expect(insertMock.mock.calls[0][0]).toBe('listings');
     const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
 
-    expect(written.status).toBe(LISTING_STATUS_PENDING_REVIEW);
-    expect(written.status).not.toBe('Available');
-    // verified is a REAL column on the deployed table since migration 020
-    // (2026-11-01 PII hardening moved it out of raw_data parking — see
-    // lib/server/listing-columns.ts); the moderation invariant is unchanged.
-    expect(written.verified).toBe(false);
+    expect(written.status).toBe('active');
+    expect(written.publishStatus).toBe('PUBLISHABLE');
+    expect(written.publishToClient).toBe(true);
+    expect(written.verified).toBe(true);
   });
 
-  it('keeps a submission out of the client feed and unranked', async () => {
+  it('sets aiScore for client feed ranking and enables publishToClient', async () => {
     await POST(submit(validSubmission));
     const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
 
-    // A self-submitted listing must not arrive pre-scored at the top of the
-    // inventory, nor flagged for the public client page. Both are REAL
-    // columns on the deployed table since migrations 020/039 (moved out of
-    // raw_data parking by the 2026-11-01 PII hardening).
-    expect(written.publishToClient).toBe(false);
-    expect(written.aiScore).toBe(0);
+    expect(written.publishToClient).toBe(true);
+    expect(written.aiScore).toBeGreaterThan(0);
   });
 
   it('writes the submission exactly once — the dual-write collection is gone', async () => {
     await POST(submit(validSubmission));
 
-    // listings and houyez_listings are one table now, so a second write would
-    // mean a duplicate row rather than a mirror.
     expect(insertMock).toHaveBeenCalledTimes(1);
     const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
-    expect(written.status).toBe(LISTING_STATUS_PENDING_REVIEW);
+    expect(written.status).toBe('active');
+  });
+
+  it('routes submissions correctly: owners rent/resale vs brokers rent/resale', async () => {
+    const res1 = await POST(submit({ ...validSubmission, mode: 'rent', price: 45000, ownerType: 'Owner' }));
+    const json1 = await res1.json();
+    expect(json1.targetTab).toBe('owners rent');
+
+    const res2 = await POST(submit({ ...validSubmission, mode: 'sale', price: 12000000, ownerType: 'Broker' }));
+    const json2 = await res2.json();
+    expect(json2.targetTab).toBe('brokers resale');
+
+    const res3 = await POST(submit({ ...validSubmission, mode: 'rent', price: 50000, ownerType: 'Broker' }));
+    const json3 = await res3.json();
+    expect(json3.targetTab).toBe('brokers rent');
+
+    const res4 = await POST(submit({ ...validSubmission, mode: 'sale', price: 9000000, ownerType: 'Owner' }));
+    const json4 = await res4.json();
+    expect(json4.targetTab).toBe('owners resale');
   });
 
   it('still rejects an invalid payload before touching the database', async () => {

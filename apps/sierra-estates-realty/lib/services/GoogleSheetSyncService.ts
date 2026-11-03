@@ -49,6 +49,8 @@ export interface WebsiteSheetSyncResult {
   ok: boolean;
   /** Sheet row number on success. */
   row?: number;
+  /** Tab name written to (e.g. 'owners rent', 'owners resale', 'brokers rent', 'brokers resale') */
+  sheet?: string;
   /** Deep link to the exact sheet row (لينك الانفنتوري). */
   inventoryUrl?: string;
   /** Permanent Google Drive links for the uploaded photos. */
@@ -130,6 +132,14 @@ export async function syncWebsiteSubmissionToSheet(
     }
   }
 
+  const isBroker = String(input.ownerType || '').toLowerCase().includes('broker');
+  const isRent = input.mode === 'rent';
+  // 400,000 EGP rent ceiling guard: rent above 400k is classified as resale
+  const effectiveDealType = (isRent && Number(input.price) <= 400_000) ? 'Rent' : 'Resale';
+  const targetTab = isBroker
+    ? (effectiveDealType === 'Rent' ? 'brokers rent' : 'brokers resale')
+    : (effectiveDealType === 'Rent' ? 'owners rent' : 'owners resale');
+
   const now = new Date();
   const cairoDate = now.toLocaleDateString('en-GB');
   const masterRow = [
@@ -144,10 +154,10 @@ export async function syncWebsiteSubmissionToSheet(
     input.compound,
     Number(input.price).toLocaleString('en-US'),
     input.finishing || 'Fully finished',
-    input.mode === 'rent' ? 'Rent' : 'Sale',
+    effectiveDealType,
     input.propertyType,
     input.code,
-    input.ownerType || 'Owner',
+    isBroker ? 'Broker' : (input.ownerType || 'Owner'),
     input.gardenArea ? String(input.gardenArea) : '',
     input.area ? String(input.area) : '',
     '',
@@ -159,12 +169,13 @@ export async function syncWebsiteSubmissionToSheet(
     secret,
     mode: 'website_submission',
     action: 'appendRows',
+    targetTab,
     rows: [masterRow],
     code: input.code,
     supabaseId: input.supabaseId,
     compound: input.compound,
     propertyType: input.propertyType,
-    dealType: input.mode === 'rent' ? 'Rent' : 'Resale',
+    dealType: effectiveDealType,
     beds: input.beds,
     baths: input.baths,
     area: input.area,
@@ -172,7 +183,8 @@ export async function syncWebsiteSubmissionToSheet(
     price: input.price,
     finishing: input.finishing || '',
     ownerName: input.ownerName,
-    ownerType: input.ownerType || 'Owner',
+    ownerType: isBroker ? 'Broker' : (input.ownerType || 'Owner'),
+    advertiserType: isBroker ? 'Broker' : 'Direct Owner',
     mobile: input.mobile,
     comment: input.comment || '',
     websiteUrl: input.websiteUrl,
@@ -204,11 +216,12 @@ export async function syncWebsiteSubmissionToSheet(
     if (json && typeof json === 'object' && 'ok' in json) {
       if (json.ok === true && res.ok) {
         logger.info(
-          `[SHEET_SYNC] Row ${json.row} written to ${json.sheet} for ${input.code}`
+          `[SHEET_SYNC] Row ${json.row} written to ${json.sheet || targetTab} for ${input.code}`
         );
         return {
           ok: true,
           row: typeof json.row === 'number' ? json.row : undefined,
+          sheet: typeof json.sheet === 'string' ? json.sheet : targetTab,
           inventoryUrl: typeof json.inventoryUrl === 'string' ? json.inventoryUrl : undefined,
           photoUrls: Array.isArray(json.photoUrls) ? json.photoUrls.map(String) : [],
         };

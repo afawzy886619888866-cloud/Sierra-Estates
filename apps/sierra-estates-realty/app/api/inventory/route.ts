@@ -67,6 +67,10 @@ function deriveSegment(
 let cachedSupabaseListings: { data: InventoryResponse; expiresAt: number } | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
+export function bustInventoryCache(): void {
+  cachedSupabaseListings = null;
+}
+
 /** Canonical Supabase listings, mapped to the public-safe map shape.
  *
  * Least privilege (was service-role): this is a public, unauthenticated

@@ -1161,7 +1161,25 @@ const EASY_LISTING = {
 function handleEasyListing_(data, ss) {
   const lock = LockService.getScriptLock();
   try {
-    const targetSheetName = data.mode === "website_submission" ? EASY_LISTING.WEBSITE_SHEET_NAME : EASY_LISTING.SHEET_NAME;
+    // ---- advertiser & deal type resolution ----
+    const isBroker = String(data.ownerType || data.advertiserType || "").toLowerCase().includes("broker");
+    const isRent = String(data.dealType || data.mode || "").toLowerCase().includes("rent");
+    let price = parseFloat(String(data.price || "0").replace(/,/g, "")) || 0;
+
+    let finalDealType = isRent ? "Rent" : "Resale";
+    if (finalDealType === "Rent" && price > CONFIG.PRICE_RENT_MAX) {
+      finalDealType = "Resale";
+    }
+
+    let targetSheetName = "";
+    if (data.targetTab && typeof data.targetTab === "string" && data.targetTab.trim()) {
+      targetSheetName = data.targetTab.trim().toLowerCase();
+    } else if (isBroker) {
+      targetSheetName = finalDealType === "Rent" ? "brokers rent" : "brokers resale";
+    } else {
+      targetSheetName = finalDealType === "Rent" ? "owners rent" : "owners resale";
+    }
+
     const sheet = ensureTargetListingSheet_(ss, targetSheetName);
 
     // ---- photos: base64 → Google Drive (permanent, shareable links) ----
@@ -1194,34 +1212,81 @@ function handleEasyListing_(data, ss) {
       urls.push(String(extra[j]));
     }
 
-    // Unify the compound name with the same famous-name gazetteer
+    // Unify the compound name with famous-name gazetteer
     const compound = resolveFamousCompound(String(data.compound || "Not Specified"));
 
-    // Keep the Egyptian leading zero on the owner phone
+    // Keep Egyptian leading zero on phone
     let phoneDigits = String(data.ownerPhone || data.mobile || "").replace(/\D/g, "");
     if (phoneDigits.startsWith("20") && phoneDigits.length === 12) phoneDigits = phoneDigits.slice(2);
     if (phoneDigits.length === 10 && phoneDigits.startsWith("1")) phoneDigits = "0" + phoneDigits;
 
-    lock.waitLock(10000);
-    const lastRow = sheet.getLastRow();
-    sheet.appendRow([
-      data.code || "SE-PENDING",
+    const timestamp = data.submittedAt || data.createdAt || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss");
+    const code = data.code || ("SE-SUB-" + Math.floor(100000 + Math.random() * 900000));
+    const propType = data.propertyType || "Apartment";
+    const finishing = data.finishing || "Fully Finished";
+    const floor = data.floor || "Not Specified";
+    const garden = data.gardenArea ? String(data.gardenArea) : "No Info";
+    const pool = data.pool || "No Info";
+    const advertiserType = isBroker ? "Broker" : "Direct Owner";
+    const contactName = data.ownerName || data.contactName || (isBroker ? "Broker" : "Direct Owner");
+    const phoneFormatted = phoneDigits ? "'" + phoneDigits : "MISSING";
+    const last7 = phoneDigits ? "'" + phoneDigits.slice(-7) : "MISSING";
+    const availability = "Available";
+    const actionDate = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
+
+    const notesParts = [];
+    if (data.comment) notesParts.push(data.comment);
+    if (data.websiteUrl) notesParts.push("Website: " + data.websiteUrl);
+    if (data.mapLink) notesParts.push("Map: " + data.mapLink);
+    const notes = notesParts.join(" | ") || "Direct web submission";
+    const photosCell = urls.length ? urls.join(" , ") : "No Photos";
+    const ragId = "rag-" + code + "-" + Date.now().toString(36);
+
+    const canonicalRow = [
+      timestamp,
+      code,
+      finalDealType,
       compound,
-      data.bedrooms != null ? data.bedrooms : "Not Specified",
-      data.bathrooms != null ? data.bathrooms : "Not Specified",
+      propType,
+      price,
       data.area != null ? data.area : "Not Specified",
-      data.price != null ? data.price : "Ask Owner",
-      data.currency || "EGP",
-      data.furnished ? "Yes" : "No",
-      phoneDigits ? "'" + phoneDigits : "MISSING",
-      data.whatsappContent || "",
-      data.facebookContent || "",
-      data.pfContent || data.comment || "",
-      data.mapLink || "No Map",
-      urls.length ? urls.join(" , ") : "No Photos",
-      data.createdAt || data.submittedAt || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss")
-    ]);
+      data.beds != null ? data.beds : (data.bedrooms != null ? data.bedrooms : "Not Specified"),
+      data.baths != null ? data.baths : (data.bathrooms != null ? data.bathrooms : "Not Specified"),
+      finishing,
+      floor,
+      garden,
+      pool,
+      advertiserType,
+      contactName,
+      phoneFormatted,
+      last7,
+      availability,
+      actionDate,
+      notes,
+      photosCell,
+      ragId
+    ];
+
+    lock.waitLock(10000);
+    sheet.appendRow(canonicalRow);
     const newRowNum = sheet.getLastRow();
+    sheet.getRange(newRowNum, 6).setNumberFormat("#,##0");
+    sheet.getRange(newRowNum, 16, 1, 2).setNumberFormat("@");
+
+    // Also mirror into 'available units' sheet
+    const availSheet = ensureTargetListingSheet_(ss, "available units");
+    availSheet.appendRow(canonicalRow);
+    const availRowNum = availSheet.getLastRow();
+    availSheet.getRange(availRowNum, 6).setNumberFormat("#,##0");
+    availSheet.getRange(availRowNum, 16, 1, 2).setNumberFormat("@");
+
+    // Live update Dashboard counts if dashboard sheet exists
+    try {
+      updateDashboardCounts_(ss);
+    } catch (dErr) {
+      Logger.log("Dashboard update skipped: " + dErr.message);
+    }
+
     lock.releaseLock();
 
     return ContentService.createTextOutput(JSON.stringify({
@@ -1230,7 +1295,8 @@ function handleEasyListing_(data, ss) {
       urls: urls,
       photoUrls: urls,
       sheet: targetSheetName,
-      compound: compound
+      compound: compound,
+      code: code
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     try { lock.releaseLock(); } catch (e2) {}
@@ -1242,19 +1308,60 @@ function handleEasyListing_(data, ss) {
   }
 }
 
+function updateDashboardCounts_(ss) {
+  const dash = ss.getSheetByName("dashboard");
+  if (!dash) return;
+  const sAvail = ss.getSheetByName("available units");
+  const sOwnRent = ss.getSheetByName("owners rent");
+  const sOwnResale = ss.getSheetByName("owners resale");
+  const sBrkRent = ss.getSheetByName("brokers rent");
+  const sBrkResale = ss.getSheetByName("brokers resale");
+
+  const cAvail = sAvail ? Math.max(0, sAvail.getLastRow() - 2) : 0;
+  const cOwnRent = sOwnRent ? Math.max(0, sOwnRent.getLastRow() - 2) : 0;
+  const cOwnResale = sOwnResale ? Math.max(0, sOwnResale.getLastRow() - 2) : 0;
+  const cBrkRent = sBrkRent ? Math.max(0, sBrkRent.getLastRow() - 2) : 0;
+  const cBrkResale = sBrkResale ? Math.max(0, sBrkResale.getLastRow() - 2) : 0;
+  const total = cOwnRent + cOwnResale + cBrkRent + cBrkResale;
+
+  dash.getRange("B6").setValue(total);
+  dash.getRange("D6").setValue(cAvail);
+  dash.getRange("F6").setValue(cOwnRent);
+  dash.getRange("H6").setValue(cOwnResale);
+  dash.getRange("J6").setValue(cBrkRent + cBrkResale);
+}
+
 function ensureTargetListingSheet_(ss, sheetName) {
   let sheet = ss.getSheetByName(sheetName);
   if (!sheet) sheet = ss.insertSheet(sheetName);
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      "Code", "Compound", "Bedrooms", "Bathrooms", "Area (sqm)", "Price", "Currency",
-      "Furnished", "Owner Phone", "WhatsApp Content", "Facebook Content",
-      "Property Finder Content", "Map Link", "Images (URLs)", "Created At"
-    ]);
-    sheet.getRange(1, 1, 1, 15)
-      .setFontWeight("bold").setBackground("#0e5c46").setFontColor("#ffffff");
-    sheet.setFrozenRows(1);
-    if (sheet.getMaxColumns() > 15) sheet.hideColumns(16, sheet.getMaxColumns() - 15);
+    const CANONICAL_HEADERS = [
+      "Timestamp", "Unit Code", "Deal Type", "Compound (Canonical)", "Property Type",
+      "Asking Price (EGP)", "Area (m²)", "Bedrooms", "Bathrooms", "Finishing Status",
+      "Floor", "Garden (m²)", "Pool", "Advertiser Type", "Contact Name",
+      "Mobile Number", "Mobile (Last 7)", "Availability Status", "Last Action Date",
+      "Owner Call Response & Notes", "Photo URLs", "RAG Memory ID"
+    ];
+    const GUIDANCE_ROW = [
+      "e.g. 2026-11-03 21:00:00", "e.g. CFC-APT-104", "Dropdown: Rent or Resale",
+      "Famous Canonical Compound (e.g. Cairo Festival City)", "Dropdown: Apartment, Villa, etc.",
+      "Numeric: Rent <= 400,000 | Resale > 400,000", "Numeric area (m²)",
+      "Dropdown: Studio, 1, 2, 3, 4, 5, 6+", "Dropdown: 1, 2, 3, 4, 5+",
+      "Dropdown: Core & Shell, Semi Finished, Fully Finished, Furnished, Ultra Super Lux",
+      "Floor level or Not Specified", "Numeric garden m² or No Info",
+      "Dropdown: Yes, No, Shared, Not Specified", "Dropdown: Direct Owner or Broker",
+      "Full name of owner/broker", "REQUIRED: 01xxxxxxxxx (11 digits)",
+      "Auto: Last 7 digits for deduplication",
+      "Dropdown: Available, Under Offer, Rented, Sold, No Answer, Not Available",
+      "Date: YYYY-MM-DD / تاريخ اخر تواصل",
+      "Detailed call feedback, price changes, viewing terms",
+      "Image URLs or No Photos", "Supabase Vector UUID / RAG Tag"
+    ];
+    sheet.appendRow(CANONICAL_HEADERS);
+    sheet.getRange(1, 1, 1, 22).setBackground("#0F172A").setFontColor("#FFFFFF").setFontWeight("bold");
+    sheet.appendRow(GUIDANCE_ROW);
+    sheet.getRange(2, 1, 1, 22).setBackground("#F1F5F9").setFontColor("#475569").setFontStyle("italic");
+    sheet.setFrozenRows(2);
   }
   return sheet;
 }
