@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Sierra Estates — Comprehensive Git Ignore Policy
 # ==============================================================================
 
@@ -195,6 +195,7 @@ obsidian-store.json
 *se.env*
 !.env.example
 !infra/.env.example
+!apps/easy-listing/.env.example
 
 # ============================================================================
 # Removed from repo (kept local): AI tooling artifacts & vendored dev tooling.
