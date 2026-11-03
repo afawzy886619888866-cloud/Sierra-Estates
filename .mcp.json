@@ -1,4 +1,25 @@
 {
   "mcpServers": {
+    "amphion-command-deck": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        ".amphion/command-deck/scripts/mcp-bridge.py"
+      ],
+      "tools": [
+        "*"
+      ]
+    },
+    "sierra-estates": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "node_modules/tsx/dist/cli.mjs",
+        "scripts/sierra-mcp-server.ts"
+      ],
+      "tools": [
+        "*"
+      ]
+    }
   }
 }
