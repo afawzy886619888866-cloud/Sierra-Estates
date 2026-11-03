@@ -121,12 +121,6 @@
     "vpgk",
     "zedeast"
   ],
-  "circuitpythonsync.cpbaseversion": "10",
-  "circuitpythonsync.cpfullversion": "10.3.0",
-  "circuitpythonsync.curlibtag": "20260901",
-  "circuitpythonsync.doNotShowWelcome": true,
-  "circuitpythonsync.drivepath": "",
-  "rust-analyzer.cargo.target": "x86_64-pc-windows-gnu",
   "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
   "git.enabled": true,
   "git.autorefresh": true,
