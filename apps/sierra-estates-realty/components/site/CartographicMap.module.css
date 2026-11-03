@@ -1,0 +1,888 @@
+/* ============================================================================
+   SIERRA ESTATES · Bespoke Cartographic Masterplan Map Styles
+   Independent of Tailwind · Fully compatible with Next.js Client Pages
+   Dual Theme: Obsidian Nocturne (Dark) & Royal Alabaster (Light)
+   ============================================================================ */
+
+.mapRoot {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  font-family: var(--font-jakarta, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+/* --- Top Toolbar --- */
+.toolbar {
+  width: 100%;
+  max-width: 1280px;
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.toolbarDark {
+  background-color: #061122;
+  border-bottom-color: rgba(212, 175, 55, 0.22);
+}
+
+.toolbarLight {
+  background-color: #faf8f5;
+  border-bottom-color: #e6dec8;
+}
+
+/* Zone Filter Pills */
+.zoneFilters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 2px 0;
+  scrollbar-width: thin;
+}
+
+.zoneLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.zoneBtn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.zoneBtnActive {
+  background: linear-gradient(135deg, #c8961a, #dfad3a);
+  color: #071523;
+  box-shadow: 0 2px 8px rgba(200, 150, 26, 0.35);
+  border-color: #dfad3a;
+}
+
+.zoneBtnInactiveDark {
+  background-color: rgba(11, 25, 44, 0.85);
+  color: #cbd5e1;
+  border-color: rgba(100, 116, 139, 0.4);
+}
+
+.zoneBtnInactiveDark:hover {
+  background-color: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.5);
+  color: #f6d88b;
+}
+
+.zoneBtnInactiveLight {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.zoneBtnInactiveLight:hover {
+  background-color: #fef3c7;
+  border-color: #d97706;
+  color: #78350f;
+}
+
+/* Toolbar Controls Group */
+.toolbarControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Feature Toggle Buttons (AUC, Road, Yield) */
+.featureToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  outline: none;
+}
+
+.featureToggleActiveDark {
+  background-color: rgba(212, 175, 55, 0.15);
+  border-color: #dfad3a;
+  color: #f6d88b;
+}
+
+.featureToggleActiveLight {
+  background-color: #fef3c7;
+  border-color: #d97706;
+  color: #92400e;
+}
+
+.featureToggleInactiveDark {
+  background-color: transparent;
+  border-color: rgba(100, 116, 139, 0.35);
+  color: #94a3b8;
+}
+
+.featureToggleInactiveDark:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  color: #cbd5e1;
+}
+
+.featureToggleInactiveLight {
+  background-color: transparent;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.featureToggleInactiveLight:hover {
+  border-color: #d97706;
+  color: #334155;
+}
+
+/* Prominent Theme Toggle Button */
+.themeModeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid;
+  outline: none;
+}
+
+.themeModeBtnDark {
+  background-color: #0b192c;
+  border-color: rgba(212, 175, 55, 0.5);
+  color: #f6d88b;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.themeModeBtnDark:hover {
+  background-color: #11243e;
+  border-color: #f6d88b;
+}
+
+.themeModeBtnLight {
+  background-color: #ffffff;
+  border-color: rgba(200, 150, 26, 0.5);
+  color: #78350f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.themeModeBtnLight:hover {
+  background-color: #fffbeb;
+  border-color: #b45309;
+}
+
+/* Zoom Controls Cluster */
+.zoomGroup {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid;
+}
+
+.zoomGroupDark {
+  background-color: rgba(11, 25, 44, 0.85);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #e2e8f0;
+}
+
+.zoomGroupLight {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.zoomBtn {
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  transition: background-color 0.15s;
+}
+
+.zoomBtn:hover {
+  background-color: rgba(212, 175, 55, 0.2);
+}
+
+.zoomPercentage {
+  padding: 0 8px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  min-width: 44px;
+  text-align: center;
+  border-left: 1px solid rgba(148, 163, 184, 0.3);
+  border-right: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.iconBtn {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.iconBtnDark {
+  background-color: transparent;
+  border-color: rgba(100, 116, 139, 0.35);
+  color: #cbd5e1;
+}
+
+.iconBtnDark:hover {
+  border-color: #dfad3a;
+  color: #f6d88b;
+}
+
+.iconBtnLight {
+  background-color: transparent;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.iconBtnLight:hover {
+  border-color: #d97706;
+  color: #78350f;
+}
+
+/* --- Main Masterplan Frame --- */
+.mapFrameWrapper {
+  width: 100%;
+  max-width: 1280px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+.editorialFrame {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.editorialFrameDark {
+  border-color: rgba(212, 175, 55, 0.4);
+  background-color: #061122;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+}
+
+.editorialFrameLight {
+  border-color: rgba(200, 150, 26, 0.45);
+  background-color: #faf8f5;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+/* Hairline framing line inside */
+.innerFramingLine {
+  position: absolute;
+  inset: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* Floating Masterplan HUD Title Banner */
+.hudBanner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 32;
+  pointer-events: none;
+  padding: 5px 18px;
+  border-radius: 999px;
+  border: 1px solid;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-align: center;
+  max-width: 90%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.hudBannerDark {
+  background-color: rgba(6, 17, 34, 0.94);
+  border-color: rgba(212, 175, 55, 0.5);
+  color: #f1f5f9;
+}
+
+.hudBannerLight {
+  background-color: rgba(250, 248, 245, 0.96);
+  border-color: rgba(200, 150, 26, 0.45);
+  color: #0f172a;
+}
+
+.hudBannerTitle {
+  font-family: var(--font-playfair, "Cinzel", "Times New Roman", serif);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hudBannerDot {
+  color: #dfad3a;
+  font-weight: 800;
+}
+
+.hudBannerDomain {
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  color: #06b6d4;
+  font-weight: 700;
+}
+
+.hudBannerSub {
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  color: #dfad3a;
+  font-weight: 600;
+}
+
+/* Floating Quick Theme Pill */
+.quickThemePill {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.quickThemePillDark {
+  background-color: rgba(11, 25, 44, 0.92);
+  border-color: rgba(212, 175, 55, 0.6);
+  color: #f6d88b;
+}
+
+.quickThemePillDark:hover {
+  background-color: #132845;
+  border-color: #fde047;
+}
+
+.quickThemePillLight {
+  background-color: rgba(255, 255, 255, 0.96);
+  border-color: rgba(200, 150, 26, 0.55);
+  color: #78350f;
+}
+
+.quickThemePillLight:hover {
+  background-color: #fffbeb;
+  border-color: #b45309;
+}
+
+/* --- Viewport & Canvas --- */
+.viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 540px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  background-color: #061122;
+}
+
+.viewportDragging {
+  cursor: grabbing !important;
+}
+
+.canvasTransform {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.backdropImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  display: block;
+}
+
+.backdropDark {
+  filter: contrast(1.1) saturate(1.08) brightness(0.98);
+}
+
+.backdropLight {
+  filter: contrast(1.06) saturate(1.04) brightness(1.02);
+}
+
+/* Overlay Color Tint */
+.colorTintDark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(ellipse at 50% 50%, rgba(6, 17, 34, 0.15) 0%, rgba(6, 17, 34, 0.6) 100%);
+  mix-blend-mode: multiply;
+}
+
+.colorTintLight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(ellipse at 50% 50%, rgba(250, 248, 245, 0.04) 0%, rgba(250, 248, 245, 0.2) 100%);
+  mix-blend-mode: soft-light;
+}
+
+/* Edge Vignette */
+.vignetteDark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+  box-shadow: inset 0 0 90px rgba(6, 17, 34, 0.85);
+  background: linear-gradient(to top, rgba(6, 17, 34, 0.7), transparent 30%, transparent 70%, rgba(6, 17, 34, 0.5));
+}
+
+.vignetteLight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+  box-shadow: inset 0 0 60px rgba(180, 83, 9, 0.08);
+  background: linear-gradient(to top, rgba(250, 248, 245, 0.3), transparent 30%, transparent 70%, rgba(250, 248, 245, 0.2));
+}
+
+/* SVG Vector CAD Overlay */
+.svgCadLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* Road Axis Labels */
+.roadBadgesLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 18;
+}
+
+.roadBadge {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.05em;
+  border: 1px solid;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.roadBadgeDark {
+  background-color: rgba(6, 17, 34, 0.92);
+  color: #fde68a;
+  border-color: rgba(212, 175, 55, 0.35);
+}
+
+.roadBadgeLight {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #1e293b;
+  border-color: rgba(200, 150, 26, 0.4);
+}
+
+.roadBadgeHeroDark {
+  background-color: rgba(6, 17, 34, 0.96);
+  color: #fde047;
+  border-color: rgba(253, 224, 71, 0.6);
+  font-weight: 800;
+}
+
+.roadBadgeHeroLight {
+  background-color: #fef3c7;
+  color: #78350f;
+  border-color: rgba(180, 83, 9, 0.6);
+  font-weight: 800;
+}
+
+/* Compound Interactive Target & Badge */
+.compoundTarget {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compoundPill {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid;
+}
+
+.compoundPillNormalDark {
+  background-color: rgba(6, 17, 34, 0.88);
+  color: #f6d88b;
+  border-color: rgba(212, 175, 55, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.compoundPillNormalLight {
+  background-color: rgba(255, 255, 255, 0.92);
+  color: #1e293b;
+  border-color: rgba(200, 150, 26, 0.45);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.compoundPillHoverDark {
+  background-color: #f59e0b;
+  color: #061122;
+  border-color: #fbbf24;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.95);
+  transform: scale(1.15);
+  font-weight: 900;
+}
+
+.compoundPillHoverLight {
+  background-color: #d97706;
+  color: #ffffff;
+  border-color: #b45309;
+  box-shadow: 0 0 16px rgba(217, 119, 6, 0.8);
+  transform: scale(1.15);
+  font-weight: 900;
+}
+
+.yieldPill {
+  position: absolute;
+  top: -15px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  background-color: #22d3ee;
+  color: #071523;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.9);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Compound Hover Popup Sign */
+.popupCard {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 290px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 2px solid;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8);
+  text-align: left;
+  animation: popupFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popupFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.popupCardDark {
+  background-color: rgba(6, 17, 34, 0.97);
+  color: #ffffff;
+  border-color: rgba(212, 175, 55, 0.65);
+}
+
+.popupCardLight {
+  background-color: rgba(250, 248, 245, 0.98);
+  color: #0f172a;
+  border-color: rgba(200, 150, 26, 0.6);
+}
+
+.popupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+}
+
+.popupIndex {
+  color: #dfad3a;
+  font-weight: 800;
+}
+
+.popupUnitsBadge {
+  color: #10b981;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.popupTitleEn {
+  font-family: var(--font-playfair, "Cinzel", "Times New Roman", serif);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.popupTitleAr {
+  font-family: var(--font-cairo, "Segoe UI", sans-serif);
+  font-weight: 700;
+  font-size: 12px;
+  color: #dfad3a;
+  margin: 2px 0 8px;
+}
+
+.popupPricingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+}
+
+.popupMetricLabel {
+  font-size: 9px;
+  color: #94a3b8;
+  display: block;
+}
+
+.popupPriceValue {
+  font-weight: 800;
+  color: #dfad3a;
+}
+
+.popupRentValue {
+  font-weight: 800;
+  color: #10b981;
+}
+
+.popupYieldRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  color: #06b6d4;
+}
+
+.popupDriveRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 9px;
+  font-family: var(--font-mono, monospace);
+  color: #94a3b8;
+}
+
+.popupCtaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  font-size: 11px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+/* --- Compass & Scale (Bottom Left) --- */
+.compassContainer {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compassRose {
+  width: 60px;
+  height: 60px;
+}
+
+.scaleBox {
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.scaleBoxDark {
+  background-color: rgba(6, 17, 34, 0.9);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #e2e8f0;
+}
+
+.scaleBoxLight {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(200, 150, 26, 0.35);
+  color: #1e293b;
+}
+
+/* --- Seal Signature (Bottom Right) --- */
+.sealSignature {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  border-radius: 12px;
+  border: 1px solid;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.sealSignatureDark {
+  background-color: rgba(6, 17, 34, 0.95);
+  border-color: rgba(212, 175, 55, 0.45);
+  color: #f1f5f9;
+}
+
+.sealSignatureLight {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(200, 150, 26, 0.4);
+  color: #0f172a;
+}
+
+.sealLogoWrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background-color: #061122;
+  flex-shrink: 0;
+  padding: 2px;
+  display: grid;
+  place-items: center;
+}
+
+/* --- Bottom Instructions --- */
+.instructionStrip {
+  width: 100%;
+  max-width: 1280px;
+  padding: 10px 16px;
+  border-top: 1px solid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.instructionStripDark {
+  background-color: #080f1d;
+  border-top-color: rgba(212, 175, 55, 0.2);
+  color: #cbd5e1;
+}
+
+.instructionStripLight {
+  background-color: #f7f3eb;
+  border-top-color: #e6dec8;
+  color: #475569;
+}
