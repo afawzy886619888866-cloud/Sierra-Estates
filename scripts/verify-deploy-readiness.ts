@@ -143,7 +143,19 @@ check('Supabase Master Schema Readiness', () => {
   if (!fs.existsSync(schemaPath)) throw new Error('Missing supabase/schema.sql master schema file');
 });
 
-const pnpmRunner = process.platform === 'win32' ? 'corepack.cmd pnpm' : 'pnpm';
+function resolvePnpmRunner(): string {
+  if (process.platform === 'win32') {
+    try {
+      execSync('where.exe corepack.cmd', { stdio: 'ignore' });
+      return 'corepack.cmd pnpm';
+    } catch {
+      return 'pnpm';
+    }
+  }
+  return 'pnpm';
+}
+
+const pnpmRunner = resolvePnpmRunner();
 
 // 7. Check package type safety. Not every workspace package publishes a build
 // script, while all maintained packages expose type-check.
