@@ -577,3 +577,110 @@
     animation: none !important;
   }
 }
+
+/* AI Magic Intake Section */
+.aiIntakeCard {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 28px;
+  position: relative;
+  transition: border-color 0.2s var(--silk);
+}
+.aiIntakeCard:focus-within {
+  border-color: var(--gold);
+}
+.aiIntakeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.aiIntakeTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--gold);
+}
+.aiIntakeTitle .i {
+  width: 18px;
+  height: 18px;
+}
+.aiIntakeDesc {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.aiIntakeTextarea {
+  width: 100%;
+  min-height: 84px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  resize: vertical;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.aiIntakeTextarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.aiIntakeActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.aiParseBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-l) 100%);
+  color: #0a1622;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s var(--silk), opacity 0.2s var(--silk);
+}
+.aiParseBtn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+.aiParseBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.codeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(200, 150, 26, 0.15);
+  border: 1px solid var(--gold);
+  color: var(--gold-l);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.aiFeedbackSuccess {
+  font-size: 12.5px;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}

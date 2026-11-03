@@ -229,7 +229,7 @@ export async function GET(request: Request) {
         aiScore: typeof item.ai_score === 'number' ? item.ai_score : 0,
         tag: item.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
         mode: itemMode,
-        agent: item.agent_name || '',
+        agent: scrubOwnerContactText(item.agent_name || ''),
         img: item.img || (item.images && item.images[0]) || '',
         status,
         description: scrubOwnerContactText(item.description) || '',

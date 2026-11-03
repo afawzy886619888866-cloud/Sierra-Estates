@@ -177,11 +177,15 @@ export function isAdminEmail(email: string): boolean {
  * Provides resilient access for approved staff and administrators.
  */
 export function tryDemoLogin(email: string, password: string): Session | null {
-  let cleanEmail = (email || "").trim().toLowerCase();
+  const rawEmail = (email || "").trim().toLowerCase();
+  if (!rawEmail) return null;
+
+  let cleanEmail = rawEmail;
   if (cleanEmail === "admin" || !cleanEmail.includes("@")) {
     cleanEmail = `${cleanEmail}@sierra-estates.net`;
   }
   const cleanPass = (password || "").trim();
+  if (!cleanPass) return null;
 
   // This path previously accepted a hardcoded list of passwords — including
   // "admin", "password", "123456" and "12345678" — and its final condition was

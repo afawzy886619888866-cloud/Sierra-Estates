@@ -235,6 +235,26 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
       return { success: true, count: 0, units: [] };
     }
 
+    const headerRow = (rows[0] || []).map((h) => convertArabicNumerals(String(h || '').trim().toLowerCase()));
+    const findCol = (regex: RegExp, fallback: number) => {
+      const idx = headerRow.findIndex((h) => regex.test(h));
+      return idx >= 0 ? idx : fallback;
+    };
+
+    const colMobile = findCol(/mobile|هاتف|موبايل|تليفون/i, 4);
+    const colAvail = findCol(/avail|حالة|إتاحة/i, 5);
+    const colBeds = findCol(/bed|غرف|نوم/i, 6);
+    const colBaths = findCol(/bath|حمام(?!.*سباح)/i, 7);
+    const colLoc = findCol(/location|compound|موقع|كمبوند|منطقة/i, 8);
+    const colPrice = findCol(/price|سعر|مطلوب/i, 9);
+    const colFurnished = findCol(/furnish|فرش|تشطيب/i, 10);
+    const colType = findCol(/^type$|deal|mode|نوع الايجار|نوع العرض/i, 11);
+    const colPropertyType = findCol(/property.*type|نوع العقار|نوع الوحدة/i, 12);
+    const colCode = findCol(/code|كود/i, 13);
+    const colOwner = findCol(/owner|مالك|وسيط|broker/i, 14);
+    const colSpace = findCol(/space|area|مساح/i, 16);
+    const colComment = findCol(/comment|ملاحظ|وصف/i, 18);
+
     const dataRows = rows.slice(1); // skip header
     const parsedUnits: Partial<Unit>[] = [];
     const pendingWrites: { docId: string; data: Record<string, unknown> }[] = [];
@@ -253,26 +273,19 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
       const row = dataRows[i];
       if (!row || row.length < 3) continue;
 
-      const [
-        _timestamp,
-        _rowNo,
-        _lastUpdated,
-        _name,
-        mobile,
-        availability,
-        bedrooms,
-        location,
-        priceRaw,
-        furnished,
-        typeRaw,
-        propertyTypeRaw,
-        code,
-        ownerTypeRaw,
-        _gardenArea,
-        spaceArea,
-        _pool,
-        comment
-      ] = row;
+      const mobile = row[colMobile] || '';
+      const availability = row[colAvail] || '';
+      const bedrooms = row[colBeds] || '';
+      const bathrooms = row[colBaths] || '';
+      const location = row[colLoc] || '';
+      const priceRaw = row[colPrice] || '';
+      const furnished = row[colFurnished] || '';
+      const typeRaw = row[colType] || '';
+      const propertyTypeRaw = row[colPropertyType] || '';
+      const code = row[colCode] || '';
+      const ownerTypeRaw = row[colOwner] || '';
+      const spaceArea = row[colSpace] || '';
+      const comment = row[colComment] || '';
 
       const price = parsePriceEgp(priceRaw); // canonical EGP
       const sheetStatus = parseAvailability(availability, typeRaw);
@@ -284,6 +297,12 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
 
       const cleanBedStr = convertArabicNumerals(bedrooms || '').replace(/[^0-9]/g, '');
       const bedCount = parseInt(cleanBedStr, 10) || 0;
+
+      const cleanBathStr = convertArabicNumerals(bathrooms || '').replace(/[^0-9]/g, '');
+      const bathCount = parseInt(cleanBathStr, 10) || 0;
+
+      const normType = (typeRaw || '').toLowerCase().trim();
+      const dealType = normType.includes('rent') || normType.includes('ايجار') || normType.includes('إيجار') ? 'rent' : 'resale';
 
       const unitCode = (code || `SB-UNIT-${i + 1}`).trim();
       const sanitizedDocId = unitCode.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
@@ -313,7 +332,7 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
         locationArea: (location || '').trim(),
         city: geo.zone, // canonical zone from the gazetteer, not hardcoded
         propertyType,
-        dealType: 'resale', // owner sheet is secondary-market inventory
+        dealType,
         category: 'residential',
         price,
         priceCurrency: 'EGP',
@@ -322,6 +341,7 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
         areaSqm: area,
         pricePerSqm: price > 0 && area > 0 ? Math.round(price / area) : undefined,
         bedrooms: bedCount,
+        bathrooms: bathCount,
         furnishingStatus: furnishing,
         ownerType: (ownerTypeRaw || '').toLowerCase().includes('broker') ? 'broker' : 'owner',
         ownerPhone: mobile || '',

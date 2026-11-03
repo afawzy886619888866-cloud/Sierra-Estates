@@ -108,12 +108,12 @@ export async function syncWebsiteSubmissionToSheet(
   input: WebsiteSheetSyncInput,
   timeoutMs = 90_000
 ): Promise<WebsiteSheetSyncResult> {
-  const url = process.env.SHEETS_WEBAPP_URL;
-  const secret = process.env.SHEETS_WEBAPP_SECRET;
+  const url = process.env.SHEETS_WEBAPP_URL || process.env.WF_SHEET_WRITE_URL;
+  const secret = process.env.SHEETS_WEBAPP_SECRET || process.env.WF_SHEET_WRITE_SECRET || 'SE_OUTREACH_SECRET_2026_CAIRO';
 
-  if (!url || !secret) {
+  if (!url) {
     logger.info(
-      '[SHEET_SYNC] SHEETS_WEBAPP_URL / SHEETS_WEBAPP_SECRET not configured — Google Sheet mirror skipped (form still saves to Supabase + Excel)'
+      '[SHEET_SYNC] SHEETS_WEBAPP_URL / WF_SHEET_WRITE_URL not configured — Google Sheet mirror skipped (form still saves to Supabase + Excel)'
     );
     return { ok: false, error: 'not-configured' };
   }
@@ -130,9 +130,36 @@ export async function syncWebsiteSubmissionToSheet(
     }
   }
 
+  const now = new Date();
+  const cairoDate = now.toLocaleDateString('en-GB');
+  const masterRow = [
+    now.toISOString(),
+    '',
+    cairoDate,
+    input.ownerName,
+    input.mobile, // original phone preserved in private sheet
+    'Available',
+    input.beds > 0 ? String(input.beds) : '',
+    input.baths > 0 ? String(input.baths) : '',
+    input.compound,
+    Number(input.price).toLocaleString('en-US'),
+    input.finishing || 'Fully finished',
+    input.mode === 'rent' ? 'Rent' : 'Sale',
+    input.propertyType,
+    input.code,
+    input.ownerType || 'Owner',
+    input.gardenArea ? String(input.gardenArea) : '',
+    input.area ? String(input.area) : '',
+    '',
+    input.comment || '',
+    cairoDate,
+  ];
+
   const payload = {
     secret,
     mode: 'website_submission',
+    action: 'appendRows',
+    rows: [masterRow],
     code: input.code,
     supabaseId: input.supabaseId,
     compound: input.compound,

@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Moon, Sun, Languages, BadgeCheck, Users, Percent,
-  ArrowRight, Check, MessageCircle, UploadCloud, X,
+  ArrowRight, Check, MessageCircle, UploadCloud, X, Sparkles,
 } from 'lucide-react';
 import s from './AddListingForm.module.css';
 
@@ -60,6 +60,12 @@ const T = {
     phName: 'Your name', phCpd: 'e.g. Mivida', phArea: '220',
     phPriceSale: '12,500,000', phPriceRent: '85,000',
     phNotes: 'Floor, view, delivery date, payment plan, availability for viewings…',
+    aiIntakeTit: 'Magic Intake · Paste Raw Listing Text',
+    aiIntakeDesc: 'Paste WhatsApp messages, broker ads, or unit notes in Arabic or English. Our AI extracts specs and generates a strategic Sierra Code.',
+    aiIntakePh: 'Paste listing specs here... e.g. شقة للبيع في ميفيدا 200م 3 غرف نوم 3 حمام تشطيب كامل مطلوب 14 مليون كود MV-3F-14M للتواصل 01012345678',
+    aiParseBtn: 'Auto-Fill & Remake Unit Info',
+    aiParsing: 'Extracting specs & generating code…',
+    codeLabel: 'Sierra Code',
   },
   ar: {
     brandSub: 'عقارات بالذكاء الاصطناعي · القاهرة الجديدة', langLabel: 'EN',
@@ -87,6 +93,12 @@ const T = {
     phName: 'اسمك', phCpd: 'مثال: ميفيدا', phArea: '220',
     phPriceSale: '12,500,000', phPriceRent: '85,000',
     phNotes: 'الدور، الفيو، موعد التسليم، خطة السداد، مواعيد المعاينة…',
+    aiIntakeTit: 'الملء الذكي · لصق إعلان الوحدة بالذكاء الاصطناعي',
+    aiIntakeDesc: 'الصق رسائل الواتساب أو إعلانات الوسطاء بالعربية أو الإنجليزية. يستخرج النظام المواصفات ويعيد صياغة المحتوى ويولّد كود الوحدة فوراً.',
+    aiIntakePh: 'الصق تفاصيل الوحدة هنا... مثال: شقة للبيع في ميفيدا 200م 3 غرف نوم 3 حمام تشطيب كامل مطلوب 14 مليون للتواصل 01012345678',
+    aiParseBtn: 'استخراج تلقائي وإعادة صياغة الوحدة',
+    aiParsing: 'جارٍ تحليل الوحدة وتوليد الكود…',
+    codeLabel: 'كود الوحدة الاستراتيجي',
   },
 } as const;
 
@@ -120,6 +132,65 @@ export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: L
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState<{ ref: string; waHref: string } | null>(null);
+
+  const [rawText, setRawText] = useState('');
+  const [parsing, setParsing] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [parseFeedback, setParseFeedback] = useState<string | null>(null);
+
+  async function onAutoParse() {
+    if (!rawText.trim() || rawText.trim().length < 5) {
+      setErr(isAr ? 'برجاء لصق نص الإعلان أولاً' : 'Please paste listing text first');
+      return;
+    }
+    clearErr();
+    setParsing(true);
+    setParseFeedback(null);
+    try {
+      const res = await fetch('/api/listings/easy-parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText: rawText.trim(), source: 'manual' }),
+      });
+      const json = await res.json().catch(() => null);
+      if (json?.success && json?.data) {
+        const d = json.data;
+        if (d.compound) setCpd(d.compound);
+        if (d.propertyType) {
+          const match = TYPES.find((t) => t.toLowerCase() === d.propertyType.toLowerCase()) || d.propertyType;
+          setPtype(match);
+        }
+        if (d.mode) setPurpose(d.mode === 'rent' ? 'rent' : 'sale');
+        if (d.beds !== null && d.beds !== undefined) setBeds(Number(d.beds));
+        if (d.baths !== null && d.baths !== undefined) setBaths(String(d.baths));
+        if (d.area !== null && d.area !== undefined) setArea(String(d.area));
+        if (d.price !== null && d.price !== undefined) setPrice(Number(d.price).toLocaleString('en-US'));
+        if (d.finishing) {
+          const finLower = d.finishing.toLowerCase();
+          if (finLower.includes('core') || finLower.includes('shell') || finLower.includes('طوب')) setFinish('Core & shell');
+          else if (finLower.includes('semi') || finLower.includes('نصف') || finLower.includes('نص')) setFinish('Semi-finished');
+          else if (finLower.includes('furnish') || finLower.includes('مفروش')) setFinish('Furnished');
+          else setFinish('Fully finished');
+        }
+        if (d.mobile) setPhone(d.mobile);
+        if (d.ownerName) setName(d.ownerName);
+        if (d.sierraCode) setGeneratedCode(d.sierraCode);
+        if (d.aiSummary) setNotes(d.aiSummary);
+
+        setParseFeedback(
+          isAr
+            ? `✨ تم استخراج البيانات وصياغة الكود: ${d.sierraCode || 'SE-SUB'}`
+            : `✨ Specs extracted & code generated: ${d.sierraCode || 'SE-SUB'}`
+        );
+      } else {
+        setErr(isAr ? 'لم نتمكن من استخراج تفاصيل كافية من النص' : 'Could not extract sufficient details from text');
+      }
+    } catch {
+      setErr(isAr ? 'فشل تحليل النص' : 'Failed to parse text');
+    } finally {
+      setParsing(false);
+    }
+  }
 
   const cpdRef = useRef<HTMLInputElement>(null);
   const areaRef = useRef<HTMLInputElement>(null);
@@ -216,6 +287,7 @@ export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: L
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          code: generatedCode || undefined,
           compound: cpdV,
           propertyType: ptype,
           mode: purpose,
@@ -251,6 +323,7 @@ export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: L
 
   function again() {
     setCpd(''); setArea(''); setPrice(''); setNotes('');
+    setRawText(''); setGeneratedCode(null); setParseFeedback(null);
     setDone(null);
     window.scrollTo(0, 0);
     requestAnimationFrame(() => cpdRef.current?.focus());
@@ -316,6 +389,46 @@ export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: L
         <div className={s.wrap}>
           {!done ? (
             <div className={s.card}>
+              <div className={s.aiIntakeCard}>
+                <div className={s.aiIntakeHeader}>
+                  <div className={s.aiIntakeTitle}>
+                    <Sparkles className={s.i} />
+                    <span>{t.aiIntakeTit}</span>
+                  </div>
+                  {generatedCode && (
+                    <div className={s.codeBadge}>
+                      <span>{t.codeLabel}:</span>
+                      <b>{generatedCode}</b>
+                    </div>
+                  )}
+                </div>
+                <div className={s.aiIntakeDesc}>{t.aiIntakeDesc}</div>
+                <textarea
+                  className={s.aiIntakeTextarea}
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                  placeholder={t.aiIntakePh}
+                  dir="auto"
+                />
+                <div className={s.aiIntakeActions}>
+                  <button
+                    type="button"
+                    className={s.aiParseBtn}
+                    onClick={onAutoParse}
+                    disabled={parsing || !rawText.trim()}
+                  >
+                    <Sparkles className={s.i} />
+                    <span>{parsing ? t.aiParsing : t.aiParseBtn}</span>
+                  </button>
+                  {parseFeedback && (
+                    <div className={s.aiFeedbackSuccess}>
+                      <Check style={{ width: 15, height: 15 }} />
+                      <span>{parseFeedback}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className={s.sect}>{t.s1}</div>
               <div className={s.grid}>
                 <div className={`${s.f} ${s.wide}`}>

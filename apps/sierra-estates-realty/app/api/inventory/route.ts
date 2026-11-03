@@ -200,10 +200,10 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
       return {
         id: listing.id,
         code: listing.code || listing.sbr_code || listing.ref_id || listing.id,
-        title: listing.title || undefined,
-        titleAr: listing.title_ar || undefined,
+        title: listing.title ? scrubOwnerContactText(listing.title) : undefined,
+        titleAr: listing.title_ar ? scrubOwnerContactText(listing.title_ar) : undefined,
         descriptionAr: scrubOwnerContactText(listing.description_ar) || undefined,
-        agent: listing.agent_name || undefined,
+        agent: listing.agent_name ? scrubOwnerContactText(listing.agent_name) : undefined,
         tag: listing.tag || undefined,
         aiScore: typeof listing.ai_score === "number" ? listing.ai_score : undefined,
         featured: Boolean(listing.featured),

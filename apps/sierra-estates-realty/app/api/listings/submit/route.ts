@@ -18,6 +18,7 @@ import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
+import { resolveLocation } from '@/lib/inventory/gazetteer';
 import { egpToUsd } from '@/lib/fx';
 import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
@@ -30,6 +31,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const submitListingSchema = z.object({
+  code: z.string().optional(),
   compound: z.string().min(1, 'Compound / Location is required').max(100),
   propertyType: z.string().min(1, 'Property type is required'),
   mode: z.enum(['sale', 'rent']),
@@ -65,18 +67,25 @@ export async function POST(request: Request) {
 
     const data = parseResult.data;
     const now = new Date().toISOString();
-    const listingCode = `SE-SUB-${Date.now().toString().slice(-6)}`;
+    const listingCode = (data.code || '').trim() || `SE-SUB-${Date.now().toString().slice(-6)}`;
     const egpM = data.price > 100000 ? Number((data.price / 1_000_000).toFixed(2)) : data.price;
     const usd = egpToUsd(data.price);
+    const geo = resolveLocation(data.compound);
 
     const listingDocument = {
       code: listingCode,
+      unitCode: listingCode,
+      sbrCode: listingCode,
       ownerName: data.ownerName,
       mobile: data.mobile,
       status: LISTING_STATUS_PENDING_REVIEW,
       verified: false,
       cmp: data.compound,
       compound: data.compound,
+      locationArea: data.compound,
+      city: geo.zone,
+      latitude: geo.lat,
+      longitude: geo.lng,
       // Zone is NOT invented from the compound name: it stays unset until
       // verification assigns a real one (§21: no '5th Settlement' guess).
       type: data.propertyType,
@@ -255,7 +264,11 @@ export async function POST(request: Request) {
         code: listingCode,
         id,
         sheetSync,
-        listing: { ...listingDocument, id },
+        listing: {
+          ...listingDocument,
+          id,
+          mobile: '+201092048333', // Privacy doctrine: always route public contact to concierge
+        },
       },
       { status: 201 }
     );
