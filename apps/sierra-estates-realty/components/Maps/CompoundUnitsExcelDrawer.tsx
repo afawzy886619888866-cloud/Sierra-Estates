@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Building,
   Sparkles,
+  Navigation,
 } from 'lucide-react';
 import type { CompoundLocation, MapUnitPin } from './LiveMap';
 import { hasPendingPhoto } from '@/lib/inventory/normalize';
@@ -230,6 +231,31 @@ export default function CompoundUnitsExcelDrawer({
 
         {/* Header Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {/* Google Maps Deeplink */}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${compound.lat},${compound.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={isAr ? 'فتح في خرائط Google' : 'Open in Google Maps'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'linear-gradient(135deg, rgba(66, 133, 244, 0.22), rgba(52, 168, 83, 0.22))',
+              border: '1px solid rgba(66, 133, 244, 0.5)',
+              color: '#93c5fd',
+              borderRadius: 8,
+              padding: '5px 10px',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              textDecoration: 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Navigation size={13} style={{ color: '#60a5fa' }} />
+            <span className="hidden sm:inline">{isAr ? 'خرائط Google' : 'Google Maps'}</span>
+          </a>
           <button
             type="button"
             onClick={handleExportCSV}

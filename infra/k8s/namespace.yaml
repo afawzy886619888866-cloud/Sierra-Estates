@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sierra-estates
+  labels:
+    name: sierra-estates
+    app.kubernetes.io/part-of: sierra-estates-platform

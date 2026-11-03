@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sierra-estates-realty-pdb
+  namespace: sierra-estates
+  labels:
+    app.kubernetes.io/name: sierra-estates-realty
+    app.kubernetes.io/part-of: sierra-estates-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sierra-estates-realty
