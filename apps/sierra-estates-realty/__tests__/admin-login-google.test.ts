@@ -150,6 +150,31 @@ describe('Admin Login & Google Mail Authentication', () => {
       }
     });
 
+    it('authenticates username shortcut "admin" with the configured operator password', async () => {
+      const original = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+      process.env.ADMIN_BOOTSTRAP_PASSWORD = 'operator-configured-pass';
+      try {
+        const req = new NextRequest('http://localhost:3000/api/auth', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            action: 'signin',
+            email: 'admin',
+            password: 'operator-configured-pass',
+          }),
+        });
+
+        const res = await POST(req);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.ok).toBe(true);
+        expect(data.role).toBe('admin');
+      } finally {
+        if (original === undefined) delete process.env.ADMIN_BOOTSTRAP_PASSWORD;
+        else process.env.ADMIN_BOOTSTRAP_PASSWORD = original;
+      }
+    });
+
     it('rejects unauthenticated requests without credentials', async () => {
       const req = new NextRequest('http://localhost:3000/api/auth', {
         method: 'POST',

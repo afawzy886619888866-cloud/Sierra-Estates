@@ -131,7 +131,10 @@ export function cookieOpts(reqHost?: string) {
  */
 export function isAdminEmail(email: string): boolean {
   if (!email) return false;
-  const clean = email.trim().toLowerCase();
+  let clean = email.trim().toLowerCase();
+  if (clean === "admin" || !clean.includes("@")) {
+    clean = `${clean}@sierra-estates.net`;
+  }
 
   // Explicitly configured admin emails via env
   const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
@@ -174,7 +177,10 @@ export function isAdminEmail(email: string): boolean {
  * Provides resilient access for approved staff and administrators.
  */
 export function tryDemoLogin(email: string, password: string): Session | null {
-  const cleanEmail = (email || "").trim().toLowerCase();
+  let cleanEmail = (email || "").trim().toLowerCase();
+  if (cleanEmail === "admin" || !cleanEmail.includes("@")) {
+    cleanEmail = `${cleanEmail}@sierra-estates.net`;
+  }
   const cleanPass = (password || "").trim();
 
   // This path previously accepted a hardcoded list of passwords — including

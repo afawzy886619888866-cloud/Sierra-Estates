@@ -285,3 +285,6 @@ infra/.secrets.env
 .node-persist/
 .playwright-mcp/
 .reports/
+
+ANTIGRAVITY-PROMPT-*.md
+Activate-WhatsAppGateway.ps1

@@ -97,7 +97,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400, headers: NO_STORE_HEADERS });
   }
 
-  const targetEmail = (email || "").trim().toLowerCase();
+  let targetEmail = (email || "").trim().toLowerCase();
+  if (targetEmail && (targetEmail === "admin" || !targetEmail.includes("@"))) {
+    targetEmail = `${targetEmail}@sierra-estates.net`;
+  }
 
   // Path A — verify the Supabase access token, then read the stored role.
   if (typeof accessToken === "string" && accessToken.trim().length > 0) {

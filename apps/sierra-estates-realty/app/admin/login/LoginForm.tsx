@@ -230,7 +230,7 @@ export default function LoginForm() {
         credentials: 'same-origin',
         body: JSON.stringify({
           action: 'signin',
-          email: cleanEmail,
+          email: supaEmail,
           password,
           token: supaToken,
         }),
