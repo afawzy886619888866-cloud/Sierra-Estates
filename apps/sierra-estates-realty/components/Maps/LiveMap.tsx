@@ -25,12 +25,12 @@ import {
   Share2,
 } from 'lucide-react';
 
-import { CompoundLocation, NEW_CAIRO_COMPOUNDS } from './compounds-data';
+import { CompoundLocation, NEW_CAIRO_COMPOUNDS, normalizeCompoundKey } from './compounds-data';
 import { compoundShortName } from '@/lib/site/smart-search';
 import CompoundUnitsExcelDrawer from './CompoundUnitsExcelDrawer';
 
 export type { CompoundLocation };
-export { NEW_CAIRO_COMPOUNDS };
+export { NEW_CAIRO_COMPOUNDS, normalizeCompoundKey };
 
 export interface MapZonePreset {
   id: string;
@@ -192,15 +192,7 @@ const PANEL_BORDER = 'rgba(233, 193, 118, 0.28)';
 const RENT_BLUE = '#38bdf8';
 const SALE_GREEN = '#10b981';
 
-/** Normalize a free-text compound/location label to a comparable key. */
-export function normalizeCompoundKey(raw: string): string {
-  let s = (raw || '').toLowerCase().trim();
-  s = s.replace(/[–—]/g, ' ');
-  s = s.replace(/\bphase\s*[-]?\s*\d+\b/g, ' ');
-  s = s.replace(/\b(new cairo|fifth settlement|5th settlement|compound|the|nc|tagamoo|tagamo3)\b/g, ' ');
-  s = s.replace(/[^a-z0-9\u0600-\u06ff\s]/g, ' ');
-  return s.replace(/\s+/g, ' ').trim();
-}
+// normalizeCompoundKey imported & re-exported from ./compounds-data
 
 /** Resolve the live count for a compound exactly */
 function resolveCompoundCount(

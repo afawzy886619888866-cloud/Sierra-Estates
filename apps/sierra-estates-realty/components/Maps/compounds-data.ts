@@ -372,3 +372,13 @@ export const NEW_CAIRO_COMPOUNDS: CompoundLocation[] = [
     notes: '📍 Location Pending Verification — Private villa & floor drops needing exact street mapping',
   },
 ];
+
+/** Normalize a free-text compound/location label to a comparable key. */
+export function normalizeCompoundKey(raw: string): string {
+  let s = (raw || '').toLowerCase().trim();
+  s = s.replace(/[–—]/g, ' ');
+  s = s.replace(/\bphase\s*[-]?\s*\d+\b/g, ' ');
+  s = s.replace(/\b(new cairo|fifth settlement|5th settlement|compound|the|nc|tagamoo|tagamo3)\b/g, ' ');
+  s = s.replace(/[^a-z0-9\u0600-\u06ff\s]/g, ' ');
+  return s.replace(/\s+/g, ' ').trim();
+}

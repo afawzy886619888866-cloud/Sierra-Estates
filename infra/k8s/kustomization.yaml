@@ -3,8 +3,9 @@ kind: Kustomization
 
 namespace: sierra-estates
 
-commonLabels:
-  app.kubernetes.io/part-of: sierra-estates-platform
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: sierra-estates-platform
 
 resources:
   - namespace.yaml
