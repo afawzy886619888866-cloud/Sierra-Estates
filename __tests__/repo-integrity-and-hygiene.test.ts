@@ -126,6 +126,13 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
     }
   });
 
+  it('secret and generated build paths must be excluded from Git', () => {
+    const gitignore = fs.readFileSync(path.join(ROOT_DIR, '.gitignore'), 'utf-8');
+    for (const pattern of ['.env*', '**/.secrets.env', '.next/', 'build/', 'dist/']) {
+      expect(gitignore, `${pattern} must be ignored`).toContain(pattern);
+    }
+  });
+
   it('all package.json files across apps and packages must have valid names and scripts', () => {
     const pkgFiles = allSourceFiles.filter((f) => path.basename(f) === 'package.json');
     expect(pkgFiles.length).toBeGreaterThanOrEqual(10);

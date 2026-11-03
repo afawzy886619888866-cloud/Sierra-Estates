@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "prebuild": "node scripts/ensure-snapshot.mjs && node scripts/apply-pending-migrations.mjs",
-    "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=6144 next build --webpack",
+    "build": "node scripts/ensure-snapshot.mjs && node scripts/apply-pending-migrations.mjs && node scripts/tsc-adaptive.mjs && cross-env NODE_OPTIONS=--max-old-space-size=6144 next build --webpack",
     "build:low-memory": "node scripts/build-low-memory.mjs",
     "start": "next start",
     "lint": "eslint . && node scripts/validate-configs.mjs",

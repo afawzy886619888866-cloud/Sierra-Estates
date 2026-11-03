@@ -16,11 +16,12 @@ export default [
       '**/extract_all_styles.js',
       '**/eslint.config.mjs',
       '**/next.config.mjs',
-      '**/vitest.config.ts',
+      '**/vitest.config.{ts,mts}',
       '**/scripts/**',
       '**/push_env.js',
       '**/merge_and_push_env.js',
       '**/*.js',
+      '!workflows/**/*.js',
       '**/*.mjs',
       '**/apps/**',
       // Vendored third-party project — excluded from the pnpm workspace, so it

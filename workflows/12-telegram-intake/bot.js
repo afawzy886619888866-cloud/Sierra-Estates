@@ -514,7 +514,11 @@ function runUnitAdder() {
       clearTimeout(killer);
       const summary = (out.match(/^SUMMARY (.+)$/m) || [])[1] || '';
       log(`unit-adder inline: exit ${codeNum} ${summary}`);
-      codeNum === 0 || codeNum === 2 ? resolve() : reject(new Error(`exit ${codeNum}`));
+      if (codeNum === 0 || codeNum === 2) {
+        resolve();
+      } else {
+        reject(new Error(`exit ${codeNum}`));
+      }
     });
     child.on('error', reject);
   });

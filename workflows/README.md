@@ -5,7 +5,7 @@ External automation scripts that sync data between Google Sheets, WhatsApp, Prop
 ## Setup
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 # Edit .env with your credentials
 ```
@@ -87,7 +87,7 @@ npm run email-sender
 
 ### 05. Unit Adder
 
-Reads new properties from Sheets, deduplicates, writes to Firestore.
+Reads new properties from Sheets, deduplicates, and writes to Supabase.
 
 ```bash
 npm run unit-adder
@@ -251,7 +251,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: cd workflows && npm install
+      - run: cd workflows && npm ci
       - run: npm run all
         env:
           PROPERTY_FINDER_JWT_TOKEN: ${{ secrets.PF_JWT }}

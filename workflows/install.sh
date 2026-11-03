@@ -9,7 +9,7 @@ mkdir -p lib .state 01-whatsapp-scraper 02-owner-search 03-owner-contact 04-emai
 chmod 700 .state
 
 echo "── 2. dependencies"
-npm install --no-audit --no-fund --loglevel=error
+npm ci --omit=dev --no-audit --no-fund --loglevel=error
 
 echo "── 3. env file (create if missing)"
 if [ ! -f workflows.env ]; then

@@ -16,10 +16,10 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# Dependencies first (layer cache): lockfile is committed, so `npm ci`
-# gives reproducible installs (dev deps excluded).
-COPY package.json ./
-RUN npm install --omit=dev --no-audit --no-fund
+# Dependencies first (layer cache): `npm ci` installs the committed lockfile
+# reproducibly and excludes development-only dependencies.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # Runner + workflow sources + shared libraries (workflows/lib holds the
 # gateway client, cron parser, state, supabase sync — same relative layout

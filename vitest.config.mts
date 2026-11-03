@@ -1,5 +1,8 @@
 import { defineConfig } from 'vitest/config';
-import { resolve } from 'path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const configDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
@@ -24,31 +27,31 @@ export default defineConfig({
     alias: [
       {
         find: /^@sierra-estates\/agents-core\/src\/(.*)$/,
-        replacement: `${resolve(__dirname, 'packages/agents-core/src')}/$1`,
+        replacement: `${resolve(configDir, 'packages/agents-core/src')}/$1`,
       },
       {
         find: 'server-only',
-        replacement: resolve(__dirname, 'tools/test-stubs/empty.js'),
+        replacement: resolve(configDir, 'tools/test-stubs/empty.js'),
       },
       {
         find: '@',
-        replacement: resolve(__dirname, 'apps/sierra-estates-realty'),
+        replacement: resolve(configDir, 'apps/sierra-estates-realty'),
       },
       {
         find: '@sierra-estates/types',
-        replacement: resolve(__dirname, 'packages/shared/src/types/index.ts'),
+        replacement: resolve(configDir, 'packages/shared/src/types/index.ts'),
       },
       {
         find: '@sierra-estates/agents-core',
-        replacement: resolve(__dirname, 'packages/agents-core/src/index.ts'),
+        replacement: resolve(configDir, 'packages/agents-core/src/index.ts'),
       },
       {
         find: '@sierra-estates/memory-engine',
-        replacement: resolve(__dirname, 'packages/memory-engine/src/index.ts'),
+        replacement: resolve(configDir, 'packages/memory-engine/src/index.ts'),
       },
       {
         find: '@sierra-estates/obsidian',
-        replacement: resolve(__dirname, 'packages/obsidian/src/index.ts'),
+        replacement: resolve(configDir, 'packages/obsidian/src/index.ts'),
       },
     ],
   },

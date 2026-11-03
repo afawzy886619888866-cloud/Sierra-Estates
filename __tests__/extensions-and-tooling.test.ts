@@ -31,18 +31,18 @@ describe('IDE Extensions, Tooling & Workflow Verification Suite', () => {
     });
   });
 
-  describe('.vscode/mcp.json configuration', () => {
+  describe('root .mcp.json configuration', () => {
     it('mcp.json must exist and configure local MCP servers', () => {
-      const mcpPath = path.join(VSCODE_DIR, 'mcp.json');
+      const mcpPath = path.join(ROOT_DIR, '.mcp.json');
       expect(fs.existsSync(mcpPath), 'mcp.json must exist').toBe(true);
 
       const data = JSON.parse(fs.readFileSync(mcpPath, 'utf-8'));
-      expect(data.servers).toBeDefined();
-      expect(data.servers['sierra-estates']).toBeDefined();
-      expect(data.servers['amphion-command-deck']).toBeDefined();
+      expect(data.mcpServers).toBeDefined();
+      expect(data.mcpServers['sierra-estates']).toBeDefined();
+      expect(data.mcpServers['amphion-command-deck']).toBeDefined();
 
       // Ensure sierra-estates does not invoke npx (to avoid C: drive ENOSPC)
-      const sierraCmd = data.servers['sierra-estates'].command;
+      const sierraCmd = data.mcpServers['sierra-estates'].command;
       expect(sierraCmd).not.toBe('npx');
     });
   });

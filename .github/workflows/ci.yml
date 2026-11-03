@@ -62,6 +62,9 @@ jobs:
       - name: Type-check realty app
         run: pnpm --filter sierra-estates-client-page type-check
 
+      - name: Type-check automations worker
+        run: pnpm --filter @sierra-estates/automations type-check
+
       - name: Canonical backend policy
         run: pnpm check:backend
         env:
@@ -75,8 +78,8 @@ jobs:
       - name: Legacy runtime boundary
         run: pnpm check:legacy-runtime
 
-      - name: Lint realty app
-        run: pnpm --filter sierra-estates-client-page lint
+      - name: Lint monorepo and standalone workflows
+        run: pnpm lint
 
       - name: Unit tests (realty app)
         run: pnpm --filter sierra-estates-client-page test:ci

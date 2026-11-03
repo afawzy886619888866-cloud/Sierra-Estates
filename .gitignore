@@ -34,6 +34,7 @@ apps/sierra-estates-realty/__tests__/**/*.js
 **/.env
 **/.env.local
 **/.env.*.local
+**/.secrets.env
 apps/agents/**/.env
 apps/agents/**/.env.*
 *.pem

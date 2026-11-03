@@ -76,7 +76,7 @@ Sierra-Estates/
 │   ├── db/                         # Authoritative Supabase clients & typed records
 │   ├── agents/                     # Autonomous agents (Matchmaker, Closer, Scribe)
 │   ├── agents-core/                # Agent lifecycle contracts & dispatch helpers
-│   ├── agents-tools/               # EpisodicContextCache & schema validators
+│   ├── agents/                     # Operational agent scripts and bot routing
 │   ├── ai-agent-sdk/               # Shared agent runtime & tool SDK
 │   ├── ai-orchestrator/            # Multi-model gateway (Google Gemini & DeepSeek)
 │   ├── deepseek-harness/           # 10-scenario Egyptian real-estate benchmark suite
@@ -85,7 +85,7 @@ Sierra-Estates/
 │   ├── obsidian/                   # Obsidian vault markdown parser & sync
 │   ├── shared/                     # Common types, validation schemas & utilities
 │   └── ui/                         # Luxury obsidian glassmorphism UI design tokens
-├── workflows/                      # 10 scheduled cron workflow definitions & reply classifier
+├── workflows/                      # 19 orchestrated workflow modules & reply classifier
 ├── infra/                          # Docker Compose definitions (RAG station & workflow runner)
 ├── scripts/                        # Operational scripts, deployment gates & verification suites
 └── supabase/                       # 27 SQL migrations, schema definitions & RLS tests
@@ -119,7 +119,7 @@ Sierra-Estates/
 * **Threshold Quality Gate (`scripts/check-thresholds.ts`):** Enforces production workflow error rates `<25%` and queue depths `<250`.
 
 ### Engine 4: Workflows, OpenClaw & Syndication (`workflows/`)
-* **10 Automated Cron Workflows:** Executes sync, catalog validation, and lead alerts under `workflows/runner.js` (`:2786`).
+* **19 Workflow Modules:** Executes sync, catalog validation, and lead alerts under `workflows/runner.js` (`:2786`).
 * **OpenWA WhatsApp Pool (`:2785`):** 8 active phone lines routed via Cloudflare Tunnel, enforcing Egyptian business hours (`10:00–20:00 Africa/Cairo`) and 45–55s human-like pacing intervals.
 * **Closed-Loop Reply Classifier (`workflows/lib/inbox.js`):** Classifies owner replies into Opt-Out (`إلغاء`), Available (`متاحة`), or Sold (`اتباعت`), updating `public.listings.status` automatically.
 * **Property Finder Atlas v1 Syndication:** Real-time OAuth2 synchronization of listings and buyer leads between Property Finder and Supabase.

@@ -7,7 +7,6 @@ import {
 } from '../lib/lead-qualifier.js';
 import {
   extractClientNeeds,
-  getConversationalSkillsGuide,
   TARGET_COMPOUNDS,
 } from '../lib/customer-chat-learner.js';
 
