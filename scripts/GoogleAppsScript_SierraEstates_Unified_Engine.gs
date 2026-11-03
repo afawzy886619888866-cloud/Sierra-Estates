@@ -233,6 +233,316 @@ const COLUMN_FILL_DEFAULTS = [
  *   5. Fills all empty cells contextually (Zero-Blank Guarantee).
  *   6. Prints a complete audit summary to the Execution Log.
  */
+
+/**
+ * ============================================================================
+ * PRIMARY 6-TAB REORGANIZATION ENGINE
+ * ============================================================================
+ * Consolidates ALL inventory tabs into the exact 6 canonical tabs requested:
+ *   1. dashboard       - Executive summary, KPI counters & segregation breakdown
+ *   2. owners rent      - Direct owner rent units (Rent <= 400,000 EGP)
+ *   3. owners resale    - Direct owner resale units (Resale > 400,000 EGP)
+ *   4. brokers rent     - Broker rent listings
+ *   5. brokers resale   - Broker resale listings
+ *   6. available units  - Confirmed available units across all categories
+ *
+ * Rules:
+ *   - Deduplicates by Mobile (Last 7).
+ *   - Preserves leading zeros on mobiles: '01xxxxxxxxx.
+ *   - Standardizes famous compounds (CFC, Madinaty, Mivida, etc.).
+ *   - Applies 400k rent ceiling guard.
+ *   - Applies 22-column canonical formatting with Zero-Blank Guarantee.
+ */
+function reorganizeTo6MasterTabs() {
+  Logger.log("====================================================");
+  Logger.log("🚀 SIERRA ESTATES · REORGANIZING TO 6 CANONICAL TABS");
+  Logger.log("====================================================");
+
+  const ss = getSpreadsheet();
+  const allSheets = ss.getSheets();
+
+  const CANONICAL_HEADERS = [
+    "Timestamp", "Unit Code", "Deal Type", "Compound (Canonical)", "Property Type",
+    "Asking Price (EGP)", "Area (m²)", "Bedrooms", "Bathrooms", "Finishing Status",
+    "Floor", "Garden (m²)", "Pool", "Advertiser Type", "Contact Name",
+    "Mobile Number", "Mobile (Last 7)", "Availability Status", "Last Action Date",
+    "Owner Call Response & Notes", "Photo URLs", "RAG Memory ID"
+  ];
+
+  const GUIDANCE_ROW = [
+    "e.g. 2026-11-03 21:00:00", "e.g. CFC-APT-104", "Dropdown: Rent or Resale",
+    "Famous Canonical Compound (e.g. Cairo Festival City)", "Dropdown: Apartment, Villa, etc.",
+    "Numeric: Rent <= 400,000 | Resale > 400,000", "Numeric area (m²)",
+    "Dropdown: Studio, 1, 2, 3, 4, 5, 6+", "Dropdown: 1, 2, 3, 4, 5+",
+    "Dropdown: Core & Shell, Semi Finished, Fully Finished, Furnished, Ultra Super Lux",
+    "Floor level or Not Specified", "Numeric garden m² or No Info",
+    "Dropdown: Yes, No, Shared, Not Specified", "Dropdown: Direct Owner or Broker",
+    "Full name of owner/broker", "REQUIRED: 01xxxxxxxxx (11 digits)",
+    "Auto: Last 7 digits for deduplication",
+    "Dropdown: Available, Under Offer, Rented, Sold, No Answer, Not Available",
+    "Date: YYYY-MM-DD / تاريخ اخر تواصل",
+    "Detailed call feedback, price changes, viewing terms",
+    "Image URLs or No Photos", "Supabase Vector UUID / RAG Tag"
+  ];
+
+  // 1. Gather all units across all sheets
+  const rawUnits = [];
+
+  for (const sheet of allSheets) {
+    const sName = sheet.getName().trim().toLowerCase();
+    if (sName === "dashboard" || sName === "calc_data" || sName === "_validationlookups" || sName === "bot_api_guide") {
+      continue;
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) continue;
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    
+    // Find column indices
+    let cMob = headers.findIndex(h => h.includes("mobile") || h.includes("تليفون") || h.includes("phone") || h.includes("موبايل"));
+    let cPrice = headers.findIndex(h => h.includes("price") || h.includes("سعر"));
+    let cComp = headers.findIndex(h => h.includes("location") || h.includes("كمبوند") || h.includes("موقع") || h.includes("compound"));
+    let cName = headers.findIndex(h => h.includes("name") || h.includes("اسم"));
+    let cCode = headers.findIndex(h => h.includes("code") || h.includes("كود"));
+    let cDeal = headers.findIndex(h => h.includes("deal type") || h.includes("بيع/ ايجار") || h === "type");
+    let cPType = headers.findIndex(h => h.includes("property ty") || h.includes("نوع الوحده"));
+    let cFurn = headers.findIndex(h => h.includes("furnish") || h.includes("تشطيب"));
+    let cAvail = headers.findIndex(h => h.includes("avail") || h.includes("متاح"));
+    let cAction = headers.findIndex(h => h.includes("تواصل") || h.includes("متابعه") || h.includes("last action") || h.includes("تحديث"));
+    let cNotes = headers.findIndex(h => h.includes("comment") || h.includes("ملحوظ") || h.includes("بيان") || h.includes("تفاصيل") || h.includes("notes"));
+    let cAdv = headers.findIndex(h => h.includes("advertiser") || h.includes("owner") || h.includes("broker"));
+    let cSpace = headers.findIndex(h => h.includes("space") || h.includes("مساح") || h.includes("area"));
+    let cBeds = headers.findIndex(h => h.includes("bedroom") || h.includes("غرف"));
+    let cGarden = headers.findIndex(h => h.includes("garden") || h.includes("حديق"));
+
+    const defaultAdv = (sName.includes("broker")) ? "Broker" : "Direct Owner";
+    const defaultDeal = (sName.includes("resale") || sName.includes("sale") || sName.includes("بيع")) ? "Resale" : "Rent";
+
+    for (let r = 1; r < data.length; r++) {
+      const row = data[r];
+      if (!row || !row.some(cell => String(cell || "").trim() !== "")) continue;
+
+      let rawPhone = String((cMob >= 0 ? row[cMob] : "") || "").replace(/\D/g, "");
+      if (rawPhone.startsWith("20") && rawPhone.length === 12) rawPhone = rawPhone.slice(2);
+      if (rawPhone.length === 10 && rawPhone.startsWith("1")) rawPhone = "0" + rawPhone;
+      if (!/^01[0125]\d{8}$/.test(rawPhone)) continue; // Skip non-Egyptian
+
+      const last7 = rawPhone.slice(-7);
+      let rawP = String((cPrice >= 0 ? row[cPrice] : "0") || "").replace(/,/g, "");
+      let price = parseFloat(rawP) || 0;
+
+      let rawComp = String((cComp >= 0 ? row[cComp] : "") || "").trim();
+      let comp = resolveFamousCompound(rawComp) || "New Cairo (General)";
+
+      let dealType = defaultDeal;
+      if (price > CONFIG.PRICE_RENT_MAX) {
+        dealType = "Resale";
+      } else if (price > 0 && price <= CONFIG.PRICE_RENT_MAX) {
+        dealType = "Rent";
+      } else if (cDeal >= 0) {
+        const dStr = String(row[cDeal] || "").toLowerCase();
+        if (dStr.includes("sell") || dStr.includes("sale") || dStr.includes("بيع")) dealType = "Resale";
+      }
+
+      let adv = defaultAdv;
+      if (cAdv >= 0) {
+        const aStr = String(row[cAdv] || "").toLowerCase();
+        if (aStr.includes("broker") || aStr.includes("بروكر")) adv = "Broker";
+        else if (aStr.includes("owner") || aStr.includes("مالك")) adv = "Direct Owner";
+      }
+
+      let rawAvail = String((cAvail >= 0 ? row[cAvail] : "") || "").trim().toLowerCase();
+      let avail = "Available";
+      if (rawAvail.includes("not") || rawAvail.includes("غير")) avail = "Not Available";
+      else if (rawAvail.includes("rented") || rawAvail.includes("تاجر")) avail = "Rented";
+      else if (rawAvail.includes("sold") || rawAvail.includes("اتباع")) avail = "Sold";
+      else if (rawAvail.includes("under")) avail = "Under Offer";
+      else if (rawAvail.includes("no answer")) avail = "No Answer";
+
+      let name = String((cName >= 0 ? row[cName] : "") || "").trim();
+      let code = String((cCode >= 0 ? row[cCode] : "") || "").trim();
+      let notes = String((cNotes >= 0 ? row[cNotes] : "") || "").trim();
+      let action = String((cAction >= 0 ? row[cAction] : "") || "").trim();
+      let ptype = String((cPType >= 0 ? row[cPType] : "Apartment") || "").trim() || "Apartment";
+      let space = String((cSpace >= 0 ? row[cSpace] : "Not Specified") || "").trim() || "Not Specified";
+      let beds = String((cBeds >= 0 ? row[cBeds] : "Not Specified") || "").trim() || "Not Specified";
+      let garden = String((cGarden >= 0 ? row[cGarden] : "No Info") || "").trim() || "No Info";
+      let furn = String((cFurn >= 0 ? row[cFurn] : "Not Specified") || "").trim() || "Not Specified";
+
+      rawUnits.push({
+        source: sName,
+        phone: rawPhone,
+        last7: last7,
+        price: price,
+        compound: comp,
+        dealType: dealType,
+        adv: adv,
+        avail: avail,
+        name: name,
+        code: code,
+        notes: notes,
+        action: action,
+        ptype: ptype,
+        space: space,
+        beds: beds,
+        garden: garden,
+        furn: furn
+      });
+    }
+  }
+
+  Logger.log("Parsed total raw unit rows: " + rawUnits.length);
+
+  // 2. Deduplicate by Last 7 Digits (Smart Merging)
+  const dedupMap = new Map();
+  for (const u of rawUnits) {
+    if (!dedupMap.has(u.last7)) {
+      dedupMap.set(u.last7, { ...u });
+    } else {
+      const ex = dedupMap.get(u.last7);
+      if ((!ex.name || ex.name === "Unknown" || ex.name === "Owner") && u.name && u.name !== "Unknown") ex.name = u.name;
+      if (ex.price === 0 && u.price > 0) { ex.price = u.price; ex.dealType = u.dealType; }
+      if (ex.compound === "New Cairo (General)" && u.compound !== "New Cairo (General)") ex.compound = u.compound;
+      if ((!ex.notes || ex.notes === "No Notes") && u.notes && u.notes !== "No Notes") ex.notes = u.notes;
+      if (u.action && u.action !== "No Contact Yet") ex.action = u.action;
+      if (u.avail === "Available") ex.avail = "Available";
+      if ((!ex.code || ex.code === "Pending Code") && u.code && u.code !== "Pending Code") ex.code = u.code;
+      if (ex.beds === "Not Specified" && u.beds !== "Not Specified") ex.beds = u.beds;
+      if (ex.space === "Not Specified" && u.space !== "Not Specified") ex.space = u.space;
+    }
+  }
+
+  const allClean = Array.from(dedupMap.values());
+  Logger.log("Total unique units after deduplication: " + allClean.length);
+
+  // 3. Segregate into the 5 Data Lists
+  const ownersRent = [];
+  const ownersResale = [];
+  const brokersRent = [];
+  const brokersResale = [];
+  const availableUnits = [];
+
+  for (const u of allClean) {
+    if (!u.code || u.code === "Pending Code") {
+      const pfx = u.adv === "Direct Owner" ? "OWN" : "BRK";
+      const dPfx = u.dealType === "Rent" ? "RNT" : "RSL";
+      const cPfx = u.compound.replace(/[^A-Za-z0-9]/g, "").slice(0, 5).toUpperCase() || "SE";
+      u.code = pfx + "-" + cPfx + "-" + dPfx + "-" + u.last7;
+    }
+
+    const row22 = [
+      Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss"),
+      u.code,
+      u.dealType,
+      u.compound,
+      u.ptype || "Apartment",
+      u.price || "Ask Owner",
+      u.space || "Not Specified",
+      u.beds || "Not Specified",
+      "Not Specified", // Bathrooms
+      u.furn || "Not Specified",
+      "Not Specified", // Floor
+      u.garden || "No Info",
+      "Not Specified", // Pool
+      u.adv,
+      u.name || "Unknown",
+      "'" + u.phone,
+      "'" + u.last7,
+      u.avail,
+      u.action || Utilities.formatDate(new Date(), "Africa/Cairo", "dd/MM/yyyy"),
+      u.notes || "No Notes",
+      "No Photos",
+      "rag-" + u.code.toLowerCase()
+    ];
+
+    if (u.adv === "Direct Owner" && u.dealType === "Rent") ownersRent.push(row22);
+    else if (u.adv === "Direct Owner" && u.dealType === "Resale") ownersResale.push(row22);
+    else if (u.adv === "Broker" && u.dealType === "Rent") brokersRent.push(row22);
+    else if (u.adv === "Broker" && u.dealType === "Resale") brokersResale.push(row22);
+
+    if (u.avail === "Available") availableUnits.push(row22);
+  }
+
+  Logger.log("Owners Rent Units   : " + ownersRent.length);
+  Logger.log("Owners Resale Units : " + ownersResale.length);
+  Logger.log("Brokers Rent Units  : " + brokersRent.length);
+  Logger.log("Brokers Resale Units: " + brokersResale.length);
+  Logger.log("Available Units     : " + availableUnits.length);
+
+  // 4. Populate the 5 Data Tabs
+  function writeDataTab(tabName, rows) {
+    let sheet = ss.getSheetByName(tabName);
+    if (!sheet) sheet = ss.insertSheet(tabName);
+    sheet.clear();
+
+    sheet.getRange(1, 1, 1, 22).setValues([CANONICAL_HEADERS]);
+    sheet.getRange(1, 1, 1, 22).setBackground("#0F172A").setFontColor("#FFFFFF").setFontWeight("bold");
+
+    sheet.getRange(2, 1, 1, 22).setValues([GUIDANCE_ROW]);
+    sheet.getRange(2, 1, 1, 22).setBackground("#F1F5F9").setFontColor("#475569").setFontStyle("italic");
+
+    if (rows.length > 0) {
+      sheet.getRange(3, 1, rows.length, 22).setValues(rows);
+      sheet.getRange(3, 6, rows.length, 1).setNumberFormat("#,##0");
+      sheet.getRange(3, 16, rows.length, 2).setNumberFormat("@");
+    }
+  }
+
+  writeDataTab("owners rent", ownersRent);
+  writeDataTab("owners resale", ownersResale);
+  writeDataTab("brokers rent", brokersRent);
+  writeDataTab("brokers resale", brokersResale);
+  writeDataTab("available units", availableUnits);
+
+  // 5. Populate Dashboard Tab
+  let dash = ss.getSheetByName("dashboard");
+  if (!dash) dash = ss.insertSheet("dashboard", 0);
+  dash.clear();
+
+  dash.getRange("B2").setValue("SIERRA ESTATES · MASTER REAL ESTATE COMMAND DASHBOARD").setFontSize(16).setFontWeight("bold").setFontColor("#0F172A");
+  dash.getRange("B3").setValue("Authoritative Executive Inventory Metrics, Real-Time Segregation & Outreach Parity Engine").setFontSize(10).setFontStyle("italic").setFontColor("#64748B");
+
+  const kpis = [
+    ["TOTAL MASTER INVENTORY", allClean.length, "B5", "B6"],
+    ["AVAILABLE UNITS", availableUnits.length, "D5", "D6"],
+    ["OWNERS RENT (<= 400K)", ownersRent.length, "F5", "F6"],
+    ["OWNERS RESALE (> 400K)", ownersResale.length, "H5", "H6"],
+    ["BROKERS INVENTORY", brokersRent.length + brokersResale.length, "J5", "J6"]
+  ];
+
+  for (const k of kpis) {
+    dash.getRange(k[2]).setValue(k[0]).setFontSize(9).setFontWeight("bold").setFontColor("#64748B");
+    dash.getRange(k[3]).setValue(k[1]).setFontSize(20).setFontWeight("bold").setFontColor("#0284C7");
+  }
+
+  dash.getRange("B9").setValue("INVENTORY SEGREGATION BY CATEGORY").setFontSize(12).setFontWeight("bold").setFontColor("#334155");
+
+  const tableRows = [
+    ["Tab Name", "Category Description", "Advertiser", "Deal Type", "Active Units"],
+    ["owners rent", "Direct Owner Rent Units (Rent <= 400,000 EGP)", "Direct Owner", "Rent", ownersRent.length],
+    ["owners resale", "Direct Owner Resale Units (Resale > 400,000 EGP)", "Direct Owner", "Resale", ownersResale.length],
+    ["brokers rent", "Broker Rent Listings", "Broker", "Rent", brokersRent.length],
+    ["brokers resale", "Broker Resale Listings", "Broker", "Resale", brokersResale.length],
+    ["available units", "Ready & Confirmed Available Units (All Categories)", "Mixed", "Mixed", availableUnits.length]
+  ];
+
+  dash.getRange(10, 2, tableRows.length, 5).setValues(tableRows);
+  dash.getRange(10, 2, 1, 5).setBackground("#0F172A").setFontColor("#FFFFFF").setFontWeight("bold");
+
+  safeToast(ss, "Reorganization Complete! 6 Master tabs populated and deduplicated cleanly.", "Sierra Estates", 8);
+
+  return {
+    ok: true,
+    totalUniqueUnits: allClean.length,
+    ownersRent: ownersRent.length,
+    ownersResale: ownersResale.length,
+    brokersRent: brokersRent.length,
+    brokersResale: brokersResale.length,
+    availableUnits: availableUnits.length
+  };
+}
+
 function run() {
   return runSierraEstatesEngine();
 }
@@ -255,7 +565,7 @@ function runSierraEstatesEngine() {
     return { ok: false, error: err.message };
   }
 
-  const targetSheets = ["Owners_Rent_Master", "Owners_Resale_Master", "Brokers_Inventory", "Owners-Rent"];
+  const targetSheets = ["owners rent", "Owners_Rent_Master", "owners resale", "Owners_Resale_Master", "brokers rent", "brokers resale", "available units", "Owners-Rent"];
   let totalCompUpdated = 0;
   let totalRentAudited = 0;
   let totalMobilesFormatted = 0;

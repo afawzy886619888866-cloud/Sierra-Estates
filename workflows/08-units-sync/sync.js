@@ -304,18 +304,18 @@ function rowToListing(row) {
     }
     return '';
   };
-  const code = get('Code', 'code');
+  const code = get('Code', 'code', 'Unit Code', 'Unit code');
   if (!code) return null;
 
-  const location = get('Location', 'Location ');
+  const location = get('Location', 'Location ', 'Compound (Canonical)', 'Compound', 'compound');
   const propertyType = get('Property Tybe', 'Property Type', 'property_type') || '';
-  const dealType = detectDealType(get('Type', 'type'));
+  const dealType = detectDealType(get('Type', 'type', 'Deal Type', 'Deal type'));
   summary.dealTypes[dealType || 'unknown'] = (summary.dealTypes[dealType || 'unknown'] || 0) + 1;
 
   // Price: explicit-format parsing with quarantine (see parseUnitPrice).
   // Raw source text is ALWAYS preserved: verbatim in raw_data's sheet row
   // plus the parse decision envelope for the human review queue.
-  const priceParse = parseUnitPrice(get('Unit Price', 'Unit price', 'Price'));
+  const priceParse = parseUnitPrice(get('Unit Price', 'Unit price', 'Price', 'Asking Price (EGP)', 'Asking Price'));
   if (priceParse.status === 'parsed') {
     summary.priceParsed = (summary.priceParsed || 0) + 1;
     if (!priceParse.currency) summary.priceNoCurrency = (summary.priceNoCurrency || 0) + 1;
@@ -337,15 +337,15 @@ function rowToListing(row) {
     price_currency: priceParse.currency,
     bedrooms: digits(get('bedrooms', 'Bedrooms')),
     bathrooms: 0,
-    area_sqm: digits(get('Space', 'space')),
+    area_sqm: digits(get('Space', 'space', 'Area (m²)', 'Area')),
     garden_sqm: digits(get('Garden', 'garden')),
-    furnishing_status: get('Furnished or not', 'Furnished') || null,
-    status: mapStatus(get('Availablty', 'Availability')),
+    furnishing_status: get('Furnished or not', 'Furnished', 'Finishing Status', 'Finishing status') || null,
+    status: mapStatus(get('Availablty', 'Availability', 'Availability Status', 'Availability status')),
     availability: get('Availablty', 'Availability') || null,
     sync_source: 'sheets-units',
     source_channel: 'sheets',
-    owner_name: get('Name', 'name') || null,
-    owner_phone: get('Mobile', 'mobile') || null,
+    owner_name: get('Name', 'name', 'Contact Name', 'Contact name') || null,
+    owner_phone: get('Mobile', 'mobile', 'Mobile Number', 'Mobile number') || null,
     amenities: [],
     raw_data: { ...row, _price_parse: priceParse },
     updated_at: new Date().toISOString(),

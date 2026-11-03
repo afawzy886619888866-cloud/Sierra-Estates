@@ -146,7 +146,6 @@ def clean_price(val):
     if val is None or val == "": return 0.0
     val_str = str(val).strip().replace(',', '')
     if '.' in val_str and val_str.count('.') > 1:
-        # e.g. 4.600.000 -> 4600000
         val_str = val_str.replace('.', '')
     val_str = re.sub(r'[^\d.]', '', val_str)
     try:
@@ -198,7 +197,7 @@ def clean_availability(val):
     return "Available"
 
 print("="*60)
-print("SIERRA ESTATES: MASTER 6-TAB INVENTORY MERGE ENGINE")
+print("SIERRA ESTATES: UNIFIED MASTER 6-TAB REORGANIZATION ENGINE")
 print("="*60)
 
 raw_units = []
@@ -299,20 +298,73 @@ def ingest_csv(fpath, default_adv="Direct Owner", default_deal="Rent"):
             "RAG Memory ID": ""
         })
 
-# Ingest all available sources
-print("Ingesting online downloaded tabs...")
+# Ingest all available online downloaded sources
+print("Ingesting online tabs...")
+ingest_csv("scratch/online_tabs_raw/Owners-Rent 2.csv", "Direct Owner", "Rent") # Has Available status & 712 units
 ingest_csv("scratch/online_tabs_raw/Owners_Rent_Master.csv", "Direct Owner", "Rent")
 ingest_csv("scratch/online_tabs_raw/Owners-Rent.csv", "Direct Owner", "Rent")
-ingest_csv("scratch/online_tabs_raw/Owners-Rent 2.csv", "Direct Owner", "Rent")
 ingest_csv("scratch/online_tabs_raw/Owners_Resale_Master.csv", "Direct Owner", "Resale")
 ingest_csv("scratch/online_tabs_raw/Owners-Resale.csv", "Direct Owner", "Resale")
 ingest_csv("scratch/online_tabs_raw/Brokers_Inventory.csv", "Broker", "Rent")
 ingest_csv("scratch/online_tabs_raw/Brokers Rent.csv", "Broker", "Rent")
 ingest_csv("scratch/online_tabs_raw/Not Available Properties.csv", "Direct Owner", "Rent")
 
-print(f"Total raw records parsed: {len(raw_units)}")
+# Ingest clean master xlsx
+if os.path.exists("data/sierra-estates-master-inventory-clean.xlsx"):
+    print("Ingesting data/sierra-estates-master-inventory-clean.xlsx...")
+    wb_clean = openpyxl.load_workbook("data/sierra-estates-master-inventory-clean.xlsx", read_only=True)
+    ws_clean = wb_clean["Master_Inventory"]
+    rows = list(ws_clean.iter_rows(values_only=True))
+    headers = [str(h).strip().lower() for h in rows[0]]
+    c_mob = headers.index("mobile")
+    c_name = headers.index("name")
+    c_price = headers.index("unit price")
+    c_loc = headers.index("location")
+    c_beds = headers.index("bedrooms")
+    c_furn = headers.index("furnished or not")
+    c_type = headers.index("type")
+    c_ptype = headers.index("property tybe")
+    c_code = headers.index("code")
+    c_space = headers.index("space")
+    c_comm = headers.index("comment")
+    c_action = headers.index("تاريخ اخر تواصل")
+    c_avail = headers.index("availablty")
 
-# Deduplication by Mobile Last 7 (with smart field absorption)
+    for r in rows[1:]:
+        p = r[c_mob]
+        digits, last7 = clean_phone(p)
+        if not digits: continue
+        price = clean_price(r[c_price])
+        deal_type = "Resale" if price > 400000 or "sell" in str(r[c_type]).lower() else "Rent"
+        raw_units.append({
+            "source": "sierra-estates-master-inventory-clean.xlsx",
+            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "Unit Code": str(r[c_code] or "").strip(),
+            "Deal Type": deal_type,
+            "Compound (Canonical)": clean_compound(r[c_loc]),
+            "Property Type": clean_prop_type(r[c_ptype]),
+            "Asking Price (EGP)": price,
+            "Area (m²)": re.sub(r'[^\d]', '', str(r[c_space] or "")) or "Not Specified",
+            "Bedrooms": str(r[c_beds] or "").strip() or "Not Specified",
+            "Bathrooms": "Not Specified",
+            "Finishing Status": clean_finishing(r[c_furn]),
+            "Floor": "Not Specified",
+            "Garden (m²)": "No Info",
+            "Pool": "Not Specified",
+            "Advertiser Type": "Direct Owner",
+            "Contact Name": str(r[c_name] or "").strip(),
+            "Mobile Number": "'" + digits,
+            "Mobile (Last 7)": "'" + last7,
+            "Availability Status": clean_availability(r[c_avail]),
+            "Last Action Date": str(r[c_action] or "").strip() or "2026-10-31",
+            "Owner Call Response & Notes": str(r[c_comm] or "").strip() or "No Notes",
+            "Photo URLs": "No Photos",
+            "RAG Memory ID": ""
+        })
+
+print(f"Total raw records parsed across all sources: {len(raw_units)}")
+
+# Deduplication by Mobile Last 7 (Smart Merging)
 deduped_map = {}
 
 for u in raw_units:
@@ -321,12 +373,20 @@ for u in raw_units:
         deduped_map[l7] = u
     else:
         ex = deduped_map[l7]
-        # Merge logic: preserve the most complete / informative data
+        # 1. Contact Name: Take actual name
         if (not ex["Contact Name"] or ex["Contact Name"] in ["Unknown", "Owner", "N/A"]) and u["Contact Name"] not in ["", "Unknown", "Owner", "N/A"]:
             ex["Contact Name"] = u["Contact Name"]
+        
+        # 2. Price & Deal Type
         if ex["Asking Price (EGP)"] == 0 and u["Asking Price (EGP)"] > 0:
             ex["Asking Price (EGP)"] = u["Asking Price (EGP)"]
             ex["Deal Type"] = u["Deal Type"]
+        
+        # 3. Compound: Prefer specific over generic
+        if ex["Compound (Canonical)"] in ["New Cairo (General)", "Not Specified"] and u["Compound (Canonical)"] not in ["New Cairo (General)", "Not Specified"]:
+            ex["Compound (Canonical)"] = u["Compound (Canonical)"]
+            
+        # 4. Specifications
         if ex["Area (m²)"] in ["Not Specified", "N/A", ""] and u["Area (m²)"] not in ["Not Specified", "N/A", ""]:
             ex["Area (m²)"] = u["Area (m²)"]
         if ex["Bedrooms"] in ["Not Specified", "N/A", ""] and u["Bedrooms"] not in ["Not Specified", "N/A", ""]:
@@ -335,18 +395,26 @@ for u in raw_units:
             ex["Bathrooms"] = u["Bathrooms"]
         if ex["Finishing Status"] in ["Not Specified", "N/A", ""] and u["Finishing Status"] not in ["Not Specified", "N/A", ""]:
             ex["Finishing Status"] = u["Finishing Status"]
+            
+        # 5. Notes
         if (not ex["Owner Call Response & Notes"] or ex["Owner Call Response & Notes"] in ["No Notes", "N/A"]) and u["Owner Call Response & Notes"] not in ["", "No Notes", "N/A"]:
             ex["Owner Call Response & Notes"] = u["Owner Call Response & Notes"]
-        # Last Action Date: pick the freshest date if present
+            
+        # 6. Availability: Prefer 'Available' if confirmed
+        if u["Availability Status"] == "Available":
+            ex["Availability Status"] = "Available"
+            
+        # 7. Last Action Date
         if u["Last Action Date"] and u["Last Action Date"] not in ["No Contact Yet", "2026-10-31"]:
             ex["Last Action Date"] = u["Last Action Date"]
-        # Code: preserve valid custom code
+            
+        # 8. Code
         if (not ex["Unit Code"] or ex["Unit Code"] in ["Pending Code", "N/A"]) and u["Unit Code"] not in ["", "Pending Code", "N/A"]:
             ex["Unit Code"] = u["Unit Code"]
 
 all_clean = list(deduped_map.values())
 
-# Finalize Unit Code and RAG Memory ID for every unit
+# Finalize Unit Code & RAG Memory ID
 for u in all_clean:
     l7_clean = u["Mobile (Last 7)"].replace("'", "")
     comp_clean = re.sub(r'[^A-Za-z0-9]', '', u["Compound (Canonical)"])[:6].upper() or "SE"
@@ -381,7 +449,6 @@ NAVY_HEADER = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="s
 GUIDANCE_FILL = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
 ZEBRA_FILL = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
 WHITE_FILL = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
-CARD_FILL = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
 
 FONT_HEADER = Font(name="Segoe UI", size=10, bold=True, color="FFFFFF")
 FONT_GUIDANCE = Font(name="Segoe UI", size=9, italic=True, color="475569")
@@ -412,18 +479,18 @@ ws_dash.cell(row=3, column=2, value="Authoritative Executive Inventory Metrics, 
 
 # KPI Summary Cards
 kpis = [
-    ("TOTAL MASTER INVENTORY", len(all_clean), "B5", "B6", "C6"),
-    ("AVAILABLE UNITS", len(available_units), "D5", "D6", "E6"),
-    ("OWNERS RENT (<= 400K)", len(owners_rent), "F5", "F6", "G6"),
-    ("OWNERS RESALE (> 400K)", len(owners_resale), "H5", "H6", "I6"),
-    ("BROKERS INVENTORY", len(brokers_rent) + len(brokers_resale), "J5", "J6", "K6")
+    ("TOTAL MASTER INVENTORY", len(all_clean), "B5", "B6"),
+    ("AVAILABLE UNITS", len(available_units), "D5", "D6"),
+    ("OWNERS RENT (<= 400K)", len(owners_rent), "F5", "F6"),
+    ("OWNERS RESALE (> 400K)", len(owners_resale), "H5", "H6"),
+    ("BROKERS INVENTORY", len(brokers_rent) + len(brokers_resale), "J5", "J6")
 ]
 
-for label, val, top_left, bot_left, bot_right in kpis:
-    ws_dash[top_left] = label
-    ws_dash[top_left].font = FONT_KPI_LBL
-    ws_dash[bot_left] = val
-    ws_dash[bot_left].font = FONT_KPI_VAL
+for label, val, top_cell, bot_cell in kpis:
+    ws_dash[top_cell] = label
+    ws_dash[top_cell].font = FONT_KPI_LBL
+    ws_dash[bot_cell] = val
+    ws_dash[bot_cell].font = FONT_KPI_VAL
 
 ws_dash.cell(row=9, column=2, value="INVENTORY SEGREGATION BY CATEGORY").font = FONT_SUBTITLE
 
@@ -494,7 +561,7 @@ def populate_data_sheet(ws_name, unit_list):
 
     # Set column widths
     for col in ws.columns:
-        max_len = max(len(str(cell.value or '')) for cell in col[:15]) # sample first 15
+        max_len = max(len(str(cell.value or '')) for cell in col[:15])
         col_letter = get_column_letter(col[0].column)
         ws.column_dimensions[col_letter].width = max(min(max_len + 3, 40), 12)
 
@@ -510,7 +577,7 @@ output_xlsx = "Sierra_Estates_Master_GoogleSheet_Reorganized.xlsx"
 wb.save(output_xlsx)
 print(f"Saved Master Reorganized Workbook: {output_xlsx}")
 
-# Also export each sheet as clean CSV
+# Export CSVs
 csv_dir = "scratch/master_6_tabs_csv"
 os.makedirs(csv_dir, exist_ok=True)
 
