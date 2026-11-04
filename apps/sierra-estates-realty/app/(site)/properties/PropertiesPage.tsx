@@ -52,6 +52,18 @@ const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
   ),
 });
 
+// Stitch v2 masterplan redesign (presentation layer only — same data:
+// units + full filtered inventory rows; §21-safe, every number live).
+const MasterplanMap = dynamic(() => import('@/components/Maps/MasterplanMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-125 flex items-center justify-center gap-3 text-white/60 text-sm">
+      <div className="w-5 h-5 border-2 border-[#c99436] border-t-transparent rounded-full animate-spin" />
+      <span>Loading masterplan…</span>
+    </div>
+  ),
+});
+
 export interface RealListing {
   id: string;
   code: string;
@@ -912,57 +924,20 @@ export default function PropertiesPage() {
 
           {/* ── MAIN CONTENT AREA (MAP & LISTINGS) ── */}
           {viewMode === 'map' ? (
-            /* Full Map View */
+            /* Full Map View — Stitch v2 masterplan redesign (4 variants:
+             * theme × language toggles; registry modal replaces the drawer). */
             <div className="props-full-map-wrap">
-              <LiveMap
-                mode={theme === 'dark' ? 'dark' : 'light'}
+              <MasterplanMap
                 units={mapPins}
+                inventoryRows={sortedListings}
+                initialTheme={theme === 'dark' ? 'dark' : 'light'}
+                initialLang={isAr ? 'ar' : 'en'}
                 activeUnitId={activeUnit?.id || activeUnit?.code || null}
                 flyToCoords={flyToCoords}
+                flyToZoom={14}
                 onSelectUnit={handleSelectUnit}
-                onSelectCompound={handleMapSelectCompound}
-                radiusKm={radiusKm}
-                onRadiusChange={setRadiusKm}
-                centerCoords={centerCoords}
-                onCenterChange={setCenterCoords}
-                maxPins={250}
                 height="100%"
               />
-
-              {activeUnit && (
-                <div className="props-map-drawer">
-                  <div style={{ display: 'flex', gap: 12, padding: 14, alignItems: 'center' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={activeUnit.img}
-                      alt={activeUnit.code}
-                      style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: '#e9c176', fontFamily: 'var(--mono)' }}>
-                          {activeUnit.code}
-                        </span>
-                        <span className={`tag ${activeUnit.mode === 'rent' ? 'rent' : 'sale'}`} style={{ fontSize: 10, padding: '2px 6px' }}>
-                          {activeUnit.mode === 'rent' ? 'Rent' : 'Sale'}
-                        </span>
-                      </div>
-                      <h4 style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{activeUnit.compound}</h4>
-                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                        {activeUnit.type} · {activeUnit.beds} bds · {activeUnit.area} m²
-                        {activeUnit.distanceKm != null && (
-                          <span style={{ color: '#c99436', fontWeight: 700, marginLeft: 6 }}>
-                            · 📍 {activeUnit.distanceKm.toFixed(1)} km
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#0f9d76', marginTop: 4, fontFamily: 'var(--mono)' }}>
-                        {activeUnit.priceLabel}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           ) : viewMode === 'split' ? (
             /* Split View: Left List, Right Sticky Map */

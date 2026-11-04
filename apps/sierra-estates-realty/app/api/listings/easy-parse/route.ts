@@ -69,10 +69,15 @@ const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '
  * Fallback heuristic extractor when AI API key is unavailable in dev/offline.
  * Detects ONLY what the text literally states; everything else stays null.
  */
-function heuristicFallbackParse(rawText: string): ParsedListingResult {
-  const lower = rawText.toLowerCase();
+function normalizeDigits(s: string): string {
+  return s.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+}
 
-  // Detect Compound
+function heuristicFallbackParse(rawText: string): ParsedListingResult {
+  const normalizedText = normalizeDigits(rawText);
+  const lower = normalizedText.toLowerCase();
+
+  // Detect Compound with comprehensive New Cairo & Egyptian gazetteer
   const compounds = [
     { name: 'Fifth Square', matches: ['fifth square', 'فيفث سكوير', 'المراسم'] },
     { name: 'Al Rehab', matches: ['al rehab', 'rehab', 'الرحاب', 'مدينة الرحاب'] },
@@ -80,14 +85,25 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
     { name: 'Mivida', matches: ['mivida', 'ميفيدا', 'ميفيلد'] },
     { name: 'Hyde Park', matches: ['hyde park', 'هايد بارك', 'هايدبارك'] },
     { name: 'Mountain View iCity', matches: ['mountain view', 'ماونتن فيو', 'ماونتن', 'icity', 'اي سيتي'] },
-    { name: 'Villette', matches: ['villette', 'فيليت', 'sodic villette'] },
+    { name: 'Villette', matches: ['villette', 'فيليت', 'ڤيليت', 'sodic villette'] },
     { name: 'Palm Hills NC', matches: ['palm hills', 'بالم هيلز', 'بالم'] },
     { name: 'Eastown', matches: ['eastown', 'ايست تاون', 'ايستاون'] },
     { name: 'Beit El Watan', matches: ['beit el watan', 'beit elwatan', 'بيت الوطن'] },
-    { name: 'Katameya Dunes', matches: ['katameya dunes', 'katameya', 'قطامية ديونز', 'القطامية'] },
+    { name: 'Katameya Dunes', matches: ['katameya dunes', 'قطامية ديونز'] },
+    { name: 'Katameya Heights', matches: ['katameya heights', 'قطامية هايتس'] },
+    { name: 'Katameya Residence', matches: ['katameya residence', 'قطاميا ريزيدنس', 'قطامية ريزيدنس'] },
+    { name: 'Cairo Festival City', matches: ['cairo festival city', 'cairo festival', 'cfc', 'كايرو فيستيفال', 'كايرو فستيفال', 'اوريانا', 'oriana'] },
+    { name: 'Taj City', matches: ['taj city', 'تاج سيتي', 'تاج سيتى'] },
+    { name: 'Sarai', matches: ['sarai', 'سراي'] },
+    { name: 'Noor City', matches: ['noor city', 'نور سيتي'] },
+    { name: 'The Waterway', matches: ['the waterway', 'waterway', 'ووتر واي', 'الووتر واي'] },
+    { name: '90 Avenue', matches: ['90 avenue', '90 افينيو', 'افينيو 90'] },
     { name: 'Lake View', matches: ['lake view', 'ليك فيو', 'lakeview'] },
     { name: 'Uptown Cairo', matches: ['uptown', 'اب تاون', 'أب تاون'] },
     { name: 'Swan Lake', matches: ['swan lake', 'سوان ليك'] },
+    { name: 'Zed East', matches: ['zed east', 'زد ايست', 'زد'] },
+    { name: 'Badya', matches: ['badya', 'باديا'] },
+    { name: 'Il Bosco', matches: ['il bosco', 'البوسكو', 'إل بوسكو'] },
   ];
 
   const detectedCompound: string | null =
@@ -120,24 +136,24 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
   }
 
   // Detect Beds & Baths
-  const bedsMatch = rawText.match(/(\d+)\s*(?:bed|bd|غرف|نوم|rooms)/i) || rawText.match(/(?:bed|bd|غرف|نوم)\s*(\d+)/i);
+  const bedsMatch = normalizedText.match(/(\d+)\s*(?:bed|bd|غرف|نوم|rooms)/i) || rawText.match(/(?:bed|bd|غرف|نوم)\s*(\d+)/i);
   const beds = bedsMatch ? parseInt(bedsMatch[1], 10) : null;
 
-  const bathsMatch = rawText.match(/(\d+)\s*(?:bath|ba|حمام|حمامات)/i) || rawText.match(/(?:bath|ba|حمام)\s*(\d+)/i);
+  const bathsMatch = normalizedText.match(/(\d+)\s*(?:bath|ba|حمام|حمامات)/i) || rawText.match(/(?:bath|ba|حمام)\s*(\d+)/i);
   const baths = bathsMatch ? parseInt(bathsMatch[1], 10) : null;
 
   // Detect Area
-  const areaMatch = rawText.match(/(\d{2,4})\s*(?:m2|sqm|متر|م²|m)/i) || rawText.match(/(?:area|مساحة)\s*[:=]?\s*(\d{2,4})/i);
+  const areaMatch = normalizedText.match(/(\d{2,4})\s*(?:m2|sqm|متر|م²|m)/i) || rawText.match(/(?:area|مساحة)\s*[:=]?\s*(\d{2,4})/i);
   const area = areaMatch ? parseInt(areaMatch[1], 10) : null;
 
   // Detect Garden
-  const gardenMatch = rawText.match(/garden\s*(\d{2,4})/i) || rawText.match(/حديقة\s*(\d{2,4})/i) || rawText.match(/جاردن\s*(\d{2,4})/i);
+  const gardenMatch = normalizedText.match(/garden\s*(\d{2,4})/i) || rawText.match(/حديقة\s*(\d{2,4})/i) || rawText.match(/جاردن\s*(\d{2,4})/i);
   const gardenArea = gardenMatch ? parseInt(gardenMatch[1], 10) : null;
 
   // Detect Price
   let price: number | null = null;
-  const priceNumberMatch = rawText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(1?\d{1,3}(?:,\d{3})+)/);
-  const priceMillionMatch = rawText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:million|مليون)/i)
+  const priceNumberMatch = normalizedText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(1?\d{1,3}(?:,\d{3})+)/);
+  const priceMillionMatch = normalizedText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:million|مليون)/i)
     || rawText.match(/(\d+(?:\.\d+)?)\s*(?:million|مليون)/i);
 
   if (priceNumberMatch) {
@@ -165,7 +181,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
   }
 
   // Detect Phone — only a real match, never a placeholder
-  const phoneMatch = rawText.match(/(?:\+?20|0)?1[0125]\d{8}/);
+  const phoneMatch = normalizedText.match(/(?:\+?20|0)?1[0125]\d{8}/);
   const mobile = phoneMatch ? phoneMatch[0] : null;
 
   // SBR Code — only derivable from fields the text actually provided

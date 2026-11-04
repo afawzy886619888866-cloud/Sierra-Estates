@@ -129,7 +129,8 @@
       "outputs": [
         ".next/**",
         "!.next/cache/**",
-        "dist/**"
+        "dist/**",
+        "data/consolidated-master-inventory.json"
       ]
     },
     "dev": {
