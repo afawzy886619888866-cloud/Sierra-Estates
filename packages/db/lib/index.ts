@@ -39,3 +39,4 @@ export {
   countRecords,
 } from './records';
 export * from './firebase-compat-supabase';
+export * from './unified-memory-seeds';

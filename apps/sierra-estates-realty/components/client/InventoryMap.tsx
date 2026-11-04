@@ -192,6 +192,56 @@ function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
   });
 }
 
+function createCentroidPillIcon(comp: CompoundGisData, count: number, isAr: boolean) {
+  const label = isAr ? comp.nameAr : comp.nameEn;
+  const countText = count > 0 ? ` · ${count}` : '';
+  const borderColor = comp.borderColor;
+  const glowColor =
+    borderColor === '#00F0FF'
+      ? 'rgba(0, 240, 255, 0.65)'
+      : borderColor === '#10B981'
+      ? 'rgba(16, 185, 129, 0.65)'
+      : 'rgba(201, 168, 76, 0.75)';
+
+  return L.divIcon({
+    className: 'gis-centroid-pill',
+    html: `
+      <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(10, 22, 40, 0.94);
+        border: 1.5px solid ${borderColor};
+        color: #F5D78E;
+        box-shadow: 0 0 16px ${glowColor}, inset 0 0 8px ${glowColor};
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-weight: 800;
+        font-size: 11px;
+        white-space: nowrap;
+        pointer-events: auto;
+        cursor: pointer;
+        transform: translate(-50%, -50%);
+        backdrop-filter: blur(8px);
+        letter-spacing: 0.02em;
+      ">
+        <span style="
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: ${borderColor};
+          box-shadow: 0 0 8px ${borderColor};
+        "></span>
+        <span>${label}${countText}</span>
+      </div>
+    `,
+    iconSize: [120, 26],
+    iconAnchor: [60, 13],
+  });
+}
+
 function createCompoundHubIcon(comp: CompoundLocation, count: number, isVerified: boolean) {
   return L.divIcon({
     className: 'houzez-compound-hub',
@@ -298,6 +348,9 @@ export default function InventoryMap({
   const [flyZoom, setFlyZoom] = useState<number | undefined>(undefined);
   const [showRadarRings, setShowRadarRings] = useState<boolean>(true);
   const [photoRequestStatus, setPhotoRequestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'cooldown'>>({});
+  const [activeLandmark, setActiveLandmark] = useState<string | null>(null);
+  const [showUnitDetailModal, setShowUnitDetailModal] = useState<boolean>(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState<boolean>(false);
 
   // Real-time Harvester Live Opportunities & Telemetry (HARV-030-003)
   const [harvesterPulses, setHarvesterPulses] = useState<HarvesterPulse[]>([]);
@@ -500,6 +553,48 @@ export default function InventoryMap({
             </button>
           ))}
         </div>
+
+        {/* Middle: Landmark Proximity Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 border-t sm:border-t-0 sm:border-l sm:border-r border-white/10 px-2">
+          <span className="text-[#00F0FF] font-bold uppercase tracking-wider text-[11px] whitespace-nowrap flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" />
+            <span>{isAr ? 'المعالم والقرب:' : 'Proximity:'}</span>
+          </span>
+          {NEW_CAIRO_LANDMARKS.map((lm) => {
+            const refCoords: [number, number] = selectedUnit ? [selectedUnit.lat, selectedUnit.lng] : NEW_CAIRO_CENTER;
+            const distKm = calculateHaversineDistanceKm(refCoords[0], refCoords[1], lm.coords[0], lm.coords[1]);
+            const driveMin = calculateDriveTimeMin(distKm);
+            const isSelected = activeLandmark === lm.id;
+
+            return (
+              <button
+                key={lm.id}
+                onClick={() => {
+                  if (activeLandmark === lm.id) {
+                    setActiveLandmark(null);
+                    setFlyTarget(NEW_CAIRO_CENTER);
+                    setFlyZoom(12);
+                  } else {
+                    setActiveLandmark(lm.id);
+                    setFlyTarget(lm.coords);
+                    setFlyZoom(14);
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 border ${
+                  isSelected
+                    ? 'bg-[#C9A84C] text-[#0A1628] border-[#F5D78E] shadow-[0_0_12px_rgba(201,168,76,0.6)] font-extrabold'
+                    : 'bg-[#001f38]/90 text-slate-200 hover:text-white hover:bg-[#002b4b] border-white/15'
+                }`}
+                title={`Drive time ~${driveMin} min (${distKm} km)`}
+              >
+                <span>{lm.icon}</span>
+                <span>{isAr ? lm.nameAr : lm.nameEn}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${isSelected ? 'bg-[#0A1628]/20 text-[#0A1628] font-bold' : 'bg-[#00F0FF]/15 text-[#00F0FF]'}`}>
+                  ~{driveMin} {isAr ? 'د' : 'min'}
+                </span>
+              </button>
+            );
+          })}
 
         {/* Right: Filters & Tile Switcher */}
         <div className="flex items-center gap-2 shrink-0">
