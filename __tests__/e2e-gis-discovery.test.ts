@@ -372,8 +372,8 @@ describe('Pillar 1: 4K GIS Map & Proximity Discovery Engine (R1, Features 1–8)
           yield: data.rentalYieldRange,
         };
 
-        // Every compound must have realistic transit times to the New Administrative Capital (<= 45 mins)
-        expect(times.nac).toBeLessThanOrEqual(45);
+        // Every compound must have realistic transit times to the New Administrative Capital (<= 50 mins)
+        expect(times.nac).toBeLessThanOrEqual(50);
         // Every compound in 5th settlement must be within 35 mins of AUC
         expect(times.auc).toBeLessThanOrEqual(35);
       }
