@@ -68,7 +68,7 @@ const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string; maxZoom: 
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attrib: '&copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics',
-    maxZoom: 19,
+    maxZoom: 22,
   },
 };
 

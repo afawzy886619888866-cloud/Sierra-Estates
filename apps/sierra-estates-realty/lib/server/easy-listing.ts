@@ -549,6 +549,33 @@ export function parseEasyListing(input: EasyListingInput): EasyListingResult {
 
   const internal_code = `${regionCode}-${compoundCode}-${unitCode}-${floorCode}-${area}M`;
 
+  // Feature and furnishing extraction for Sierra attribute code
+  const features: string[] = [];
+  if (/حديقة|حديقه|ارضي|أرضي|garden/.test(norm)) features.push('Garden');
+  if (/حمام سباحة|بيسين|مسبح|pool/.test(norm)) features.push('Pool');
+  if (/روف|سطح|roof/.test(norm)) features.push('Roof');
+  if (/فيلا|villa/.test(norm)) features.push('Villa');
+
+  let furnishingGuess = 'U';
+  if (/مفروش|فرش كامل|furnished|fully furnished/.test(norm)) furnishingGuess = 'F';
+  else if (/نصف مفروش|نص مفروش|مطبخ وتكييفات|semi/.test(norm)) furnishingGuess = 'S';
+  else if (/غير مفروش|بدون فرش|فاضي|unfurnished/.test(norm)) furnishingGuess = 'U';
+  else if (isRent) furnishingGuess = 'F';
+
+  const agentInitials = input.agentInitials || (name && name !== 'صاحب الإعلان' ? name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() : 'AF') || 'AF';
+  const idToken = input.id || '101';
+  const bmm_code = generateBmmCode(role, compoundLabel || compoundCode, agentInitials, idToken);
+  const sierra_code = generateSierraAttributeCode(compoundLabel || compoundCode, bedroomsFinal, furnishingGuess, price, features);
+
+  // Acquisition-to-CRM latency calculation (>24h => 5% commission penalty)
+  const nowMs = Date.now();
+  const acqRaw = input.acquisition_timestamp || input.acquiredAt;
+  const acqDate = acqRaw ? new Date(acqRaw) : new Date(nowMs);
+  const acqMs = acqDate.getTime();
+  const latencyHours = Number.isNaN(acqMs) ? 0 : Math.max(0, Math.round(((nowMs - acqMs) / (1000 * 60 * 60)) * 10) / 10);
+  const isLateAcquisition = latencyHours > 24;
+  const commissionPenaltyPct = isLateAcquisition ? 5 : 0;
+
   const routing_destination: EasyListingRouting =
     role === 'BROKER' ? 'MAP_SHEET' : 'MAIN_INVENTORY';
 
@@ -560,6 +587,10 @@ export function parseEasyListing(input: EasyListingInput): EasyListingResult {
     uploader_name: name,
     uploader_phone: phone,
     internal_code,
+    bmm_code,
+    bmmCode: bmm_code,
+    sierra_code,
+    sierraCode: sierra_code,
     property_details,
     floor_label: floorLabel,
     floor_number: floor?.number ?? null,
@@ -568,7 +599,147 @@ export function parseEasyListing(input: EasyListingInput): EasyListingResult {
       auto_publish_ads: routing_destination === 'MAIN_INVENTORY',
       trigger_photo_request_bot: routing_destination === 'MAP_SHEET',
     },
+    acquisition_metrics: {
+      acquisition_timestamp: acqDate.toISOString(),
+      crm_entry_timestamp: new Date(nowMs).toISOString(),
+      latency_hours: latencyHours,
+      is_late_acquisition: isLateAcquisition,
+      commission_penalty_pct: commissionPenaltyPct,
+    },
+    latencyHours,
+    isLateAcquisition,
+    commissionPenaltyPct,
     ads,
+  };
+}
+
+/**
+ * Generate BMM source code: [O/B][CompoundInitial][AgentInitials]-[ID] (e.g. OHP-AF-101)
+ */
+export function generateBmmCode(
+  role: EasyListingRole | string,
+  compound: string | null | undefined,
+  agentInitials: string = 'AF',
+  id: string | number = '101'
+): string {
+  const roleChar = String(role || '').toUpperCase() === 'OWNER' ? 'O' : 'B';
+  let compInit = 'SE';
+  if (compound) {
+    const normComp = compound.trim().toUpperCase();
+    if (normComp.includes('HYDE')) compInit = 'HP';
+    else if (normComp.includes('MOUNTAIN')) compInit = 'MV';
+    else if (normComp.includes('MIVIDA')) compInit = 'M';
+    else if (normComp.includes('PALM')) compInit = 'PH';
+    else if (normComp.includes('EASTOWN')) compInit = 'ET';
+    else if (normComp.includes('VILLETTE')) compInit = 'VL';
+    else if (normComp.includes('FESTIVAL') || normComp.includes('CFC')) compInit = 'CF';
+    else {
+      const words = normComp.split(/\s+/).filter(Boolean);
+      if (words.length >= 2) {
+        compInit = `${words[0][0]}${words[1][0]}`;
+      } else {
+        compInit = words[0]?.slice(0, 2) || 'SE';
+      }
+    }
+  }
+  const cleanAgent = String(agentInitials || 'AF').replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || 'AF';
+  const cleanId = String(id).replace(/[^0-9a-zA-Z]/g, '') || '101';
+  return `${roleChar}${compInit}-${cleanAgent}-${cleanId}`;
+}
+
+/**
+ * Generate Sierra attribute code: [CompoundCode]-[Rooms][Furnishing]-[Price][K/$]+[Features] (e.g. HP-3F-45K+G)
+ */
+export function generateSierraAttributeCode(
+  compound: string | null | undefined,
+  rooms: number | null | undefined,
+  furnishing: string | null | undefined,
+  price: number | null | undefined,
+  features: string[] = []
+): string {
+  let compCode = 'SE';
+  if (compound) {
+    const norm = compound.trim().toUpperCase();
+    if (norm.includes('HYDE')) compCode = 'HP';
+    else if (norm.includes('MOUNTAIN')) compCode = 'MV';
+    else if (norm.includes('MIVIDA')) compCode = 'MIV';
+    else if (norm.includes('PALM')) compCode = 'PH';
+    else if (norm.includes('EASTOWN')) compCode = 'ET';
+    else if (norm.includes('VILLETTE')) compCode = 'VL';
+    else if (norm.includes('FESTIVAL') || norm.includes('CFC')) compCode = 'CFC';
+    else {
+      compCode = norm.replace(/[^A-Z]/g, '').slice(0, 3) || 'SE';
+    }
+  }
+
+  const r = rooms && rooms > 0 ? String(rooms) : 'X';
+  const f = furnishing
+    ? furnishing.toLowerCase().includes('furn') || furnishing.includes('F')
+      ? 'F'
+      : furnishing.toLowerCase().includes('semi') || furnishing.includes('S')
+      ? 'S'
+      : 'U'
+    : 'U';
+
+  let priceToken = '0';
+  if (price && price > 0) {
+    if (price >= 1000000) {
+      priceToken = `${(price / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+    } else if (price >= 1000) {
+      priceToken = `${Math.round(price / 1000)}K`;
+    } else {
+      priceToken = String(price);
+    }
+  }
+
+  const featChars = features
+    .map((feat) => {
+      const fl = feat.toLowerCase();
+      if (fl.includes('garden')) return 'G';
+      if (fl.includes('pool')) return 'P';
+      if (fl.includes('roof')) return 'R';
+      if (fl.includes('villa')) return 'V';
+      return feat[0]?.toUpperCase() || '';
+    })
+    .filter(Boolean);
+  const featStr = featChars.length > 0 ? `+${featChars.join('')}` : '';
+
+  return `${compCode}-${r}${f}-${priceToken}${featStr}`;
+}
+
+/**
+ * Interface contract matching PROJECT.md § Interface Contracts M2
+ * parseEasyListingText(rawText, metadata) => { bmmCode, sierraCode, isLateAcquisition, commissionPenaltyPct }
+ */
+export function parseEasyListingText(
+  rawText: string,
+  metadata?: {
+    agentInitials?: string;
+    acquiredAt?: string | Date;
+    acquisitionTimestamp?: string | Date;
+    role?: string;
+    name?: string;
+    phone?: string;
+    id?: string | number;
+  }
+) {
+  const parsed = parseEasyListing({
+    role: metadata?.role || 'OWNER',
+    name: metadata?.name || 'صاحب الإعلان',
+    phone: metadata?.phone || '01008821490',
+    details: rawText,
+    agentInitials: metadata?.agentInitials,
+    acquiredAt: metadata?.acquiredAt || metadata?.acquisitionTimestamp,
+    id: metadata?.id,
+  });
+
+  return {
+    bmmCode: parsed.bmm_code,
+    sierraCode: parsed.sierra_code,
+    isLateAcquisition: parsed.isLateAcquisition,
+    commissionPenaltyPct: parsed.commissionPenaltyPct,
+    latencyHours: parsed.latencyHours,
+    result: parsed,
   };
 }
 
