@@ -130,12 +130,27 @@ function placeUnits(units: InventoryUnit[]): PlacedUnit[] {
 /**
  * Custom Houzez Luxury Marker Icon
  */
+function isUnitGem(u: InventoryUnit): { isGem: boolean; discountPct: number } {
+  if (!u.price || u.price <= 0 || !u.area || u.area <= 0 || u.mode !== 'sale') {
+    return { isGem: false, discountPct: 0 };
+  }
+  const comp = getCompoundGisData(u.compound || u.location);
+  if (!comp || !comp.avgPriceSqmEgp) {
+    return { isGem: false, discountPct: 0 };
+  }
+  const unitPriceSqm = Math.round(u.price / u.area);
+  const discountPct = Math.round(((comp.avgPriceSqmEgp - unitPriceSqm) / comp.avgPriceSqmEgp) * 100);
+  return { isGem: discountPct >= 15, discountPct };
+}
+
 function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
   const isSale = u.mode === 'sale';
   const badgeColor = isSale ? '#16a34a' : '#00aeff';
   const ringColor = isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)';
   const glow = isSelected ? '0 0 16px rgba(0,174,255,0.9), 0 4px 12px rgba(0,0,0,0.45)' : '0 2px 8px rgba(0,0,0,0.3)';
   const priceDisplay = u.priceLabel ? u.priceLabel.split(' ')[0] : (isSale ? 'S' : 'R');
+  const aiScore = u.aiScore ? u.aiScore.toFixed(1) : undefined;
+  const { isGem, discountPct } = isUnitGem(u);
 
   return L.divIcon({
     className: 'houzez-unit-marker',
@@ -148,8 +163,8 @@ function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
         color: #ffffff;
         padding: ${isSelected ? '4px 9px' : '3px 7px'};
         border-radius: 999px;
-        border: 2px solid ${ringColor};
-        box-shadow: ${glow};
+        border: 2px solid ${isGem ? '#C9A84C' : ringColor};
+        box-shadow: ${isGem ? '0 0 14px rgba(201,168,76,0.9), ' + glow : glow};
         font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
         font-weight: 800;
         font-size: ${isSelected ? '12px' : '11px'};
@@ -166,11 +181,14 @@ function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
           border-radius: 50%;
           background: #ffffff;
         "></span>
+        <span style="display: inline-block; font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,0.25); font-weight: 900; text-transform: uppercase;">${isSale ? 'Resale' : 'Rent'}</span>
         <span>${priceDisplay}</span>
+        ${aiScore ? `<span style="font-size: 9.5px; opacity: 0.95; padding-left: 2px;">★${aiScore}</span>` : ''}
+        ${isGem ? `<span style="background: linear-gradient(135deg, #C9A84C, #10B981); color: #0A1628; border-radius: 4px; padding: 1px 4px; font-size: 9px; font-weight: 900;">💎 -${discountPct}%</span>` : ''}
       </div>
     `,
-    iconSize: [60, 24],
-    iconAnchor: [30, 12],
+    iconSize: [isGem ? 130 : 80, 24],
+    iconAnchor: [isGem ? 65 : 40, 12],
   });
 }
 

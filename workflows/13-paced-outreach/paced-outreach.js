@@ -176,42 +176,148 @@ function supabase() {
   } catch (e) { log(`supabase init failed: ${e.message}`); return null; }
 }
 
-/** Pull owner candidates from public.listings, segmented by deal type.
- * Rent owners → worker A; everyone else → worker B. One row per OWNER
- * (first listing wins; a renting owner is always removed from bucket B). */
-async function loadCandidates() {
-  const client = supabase();
-  if (!client) return { activeRenting: [], massiveOwners: [] };
-  const selectCols = 'id,code,unit_code,owner_name,owner_phone,compound,deal_type,availability,status,price,bedrooms,property_type';
-  const { data, error } = await client.from('listings').select(selectCols).limit(5000);
-  if (error) {
-    log(`listings read failed: ${error.message}`);
-    return { activeRenting: [], massiveOwners: [] };
-  }
-  const skipStatus = ['sold', 'rented', 'off-market', 'unavailable', 'archived'];
-  const rentOwners = new Map();
-  const otherOwners = new Map();
-  for (const r of data || []) {
-    const status = String(r.status || '').toLowerCase().trim();
-    const avail = String(r.availability || '').toLowerCase().trim();
-    if (skipStatus.includes(status) || ['sold', 'rented', 'unavailable'].includes(avail)) continue;
-    const phone = normalizePhone(r.owner_phone);
-    if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue;
-    const entry = {
-      code: (r.code || r.unit_code || '').trim() || 'SE-DB',
-      name: (r.owner_name || '').trim() || 'صاحب الإعلان',
-      phone,
-      compound: resolveCanonicalCompound(r.compound),
-      dealType: String(r.deal_type || '').toLowerCase().trim(),
-      listingId: r.id,
-    };
-    if (entry.dealType === 'rent') {
-      if (!rentOwners.has(phone)) rentOwners.set(phone, entry);
-      otherOwners.delete(phone); // renting owners are worker A territory
-    } else if (!otherOwners.has(phone) && !rentOwners.has(phone)) {
-      otherOwners.set(phone, entry);
+const DEFAULT_OWNERS_SHEET_ID = process.env.UNITS_SHEET_ID || process.env.GOOGLE_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
+const DEFAULT_OWNERS_SHEET_GID = process.env.OWNERS_SHEET_GID || process.env.UNITS_SHEET_GID || '1127958606';
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n') {
+      row.push(field); field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else if (c === '\r') {
+      // skip
+    } else {
+      field += c;
     }
   }
+  if (field !== '' || row.length) {
+    row.push(field);
+    if (row.length > 1 || row[0] !== '') rows.push(row);
+  }
+  return rows;
+}
+
+async function fetchSheetCandidates(sheetId = DEFAULT_OWNERS_SHEET_ID, gid = DEFAULT_OWNERS_SHEET_GID) {
+  if (!sheetId || !gid) return [];
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) {
+      log(`sheet fetch HTTP ${res.status}`);
+      return [];
+    }
+    const csv = await res.text();
+    if (!csv || csv.length < 20) return [];
+    const parsed = parseCsv(csv);
+    if (parsed.length <= 1) return [];
+    const headers = parsed[0].map((h) => String(h || '').trim());
+    return parsed.slice(1).map((r) => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = r[i] ?? ''; });
+      return obj;
+    });
+  } catch (e) {
+    log(`sheet candidate read failed/offline: ${e.message}`);
+    return [];
+  }
+}
+
+/** Pull owner candidates from verified Google Owners Sheet (GID 1127958606)
+ *  and Supabase public.listings, segmented by deal type.
+ *  Rent owners → worker A; everyone else → worker B. One row per OWNER
+ *  (first listing wins; a renting owner is always removed from bucket B). */
+async function loadCandidates() {
+  const rentOwners = new Map();
+  const otherOwners = new Map();
+  const skipStatus = ['sold', 'rented', 'off-market', 'unavailable', 'archived'];
+
+  // 1. Google Owners Sheet (GID 1127958606)
+  try {
+    const sheetRows = await fetchSheetCandidates();
+    for (const r of sheetRows) {
+      const status = String(r.Listing_Status || r.Availability || r.availability || r.status || '').toLowerCase().trim();
+      const contactStatus = String(r.Contact_Status || r.contact_status || '').toLowerCase().trim();
+      if (skipStatus.includes(status) || ['sold', 'rented', 'unavailable'].includes(contactStatus)) continue;
+
+      const rawPhone = r.Mobile || r.Phone || r.owner_phone || r.Owner_Mobile_Internal || r.mobile;
+      const phone = normalizePhone(rawPhone);
+      if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue;
+
+      const rawDeal = String(r.Deal_Type || r.Type || r.deal_type || r.type || 'rent').toLowerCase().trim();
+      const dealType = (rawDeal.includes('rent') || rawDeal.includes('ايجار') || rawDeal.includes('إيجار')) ? 'rent' : 'sale';
+      const rawComp = r.Compound || r.Canonical_Compound || r.compound || r.Location;
+
+      const entry = {
+        code: (r.Unit_Code || r.Code || r.code || r.unit_code || '').trim() || 'SE-SHEET',
+        name: (r.Owner_Name_Internal || r.Name || r.owner_name || '').trim() || 'صاحب الإعلان',
+        phone,
+        compound: resolveCanonicalCompound(rawComp),
+        dealType,
+        source: 'sheet',
+      };
+
+      if (entry.dealType === 'rent') {
+        if (!rentOwners.has(phone)) rentOwners.set(phone, entry);
+        otherOwners.delete(phone);
+      } else if (!otherOwners.has(phone) && !rentOwners.has(phone)) {
+        otherOwners.set(phone, entry);
+      }
+    }
+    if (rentOwners.size || otherOwners.size) {
+      log(`loaded ${rentOwners.size} rent + ${otherOwners.size} massive owners from Owners Sheet (gid ${DEFAULT_OWNERS_SHEET_GID})`);
+    }
+  } catch (e) {
+    log(`sheet ingestion skipped: ${e.message}`);
+  }
+
+  // 2. Supabase listings (supplement / fallback)
+  const client = supabase();
+  if (client) {
+    const selectCols = 'id,code,unit_code,owner_name,owner_phone,compound,deal_type,availability,status,price,bedrooms,property_type';
+    const { data, error } = await client.from('listings').select(selectCols).limit(5000);
+    if (error) {
+      log(`listings read failed: ${error.message}`);
+    } else {
+      for (const r of data || []) {
+        const status = String(r.status || '').toLowerCase().trim();
+        const avail = String(r.availability || '').toLowerCase().trim();
+        if (skipStatus.includes(status) || ['sold', 'rented', 'unavailable'].includes(avail)) continue;
+        const phone = normalizePhone(r.owner_phone);
+        if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue;
+        const entry = {
+          code: (r.code || r.unit_code || '').trim() || 'SE-DB',
+          name: (r.owner_name || '').trim() || 'صاحب الإعلان',
+          phone,
+          compound: resolveCanonicalCompound(r.compound),
+          dealType: String(r.deal_type || '').toLowerCase().trim(),
+          listingId: r.id,
+          source: 'supabase',
+        };
+        if (entry.dealType === 'rent') {
+          if (!rentOwners.has(phone)) rentOwners.set(phone, entry);
+          otherOwners.delete(phone);
+        } else if (!otherOwners.has(phone) && !rentOwners.has(phone)) {
+          otherOwners.set(phone, entry);
+        }
+      }
+    }
+  }
+
   return {
     activeRenting: [...rentOwners.values()],
     massiveOwners: [...otherOwners.values()],
@@ -474,4 +580,10 @@ module.exports = {
   bumpCounters,
   pass,
   CONCIERGE_LINE,
+  loadCandidates,
+  fetchSheetCandidates,
+  parseCsv,
+  typingDelay,
+  DEFAULT_OWNERS_SHEET_GID,
+  DEFAULT_OWNERS_SHEET_ID,
 };
