@@ -1,22 +1,22 @@
 {
-  "name": "sierra-estates-workflows",
-  "version": "1.1.0",
-  "description": "Sierra Estates server-side workflow control plane (OpenWA gateway era)",
-  "private": true,
+  "name": "workflows",
+  "version": "1.0.0",
+  "description": "Sierra Estates Outreach & Automation Workflows",
+  "main": "runner.js",
   "scripts": {
-    "runner": "node runner.js",
-    "whatsapp-scraper": "node 01-whatsapp-scraper/index.js",
-    "owner-search": "node 02-owner-search/search.js",
-    "owner-contact": "node 03-owner-contact/contact.js",
-    "email-sender": "node 04-email-sender/send.js",
-    "unit-adder": "node 05-unit-adder/add.js",
-    "gateway-sentinel": "node 06-gateway-sentinel/sentinel.js",
-    "daily-digest": "node 07-daily-digest/digest.js",
-    "units-sync": "node 08-units-sync/sync.js",
-    "owner-outreach": "node 09-owner-outreach/outreach.js",
-    "whatsapp-dispatch": "node 10-whatsapp-dispatch/dispatch.js",
-    "telegram-intake": "node 12-telegram-intake/bot.js",
-    "all": "npm run owner-search && npm run owner-contact && npm run email-sender && npm run unit-adder"
+    "test": "node --test",
+    "wf:01": "node 01-daily-rent-scout/run.js",
+    "wf:02": "node 02-daily-resale-scout/run.js",
+    "wf:03": "node 03-sheet-to-supabase-sync/run.js",
+    "wf:04": "node 04-lead-enrichment-pulse/run.js",
+    "wf:05": "node 05-unit-adder-consumer/run.js",
+    "wf:06": "node 06-daily-owner-outreach/run.js",
+    "wf:07": "node 07-stale-lead-reengagement/run.js",
+    "wf:08": "node 08-property-finder-leads/run.js",
+    "wf:09": "node 09-price-drop-broadcaster/run.js",
+    "wf:10": "node 10-evening-kpi-digest/run.js",
+    "wf:11": "node 11-inbound-lead-router/run.js",
+    "wf:12": "node 12-telegram-intake/run.js"
   },
   "dependencies": {
     "googleapis": "^136.0.0",
@@ -26,10 +26,13 @@
     "dotenv": "^16.4.0",
     "@google/genai": "^2.4.0"
   },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
   "overrides": {
     "uuid": "^11.1.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
