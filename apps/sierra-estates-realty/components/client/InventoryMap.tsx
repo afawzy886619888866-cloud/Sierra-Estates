@@ -595,8 +595,9 @@ export default function InventoryMap({
               </button>
             );
           })}
+        </div>
 
-        {/* Right: Filters & Tile Switcher */}
+{/* Right: Filters & Tile Switcher */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Rent/Sale Mode Filter */}
           <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
