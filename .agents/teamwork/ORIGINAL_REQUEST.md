@@ -79,3 +79,21 @@ Verify all integrations locally across the monorepo. Where live external service
 - [ ] `TURBO_UI=false CI=true pnpm turbo run build --ui=stream` succeeds with exit code 0.
 - [ ] `FINAL_ECOSYSTEM_VERIFICATION.md` is generated detailing all wired endpoints, features, and test results.
 - [ ] Additive commits are created and pushed to `origin/main` if git remote credentials permit.
+
+
+## Follow-up — 2026-11-04T21:48:46Z
+
+### Lead Architect Update to Coordinator
+1. **Git Weight & Hygiene Test**: Untracked `docs/drafts/propertyfinder/propertyfinder-all-units.xml` and `propertyfinder-owners-full.xml` (already in `.gitignore`). Re-executed `pnpm test:root --run` and verified that **100% of tests pass** (99 test files passed, 956 tests passed).
+2. **Homepage Map & Client Page Crash Resolution**:
+   - Resolved unstyled HTML buttons and layout collapse on `http://localhost:3000` (`#interactive-map`).
+   - Integrated and verified the dual engine switcher (`4K Masterplan Visualizer` vs `Live Geographic GIS Map`) in `CartographicMap.tsx` and `CartographicMap.module.css`.
+   - Verified both Alabaster Light and Obsidian Nocturne Dark editions via Chrome DevTools screenshot verification.
+   - Tested Live Geographic GIS map rendering real units from `/api/inventory` with retina tiles.
+3. **Monorepo Build State**:
+   - `turbo run type-check`: 21/21 packages successful (exit 0).
+   - `pnpm test:root --run`: 99/99 test files passed (956/956 tests, exit 0).
+   - Dev server (`pnpm dev`) is running cleanly on `http://localhost:3000`.
+   - Amphion Command Deck daemon is running on port 8888.
+
+Proceed with `PROJECT.md` synthesis and the dual-track implementation dispatch across the 6 pillars.
