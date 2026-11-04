@@ -1,4 +1,4 @@
-# BRIEFING — 2026-11-04T21:25:00Z
+# BRIEFING — 2026-11-04T21:49:00Z
 
 ## Mission
 Execute an additive, zero-regression integration across the Turborepo monorepo for Sierra Estates, wiring all 6 pillars end-to-end and verifying with real tests and builds.
@@ -34,7 +34,7 @@ Execute an additive, zero-regression integration across the Turborepo monorepo f
   7. R6: Commission Engine & Dashboard [pending]
   8. Final Verification & Test Suite [pending]
 - **Current phase**: 0 (Survey)
-- **Current focus**: Monorepo Survey & Pre-flight (3 parallel Explorers)
+- **Current focus**: Monorepo Survey & Pre-flight (Explorer 1 & 3 completed, Explorer 2 in-progress)
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -51,18 +51,20 @@ Execute an additive, zero-regression integration across the Turborepo monorepo f
 
 ## Key Decisions Made
 - Selected Project Pattern with Survey phase, 3 parallel explorers dispatched for comprehensive architectural scoping.
+- Explorer 1 (Frontend & GIS) completed with full GPS polygon dataset for 14 compounds and PropertyCard badge roadmap.
+- Explorer 3 (Admin, Memory & Infra) completed with test baseline (955/956 root tests passing) and R4/R5/R6 integration targets.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| Explorer 1 | teamwork_explorer | R1/R4 Frontend & GIS Engine | in-progress | d7078508-1db6-4a82-be69-a434aa700ee8 |
+| Explorer 1 | teamwork_explorer | R1/R4 Frontend & GIS Engine | completed | d7078508-1db6-4a82-be69-a434aa700ee8 |
 | Explorer 2 | teamwork_explorer | R2/R3 Supply Engine, DQE & Sync | in-progress | 2b01588e-64b0-49ca-bcdc-46aa55156af3 |
-| Explorer 3 | teamwork_explorer | R4/R5/R6/R7 Admin, AI Memory, Concierge, Infra | in-progress | fce16e32-df52-46ee-a25f-7776534f0cdf |
+| Explorer 3 | teamwork_explorer | R4/R5/R6/R7 Admin, AI Memory, Concierge, Infra | completed | fce16e32-df52-46ee-a25f-7776534f0cdf |
 
 ## Succession Status
 - Succession required: no
 - Spawn count: 3 / 16
-- Pending subagents: d7078508-1db6-4a82-be69-a434aa700ee8, 2b01588e-64b0-49ca-bcdc-46aa55156af3, fce16e32-df52-46ee-a25f-7776534f0cdf
+- Pending subagents: 2b01588e-64b0-49ca-bcdc-46aa55156af3
 - Predecessor: none
 - Successor: not yet spawned
 
@@ -75,6 +77,8 @@ Execute an additive, zero-regression integration across the Turborepo monorepo f
 - H:\Sierra Estates\.agents\teamwork\orchestrator\DISPATCH.md — Dispatch log
 - H:\Sierra Estates\.agents\teamwork\orchestrator\BRIEFING.md — Persistent context & state
 - H:\Sierra Estates\.agents\teamwork\orchestrator\progress.md — Execution progress & liveness
-- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_1\survey_report.md — Frontend survey report (pending)
-- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_2\survey_report.md — Backend & sync survey report (pending)
-- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_3\survey_report.md — Admin & infra survey report (pending)
+- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_1\survey_report.md — Frontend survey report
+- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_1\handoff.md — Frontend survey handoff
+- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_3\survey_report.md — Admin & infra survey report
+- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_3\handoff.md — Admin & infra survey handoff
+- H:\Sierra Estates\.agents\teamwork\teamwork_explorer_survey_2\survey_report.md — Backend & sync survey report (in-progress)
