@@ -73,7 +73,7 @@ const TOKENS = {
     hudText: '#1b1c1d',
     hudMuted: '#434653',
     gold: '#C9A24D',
-    tile: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    tile: 'https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     tileAttr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     wash: 'linear-gradient(rgba(250,249,246,0.10), rgba(246,244,239,0.16))',
   },
@@ -465,7 +465,7 @@ export default function MasterplanMap({
         attributionControl
         zoomControl={false}
       >
-        <TileLayer url={tk.tile} attribution={tk.tileAttr} subdomains="abcd" maxZoom={19} />
+        <TileLayer url={tk.tile} attribution={tk.tileAttr} subdomains="abcd" maxZoom={22} maxNativeZoom={19} detectRetina={true} />
         {/* Ivory / void gradient wash over tiles (never hand-painted). */}
         <div
           className="leaflet-pane"

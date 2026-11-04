@@ -840,7 +840,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* INTERACTIVE MASTERPLAN MAP SECTION */}
+      {/* INTERACTIVE MASTERPLAN MAP SECTION (CANONICAL 4K & GIS ENGINE) */}
       <section className="block well" id="interactive-map">
         <div className="wrap">
           <div className="sec-head rv" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>

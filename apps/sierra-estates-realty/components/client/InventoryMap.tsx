@@ -44,12 +44,12 @@ export type MapTileStyle = 'dark' | 'light' | 'satellite';
 
 const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string; maxZoom: number }> = {
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    url: 'https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 20,
   },
   light: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    url: 'https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 20,
   },
@@ -244,6 +244,7 @@ export interface InventoryMapProps {
   onSelectCompound?: (compoundName: string) => void;
   lang?: 'en' | 'ar';
   isDarkMode?: boolean;
+  hideToolbar?: boolean;
 }
 
 export default function InventoryMap({
@@ -253,6 +254,7 @@ export default function InventoryMap({
   onSelectCompound,
   lang = 'en',
   isDarkMode = true,
+  hideToolbar = false,
 }: InventoryMapProps) {
   const isAr = lang === 'ar';
 
@@ -445,8 +447,8 @@ export default function InventoryMap({
   };
 
   return (
-    <div className="relative w-full h-170 rounded-2xl overflow-hidden border border-[#00aeff]/30 shadow-2xl bg-[#001f38] flex flex-col font-sans select-none">
-      {/* ── Top Houzez Luxury Action Bar ──────────────────────────────── */}
+    <div className="relative w-full h-170 rounded-2xl overflow-hidden border border-[#00aeff]/30 shadow-2xl bg-[#001f38] flex flex-col font-sans select-none" style={{ position: 'relative', width: '100%', height: 680, minHeight: 680, display: 'flex', flexDirection: 'column' }}>
+      {!hideToolbar && (
       <div className="z-30 w-full px-4 py-3 bg-[#002b4b]/95 backdrop-blur-md border-b border-[#00aeff]/25 flex flex-wrap items-center justify-between gap-3 text-xs text-white">
         {/* Left: Zone Jump Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
@@ -560,8 +562,10 @@ export default function InventoryMap({
         </div>
       </div>
 
+      
+      )}
       {/* ── Main Leaflet Map Stage ────────────────────────────────────── */}
-      <div className="relative flex-1 w-full h-full">
+      <div className="relative flex-1 w-full h-full" style={{ position: 'relative', flex: 1, width: '100%', height: 620, minHeight: 600 }}>
         <MapContainer
           center={NEW_CAIRO_CENTER}
           zoom={12}
@@ -571,7 +575,10 @@ export default function InventoryMap({
           <TileLayer
             url={TILE_LAYERS[tileStyle].url}
             attribution={TILE_LAYERS[tileStyle].attrib}
-            maxZoom={TILE_LAYERS[tileStyle].maxZoom}
+            maxZoom={22}
+            maxNativeZoom={19}
+            // @ts-ignore
+            detectRetina={true}
           />
 
           {/* AUC Distance Radar Rings */}

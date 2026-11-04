@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import styles from './CartographicMap.module.css';
+
+const InventoryMap = dynamic(() => import('@/components/client/InventoryMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 540, background: '#001f38', color: '#00aeff', fontFamily: 'monospace', fontSize: 13 }}>
+      Loading Live Geographic GIS Engine…
+    </div>
+  ),
+});
 import { 
   Compound, 
   UnitListing, 
@@ -44,6 +54,8 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   const isAr = lang === 'ar';
   
   const [activeZoneFilter, setActiveZoneFilter] = useState<string>('all');
+  const [viewEngine, setViewEngine] = useState<'4k-masterplan' | 'live-gis'>('4k-masterplan');
+  const [rawLiveUnits, setRawLiveUnits] = useState<any[]>([]);
   const [showRadarRings, setShowRadarRings] = useState<boolean>(true);
   const [showRoadLabels, setShowRoadLabels] = useState<boolean>(true);
   const [showYieldHeatmap, setShowYieldHeatmap] = useState<boolean>(false);
@@ -66,6 +78,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
       .then(data => {
         if (!active || !data || !Array.isArray(data.units)) return;
         const { unitListings } = hydrateRegistryWithLiveInventory(data.units, data.compoundCounts);
+        setRawLiveUnits(data.units || []);
         setLiveSyncedCount(data.count || unitListings.length);
       })
       .catch(() => {});
@@ -192,6 +205,28 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
 
         {/* View Toggles, Theme Toggle & Zoom Controls */}
         <div className={styles.toolbarControls}>
+          {/* Dual Engine Switcher: 4K Masterplan Visualizer vs Live Geographic GIS Map */}
+          <div className={styles.engineToggleGroup}>
+            <button
+              type="button"
+              onClick={() => setViewEngine('4k-masterplan')}
+              className={`${styles.engineBtn} ${viewEngine === '4k-masterplan' ? styles.engineBtnActive : ''}`}
+              title="4K Masterplan Visualizer"
+            >
+              <Sparkles style={{ width: 13, height: 13 }} />
+              <span>{isAr ? 'المخطط 4K' : '4K Masterplan'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewEngine('live-gis')}
+              className={`${styles.engineBtn} ${viewEngine === 'live-gis' ? styles.engineBtnActive : ''}`}
+              title="Live Geographic GIS Map (Leaflet / Retina Tiles)"
+            >
+              <Navigation style={{ width: 13, height: 13 }} />
+              <span>{isAr ? 'الخريطة الحية (GIS)' : 'Live Geographic GIS'}</span>
+            </button>
+          </div>
+
           
           {/* Prominent Dark & Light Edition Toggle Button */}
           <button
@@ -344,7 +379,21 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             )}
           </button>
 
-          {/* Interactive Map Viewport with Smooth Pan and Wheel Zoom */}
+          {viewEngine === 'live-gis' ? (
+            <div className={styles.gisEmbedWrap}>
+              <InventoryMap hideToolbar={true}
+                units={rawLiveUnits}
+                lang={lang}
+                isDarkMode={activeDarkMode}
+                onSelect={(unit: any) => onSelectUnit?.(unit)}
+                onSelectCompound={(cName: string) => {
+                  const match = COMPOUNDS.find(c => c.nameEn.toLowerCase() === cName.toLowerCase());
+                  if (match) onSelectCompoundToExcel(match);
+                }}
+              />
+            </div>
+          ) : (
+          /* Interactive Map Viewport with Smooth Pan and Wheel Zoom */
           <div 
             ref={containerRef}
             onMouseDown={handleMouseDown}
@@ -742,6 +791,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             </div>
 
           </div>
+          )}
         </div>
       </div>
 
