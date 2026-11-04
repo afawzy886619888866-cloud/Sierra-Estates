@@ -9,10 +9,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const bodySchema = z.object({
-  unitCode: z.string().min(1).max(80),
+  unitCode: z.string().min(1).max(80).optional(),
   compound: z.string().max(120).optional(),
   unitId: z.string().max(80).optional(),
   requesterName: z.string().max(80).optional(),
+  sweep: z.boolean().optional(),
+  mode: z.enum(['single', 'batch', 'sweep']).optional(),
+  minPhotos: z.number().int().min(1).max(20).optional(),
+  limit: z.number().int().min(1).max(100).optional(),
 });
 
 /**
@@ -86,6 +90,178 @@ async function resolveListing(unitCode: string, unitId?: string): Promise<Record
   return null;
 }
 
+interface SweepResultItem {
+  unitCode: string;
+  compound: string;
+  photosCount: number;
+  contactName: string;
+  jobId?: string;
+  status: 'dispatched' | 'cooldown' | 'no_phone' | 'skipped';
+}
+
+async function runBatchPhotoSweep(options?: {
+  minPhotos?: number;
+  limit?: number;
+}) {
+  const minPhotos = options?.minPhotos ?? 8;
+  const limit = options?.limit ?? 25;
+
+  const candidates: Array<Record<string, unknown>> = [];
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('listings')
+      .select('id,code,ref_id,sbr_code,compound,location_area,images,owner_phone,owner_name,broker_phone,broker_name,status,publish_status')
+      .eq('status', 'active')
+      .limit(limit * 3);
+
+    if (!error && Array.isArray(data)) {
+      candidates.push(...data);
+    }
+  } catch (err) {
+    logger.debug('[request-photos] Supabase sweep query fallback:', err);
+  }
+
+  // Generic fallback if Supabase returns empty
+  if (candidates.length === 0) {
+    try {
+      const rows = await listRecords('listings', {
+        where: [{ column: 'status', value: 'active' }],
+        limit: limit * 2,
+      });
+      if (Array.isArray(rows)) {
+        candidates.push(...(rows as Array<Record<string, unknown>>));
+      }
+    } catch {
+      // fail-safe fallback
+    }
+  }
+
+  const results: SweepResultItem[] = [];
+  let dispatchedCount = 0;
+
+  for (const item of candidates) {
+    if (dispatchedCount >= limit) break;
+
+    const unitCode = String(item.code || item.ref_id || item.sbr_code || item.id || '').trim();
+    if (!unitCode) continue;
+
+    const imagesArr = Array.isArray(item.images)
+      ? item.images
+      : (typeof item.images === 'string' && item.images ? [item.images] : []);
+    const photosCount = imagesArr.length;
+
+    // Filter units with fewer than minPhotos (< 8-10 photos)
+    if (photosCount >= minPhotos) {
+      continue;
+    }
+
+    if (isUnitOnCooldown(unitCode)) {
+      results.push({
+        unitCode,
+        compound: String(item.compound || item.location_area || ''),
+        photosCount,
+        contactName: String(item.owner_name || item.broker_name || ''),
+        status: 'cooldown',
+      });
+      continue;
+    }
+
+    const phone =
+      (typeof item.owner_phone === 'string' && item.owner_phone) ||
+      (typeof item.ownerPhone === 'string' && item.ownerPhone) ||
+      (typeof item.broker_phone === 'string' && item.broker_phone) ||
+      (typeof item.brokerPhone === 'string' && item.brokerPhone) ||
+      null;
+
+    const contactName =
+      (typeof item.owner_name === 'string' && item.owner_name) ||
+      (typeof item.ownerName === 'string' && item.ownerName) ||
+      (typeof item.broker_name === 'string' && item.broker_name) ||
+      (typeof item.brokerName === 'string' && item.brokerName) ||
+      '';
+
+    const compoundName = String(item.compound || item.location_area || '');
+
+    if (!phone) {
+      results.push({
+        unitCode,
+        compound: compoundName,
+        photosCount,
+        contactName,
+        status: 'no_phone',
+      });
+      continue;
+    }
+
+    const uploadUrl = `https://sierra-estates.net/upload-photos?code=${encodeURIComponent(unitCode)}`;
+    const messageBody = [
+      `مرحباً ${contactName ? contactName : 'يا فندم'} 👋`,
+      `معاك المساعد الذكي لشركة Sierra Estates بخصوص وحدتكم [${unitCode}]${compoundName ? ` في ${compoundName}` : ''}.`,
+      '',
+      `حرصاً على تسويق وحدتكم بأعلى معايير الجودة على منصاتنا وبروبرتي فايندر وخريطة المستثمرين، نلاحظ أن الوحدة تحتوي على (${photosCount}) صور فقط (الحد الأدنى المطلوب 8-10 صور عالية الجودة).`,
+      '',
+      `📷 نرجو التكرم بإرسال الصور هنا عبر الواتساب، أو رفعها مباشرة من خلال الرابط المخصص:`,
+      uploadUrl,
+      '',
+      `شاكرين حسن تعاونكم معنا 🙏`,
+    ].join('\n');
+
+    let jobId: string | undefined;
+    try {
+      jobId = await enqueueWhatsAppJob({
+        purpose: 'general-outreach',
+        toPhone: phone,
+        toName: contactName || 'المالك المحترم',
+        body: messageBody,
+        unitId: typeof item.id === 'string' ? item.id : undefined,
+        metadata: {
+          kind: 'auto-photo-sweep',
+          unitCode,
+          compound: compoundName,
+          photosCount,
+          minPhotosThreshold: minPhotos,
+          uploadUrl,
+        },
+      });
+    } catch (queueErr) {
+      logger.warn('[request-photos] Failed to enqueue sweep WhatsApp job:', queueErr);
+    }
+
+    markUnitRequested(unitCode);
+    dispatchedCount++;
+
+    results.push({
+      unitCode,
+      compound: compoundName,
+      photosCount,
+      contactName,
+      jobId,
+      status: 'dispatched',
+    });
+  }
+
+  return {
+    success: true,
+    mode: 'batch-sweep',
+    scannedTotal: candidates.length,
+    dispatchedCount,
+    minPhotosThreshold: minPhotos,
+    items: results,
+    message: `تم فحص الوحدات وإرسال طلبات تحديث الصور لـ ${dispatchedCount} وحدة بنجاح.`,
+  };
+}
+
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const minPhotos = parseInt(url.searchParams.get('minPhotos') || '8', 10);
+  const limit = parseInt(url.searchParams.get('limit') || '25', 10);
+
+  const sweepOutput = await runBatchPhotoSweep({ minPhotos, limit });
+  return NextResponse.json(sweepOutput);
+}
+
 export async function POST(req: NextRequest) {
   // 1. Public rate limiting per IP
   const rateLimitResponse = await publicEndpointLimiter(req);
@@ -103,7 +279,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if batch sweep was requested
+    if (parsed.data.sweep || parsed.data.mode === 'batch' || parsed.data.mode === 'sweep') {
+      const sweepOutput = await runBatchPhotoSweep({
+        minPhotos: parsed.data.minPhotos,
+        limit: parsed.data.limit,
+      });
+      return NextResponse.json(sweepOutput);
+    }
+
     const { unitCode, compound, unitId } = parsed.data;
+    if (!unitCode) {
+      return NextResponse.json(
+        { error: 'Invalid payload', details: 'unitCode is required for single unit photo requests' },
+        { status: 400 }
+      );
+    }
 
     // 2. Cooldown check
     if (isUnitOnCooldown(unitCode)) {

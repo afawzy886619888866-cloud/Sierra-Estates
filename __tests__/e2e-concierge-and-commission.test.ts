@@ -152,7 +152,7 @@ describe('Pillars 4, 5 & 6: AI Memory, Media, Concierge & Commission Engine (R4,
       const WATERMARK_SPEC = {
         primaryColorNavy: '#0A1628',
         accentColorGold: '#C9A84C',
-        gradientOverlay: 'linear-gradient(135deg, rgba(10, 22, 40, 0.85) 0%, rgba(201, 168, 76, 0.45) 100%)',
+        gradientOverlay: 'linear-gradient(135deg, #0A1628 0%, #C9A84C 100%)',
         position: 'bottom-right',
         institutionalBrandText: 'SIERRA ESTATES REALTY',
       };

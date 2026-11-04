@@ -694,6 +694,7 @@ export default function InventoryMap({
         <MapContainer
           center={NEW_CAIRO_CENTER}
           zoom={12}
+          maxZoom={22}
           scrollWheelZoom={true}
           style={{ height: '100%', width: '100%', background: '#001f38' }}
         >
@@ -722,8 +723,65 @@ export default function InventoryMap({
             </>
           )}
 
+          {/* Target 14 Compound GPS Glowing Polygons & Centroid Pills */}
+          {Object.entries(TARGET_14_COMPOUND_POLYGONS).map(([cKey, comp]) => {
+            const stat = compoundStats.find((s) => s.compoundCode === comp.code);
+            const count = stat ? stat.totalUnits : 0;
+            return (
+              <React.Fragment key={`target-compound-${comp.code}`}>
+                <Polygon
+                  positions={comp.polygon}
+                  pathOptions={{
+                    color: comp.borderColor,
+                    weight: 2.5,
+                    opacity: 0.95,
+                    fillColor: comp.fillColor,
+                    fillOpacity: 0.22,
+                  }}
+                  eventHandlers={{
+                    click: () => {
+                      if (onSelectCompound) onSelectCompound(comp.nameEn);
+                      setFlyTarget(comp.centroid);
+                      setFlyZoom(15);
+                    },
+                  }}
+                />
+                <Marker
+                  position={comp.centroid}
+                  icon={createCentroidPillIcon(comp, count, isAr)}
+                  zIndexOffset={600}
+                  eventHandlers={{
+                    click: () => {
+                      if (onSelectCompound) onSelectCompound(comp.nameEn);
+                      setFlyTarget(comp.centroid);
+                      setFlyZoom(15);
+                    },
+                  }}
+                >
+                  <Tooltip direction="top" offset={[0, -14]} opacity={0.96}>
+                    <div className="text-xs p-1.5 font-sans" style={{ minWidth: 170 }}>
+                      <div className="font-bold text-[#002b4b]" style={{ color: comp.borderColor }}>
+                        {isAr ? comp.nameAr : comp.nameEn}
+                      </div>
+                      <div className="text-slate-600 text-[11px] font-semibold mt-0.5">
+                        {comp.developer}
+                      </div>
+                      <div className="text-slate-700 text-[11px] mt-1">
+                        {isAr ? 'متوسط سعر المتر:' : 'Avg Price/m²:'}{' '}
+                        <b>{comp.avgPriceSqmEgp.toLocaleString()} EGP</b>
+                      </div>
+                      <div className="text-emerald-600 text-[11px] font-bold">
+                        {isAr ? 'عائد الإيجار المتوقع:' : 'Expected Yield:'} {comp.rentalYieldRange}
+                      </div>
+                    </div>
+                  </Tooltip>
+                </Marker>
+              </React.Fragment>
+            );
+          })}
+
           {/* Master Compound Hub Markers */}
-          {NEW_CAIRO_COMPOUNDS.map((comp) => {
+          {NEW_CAIRO_COMPOUNDS.filter((comp) => !Object.values(TARGET_14_COMPOUND_POLYGONS).some((t) => t.code === comp.code)).map((comp) => {
             const stat = compoundStats.find((s) => s.compoundCode === comp.code);
             const count = stat ? stat.totalUnits : 0;
             return (
