@@ -35,6 +35,10 @@ export interface EasyListingInput {
    *  from `details` (WhatsApp channel flow); no valid number → loud error. */
   phone?: string;
   details: string;
+  agentInitials?: string;
+  acquisition_timestamp?: string | Date;
+  acquiredAt?: string | Date;
+  id?: string | number;
 }
 
 export interface EasyListingPropertyDetails {
@@ -59,6 +63,12 @@ export interface EasyListingResult {
   uploader_name: string;
   uploader_phone: string;
   internal_code: string;
+  /** BMM source code: [O/B][CompoundInitial][AgentInitials]-[ID] (e.g. OHP-AF-101) */
+  bmm_code: string;
+  bmmCode: string;
+  /** Sierra attribute code: [CompoundCode]-[Rooms][Furnishing]-[Price][K/$]+[Features] (e.g. HP-3F-45K+G) */
+  sierra_code: string;
+  sierraCode: string;
   property_details: EasyListingPropertyDetails;
   floor_label: string | null;
   /** Numeric floor when parsed (F2 → 2); null for RF/PH/MZ/FX/unknown. */
@@ -68,6 +78,16 @@ export interface EasyListingResult {
     auto_publish_ads: boolean;
     trigger_photo_request_bot: boolean;
   };
+  acquisition_metrics: {
+    acquisition_timestamp: string;
+    crm_entry_timestamp: string;
+    latency_hours: number;
+    is_late_acquisition: boolean;
+    commission_penalty_pct: number;
+  };
+  latencyHours: number;
+  isLateAcquisition: boolean;
+  commissionPenaltyPct: number;
   ads: EasyListingAds | null;
 }
 

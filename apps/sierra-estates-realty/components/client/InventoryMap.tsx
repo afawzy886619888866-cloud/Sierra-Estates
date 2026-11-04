@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, useMap, Circle, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, Circle, Tooltip, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,7 +30,19 @@ import {
   Compass,
   Radio,
   Zap,
+  TrendingUp,
+  ShieldCheck,
+  CheckCircle2,
+  Phone,
 } from 'lucide-react';
+import {
+  TARGET_14_COMPOUND_POLYGONS,
+  NEW_CAIRO_LANDMARKS,
+  calculateHaversineDistanceKm,
+  calculateDriveTimeMin,
+  getCompoundGisData,
+  type CompoundGisData,
+} from '@/lib/gis/compound-polygons';
 import type { InventoryUnit, InventoryStatus } from '@/lib/inventory/types';
 import { hasPendingPhoto } from '@/lib/inventory/normalize';
 import { NEW_CAIRO_COMPOUNDS, type CompoundLocation } from '@/components/Maps/compounds-data';
