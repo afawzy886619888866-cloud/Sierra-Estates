@@ -78,7 +78,18 @@ export default function SiteFooter() {
           <div className="fcol">
             <h5>{t('fTouch')}</h5>
             <div className="contact-line"><MapPin className="i" /><span>{t('fAddr')}</span></div>
-            <div className="contact-line"><Phone className="i" /><span>+2 01092048333</span></div>
+            <div className="contact-line">
+              <Phone className="i" style={{ color: '#10b981' }} />
+              <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" style={{ color: '#10b981', fontWeight: 600 }}>
+                +2 01092048333 (WhatsApp Business)
+              </a>
+            </div>
+            <div className="contact-line">
+              <ArrowRight className="i" style={{ color: '#c9a84c' }} />
+              <a href="/downloads/sierra-whatsapp-business-card.png" download="Sierra-Estates-WhatsApp-QR.png" style={{ color: '#c9a84c', fontSize: 12 }}>
+                {isAr ? 'كارت واتساب بزنس (QR VIP)' : 'VIP WhatsApp Business QR'}
+              </a>
+            </div>
             <div className="contact-line"><Mail className="i" /><span>Info@sierra-estates.net</span></div>
           </div>
         </div>

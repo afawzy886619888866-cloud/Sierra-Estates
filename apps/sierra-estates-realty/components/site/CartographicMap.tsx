@@ -31,7 +31,12 @@ import {
   Maximize2,
   Sun,
   Moon,
-  Flame
+  Flame,
+  QrCode,
+  MessageCircle,
+  ExternalLink,
+  Download,
+  X
 } from 'lucide-react';
 
 interface CartographicMapProps {
@@ -65,6 +70,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [hoveredCompoundId, setHoveredCompoundId] = useState<string | null>(selectedCompoundId || null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState<boolean>(false);
   const [liveSyncedCount, setLiveSyncedCount] = useState<number>(UNIT_LISTINGS.length);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -228,6 +234,18 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
           </div>
 
           
+
+          {/* Official WhatsApp Business Platform & VIP QR Code Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowWhatsAppModal(true)}
+            className={`${styles.whatsAppBtn} ${activeDarkMode ? styles.whatsAppBtnDark : styles.whatsAppBtnLight}`}
+            title={isAr ? 'منصة واتساب للأعمال الرسمية ورمز الاستجابة السريعة (QR)' : 'Sierra Estates Official WhatsApp Business Platform & VIP QR Code'}
+          >
+            <QrCode style={{ width: 14, height: 14, color: '#10b981' }} />
+            <span>{isAr ? 'واتساب بزنس (QR)' : 'WhatsApp QR'}</span>
+          </button>
+
           {/* Prominent Dark & Light Edition Toggle Button */}
           <button
             type="button"
@@ -710,6 +728,26 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                           <span>Airport: {compound.driveTimeToAirportMin}m</span>
                         </div>
 
+
+                        {/* WhatsApp Instant Inquiry CTA */}
+                        <div 
+                          className={styles.popupWaRow}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const text = isAr 
+                              ? `مرحباً سييرا استيتس، أود الاستفسار عن وحدات متاحة في مشروع ${compound.nameAr} (${compound.nameEn})`
+                              : `Hello Sierra Estates, I would like to inquire about available units in ${compound.nameEn}`;
+                            window.open(`https://wa.me/201092048333?text=${encodeURIComponent(text)}`, '_blank');
+                          }}
+                          title={isAr ? 'بدء محادثة واتساب فورية عن هذا المشروع' : 'Start instant WhatsApp conversation about this compound'}
+                        >
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#10b981' }}>
+                            <MessageCircle style={{ width: 13, height: 13 }} />
+                            <span>{isAr ? 'استفسار عبر واتساب' : 'WhatsApp Inquiry'}</span>
+                          </span>
+                          <ExternalLink style={{ width: 12, height: 12, color: '#10b981' }} />
+                        </div>
+
                         {/* CTA Prompt */}
                         <div className={styles.popupCtaRow}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -767,7 +805,7 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               <div className={styles.sealLogoWrap}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src="/assets/aistudio/8e9559f6f_image__1__4350f848.png" 
+                  src="/assets/logo-mark.png" 
                   alt="Sierra Estates Seal"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -813,6 +851,73 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
           </span>
         </div>
       </div>
+
+    
+      {/* Interactive WhatsApp Business VIP QR Modal */}
+      {showWhatsAppModal && (
+        <div 
+          className={styles.qrModalOverlay}
+          onClick={() => setShowWhatsAppModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sierra Estates WhatsApp Business Platform"
+        >
+          <div 
+            className={`${styles.qrModalCard} ${!activeDarkMode ? styles.qrModalCardLight : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              type="button"
+              className={styles.qrModalCloseBtn}
+              onClick={() => setShowWhatsAppModal(false)}
+              aria-label="Close"
+            >
+              <X style={{ width: 18, height: 18 }} />
+            </button>
+
+            <div className={styles.qrModalHeader}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/logo-mark.png" alt="Sierra Estates" className={styles.qrModalShield} />
+              <div>
+                <h3 className={styles.qrModalTitle}>SIERRA ESTATES</h3>
+                <div className={styles.qrModalSub}>
+                  {isAr ? 'منصة واتساب للأعمال الرسمية' : 'Official WhatsApp Business Platform'}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.qrModalPreview}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/assets/sierra-whatsapp-business-card.png" 
+                alt="Sierra Estates WhatsApp Business QR Card" 
+              />
+            </div>
+
+            <div className={styles.qrModalActions}>
+              <a 
+                href="https://wa.me/201092048333?text=Hello%20Sierra%20Estates"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.qrChatBtn}
+              >
+                <MessageCircle style={{ width: 18, height: 18 }} />
+                <span>{isAr ? 'بدء المحادثة على واتساب (+20 109 204 8333)' : 'Open WhatsApp (+20 109 204 8333)'}</span>
+                <ExternalLink style={{ width: 14, height: 14 }} />
+              </a>
+
+              <a 
+                href="/downloads/sierra-whatsapp-business-card.png"
+                download="Sierra-Estates-WhatsApp-Business-QR.png"
+                className={styles.qrDownloadBtn}
+              >
+                <Download style={{ width: 15, height: 15 }} />
+                <span>{isAr ? 'تحميل كارت VIP عالي الدقة (PNG)' : 'Download High-Res VIP QR Card (PNG)'}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

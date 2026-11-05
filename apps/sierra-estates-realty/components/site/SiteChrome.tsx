@@ -107,6 +107,25 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               <span className="pill-badge">{isAr ? 'EN' : 'AR'}</span>
             </button>
 
+
+            {/* Official WhatsApp Business Platform Quick Pill */}
+            <a
+              href="https://wa.me/201092048333?text=Hello%20Sierra%20Estates"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-control-pill nav-wa-pill"
+              title={isAr ? 'منصة واتساب للأعمال الرسمية (+20 109 204 8333)' : 'Official WhatsApp Business Platform (+20 109 204 8333)'}
+              aria-label="WhatsApp Business Platform"
+              style={{
+                borderColor: 'rgba(16, 185, 129, 0.45)',
+                color: '#10b981',
+                textDecoration: 'none'
+              }}
+            >
+              <Phone className="i" style={{ width: 14, height: 14, color: '#10b981' }} />
+              <span className="pill-text">{isAr ? 'واتساب' : 'WhatsApp'}</span>
+            </a>
+
             {/* Mobile Hamburger Menu Toggle */}
             <button
               className="mobile-nav-toggle"
@@ -185,6 +204,18 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
               </Link>
+
+              <a 
+                href="https://wa.me/201092048333?text=Hello%20Sierra%20Estates" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="mobile-drawer-link" 
+                style={{ color: '#10b981' }}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Phone className="i" style={{ width: 18, height: 18, color: '#10b981' }} />
+                <span>{isAr ? 'واتساب بزنس (+20 109 204 8333)' : 'WhatsApp Business (+20 109 204 8333)'}</span>
+              </a>
               <Link href="/#contact" className={`mobile-drawer-link${active === 'contact' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
                 <Phone className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('reqNow')}</span>
