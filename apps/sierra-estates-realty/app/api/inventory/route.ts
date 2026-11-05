@@ -251,6 +251,19 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
       };
     });
 
+    // Priority Ranking: Real photo listings always rank first across map & catalogs
+    units.sort((a, b) => {
+      const aPhoto = a.hasPhoto ? 1 : 0;
+      const bPhoto = b.hasPhoto ? 1 : 0;
+      if (aPhoto !== bPhoto) return bPhoto - aPhoto;
+      const aFeat = a.featured ? 1 : 0;
+      const bFeat = b.featured ? 1 : 0;
+      if (aFeat !== bFeat) return bFeat - aFeat;
+      const aAi = typeof a.aiScore === 'number' ? a.aiScore : 0;
+      const bAi = typeof b.aiScore === 'number' ? b.aiScore : 0;
+      return bAi - aAi;
+    });
+
     if (units.length) {
       const res: InventoryResponse = {
         generatedAt: new Date().toISOString(),
@@ -285,6 +298,7 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
     });
     if (!rows.length) return null;
     const units = rows.map(queryUnitToMapUnit);
+    units.sort((a, b) => (b.hasPhoto ? 1 : 0) - (a.hasPhoto ? 1 : 0));
     return {
       generatedAt: new Date().toISOString(),
       source: "domain",

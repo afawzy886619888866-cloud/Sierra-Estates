@@ -289,3 +289,5 @@ infra/.secrets.env
 
 ANTIGRAVITY-PROMPT-*.md
 Activate-WhatsAppGateway.ps1
+
+*.code-workspace

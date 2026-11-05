@@ -205,6 +205,11 @@ export default function ExcelInventorySheet({
       }
 
       return true;
+    }).sort((a, b) => {
+      const aPhoto = (a.hasPhoto || a.img) ? 1 : 0;
+      const bPhoto = (b.hasPhoto || b.img) ? 1 : 0;
+      if (aPhoto !== bPhoto) return bPhoto - aPhoto;
+      return (b.price || 0) - (a.price || 0);
     });
   }, [units, categoryFilter, bedsFilter, minPrice, maxPrice, searchQuery]);
 

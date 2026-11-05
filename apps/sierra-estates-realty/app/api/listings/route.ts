@@ -268,7 +268,13 @@ export async function GET(request: Request) {
           .map(rowToEnvelope)
           .filter(
             (l) => l.publishToClient !== false && isPubliclyVisibleListingStatus(l.status)
-          );
+          )
+          .sort((a: any, b: any) => {
+            const aPhoto = Boolean(a.img || (Array.isArray(a.images) && a.images.length > 0)) ? 1 : 0;
+            const bPhoto = Boolean(b.img || (Array.isArray(b.images) && b.images.length > 0)) ? 1 : 0;
+            if (aPhoto !== bPhoto) return bPhoto - aPhoto;
+            return (b.aiScore || 0) - (a.aiScore || 0);
+          });
         if (listings.length > 0) {
           return NextResponse.json({ success: true, listings, count: listings.length });
         }
@@ -387,6 +393,11 @@ export async function GET(request: Request) {
       );
     }
     items = [...items].sort((a, b) => {
+      const aImg = typeof a.img === 'string' ? a.img : '';
+      const bImg = typeof b.img === 'string' ? b.img : '';
+      const aPhoto = (aImg && !aImg.includes('placeholder')) ? 1 : 0;
+      const bPhoto = (bImg && !bImg.includes('placeholder')) ? 1 : 0;
+      if (aPhoto !== bPhoto) return bPhoto - aPhoto;
       if (!!b.featured !== !!a.featured) return b.featured ? 1 : -1;
       return b.aiScore - a.aiScore;
     });
