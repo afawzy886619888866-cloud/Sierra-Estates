@@ -18,6 +18,7 @@ import { createClient } from '@supabase/supabase-js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local'), quiet: true });
 dotenv.config({ path: path.resolve(__dirname, '../.env.local'), quiet: true });
 dotenv.config({ path: path.resolve(__dirname, '../.env'), quiet: true });
 dotenv.config({ path: path.resolve(__dirname, '../workflows/.env'), quiet: true });

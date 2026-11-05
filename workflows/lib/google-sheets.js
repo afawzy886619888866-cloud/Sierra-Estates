@@ -17,6 +17,7 @@ function loadWorkflowEnv(workflowDir = path.resolve(__dirname, '..')) {
     for (const candidate of [
       secretsFile,
       path.join(workflowDir, '.env'),
+      path.join(repoRoot, 'apps', 'sierra-estates-realty', '.env.local'),
       path.join(repoRoot, '.env.local'),
       path.join(repoRoot, '.env'),
     ]) {
@@ -29,6 +30,7 @@ function loadWorkflowEnv(workflowDir = path.resolve(__dirname, '..')) {
     for (const candidate of [
       secretsFile,
       path.join(workflowDir, '.env'),
+      path.join(repoRoot, 'apps', 'sierra-estates-realty', '.env.local'),
       path.join(repoRoot, '.env.local'),
       path.join(repoRoot, '.env'),
     ]) {

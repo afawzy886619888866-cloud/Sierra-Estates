@@ -46,6 +46,7 @@ function loadEnvFile(filePath) {
   }
 }
 
+loadEnvFile(path.join(ROOT, 'apps', 'sierra-estates-realty', '.env.local'));
 loadEnvFile(path.join(ROOT, '.env.local'));
 loadEnvFile(path.join(ROOT, '.env'));
 loadEnvFile(path.join(ROOT, 'workflows', '.env'));

@@ -143,7 +143,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
   const baths = bathsMatch ? parseInt(bathsMatch[1], 10) : null;
 
   // Detect Area
-  const areaMatch = normalizedText.match(/(\d{2,4})\s*(?:m2|sqm|متر|م²|m)/i) || rawText.match(/(?:area|مساحة)\s*[:=]?\s*(\d{2,4})/i);
+  const areaMatch = normalizedText.match(/(\d{2,4})\s*(?:m2|sqm|متر|م²|م(?!\p{L})|m\b)/iu) || rawText.match(/(?:area|مساحة)\s*[:=]?\s*(\d{2,4})/i);
   const area = areaMatch ? parseInt(areaMatch[1], 10) : null;
 
   // Detect Garden
@@ -152,7 +152,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // Detect Price
   let price: number | null = null;
-  const priceNumberMatch = normalizedText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(1?\d{1,3}(?:,\d{3})+)/);
+  const priceNumberMatch = normalizedText.match(/(?:price|سعر|السعر|بسعر|مطلوب|كاش|إجمالي)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(1?\d{1,3}(?:,\d{3})+)/);
   const priceMillionMatch = normalizedText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:million|مليون)/i)
     || rawText.match(/(\d+(?:\.\d+)?)\s*(?:million|مليون)/i);
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T06:53:22.746Z",
+  "generatedAt": "2026-11-05T00:59:00.515Z",
   "specVersion": "3.1.0",
   "mediaQualityPolicy": {
     "minPhotos": 6,
@@ -36,186 +36,24 @@
     ]
   },
   "inventorySummary": {
-    "totalSupabaseListings": 22844,
-    "priorityCohortEvaluated": 2389,
+    "totalSupabaseListings": 22970,
+    "priorityCohortEvaluated": 2435,
     "excludedBreakdown": {
-      "inactive_status": 477,
+      "inactive_status": 482,
+      "already_live_on_pf": 189,
+      "below_market_price_floor": 489,
       "unavailable_owner_status": 588,
-      "duplicate_unit_fingerprint": 82,
-      "unmapped_property_type": 53,
-      "below_market_price_floor": 452,
-      "missing_area_sqm": 140,
-      "already_live_on_pf": 186,
-      "unresolved_pf_location_id": 62
+      "duplicate_unit_fingerprint": 58,
+      "unmapped_property_type": 58,
+      "missing_area_sqm": 133,
+      "unresolved_pf_location_id": 66
     },
     "tier1aGateReadyCount": 0,
-    "tier1bPrimePhotoUnitsCount": 7,
-    "tier2SheetAvailableOwnersCount": 38
+    "tier1bPrimePhotoUnitsCount": 3,
+    "tier2SheetAvailableOwnersCount": 35
   },
   "tier1aGateReadyAds": [],
   "tier1bPrimePhotoUnits": [
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 77,
-      "id": "d998ece9-e80b-4d9b-b245-5f8ef2406599",
-      "reference": "MI-S-3S-48M",
-      "compound": "Mivida",
-      "pfLocationId": 2751,
-      "propertyType": "villa",
-      "offeringType": "sale",
-      "priceEgp": 48000000,
-      "areaSqm": 200,
-      "bedrooms": "3",
-      "bathrooms": "2",
-      "titleEn": "Standalone Villa in Mivida (RESALE)",
-      "titleAr": null,
-      "descriptionEn": "Verified villa for sale in Mivida. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 1,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 5,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1179,
-          "height": 803,
-          "format": "jpeg",
-          "byteSize": 74441,
-          "qualifying": true,
-          "issue": null
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_5_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "MI-S-3S-48M",
-        "category": "residential",
-        "type": "villa",
-        "offeringType": "sale",
-        "location": {
-          "id": 2751
-        },
-        "size": 200,
-        "bedrooms": "3",
-        "bathrooms": "2",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 48000000
-          }
-        },
-        "title": {
-          "en": "Standalone Villa in Mivida (RESALE)"
-        },
-        "description": {
-          "en": "Verified villa for sale in Mivida. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": [
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 77,
-      "id": "61d49edb-9af6-4769-9508-1ba92f6a1bdd",
-      "reference": "MI-S-4F-38M+G+P",
-      "compound": "Mivida",
-      "pfLocationId": 2751,
-      "propertyType": "villa",
-      "offeringType": "sale",
-      "priceEgp": 38000000,
-      "areaSqm": 450,
-      "bedrooms": "4",
-      "bathrooms": "3",
-      "titleEn": "Standalone Villa in Mivida (RESALE)",
-      "titleAr": null,
-      "descriptionEn": "Verified villa for sale in Mivida. Features 4 bedrooms, 3 bathrooms, 450 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 1,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 5,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1179,
-          "height": 803,
-          "format": "jpeg",
-          "byteSize": 74441,
-          "qualifying": true,
-          "issue": null
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_5_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "MI-S-4F-38M+G+P",
-        "category": "residential",
-        "type": "villa",
-        "offeringType": "sale",
-        "location": {
-          "id": 2751
-        },
-        "size": 450,
-        "bedrooms": "4",
-        "bathrooms": "3",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 38000000
-          }
-        },
-        "title": {
-          "en": "Standalone Villa in Mivida (RESALE)"
-        },
-        "description": {
-          "en": "Verified villa for sale in Mivida. Features 4 bedrooms, 3 bathrooms, 450 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": [
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png"
-              }
-            }
-          ]
-        }
-      }
-    },
     {
       "tier": "tier1b_prime_photo_units",
       "adScore": 65,
@@ -371,82 +209,6 @@
     {
       "tier": "tier1b_prime_photo_units",
       "adScore": 65,
-      "id": "07a357ff-e3c2-40fa-a624-3061c67d6a94",
-      "reference": "HY-A-3F-11.5M",
-      "compound": "Hyde Park",
-      "pfLocationId": 2790,
-      "propertyType": "apartment",
-      "offeringType": "sale",
-      "priceEgp": 11500000,
-      "areaSqm": 190,
-      "bedrooms": "3",
-      "bathrooms": "2",
-      "titleEn": "Apartment in Hyde Park (RESALE)",
-      "titleAr": null,
-      "descriptionEn": "Verified apartment for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 1,
-      "qualifyingPhotoCount": 0,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 6,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 668,
-          "height": 455,
-          "format": "jpeg",
-          "byteSize": 30774,
-          "qualifying": false,
-          "issue": "Resolution 668x455px below minimum 800x600px"
-        }
-      ],
-      "isDirectOwner": true,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_6_more_qualifying_photos_min_800x600px",
-        "1_photo_below_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "HY-A-3F-11.5M",
-        "category": "residential",
-        "type": "apartment",
-        "offeringType": "sale",
-        "location": {
-          "id": 2790
-        },
-        "size": 190,
-        "bedrooms": "3",
-        "bathrooms": "2",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 11500000
-          }
-        },
-        "title": {
-          "en": "Apartment in Hyde Park (RESALE)"
-        },
-        "description": {
-          "en": "Verified apartment for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
-        },
-        "media": {
-          "images": []
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 65,
       "id": "abb462a0-4db9-40ec-8f55-659310a2b21f",
       "reference": "OSA540-D2",
       "compound": "Eastown",
@@ -517,121 +279,6 @@
         },
         "media": {
           "images": []
-        }
-      }
-    },
-    {
-      "tier": "tier1b_prime_photo_units",
-      "adScore": 52,
-      "id": "8a57c0e3-a677-40a6-b3f9-97f9a4f493bd",
-      "reference": "PF-6JEN7BDC4FNTCQC5XE0PXC3BJC",
-      "compound": "New Cairo",
-      "pfLocationId": 2786,
-      "propertyType": "villa",
-      "offeringType": "sale",
-      "priceEgp": 94000000,
-      "areaSqm": 417,
-      "bedrooms": "6",
-      "bathrooms": "7",
-      "titleEn": "6-Bedroom Prestigious Villa in Oriana 2, New Cairo",
-      "titleAr": "Palatial Standalone Villa for Sale in Oriana 2 |",
-      "descriptionEn": "Prestigious 6-bedroom standalone villa in Oriana 2, New Cairo. Private garden, covered parking, shared spa, balcony, and maids room with premium finishes. Secure exclusive compound offering the ultimate luxury lifestyle.",
-      "realPhotoCount": 3,
-      "qualifyingPhotoCount": 3,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 3,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/6JEN7BDC4FNTCQC5XE0PXC3BJC/57174ef8-3a58-47e6-9c54-ee43576756f5/original.jpg",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1312,
-          "height": 894,
-          "format": "jpeg",
-          "byteSize": 138237,
-          "qualifying": true,
-          "issue": null
-        },
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/6JEN7BDC4FNTCQC5XE0PXC3BJC/9114cddd-2415-4078-9e88-d8e6df18ae3a/original.jpg",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1312,
-          "height": 894,
-          "format": "jpeg",
-          "byteSize": 277025,
-          "qualifying": true,
-          "issue": null
-        },
-        {
-          "url": "https://static.shared.propertyfinder.eg/media/images/listing/6JEN7BDC4FNTCQC5XE0PXC3BJC/f78289d2-c52b-4ac5-8943-d830f2b35398/original.png",
-          "reachable": true,
-          "httpStatus": 206,
-          "width": 1024,
-          "height": 1024,
-          "format": "png",
-          "byteSize": 1459417,
-          "qualifying": true,
-          "issue": null
-        }
-      ],
-      "isDirectOwner": false,
-      "isSheetSynced": false,
-      "onClientMap": true,
-      "publishStatus": "PUBLISHABLE",
-      "status": "active",
-      "missingForGate": [
-        "needs_3_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ],
-      "atlasPayload": {
-        "reference": "PF-6JEN7BDC4FNTCQC5XE0PXC3BJC",
-        "category": "residential",
-        "type": "villa",
-        "offeringType": "sale",
-        "location": {
-          "id": 2786
-        },
-        "size": 417,
-        "bedrooms": "6",
-        "bathrooms": "7",
-        "assignedTo": {
-          "id": 79509
-        },
-        "price": {
-          "type": "sale",
-          "amounts": {
-            "sale": 94000000
-          }
-        },
-        "title": {
-          "en": "6-Bedroom Prestigious Villa in Oriana 2, New Cairo",
-          "ar": "Palatial Standalone Villa for Sale in Oriana 2 |"
-        },
-        "description": {
-          "en": "Prestigious 6-bedroom standalone villa in Oriana 2, New Cairo. Private garden, covered parking, shared spa, balcony, and maids room with premium finishes. Secure exclusive compound offering the ultimate luxury lifestyle.",
-          "ar": "A rare opportunity to own a prestigious standalone villa in the heart of \"Oriana 2,\" the most sought-after residential enclave within Cairo Festival City (CFC). This property offers expansive living spaces and architectural elegance, providing the perfect canvas for you to design your dream home with your personal touch (Semi-Finished).\n\nNestled in a community that redefines luxury, this villa ensures maximum privacy and security, all while being just minutes away from world-class shopping, dining, and international business hubs.\n\nProperty Specifications:\n\nLocation: New Cairo – Cairo Festival City (Oriana 2).\n\nLand Area: 690 sqm.\n\nBuilt-up Area (BUA): 417 sqm.\n\nCondition: Semi-Finished.\n\nInternal Layout:\n\n6 Spacious Bedrooms (Versatile distribution).\n\nGrand Reception & Dining areas.\n\nDedicated spaces for a private garden and outdoor living.\n\nExceptional Features:\n Strategic Location: Heart of the Fifth Settlement, walking distance to Cairo Festival City Mall, IKEA, and top-tier international schools.\n Absolute Privacy: A massive private garden surrounding the villa, ideal for family gatherings and serene living.\n Investment Value: Oriana villas represent one of the highest appreciating real estate assets in Egypt.\n Elite Community: 24/7 advanced security, professional facility management, and a vibrant, upscale neighborhood.\n\nFinancial Details:\n\nAsking Price: $1,900,000 USD.\n\nProperty Code: OR2-6R-1.9M$"
-        },
-        "media": {
-          "images": [
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/6JEN7BDC4FNTCQC5XE0PXC3BJC/57174ef8-3a58-47e6-9c54-ee43576756f5/original.jpg"
-              }
-            },
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/6JEN7BDC4FNTCQC5XE0PXC3BJC/9114cddd-2415-4078-9e88-d8e6df18ae3a/original.jpg"
-              }
-            },
-            {
-              "original": {
-                "url": "https://static.shared.propertyfinder.eg/media/images/listing/6JEN7BDC4FNTCQC5XE0PXC3BJC/f78289d2-c52b-4ac5-8943-d830f2b35398/original.png"
-              }
-            }
-          ]
         }
       }
     }
@@ -719,39 +366,6 @@
       "titleEn": "Apartment — rehab",
       "titleAr": null,
       "descriptionEn": "Verified apartment for sale in rehab. Features 3 bedrooms, 131 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 0,
-      "qualifyingPhotoCount": 0,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 6,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [],
-      "isDirectOwner": true,
-      "isSheetSynced": true,
-      "onClientMap": false,
-      "publishStatus": "REVIEW_REQUIRED",
-      "status": "available",
-      "missingForGate": [
-        "needs_6_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ]
-    },
-    {
-      "tier": "tier2_sheet_available_owners",
-      "adScore": 65,
-      "id": "e9ede416-af53-4a9d-b30a-6906875ef297",
-      "reference": "MAD-R-2424-D3",
-      "compound": "Madinaty",
-      "pfLocationId": 42270,
-      "propertyType": "apartment",
-      "offeringType": "rent",
-      "priceEgp": 7000000,
-      "areaSqm": 87,
-      "bedrooms": "studio",
-      "bathrooms": "none",
-      "titleEn": "Apartment — Madinaty",
-      "titleAr": null,
-      "descriptionEn": "Verified apartment for rent in Madinaty. Features studio layout, 87 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
       "realPhotoCount": 0,
       "qualifyingPhotoCount": 0,
       "requiredPhotoCount": 6,
@@ -1333,39 +947,6 @@
     {
       "tier": "tier2_sheet_available_owners",
       "adScore": 65,
-      "id": "dea8a6e4-5a87-4754-a9d7-ab477972cb0e",
-      "reference": "كود RH5-2R-38K-D3",
-      "compound": "rehab",
-      "pfLocationId": 2284,
-      "propertyType": "apartment",
-      "offeringType": "rent",
-      "priceEgp": 38000,
-      "areaSqm": 90,
-      "bedrooms": "2",
-      "bathrooms": "none",
-      "titleEn": "Apartment — rehab",
-      "titleAr": null,
-      "descriptionEn": "Verified apartment for rent in rehab. Features 2 bedrooms, 90 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
-      "realPhotoCount": 0,
-      "qualifyingPhotoCount": 0,
-      "requiredPhotoCount": 6,
-      "photosNeededFor6": 6,
-      "minDimensionsRequired": "800x600",
-      "photosDetailed": [],
-      "isDirectOwner": true,
-      "isSheetSynced": true,
-      "onClientMap": false,
-      "publishStatus": "REVIEW_REQUIRED",
-      "status": "available",
-      "missingForGate": [
-        "needs_6_more_qualifying_photos_min_800x600px",
-        "staff_verification_stamp",
-        "quality_score_0_below_75"
-      ]
-    },
-    {
-      "tier": "tier2_sheet_available_owners",
-      "adScore": 65,
       "id": "e509c9f9-4a0e-4df7-9e2d-4ba08bf8ee56",
       "reference": "BS4-3F-35K+A-D3",
       "compound": "Fifth square",
@@ -1445,6 +1026,72 @@
       "titleEn": "Apartment — Madinaty",
       "titleAr": null,
       "descriptionEn": "Verified apartment for rent in Madinaty. Features 3 bedrooms, 108 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "realPhotoCount": 0,
+      "qualifyingPhotoCount": 0,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 6,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [],
+      "isDirectOwner": true,
+      "isSheetSynced": true,
+      "onClientMap": false,
+      "publishStatus": "REVIEW_REQUIRED",
+      "status": "available",
+      "missingForGate": [
+        "needs_6_more_qualifying_photos_min_800x600px",
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ]
+    },
+    {
+      "tier": "tier2_sheet_available_owners",
+      "adScore": 65,
+      "id": "662203ab-6f81-449a-9149-174e3e5bcb8c",
+      "reference": "RH-3FF-35K+Y+123+1L+M-D3",
+      "compound": "rehab",
+      "pfLocationId": 2284,
+      "propertyType": "apartment",
+      "offeringType": "rent",
+      "priceEgp": 35000,
+      "areaSqm": 123,
+      "bedrooms": "3",
+      "bathrooms": "none",
+      "titleEn": "Apartment — rehab",
+      "titleAr": null,
+      "descriptionEn": "Verified apartment for rent in rehab. Features 3 bedrooms, 123 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "realPhotoCount": 0,
+      "qualifyingPhotoCount": 0,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 6,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [],
+      "isDirectOwner": true,
+      "isSheetSynced": true,
+      "onClientMap": false,
+      "publishStatus": "REVIEW_REQUIRED",
+      "status": "available",
+      "missingForGate": [
+        "needs_6_more_qualifying_photos_min_800x600px",
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ]
+    },
+    {
+      "tier": "tier2_sheet_available_owners",
+      "adScore": 65,
+      "id": "5ad6ff7e-8a5a-4453-bb70-e25c9cdc151d",
+      "reference": "REH-R-2103-D3",
+      "compound": "rehab",
+      "pfLocationId": 2284,
+      "propertyType": "apartment",
+      "offeringType": "rent",
+      "priceEgp": 30000,
+      "areaSqm": 100,
+      "bedrooms": "2",
+      "bathrooms": "none",
+      "titleEn": "Apartment — rehab",
+      "titleAr": null,
+      "descriptionEn": "Verified apartment for rent in rehab. Features 2 bedrooms, 100 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
       "realPhotoCount": 0,
       "qualifyingPhotoCount": 0,
       "requiredPhotoCount": 6,
