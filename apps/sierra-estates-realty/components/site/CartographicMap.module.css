@@ -39,13 +39,17 @@
 }
 
 .toolbarDark {
-  background-color: #061122;
-  border-bottom-color: rgba(212, 175, 55, 0.22);
+  background: rgba(6, 11, 19, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: rgba(201, 168, 76, 0.35);
 }
 
 .toolbarLight {
-  background-color: #faf8f5;
-  border-bottom-color: #e6dec8;
+  background: rgba(250, 248, 245, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: rgba(200, 150, 26, 0.25);
 }
 
 /* Zone Filter Pills */
@@ -55,8 +59,26 @@
   gap: 6px;
   overflow-x: auto;
   max-width: 100%;
-  padding: 2px 0;
+  padding: 4px 0;
   scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 76, 0.4) transparent;
+}
+
+.zoneFilters::-webkit-scrollbar {
+  height: 4px;
+}
+
+.zoneFilters::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.zoneFilters::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.35);
+  border-radius: 4px;
+}
+
+.zoneFilters::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.7);
 }
 
 .zoneLabel {
