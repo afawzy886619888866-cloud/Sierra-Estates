@@ -41,9 +41,15 @@ const submitListingSchema = z.object({
   gardenArea: z.coerce.number().min(0).optional().default(0),
   price: z.coerce.number().min(0, 'Price must be positive'),
   finishing: z.string().optional(),
-  ownerName: z.string().min(1, 'Owner name is required').max(100),
+  ownerName: z.string().max(100).optional().default('صاحب الإعلان'),
   ownerType: z.string().optional().default('Owner'),
-  mobile: z.string().min(6, 'Valid contact mobile is required').max(30),
+  mobile: z.string().max(30).optional().default(''),
+  ownerPhone: z.string().max(30).optional().default(''),
+  brokerPhone: z.string().max(30).optional().default(''),
+  brokerName: z.string().max(100).optional().default(''),
+  agentName: z.string().max(100).optional().default(''),
+  submitterType: z.enum(['owner', 'broker', 'employee', 'bot']).optional().default('owner'),
+  rawText: z.string().optional().default(''),
   comment: z.string().max(2000).optional().default(''),
   photos: z.array(z.string()).optional().default([]),
   images: z.array(z.string()).optional().default([]),
@@ -72,7 +78,7 @@ export async function POST(request: Request) {
     const usd = egpToUsd(data.price);
     const geo = resolveLocation(data.compound);
 
-    const isBroker = data.ownerType === 'Broker';
+    const isBroker = data.ownerType === 'Broker' || data.submitterType === 'broker' || Boolean(data.brokerPhone && !data.ownerPhone);
     const isRent = data.mode === 'rent';
     // 400k rent ceiling guard
     const effectiveDealType = (isRent && Number(data.price) <= 400_000) ? 'Rent' : 'Resale';
@@ -80,15 +86,23 @@ export async function POST(request: Request) {
       ? (effectiveDealType === 'Rent' ? 'brokers rent' : 'brokers resale')
       : (effectiveDealType === 'Rent' ? 'owners rent' : 'owners resale');
 
+    const effectiveOwnerPhone = data.ownerPhone || (!isBroker ? data.mobile : '') || null;
+    const effectiveBrokerPhone = data.brokerPhone || (isBroker ? data.mobile : '') || null;
+    const primaryPhone = effectiveOwnerPhone || effectiveBrokerPhone || data.mobile || '201092048333';
+    const agentDisplay = data.agentName || (isBroker ? 'Authorized Broker' : 'Sierra Advisory Desk');
+
     const listingDocument = {
       code: listingCode,
       unitCode: listingCode,
       sbrCode: listingCode,
-      ownerName: isBroker ? 'Broker' : data.ownerName,
-      brokerName: isBroker ? data.ownerName : null,
-      mobile: data.mobile,
-      ownerPhone: isBroker ? null : data.mobile,
-      brokerPhone: isBroker ? data.mobile : null,
+      ownerName: data.ownerName || (isBroker ? 'Direct Owner' : 'صاحب الإعلان'),
+      brokerName: data.brokerName || (isBroker ? data.ownerName : null),
+      agentName: agentDisplay,
+      agent: agentDisplay,
+      sourcedByAgent: agentDisplay,
+      mobile: primaryPhone,
+      ownerPhone: effectiveOwnerPhone,
+      brokerPhone: effectiveBrokerPhone,
       status: 'active',
       publishStatus: 'PUBLISHABLE',
       verified: true,
@@ -117,16 +131,16 @@ export async function POST(request: Request) {
       finishingType: data.finishing,
       ownerType: isBroker ? 'Broker' : 'Owner',
       advertiserType: isBroker ? 'Broker' : 'Direct Owner',
-      sourceChannel: isBroker ? 'broker' : 'owner',
+      sourceChannel: data.submitterType || (isBroker ? 'broker' : 'owner'),
       tag: isBroker ? 'Broker Direct Submission' : 'Owner Direct Submission',
-      aiScore: 88,
-      agent: `${data.ownerName} (${isBroker ? 'Broker' : 'Owner'})`,
+      aiScore: 92,
       ago: 'Just now',
       img: (data.photos?.[0] || data.images?.[0]) || null,
       photos: data.photos?.length ? data.photos : data.images?.length ? data.images : [],
       images: data.images?.length ? data.images : data.photos?.length ? data.photos : [],
       tags: data.tags,
-      comment: data.comment,
+      comment: data.comment || data.rawText,
+      description: data.comment || data.rawText,
       submittedAt: now,
       source: 'web-submission',
     };
@@ -161,11 +175,11 @@ export async function POST(request: Request) {
         areaSqm: data.area,
         bedrooms: data.beds,
         bathrooms: data.baths,
-        contactName: data.ownerName,
-        contactPhone: data.mobile,
-        sourceType: data.ownerType === 'Broker' ? 'broker' : 'owner',
+        contactName: data.ownerName || (isBroker ? 'Broker' : 'Owner'),
+        contactPhone: primaryPhone,
+        sourceType: isBroker ? 'broker' : 'owner',
         photoUrls: data.photos || data.images || [],
-        description: data.comment,
+        description: data.comment || data.rawText || '',
       });
     } catch (excelErr) {
       logger.warn(`[LISTING_SUBMIT] Excel append error (non-fatal): ${(excelErr as Error).message}`);
@@ -203,10 +217,10 @@ export async function POST(request: Request) {
         gardenArea: data.gardenArea,
         price: data.price,
         finishing: data.finishing,
-        ownerName: data.ownerName,
-        ownerType: data.ownerType,
-        mobile: data.mobile,
-        comment: data.comment,
+        ownerName: data.ownerName || (isBroker ? 'Broker' : 'Owner'),
+        ownerType: isBroker ? 'Broker' : 'Owner',
+        mobile: primaryPhone,
+        comment: data.comment || data.rawText || '',
         photos: data.photos || data.images || [],
         websiteUrl: `${siteOrigin}/property/${id}`,
       });
