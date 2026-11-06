@@ -1,21 +1,22 @@
 'use client';
 
 /**
- * AddListingForm — Streamlined Luxury Intake Terminal.
+ * AddListingForm — Clean, High-Velocity Unified Intake Terminal.
  *
- * Implements Stitch UI/UX design:
- * 1. Simple, elegant, uncluttered header (no redundant duplicate site navigation).
- * 2. Monolithic Paste Canvas with 1-click samples (Sale & Rent) & Instant AI Extraction (/api/listings/easy-parse).
- * 3. Live Bento Revision Cards: Compound (with New Cairo suggestions), Price & Mode, Footprint, Layout, and Sierra Code.
- * 4. 3 Contact Identities: Submitter Identity (Bots / Partners / Staff / Owner / Broker), Owner Mobile, and Broker Mobile.
- * 5. Media & Blueprint Tray: Drag & drop image uploads with cover photo tags.
- * 6. Ecosystem Integration: Submits to /api/listings/submit -> writes to Supabase, pins on GIS map, updates Master Excel & Google Sheet.
+ * Merges the simplicity of the foundational intake form with the modern Stitch
+ * AI terminal workflow:
+ * 1. Monolithic Paste Canvas: Paste raw WhatsApp copy/broker notes with 1-click samples
+ *    (Resale & Rent) and instant spec extraction via /api/listings/easy-parse.
+ * 2. Clean Revision Grid: Review and fine-tune Compound, Price, Area, Bedrooms,
+ *    Finishing, and Sierra Code.
+ * 3. 3-Contact Routing: Dedicated inputs for Submitter Identity (Bots/Staff/Roles),
+ *    Owner Mobile Number, and Broker Mobile Number.
+ * 4. Architectural Media: Simple image drag & drop with cover showcase previews.
+ * 5. Full Ecosystem Synchronization: Writes to Supabase public.listings, geocodes
+ *    coordinates, busts GIS map cache, and mirrors to canonical Google Sheet tabs.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Sun,
-  Moon,
-  Languages,
   Sparkles,
   Building,
   MapPin,
@@ -36,20 +37,22 @@ import {
   PhoneCall,
   Briefcase,
   Bot,
+  Languages,
 } from 'lucide-react';
 import s from './AddListingForm.module.css';
 
 const WA_CONCIERGE = '201092048333';
 
-const TOP_COMPOUNDS = [
+const CPDS = [
   'Mountain View iCity',
   'Mountain View Hyde Park',
   'Villette Sodic',
   'Mivida',
+  'Madinaty',
   'Hyde Park',
   'Eastown',
   'Palm Hills New Cairo',
-  'Madinaty',
+  'El Shorouk',
   'Al Rehab',
   'Katameya Heights',
   'Katameya Dunes',
@@ -60,6 +63,9 @@ const TOP_COMPOUNDS = [
   'Sarai',
   'Zed East',
   'The Waterway',
+  'SODIC East',
+  'Uptown Cairo',
+  'La Vista City',
 ];
 
 const PROPERTY_TYPES = [
@@ -73,6 +79,17 @@ const PROPERTY_TYPES = [
   'Chalet',
 ];
 
+const PROPERTY_TYPES_AR: Record<string, string> = {
+  Apartment: 'شقة',
+  Villa: 'فيلا',
+  Townhouse: 'تاون هاوس',
+  'Twin House': 'توين هاوس',
+  Penthouse: 'بنتهاوس',
+  Duplex: 'دوبلكس',
+  Studio: 'استوديو',
+  Chalet: 'شاليه',
+};
+
 const FINISHING_OPTIONS = [
   'Fully finished',
   'Semi-finished',
@@ -80,44 +97,51 @@ const FINISHING_OPTIONS = [
   'Furnished',
 ];
 
+const FINISHING_AR: Record<string, string> = {
+  'Fully finished': 'تشطيب كامل',
+  'Semi-finished': 'نصف تشطيب',
+  'Core & shell': 'على الطوب',
+  Furnished: 'مفروش',
+};
+
 const SUBMITTER_PRESETS = [
-  { id: 'agent:closer-bot', type: 'bot', name: 'Sierra AI Closer Bot (Stage-9 Closer)', labelAr: 'بوت المفاوض والإغلاق الذكي (Closer Bot)', labelEn: 'Sierra AI Closer Bot' },
-  { id: 'agent:openclaw', type: 'bot', name: 'OpenClaw Intake Agent (Telegram & Web Harvester)', labelAr: 'وكيل أوبن كلو لجلب العقارات (OpenClaw)', labelEn: 'OpenClaw Intake Agent' },
-  { id: 'agent:fawzy', type: 'employee', name: 'Ahmed Fawzy (Managing Partner)', labelAr: 'أحمد فوزي (الشريك الإداري)', labelEn: 'Ahmed Fawzy (Managing Partner)' },
-  { id: 'employee:advisor', type: 'employee', name: 'Sierra Advisory Staff / Employee', labelAr: 'فريق استشارات سييرا / موظف بالشركة', labelEn: 'Sierra Advisory Staff / Employee' },
-  { id: 'role:owner', type: 'owner', name: 'Direct Owner', labelAr: 'المالك الأصلي للوحدة مباشرة (Direct Owner)', labelEn: 'Direct Property Owner' },
-  { id: 'role:broker', type: 'broker', name: 'Authorized Broker', labelAr: 'وسيط عقاري / بروكر معتمد (Broker Desk)', labelEn: 'Authorized Broker Desk' },
-  { id: 'custom', type: 'employee', name: 'Other Submitter / Manual Entry', labelAr: 'جهة أخرى / إدخال يدوي مخصص', labelEn: 'Other Submitter / Custom' },
+  { id: 'agent:closer-bot', type: 'bot', name: 'Sierra AI Closer Bot (Stage-9 Closer)', labelAr: '🤖 بوت المفاوض والإغلاق الذكي (Closer Bot)', labelEn: '🤖 Sierra AI Closer Bot' },
+  { id: 'agent:openclaw', type: 'bot', name: 'OpenClaw Intake Agent (Telegram & Web Harvester)', labelAr: '🦅 وكيل أوبن كلو لجلب العقارات (OpenClaw)', labelEn: '🦅 OpenClaw Intake Agent' },
+  { id: 'agent:fawzy', type: 'employee', name: 'Ahmed Fawzy (Managing Partner)', labelAr: '👔 أحمد فوزي (الشريك الإداري)', labelEn: '👔 Ahmed Fawzy (Managing Partner)' },
+  { id: 'employee:advisor', type: 'employee', name: 'Sierra Advisory Staff / Employee', labelAr: '💼 فريق استشارات سييرا / موظف بالشركة', labelEn: '💼 Sierra Advisory Staff / Employee' },
+  { id: 'role:owner', type: 'owner', name: 'Direct Owner', labelAr: '🏠 المالك الأصلي للوحدة مباشرة (Direct Owner)', labelEn: '🏠 Direct Property Owner' },
+  { id: 'role:broker', type: 'broker', name: 'Authorized Broker', labelAr: '🤝 وسيط عقاري / بروكر معتمد (Broker Desk)', labelEn: '🤝 Authorized Broker Desk' },
+  { id: 'custom', type: 'employee', name: 'Other Submitter / Manual Entry', labelAr: '✍️ جهة أخرى / إدخال يدوي مخصص', labelEn: '✍️ Other Submitter / Custom' },
 ];
 
 const T = {
   en: {
-    badge: '✨ Instant AI Listing Intake · Private Portfolio',
+    badge: '✨ Instant AI Intake · Master Inventory',
     titleLead: 'List your unit with ',
     titleEm: 'Sierra Estates',
     subtitle:
-      'Paste your raw listing copy, broker notes, or WhatsApp message. Sierra AI automatically sanitizes and extracts specifications, pins your unit to the GIS map, and routes it to the Master Inventory & Google Sheet.',
+      'Paste your raw listing copy, broker notes, or WhatsApp message. Sierra AI instantly extracts the specifications, pins the unit on the GIS map, and syncs to the Master Google Sheet.',
     sampleResale: '🏢 Sample Resale (Villette Villa)',
     sampleRent: '🔑 Sample Rent (Mivida Flat)',
     clear: 'Clear',
     pastePlaceholder:
       'Paste property description, WhatsApp message, broker notes, compound, area, beds, price... e.g. Standalone villa for sale in Villette Sodic New Cairo, BUA 380m, 5 beds, 6 baths, private pool, price 45M cash, contact owner Dr. Ayman 01012345678, broker Eng. Tarek 01098765432',
-    chars: 'characters',
+    chars: 'chars',
     extractBtn: '✨ Extract & Auto-Fill Specs',
     extracting: 'Analyzing text & extracting specs…',
-    specsTitle: 'Verified Property Specifications',
-    specsSubtitle: 'Review or fine-tune auto-extracted metadata in seconds',
-    compound: 'Compound / Development',
+    specsTitle: 'Property Specifications',
+    specsSub: 'Review and adjust specifications before publishing',
+    compound: 'Compound',
     compoundPh: 'e.g. Villette Sodic',
     dealMode: 'Listing Mode',
     sale: 'Resale (Sale)',
     rent: 'Rental (Rent)',
-    price: 'Asking Price (EGP)',
+    priceSale: 'Asking Price (EGP)',
     priceRent: 'Monthly Rent (EGP)',
     footprint: 'Footprint (m²)',
-    areaPh: 'BUA m²',
-    gardenAreaPh: 'Garden m² (optional)',
-    layout: 'Layout & Finishing',
+    areaPh: 'Built-up Area (m²)',
+    gardenPh: 'Garden Area (m² optional)',
+    layout: 'Layout & Rooms',
     beds: 'Bedrooms',
     baths: 'Bathrooms',
     propType: 'Property Type',
@@ -125,24 +149,25 @@ const T = {
     sierraCode: 'Sierra Algorithmic Code',
     codePh: 'e.g. VIL-S-5B-380M',
     codeSub: 'Minted algorithmic identifier for fast GIS and Sheet tracking',
-    mediaTitle: 'Architectural Assets & Photos',
-    mediaSubtitle: 'Upload high-res photos (JPG, PNG, WebP · Max 10 photos). First photo serves as Cover Showcase.',
-    dropzoneTitle: 'Drag & drop photos here, or click to browse',
-    dropzoneSub: 'Supported formats: JPG, PNG, WebP up to 15MB each',
-    coverPhoto: '⭐ Cover Showcase',
-    removePhoto: 'Remove photo',
-    contactsTitle: 'Representation & 3 Counterparty Contact Lines',
-    contactsSubtitle: 'Dedicated identification for Submitter (Bot/Staff), Owner, and Broker lines.',
+    notes: 'Additional Notes & Highlights',
+    notesPh: 'Floor, view, delivery status, payment schedule, viewing hours…',
+    contactsTitle: 'Contacts & Submitter Identity',
+    contactsSub: '3 distinct slots for Submitter identity, Owner mobile, and Broker mobile.',
     submitterLabel: 'Submitted By (Identity & Channel)',
-    submitterSub: 'Select the agent, bot, employee, or counterparty submitting this listing',
     ownerPhoneLabel: 'Owner Mobile Number',
-    ownerPhoneSub: 'Direct property owner WhatsApp or phone line for verification',
+    ownerPhonePh: '010XXXXXXXX',
     ownerNameLabel: 'Owner Name',
     ownerNamePh: 'e.g. Dr. Ayman',
     brokerPhoneLabel: 'Broker Mobile Number',
-    brokerPhoneSub: 'Introducing broker or agency desk phone (if applicable)',
+    brokerPhonePh: '010XXXXXXXX',
     brokerNameLabel: 'Broker Name / Agency',
-    brokerNamePh: 'e.g. Eng. Tarek / Capital Hub',
+    brokerNamePh: 'e.g. Eng. Tarek',
+    mediaTitle: 'Property Photos',
+    mediaSub: 'Upload high-res photos (JPG, PNG, WebP · Max 10 photos)',
+    dropzoneText: 'Drag & drop photos here, or click to browse',
+    dropzoneSub: 'Supported formats: JPG, PNG, WebP up to 15MB each',
+    coverPhoto: '⭐ Cover Showcase',
+    removePhoto: 'Remove photo',
     submit: 'Submit listing',
     submitting: 'Publishing to Map, Supabase & Google Sheet…',
     reset: 'Reset Form',
@@ -154,14 +179,14 @@ const T = {
     doneTitle: '🎉 Listing Published Successfully!',
     doneDesc: 'Your property has been validated, pinned to the interactive GIS map, saved in Supabase inventory, and recorded in the canonical Google Sheet.',
     refCode: 'Reference Code',
-    targetTab: 'Canonical Sheet Tab',
+    targetTab: 'Target Sheet Tab',
     viewMap: '📍 View on Interactive Map',
     viewAdmin: '📊 View in Admin Inventory',
     chatWa: '💬 Share via WhatsApp Concierge',
     addAnother: '➕ Add Another Listing',
   },
   ar: {
-    badge: '✨ محطة إدراج العقارات الذكية · المحفظة الخاصة',
+    badge: '✨ محطة إدراج العقارات الذكية · شيت المخزون الرئيسي',
     titleLead: 'أضف وحدتك مع ',
     titleEm: 'سييرا إستيتس',
     subtitle:
@@ -174,18 +199,18 @@ const T = {
     chars: 'حرف',
     extractBtn: '✨ استخراج وتعبئة المواصفات تلقائياً',
     extracting: 'جارٍ تحليل النص واستخراج المواصفات…',
-    specsTitle: 'المواصفات المؤكدة للعقار',
-    specsSubtitle: 'راجع المواصفات المستخرجة أو عدّلها خلال ثوانٍ معدودة',
-    compound: 'الكمبوند / المشروع',
+    specsTitle: 'مواصفات العقار المؤكدة',
+    specsSub: 'راجع المواصفات المستخرجة أو عدّلها خلال ثوانٍ معدودة',
+    compound: 'الكمبوند',
     compoundPh: 'مثال: سوديك فيليت Villette',
     dealMode: 'نوع الإعلان',
     sale: 'بيع (Resale)',
     rent: 'إيجار (Rent)',
-    price: 'السعر المطلوب (ج.م)',
+    priceSale: 'السعر المطلوب (ج.م)',
     priceRent: 'الإيجار الشهري (ج.م)',
     footprint: 'المساحة (م²)',
     areaPh: 'مساحة المباني م²',
-    gardenAreaPh: 'مساحة الحديقة م² (اختياري)',
+    gardenPh: 'مساحة الحديقة م² (اختياري)',
     layout: 'التقسيم وحالة التشطيب',
     beds: 'غرف النوم',
     baths: 'الحمامات',
@@ -194,25 +219,26 @@ const T = {
     sierraCode: 'كود سييرا التعريفي',
     codePh: 'مثال: VIL-S-5B-380M',
     codeSub: 'رمز تعريفي خوارزمي لتتبع الوحدة على الخريطة والشيت',
-    mediaTitle: 'صور ومخططات العقار',
-    mediaSubtitle: 'ارفع صور عالية الجودة (JPG, PNG, WebP · حتى 10 صور). أول صورة تُعرض كواجهة رئيسية.',
-    dropzoneTitle: 'اسحب وأفلت صور العقار هنا، أو اضغط للاختيار',
-    dropzoneSub: 'يدعم صيغ JPG, PNG, WebP بحجم يصل إلى 15 ميجابايت لكل صورة',
-    coverPhoto: '⭐ الواجهة الرئيسية',
-    removePhoto: 'حذف الصورة',
-    contactsTitle: 'بيانات الاتصال وهوية مقدم العقار (3 جهات)',
-    contactsSubtitle: 'تحديد دقيق ومستقل لهوية مقدم الطلب (بوت أو موظف)، ورقم المالك، ورقم الوسيط.',
+    notes: 'ملاحظات وتفاصيل إضافية',
+    notesPh: 'الدور، الفيو، موعد التسليم، خطة السداد، مواعيد المعاينة…',
+    contactsTitle: 'بيانات الاتصال ومقدم العقار (3 جهات)',
+    contactsSub: 'تحديد دقيق لهوية مقدم الطلب (بوت أو موظف)، ورقم المالك، ورقم الوسيط.',
     submitterLabel: 'مقدم الطلب (الهوية والجهة)',
-    submitterSub: 'حدد الوكيل الذكي، أو البوت، أو الموظف، أو صفة العارض',
     ownerPhoneLabel: 'رقم موبايل / واتساب المالك',
-    ownerPhoneSub: 'رقم المالك المباشر للتحقق ومطابقة عقد الملكية',
+    ownerPhonePh: '010XXXXXXXX',
     ownerNameLabel: 'اسم المالك',
     ownerNamePh: 'مثال: د. أيمن',
     brokerPhoneLabel: 'رقم موبايل / واتساب الوسيط (البروكر)',
-    brokerPhoneSub: 'رقم الوسيط العقاري أو المكتب المفوض (إن وجد)',
+    brokerPhonePh: '010XXXXXXXX',
     brokerNameLabel: 'اسم الوسيط / الشركة',
-    brokerNamePh: 'مثال: م. طارق / شركة كابيتال هب',
-    submit: 'أرسل العقار (Submit listing)',
+    brokerNamePh: 'مثال: م. طارق',
+    mediaTitle: 'صور ومخططات العقار',
+    mediaSub: 'ارفع صور عالية الجودة (JPG, PNG, WebP · حتى 10 صور)',
+    dropzoneText: 'اسحب وأفلت صور العقار هنا، أو اضغط للاختيار',
+    dropzoneSub: 'يدعم صيغ JPG, PNG, WebP بحجم يصل إلى 15 ميجابايت لكل صورة',
+    coverPhoto: '⭐ الواجهة الرئيسية',
+    removePhoto: 'حذف الصورة',
+    submit: 'Submit listing (أرسل العقار)',
     submitting: 'جارٍ الحفظ والنشر على الخريطة وقاعدة البيانات والشيت…',
     reset: 'إعادة ضبط النموذج',
     complianceNote: 'بيانات مشفرة 256-Bit ومربوطة بقاعدة بيانات Supabase والخريطة وشيت الإكسل',
@@ -232,14 +258,12 @@ const T = {
 } as const;
 
 type Lang = 'en' | 'ar';
-type Theme = 'light' | 'dark';
 type Purpose = 'sale' | 'rent';
 
 const digits = (v: string) => String(v || '').replace(/[^\d]/g, '');
 
 export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: Lang } = {}) {
   const [lang, setLang] = useState<Lang>(defaultLang);
-  const [theme, setTheme] = useState<Theme>('light');
 
   // Core intake inputs
   const [rawText, setRawText] = useState('');
@@ -271,7 +295,7 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
   const [photos, setPhotos] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  // States
+  // Submission States
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
   const [badField, setBadField] = useState<string | null>(null);
@@ -281,7 +305,7 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
     targetTab?: string;
   } | null>(null);
 
-  // Refs for focus management
+  // Refs for focusing
   const compoundRef = useRef<HTMLInputElement>(null);
   const areaRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
@@ -291,9 +315,7 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
 
   useEffect(() => {
     const storedLang = window.localStorage.getItem('hzp-lang');
-    const storedTheme = window.localStorage.getItem('hzp-theme');
     if (storedLang === 'ar' || storedLang === 'en') setLang(storedLang);
-    if (storedTheme === 'light' || storedTheme === 'dark') setTheme(storedTheme);
   }, []);
 
   const t = T[lang];
@@ -305,13 +327,7 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
     window.localStorage.setItem('hzp-lang', next);
   }
 
-  function toggleTheme() {
-    const next: Theme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    window.localStorage.setItem('hzp-theme', next);
-  }
-
-  // Auto-generate Sierra Code helper when key fields change
+  // Auto-generate Sierra Code helper
   useEffect(() => {
     if (!compound && !area) return;
     const cpdAcronym = (compound || 'UNIT')
@@ -439,7 +455,6 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
         if (d.sierraCode) setSierraCode(d.sierraCode);
         if (d.ownerName && !ownerName) setOwnerName(d.ownerName);
         if (d.mobile) {
-          // If phone matches, assign to owner or broker
           if (!ownerPhone) setOwnerPhone(d.mobile);
           else if (!brokerPhone && d.mobile !== ownerPhone) setBrokerPhone(d.mobile);
         }
@@ -496,7 +511,7 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
     setPhotos((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // Submission
+  // Submit Listing
   async function handleSubmit() {
     const cpdVal = compound.trim();
     const areaClean = digits(area);
@@ -604,583 +619,568 @@ export default function AddListingForm({ defaultLang = 'ar' }: { defaultLang?: L
   }
 
   return (
-    <div className={s.page} data-theme={theme} dir={isAr ? 'rtl' : 'ltr'} lang={lang}>
+    <div className={s.page} dir={isAr ? 'rtl' : 'ltr'} lang={lang}>
       <div className={s.wrap}>
-        {/* Header Block — Clean, Focused, No Duplicate Navigation */}
-        <header className={s.headerBlock}>
-          <div className={s.headerTopRow}>
-            <div className={s.badgeIntake}>
+        {/* Top Header: Simple, Clean, Non-Duplicated */}
+        <header className={s.header}>
+          <div className={s.headerTop}>
+            <div className={s.badge}>
               <span className={s.pulseDot} />
               <span>{t.badge}</span>
             </div>
             <div className={s.headerControls}>
               <button
                 type="button"
-                className={s.ctrlBtn}
+                className={s.langBtn}
                 onClick={toggleLang}
-                title={isAr ? 'تبديل للإنجليزية' : 'Switch to Arabic'}
+                title={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
               >
-                <Languages style={{ width: 15, height: 15 }} />
+                <Languages style={{ width: 14, height: 14 }} />
                 <span>{isAr ? 'English' : 'عربي'}</span>
-              </button>
-              <button
-                type="button"
-                className={s.ctrlBtn}
-                onClick={toggleTheme}
-                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              >
-                {theme === 'dark' ? <Sun style={{ width: 15, height: 15 }} /> : <Moon style={{ width: 15, height: 15 }} />}
               </button>
             </div>
           </div>
 
-          <h1 className={s.mainTitle}>
+          <h1 className={s.title}>
             {t.titleLead}
             <em>{t.titleEm}</em>
           </h1>
           <p className={s.subtitle}>{t.subtitle}</p>
         </header>
 
-        {/* Section 1: Monolithic Paste Terminal */}
-        <section className={s.sectionCard}>
-          <div className={s.sectionHeader}>
-            <div className={s.sectionTitleGroup}>
-              <Sparkles className={s.sectionIcon} />
-              <div>
-                <h2 className={s.sectionTitle}>
-                  {isAr ? 'محطة استقبال ولصق نصوص العقارات' : 'Listing Intelligence Terminal'}
-                </h2>
-                <div className={s.sectionSubtitle}>
-                  {isAr ? 'الصق رسائل الواتساب أو إعلانات الملاك والوسطاء' : 'Paste raw WhatsApp messages or MLS ad copy'}
-                </div>
+        {/* Unified Intake Card */}
+        <div className={s.formCard}>
+          {/* 1. Monolithic Paste Canvas */}
+          <div>
+            <div className={s.sectHeader}>
+              <div className={s.sectTitle}>
+                <Sparkles className={s.sectIcon} />
+                <span>{isAr ? 'محطة لصق نصوص العقار والواتساب' : 'Listing Intake Terminal'}</span>
               </div>
-            </div>
-
-            <div className={s.sampleBar}>
-              <button
-                type="button"
-                className={s.samplePill}
-                onClick={() => loadSample('resale')}
-              >
-                {t.sampleResale}
-              </button>
-              <button
-                type="button"
-                className={s.samplePill}
-                onClick={() => loadSample('rent')}
-              >
-                {t.sampleRent}
-              </button>
-              {rawText && (
+              <div className={s.samplePills}>
                 <button
                   type="button"
                   className={s.samplePill}
-                  onClick={handleClear}
+                  onClick={() => loadSample('resale')}
                 >
-                  <RotateCcw style={{ width: 12, height: 12 }} />
-                  <span>{t.clear}</span>
+                  {t.sampleResale}
                 </button>
-              )}
+                <button
+                  type="button"
+                  className={s.samplePill}
+                  onClick={() => loadSample('rent')}
+                >
+                  {t.sampleRent}
+                </button>
+                {rawText && (
+                  <button
+                    type="button"
+                    className={s.samplePill}
+                    onClick={handleClear}
+                  >
+                    <RotateCcw style={{ width: 12, height: 12 }} />
+                    <span>{t.clear}</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className={s.textareaWrap}>
-            <textarea
-              className={s.rawTextarea}
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              placeholder={t.pastePlaceholder}
-              rows={6}
-            />
-
-            <div className={s.textareaFooter}>
-              <div className={s.metaInfo}>
+            <div className={s.pasteWrapper}>
+              <textarea
+                className={s.pasteArea}
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder={t.pastePlaceholder}
+                rows={5}
+              />
+              <div className={s.pasteFooter}>
                 <span className={s.charCount}>
                   {rawText.length} {t.chars}
                 </span>
-                <span className={s.encBadge}>
-                  <ShieldCheck style={{ width: 14, height: 14 }} />
-                  <span>{isAr ? 'معالجة مشفرة وآمنة' : 'Encrypted & Sanitized'}</span>
-                </span>
+                <button
+                  type="button"
+                  className={s.parseBtn}
+                  onClick={handleAutoParse}
+                  disabled={parsing || !rawText.trim()}
+                >
+                  <Sparkles style={{ width: 15, height: 15 }} />
+                  <span>{parsing ? t.extracting : t.extractBtn}</span>
+                </button>
               </div>
-
-              <button
-                type="button"
-                className={s.parseTriggerBtn}
-                onClick={handleAutoParse}
-                disabled={parsing || !rawText.trim()}
-              >
-                <Sparkles style={{ width: 16, height: 16 }} />
-                <span>{parsing ? t.extracting : t.extractBtn}</span>
-              </button>
             </div>
+
+            {parseFeedback && (
+              <div className={s.parseFeedback}>
+                <CheckCircle2 style={{ width: 16, height: 16, color: '#10b981', flexShrink: 0 }} />
+                <span>{parseFeedback}</span>
+              </div>
+            )}
           </div>
 
-          {parseFeedback && (
-            <div className={s.parseFeedbackBox}>
-              <CheckCircle2 style={{ width: 18, height: 18, color: '#10b981', flexShrink: 0 }} />
-              <div>{parseFeedback}</div>
-            </div>
-          )}
-        </section>
-
-        {/* Section 2: Live Bento Revision Cards */}
-        <section className={s.sectionCard}>
-          <div className={s.sectionHeader}>
-            <div className={s.sectionTitleGroup}>
-              <Building className={s.sectionIcon} />
-              <div>
-                <h2 className={s.sectionTitle}>{t.specsTitle}</h2>
-                <div className={s.sectionSubtitle}>{t.specsSubtitle}</div>
+          {/* 2. Structured Revision Grid */}
+          <div>
+            <div className={s.sectHeader}>
+              <div className={s.sectTitle}>
+                <Building className={s.sectIcon} />
+                <span>{t.specsTitle}</span>
               </div>
-            </div>
-          </div>
-
-          <div className={s.bentoGrid}>
-            {/* Card 1: Compound / Location */}
-            <div className={`${s.bentoCard} ${s.colCompound}`}>
-              <div className={s.bentoHeader}>
-                <span className={s.bentoLabel}>{t.compound}</span>
-                <MapPin className={s.bentoIcon} />
-              </div>
-              <input
-                ref={compoundRef}
-                type="text"
-                className={`${s.bentoInput} ${badField === 'compound' ? s.bad : ''}`}
-                value={compound}
-                onChange={(e) => setCompound(e.target.value)}
-                placeholder={t.compoundPh}
-                list="compounds-list"
-              />
-              <datalist id="compounds-list">
-                {TOP_COMPOUNDS.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-              <div className={s.bentoSub}>
-                {compound
-                  ? isAr
-                    ? `موقع معتمد: القاهرة الجديدة · التجمع الخامس`
-                    : `Verified Sector: New Cairo Golden Square`
-                  : isAr
-                  ? 'اختر أو اكتب اسم الكمبوند في التجمع'
-                  : 'Type or select compound in New Cairo'}
-              </div>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{t.specsSub}</span>
             </div>
 
-            {/* Card 2: Valuation & Deal Mode */}
-            <div className={`${s.bentoCard} ${s.colValuation}`}>
-              <div className={s.bentoHeader}>
-                <div className={s.modeToggle}>
+            <div className={s.grid}>
+              {/* Compound / Location */}
+              <div className={`${s.field} ${s.col6}`}>
+                <label className={s.label} htmlFor="compound-input">
+                  <MapPin style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.compound}</span>
+                </label>
+                <input
+                  id="compound-input"
+                  ref={compoundRef}
+                  type="text"
+                  className={`${s.input} ${badField === 'compound' ? s.bad : ''}`}
+                  value={compound}
+                  onChange={(e) => {
+                    setCompound(e.target.value);
+                    if (badField === 'compound') setBadField(null);
+                  }}
+                  placeholder={t.compoundPh}
+                  list="cpds-list"
+                  autoComplete="off"
+                />
+                <datalist id="cpds-list">
+                  {CPDS.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Deal Mode (Sale vs Rent) */}
+              <div className={`${s.field} ${s.col6}`}>
+                <label className={s.label}>
+                  <CircleDollarSign style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.dealMode}</span>
+                </label>
+                <div className={s.segToggle}>
                   <button
                     type="button"
-                    className={`${s.modeOption} ${purpose === 'sale' ? s.modeOptionActive : ''}`}
+                    className={`${s.segBtn} ${purpose === 'sale' ? s.segBtnActive : ''}`}
                     onClick={() => setPurpose('sale')}
                   >
                     {t.sale}
                   </button>
                   <button
                     type="button"
-                    className={`${s.modeOption} ${purpose === 'rent' ? s.modeOptionActive : ''}`}
+                    className={`${s.segBtn} ${purpose === 'rent' ? s.segBtnActive : ''}`}
                     onClick={() => setPurpose('rent')}
                   >
                     {t.rent}
                   </button>
                 </div>
-                <CircleDollarSign className={s.bentoIcon} />
               </div>
-              <input
-                ref={priceRef}
-                type="text"
-                className={`${s.bentoInput} ${badField === 'price' ? s.bad : ''}`}
-                value={price}
-                onChange={(e) => {
-                  const raw = digits(e.target.value);
-                  setPrice(raw ? Number(raw).toLocaleString('en-US') : '');
-                }}
-                placeholder={purpose === 'rent' ? t.priceRent : t.price}
-              />
-              <div className={s.bentoSub}>
-                {price
-                  ? `${price} EGP · ~${(Number(digits(price)) / 49).toLocaleString('en-US', { maximumFractionDigits: 0 })} USD`
-                  : isAr
-                  ? 'اكتب السعر بالجنيه المصري'
-                  : 'Enter price in Egyptian Pounds'}
-              </div>
-            </div>
 
-            {/* Card 3: Footprint / Area */}
-            <div className={`${s.bentoCard} ${s.colFootprint}`}>
-              <div className={s.bentoHeader}>
-                <span className={s.bentoLabel}>{t.footprint}</span>
-                <Maximize2 className={s.bentoIcon} />
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              {/* Price */}
+              <div className={`${s.field} ${s.col6}`}>
+                <label className={s.label} htmlFor="price-input">
+                  <CircleDollarSign style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{purpose === 'rent' ? t.priceRent : t.priceSale}</span>
+                  {price && (
+                    <span className={s.labelSub}>
+                      ~{(Number(digits(price)) / 49).toLocaleString('en-US', { maximumFractionDigits: 0 })} USD
+                    </span>
+                  )}
+                </label>
                 <input
-                  ref={areaRef}
+                  id="price-input"
+                  ref={priceRef}
                   type="text"
-                  className={`${s.bentoInput} ${badField === 'area' ? s.bad : ''}`}
-                  value={area}
-                  onChange={(e) => setArea(digits(e.target.value))}
-                  placeholder={t.areaPh}
-                  style={{ width: '50%' }}
-                />
-                <input
-                  type="text"
-                  className={s.bentoInput}
-                  value={gardenArea}
-                  onChange={(e) => setGardenArea(digits(e.target.value))}
-                  placeholder={t.gardenAreaPh}
-                  style={{ width: '50%' }}
+                  className={`${s.input} ${badField === 'price' ? s.bad : ''}`}
+                  value={price}
+                  onChange={(e) => {
+                    const raw = digits(e.target.value);
+                    setPrice(raw ? Number(raw).toLocaleString('en-US') : '');
+                    if (badField === 'price') setBadField(null);
+                  }}
+                  placeholder={purpose === 'rent' ? '65,000' : '14,000,000'}
                 />
               </div>
-              <div className={s.bentoSub}>
-                {area
-                  ? `${area} m² Net Built-Up ${gardenArea ? `+ ${gardenArea} m² Garden` : ''}`
-                  : isAr
-                  ? 'المساحة الصافية بالمتر المربع'
-                  : 'Net usable area in square meters'}
-              </div>
-            </div>
 
-            {/* Card 4: Layout & Finishing */}
-            <div className={`${s.bentoCard} ${s.colLayout}`}>
-              <div className={s.bentoHeader}>
-                <span className={s.bentoLabel}>{t.layout}</span>
-                <Layers className={s.bentoIcon} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
-                {/* Bedrooms */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <BedDouble style={{ width: 13, height: 13 }} />
-                    <span>{t.beds}</span>
-                  </div>
-                  <div className={s.pillsRow}>
-                    {[1, 2, 3, 4, 5, 6].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        className={`${s.pillBtn} ${beds === num ? s.pillBtnActive : ''}`}
-                        onClick={() => setBeds(num)}
-                      >
-                        {num === 6 ? '6+' : num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bathrooms */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Bath style={{ width: 13, height: 13 }} />
-                    <span>{t.baths}</span>
-                  </div>
-                  <div className={s.pillsRow}>
-                    {[1, 2, 3, 4, 5].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        className={`${s.pillBtn} ${baths === num ? s.pillBtnActive : ''}`}
-                        onClick={() => setBaths(num)}
-                      >
-                        {num === 5 ? '5+' : num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Property Type */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 4 }}>
-                    {t.propType}
-                  </div>
-                  <select
-                    className={s.selectCustom}
-                    value={propertyType}
-                    onChange={(e) => setPropertyType(e.target.value)}
-                  >
-                    {PROPERTY_TYPES.map((pt) => (
-                      <option key={pt} value={pt}>
-                        {pt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Finishing */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', marginBottom: 4 }}>
-                    {t.finishing}
-                  </div>
-                  <select
-                    className={s.selectCustom}
-                    value={finishing}
-                    onChange={(e) => setFinishing(e.target.value)}
-                  >
-                    {FINISHING_OPTIONS.map((fin) => (
-                      <option key={fin} value={fin}>
-                        {fin}
-                      </option>
-                    ))}
-                  </select>
+              {/* Footprint (Area & optional Garden) */}
+              <div className={`${s.field} ${s.col6}`}>
+                <label className={s.label}>
+                  <Maximize2 style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.footprint}</span>
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    ref={areaRef}
+                    type="text"
+                    className={`${s.input} ${badField === 'area' ? s.bad : ''}`}
+                    value={area}
+                    onChange={(e) => {
+                      setArea(digits(e.target.value));
+                      if (badField === 'area') setBadField(null);
+                    }}
+                    placeholder={t.areaPh}
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="text"
+                    className={s.input}
+                    value={gardenArea}
+                    onChange={(e) => setGardenArea(digits(e.target.value))}
+                    placeholder={t.gardenPh}
+                    style={{ flex: 1 }}
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Card 5: Sierra Code & Identifier */}
-            <div className={`${s.bentoCard} ${s.colCode}`}>
-              <div className={s.bentoHeader}>
-                <span className={s.bentoLabel}>{t.sierraCode}</span>
-                <ShieldCheck className={s.bentoIcon} />
+              {/* Bedrooms */}
+              <div className={`${s.field} ${s.col6}`}>
+                <label className={s.label}>
+                  <BedDouble style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.beds}</span>
+                </label>
+                <div className={s.chipsRow}>
+                  {[1, 2, 3, 4, 5, 6].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`${s.chipBtn} ${beds === n ? s.chipBtnActive : ''}`}
+                      onClick={() => setBeds(n)}
+                    >
+                      {n === 6 ? '6+' : n}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <input
-                type="text"
-                className={s.bentoInput}
-                value={sierraCode}
-                onChange={(e) => setSierraCode(e.target.value.toUpperCase())}
-                placeholder={t.codePh}
-                style={{ fontFamily: 'var(--font-jetbrains), monospace', letterSpacing: '0.04em' }}
-              />
-              <div className={s.bentoSub}>{t.codeSub}</div>
+
+              {/* Bathrooms */}
+              <div className={`${s.field} ${s.col6}`}>
+                <label className={s.label}>
+                  <Bath style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.baths}</span>
+                </label>
+                <div className={s.chipsRow}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`${s.chipBtn} ${baths === n ? s.chipBtnActive : ''}`}
+                      onClick={() => setBaths(n)}
+                    >
+                      {n === 5 ? '5+' : n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Property Type */}
+              <div className={`${s.field} ${s.col4}`}>
+                <label className={s.label} htmlFor="ptype-select">
+                  <Building style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.propType}</span>
+                </label>
+                <select
+                  id="ptype-select"
+                  className={s.select}
+                  value={propertyType}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                >
+                  {PROPERTY_TYPES.map((pt) => (
+                    <option key={pt} value={pt}>
+                      {isAr ? PROPERTY_TYPES_AR[pt] || pt : pt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Finishing */}
+              <div className={`${s.field} ${s.col4}`}>
+                <label className={s.label} htmlFor="finishing-select">
+                  <Layers style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.finishing}</span>
+                </label>
+                <select
+                  id="finishing-select"
+                  className={s.select}
+                  value={finishing}
+                  onChange={(e) => setFinishing(e.target.value)}
+                >
+                  {FINISHING_OPTIONS.map((f) => (
+                    <option key={f} value={f}>
+                      {isAr ? FINISHING_AR[f] || f : f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sierra Code */}
+              <div className={`${s.field} ${s.col4}`}>
+                <label className={s.label} htmlFor="code-input">
+                  <ShieldCheck style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                  <span>{t.sierraCode}</span>
+                </label>
+                <input
+                  id="code-input"
+                  type="text"
+                  className={s.input}
+                  value={sierraCode}
+                  onChange={(e) => setSierraCode(e.target.value.toUpperCase())}
+                  placeholder={t.codePh}
+                  style={{ fontFamily: 'var(--font-jetbrains), monospace', letterSpacing: '0.04em' }}
+                />
+              </div>
+
+              {/* Additional Highlights */}
+              <div className={`${s.field} ${s.col12}`}>
+                <label className={s.label} htmlFor="notes-input">
+                  <span>{t.notes}</span>
+                </label>
+                <input
+                  id="notes-input"
+                  type="text"
+                  className={s.input}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={t.notesPh}
+                />
+              </div>
             </div>
           </div>
-        </section>
 
-        {/* Section 3: The 3 Contact Identities & Submitter Dropdown */}
-        <section className={s.sectionCard}>
-          <div className={s.sectionHeader}>
-            <div className={s.sectionTitleGroup}>
-              <User className={s.sectionIcon} />
-              <div>
-                <h2 className={s.sectionTitle}>{t.contactsTitle}</h2>
-                <div className={s.sectionSubtitle}>{t.contactsSubtitle}</div>
-              </div>
-            </div>
-          </div>
-
+          {/* 3. The 3 Contact Entities Box */}
           <div className={s.contactsBox}>
-            {/* Contact 1: Submitter Role & Identity (Dropdown) */}
-            <div className={s.contactField}>
-              <div className={s.contactFieldHeader}>
-                <span className={s.contactFieldLabel}>
-                  <Bot style={{ width: 15, height: 15, color: 'var(--gold)' }} />
-                  <span>{t.submitterLabel}</span>
-                </span>
-                <span className={s.contactTag}>Identity #1</span>
+            <div className={s.contactsHeader}>
+              <div className={s.contactsTitle}>
+                <User style={{ width: 16, height: 16, color: 'var(--gold)' }} />
+                <span>{t.contactsTitle}</span>
               </div>
-              <select
-                className={s.selectCustom}
-                value={submitterPreset}
-                onChange={(e) => setSubmitterPreset(e.target.value)}
-              >
-                {SUBMITTER_PRESETS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {isAr ? p.labelAr : p.labelEn}
-                  </option>
-                ))}
-              </select>
+              <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>{t.contactsSub}</span>
+            </div>
 
-              {submitterPreset === 'custom' && (
+            <div className={s.contactsGrid}>
+              {/* Contact 1: Submitter Dropdown */}
+              <div className={s.contactCol}>
+                <div className={s.contactColHeader}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Bot style={{ width: 14, height: 14, color: 'var(--gold)' }} />
+                    <span>{t.submitterLabel}</span>
+                  </span>
+                  <span className={s.contactTag}>Slot #1</span>
+                </div>
+                <select
+                  className={s.select}
+                  value={submitterPreset}
+                  onChange={(e) => setSubmitterPreset(e.target.value)}
+                >
+                  {SUBMITTER_PRESETS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {isAr ? p.labelAr : p.labelEn}
+                    </option>
+                  ))}
+                </select>
+                {submitterPreset === 'custom' && (
+                  <input
+                    type="text"
+                    className={s.input}
+                    value={customAgentName}
+                    onChange={(e) => setCustomAgentName(e.target.value)}
+                    placeholder={isAr ? 'اسم مقدم الطلب / الموظف' : 'Submitter / staff name'}
+                  />
+                )}
+                <div className={s.contactHelper}>
+                  {isAr ? 'يحدد المحفظة والوكيل المباشر المنسوب له العقار' : 'Assigns mandate channel and agent provenance'}
+                </div>
+              </div>
+
+              {/* Contact 2: Owner Mobile */}
+              <div className={s.contactCol}>
+                <div className={s.contactColHeader}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <PhoneCall style={{ width: 14, height: 14, color: '#10b981' }} />
+                    <span>{t.ownerPhoneLabel}</span>
+                  </span>
+                  <span className={s.contactTag}>Slot #2</span>
+                </div>
+                <input
+                  ref={ownerPhoneRef}
+                  type="tel"
+                  className={`${s.input} ${badField === 'ownerPhone' ? s.bad : ''}`}
+                  value={ownerPhone}
+                  onChange={(e) => {
+                    setOwnerPhone(e.target.value);
+                    if (badField === 'ownerPhone') setBadField(null);
+                  }}
+                  placeholder={t.ownerPhonePh}
+                  dir="ltr"
+                />
                 <input
                   type="text"
-                  className={s.contactInput}
-                  value={customAgentName}
-                  onChange={(e) => setCustomAgentName(e.target.value)}
-                  placeholder={isAr ? 'اكتب اسم مقدم الطلب / الموظف' : 'Enter submitter or staff name'}
+                  className={s.input}
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  placeholder={t.ownerNamePh}
                 />
-              )}
-              <div className={s.contactSubtext}>{t.submitterSub}</div>
-            </div>
-
-            {/* Contact 2: Owner Line */}
-            <div className={s.contactField}>
-              <div className={s.contactFieldHeader}>
-                <span className={s.contactFieldLabel}>
-                  <PhoneCall style={{ width: 15, height: 15, color: '#10b981' }} />
-                  <span>{t.ownerPhoneLabel}</span>
-                </span>
-                <span className={s.contactTag}>Identity #2</span>
-              </div>
-              <input
-                ref={ownerPhoneRef}
-                type="tel"
-                className={`${s.contactInput} ${badField === 'ownerPhone' ? s.bad : ''}`}
-                value={ownerPhone}
-                onChange={(e) => setOwnerPhone(e.target.value)}
-                placeholder="010XXXXXXXX"
-                dir="ltr"
-              />
-              <input
-                type="text"
-                className={s.contactInput}
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
-                placeholder={t.ownerNamePh}
-              />
-              <div className={s.contactSubtext}>{t.ownerPhoneSub}</div>
-            </div>
-
-            {/* Contact 3: Broker Line */}
-            <div className={s.contactField}>
-              <div className={s.contactFieldHeader}>
-                <span className={s.contactFieldLabel}>
-                  <Briefcase style={{ width: 15, height: 15, color: '#00b4d8' }} />
-                  <span>{t.brokerPhoneLabel}</span>
-                </span>
-                <span className={s.contactTag}>Identity #3</span>
-              </div>
-              <input
-                ref={brokerPhoneRef}
-                type="tel"
-                className={s.contactInput}
-                value={brokerPhone}
-                onChange={(e) => setBrokerPhone(e.target.value)}
-                placeholder="010XXXXXXXX / +20..."
-                dir="ltr"
-              />
-              <input
-                type="text"
-                className={s.contactInput}
-                value={brokerName}
-                onChange={(e) => setBrokerName(e.target.value)}
-                placeholder={t.brokerNamePh}
-              />
-              <div className={s.contactSubtext}>{t.brokerPhoneSub}</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 4: Media & Architectural Assets Tray */}
-        <section className={s.sectionCard}>
-          <div className={s.sectionHeader}>
-            <div className={s.sectionTitleGroup}>
-              <UploadCloud className={s.sectionIcon} />
-              <div>
-                <h2 className={s.sectionTitle}>{t.mediaTitle}</h2>
-                <div className={s.sectionSubtitle}>{t.mediaSubtitle}</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`${s.dropzone} ${isDragging ? s.dropzoneActive : ''}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/png,image/jpeg,image/webp"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-            <UploadCloud className={s.dropzoneIcon} />
-            <div className={s.dropzoneTitle}>{t.dropzoneTitle}</div>
-            <div className={s.dropzoneSub}>{t.dropzoneSub}</div>
-          </div>
-
-          {photos.length > 0 && (
-            <div className={s.mediaTray}>
-              {photos.map((src, idx) => (
-                <div key={idx} className={s.mediaItem}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt={`Upload ${idx + 1}`} className={s.mediaImg} />
-                  {idx === 0 && <span className={s.mediaCoverBadge}>{t.coverPhoto}</span>}
-                  <button
-                    type="button"
-                    className={s.mediaRemoveBtn}
-                    onClick={() => removePhoto(idx)}
-                    title={t.removePhoto}
-                  >
-                    <X style={{ width: 14, height: 14 }} />
-                  </button>
+                <div className={s.contactHelper}>
+                  {isAr ? 'رقم المالك للتحقق ومطابقة الملكية' : 'Direct owner line for title verification'}
                 </div>
-              ))}
+              </div>
+
+              {/* Contact 3: Broker Mobile */}
+              <div className={s.contactCol}>
+                <div className={s.contactColHeader}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Briefcase style={{ width: 14, height: 14, color: '#00b4d8' }} />
+                    <span>{t.brokerPhoneLabel}</span>
+                  </span>
+                  <span className={s.contactTag}>Slot #3</span>
+                </div>
+                <input
+                  ref={brokerPhoneRef}
+                  type="tel"
+                  className={s.input}
+                  value={brokerPhone}
+                  onChange={(e) => setBrokerPhone(e.target.value)}
+                  placeholder={t.brokerPhonePh}
+                  dir="ltr"
+                />
+                <input
+                  type="text"
+                  className={s.input}
+                  value={brokerName}
+                  onChange={(e) => setBrokerName(e.target.value)}
+                  placeholder={t.brokerNamePh}
+                />
+                <div className={s.contactHelper}>
+                  {isAr ? 'رقم الوسيط أو البروكر لحفظ العمولة' : 'Introducing broker / agency desk line'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Media Upload */}
+          <div>
+            <div className={s.sectHeader}>
+              <div className={s.sectTitle}>
+                <UploadCloud className={s.sectIcon} />
+                <span>{t.mediaTitle}</span>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>{t.mediaSub}</span>
+            </div>
+
+            <div
+              className={`${s.dropzone} ${isDragging ? s.dropzoneActive : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <UploadCloud className={s.dropzoneIcon} />
+              <div className={s.dropzoneText}>{t.dropzoneText}</div>
+              <div className={s.dropzoneSub}>{t.dropzoneSub}</div>
+            </div>
+
+            {photos.length > 0 && (
+              <div className={s.mediaStrip}>
+                {photos.map((src, idx) => (
+                  <div key={idx} className={s.mediaItem}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Upload ${idx + 1}`} className={s.mediaImg} />
+                    {idx === 0 && <span className={s.coverBadge}>{t.coverPhoto}</span>}
+                    <button
+                      type="button"
+                      className={s.deletePhotoBtn}
+                      onClick={() => removePhoto(idx)}
+                      title={t.removePhoto}
+                    >
+                      <X style={{ width: 12, height: 12 }} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Error Notice */}
+          {err && (
+            <div className={s.errorNotice}>
+              <X style={{ width: 16, height: 16, flexShrink: 0 }} />
+              <span>{err}</span>
             </div>
           )}
-        </section>
 
-        {/* Error Notification */}
-        {err && (
-          <div className={s.errBox}>
-            <X style={{ width: 18, height: 18, flexShrink: 0 }} />
-            <div>{err}</div>
-          </div>
-        )}
-
-        {/* Section 5: Sticky Action Bar */}
-        <div className={s.actionBar}>
-          <div className={s.auditGuarantee}>
-            <div className={s.auditIcon}>
-              <ShieldCheck style={{ width: 18, height: 18 }} />
+          {/* 5. Sticky Action Bar */}
+          <div className={s.submitBar}>
+            <div className={s.securityNote}>
+              <ShieldCheck className={s.securityIcon} />
+              <span>{t.complianceNote}</span>
             </div>
-            <div className={s.auditText}>
-              <div className={s.auditTitle}>
-                {isAr ? 'حوكمة وتدقيق أمني E2EE' : 'Institutional Protocol Compliance'}
-              </div>
-              <div className={s.auditSub}>{t.complianceNote}</div>
-            </div>
-          </div>
 
-          <div className={s.actionButtons}>
-            <button type="button" className={s.resetBtn} onClick={handleReset}>
-              <RotateCcw style={{ width: 14, height: 14, display: 'inline', marginInlineEnd: 6 }} />
-              <span>{t.reset}</span>
-            </button>
-            <button
-              type="button"
-              className={s.submitBtn}
-              onClick={handleSubmit}
-              disabled={sending}
-            >
-              <Send style={{ width: 16, height: 16 }} />
-              <span>{sending ? t.submitting : t.submit}</span>
-            </button>
+            <div className={s.actionBtns}>
+              <button type="button" className={s.resetBtn} onClick={handleReset}>
+                <RotateCcw style={{ width: 13, height: 13, display: 'inline', marginInlineEnd: 4 }} />
+                <span>{t.reset}</span>
+              </button>
+              <button
+                type="button"
+                className={s.submitBtn}
+                onClick={handleSubmit}
+                disabled={sending}
+              >
+                <Send style={{ width: 15, height: 15 }} />
+                <span>{sending ? t.submitting : t.submit}</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Success Modal / Celebration Card */}
+        {/* Success Modal */}
         {done && (
-          <div className={s.modalBackdrop}>
-            <div className={s.successCard}>
-              <div className={s.successIconWrap}>
-                <CheckCircle2 style={{ width: 36, height: 36 }} />
+          <div className={s.modalOverlay}>
+            <div className={s.modalContent}>
+              <div className={s.modalIcon}>
+                <CheckCircle2 style={{ width: 32, height: 32 }} />
               </div>
-              <h2 className={s.successTitle}>{t.doneTitle}</h2>
-              <p className={s.successDesc}>{t.doneDesc}</p>
+              <h2 className={s.modalTitle}>{t.doneTitle}</h2>
+              <p className={s.modalText}>{t.doneDesc}</p>
 
-              <div className={s.codePill}>
+              <div className={s.codeBadge}>
                 <span>{t.refCode}:</span>
                 <strong>{done.ref}</strong>
               </div>
 
               {done.targetTab && (
-                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>
                   <span>{t.targetTab}: </span>
                   <strong style={{ color: 'var(--ink)' }}>{done.targetTab}</strong>
                 </div>
               )}
 
-              <div className={s.successLinks}>
-                <a href={done.waHref} target="_blank" rel="noopener noreferrer" className={s.successBtnPrimary}>
-                  <MessageCircle style={{ width: 18, height: 18 }} />
+              <div className={s.modalActions}>
+                <a href={done.waHref} target="_blank" rel="noopener noreferrer" className={s.modalBtnPrimary}>
+                  <MessageCircle style={{ width: 16, height: 16 }} />
                   <span>{t.chatWa}</span>
                 </a>
 
-                <div className={s.successBtnRow}>
-                  <a href="/client" className={s.successBtnSecondary}>
-                    <ExternalLink style={{ width: 14, height: 14 }} />
+                <div className={s.modalBtnRow}>
+                  <a href="/client" className={s.modalBtnSecondary}>
+                    <ExternalLink style={{ width: 13, height: 13 }} />
                     <span>{t.viewMap}</span>
                   </a>
-                  <a href="/admin/properties" className={s.successBtnSecondary}>
-                    <ExternalLink style={{ width: 14, height: 14 }} />
+                  <a href="/admin/properties" className={s.modalBtnSecondary}>
+                    <ExternalLink style={{ width: 13, height: 13 }} />
                     <span>{t.viewAdmin}</span>
                   </a>
                 </div>
