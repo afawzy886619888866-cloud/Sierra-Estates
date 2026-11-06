@@ -55,16 +55,8 @@
   gap: 6px;
   overflow-x: auto;
   max-width: 100%;
-  padding: 4px 6px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
-}
-
-.zoneFilters::-webkit-scrollbar {
-  display: none;
+  padding: 2px 0;
+  scrollbar-width: thin;
 }
 
 .zoneLabel {
@@ -412,8 +404,8 @@
   font-weight: 800;
   border: 1px solid;
   cursor: pointer;
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
@@ -686,8 +678,8 @@
   padding: 14px;
   border-radius: 14px;
   border: 2px solid;
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8);
   text-align: left;
   animation: popupFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -933,8 +925,8 @@
   gap: 3px;
   border: 1px solid rgba(201, 168, 76, 0.4);
   background: rgba(6, 17, 34, 0.7);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .engineBtn {
@@ -986,8 +978,8 @@
   background: rgba(6, 17, 34, 0.9);
   color: #ffffff;
   border: 1px solid rgba(201, 168, 76, 0.75);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   text-shadow:
     0 0 10px rgba(201, 168, 76, 1),
     0 0 22px rgba(201, 168, 76, 0.6);
@@ -1115,8 +1107,8 @@
   position: fixed;
   inset: 0;
   background: rgba(4, 8, 15, 0.88);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   display: grid;
   place-items: center;
   z-index: 99999;
