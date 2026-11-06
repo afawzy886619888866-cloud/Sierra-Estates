@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T23:14:50.264Z",
+  "generatedAt": "2026-11-06T01:28:33.710Z",
   "specVersion": "3.1.0",
   "mediaQualityPolicy": {
     "minPhotos": 6,
@@ -39,10 +39,10 @@
     "totalSupabaseListings": 22970,
     "priorityCohortEvaluated": 2435,
     "excludedBreakdown": {
+      "unavailable_owner_status": 588,
       "inactive_status": 482,
       "already_live_on_pf": 189,
       "below_market_price_floor": 489,
-      "unavailable_owner_status": 588,
       "duplicate_unit_fingerprint": 58,
       "unmapped_property_type": 58,
       "missing_area_sqm": 133,
