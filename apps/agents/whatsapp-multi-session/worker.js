@@ -124,12 +124,14 @@ let roundRobinIndex = 0;
  * seamless local operator UI on localhost.
  */
 function checkAuth(req, res, next) {
-  // Check if request is genuine localhost (no proxy / tunnel headers)
+  const rawIp = String(req.ip || '');
+  const cleanIp = rawIp.replace(/^::ffff:/, '');
+  // Check if request is genuine localhost or docker internal bridge
   const isDirectLocal = (
     !req.headers['cf-connecting-ip'] &&
     !req.headers['cf-ray'] &&
     !req.headers['x-forwarded-for'] &&
-    (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')
+    (cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp.startsWith('172.') || cleanIp.startsWith('10.') || cleanIp.startsWith('192.168.'))
   );
 
   // Health check endpoint is safe for all (returns minimal status)
@@ -137,14 +139,12 @@ function checkAuth(req, res, next) {
     return next();
   }
 
-  // Mobile pairing portal — public by design (same trust level as the retired
-  // EC2 runner :2786/pair). It only exposes ephemeral QR codes and per-line
-  // ready/qr status; no phone numbers, no send capability.
+  // Mobile pairing portal — public by design (exposes ONLY ephemeral live QR codes + per-line ready status)
   if (req.path === '/pair' || req.path.startsWith('/api/pair/')) {
     return next();
   }
 
-  // Allow localhost browser UI and dashboard polling ONLY from direct local machine
+  // Allow browser UI and dashboard polling from local network / Docker host
   if (isDirectLocal) {
     if (req.path === '/' || req.path === '/dashboard' || req.path === '/map') {
       return next();
