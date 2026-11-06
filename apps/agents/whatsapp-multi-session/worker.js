@@ -246,14 +246,35 @@ async function initSession(sessionId) {
 
   console.log(`[${sessionId}] Starting WhatsApp client instance...`);
 
-    const possibleChromePaths = [
-      process.env.CHROME_BIN,
-      process.env.PUPPETEER_EXECUTABLE_PATH,
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
-    ].filter(Boolean);
-    const resolvedChrome = possibleChromePaths.find(p => fs.existsSync(p));
+  // Forcefully terminate any lingering Chrome process locking this profile
+  try {
+    const { execSync } = require('child_process');
+    if (process.platform === 'win32') {
+      execSync(`wmic process where "name='chrome.exe' and CommandLine like '%profile-${sessionId}%'" call terminate`, { stdio: 'ignore' });
+    } else {
+      execSync(`pkill -f "profile-${sessionId}" || true`, { stdio: 'ignore' });
+    }
+  } catch (_) {}
+
+  // Remove stale singleton locks from this profile dir
+  try {
+    const profDir = path.join(AUTH_BASE_DIR, `profile-${sessionId}`);
+    if (fs.existsSync(profDir)) {
+      ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'lockfile'].forEach((f) => {
+        const fp = path.join(profDir, f);
+        if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      });
+    }
+  } catch (_) {}
+
+  const possibleChromePaths = [
+    process.env.CHROME_BIN,
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+  ].filter(Boolean);
+  const resolvedChrome = possibleChromePaths.find(p => fs.existsSync(p));
 
   try {
     const client = await waAutomate.create({
@@ -288,6 +309,8 @@ async function initSession(sessionId) {
         try {
           if (QRCode) {
             s.qrDataUrl = await QRCode.toDataURL(qrCode, { scale: 6, margin: 2 });
+            const pngBuf = await QRCode.toBuffer(qrCode, { scale: 6, margin: 2 });
+            fs.writeFileSync(path.join(__dirname, `qr_${sessionId}.png`), pngBuf);
           } else {
             s.qrDataUrl = qrCode.startsWith('data:') ? qrCode : null;
           }
@@ -548,9 +571,9 @@ async function startAllSessions() {
   for (let i = 0; i < SESSION_IDS.length; i++) {
     const id = SESSION_IDS[i];
     initSession(id);
-    // Stagger 3.5 seconds between browser launches to keep CPU quiet
+    // Stagger 6.5 seconds between browser launches to keep CPU and disk quiet
     if (i < SESSION_IDS.length - 1) {
-      await new Promise(r => setTimeout(r, 3500));
+      await new Promise(r => setTimeout(r, 6500));
     }
   }
 }
@@ -782,16 +805,51 @@ app.get('/api/pair/status', (req, res) => {
  */
 app.get('/api/pair/qr/:sessionId.png', (req, res) => {
   const s = sessions.get(req.params.sessionId);
-  if (!s || !s.qrDataUrl) {
-    return res.status(404).send('No active QR for this line');
+  if (s && s.qrDataUrl) {
+    const imgBuf = Buffer.from(String(s.qrDataUrl).replace(/^data:image\/png;base64,/, ''), 'base64');
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': imgBuf.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    return res.end(imgBuf);
   }
-  const imgBuf = Buffer.from(String(s.qrDataUrl).replace(/^data:image\/png;base64,/, ''), 'base64');
-  res.writeHead(200, {
-    'Content-Type': 'image/png',
-    'Content-Length': imgBuf.length,
-    'Cache-Control': 'no-cache, no-store, must-revalidate'
-  });
-  res.end(imgBuf);
+  const diskQr = path.join(__dirname, `qr_${req.params.sessionId}.png`);
+  if (fs.existsSync(diskQr)) {
+    const imgBuf = fs.readFileSync(diskQr);
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': imgBuf.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    return res.end(imgBuf);
+  }
+  return res.status(404).send('No active QR for this line');
+});
+
+/**
+ * POST /api/pair/reload — Restart lines that need a new QR code or are in error
+ */
+app.post('/api/pair/reload', async (req, res) => {
+  const targetId = req.query.sessionId || req.body?.sessionId;
+  const ids = targetId ? [targetId] : SESSION_IDS;
+  const reloaded = [];
+  for (const id of ids) {
+    const s = sessions.get(id);
+    if (!s) continue;
+    if (s.status !== 'READY') {
+      if (s.client) {
+        try { await s.client.kill(); } catch (_) {}
+        s.client = null;
+      }
+      s.status = 'STARTING';
+      s.qrDataUrl = null;
+      initSession(id);
+      reloaded.push(id);
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  }
+  res.json({ ok: true, reloaded });
 });
 
 /**
