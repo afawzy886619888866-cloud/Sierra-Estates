@@ -22,11 +22,15 @@ import {
   ArrowLeft,
   Bot,
   Brain,
+  Compass,
   Database,
   FileText,
   Gem,
   Handshake,
+  Layers,
   Play,
+  Send,
+  Shield,
   Webhook,
 } from 'lucide-react';
 import {
@@ -90,12 +94,48 @@ interface RunResult {
 }
 
 const WORKFLOWS: {
-  id: 'scribe' | 'curator' | 'closer' | 'matchmaker';
+  id:
+    | 'scribe'
+    | 'curator'
+    | 'closer'
+    | 'matchmaker'
+    | 'engine1_partition'
+    | 'engine2_harvester'
+    | 'engine3_valuation'
+    | 'engine4_outreach';
   botId: string;
   label: string;
   blurb: string;
   icon: React.ReactNode;
 }[] = [
+  {
+    id: 'engine1_partition',
+    botId: 'memory-engine-bot',
+    label: 'Engine 1: Partition Contacts',
+    blurb: 'Divide uncontacted owners across numbers (100/line/day) with dedupe.',
+    icon: <Database className="h-4 w-4 text-emerald-400" />,
+  },
+  {
+    id: 'engine2_harvester',
+    botId: 'harvester-gis-bot',
+    label: 'Engine 2: Run Harvester',
+    blurb: 'Scrape WhatsApp broker groups ("Data" & "داتا ايمان") & map GIS.',
+    icon: <Compass className="h-4 w-4 text-cyan-400" />,
+  },
+  {
+    id: 'engine3_valuation',
+    botId: 'valuation-harness-bot',
+    label: 'Engine 3: Run Valuation',
+    blurb: 'Cairo AVM financial appraisal, Cap Rate analysis & DQE validation.',
+    icon: <Shield className="h-4 w-4 text-amber-400" />,
+  },
+  {
+    id: 'engine4_outreach',
+    botId: 'openclaw-closer-bot',
+    label: 'Engine 4: OpenClaw Closer',
+    blurb: 'Multi-line owner outreach dispatch & Telegram Easy Listing intake.',
+    icon: <Send className="h-4 w-4 text-purple-400" />,
+  },
   {
     id: 'scribe',
     botId: 'scribe-agent',

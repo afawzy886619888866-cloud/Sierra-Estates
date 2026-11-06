@@ -26,11 +26,18 @@ const DATA: any = {
   slides: [
     {
       id: 1,
-      pre: 'FIRST & ONLY WEBSITE IN EGYPT DESIGNED FOR NEW CAIRO',
-      preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
-      main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.',
-      mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
-      img: '/hero/hero-01.webp'
+      pre: 'FIRST & ONLY AI-DRIVEN PLATFORM FOR NEW CAIRO',
+      preAr: 'المنصة الأولى والوحيدة المدعومة بالذكاء الاصطناعي للقاهرة الجديدة',
+      main: 'The Best Decisions, AI-Driven. Exclusive Rent & Resale.',
+      mainAr: 'أفضل القرارات، مدعومة بالذكاء الاصطناعي. عقارات حصرية للبيع والإيجار.',
+      sub: 'Algorithmic valuation, verified owner direct inventory, and instant cadastral GIS matching.',
+      subAr: 'تقييم خوارزمي دقيق، وحدات حصرية مباشرة من الملاك، ومطابقة عقارية فورية بنظام GIS.',
+      img: '/hero/hero-sierra-luxury-ai.webp',
+      badge: '🛡️ SIERRA ESTATES · THE BEST DECISIONS, AI-DRIVEN.',
+      badgeAr: '🛡️ سييرا إيستيتس · أفضل القرارات، مدعومة بالذكاء الاصطناعي',
+      cta: 'Explore Master Registry',
+      ctaAr: 'استكشف الماستربلان والعقارات',
+      href: '/client',
     },
     {
       id: 2,

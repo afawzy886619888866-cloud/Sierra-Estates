@@ -22,7 +22,7 @@ const SiteCtx = createContext<SiteState | null>(null);
 
 export function SiteProvider({
   children,
-  defaultTheme = 'dark',
+  defaultTheme = 'light',
 }: {
   children: React.ReactNode;
   defaultTheme?: Theme;
@@ -32,18 +32,17 @@ export function SiteProvider({
 
   // Read persisted theme/language before the browser paints so users with a
   // saved dark mode or Arabic preference never see a flash on load.
-  // Defaults strictly to Obsidian Quiet Luxury ("dark").
+  // Defaults strictly to Sierra Alabaster Light Luxury ("light").
   useLayoutEffect(() => {
     const storedLang = window.localStorage.getItem('hzp-lang');
     const storedTheme = window.localStorage.getItem('hzp-theme');
     if (storedLang === 'ar' || storedLang === 'en') setLang(storedLang);
-    // Force Obsidian Quiet Luxury dark mode as the strict default for all sessions
     if (storedTheme === 'dark') {
       setTheme('dark');
     } else {
-      setTheme('dark');
+      setTheme('light');
       try {
-        window.localStorage.setItem('hzp-theme', 'dark');
+        window.localStorage.setItem('hzp-theme', 'light');
       } catch {}
     }
   }, []);
@@ -88,7 +87,7 @@ export function SiteProvider({
 
 const defaultSiteState: SiteState = {
   lang: 'en',
-  theme: 'dark',
+  theme: 'light',
   isAr: false,
   t: (key: string) => (I18N.en as Record<string, string>)?.[key] ?? key,
   toggleLang: () => {},

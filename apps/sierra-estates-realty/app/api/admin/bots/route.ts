@@ -42,6 +42,11 @@ const KNOWN_BOTS = [
   'matchmaker-agent',
   'property-finder-bot',
   'mass-blast-bot',
+  // ── 4-Engine Autonomous Machine Fleet (2026-11) ──
+  'memory-engine-bot',
+  'harvester-gis-bot',
+  'valuation-harness-bot',
+  'openclaw-closer-bot',
   // ── Guardian fleet (Mission 4, 2026-11-01) ──
   'paced-outreach-bot',
   'scribe-guardian',
@@ -52,6 +57,38 @@ const KNOWN_BOTS = [
 ];
 
 const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
+  // ── 4-Engine Machine Core Fleet (2026-11) ──
+  'memory-engine-bot': {
+    engine: 'Engine 1: Memory & Learning',
+    role: 'Contact Partitioning & Episodic Ledger Coordinator',
+    dailyQuotaPerLine: 100,
+    activeHours: '09:00-22:00 Africa/Cairo',
+    dedupeSources: ['owner-outreach-ledger.jsonl', 'public.owner_outreach_log', 'sheet_contact_date'],
+    systemPrompt: `Autonomous Memory & Ledger Bot for Sierra Estates. Dynamically divides eligible uncontacted owners across active WhatsApp numbers (up to 100/line/day), eliminates duplicate outreach, and handles live failover if a line disconnects.`,
+  },
+  'harvester-gis-bot': {
+    engine: 'Engine 2: RAG & GIS Map Engine',
+    role: 'WhatsApp Scraper & Compound Geocoding',
+    targetGroups: ['Data', 'داتا ايمان'],
+    intervalMinutes: 15,
+    minConfidence: 0.85,
+    systemPrompt: `Harvests real estate listings from targeted WhatsApp broker groups ('Data' and 'داتا ايمان'), extracts Egyptian Arabic/English unit metadata, normalizes New Cairo compounds, and binds cadastral GIS boundaries.`,
+  },
+  'valuation-harness-bot': {
+    engine: 'Engine 3: Valuation & Reasoning Harness',
+    role: 'AVM Financial Arbitrage & DQE Quality Control',
+    model: 'gemini-2.0-flash',
+    metrics: ['CapRate', 'PaybackPeriod', 'PriceVarianceVsCompoundAverage'],
+    systemPrompt: `Conducts rigorous Cairo AVM appraisal and DQE validation. Calculates rental yields, investment payback, and flags underpriced arbitrage vs overpriced listings.`,
+  },
+  'openclaw-closer-bot': {
+    engine: 'Engine 4: Workflows, Closer & UI/UX Engine',
+    role: 'Multi-Line Outreach Dispatch & OpenClaw Telegram Intake',
+    pacingMs: '30000-45000',
+    telegramIntakeActive: true,
+    linesSupported: ['line-1', 'line-2', 'line-3', 'line-4'],
+    systemPrompt: `Executes multi-line WhatsApp owner outreach at safe 30-45s human pacing, receives broker/agent units via Telegram Easy Listing Bot, and powers the luxury light-mode client portal.`,
+  },
   'whatsapp-agent': {
     model: 'gemini-2.0-flash',
     temperature: 0.7,

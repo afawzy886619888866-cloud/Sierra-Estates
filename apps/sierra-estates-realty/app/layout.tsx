@@ -83,7 +83,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="dark"
+      data-theme="light"
       dir="ltr"
       className={[
         jakarta.variable,
@@ -98,7 +98,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('hzp-theme')!=='dark'){localStorage.setItem('hzp-theme','dark');}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('hzp-theme')||'light';document.documentElement.setAttribute('data-theme',t);if(!localStorage.getItem('hzp-theme')){localStorage.setItem('hzp-theme','light');}}catch(e){}})();`,
           }}
         />
       </head>
