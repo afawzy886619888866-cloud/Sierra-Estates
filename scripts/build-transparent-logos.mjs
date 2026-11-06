@@ -7,7 +7,7 @@ const ASSETS_DIR = path.join(ROOT, 'apps/sierra-estates-realty/public/assets');
 const SRC_SHIELD = 'C:/Users/Sierr/.gemini/antigravity/brain/4f24c6b2-8a5e-412c-86f8-7dbfc95f1c77/.user_uploaded/media_1793847025063_3434b006.jpg';
 
 async function extractTransparentShield() {
-  console.log('Extracting transparent shield emblem from source...');
+  console.log('Extracting transparent shield emblem (removing the two black artifact lines)...');
   
   const { data, info } = await sharp(SRC_SHIELD)
     .raw()
@@ -15,14 +15,33 @@ async function extractTransparentShield() {
     
   const { width, height } = info;
   const totalPixels = width * height;
+
+  // STEP 1: Pre-clean and erase the two black artifact lines at x < 235 and x > 785
+  // The real shield emblem is located between x=240 and x=780.
+  // The two isolated black artifact lines exist at x=222 and x=808.
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < 235; x++) {
+      const idx = (y * width + x) * 3;
+      data[idx] = 255;
+      data[idx + 1] = 253;
+      data[idx + 2] = 247;
+    }
+    for (let x = 785; x < width; x++) {
+      const idx = (y * width + x) * 3;
+      data[idx] = 255;
+      data[idx + 1] = 253;
+      data[idx + 2] = 247;
+    }
+  }
+
   const isBackground = new Uint8Array(totalPixels);
   const queue = new Int32Array(totalPixels * 2);
   let qHead = 0;
   let qTail = 0;
 
-  // Background threshold: cream-white perimeter (R>225, G>220, B>210)
+  // Background threshold: cream-white perimeter (R>220, G>215, B>205)
   function isBgColor(r, g, b) {
-    return r > 225 && g > 220 && b > 210 && Math.abs(r - g) < 20 && Math.abs(r - b) < 30;
+    return r > 220 && g > 215 && b > 205 && Math.abs(r - g) < 22 && Math.abs(r - b) < 32;
   }
 
   // Push all perimeter pixels
@@ -98,34 +117,34 @@ async function extractTransparentShield() {
       let g = data[srcP + 1];
       let b = data[srcP + 2];
 
-      if (isBackground[idx] === 1) {
+      // Any pixel marked as background or outside the shield is 100% transparent
+      if (isBackground[idx] === 1 || x < 236 || x > 784) {
         rgba[dstP] = 0;
         rgba[dstP + 1] = 0;
         rgba[dstP + 2] = 0;
         rgba[dstP + 3] = 0; // Fully transparent
       } else {
-        // Check if adjacent to background for anti-aliasing
+        // Anti-aliasing blend for perimeter gold border
         let bgNeighbors = 0;
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             if (dx === 0 && dy === 0) continue;
             const nx = x + dx;
             const ny = y + dy;
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              if (isBackground[ny * width + nx] === 1) bgNeighbors++;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height || isBackground[ny * width + nx] === 1 || nx < 236 || nx > 784) {
+              bgNeighbors++;
             }
           }
         }
 
         if (bgNeighbors > 0) {
-          // De-fringe: blend edge pixels
-          const alpha = Math.max(0, Math.min(255, Math.round(255 - (bgNeighbors / 8) * 140)));
+          const alpha = Math.max(0, Math.min(255, Math.round(255 - (bgNeighbors / 8) * 130)));
           rgba[dstP] = Math.min(255, Math.round(r * 1.15));
           rgba[dstP + 1] = Math.min(255, Math.round(g * 1.15));
           rgba[dstP + 2] = Math.min(255, Math.round(b * 1.15));
           rgba[dstP + 3] = alpha;
         } else {
-          // Inside shield: 20% brighter + punchy gold saturation
+          // Inside shield: brightened & vibrant
           rgba[dstP] = Math.min(255, Math.round(r * 1.2));
           rgba[dstP + 1] = Math.min(255, Math.round(g * 1.2));
           rgba[dstP + 2] = Math.min(255, Math.round(b * 1.2));
@@ -146,7 +165,7 @@ async function extractTransparentShield() {
 
 async function main() {
   const shieldBuffer = await extractTransparentShield();
-  console.log('✅ Transparent shield extracted! Size:', shieldBuffer.length, 'bytes');
+  console.log('✅ Transparent shield extracted (zero black lines)! Size:', shieldBuffer.length, 'bytes');
 
   // 1. Save core shield marks
   fs.writeFileSync(path.join(ASSETS_DIR, 'logo-shield.png'), shieldBuffer);
@@ -161,10 +180,10 @@ async function main() {
   const mark32 = await sharp(shieldBuffer).resize(32, 32, { fit: 'contain' }).png().toBuffer();
   fs.writeFileSync(path.join(ASSETS_DIR, 'logo-small.png'), mark32);
 
-  // 2. Generate Vertical Brand Lockup: Dark Mode (1200 x 1400, Transparent PNG)
+  // 2. Generate Vertical Brand Lockup: Dark Mode (Clean, NO horizontal lines)
   const darkCanvasW = 1200;
-  const darkCanvasH = 1400;
-  const shieldDarkSize = 750;
+  const darkCanvasH = 1350;
+  const shieldDarkSize = 780;
 
   const shieldDarkResized = await sharp(shieldBuffer)
     .resize(shieldDarkSize, shieldDarkSize, { fit: 'contain' })
@@ -182,32 +201,22 @@ async function main() {
       </defs>
 
       <!-- Brand Name -->
-      <text x="600" y="930" 
+      <text x="600" y="970" 
         font-family="'Cinzel', 'Playfair Display', 'Trajan Pro', 'Georgia', serif" 
-        font-size="82" 
+        font-size="88" 
         font-weight="900" 
         fill="#FFFFFF" 
         text-anchor="middle" 
         letter-spacing="10">SIERRA ESTATES</text>
 
-      <!-- Official Slogan -->
-      <text x="600" y="1010" 
+      <!-- Official Slogan (Pure typography, zero dividing lines) -->
+      <text x="600" y="1055" 
         font-family="'Inter', -apple-system, sans-serif" 
-        font-size="28" 
+        font-size="30" 
         font-weight="800" 
         fill="url(#goldGrad)" 
         text-anchor="middle" 
         letter-spacing="12">FUTURE OF REAL ESTATE</text>
-
-      <!-- Domain & Authority Bar -->
-      <line x1="380" y1="1065" x2="820" y2="1065" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.6" />
-      <text x="600" y="1115" 
-        font-family="monospace" 
-        font-size="18" 
-        font-weight="700" 
-        fill="#38BDF8" 
-        text-anchor="middle" 
-        letter-spacing="4">NEW CAIRO · GOLDEN SQUARE · 2026</text>
     </svg>
   `);
 
@@ -225,7 +234,7 @@ async function main() {
   fs.writeFileSync(path.join(ASSETS_DIR, 'logo-dark.png'), logoDark);
   fs.writeFileSync(path.join(ASSETS_DIR, 'sierra-estates-official-logo.png'), logoDark);
 
-  // 3. Generate Vertical Brand Lockup: Light Mode (1200 x 1400, Transparent PNG)
+  // 3. Generate Vertical Brand Lockup: Light Mode (Clean, NO horizontal lines)
   const lightTypographySvg = Buffer.from(`
     <svg width="${darkCanvasW}" height="${darkCanvasH}" viewBox="0 0 ${darkCanvasW} ${darkCanvasH}" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -237,32 +246,22 @@ async function main() {
       </defs>
 
       <!-- Brand Name -->
-      <text x="600" y="930" 
+      <text x="600" y="970" 
         font-family="'Cinzel', 'Playfair Display', 'Trajan Pro', 'Georgia', serif" 
-        font-size="82" 
+        font-size="88" 
         font-weight="900" 
         fill="#061122" 
         text-anchor="middle" 
         letter-spacing="10">SIERRA ESTATES</text>
 
       <!-- Official Slogan -->
-      <text x="600" y="1010" 
+      <text x="600" y="1055" 
         font-family="'Inter', -apple-system, sans-serif" 
-        font-size="28" 
+        font-size="30" 
         font-weight="800" 
         fill="url(#bronzeGrad)" 
         text-anchor="middle" 
         letter-spacing="12">FUTURE OF REAL ESTATE</text>
-
-      <!-- Domain & Authority Bar -->
-      <line x1="380" y1="1065" x2="820" y2="1065" stroke="url(#bronzeGrad)" stroke-width="1.5" opacity="0.6" />
-      <text x="600" y="1115" 
-        font-family="monospace" 
-        font-size="18" 
-        font-weight="700" 
-        fill="#0284C7" 
-        text-anchor="middle" 
-        letter-spacing="4">NEW CAIRO · GOLDEN SQUARE · 2026</text>
     </svg>
   `);
 
@@ -279,9 +278,9 @@ async function main() {
 
   fs.writeFileSync(path.join(ASSETS_DIR, 'logo-light.png'), logoLight);
 
-  // 4. Generate Horizontal Header Lockup (1400 x 360, Transparent PNG)
+  // 4. Generate Horizontal Header Lockup (Clean, NO lines)
   const horizW = 1400;
-  const horizH = 360;
+  const horizH = 340;
   const shieldHorizSize = 300;
 
   const shieldHorizResized = await sharp(shieldBuffer)
@@ -298,26 +297,19 @@ async function main() {
         </linearGradient>
       </defs>
 
-      <text x="350" y="170" 
+      <text x="350" y="175" 
         font-family="'Cinzel', 'Playfair Display', serif" 
-        font-size="68" 
+        font-size="72" 
         font-weight="900" 
         fill="#FFFFFF" 
         letter-spacing="6">SIERRA ESTATES</text>
 
-      <text x="355" y="235" 
+      <text x="355" y="245" 
         font-family="'Inter', sans-serif" 
-        font-size="24" 
+        font-size="26" 
         font-weight="800" 
         fill="url(#goldGradH)" 
         letter-spacing="10">FUTURE OF REAL ESTATE</text>
-
-      <text x="355" y="290" 
-        font-family="monospace" 
-        font-size="16" 
-        font-weight="700" 
-        fill="#38BDF8" 
-        letter-spacing="2">NEW CAIRO MASTER PLAN · 2026</text>
     </svg>
   `);
 
@@ -325,7 +317,7 @@ async function main() {
     .composite([
       {
         input: shieldHorizResized,
-        top: 30,
+        top: 20,
         left: 20,
       },
     ])
@@ -334,7 +326,7 @@ async function main() {
 
   fs.writeFileSync(path.join(ASSETS_DIR, 'logo-horizontal-dark.png'), logoHorizDark);
 
-  console.log('✅ All transparent logos, lockups, and slogan badges created successfully!');
+  console.log('✅ All black lines removed! Pristine transparent logos and brand lockups regenerated.');
 }
 
 main().catch(console.error);
