@@ -250,7 +250,7 @@ async function initSession(sessionId) {
   try {
     const { execSync } = require('child_process');
     if (process.platform === 'win32') {
-      execSync(`wmic process where "name='chrome.exe' and CommandLine like '%profile-${sessionId}%'" call terminate`, { stdio: 'ignore' });
+      execSync(`powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name = 'chrome.exe'\\" | Where-Object { $_.CommandLine -like '*profile-${sessionId}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`, { stdio: 'ignore' });
     } else {
       execSync(`pkill -f "profile-${sessionId}" || true`, { stdio: 'ignore' });
     }
@@ -940,8 +940,16 @@ function renderPairPortalHtml() {
     .langbar button {
       padding: 5px 12px; font-size: 11px; border-radius: 6px; cursor: pointer;
       border: 1px solid var(--edge); background: transparent; color: var(--dim); font-family: inherit;
+      transition: all 0.2s ease;
     }
     .langbar button.on { color: var(--gold-hi); border-color: var(--gold); background: rgba(240,192,64,.1); font-weight: 700; }
+    .langbar button.reload-btn {
+      color: #071422; border-color: var(--gold); background: linear-gradient(135deg, var(--gold-hi), #d9a521);
+      font-weight: 700; margin-left: 12px; box-shadow: 0 0 12px rgba(255,215,0,.25);
+    }
+    .langbar button.reload-btn:hover {
+      transform: translateY(-1px); box-shadow: 0 0 16px rgba(255,215,0,.45);
+    }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
     .card {
       background: var(--card); border: 1px solid var(--edge); border-radius: 12px; padding: 13px;
@@ -974,6 +982,7 @@ function renderPairPortalHtml() {
     <div class="langbar">
       <button id="btn-en" class="on" onclick="setLang('en')">🇬🇧 EN</button>
       <button id="btn-ar" onclick="setLang('ar')">🇸🇦 ع</button>
+      <button id="btn-reload" class="reload-btn" onclick="reloadQrs(this)">🔄 <span data-i18n="reload">Reload QR</span></button>
     </div>
   </header>
   <div class="grid">${cards}</div>
@@ -989,7 +998,8 @@ function renderPairPortalHtml() {
         readyMsg: 'This line is paired and operating.',
         awaitMsg: 'Scan this code: WhatsApp › Linked Devices › Link a Device',
         startMsg: 'Waiting for the line to start…',
-        hint: 'The QR renews every few seconds — keep the scanner open.'
+        hint: 'The QR renews every few seconds — keep the scanner open.',
+        reload: 'Reload QR'
       },
       ar: {
         t1: 'ربط', t2: 'امسح', t3: 'اتصل',
@@ -998,17 +1008,36 @@ function renderPairPortalHtml() {
         readyMsg: 'هذا الخط مرتبط ويعمل.',
         awaitMsg: 'امسح هذا الكود: واتساب › الأجهزة المرتبطة › ربط جهاز',
         startMsg: 'بانتظار بدء الخط…',
-        hint: 'يتجدد الكود كل ثوانٍ — أبقِ الماسح مفتوحًا.'
+        hint: 'يتجدد الكود كل ثوانٍ — أبقِ الماسح مفتوحًا.',
+        reload: 'تحديث الـ QR'
       }
     };
     function setLang(l) { L = l; apply(); }
-    function T(k) { return I18N[L][k]; }
+    function T(k) { return (I18N[L] && I18N[L][k]) || k; }
     function apply() {
       document.getElementById('btn-en').className = L === 'en' ? 'on' : '';
       document.getElementById('btn-ar').className = L === 'ar' ? 'on' : '';
       document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = T(el.getAttribute('data-i18n')); });
       document.querySelector('.sub').textContent = T('sub');
       refresh();
+    }
+    function reloadQrs(btn) {
+      if (!btn) btn = document.getElementById('btn-reload');
+      btn.disabled = true;
+      btn.textContent = '… Reloading';
+      fetch('/api/pair/reload', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          setTimeout(function () {
+            btn.disabled = false;
+            btn.innerHTML = '🔄 <span data-i18n="reload">' + T('reload') + '</span>';
+            refresh();
+          }, 3500);
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = '🔄 <span data-i18n="reload">' + T('reload') + '</span>';
+        });
     }
     function refresh() {
       fetch('/api/pair/status').then(function (r) { return r.json(); }).then(function (d) {
