@@ -682,6 +682,12 @@ async function main() {
   }
   console.log(`gateway: ${poolEntries.length ? `${readyEntries.length}/${poolEntries.length} pool line(s) ready` : 'single-session mode'} | cap ${DAILY_CAP}/day | ${HOST_SIDE} walk`);
 
+  // Engine 1: Trigger deterministic contact partitioning across all ready lines
+  try {
+    const { partitionOwnerContacts } = require('./contact-partitioner');
+    await partitionOwnerContacts().catch((err) => console.warn(`[outreach] partitioner notice: ${err.message}`));
+  } catch (_) {}
+
   // Fetch sheet
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(25000) });
