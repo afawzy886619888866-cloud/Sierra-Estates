@@ -264,6 +264,7 @@ async function initSession(sessionId) {
       disableSpins: true,
       headless: process.env.HEADLESS !== 'false',
       sessionDataPath: AUTH_BASE_DIR,
+      userDataDir: path.join(AUTH_BASE_DIR, `profile-${sessionId}`),
       ...(resolvedChrome ? { executablePath: resolvedChrome } : { useChrome: true }),
       killProcessOnBrowserClose: false,
       popup: false,
@@ -633,6 +634,106 @@ app.get('/api/sessions/:sessionId', (req, res) => {
     qrDataUrl: s.qrDataUrl,
     error: s.error
   });
+});
+
+/**
+ * GET /api/groups — Lists all active WhatsApp groups across all ready sessions
+ */
+app.get('/api/groups', async (req, res) => {
+  const readySessions = Array.from(sessions.values()).filter(s => s.status === 'READY' && s.client);
+  if (!readySessions.length) {
+    return res.json({ ok: false, message: 'No ready WhatsApp sessions available yet', groups: [] });
+  }
+  const allGroups = [];
+  for (const s of readySessions) {
+    try {
+      const chats = await s.client.getAllChats();
+      const groups = (chats || []).filter(c => c && (c.isGroup || String(c.id?._serialized || c.id || '').endsWith('@g.us'))).map(c => ({
+        sessionId: s.id,
+        id: c.id?._serialized || c.id,
+        name: c.name || c.formattedTitle || 'Unknown Group',
+        unreadCount: c.unreadCount || 0
+      }));
+      allGroups.push(...groups);
+    } catch (err) {
+      console.warn(`[${s.id}] Failed to list groups:`, err.message);
+    }
+  }
+  res.json({ ok: true, count: allGroups.length, groups: allGroups });
+});
+
+/**
+ * POST /api/scrape-named-groups — Scrapes target groups by name keywords across ready sessions
+ */
+app.post('/api/scrape-named-groups', async (req, res) => {
+  const queries = (req.body && Array.isArray(req.body.queries)) ? req.body.queries : ['data', 'داتا ايمان', 'ايمان'];
+  const limitPerGroup = Math.min(1000, Math.max(50, parseInt(req.body?.limit || '500', 10)));
+  const readySessions = Array.from(sessions.values()).filter(s => s.status === 'READY' && s.client);
+  if (!readySessions.length) {
+    return res.status(503).json({ ok: false, error: 'No ready WhatsApp sessions connected' });
+  }
+
+  const results = {
+    searchedQueries: queries,
+    matchedGroups: [],
+    totalMessagesScraped: 0,
+    unitsHarvested: 0
+  };
+
+  for (const s of readySessions) {
+    try {
+      const chats = await s.client.getAllChats();
+      const groups = (chats || []).filter(c => c && (c.isGroup || String(c.id?._serialized || c.id || '').endsWith('@g.us')));
+      for (const group of groups) {
+        const groupName = String(group.name || group.formattedTitle || '').trim();
+        const groupId = group.id?._serialized || group.id;
+        const lowerName = groupName.toLowerCase();
+        const matches = queries.some(q => lowerName.includes(String(q).toLowerCase()));
+        if (!matches) continue;
+
+        results.matchedGroups.push({ sessionId: s.id, groupId, groupName });
+        console.log(`[scrape] Found target group "${groupName}" (${groupId}) on session ${s.id}! Fetching messages...`);
+
+        try {
+          for (let step = 0; step < 5; step++) {
+            await s.client.loadEarlierMessages(groupId).catch(() => null);
+            await new Promise(r => setTimeout(r, 600));
+          }
+        } catch (_) {}
+
+        let msgs = [];
+        try {
+          if (typeof s.client.getAllMessagesInChat === 'function') {
+            msgs = await s.client.getAllMessagesInChat(groupId, true, true);
+          } else if (s.client.page) {
+            msgs = await s.client.page.evaluate(async (gid) => {
+              if (window.WAPI && typeof window.WAPI.getAllMessagesInChat === 'function') {
+                return await window.WAPI.getAllMessagesInChat(gid, true, true);
+              }
+              return [];
+            }, groupId);
+          }
+        } catch (mErr) {
+          console.warn(`[scrape] Error fetching messages for ${groupName}:`, mErr.message);
+        }
+
+        if (Array.isArray(msgs)) {
+          const slice = msgs.slice(-limitPerGroup);
+          results.totalMessagesScraped += slice.length;
+          for (const m of slice) {
+            try {
+              const harvested = await harvesterInstance.handleIncomingMessage(s.id, m);
+              if (harvested) results.unitsHarvested++;
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[${s.id}] Group scraping error:`, err.message);
+    }
+  }
+
+  res.json({ ok: true, results });
 });
 
 /**
