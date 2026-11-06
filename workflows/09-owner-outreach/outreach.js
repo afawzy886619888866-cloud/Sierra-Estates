@@ -117,6 +117,33 @@ async function writeSheetDate(phone, rawMobile, dateStr) {
   }
 }
 
+function appendOutreachSpreadsheet(cand, session, dateStr) {
+  try {
+    const csvPath = path.resolve(__dirname, '../../data/outreach_contacted_units.csv');
+    const dir = path.dirname(csvPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(csvPath)) {
+      fs.writeFileSync(csvPath, 'Code,Name,Phone,Location,Price,Bedrooms,DealType,ContactDate,Session,Status\n', 'utf8');
+    }
+    const clean = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
+    const row = [
+      clean(cand.code),
+      clean(cand.name),
+      clean(cand.phone),
+      clean(cand.location),
+      clean(cand.price),
+      clean(cand.bedrooms),
+      clean(cand.dealType),
+      clean(dateStr),
+      clean(session),
+      clean('تم التواصل')
+    ].join(',') + '\n';
+    fs.appendFileSync(csvPath, row, 'utf8');
+  } catch (e) {
+    console.warn(`[outreach] local sheet export failed: ${e.message}`);
+  }
+}
+
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
 const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
 
@@ -188,7 +215,7 @@ function auditContact(entry) {
     });
 }
 
-const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10);
+const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '100', 10);
 // Pool-aware: recomputed in main() as per-line × pool unless the operator set
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
 const CAP_EXPLICIT = process.env.WF_OWNER_CONTACT_DAILY_CAP != null && process.env.WF_OWNER_CONTACT_DAILY_CAP !== '';
@@ -974,6 +1001,7 @@ async function main() {
             void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
             console.log(`sent [${lane.direction}][#${idx}] → ${toLocalPhone(phone)} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
             await writeSheetDate(phone, cand.rawMobile, formatCairoDate(), cand.code, 'تم التواصل');
+            appendOutreachSpreadsheet(cand, usedSession, formatCairoDate());
             saveCheckpoint(checkpoint);
             // Update listing availability and status in Supabase if code present
             if (cand.code) {

@@ -28,16 +28,16 @@ import { logger } from '@/lib/logger';
  * Timestamp/FieldValue hops are gone.
  */
 
-// Daily outreach dispatch window: 12:00–20:00 Africa/Cairo (12:00 PM to 8:00 PM).
-// Drains 40 contacts every hour across the 8-hour window (320 owners max per day).
+// Daily outreach dispatch window: 09:00–22:00 Africa/Cairo (9:00 AM to 10:00 PM).
+// Drains up to 100 contacts per number per day across active window with strict dedupe.
 export const DEFAULT_OUTREACH_CONFIG: WhatsAppOutreachConfig = {
-  operatingHourStart: 12,
-  operatingHourEnd: 20,
+  operatingHourStart: 9,
+  operatingHourEnd: 22,
   timezone: 'Africa/Cairo',
-  batchSizePerNumber: 40,
-  windowMinutes: 60,
-  dailyCapPerNumber: 80,
-  dailyCapTotal: 320,
+  batchSizePerNumber: 25,
+  windowMinutes: 30,
+  dailyCapPerNumber: 100,
+  dailyCapTotal: 400,
 };
 
 /**
