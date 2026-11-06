@@ -55,8 +55,16 @@
   gap: 6px;
   overflow-x: auto;
   max-width: 100%;
-  padding: 2px 0;
-  scrollbar-width: thin;
+  padding: 4px 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+}
+
+.zoneFilters::-webkit-scrollbar {
+  display: none;
 }
 
 .zoneLabel {
