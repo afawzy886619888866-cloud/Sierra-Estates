@@ -80,6 +80,83 @@ export async function POST(req: NextRequest) {
 
       await handleTelegramCommand(command, args, chatId);
     } else {
+      // 4. OpenClaw Easy Listing Ingestion
+      // Check if message is a property listing sent by agents, owners, or bots
+      const isListingText = (
+        /للبيع|للايجار|شقة|فيلا|دوبلكس|تاون|مساحة|مطلوب|سعر|غرف|حمام|كمبوند|for sale|for rent|apartment|villa|sqm|bedroom|compound/i.test(text) &&
+        (text.length > 20 || /\d+/.test(text))
+      );
+
+      if (isListingText) {
+        try {
+          const { parseEasyListing } = await import('@/lib/server/easy-listing');
+          const easyResult = parseEasyListing({
+            role: 'AGENT',
+            name: safeSender,
+            details: text,
+          });
+
+          const details = easyResult.property_details;
+          const unitCode = easyResult.internal_code || `SE-TG-${Date.now().toString(36).toUpperCase()}`;
+
+          // Persist unit to public.listings in review mode
+          try {
+            await insertRecord('listings', {
+              id: unitCode,
+              compound: details.compound || 'Unspecified Compound',
+              locationArea: details.region || 'New Cairo',
+              propertyType: (details.unit_type || 'Apartment').toLowerCase(),
+              offerType: details.deal_type || 'sale',
+              bedrooms: details.bedrooms ?? null,
+              bathrooms: details.bathrooms ?? null,
+              areaSqm: details.area_m2 ?? null,
+              price: details.price_egp ?? 0,
+              priceCurrency: 'EGP',
+              status: 'review',
+              syncSource: 'telegram_intake',
+              description: text.slice(0, 1000),
+              agentName: safeSender,
+              rawData: {
+                telegramChatId: safeChatId,
+                telegramSender: safeSender,
+                receivedAt: new Date().toISOString(),
+                easyListing: {
+                  sierraCode: easyResult.sierra_code,
+                  bmmCode: easyResult.bmm_code,
+                  floorLabel: easyResult.floor_label,
+                  routingDestination: easyResult.routing_destination,
+                  warnings: easyResult.parse_warnings,
+                },
+              },
+            });
+          } catch (dbErr: any) {
+            logger.warn(`[telegram-easy-listing] DB insert note: ${dbErr?.message}`);
+          }
+
+          const replyLines = [
+            `✅ <b>تم استلام وتسجيل الوحدة في Easy Listing بنجاح!</b>`,
+            `Unit successfully registered in Easy Listing (Pending Review)`,
+            ``,
+            `🏷️ <b>الكود / Code:</b> <code>${unitCode}</code>`,
+            details.compound ? `📍 <b>الكمبوند / Compound:</b> ${details.compound}` : null,
+            details.unit_type ? `🏢 <b>النوع / Type:</b> ${details.unit_type}` : null,
+            details.area_m2 ? `📐 <b>المساحة / Area:</b> ${details.area_m2} م²` : null,
+            details.bedrooms != null ? `🛏️ <b>الغرف / Bedrooms:</b> ${details.bedrooms}` : null,
+            details.price_egp ? `💰 <b>السعر / Price:</b> ${Number(details.price_egp).toLocaleString()} EGP` : null,
+            `👤 <b>الراسل / Agent:</b> ${safeSender}`,
+            `📋 <b>الحالة / Status:</b> قيد المراجعة (Pending Review)`,
+            ``,
+            `🔗 <i>مراجعة واعتماد الوحدة من لوحة التحكم:</i>`,
+            `https://sierraestates.net/admin/properties`,
+          ].filter(Boolean);
+
+          await sendTelegramMessage(replyLines.join('\n'), chatId);
+          return NextResponse.json({ status: 'success', action: 'easy_listing_registered', code: unitCode });
+        } catch (easyErr: any) {
+          logger.warn(`[telegram-easy-listing] Parse failed: ${easyErr?.message}`);
+        }
+      }
+
       // Natural language / query routing
       const lower = text.toLowerCase();
       if (lower.includes('lead') || lower.includes('client') || lower.includes('عميل')) {
@@ -90,7 +167,7 @@ export async function POST(req: NextRequest) {
         await handleTelegramCommand('/maintenance', [], chatId);
       } else {
         await sendTelegramMessage(
-          `Hello ${sender}. Send <code>/help</code> to see available command deck actions.`,
+          `Hello ${sender}. Send <code>/help</code> for available commands, or send property details to register in Easy Listing.`,
           chatId
         );
       }

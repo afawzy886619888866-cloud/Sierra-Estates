@@ -38,7 +38,12 @@ const DICT = {
     navPairing: 'QR Pairing',
     navComposer: 'Message Composer',
     navOutbox: 'Outbox & Queue',
+    navDailyReport: 'Daily Outreach Report',
+    navLiveScreen: 'Live Screen Monitor',
     navColdOutreach: 'Cold Outreach Queue',
+    navCrm: 'CRM Pipeline',
+    navInventory: 'Properties Inventory',
+    navBots: 'AI Agents Workflow',
     navApps: 'Applications',
     navBackAdmin: 'Back to Admin',
     navSectionConsole: 'Console',
@@ -173,6 +178,12 @@ const DICT = {
     navPairing: 'Appairage QR',
     navComposer: 'Composeur',
     navOutbox: 'Boîte d’envoi',
+    navDailyReport: 'Rapport quotidien',
+    navLiveScreen: 'Écran en direct',
+    navColdOutreach: 'File prospection froide',
+    navCrm: 'Pipeline CRM',
+    navInventory: 'Inventaire',
+    navBots: 'Agents IA',
     navApps: 'Applications',
     navBackAdmin: 'Retour à l’admin',
     navSectionConsole: 'Console',
@@ -283,6 +294,12 @@ const DICT = {
     navPairing: 'ربط QR',
     navComposer: 'محرر الرسائل',
     navOutbox: 'الصادر والطابور',
+    navDailyReport: 'تقرير التواصل اليومي',
+    navLiveScreen: 'شاشة الواتساب الحية',
+    navColdOutreach: 'طابور التواصل البارد',
+    navCrm: 'إدارة العملاء CRM',
+    navInventory: 'مخزون العقارات',
+    navBots: 'سير عمل وكلاء الذكاء الاصطناعي',
     navApps: 'التطبيقات',
     navBackAdmin: 'العودة للإدارة',
     navSectionConsole: 'الوحدة',
@@ -444,7 +461,7 @@ const LANGS: { key: Lang; label: string; flag: string }[] = [
   { key: 'ar', label: 'العربية', flag: '🇸🇦' },
 ];
 
-const SECTIONS = ['overview', 'lines', 'pairing', 'composer', 'outbox'] as const;
+const SECTIONS = ['overview', 'lines', 'pairing', 'composer', 'outbox', 'dailyreport', 'livescreen'] as const;
 type Section = (typeof SECTIONS)[number];
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -561,8 +578,38 @@ export default function WhatsAppCommandCenter() {
   const prevSentRef = useRef<number | null>(null);
   const chartCanvas = useRef<HTMLCanvasElement | null>(null);
 
+  const [dailyReport, setDailyReport] = useState<any | null>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [activeLiveScreenLine, setActiveLiveScreenLine] = useState('line-2');
+  const [liveScreenAutoRefresh, setLiveScreenAutoRefresh] = useState(true);
+  const [liveScreenTs, setLiveScreenTs] = useState<number>(Date.now());
+
   const t = DICT[lang];
   const isAr = lang === 'ar';
+
+  const fetchDailyReport = useCallback(async () => {
+    setLoadingReport(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp/owner-outreach?action=report');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.report) setDailyReport(json.report);
+      }
+    } catch (_) {}
+    setLoadingReport(false);
+  }, []);
+
+  useEffect(() => {
+    fetchDailyReport();
+  }, [fetchDailyReport]);
+
+  useEffect(() => {
+    if (!liveScreenAutoRefresh || section !== 'livescreen') return;
+    const interval = setInterval(() => {
+      setLiveScreenTs(Date.now());
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [liveScreenAutoRefresh, section]);
 
   const showToast = useCallback((text: string, kind: 'ok' | 'bad' | 'info' = 'info') => {
     setToast({ text, kind });
@@ -941,8 +988,23 @@ export default function WhatsAppCommandCenter() {
               <span className="iq-nav-ic">📤</span><span>{t.navOutbox}</span>
               {queued > 0 && <span className="iq-nav-badge is-bad">{queued}</span>}
             </button>
+            <button className={`iq-nav-item ${section === 'dailyreport' ? 'is-active' : ''}`} onClick={() => goSection('dailyreport')}>
+              <span className="iq-nav-ic">📈</span><span>{t.navDailyReport}</span>
+            </button>
+            <button className={`iq-nav-item ${section === 'livescreen' ? 'is-active' : ''}`} onClick={() => goSection('livescreen')}>
+              <span className="iq-nav-ic">📺</span><span>{t.navLiveScreen}</span>
+            </button>
 
             <div className="iq-nav-label">{t.navSectionSwitch}</div>
+            <button className="iq-nav-item" onClick={() => window.open('/admin/pipeline', '_self')}>
+              <span className="iq-nav-ic">📊</span><span>{t.navCrm}</span>
+            </button>
+            <button className="iq-nav-item" onClick={() => window.open('/admin/properties', '_self')}>
+              <span className="iq-nav-ic">🏢</span><span>{t.navInventory}</span>
+            </button>
+            <button className="iq-nav-item" onClick={() => window.open('/admin/bots', '_self')}>
+              <span className="iq-nav-ic">🤖</span><span>{t.navBots}</span>
+            </button>
             <button className="iq-nav-item" onClick={() => window.open('/admin/apps', '_self')}>
               <span className="iq-nav-ic">🧩</span><span>{t.navApps}</span>
             </button>
@@ -1392,6 +1454,190 @@ export default function WhatsAppCommandCenter() {
                       <button className="iq-btn iq-btn-green" style={{ width: '100%' }} onClick={() => window.open('https://wa.me/201092048333', '_blank')}>
                         <span style={{ fontSize: 15 }}>💬</span> {t.contactBtn}
                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ══ ROW 5 — Daily Outreach Intelligence Report ══ */}
+            <section id="iq-sec-dailyreport" style={{ marginTop: 20 }}>
+              <div className="iq-panel">
+                <div className="iq-panel-inner">
+                  <div className="iq-panel-hd">
+                    <span className="iq-panel-ic">📈</span>
+                    <span className="iq-panel-title">{isAr ? 'تقرير التواصل والردود اليومي' : 'Daily Outreach & Response Intelligence'}</span>
+                    <span className="iq-panel-meta">
+                      <span className="iq-chip gold">{dailyReport?.date || 'Today'}</span>
+                      <button className="iq-btn iq-btn-ghost iq-btn-sm" onClick={fetchDailyReport} disabled={loadingReport}>
+                        {loadingReport ? '…' : '↻ ' + (isAr ? 'تحديث' : 'Refresh')}
+                      </button>
+                      <button className="iq-btn iq-btn-ghost iq-btn-sm" onClick={() => window.open('/api/admin/whatsapp/owner-outreach?action=report', '_blank')}>
+                        📥 {isAr ? 'عرض JSON' : 'Raw JSON'}
+                      </button>
+                    </span>
+                  </div>
+                  <div className="iq-panel-bd">
+                    {/* KPI Metric Cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 18 }}>
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--iq-edge)', borderRadius: 8, padding: '12px 14px' }}>
+                        <div style={{ fontSize: 10, color: 'var(--iq-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {isAr ? 'المرسل اليوم / الهدف' : 'Sent Today / Target'}
+                        </div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--iq-text)', marginTop: 4 }}>
+                          {dailyReport?.totalSentToday || dailyReport?.totalSent || 0} <span style={{ fontSize: 14, color: 'var(--iq-dim)', fontWeight: 400 }}>/ {dailyReport?.targetDaily || 400}</span>
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--iq-gold)', marginTop: 4 }}>
+                          {dailyReport?.totalHistorical || 527} {isAr ? 'إجمالي الملاك المتواصل معهم تاريخياً' : 'historical owners contacted'}
+                        </div>
+                      </div>
+
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--iq-edge)', borderRadius: 8, padding: '12px 14px' }}>
+                        <div style={{ fontSize: 10, color: 'var(--iq-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {isAr ? 'إجمالي الردود المستلمة' : 'Responses Received'}
+                        </div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--iq-cyan)', marginTop: 4 }}>
+                          {dailyReport?.totalAnswered || 0}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--iq-dim)', marginTop: 4 }}>
+                          {isAr ? 'ردود مباشرة من الملاك على الواتساب' : 'Direct owner WhatsApp replies'}
+                        </div>
+                      </div>
+
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--iq-edge)', borderRadius: 8, padding: '12px 14px' }}>
+                        <div style={{ fontSize: 10, color: 'var(--iq-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {isAr ? 'نسبة الاستجابة والتفاعل' : 'Response Rate'}
+                        </div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--iq-ok)', marginTop: 4 }}>
+                          {dailyReport?.responseRate || '0.0%'}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--iq-dim)', marginTop: 4 }}>
+                          {isAr ? 'معدل التفاعل الفعلي' : 'Active engagement conversion'}
+                        </div>
+                      </div>
+
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--iq-edge)', borderRadius: 8, padding: '12px 14px' }}>
+                        <div style={{ fontSize: 10, color: 'var(--iq-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                          {isAr ? 'تصنيف الردود' : 'Sentiment Breakdown'}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          <span className="iq-chip ok" title={isAr ? 'متاحة' : 'Available'}>🟢 {dailyReport?.breakdown?.available || 0}</span>
+                          <span className="iq-chip cyan" title={isAr ? 'تفاوض' : 'Negotiating'}>🟡 {dailyReport?.breakdown?.negotiating || 0}</span>
+                          <span className="iq-chip bad" title={isAr ? 'تم البيع أو الإيجار' : 'Unavailable'}>🔴 {dailyReport?.breakdown?.unavailable || 0}</span>
+                          <span className="iq-chip warn" title={isAr ? 'إلغاء' : 'Opt-out'}>⚪ {dailyReport?.breakdown?.opt_out || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Respondent Owners Table */}
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--iq-text)', marginBottom: 8 }}>
+                        {isAr ? 'تفاصيل الملاك الذين ردوا على الرسائل' : 'Respondent Owners & Verified Unit Details'}
+                      </div>
+                      {(!dailyReport?.respondents || dailyReport.respondents.length === 0) ? (
+                        <div style={{ fontSize: 11, color: 'var(--iq-dim)', textAlign: 'center', padding: '24px 0', background: 'rgba(0,0,0,0.15)', borderRadius: 8 }}>
+                          {isAr ? 'لا توجد ردود جديدة مسجلة اليوم حتى الآن. الإرسال مستمر بحسب المواعيد الرسمية (09:00 - 22:00 بتوقيت القاهرة).' : 'No new owner responses recorded yet today. Outreach is running in scheduled active hours (09:00 - 22:00 Cairo time with 100 msgs/line cap).'}
+                        </div>
+                      ) : (
+                        <div className="iq-table-wrap">
+                          <table className="iq-table">
+                            <thead>
+                              <tr>
+                                <th>{isAr ? 'الهاتف' : 'Phone'}</th>
+                                <th>{isAr ? 'الكمبوند' : 'Compound'}</th>
+                                <th>{isAr ? 'الكود' : 'Unit Code'}</th>
+                                <th>{isAr ? 'السعر' : 'Price'}</th>
+                                <th>{isAr ? 'التصنيف' : 'Classification'}</th>
+                                <th>{isAr ? 'نص الرد' : 'Reply Message'}</th>
+                                <th>{isAr ? 'التوقيت' : 'Time'}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {dailyReport.respondents.map((r: any, idx: number) => {
+                                const catCls = r.category === 'available' ? 'ok' : r.category === 'negotiating' ? 'cyan' : r.category === 'unavailable' ? 'bad' : 'warn';
+                                return (
+                                  <tr key={idx}>
+                                    <td className="iq-mono">{fmtPhone(r.phone)}</td>
+                                    <td>{r.compound || '—'}</td>
+                                    <td className="iq-mono">{r.code || '—'}</td>
+                                    <td className="iq-mono">{r.price ? `${Number(r.price).toLocaleString()} EGP` : '—'}</td>
+                                    <td><span className={`iq-chip ${catCls}`}>{r.replyLabel || r.category}</span></td>
+                                    <td style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.replyText || '—'}</td>
+                                    <td className="iq-mono" style={{ fontSize: 10 }}>{r.replyTime ? new Date(r.replyTime).toLocaleTimeString() : '—'}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ══ ROW 6 — Live WhatsApp Screen Monitor ══ */}
+            <section id="iq-sec-livescreen" style={{ marginTop: 20 }}>
+              <div className="iq-panel">
+                <div className="iq-panel-inner">
+                  <div className="iq-panel-hd">
+                    <span className="iq-panel-ic">📺</span>
+                    <span className="iq-panel-title">{isAr ? 'شاشة الواتساب الحية — متابعة الإرسال المباشر' : 'Live Screen Monitor — Real-Time Visual Stream'}</span>
+                    <span className="iq-panel-meta">
+                      {LINE_IDS.slice(0, 4).map((lid) => {
+                        const ls = byId.get(lid);
+                        const isReady = statusKeyOf(ls?.status) === 'ready';
+                        return (
+                          <button
+                            key={lid}
+                            className={`iq-btn ${activeLiveScreenLine === lid ? 'iq-btn-gold' : 'iq-btn-ghost'} iq-btn-sm`}
+                            onClick={() => { setActiveLiveScreenLine(lid); setLiveScreenTs(Date.now()); }}
+                          >
+                            {lid} {isReady ? '✓' : ''}
+                          </button>
+                        );
+                      })}
+                      <button
+                        className={`iq-btn ${liveScreenAutoRefresh ? 'iq-btn-cyan' : 'iq-btn-ghost'} iq-btn-sm`}
+                        onClick={() => setLiveScreenAutoRefresh(!liveScreenAutoRefresh)}
+                      >
+                        {liveScreenAutoRefresh ? '⏸ ' + (isAr ? 'إيقاف البث' : 'Pause Stream') : '▶ ' + (isAr ? 'تشغيل البث (2ث)' : 'Auto-refresh (2s)')}
+                      </button>
+                      <button className="iq-btn iq-btn-ghost iq-btn-sm" onClick={() => setLiveScreenTs(Date.now())}>
+                        📸 {isAr ? 'التقاط الآن' : 'Capture Now'}
+                      </button>
+                    </span>
+                  </div>
+                  <div className="iq-panel-bd">
+                    <div style={{ textAlign: 'center', background: '#070b19', border: '1px solid var(--iq-edge)', borderRadius: 10, padding: 12, minHeight: 420 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, padding: '0 6px' }}>
+                        <span style={{ fontSize: 11, color: 'var(--iq-gold)', fontFamily: 'Consolas, monospace', fontWeight: 700 }}>
+                          SIM LINE: {activeLiveScreenLine.toUpperCase()} ({byId.get(activeLiveScreenLine)?.phone ? `+${byId.get(activeLiveScreenLine)?.phone}` : (byId.get(activeLiveScreenLine)?.status || 'ACTIVE')})
+                        </span>
+                        <span style={{ fontSize: 10, color: 'var(--iq-dim)', fontFamily: 'Consolas, monospace' }}>
+                          {isAr ? 'تحديث تلقائي كل ثانيتين' : 'Auto-refreshed stream'} · {new Date(liveScreenTs).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        key={`${activeLiveScreenLine}-${liveScreenTs}`}
+                        src={`/api/admin/whatsapp/screen?line=${activeLiveScreenLine}&ts=${liveScreenTs}`}
+                        alt="WhatsApp Live Screen"
+                        style={{
+                          width: '100%',
+                          maxHeight: 580,
+                          objectFit: 'contain',
+                          borderRadius: 8,
+                          border: '1px solid rgba(148,163,184,0.15)',
+                          boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+                        }}
+                      />
+                      <div style={{ fontSize: 10, color: 'var(--iq-dim)', marginTop: 10, textAlign: 'center' }}>
+                        {isAr
+                          ? 'بث مباشر لشاشة واتساب ويب قيد التشغيل. عند إرسال الرسائل للملاك ستظهر المحادثات ومؤشر الكتابة والإرسال هنا فورياً.'
+                          : 'Live visual stream of the active Chromium session. When automated outreach is dispatched, typing indicators and message bubbles appear here live in real time.'}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -450,4 +450,103 @@ export class OwnerOutreachService {
       eligibleInventoryCount: inventory.length,
     };
   }
+
+  /**
+   * Daily Outreach & Response Intelligence Report
+   * Reads contacted owners from data/outreach_contacted_units.csv and
+   * inbound responses from data/outreach_respondent_owners.csv.
+   */
+  static async getDailyReport(targetDate?: string) {
+    const cairoDate = targetDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(new Date());
+
+    const rootCandidates = [
+      path.resolve(process.cwd(), '..', '..'),
+      path.resolve(process.cwd(), '..'),
+      process.cwd(),
+      'h:/Sierra Estates',
+      'H:/Sierra Estates'
+    ];
+
+    let contactedCsvPath: string | null = null;
+    let respondentsCsvPath: string | null = null;
+
+    for (const r of rootCandidates) {
+      const c = path.join(r, 'data', 'outreach_contacted_units.csv');
+      if (!contactedCsvPath && fs.existsSync(c)) contactedCsvPath = c;
+
+      const resp = path.join(r, 'data', 'outreach_respondent_owners.csv');
+      if (!respondentsCsvPath && fs.existsSync(resp)) respondentsCsvPath = resp;
+    }
+
+    const contactedMap = new Map<string, any>();
+    let totalHistorical = 0;
+    let todayContactedCount = 0;
+
+    if (contactedCsvPath && fs.existsSync(contactedCsvPath)) {
+      try {
+        const raw = fs.readFileSync(contactedCsvPath, 'utf8');
+        const lines = raw.split('\n').filter(Boolean);
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',').map((s) => s.replace(/^"|"$/g, '').trim());
+          if (parts.length >= 8) {
+            const [code, name, rawPhone, location, price, bedrooms, dealType, contactDate, session] = parts;
+            const cleanPhone = String(rawPhone).replace(/\D/g, '').replace(/^00/, '').replace(/^0/, '20');
+            contactedMap.set(cleanPhone, {
+              code, name, phone: cleanPhone, location, price, bedrooms, dealType, contactDate, session,
+            });
+            totalHistorical++;
+            if (contactDate && (contactDate.includes(cairoDate) || contactDate.includes(cairoDate.split('-').reverse().join('/')))) {
+              todayContactedCount++;
+            }
+          }
+        }
+      } catch (err: any) {
+        logger.warn(`[OwnerOutreachService] Failed reading contacted CSV: ${err.message}`);
+      }
+    }
+
+    const respondents: any[] = [];
+    if (respondentsCsvPath && fs.existsSync(respondentsCsvPath)) {
+      try {
+        const raw = fs.readFileSync(respondentsCsvPath, 'utf8');
+        const lines = raw.split('\n').filter(Boolean);
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',').map((s) => s.replace(/^"|"$/g, '').trim());
+          if (parts.length >= 8) {
+            const [code, ownerName, phone, compound, price, bedrooms, dealType, category, replyLabel, replyText, replyTime] = parts;
+            respondents.push({
+              code, ownerName, phone, compound, price, bedrooms, dealType, category, replyLabel, replyText, replyTime,
+            });
+          }
+        }
+      } catch (err: any) {
+        logger.warn(`[OwnerOutreachService] Failed reading respondents CSV: ${err.message}`);
+      }
+    }
+
+    const totalSent = todayContactedCount > 0 ? todayContactedCount : (totalHistorical > 0 ? totalHistorical : 0);
+    const totalAnswered = respondents.length;
+    const responseRate = totalSent > 0 ? ((totalAnswered / totalSent) * 100).toFixed(1) + '%' : '0.0%';
+
+    const breakdown = {
+      available: respondents.filter((r) => r.category === 'available').length,
+      unavailable: respondents.filter((r) => r.category === 'unavailable').length,
+      negotiating: respondents.filter((r) => r.category === 'negotiating').length,
+      opt_out: respondents.filter((r) => r.category === 'opt_out').length,
+      general_reply: respondents.filter((r) => !['available', 'unavailable', 'negotiating', 'opt_out'].includes(r.category)).length,
+    };
+
+    return {
+      date: cairoDate,
+      totalHistorical,
+      totalSentToday: todayContactedCount,
+      totalSent,
+      targetDaily: 400,
+      totalAnswered,
+      responseRate,
+      breakdown,
+      respondents,
+      contactedCount: contactedMap.size,
+    };
+  }
 }

@@ -102,6 +102,58 @@ function stateWrite(file, obj) {
   } catch (e) { log(`state write failed (${path.basename(file)}): ${e.message}`); }
 }
 
+let supabaseDirect = null;
+function getSupabaseClient() {
+  if (!supabaseDirect && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
+      supabaseDirect = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+    } catch (_) {}
+  }
+  return supabaseDirect;
+}
+
+async function insertDirectToSupabase(listing, text, agentName, ownerPhones, photoFileIds) {
+  const sb = getSupabaseClient();
+  if (!sb) return false;
+  try {
+    const { error } = await sb.from('listings').upsert({
+      id: listing.code,
+      compound: listing.compoundCanonical || listing.compound || 'Unspecified Compound',
+      location_area: listing.district || 'New Cairo',
+      property_type: (listing.propertyType || 'apartment').toLowerCase(),
+      offer_type: listing.listingType === 'rent' ? 'rent' : 'sale',
+      bedrooms: listing.bedrooms != null ? Number(listing.bedrooms) : null,
+      bathrooms: listing.bathrooms != null ? Number(listing.bathrooms) : null,
+      area_sqm: listing.areaSqm != null ? Number(listing.areaSqm) : null,
+      price: listing.price ? Number(listing.price.amount) : 0,
+      price_currency: 'EGP',
+      status: 'review',
+      sync_source: 'telegram_intake',
+      description: String(text || '').slice(0, 1000),
+      agent_name: agentName,
+      raw_data: {
+        agent: agentName,
+        photos: photoFileIds,
+        ownerPhones,
+        receivedAt: new Date().toISOString()
+      }
+    }, { onConflict: 'id' });
+    if (error) {
+      log(`direct supabase upsert note: ${error.message}`);
+      return false;
+    }
+    log(`direct supabase upsert ok for ${listing.code}`);
+    return true;
+  } catch (err) {
+    log(`direct supabase upsert exception: ${err.message}`);
+    return false;
+  }
+}
+
 // ── startup validation ─────────────────────────────────────────────────────
 // (moved into validateStartup() above so importing the module in tests
 //  never terminates the runner)
@@ -414,6 +466,8 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     ledgerRecord(hash, code);
     log(`sheet append failed — ${code} spooled (${e.message})`);
     spooled = true;
+    // Direct Supabase fallback: unit enters review mode immediately even if Google Sheets is offline
+    await insertDirectToSupabase(listing, text, agentName, ownerPhones, photoFileIds);
     await tg.sendMessage(chatKey, render.renderSpooled(code),
       replyToMessageId ? { reply_to_message_id: replyToMessageId } : {},
     ).catch(() => {});
@@ -442,9 +496,8 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     } catch (e) { log(`photo ${i + 1} archive failed for ${code}: ${e.message}`); }
   }
 
-  // 8. Inventory: run workflow 05 unit-adder inline so the PENDING row
-  //    becomes a Supabase listing immediately (non-fatal on failure — the
-  //    cron lane retries it anyway).
+  // 8. Inventory: run direct Supabase upsert AND workflow 05 unit-adder inline
+  await insertDirectToSupabase(listing, text, agentName, ownerPhones, photoFileIds);
   if (RUN_UNIT_ADDER && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     runUnitAdder().catch((e) => log(`unit-adder inline run failed: ${e.message}`));
   }

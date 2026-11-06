@@ -299,9 +299,13 @@ async function initSession(sessionId) {
         '--disable-gpu',
         '--enable-local-storage',
         '--unlimited-storage',
-        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=CalculateNativeWinOcclusion,IsolateOrigins,site-per-process',
         '--disable-site-isolation-trials',
-        '--allow-running-insecure-content'
+        '--allow-running-insecure-content',
+        '--keep-alive-for-test'
       ],
       qrCallback: async (qrCode, asciiQR, urlCode) => {
         s.status = 'AWAITING_QR';
@@ -358,11 +362,24 @@ async function initSession(sessionId) {
     s.lastActive = new Date().toISOString();
     console.log(`[${sessionId}] Connected successfully! Phone: +${s.phone || 'unknown'}`);
 
-    // Listen for state changes
+    // Listen for state changes with auto-recovery for mobile sleep / timeout
     client.onStateChanged((state) => {
       console.log(`[${sessionId}] State changed: ${state}`);
-      if (state === 'CONFLICT' || state === 'UNLAUNCHED') {
+      if (state === 'CONFLICT' || state === 'UNLAUNCHED' || state === 'DISCONNECTED' || state === 'TIMEOUT') {
         s.status = 'DISCONNECTED';
+        // Auto-reconnect if line was previously initialized
+        setTimeout(async () => {
+          if (s.status === 'DISCONNECTED' && s.client) {
+            console.log(`[${sessionId}] Attempting automatic connection restore from state: ${state}...`);
+            try {
+              if (typeof s.client.refresh === 'function') {
+                await s.client.refresh();
+              }
+            } catch (rErr) {
+              console.warn(`[${sessionId}] Auto-restore attempt error:`, rErr.message);
+            }
+          }
+        }, 4000);
       } else if (state === 'CONNECTED') {
         s.status = 'READY';
         s.lastActive = new Date().toISOString();
@@ -910,6 +927,139 @@ app.get('/api/pair/qr/:sessionId.png', (req, res) => {
   return res.status(404).send('No active QR for this line');
 });
 
+app.get('/api/sessions/:sessionId/debug-keys', (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s || !s.client) return res.json({ error: 'No client' });
+  const clientKeys = s.client._client ? Object.keys(s.client._client) : [];
+  const clientProto = s.client._client ? Object.getOwnPropertyNames(Object.getPrototypeOf(s.client._client)) : [];
+  const transportKeys = s.client._transport ? Object.keys(s.client._transport) : [];
+  res.json({
+    clientKeys,
+    clientProto,
+    transportKeys,
+    hasPageOnUnderlying: Boolean(s.client._client && (s.client._client.page || s.client._client._page || s.client._client.pupPage))
+  });
+});
+
+/**
+ * Capture real-time visual screenshot from Puppeteer / WhatsApp Web client
+ */
+async function captureSessionScreenshot(s) {
+  if (!s || !s.client) return null;
+  try {
+    // 1. OpenWA transport page (PuppeteerPage instance)
+    const transportPage = s.client._transport?.page;
+    if (transportPage && typeof transportPage.screenshot === 'function') {
+      const u8 = await transportPage.screenshot({ type: 'png' });
+      return Buffer.from(u8);
+    }
+    // 2. Underlying Puppeteer page on transportPage.page
+    if (transportPage?.page && typeof transportPage.page.screenshot === 'function') {
+      const buf = await transportPage.page.screenshot({ type: 'png' });
+      return Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    }
+    // 3. OpenWA core page
+    const corePage = s.client._client?.page || s.client._client?.transport?.page;
+    if (corePage && typeof corePage.screenshot === 'function') {
+      const u8 = await corePage.screenshot({ type: 'png' });
+      return Buffer.from(u8);
+    }
+    // 4. OpenWA native takeScreenshot fallback
+    if (typeof s.client.takeScreenshot === 'function') {
+      const raw = await s.client.takeScreenshot();
+      if (Buffer.isBuffer(raw)) return raw;
+      if (typeof raw === 'string') {
+        const base64Data = raw.replace(/^data:image\/\w+;base64,/, '');
+        return Buffer.from(base64Data, 'base64');
+      }
+    }
+    const page = s.client.page || s.client.pupPage || (s.client.driver && s.client.driver.page);
+    if (page && typeof page.screenshot === 'function') {
+      const buf = await page.screenshot({ type: 'png' });
+      return Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    }
+  } catch (err) {
+    console.warn(`[${s.id}] Screenshot capture failed:`, err.message);
+  }
+  return null;
+}
+
+/**
+ * GET /api/pair/screenshot/:sessionId.png — Public live screen view for mobile pairing portal
+ */
+app.get('/api/pair/screenshot/:sessionId.png', async (req, res) => {
+  const s = sessions.get(req.params.sessionId);
+  if (!s || !s.client) {
+    const statusText = s ? s.status : 'NOT_FOUND';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+      <rect width="640" height="400" fill="#0b1120"/>
+      <rect x="20" y="20" width="600" height="360" rx="12" fill="#131a2e" stroke="rgba(148,163,184,0.2)"/>
+      <text x="320" y="180" fill="#f0c040" font-family="Arial,sans-serif" font-weight="bold" font-size="16" text-anchor="middle">Line ${req.params.sessionId}</text>
+      <text x="320" y="210" fill="#8b96ad" font-family="Arial,sans-serif" font-size="13" text-anchor="middle">Status: ${statusText} — Screen inactive</text>
+      <text x="320" y="240" fill="#5d6880" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">Pair or activate line to view live WhatsApp chat stream</text>
+    </svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return res.send(svg);
+  }
+
+  const buf = await captureSessionScreenshot(s);
+  if (buf) {
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': buf.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    return res.end(buf);
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+    <rect width="640" height="400" fill="#0b1120"/>
+    <text x="320" y="200" fill="#8b96ad" font-family="Arial,sans-serif" font-size="14" text-anchor="middle">Line ${req.params.sessionId} is initializing screen capture...</text>
+  </svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  return res.send(svg);
+});
+
+/**
+ * GET /api/sessions/:sessionId/screenshot.png — Authenticated screen capture for admin console
+ */
+app.get('/api/sessions/:sessionId/screenshot.png', async (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s || !s.client) {
+    const statusText = s ? s.status : 'NOT_FOUND';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+      <rect width="640" height="400" fill="#0b1120"/>
+      <rect x="20" y="20" width="600" height="360" rx="12" fill="#131a2e" stroke="rgba(148,163,184,0.2)"/>
+      <text x="320" y="180" fill="#f0c040" font-family="Arial,sans-serif" font-weight="bold" font-size="16" text-anchor="middle">Line ${req.params.sessionId}</text>
+      <text x="320" y="210" fill="#8b96ad" font-family="Arial,sans-serif" font-size="13" text-anchor="middle">Status: ${statusText} — Screen inactive</text>
+      <text x="320" y="240" fill="#5d6880" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">Pair or activate line to view live WhatsApp chat stream</text>
+    </svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return res.send(svg);
+  }
+
+  const buf = await captureSessionScreenshot(s);
+  if (buf) {
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': buf.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    return res.end(buf);
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+    <rect width="640" height="400" fill="#0b1120"/>
+    <text x="320" y="200" fill="#8b96ad" font-family="Arial,sans-serif" font-size="14" text-anchor="middle">Screen capture in progress...</text>
+  </svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  return res.send(svg);
+});
+
 /**
  * POST /api/pair/reload — Restart lines that need a new QR code or are in error
  */
@@ -988,7 +1138,17 @@ function renderPairPortalHtml() {
         <img id="qr-${id}" alt="QR ${id}" style="display:none" />
         <div class="qrmsg" id="msg-${id}">…</div>
       </div>
-      <div class="hint" id="hint-${id}">—</div>
+      <div class="live-screen-wrap" id="live-screen-${id}" style="display:none; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:10px; color:var(--gold); font-weight:700;">📺 LIVE WHATSAPP SCREEN</span>
+          <span style="font-size:9px; color:var(--dim);" id="live-time-${id}"></span>
+        </div>
+        <img id="live-img-${id}" style="width:100%; border-radius:8px; border:1px solid var(--edge); background:#000;" alt="Live Screen" />
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div class="hint" id="hint-${id}">—</div>
+        <button class="live-btn" id="btn-live-${id}" onclick="toggleLive('${id}')" style="display:none; padding:4px 10px; font-size:10px; border-radius:6px; border:1px solid var(--edge); background:rgba(56,189,248,.12); color:#38bdf8; cursor:pointer; font-weight:600;">👁️ Live Screen</button>
+      </div>
     </div>`).join('');
 
   return `<!DOCTYPE html>
@@ -1033,6 +1193,11 @@ function renderPairPortalHtml() {
     .langbar button.reload-btn:hover {
       transform: translateY(-1px); box-shadow: 0 0 16px rgba(255,215,0,.45);
     }
+    .battery-banner {
+      max-width: 900px; margin: 12px auto 0; background: rgba(240,192,64,.08);
+      border: 1px solid rgba(240,192,64,.25); border-radius: 8px; padding: 8px 12px;
+      font-size: 11px; color: #f0c040; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
     .card {
       background: var(--card); border: 1px solid var(--edge); border-radius: 12px; padding: 13px;
@@ -1067,6 +1232,10 @@ function renderPairPortalHtml() {
       <button id="btn-ar" onclick="setLang('ar')">🇸🇦 ع</button>
       <button id="btn-reload" class="reload-btn" onclick="reloadQrs(this)">🔄 <span data-i18n="reload">Reload QR</span></button>
     </div>
+    <div class="battery-banner">
+      <span>🔋</span>
+      <span data-i18n="battery">Keep-Alive: On Android, set WhatsApp Battery to 'Unrestricted' in Phone Settings so connection never sleeps.</span>
+    </div>
   </header>
   <div class="grid">${cards}</div>
   <footer>Sierra Estates WhatsApp Gateway · pairing portal v1.0</footer>
@@ -1082,7 +1251,10 @@ function renderPairPortalHtml() {
         awaitMsg: 'Scan this code: WhatsApp › Linked Devices › Link a Device',
         startMsg: 'Waiting for the line to start…',
         hint: 'The QR renews every few seconds — keep the scanner open.',
-        reload: 'Reload QR'
+        reload: 'Reload QR',
+        liveBtn: 'Live Screen',
+        hideLive: 'Hide Screen',
+        battery: 'Keep-Alive: On Android, set WhatsApp Battery to "Unrestricted" in Phone Settings so connection never sleeps.'
       },
       ar: {
         t1: 'ربط', t2: 'امسح', t3: 'اتصل',
@@ -1092,7 +1264,10 @@ function renderPairPortalHtml() {
         awaitMsg: 'امسح هذا الكود: واتساب › الأجهزة المرتبطة › ربط جهاز',
         startMsg: 'بانتظار بدء الخط…',
         hint: 'يتجدد الكود كل ثوانٍ — أبقِ الماسح مفتوحًا.',
-        reload: 'تحديث الـ QR'
+        reload: 'تحديث الـ QR',
+        liveBtn: 'الشاشة الحية',
+        hideLive: 'إغلاق الشاشة',
+        battery: 'تنبيه: في هواتف أندرويد، اضبط بطارية واتساب على "غير مقيدة" (Unrestricted) لمنع انقطاع الاتصال عند قفل الشاشة.'
       }
     };
     function setLang(l) { L = l; apply(); }
@@ -1122,6 +1297,36 @@ function renderPairPortalHtml() {
           btn.innerHTML = '🔄 <span data-i18n="reload">' + T('reload') + '</span>';
         });
     }
+
+    var activeLiveLine = null;
+    var liveTimer = null;
+    function toggleLive(id) {
+      var wrap = document.getElementById('live-screen-' + id);
+      var btn = document.getElementById('btn-live-' + id);
+      if (!wrap) return;
+      if (wrap.style.display === 'flex') {
+        wrap.style.display = 'none';
+        btn.textContent = '👁️ ' + T('liveBtn');
+        if (activeLiveLine === id) { activeLiveLine = null; clearInterval(liveTimer); }
+      } else {
+        wrap.style.display = 'flex';
+        btn.textContent = '❌ ' + T('hideLive');
+        activeLiveLine = id;
+        updateLiveImg(id);
+        clearInterval(liveTimer);
+        liveTimer = setInterval(function() {
+          if (activeLiveLine) updateLiveImg(activeLiveLine);
+        }, 2500);
+      }
+    }
+    function updateLiveImg(id) {
+      var img = document.getElementById('live-img-' + id);
+      var time = document.getElementById('live-time-' + id);
+      if (!img) return;
+      img.src = '/api/pair/screenshot/' + encodeURIComponent(id) + '.png?ts=' + Date.now();
+      if (time) time.textContent = new Date().toLocaleTimeString();
+    }
+
     function refresh() {
       fetch('/api/pair/status').then(function (r) { return r.json(); }).then(function (d) {
         (d.lines || []).forEach(function (ln) {
@@ -1129,11 +1334,13 @@ function renderPairPortalHtml() {
           var img = document.getElementById('qr-' + ln.id);
           var msg = document.getElementById('msg-' + ln.id);
           var hint = document.getElementById('hint-' + ln.id);
+          var btnLive = document.getElementById('btn-live-' + ln.id);
           if (!st) return;
           if (ln.status === 'ready') {
             st.textContent = T('ready'); st.className = 'st st-ready';
             img.style.display = 'none'; msg.className = 'qrmsg';
             msg.textContent = '✓ ' + T('readyMsg'); hint.textContent = '';
+            if (btnLive) btnLive.style.display = 'block';
           } else if (ln.status === 'await_qr' && ln.hasQr) {
             st.textContent = T('await'); st.className = 'st st-await_qr pulse';
             msg.style.display = 'none';
@@ -1141,10 +1348,12 @@ function renderPairPortalHtml() {
             img.src = '/api/pair/qr/' + encodeURIComponent(ln.id) + '.png?ts=' + Date.now();
             img.className = 'pulse';
             hint.textContent = T('hint');
+            if (btnLive) btnLive.style.display = 'none';
           } else {
             st.textContent = T('starting'); st.className = 'st st-starting';
             img.style.display = 'none'; msg.className = 'qrmsg';
             msg.textContent = T('startMsg'); hint.textContent = '';
+            if (btnLive) btnLive.style.display = 'none';
           }
         });
       }).catch(function () {});
@@ -1890,6 +2099,33 @@ const server = app.listen(PORT, () => {
   // Pulse the app heartbeat while ≥1 line is READY (honest: no READY
   // lines ⇒ no pulses ⇒ /api/whatsapp/health honestly reports stale).
   appBridge.startHeartbeat(() => Array.from(sessions.values()).some((x) => x.status === 'READY'));
+
+  // Multi-Device keepalive ping: keeps WhatsApp sockets and background Chromium renderer active
+  setInterval(async () => {
+    for (const [id, s] of sessions.entries()) {
+      if (s.status === 'READY' && s.client) {
+        try {
+          let alive = true;
+          if (typeof s.client.isConnected === 'function') {
+            alive = await s.client.isConnected();
+          } else if (typeof s.client.getConnectionState === 'function') {
+            const st = await s.client.getConnectionState();
+            alive = (st === 'CONNECTED');
+          }
+          if (alive) {
+            s.lastActive = new Date().toISOString();
+          } else {
+            console.warn(`[${id}] Keepalive watchdog: socket is idle or disconnected. Triggering refresh...`);
+            if (typeof s.client.refresh === 'function') {
+              await s.client.refresh().catch(() => {});
+            }
+          }
+        } catch (pingErr) {
+          console.warn(`[${id}] Keepalive ping:`, pingErr.message);
+        }
+      }
+    }
+  }, 25000);
 
   startAllSessions();
 });
