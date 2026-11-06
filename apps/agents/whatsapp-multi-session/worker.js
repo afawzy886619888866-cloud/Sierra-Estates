@@ -688,6 +688,50 @@ app.get('/api/groups', async (req, res) => {
 /**
  * POST /api/scrape-named-groups — Scrapes target groups by name keywords across ready sessions
  */
+app.get('/api/debug-chat/:sessionId/:groupId', async (req, res) => {
+  const s = resolveSession(req.params.sessionId);
+  if (!s || !s.client) return res.json({ ok: false, error: 'no_client' });
+  try {
+    let msgs = [];
+    if (typeof s.client.getAllMessages === 'function') {
+      msgs = await s.client.getAllMessages(req.params.groupId).catch(e => ({ error: e.message }));
+    }
+    let evalTest = null;
+    if (typeof s.client.evaluate === 'function') {
+      evalTest = await s.client.evaluate(async (gid) => {
+        const store = window.Store;
+        const wapi = window.WAPI;
+        let chat = null;
+        if (store && store.Chat) {
+          if (typeof store.Chat.get === 'function') chat = store.Chat.get(gid);
+          if (!chat && store.Chat.models) chat = store.Chat.models.find(c => c && (c.id?._serialized === gid || c.id === gid));
+        }
+        let msgCount = 0;
+        let lastMsg = null;
+        if (chat) {
+          if (chat.msgs && chat.msgs.models) {
+            msgCount = chat.msgs.models.length;
+            if (msgCount > 0) {
+              const lm = chat.msgs.models[msgCount - 1];
+              lastMsg = { body: (lm.body || lm.caption || '').slice(0, 100), t: lm.t };
+            }
+          }
+        }
+        return {
+          hasChat: Boolean(chat),
+          chatTitle: chat ? (chat.name || chat.formattedTitle) : null,
+          msgCount,
+          lastMsg,
+          totalChatModels: store && store.Chat && store.Chat.models ? store.Chat.models.length : 0
+        };
+      }, req.params.groupId).catch(e => ({ error: e.message }));
+    }
+    res.json({ ok: true, msgsType: Array.isArray(msgs) ? `array(${msgs.length})` : typeof msgs, msgsSample: Array.isArray(msgs) ? msgs.slice(-2) : msgs, evalTest });
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
 app.post('/api/scrape-named-groups', async (req, res) => {
   const queries = (req.body && Array.isArray(req.body.queries)) ? req.body.queries : ['data', 'داتا ايمان', 'ايمان'];
   const limitPerGroup = Math.min(1000, Math.max(50, parseInt(req.body?.limit || '500', 10)));
@@ -718,23 +762,61 @@ app.post('/api/scrape-named-groups', async (req, res) => {
         console.log(`[scrape] Found target group "${groupName}" (${groupId}) on session ${s.id}! Fetching messages...`);
 
         try {
-          for (let step = 0; step < 5; step++) {
-            await s.client.loadEarlierMessages(groupId).catch(() => null);
-            await new Promise(r => setTimeout(r, 600));
+          if (typeof s.client.loadEarlierMessages === 'function') {
+            for (let step = 0; step < 5; step++) {
+              await s.client.loadEarlierMessages(groupId).catch(() => null);
+              await new Promise(r => setTimeout(r, 600));
+            }
           }
         } catch (_) {}
 
         let msgs = [];
         try {
-          if (typeof s.client.getAllMessagesInChat === 'function') {
-            msgs = await s.client.getAllMessagesInChat(groupId, true, true);
-          } else if (s.client.page) {
-            msgs = await s.client.page.evaluate(async (gid) => {
-              if (window.WAPI && typeof window.WAPI.getAllMessagesInChat === 'function') {
-                return await window.WAPI.getAllMessagesInChat(gid, true, true);
-              }
+          if (typeof s.client.getAllMessages === 'function') {
+            msgs = await s.client.getAllMessages(groupId).catch(() => []);
+          }
+          if ((!msgs || !msgs.length) && typeof s.client.evaluate === 'function') {
+            msgs = await s.client.evaluate(async (gid) => {
+              try {
+                if (window.WAPI && typeof window.WAPI.getAllMessagesInChat === 'function') {
+                  const m = await window.WAPI.getAllMessagesInChat(gid, true, true);
+                  if (m && m.length) return m;
+                }
+                const store = window.Store;
+                if (!store || !store.Chat) return [];
+                const chat = (typeof store.Chat.get === 'function' ? store.Chat.get(gid) : null) ||
+                             (store.Chat.models ? store.Chat.models.find(c => c && (c.id?._serialized === gid || c.id === gid)) : null);
+                if (chat) {
+                  if (store.Cmd && typeof store.Cmd.openChatAt === 'function') {
+                    await store.Cmd.openChatAt(chat);
+                  } else if (store.Cmd && typeof store.Cmd.openChatBottom === 'function') {
+                    await store.Cmd.openChatBottom(chat);
+                  }
+                  await new Promise(r => setTimeout(r, 1200));
+                  if (chat.loadEarlierMsgs && typeof chat.loadEarlierMsgs === 'function') {
+                    for (let k = 0; k < 3; k++) {
+                      await chat.loadEarlierMsgs().catch(() => null);
+                      await new Promise(r => setTimeout(r, 400));
+                    }
+                  }
+                  if (chat.msgs && chat.msgs.models && chat.msgs.models.length) {
+                    return chat.msgs.models.map(m => ({
+                      id: m.id?._serialized || m.id,
+                      body: m.body || m.caption || '',
+                      type: m.type || 'chat',
+                      t: m.t,
+                      from: m.from?._serialized || m.from,
+                      author: m.author?._serialized || m.author || m.from?._serialized || m.from,
+                      sender: {
+                        id: m.author?._serialized || m.from?._serialized,
+                        pushname: m.sender?.pushname || m.pushname || ''
+                      }
+                    }));
+                  }
+                }
+              } catch (_) {}
               return [];
-            }, groupId);
+            }, groupId).catch(() => []);
           }
         } catch (mErr) {
           console.warn(`[scrape] Error fetching messages for ${groupName}:`, mErr.message);
@@ -743,6 +825,7 @@ app.post('/api/scrape-named-groups', async (req, res) => {
         if (Array.isArray(msgs)) {
           const slice = msgs.slice(-limitPerGroup);
           results.totalMessagesScraped += slice.length;
+          console.log(`[scrape] Retrieved ${slice.length} messages from "${groupName}"`);
           for (const m of slice) {
             try {
               const harvested = await harvesterInstance.handleIncomingMessage(s.id, m);
