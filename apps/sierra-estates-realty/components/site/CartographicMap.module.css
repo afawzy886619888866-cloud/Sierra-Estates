@@ -39,17 +39,13 @@
 }
 
 .toolbarDark {
-  background: rgba(6, 11, 19, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom-color: rgba(201, 168, 76, 0.35);
+  background-color: #061122;
+  border-bottom-color: rgba(212, 175, 55, 0.22);
 }
 
 .toolbarLight {
-  background: rgba(250, 248, 245, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom-color: rgba(200, 150, 26, 0.25);
+  background-color: #faf8f5;
+  border-bottom-color: #e6dec8;
 }
 
 /* Zone Filter Pills */
@@ -59,26 +55,8 @@
   gap: 6px;
   overflow-x: auto;
   max-width: 100%;
-  padding: 4px 0;
+  padding: 2px 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(201, 168, 76, 0.4) transparent;
-}
-
-.zoneFilters::-webkit-scrollbar {
-  height: 4px;
-}
-
-.zoneFilters::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.zoneFilters::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.35);
-  border-radius: 4px;
-}
-
-.zoneFilters::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 168, 76, 0.7);
 }
 
 .zoneLabel {
@@ -361,8 +339,8 @@
   padding: 5px 18px;
   border-radius: 999px;
   border: 1px solid;
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   text-align: center;
   max-width: 90%;
   display: flex;
@@ -583,8 +561,8 @@
   font-family: var(--font-mono, monospace);
   letter-spacing: 0.05em;
   border: 1px solid;
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   font-weight: 600;
   white-space: nowrap;
@@ -852,8 +830,8 @@
   padding: 5px 10px;
   border-radius: 4px;
   border: 1px solid;
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .scaleBoxDark {
@@ -881,8 +859,8 @@
   padding: 7px 14px;
   border-radius: 12px;
   border: 1px solid;
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
@@ -1048,7 +1026,6 @@
   background: #001f38;
 }
 
-
 /* ============================================================================
    SIERRA ESTATES · WhatsApp Business Platform & VIP QR Code Modal Styles
    ============================================================================ */
@@ -1069,14 +1046,22 @@
 }
 
 .whatsAppBtnDark {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 11, 19, 0.95));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.15),
+    rgba(6, 11, 19, 0.95)
+  );
   border-color: rgba(16, 185, 129, 0.45);
   color: #6ee7b7;
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
 }
 
 .whatsAppBtnDark:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.28), rgba(11, 25, 44, 0.98));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.28),
+    rgba(11, 25, 44, 0.98)
+  );
   border-color: #10b981;
   color: #a7f3d0;
   box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
@@ -1132,8 +1117,14 @@
 }
 
 @keyframes qrFadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .qrModalCard {
@@ -1142,7 +1133,9 @@
   background: linear-gradient(145deg, #091322, #050b13);
   border: 1.5px solid rgba(201, 168, 76, 0.6);
   border-radius: 20px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(201, 168, 76, 0.2);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.75),
+    0 0 30px rgba(201, 168, 76, 0.2);
   padding: 24px;
   position: relative;
   overflow: hidden;
@@ -1151,7 +1144,9 @@
 .qrModalCardLight {
   background: linear-gradient(145deg, #ffffff, #faf8f5);
   border: 1.5px solid rgba(200, 150, 26, 0.5);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 0 20px rgba(200, 150, 26, 0.15);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.15),
+    0 0 20px rgba(200, 150, 26, 0.15);
 }
 
 .qrModalCardLight .qrModalTitle {

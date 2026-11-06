@@ -36,10 +36,15 @@ COPY 07-daily-digest ./07-daily-digest
 COPY 08-units-sync ./08-units-sync
 COPY 09-owner-outreach ./09-owner-outreach
 COPY 10-whatsapp-dispatch ./10-whatsapp-dispatch
-# Telegram intake agent (long-poll lane; also needs 05-unit-adder above for
-# the inline new_units → Supabase trigger). Runs via compose command
-# override in infra/docker-compose.runner.yml → service telegram-intake.
+COPY 11-number-verifier ./11-number-verifier
 COPY 12-telegram-intake ./12-telegram-intake
+COPY 13-paced-outreach ./13-paced-outreach
+COPY 14-sheets-supabase-sync ./14-sheets-supabase-sync
+COPY 15-scribe-guardian ./15-scribe-guardian
+COPY 16-curator-guardian ./16-curator-guardian
+COPY 17-atlas-sync-guardian ./17-atlas-sync-guardian
+COPY 18-antigravity-closer-guardian ./18-antigravity-closer-guardian
+COPY 19-ops-watchdog ./19-ops-watchdog
 
 # Run-state (overlap locks, last-run summaries) survives restarts via the
 # compose volume mount at /app/.state.
