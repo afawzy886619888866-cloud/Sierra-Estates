@@ -4,10 +4,6 @@ import { verifyRequest, verifyAdminRequest, unauthorizedResponse } from '@/lib/s
 import { logger } from '@/lib/logger';
 
 async function checkAuth(req: NextRequest) {
-  const host = req.headers.get('host') || '';
-  const isDirectLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
-  if (isDirectLocal) return null;
-
   const auth = await verifyRequest(req);
   if (auth.authenticated && auth.method === 'secret-key') {
     return null; // internal secret key authorized

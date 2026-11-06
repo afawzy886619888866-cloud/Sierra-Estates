@@ -101,6 +101,14 @@ class BrokerHarvester {
     const text = String(msg.body).trim();
     if (text.length < 25) return null; // Skip conversational noise / greetings
 
+    // STRICT ISOLATION RULE (real-estate-excel-processor §5.2):
+    // Buyer/tenant inquiries ("مطلوب" / "Wanted" / "Looking for") MUST be routed
+    // exclusively to Client_Requests and NEVER mixed into unit supply.
+    if (this.isClientRequest(text)) {
+      this.persistClientRequest(text, msg, sessionId);
+      return null;
+    }
+
     // Check if message is a property listing
     if (!this.isPropertyListing(text)) return null;
 
@@ -160,12 +168,64 @@ class BrokerHarvester {
     return parsed;
   }
 
+  isClientRequest(text) {
+    const t = String(text || '').trim().toLowerCase();
+    // Starts with or dominated by buyer/tenant request phrasing without offering available unit
+    if (/^(?:🚨|🔥|📢|\s)*(?:مطلوب|مطلوب\s+فوراً|مطلوب\s+للشراء|مطلوب\s+للايجار|مطلوب\s+للإيجار|wanted\b|looking\s+for\b)/i.test(t)) {
+      return true;
+    }
+    const hasMatloub = /\bمطلوب\b|مطلوب للشراء|مطلوب للايجار|مطلوب للإيجار|\bwanted\b|\blooking for\b/i.test(t);
+    const hasSupply = /معروض للبيع|معروض للايجار|متاح للبيع|متاح للايجار|متاح للإيجار|شقة للبيع|فيلا للبيع|للتنازل/i.test(t);
+    return hasMatloub && !hasSupply;
+  }
+
+  persistClientRequest(text, msg, sessionId) {
+    try {
+      const matches = String(text).match(PHONE_REGEX) || [];
+      const sender = msg.author || msg.from || '';
+      const senderDigits = String(sender).replace(/[^\d]/g, '');
+      const phone = matches[0] ? matches[0].replace(/[^\d]/g, '') : senderDigits;
+      const reqRecord = {
+        id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        rawText: text.slice(0, 1000),
+        phone: phone || null,
+        senderName: msg.sender?.pushname || msg.notifyName || 'Client/Broker Inquiry',
+        sourceChat: msg.chat?.name || (msg.isGroupMsg ? 'WhatsApp Group' : 'Direct Message'),
+        capturedByLine: sessionId,
+        capturedAt: new Date().toISOString()
+      };
+      const targetFile = path.resolve(__dirname, 'whatsapp-auth', 'client_requests.jsonl');
+      fs.appendFileSync(targetFile, JSON.stringify(reqRecord).replace(/[\r\n]/g, ' ') + '\n');
+    } catch (_) {}
+  }
+
+  classifyAdvertiser(text, groupName = '') {
+    const t = String(text || '').toLowerCase();
+    const g = String(groupName || '').toLowerCase();
+    // Explicit internal Direct Owner clues ONLY (real-estate-excel-processor §5.1)
+    const ownerClues = [
+      'أنا المالك', 'انا المالك', 'من المالك مباشرة', 'المالك مباشرة', 'المالك مباشر',
+      'المالك الأصلي', 'المالك الاصلي', 'مباشر من المالك', 'بدون وسيط', 'بدون عمولة',
+      'بدون عموله', 'تعاقد مع المالك', 'شقتي الخاصة', 'فيلتي الخاصة',
+      'i am the owner', 'direct owner', 'by owner', 'from owner directly', 'no commission', 'zero commission'
+    ];
+    const brokerClues = [
+      'متاح لدينا', 'شركة عقارات', 'مكتب عقارات', 'عمولة', 'عموله', 'كود الوحدة',
+      'للتواصل واتساب فقط', 'وسطاء', 'بروكر', 'broker', 'real estate', 'consultancy', 'properties'
+    ];
+    if (brokerClues.some((kw) => t.includes(kw))) return 'Broker';
+    if (ownerClues.some((kw) => t.includes(kw)) || g.includes('owners') || g.includes('ملاك')) {
+      return 'Direct Owner';
+    }
+    return 'Broker';
+  }
+
   isPropertyListing(text) {
     const t = text.toLowerCase();
     const keywords = [
       'للبيع', 'للايجار', 'للإيجار', 'ايجار', 'إيجار', 'بيع',
       'شقة', 'فيلا', 'توين هاوس', 'تاون هاوس', 'دوبلكس', 'بنتهاوس', 'روف',
-      'مساحة', 'مساحه', 'مطلوب', 'متاح', 'كمبوند', 'كود', 'استلام',
+      'مساحة', 'مساحه', 'متاح', 'كمبوند', 'كود', 'استلام',
       'أقساط', 'اقساط', 'مقدم', 'over', 'resale', 'sqm'
     ];
     let count = 0;
@@ -217,7 +277,7 @@ class BrokerHarvester {
         priceText = `${num} Million EGP`;
       }
     }
-    if (!priceEgp) {
+      if (!priceEgp) {
       const kMatch = t.match(/(\d{1,6}(?:[.,]\d{1,4})?)\s*(?:الف|ألف|الاف|k\b)/i);
       if (kMatch) {
         const num = parseFloat(kMatch[1].replace(',', '.'));
@@ -226,6 +286,24 @@ class BrokerHarvester {
           priceText = `${priceEgp.toLocaleString()} EGP`;
         }
       }
+    }
+    if (!priceEgp) {
+      const rawCommaMatch = t.match(/\b(\d{1,3}(?:,\d{3})+)\b/);
+      if (rawCommaMatch) {
+        const num = parseInt(rawCommaMatch[1].replace(/,/g, ''), 10);
+        if (num >= 5000) {
+          priceEgp = num;
+          priceText = `${priceEgp.toLocaleString()} EGP`;
+        }
+      }
+    }
+
+    // Enforce 400,000 EGP Rent vs Resale Ceiling (real-estate-excel-processor §6)
+    let finalDealType = dealType;
+    if (priceEgp > 400000) {
+      finalDealType = 'Sale';
+    } else if (priceEgp > 0 && priceEgp <= 400000 && !t.includes('مقدم') && !t.includes('down payment')) {
+      finalDealType = 'Rent';
     }
 
     // 5. Area Extraction
@@ -242,7 +320,7 @@ class BrokerHarvester {
       bedrooms = parseInt(bedMatch[1], 10);
     }
 
-    // 7. Broker Phone Number
+    // 7. Contact Phone Number & Strict Advertiser Classification
     const phones = [];
     const matches = text.match(PHONE_REGEX);
     if (matches) {
@@ -256,23 +334,27 @@ class BrokerHarvester {
     const sender = msg.author || msg.from || '';
     const senderDigits = sender.replace(/[^\d]/g, '');
     const brokerPhone = phones[0] || (senderDigits.startsWith('20') ? senderDigits : null);
+    const sourceChat = msg.chat?.name || (msg.isGroupMsg ? 'Broker Group' : 'Direct Message');
+    const advertiserType = this.classifyAdvertiser(text, sourceChat);
 
     return {
       id: `hw_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       rawText: text,
       compound,
       zone: location.zone,
-      lat: location.lat + (Math.random() - 0.5) * 0.003, // subtle jitter to separate overlapping compound pins
+      lat: location.lat + (Math.random() - 0.5) * 0.003,
       lng: location.lng + (Math.random() - 0.5) * 0.003,
-      dealType,
+      dealType: finalDealType,
       unitType,
       priceEgp,
       priceText,
       areaSqm: areaSqm || null,
       bedrooms: bedrooms || null,
+      advertiserType,
+      sourceType: advertiserType === 'Direct Owner' ? 'owner' : 'broker',
       brokerPhone,
-      brokerName: msg.sender?.pushname || msg.notifyName || 'WhatsApp Broker',
-      sourceChat: msg.chat?.name || (msg.isGroupMsg ? 'Broker Group' : 'Direct Message'),
+      brokerName: msg.sender?.pushname || msg.notifyName || (advertiserType === 'Direct Owner' ? 'Direct Owner' : 'WhatsApp Broker'),
+      sourceChat,
       capturedByLine: sessionId,
       harvestedAt: new Date().toISOString()
     };

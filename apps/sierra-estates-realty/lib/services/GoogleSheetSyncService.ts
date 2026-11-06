@@ -18,6 +18,8 @@
  * When the variables are not configured the sync is skipped gracefully
  * (logged, non-fatal) — the public form keeps working exactly as before.
  */
+import fs from 'fs';
+import path from 'path';
 import { logger } from '../logger';
 import { resolveLocation } from '../inventory/gazetteer';
 
@@ -55,7 +57,39 @@ export interface WebsiteSheetSyncResult {
   inventoryUrl?: string;
   /** Permanent Google Drive links for the uploaded photos. */
   photoUrls?: string[];
+  /** True when Apps Script was unavailable/403 and payload was safely spooled to disk for flush. */
+  spooled?: boolean;
   error?: string;
+}
+
+function resolveRepoDataDir(): string {
+  const cwd = process.cwd();
+  const rootCandidate = path.resolve(cwd, '..', '..', 'data');
+  if (fs.existsSync(path.resolve(cwd, '..', '..', 'workflows'))) {
+    return rootCandidate;
+  }
+  return path.resolve(cwd, 'data');
+}
+
+function spoolPendingSheetSubmission(payload: Record<string, unknown>, reason: string): boolean {
+  try {
+    const dir = resolveRepoDataDir();
+    fs.mkdirSync(dir, { recursive: true });
+    const spoolPath = path.join(dir, 'pending_sheet_submissions.jsonl');
+    const safePayload = {
+      ...payload,
+      secret: '[REDACTED]',
+      imagesCount: Array.isArray(payload.images) ? payload.images.length : 0,
+      images: undefined,
+      spooledAt: new Date().toISOString(),
+      reason,
+    };
+    fs.appendFileSync(spoolPath, JSON.stringify(safePayload) + '\n', 'utf8');
+    return true;
+  } catch (spoolErr) {
+    logger.warn(`[SHEET_SYNC] Local spool write skipped: ${spoolErr instanceof Error ? spoolErr.message : String(spoolErr)}`);
+    return false;
+  }
 }
 
 interface ScriptImage {
@@ -227,25 +261,30 @@ export async function syncWebsiteSubmissionToSheet(
         };
       }
       const errMsg = String((json as Record<string, unknown>).error || 'script error');
-      logger.warn(`[SHEET_SYNC] Apps Script rejected the submission: ${errMsg}`);
-      return { ok: false, error: errMsg };
+      const spooled = spoolPendingSheetSubmission(payload, errMsg);
+      logger.warn(`[SHEET_SYNC] Apps Script rejected the submission (spooled=${spooled}): ${errMsg}`);
+      return { ok: false, spooled, error: errMsg };
     }
 
     if (!res.ok || /login|sign in|accounts\.google/i.test(text)) {
       const errMsg = `unexpected Apps Script response (HTTP ${res.status}) — is the Web App deployed with "Anyone" access?`;
-      logger.warn(`[SHEET_SYNC] ${errMsg}`);
-      return { ok: false, error: errMsg };
+      const spooled = spoolPendingSheetSubmission(payload, errMsg);
+      logger.warn(`[SHEET_SYNC] ${errMsg} (spooled=${spooled})`);
+      return { ok: false, spooled, error: errMsg };
     }
 
-    logger.warn(`[SHEET_SYNC] Unexpected payload shape: ${text.slice(0, 200)}`);
-    return { ok: false, error: 'unexpected response' };
+    const spooled = spoolPendingSheetSubmission(payload, 'unexpected response');
+    logger.warn(`[SHEET_SYNC] Unexpected payload shape (spooled=${spooled}): ${text.slice(0, 200)}`);
+    return { ok: false, spooled, error: 'unexpected response' };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     const aborted = msg.toLowerCase().includes('abort');
+    const reason = aborted ? 'timeout' : msg;
+    const spooled = spoolPendingSheetSubmission(payload, reason);
     logger.warn(
-      `[SHEET_SYNC] Google Sheet sync failed (non-fatal): ${aborted ? 'timeout' : msg}`
+      `[SHEET_SYNC] Google Sheet sync failed (non-fatal, spooled=${spooled}): ${reason}`
     );
-    return { ok: false, error: aborted ? 'timeout' : msg };
+    return { ok: false, spooled, error: reason };
   } finally {
     clearTimeout(timer);
   }

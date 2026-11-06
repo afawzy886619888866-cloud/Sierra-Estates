@@ -168,8 +168,7 @@ function validateStartup() {
     return 'TELEGRAM_BOT_TOKEN missing';
   }
   if (!AGENT_GROUPS.size) {
-    console.error('UNCONFIGURED: TELEGRAM_AGENT_GROUP_IDS missing — comma-separated chat ids (id:AgentName). Use /chatid in each group to find them.');
-    return 'TELEGRAM_AGENT_GROUP_IDS missing';
+    log('NOTE: TELEGRAM_AGENT_GROUP_IDS not set — OpenClaw Easy Listing mode active (accepting DMs & joined groups; use /chatid to pin specific group IDs).');
   }
   if (!GENERAL_GROUP_ID) {
     log('NOTE: TELEGRAM_GENERAL_GROUP_ID not set — units will be logged + confirmed, but NOT broadcast.');
@@ -631,6 +630,14 @@ async function handleCommand(text, chatId, fromUser) {
       `• Spooled units awaiting sheet: ${spoolN}`,
     ].join('\n')).catch(() => {});
   }
+  if (clean === '/easy') {
+    return tg.sendMessage(chatId, [
+      `📋 <b>OpenClaw · Easy Listing Template</b>`,
+      `Paste any Arabic/English unit note (with or without photos):`,
+      ``,
+      `<code>كمبوند ميفيدا - التجمع الخامس\nشقة 190 متر - 3 غرف نوم - 3 حمام\nتشطيب الترا سوبر لوكس\nالسعر: 14,500,000 جنيه\nالمالك: أ/ أحمد 01012345678</code>`,
+    ].join('\n')).catch(() => {});
+  }
   if (clean === '/start' || clean === '/help') {
     return tg.sendMessage(chatId, render.renderHelp(sheets.configured())).catch(() => {});
   }
@@ -644,11 +651,12 @@ async function handleUpdate(update) {
   if (updateSeen(update.update_id)) return;
   const message = update.message || update.edited_message;
   if (!message) return;
-  if (message.from && message.from.is_bot) return;
+  if (message.from && message.from.is_bot && process.env.TELEGRAM_ALLOW_BOT_SENDERS !== '1') return;
   // Ignore stale replays (bot down > 24 h): never re-intake old units.
   if (message.date && Date.now() / 1000 - message.date > 86400) return;
 
   const chatId = String(message.chat.id);
+  const isPrivateDm = message.chat.type === 'private';
   const text = String(message.text || message.caption || '');
 
   if (text.startsWith('/')) {
@@ -656,9 +664,13 @@ async function handleUpdate(update) {
     return;
   }
 
-  // Intake ONLY from configured agent groups (fail-closed: unknown chats
-  // are logged + ignored, never processed).
-  if (!AGENT_GROUPS.has(chatId)) {
+  // OpenClaw Easy Listing Intake: accept Direct Messages (from agents/owners)
+  // AND configured agent groups (or any joined group when TELEGRAM_AGENT_GROUP_IDS is open).
+  const strictGroupsOnly = process.env.TELEGRAM_STRICT_GROUPS_ONLY === '1';
+  if (!isPrivateDm && AGENT_GROUPS.size > 0 && !AGENT_GROUPS.has(chatId) && strictGroupsOnly) {
+    return;
+  }
+  if (AGENT_GROUPS.size > 0 && !isPrivateDm && !AGENT_GROUPS.has(chatId)) {
     return;
   }
 

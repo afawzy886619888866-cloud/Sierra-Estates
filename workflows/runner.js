@@ -103,6 +103,8 @@ const SLUGS = [
   'atlas-sync-guardian',
   'antigravity-closer-guardian',
   'ops-watchdog',
+  'contact-partitioner',
+  'daily-outreach-report',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -136,6 +138,8 @@ const SCRIPTS = {
   'atlas-sync-guardian': '17-atlas-sync-guardian/atlas.js',
   'antigravity-closer-guardian': '18-antigravity-closer-guardian/closer.js',
   'ops-watchdog': '19-ops-watchdog/watchdog.js',
+  'contact-partitioner': '09-owner-outreach/contact-partitioner.js',
+  'daily-outreach-report': 'lib/daily-outreach-report.js',
 };
 
 const running = new Set(); // slugs currently executing

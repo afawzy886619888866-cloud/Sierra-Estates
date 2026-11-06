@@ -297,12 +297,21 @@ async function initSession(sessionId) {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-extensions',
+        '--disable-component-update',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--mute-audio',
+        '--renderer-process-limit=1',
+        '--js-flags=--max-old-space-size=256',
         '--enable-local-storage',
         '--unlimited-storage',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
-        '--disable-features=CalculateNativeWinOcclusion,IsolateOrigins,site-per-process',
+        '--disable-features=CalculateNativeWinOcclusion,IsolateOrigins,site-per-process,TranslateUI',
         '--disable-site-isolation-trials',
         '--allow-running-insecure-content',
         '--keep-alive-for-test'
@@ -363,17 +372,27 @@ async function initSession(sessionId) {
     console.log(`[${sessionId}] Connected successfully! Phone: +${s.phone || 'unknown'}`);
 
     // Listen for state changes with auto-recovery for mobile sleep / timeout
+    // Note: WhatsApp Multi-Device runs independently of mobile screen state once paired;
+    // transient TIMEOUT/DISCONNECTED states are automatically healed without killing Chrome.
     client.onStateChanged((state) => {
       console.log(`[${sessionId}] State changed: ${state}`);
       if (state === 'CONFLICT' || state === 'UNLAUNCHED' || state === 'DISCONNECTED' || state === 'TIMEOUT') {
         s.status = 'DISCONNECTED';
-        // Auto-reconnect if line was previously initialized
         setTimeout(async () => {
           if (s.status === 'DISCONNECTED' && s.client) {
             console.log(`[${sessionId}] Attempting automatic connection restore from state: ${state}...`);
             try {
-              if (typeof s.client.refresh === 'function') {
+              if (state === 'CONFLICT' && typeof s.client.useHere === 'function') {
+                await s.client.useHere();
+              } else if (typeof s.client.refresh === 'function') {
                 await s.client.refresh();
+              }
+              const postState = typeof s.client.getConnectionState === 'function'
+                ? await s.client.getConnectionState().catch(() => null)
+                : null;
+              if (postState === 'CONNECTED') {
+                s.status = 'READY';
+                s.lastActive = new Date().toISOString();
               }
             } catch (rErr) {
               console.warn(`[${sessionId}] Auto-restore attempt error:`, rErr.message);
@@ -386,11 +405,78 @@ async function initSession(sessionId) {
       }
     });
 
+    // Periodic Multi-Device keep-alive watchdog (every 90s) so mobile lock/close never stalls session
+    if (s.keepAliveTimer) clearInterval(s.keepAliveTimer);
+    s.keepAliveTimer = setInterval(async () => {
+      if (!s.client) return;
+      try {
+        const conn = typeof s.client.evaluate === 'function'
+          ? await s.client.evaluate(() => (window.Store?.AppState?.state || 'CONNECTED')).catch(() => null)
+          : null;
+        if (conn === 'CONNECTED') {
+          if (s.status !== 'READY') s.status = 'READY';
+          s.lastActive = new Date().toISOString();
+        } else if (conn && (conn === 'DISCONNECTED' || conn === 'TIMEOUT')) {
+          console.log(`[${sessionId}] Keep-alive detected ${conn} — triggering gentle session restore...`);
+          if (typeof s.client.refresh === 'function') await s.client.refresh().catch(() => {});
+        }
+      } catch (_) {}
+    }, 90000);
+
+    // Helper: Resolve WhatsApp Multi-Device @lid JIDs to real @c.us phone numbers
+    async function resolveLidIfNeeded(msg) {
+      try {
+        const rawFrom = String(msg?.from || msg?.chatId || '');
+        if (!rawFrom.endsWith('@lid')) return msg;
+        let resolvedDigits = '';
+        // 1. Check formattedName / verifiedName / notifyName / chat contact for phone digits
+        const candidates = [
+          msg?.sender?.formattedName,
+          msg?.sender?.userid,
+          msg?.chat?.contact?.formattedName,
+          msg?.chat?.contact?.userid,
+          msg?.author
+        ].filter(Boolean);
+        for (const cand of candidates) {
+          const d = String(cand).replace(/\D/g, '');
+          if (/^201[0125]\d{8}$/.test(d)) { resolvedDigits = d; break; }
+          if (/^01[0125]\d{8}$/.test(d)) { resolvedDigits = '2' + d; break; }
+        }
+        // 2. Query OpenWA getContact / Store.Contact.getPnFromLid if still unresolved
+        if (!resolvedDigits && s.client) {
+          if (typeof s.client.getContact === 'function') {
+            const contact = await s.client.getContact(rawFrom).catch(() => null);
+            const cStr = JSON.stringify([contact?.id, contact?.formattedName, contact?.userid] || []);
+            const m = cStr.match(/(?:201[0125]\d{8}|01[0125]\d{8})/);
+            if (m) resolvedDigits = m[0].startsWith('01') ? '2' + m[0] : m[0];
+          }
+          if (!resolvedDigits && typeof s.client.evaluate === 'function') {
+            const lidPn = await s.client.evaluate((lid) => {
+              try {
+                const c = window.Store?.Contact?.get?.(lid);
+                const pn = c?.phoneNumber?._serialized || c?.phoneNumber?.user || c?.formattedUser || '';
+                return String(pn);
+              } catch (_) { return ''; }
+            }, rawFrom).catch(() => '');
+            const d = String(lidPn).replace(/\D/g, '');
+            if (/^201[0125]\d{8}$/.test(d)) resolvedDigits = d;
+            else if (/^01[0125]\d{8}$/.test(d)) resolvedDigits = '2' + d;
+          }
+        }
+        if (resolvedDigits) {
+          msg.originalLid = rawFrom;
+          msg.from = `${resolvedDigits}@c.us`;
+          msg.chatId = `${resolvedDigits}@c.us`;
+        }
+      } catch (_) {}
+      return msg;
+    }
+
     // Listen for incoming messages (broker group harvesting + app inbound forwarding)
-    client.onMessage((msg) => {
+    client.onMessage(async (rawMsg) => {
       s.lastActive = new Date().toISOString();
-      // Forward to the Sierra app webhook (fire-and-forget; the app decides
-      // DM auto-replies vs silent group handling). See app-bridge.js.
+      const msg = await resolveLidIfNeeded(rawMsg);
+      // Forward to the Sierra app webhook & local workflow runner (:2786/api/inbound)
       appBridge.forwardMessage(sessionId, msg, s.webhooks);
       harvesterInstance.handleIncomingMessage(sessionId, msg).catch((err) => {
         console.error(`[harvester] Error processing message on ${sessionId}:`, err.message);
@@ -764,9 +850,14 @@ app.post('/api/scrape-named-groups', async (req, res) => {
     unitsHarvested: 0
   };
 
+  const withTimeout = (p, ms, fb) => Promise.race([
+    Promise.resolve(p).catch(() => fb),
+    new Promise((resolve) => setTimeout(() => resolve(fb), ms)),
+  ]);
+
   for (const s of readySessions) {
     try {
-      const chats = await s.client.getAllChats();
+      const chats = await withTimeout(s.client.getAllChats(), 12000, []);
       const groups = (chats || []).filter(c => c && (c.isGroup || String(c.id?._serialized || c.id || '').endsWith('@g.us')));
       for (const group of groups) {
         const groupName = String(group.name || group.formattedTitle || '').trim();
@@ -780,9 +871,9 @@ app.post('/api/scrape-named-groups', async (req, res) => {
 
         try {
           if (typeof s.client.loadEarlierMessages === 'function') {
-            for (let step = 0; step < 5; step++) {
-              await s.client.loadEarlierMessages(groupId).catch(() => null);
-              await new Promise(r => setTimeout(r, 600));
+            for (let step = 0; step < 3; step++) {
+              await withTimeout(s.client.loadEarlierMessages(groupId), 4000, null);
+              await new Promise(r => setTimeout(r, 300));
             }
           }
         } catch (_) {}
@@ -790,10 +881,10 @@ app.post('/api/scrape-named-groups', async (req, res) => {
         let msgs = [];
         try {
           if (typeof s.client.getAllMessages === 'function') {
-            msgs = await s.client.getAllMessages(groupId).catch(() => []);
+            msgs = await withTimeout(s.client.getAllMessages(groupId), 8000, []);
           }
           if ((!msgs || !msgs.length) && typeof s.client.evaluate === 'function') {
-            msgs = await s.client.evaluate(async (gid) => {
+            msgs = await withTimeout(s.client.evaluate(async (gid) => {
               try {
                 if (window.WAPI && typeof window.WAPI.getAllMessagesInChat === 'function') {
                   const m = await window.WAPI.getAllMessagesInChat(gid, true, true);
@@ -833,7 +924,7 @@ app.post('/api/scrape-named-groups', async (req, res) => {
                 }
               } catch (_) {}
               return [];
-            }, groupId).catch(() => []);
+            }, groupId), 10000, []);
           }
         } catch (mErr) {
           console.warn(`[scrape] Error fetching messages for ${groupName}:`, mErr.message);
@@ -2108,9 +2199,8 @@ const server = app.listen(PORT, () => {
           let alive = true;
           if (typeof s.client.isConnected === 'function') {
             alive = await s.client.isConnected();
-          } else if (typeof s.client.getConnectionState === 'function') {
-            const st = await s.client.getConnectionState();
-            alive = (st === 'CONNECTED');
+          } else if (typeof s.client.evaluate === 'function') {
+            alive = await s.client.evaluate(() => Boolean(window.Store || document.readyState === 'complete')).catch(() => true);
           }
           if (alive) {
             s.lastActive = new Date().toISOString();
@@ -2121,7 +2211,9 @@ const server = app.listen(PORT, () => {
             }
           }
         } catch (pingErr) {
-          console.warn(`[${id}] Keepalive ping:`, pingErr.message);
+          if (!String(pingErr?.message || '').includes('getConnectionState')) {
+            console.warn(`[${id}] Keepalive ping:`, pingErr.message);
+          }
         }
       }
     }

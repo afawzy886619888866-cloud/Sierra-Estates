@@ -39,16 +39,16 @@ function classifyReply(text) {
   if (/إلغاء|الغاء|stop|unsubscribe|مش عاوز|لا ترسل/i.test(t)) {
     return { category: 'opt_out', label: 'إلغاء اشتراك' };
   }
-  if (/متاح|متاحه|متاحة|فاضية|فاضيه|لسه|لسة|موجود|موجودة|yes|available/i.test(t)) {
-    return { category: 'available', label: 'الوحدة متاحة' };
+  if (/متاح|متاحه|متاحة|فاضية|فاضيه|جهزه|جاهزه|جاهزة|ايوه|أيوة|لسه|لسة|موجود|موجودة|ستديو|شقة|فيلا|بريفادو|مدينتي|yes|available/i.test(t)) {
+    return { category: 'available', label: 'الوحدة متاحة / تفاصيل مالك' };
   }
   if (/اتباعت|اتأجرت|اتاجرت|تم البيع|تم التأجير|خلاص|مش متاح|sold|rented/i.test(t)) {
     return { category: 'unavailable', label: 'تم البيع أو الإيجار' };
   }
-  if (/سعر|كام|تأجير|تفاوض|نهائي|عمولة|تفاصيل|صور|price|negotiate/i.test(t)) {
-    return { category: 'negotiating', label: 'تفاوض / استفسار عن السعر' };
+  if (/سعر|كام|تأجير|تفاوض|نهائي|عمولة|عموله|تفاصيل|صور|اوڤر|أوفر|المدفوع|price|negotiate/i.test(t)) {
+    return { category: 'negotiating', label: 'تفاوض / تفاصيل مالية' };
   }
-  return { category: 'general_reply', label: 'رد عام' };
+  return { category: 'general_reply', label: 'رد مالك (رسالة / صوتي)' };
 }
 
 function generateDailyOutreachReport(targetDate = getCairoDate()) {
@@ -87,72 +87,142 @@ function generateDailyOutreachReport(targetDate = getCairoDate()) {
     } catch (_) {}
   }
 
-  // 3. Read Inbound Replies (Direct 1-on-1 DM messages from owners ONLY)
-  const responses = [];
-  const respondentPhones = new Set();
+  // 3. Read Inbound Replies (Direct 1-on-1 DM messages from owners ONLY, grouped by owner)
+  const senderBuckets = new Map();
   if (fs.existsSync(INBOX_FILE)) {
     try {
       const lines = fs.readFileSync(INBOX_FILE, 'utf8').split('\n').filter(Boolean);
       for (const line of lines) {
         try {
           const rawObj = JSON.parse(line);
-          const d = rawObj.data || rawObj;
-          const from = String(d.from || d.chatId || d.sender || '');
-          
-          // STRICT RULE: Only consider direct owner messages (@c.us), NEVER broker group messages (@g.us)
-          if (d.isGroupMsg || from.endsWith('@g.us')) continue;
+          const inner = rawObj.body && typeof rawObj.body === 'object' ? rawObj.body : rawObj;
+          const d = inner.data || inner;
+          if (!d || d.fromMe === true) continue; // Ignore our own outbound messages
+          const from = String(d.from || d.chatId || (typeof d.sender === 'string' ? d.sender : d.sender?.id) || '');
 
-          const cleanSender = normalizePhone(from);
+          // STRICT RULE: Only consider direct 1-on-1 owner messages (@c.us or @lid), NEVER group messages (@g.us) or status broadcasts
+          if (d.isGroupMsg || from.endsWith('@g.us') || from.includes('status@broadcast') || !from) continue;
+
+          const msgType = String(d.type || 'chat').toLowerCase();
+          const rawText = typeof d.caption === 'string' && d.caption.trim()
+            ? d.caption.trim()
+            : (typeof d.body === 'string' ? d.body.trim() : '');
+
+          // Skip internal line-to-line diagnostic pings
+          if (/تجربة ربط واتساب|رد تجربة واتساب|اختبار الإرسال بصيغة/i.test(rawText)) continue;
+
+          const isBase64Thumb = /^\/9j\/|^iVBOR/i.test(rawText);
+          const cleanText = isBase64Thumb ? '' : rawText;
+
+          // Extract phone from @c.us or fallback to sender pushname / LID identifier
+          const isLid = from.endsWith('@lid');
+          let cleanSender = '';
+          if (!isLid) {
+            cleanSender = normalizePhone(from.split('@')[0]);
+          } else {
+            const hintStr = `${d.sender?.pushname || ''} ${d.chatName || ''} ${cleanText}`;
+            const m = hintStr.match(/(?:201[0125]\d{8}|01[0125]\d{8})/);
+            if (m) cleanSender = normalizePhone(m[0]);
+            else cleanSender = `LID:${from.split('@')[0]}`;
+          }
           if (!cleanSender) continue;
 
-          const body = typeof d.body === 'string' ? d.body : (typeof d.caption === 'string' ? d.caption : '');
-          if (!body || body.length < 2) continue;
+          const tsNum = Number(d.timestamp || 0);
+          const replyTime = rawObj.receivedAt
+            || (tsNum > 0 && tsNum < 2000000000 ? new Date(tsNum * 1000).toISOString() : new Date().toISOString());
+          const replyDate = getCairoDate(new Date(replyTime));
+          const sessionId = inner.sessionId || rawObj.sessionId || 'line-1';
+          const unitInfo = contactedMap.get(cleanSender) || null;
+          const senderPushName = d.sender?.pushname || d.sender?.verifiedName || d.chatName || (unitInfo ? unitInfo.name : 'مالك عقار');
 
-          const replyTime = d.timestamp ? new Date(d.timestamp * 1000).toISOString() : (rawObj.at || new Date().toISOString());
-          const replyDate = replyTime.slice(0, 10);
-
-          if (replyDate === targetDate) {
-            const classification = classifyReply(body);
-            const unitInfo = contactedMap.get(cleanSender) || null;
-            respondentPhones.add(cleanSender);
-            responses.push({
+          if (!senderBuckets.has(cleanSender)) {
+            senderBuckets.set(cleanSender, {
               phone: cleanSender,
-              text: body,
+              ownerName: unitInfo?.name || senderPushName,
+              texts: [],
+              images: 0,
+              videos: 0,
+              docs: 0,
+              voiceNotes: 0,
               replyTime,
-              category: classification.category,
-              label: classification.label,
-              unit: unitInfo
+              replyDate,
+              sessionId,
+              unit: unitInfo,
             });
           }
+          const bucket = senderBuckets.get(cleanSender);
+          bucket.replyTime = replyTime;
+          bucket.replyDate = replyDate;
+          if (cleanText && !bucket.texts.includes(cleanText)) {
+            bucket.texts.push(cleanText);
+          }
+          if (msgType === 'image') bucket.images += 1;
+          else if (msgType === 'video') bucket.videos += 1;
+          else if (msgType === 'document') bucket.docs += 1;
+          else if (msgType === 'ptt' || msgType === 'audio') bucket.voiceNotes += 1;
         } catch (_) {}
       }
     } catch (_) {}
   }
 
+  const responses = [];
+  const allResponses = [];
+  for (const b of senderBuckets.values()) {
+    const mediaParts = [];
+    if (b.images > 0) mediaParts.push(`${b.images} صور`);
+    if (b.videos > 0) mediaParts.push(`${b.videos} فيديو`);
+    if (b.docs > 0) mediaParts.push(`${b.docs} مستند`);
+    if (b.voiceNotes > 0) mediaParts.push(`${b.voiceNotes} رسالة صوتية`);
+    const combinedText = [
+      b.texts.join(' | '),
+      mediaParts.length > 0 ? `[مرفقات: ${mediaParts.join(' + ')}]` : '',
+    ].filter(Boolean).join(' ');
+    if (!combinedText) continue;
+
+    const classification = classifyReply(combinedText);
+    const entryObj = {
+      phone: b.phone,
+      ownerName: b.ownerName,
+      text: combinedText,
+      replyTime: b.replyTime,
+      replyDate: b.replyDate,
+      sessionId: b.sessionId,
+      category: classification.category,
+      label: classification.label,
+      unit: b.unit,
+    };
+    allResponses.push(entryObj);
+    if (b.replyDate === targetDate) {
+      responses.push(entryObj);
+    }
+  }
+
+  const effectiveResponses = responses.length > 0 ? responses : allResponses;
+
   // Summary counts
   const totalSentToday = todaySent.length || contactedMap.size;
-  const totalAnswersToday = responses.length;
+  const totalAnswersToday = effectiveResponses.length;
   const responseRatePct = totalSentToday > 0 ? ((totalAnswersToday / totalSentToday) * 100).toFixed(1) : '0.0';
 
   const categoryBreakdown = {
-    available: responses.filter(r => r.category === 'available').length,
-    unavailable: responses.filter(r => r.category === 'unavailable').length,
-    negotiating: responses.filter(r => r.category === 'negotiating').length,
-    opt_out: responses.filter(r => r.category === 'opt_out').length,
-    general_reply: responses.filter(r => r.category === 'general_reply').length,
+    available: effectiveResponses.filter(r => r.category === 'available').length,
+    unavailable: effectiveResponses.filter(r => r.category === 'unavailable').length,
+    negotiating: effectiveResponses.filter(r => r.category === 'negotiating').length,
+    opt_out: effectiveResponses.filter(r => r.category === 'opt_out').length,
+    general_reply: effectiveResponses.filter(r => r.category === 'general_reply').length,
   };
 
-  // 4. Update outreach_respondent_owners.csv
+  // 4. Update outreach_respondent_owners.csv with all captured respondent DMs
   try {
     const csvHeader = 'Code,OwnerName,Phone,Compound,Price,Bedrooms,DealType,Category,ReplyLabel,ReplyText,ReplyTime\n';
     let csvBody = '';
-    for (const r of responses) {
+    for (const r of allResponses) {
       const u = r.unit || {};
       const row = [
-        `"${u.code || ''}"`,
-        `"${u.name || ''}"`,
+        `"${u.code || 'DM-INBOUND'}"`,
+        `"${String(r.ownerName || u.name || 'مالك عقار').replace(/"/g, '""')}"`,
         `"${r.phone}"`,
-        `"${u.location || ''}"`,
+        `"${u.location || 'New Cairo'}"`,
         `"${u.price || ''}"`,
         `"${u.bedrooms || ''}"`,
         `"${u.dealType || ''}"`,
@@ -173,15 +243,18 @@ function generateDailyOutreachReport(targetDate = getCairoDate()) {
     generatedAt: new Date().toISOString(),
     metrics: {
       totalSent: totalSentToday,
+      totalHistoricalContacted: contactedMap.size,
       totalAnswered: totalAnswersToday,
+      totalAllTimeAnswered: allResponses.length,
       responseRate: `${responseRatePct}%`,
       breakdown: categoryBreakdown
     },
-    respondents: responses,
+    respondents: effectiveResponses,
     respondentsCsvPath: RESPONDENTS_CSV,
     contactedCsvPath: CONTACTED_CSV
   };
 
+  console.log(`SUMMARY ${JSON.stringify(report.metrics)}`);
   return report;
 }
 

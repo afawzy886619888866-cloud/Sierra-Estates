@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NotebookLMHarvester, type RawScrapedListing } from '@sierra-estates/agents-core';
 import { onlineIntelligence, sharedMemory } from '@sierra-estates/memory-engine';
+import { verifyAdminRequest, verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 180; // 3 min timeout
 
 export async function POST(req: NextRequest) {
+  const secretAuth = await verifyRequest(req);
+  const adminAuth = secretAuth.authenticated && secretAuth.method === 'secret-key'
+    ? { authenticated: true }
+    : await verifyAdminRequest(req);
+  if (!adminAuth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
     const customListings: RawScrapedListing[] = body.listings || [];

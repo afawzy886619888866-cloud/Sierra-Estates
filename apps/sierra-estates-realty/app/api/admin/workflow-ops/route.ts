@@ -55,11 +55,13 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('request'), slug: z.string().min(1).max(64) }),
 ]);
 
-// Valid workflow-slug allowlist — mirrors runner's SCRIPTS map including whatsapp-dispatch
+// Valid workflow-slug allowlist — mirrors runner's SCRIPTS map (all 18 registered slugs)
 const RUNNER_SLUGS = new Set([
   'whatsapp-scraper', 'owner-search', 'owner-contact', 'email-sender',
   'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach',
-  'whatsapp-dispatch',
+  'whatsapp-dispatch', 'sheets-supabase-sync', 'scribe-guardian',
+  'curator-guardian', 'atlas-sync-guardian', 'antigravity-closer-guardian',
+  'ops-watchdog', 'contact-partitioner', 'daily-outreach-report',
 ]);
 
 function opsHeaders(): Record<string, string> {

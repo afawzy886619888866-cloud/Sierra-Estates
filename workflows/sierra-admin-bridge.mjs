@@ -16,6 +16,28 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+for (const envCandidate of [
+  path.join(__dirname, '.env'),
+  path.join(__dirname, '..', '.env.local'),
+  path.join(__dirname, '..', 'apps', 'sierra-estates-realty', '.env.local'),
+  path.join(__dirname, '..', 'apps', 'agents', 'whatsapp-multi-session', '.env'),
+]) {
+  try {
+    if (!fs.existsSync(envCandidate)) continue;
+    for (const rawLine of fs.readFileSync(envCandidate, 'utf8').split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const eq = line.indexOf('=');
+      if (eq <= 0) continue;
+      const k = line.slice(0, eq).trim();
+      const v = line.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
+      if (k && !process.env[k]) process.env[k] = v;
+    }
+  } catch {
+    /* ignore optional env file */
+  }
+}
+
 const PORT = parseInt(process.env.ADMIN_BRIDGE_PORT || '2790', 10);
 const BIND = process.env.ADMIN_BRIDGE_BIND || '127.0.0.1';
 const HTML_FILE = path.join(__dirname, 'sierra-admin.html');

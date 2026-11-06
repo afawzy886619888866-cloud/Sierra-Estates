@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runOpenClawDailyScan } from '../../../../../../scripts/openclaw-daily-scanner';
 import { WHATSAPP_GROUP_REGISTRY } from '../../../../../../packages/agents/tools/whatsappGroupRegistry';
+import { verifyAdminRequest, verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import fs from 'fs';
 import path from 'path';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 min timeout
+
+async function requireAdminOrSecret(req: NextRequest) {
+  const secretAuth = await verifyRequest(req);
+  if (secretAuth.authenticated && secretAuth.method === 'secret-key') return null;
+  const adminAuth = await verifyAdminRequest(req);
+  if (adminAuth.authenticated) return null;
+  return unauthorizedResponse();
+}
 
 const REPORT_PATH = path.resolve(
   process.cwd(),
@@ -17,6 +26,8 @@ const REPORT_PATH = path.resolve(
 );
 
 export async function POST(req: NextRequest) {
+  const denied = await requireAdminOrSecret(req);
+  if (denied) return denied;
   try {
     const body = await req.json().catch(() => ({}));
     // §21 no-fabrication: the scan target is the caller's decision — the

@@ -110,6 +110,30 @@ async function runHarvesterConsumer() {
   } catch (_) {}
 
   let units = [];
+  let namedScrapeSummary = null;
+
+  // 0. Actively trigger named group scrape ('Data', 'داتا ايمان', 'ايمان') on Gateway :2785
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(API_KEY ? { 'X-API-Key': API_KEY } : {}),
+    };
+    const scrapeRes = await requestJson(`${GATEWAY_URL}/api/scrape-named-groups`, {
+      method: 'POST',
+      headers,
+      body: { queries: ['data', 'داتا ايمان', 'ايمان'], limit: 500 },
+      timeoutMs: 45000,
+    });
+    if (scrapeRes.ok && scrapeRes.data && scrapeRes.data.results) {
+      namedScrapeSummary = scrapeRes.data.results;
+      console.log(
+        `[scraper] Named groups scraped (${(namedScrapeSummary.matchedGroups || []).map((g) => g.groupName).join(', ') || 'none matched'}): ` +
+        `${namedScrapeSummary.totalMessagesScraped || 0} msgs, ${namedScrapeSummary.unitsHarvested || 0} new units.`
+      );
+    }
+  } catch (err) {
+    console.log(`[scraper] Named group scrape skipped (${err.message})`);
+  }
 
   // 1. Query Gateway Harvester API
   try {
@@ -128,21 +152,22 @@ async function runHarvesterConsumer() {
     console.log(`[scraper] Gateway HTTP poll failed (${err.message}), falling back to disk...`);
   }
 
-  // 2. Resilient Fallback: read local harvested_units.jsonl
-  if (!units.length) {
-    const localCandidates = [
-      path.join(__dirname, '..', '..', 'apps', 'agents', 'whatsapp-multi-session', 'whatsapp-auth', 'harvested_units.jsonl'),
-      path.resolve(__dirname, '..', 'apps', 'agents', 'whatsapp-multi-session', 'whatsapp-auth', 'harvested_units.jsonl'),
-    ];
-    for (const cand of localCandidates) {
-      if (fs.existsSync(cand)) {
-        try {
-          const lines = fs.readFileSync(cand, 'utf8').split('\n').filter(Boolean);
-          units = lines.map((l) => JSON.parse(l)).reverse().slice(0, 150);
-          console.log(`[scraper] Loaded ${units.length} units from local ${path.basename(cand)}`);
-          break;
-        } catch (_) {}
-      }
+  // 2. Merge full disk ledger (harvested_units.jsonl) so historical scraped units are never missed
+  const localCandidates = [
+    path.join(__dirname, '..', '..', 'apps', 'agents', 'whatsapp-multi-session', 'whatsapp-auth', 'harvested_units.jsonl'),
+    path.resolve(__dirname, '..', 'apps', 'agents', 'whatsapp-multi-session', 'whatsapp-auth', 'harvested_units.jsonl'),
+  ];
+  for (const cand of localCandidates) {
+    if (fs.existsSync(cand)) {
+      try {
+        const lines = fs.readFileSync(cand, 'utf8').split('\n').filter(Boolean);
+        const diskUnits = lines.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean).reverse();
+        if (diskUnits.length > units.length) {
+          units = diskUnits;
+          console.log(`[scraper] Loaded ${units.length} total harvested units from ${path.basename(cand)}`);
+        }
+        break;
+      } catch (_) {}
     }
   }
 

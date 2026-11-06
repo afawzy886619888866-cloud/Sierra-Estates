@@ -240,9 +240,9 @@ export async function GET(req: NextRequest) {
         lastPulse: docData?.lastPulse ?? new Date().toISOString(),
         config: mergedConfig,
         stats: docData?.stats ?? {
-          processedToday: Math.floor(Math.random() * 45) + 12,
-          successRate: '99.4%',
-          avgLatencyMs: Math.floor(Math.random() * 200) + 120,
+          processedToday: 0,
+          successRate: '0%',
+          avgLatencyMs: 0,
         },
         logs: docData?.logs ?? [
           `[${new Date().toLocaleTimeString()}] System heartbeat: healthy`,
@@ -311,12 +311,43 @@ export async function POST(req: NextRequest) {
     if (command === 'start' || command === 'restart') update.status = 'active';
     if (command === 'run_now') update.status = 'syncing';
 
+    // Dispatch to local Workflow Runner (:2786) when run_now / start / restart is issued
+    const BOT_TO_RUNNER_SLUG: Record<string, string> = {
+      'memory-engine-bot': 'contact-partitioner',
+      'harvester-gis-bot': 'whatsapp-scraper',
+      'whatsapp-agent': 'whatsapp-dispatch',
+      'paced-outreach-bot': 'owner-outreach',
+      'openclaw-closer-bot': 'antigravity-closer-guardian',
+      'valuation-harness-bot': 'curator-guardian',
+      'scribe-guardian': 'scribe-guardian',
+      'curator-guardian': 'curator-guardian',
+      'atlas-sync-guardian': 'atlas-sync-guardian',
+      'antigravity-closer-guardian': 'antigravity-closer-guardian',
+      'ops-watchdog': 'ops-watchdog',
+    };
+
+    let runnerTriggered = false;
+    const mappedSlug = BOT_TO_RUNNER_SLUG[botId];
+    if (mappedSlug && (command === 'run_now' || command === 'start' || command === 'restart')) {
+      const runnerUrl = (process.env.WORKFLOW_OPS_URL || 'http://127.0.0.1:2786').replace(/\/+$/, '');
+      const apiKey = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
+      try {
+        const runRes = await fetch(`${runnerUrl}/api/workflows/${encodeURIComponent(mappedSlug)}/run`, {
+          method: 'POST',
+          headers: apiKey ? { 'X-API-Key': apiKey } : {},
+          signal: AbortSignal.timeout(8000),
+        });
+        runnerTriggered = runRes.ok;
+      } catch (_) {}
+    }
+
     // upsert covers both branches: the row is keyed by bot id, so an existing
     // status is merged and a first-time bot is created with status 'active'.
     await upsertRecord('system_status', {
       id: botId,
       ...(statusRow ? {} : { status: 'active', createdAt: now }),
       ...update,
+      ...(runnerTriggered ? { status: 'active' } : {}),
     });
 
     return NextResponse.json({
@@ -324,7 +355,9 @@ export async function POST(req: NextRequest) {
       commandId: cmdRef.id,
       botId,
       command,
-      message: `Command '${command}' successfully triggered for ${botId}.`,
+      runnerTriggered,
+      mappedWorkflow: mappedSlug ?? null,
+      message: `Command '${command}' successfully triggered for ${botId}${runnerTriggered ? ` (dispatched '${mappedSlug}')` : ''}.`,
     });
   } catch (err) {
     logger.error('[bots] POST failed:', err);

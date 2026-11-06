@@ -268,12 +268,46 @@ async function runMatchmaker(): Promise<Record<string, number>> {
   return { leadsPicked: rows.length, processed, withMatches: matched, errors };
 }
 
+async function triggerRunnerWorkflow(slug: string): Promise<{ ok: boolean; data?: Record<string, unknown> }> {
+  const runnerUrl = (process.env.WORKFLOW_OPS_URL || 'http://127.0.0.1:2786').replace(/\/+$/, '');
+  const apiKey = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
+  try {
+    const res = await fetch(`${runnerUrl}/api/workflows/${encodeURIComponent(slug)}/run`, {
+      method: 'POST',
+      headers: apiKey ? { 'X-API-Key': apiKey } : {},
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    return { ok: res.ok, data };
+  } catch {
+    return { ok: false };
+  }
+}
+
 async function runEngine1Partition(): Promise<Record<string, number>> {
   try {
-    const { partitionOwnerContacts } = await import(
-      // @ts-ignore
-      '../../../../../../workflows/09-owner-outreach/contact-partitioner'
-    );
+    const runnerRes = await triggerRunnerWorkflow('contact-partitioner');
+    if (runnerRes.ok) {
+      return {
+        runnerDispatched: 1,
+        status: 1,
+      };
+    }
+    const pathMod = await import('node:path');
+    const fsMod = await import('node:fs');
+    const candidates = [
+      pathMod.resolve(process.cwd(), '../../workflows/09-owner-outreach/contact-partitioner.js'),
+      pathMod.resolve(process.cwd(), 'workflows/09-owner-outreach/contact-partitioner.js'),
+    ];
+    const targetScript = candidates.find((p) => fsMod.existsSync(p));
+    if (!targetScript) {
+      return { totalAssigned: 0, error: 1 };
+    }
+    const { createRequire } = await import('node:module');
+    const req = createRequire(import.meta.url);
+    const { partitionOwnerContacts } = req(targetScript) as {
+      partitionOwnerContacts: () => Promise<{ totalAssigned?: number; totalReadyLines?: number; targetDailyCap?: number }>;
+    };
     const res = await partitionOwnerContacts();
     return {
       totalAssigned: res.totalAssigned ?? 0,
@@ -287,33 +321,118 @@ async function runEngine1Partition(): Promise<Record<string, number>> {
 }
 
 async function runEngine2Harvester(): Promise<Record<string, number>> {
-  const rows = (await listRecords('raw_feed', {
-    select: 'id, rawText, isReviewed',
-    where: [{ column: 'isReviewed', op: 'eq', value: false }],
-    limit: 20,
-  })) as Record<string, unknown>[];
-  return { unreviewedSignals: rows.length, status: 1 };
+  const gwUrl = (process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785').replace(/\/+$/, '');
+  const gwKey = process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || '';
+  let scrapedMessages = 0;
+  let unitsHarvested = 0;
+  let matchedGroups = 0;
+
+  try {
+    const scrapeRes = await fetch(`${gwUrl}/api/scrape-named-groups`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(gwKey ? { 'x-api-key': gwKey } : {}),
+      },
+      body: JSON.stringify({ queries: ['data', 'داتا ايمان', 'ايمان'], limit: 500 }),
+      signal: AbortSignal.timeout(25000),
+    });
+    if (scrapeRes.ok) {
+      const json = (await scrapeRes.json().catch(() => ({}))) as {
+        results?: { matchedGroups?: unknown[]; totalMessagesScraped?: number; unitsHarvested?: number };
+      };
+      matchedGroups = Array.isArray(json.results?.matchedGroups) ? json.results.matchedGroups.length : 0;
+      scrapedMessages = num(json.results?.totalMessagesScraped);
+      unitsHarvested = num(json.results?.unitsHarvested);
+    }
+  } catch (err) {
+    logger.warn('[ENGINE2_SCRAPE_WARN]', err instanceof Error ? err.message : err);
+  }
+
+  await triggerRunnerWorkflow('whatsapp-scraper');
+  const scribeStats = await runScribe();
+
+  return {
+    matchedGroups,
+    scrapedMessages,
+    unitsHarvested,
+    rawFeedProcessed: scribeStats.processed ?? 0,
+  };
 }
 
 async function runEngine3Valuation(): Promise<Record<string, number>> {
+  const { evaluatePropertyValuation } = await import('@/lib/valuationArbitrageEngine');
   const listings = (await listRecords('listings', {
-    select: 'id, price, bedrooms, compound',
-    limit: 50,
+    select: 'id, price, bedrooms, areaSqm, compound, propertyType, dealType',
+    limit: 100,
   })) as Record<string, unknown>[];
-  return { evaluatedListings: listings.length, status: 1 };
+
+  let evaluated = 0;
+  let arbitrageGems = 0;
+  const supabase = getSupabaseAdmin();
+
+  for (const row of listings) {
+    const price = num(row.price);
+    if (price <= 0) continue;
+    try {
+      const dealType = String(row.dealType ?? 'sale').toLowerCase() === 'rent' ? 'Rent' : 'Sale';
+      const val = evaluatePropertyValuation({
+        property_type: String(row.propertyType || 'residential'),
+        transaction_type: dealType,
+        offered_purchase_price: dealType === 'Sale' ? price : undefined,
+        offered_rent: dealType === 'Rent' ? price : undefined,
+        size_sqm: num(row.areaSqm) || undefined,
+        location: String(row.compound || 'New Cairo'),
+      });
+      evaluated += 1;
+      const isGem = Boolean(val.investment_metrics?.is_arbitrage_play);
+      if (isGem) arbitrageGems += 1;
+      const fairPrice = Math.round(
+        ((val.calculated_fair_value_range?.premium_adjusted_conservative || 0) +
+          (val.calculated_fair_value_range?.premium_adjusted_optimistic || 0)) / 2,
+      );
+      if (fairPrice > 0 && row.id) {
+        await supabase
+          .from('listings')
+          .update({
+            ai_fair_price: fairPrice,
+            is_featured_gem: isGem,
+          })
+          .eq('id', String(row.id));
+      }
+    } catch (_) {}
+  }
+
+  return { evaluatedListings: evaluated, arbitrageGemsFound: arbitrageGems, totalScanned: listings.length };
 }
 
 async function runEngine4Outreach(): Promise<Record<string, number>> {
-  const gwUrl = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+  const gwUrl = (process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785').replace(/\/+$/, '');
   let readyLines = 0;
   try {
-    const res = await fetch(`${gwUrl}/api/sessions`, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${gwUrl}/api/sessions`, { signal: AbortSignal.timeout(4000) });
     if (res.ok) {
       const sess = await res.json();
-      readyLines = Array.isArray(sess) ? sess.filter((s: any) => s.status === 'ready').length : 0;
+      readyLines = Array.isArray(sess) ? sess.filter((s: { status?: string }) => s.status === 'ready').length : 0;
     }
   } catch (_) {}
-  return { readyLines, outreachLanesDispatched: readyLines };
+
+  let enqueuedCount = 0;
+  try {
+    const { OwnerOutreachService } = await import('@/lib/services/OwnerOutreachService');
+    const batch = await OwnerOutreachService.enqueueBatch({ batchSize: Math.max(25, readyLines * 25) });
+    enqueuedCount = batch.enqueuedCount;
+  } catch (err) {
+    logger.warn('[ENGINE4_ENQUEUE_WARN]', err instanceof Error ? err.message : err);
+  }
+
+  const runnerOutreach = await triggerRunnerWorkflow('owner-outreach');
+
+  return {
+    readyLines,
+    enqueuedOwners: enqueuedCount,
+    runnerDispatched: runnerOutreach.ok ? 1 : 0,
+  };
 }
 
 const WORKFLOWS: Record<WorkflowName, () => Promise<Record<string, number>>> = {
