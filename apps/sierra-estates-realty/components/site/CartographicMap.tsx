@@ -805,8 +805,8 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               <div className={styles.sealLogoWrap}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src="/assets/logo-mark.png" 
-                  alt="Sierra Estates Seal"
+                  src="/assets/logo-shield.png" 
+                  alt="Sierra Estates Official Seal"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
@@ -815,15 +815,18 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontFamily: 'var(--font-playfair, serif)', fontWeight: 800, fontSize: 12, letterSpacing: '0.05em' }}>
+                  <span style={{ fontFamily: 'var(--font-cinzel, var(--font-playfair, serif))', fontWeight: 900, fontSize: 13, letterSpacing: '0.06em' }}>
                     SIERRA ESTATES
                   </span>
-                  <span style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: 700, color: '#06b6d4' }}>
+                  <span style={{ fontSize: 9.5, fontFamily: 'monospace', fontWeight: 800, color: '#38bdf8' }}>
                     sierra-estates.net
                   </span>
                 </div>
-                <span style={{ fontSize: 9, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#dfad3a' }}>
-                  New Cairo Master Plan 2026
+                <span style={{ fontSize: 9, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#eab308', fontWeight: 800 }}>
+                  FUTURE OF REAL ESTATE
+                </span>
+                <span style={{ fontSize: 8.5, fontFamily: 'monospace', color: activeDarkMode ? '#94a3b8' : '#64748b' }}>
+                  {isAr ? 'المخطط الرقمي المعتمد 2026' : 'New Cairo Official Master Plan 2026'}
                 </span>
               </div>
             </div>

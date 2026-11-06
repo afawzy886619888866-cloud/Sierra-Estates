@@ -519,26 +519,26 @@ export default function SierraMasterRegistryApp({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg overflow-hidden border border-cyan-500/40 bg-stone-900 p-0.5 shrink-0">
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 bg-stone-950 p-1 shrink-0">
               <img
-                src="/assets/aistudio/8e9559f6f_image__1__4350f848.png"
-                alt="Sierra Estates Logo"
+                src="/assets/logo-shield.png"
+                alt="Sierra Estates Official Seal"
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-cinzel tracking-wider font-bold text-stone-900 dark:text-stone-100">
-                  SIERRA ESTATES
+                <span className="font-cinzel tracking-wider font-bold text-stone-900 dark:text-stone-100 text-sm">
+                  {isAr ? 'سييرا إيتيتس' : 'SIERRA ESTATES'}
                 </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-mono font-semibold border border-cyan-500/20">
-                  sierra-estates.net
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-mono font-bold border border-amber-500/20">
+                  {isAr ? 'مستقبل الاستثمار العقاري' : 'FUTURE OF REAL ESTATE'}
                 </span>
               </div>
               <span className="text-[10px] font-mono text-stone-500 block">
                 {isAr
-                  ? 'أفضل مخطط للقاهرة الجديدة 2026 في مصر للإيجار وإعادة البيع'
-                  : 'Best Plan for New Cairo 2026 in Egypt for Rent and Resale'}
+                  ? 'المخطط الرقمي المعتمد للقاهرة الجديدة 2026 · لوحدات الإيجار وإعادة البيع الموثقة'
+                  : 'Official New Cairo Digital Master Plan 2026 · Verified Direct Rent & Resale Inventory'}
               </span>
             </div>
           </div>

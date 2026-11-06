@@ -154,30 +154,30 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
             onClick={() => handleSelectTab('map')}
             className="flex items-center gap-3 text-left cursor-pointer group"
           >
-            <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-cyan-500/40 bg-stone-900 shadow-md group-hover:border-cyan-400 transition-all p-0.5 flex items-center justify-center">
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-500/40 bg-stone-950/90 shadow-md group-hover:border-amber-400 transition-all p-1 flex items-center justify-center">
               <img 
-                src="/assets/aistudio/8e9559f6f_image__1__4350f848.png" 
-                alt="Sierra Estates Logo"
-                className="w-full h-full object-contain filter drop-shadow-xs"
+                src="/assets/logo-shield.png" 
+                alt="Sierra Estates Official Seal"
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="flex flex-col">
-              <span className={`text-base font-extrabold tracking-widest uppercase font-cinzel ${
-                isDarkMode ? 'text-white' : 'text-stone-900'
+              <span className={`text-[15px] font-black tracking-widest uppercase font-cinzel leading-none mb-1 ${
+                isDarkMode ? 'text-amber-100' : 'text-stone-950'
               }`}>
-                {isAr ? 'سيرّا العقارية' : 'SIERRA ESTATES'}
+                {isAr ? 'سييرا إيتيتس' : 'SIERRA ESTATES'}
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-mono tracking-wider uppercase text-cyan-600 dark:text-cyan-400 font-bold">
-                  {isAr ? 'مستقبل العقارات' : 'FUTURE OF REAL ESTATES'}
+                <span className="text-[9.5px] font-mono tracking-wider uppercase text-amber-500 dark:text-amber-400 font-extrabold leading-none">
+                  {isAr ? 'مستقبل الاستثمار العقاري' : 'FUTURE OF REAL ESTATE'}
                 </span>
-                <span className="text-stone-300 dark:text-stone-700">·</span>
+                <span className="text-stone-400 dark:text-stone-600">·</span>
                 <a
                   href="https://sierra-estates.net"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[9px] font-mono text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5"
+                  className="text-[9.5px] font-mono text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-0.5"
                   title="Visit official portal: sierra-estates.net"
                 >
                   <span>sierra-estates.net</span>
