@@ -2,7 +2,9 @@
 export const I18N = {
     en: {
       dir: 'ltr',
-      brandSub: 'Future of Real Estate',
+      brandName: 'SIERRA ESTATES',
+      brandSub: 'FUTURE OF REAL ESTATE',
+      brandSubOfficial: 'FUTURE OF REAL ESTATE',
       navHome: 'Home', navProps: 'Properties', navCpds: 'Compounds & Map', navBest: 'Best Listings', navCareer: 'Career', navAgents: 'Agents', navContact: 'Contact', navAI: 'AI Tools', navProjects: 'Important Projects',
       signIn: 'Sign In', langBtn: 'العربية',
       themeLight: 'Light', themeDark: 'Dark',
@@ -122,7 +124,9 @@ export const I18N = {
     },
     ar: {
       dir: 'rtl',
-      brandSub: 'مستقبل العقارات',
+      brandName: 'سييرا إيستيتس',
+      brandSub: 'مستقبل الاستثمار العقاري',
+      brandSubOfficial: 'مستقبل الاستثمار العقاري',
       navHome: 'الرئيسية', navProps: 'العقارات', navCpds: 'الكمبوندات والخريطة', navBest: 'أفضل العقارات', navCareer: 'وظائف', navAgents: 'المستشارون', navContact: 'تواصل', navAI: 'أدوات الذكاء', navProjects: 'المشروعات المهمة',
       signIn: 'دخول', langBtn: 'English',
       themeLight: 'فاتح', themeDark: 'غامق',

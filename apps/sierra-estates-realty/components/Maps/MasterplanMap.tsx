@@ -630,9 +630,9 @@ export default function MasterplanMap({
       {/* Logo mark (bottom-right, repo asset — never hotlinked) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/assets/logo-mark.png"
+        src="/assets/logo-shield.png"
         alt="Sierra Estates"
-        style={{ position: 'absolute', right: 14, bottom: 12, zIndex: 900, width: 30, height: 30, borderRadius: 8, opacity: 0.9 }}
+        style={{ position: 'absolute', right: 14, bottom: 12, zIndex: 900, width: 34, height: 34, borderRadius: 8, opacity: 0.95 }}
       />
 
       {/* ── 4. Inventory Registry Modal (replaces v1 right drawer) ── */}

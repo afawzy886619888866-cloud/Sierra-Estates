@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Globe, Moon, Sun, Sparkles, Table2, Map, Box, FileText, ShieldCheck, Search, X, Building2, Home, ArrowUpRight } from 'lucide-react';
 import { Compound, UnitListing, COMPOUNDS, UNIT_LISTINGS } from './registryData';
+import SierraBrandLogo from '../brand/SierraBrandLogo';
 
 interface MasterHeaderProps {
   currentTab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier';
@@ -148,43 +149,15 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
       {/* Top Bar Contract: Brand — Nav Links — Global Search & Actions */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
         
-        {/* Zone 1: Brand Wordmark with Official Sierra Estates Logo Image */}
+        {/* Zone 1: Interactive Brand Identity & Logo */}
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => handleSelectTab('map')}
-            className="flex items-center gap-3 text-left cursor-pointer group"
-          >
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-500/40 bg-stone-950/90 shadow-md group-hover:border-amber-400 transition-all p-1 flex items-center justify-center">
-              <img 
-                src="/assets/logo-shield.png" 
-                alt="Sierra Estates Official Seal"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className={`text-[15px] font-black tracking-widest uppercase font-cinzel leading-none mb-1 ${
-                isDarkMode ? 'text-amber-100' : 'text-stone-950'
-              }`}>
-                {isAr ? 'سييرا إيتيتس' : 'SIERRA ESTATES'}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9.5px] font-mono tracking-wider uppercase text-amber-500 dark:text-amber-400 font-extrabold leading-none">
-                  {isAr ? 'مستقبل الاستثمار العقاري' : 'FUTURE OF REAL ESTATE'}
-                </span>
-                <span className="text-stone-400 dark:text-stone-600">·</span>
-                <a
-                  href="https://sierra-estates.net"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-[9.5px] font-mono text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-0.5"
-                  title="Visit official portal: sierra-estates.net"
-                >
-                  <span>sierra-estates.net</span>
-                </a>
-              </div>
-            </div>
-          </button>
+          <SierraBrandLogo
+            variant="header"
+            lang={lang}
+            isDark={isDarkMode}
+            enableTilt={true}
+            interactiveModal={true}
+          />
         </div>
 
         {/* Zone 2: Navigation links */}

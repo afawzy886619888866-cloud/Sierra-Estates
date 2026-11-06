@@ -1298,12 +1298,17 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             <div className={styles.qrModalHeader}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assets/logo-mark.png"
+                src="/assets/logo-shield.png"
                 alt="Sierra Estates"
                 className={styles.qrModalShield}
               />
               <div>
-                <h3 className={styles.qrModalTitle}>SIERRA ESTATES</h3>
+                <h3 className={styles.qrModalTitle}>
+                  {isAr ? 'سييرا إيستيتس' : 'SIERRA ESTATES'}
+                </h3>
+                <div style={{ fontSize: 10, color: '#EAB308', fontWeight: 800, letterSpacing: '0.12em', marginTop: 2, marginBottom: 4 }}>
+                  {isAr ? 'مستقبل الاستثمار العقاري' : 'FUTURE OF REAL ESTATE'}
+                </div>
                 <div className={styles.qrModalSub}>
                   {isAr
                     ? "منصة واتساب للأعمال الرسمية"

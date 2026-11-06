@@ -529,7 +529,7 @@ export default function SierraMasterRegistryApp({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-cinzel tracking-wider font-bold text-stone-900 dark:text-stone-100 text-sm">
-                  {isAr ? 'سييرا إيتيتس' : 'SIERRA ESTATES'}
+                  {isAr ? 'سييرا إيستيتس' : 'SIERRA ESTATES'}
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-mono font-bold border border-amber-500/20">
                   {isAr ? 'مستقبل الاستثمار العقاري' : 'FUTURE OF REAL ESTATE'}

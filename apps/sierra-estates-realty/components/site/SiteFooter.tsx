@@ -22,11 +22,11 @@ export default function SiteFooter() {
             <Link href="/" className="brand">
               <span className="mark logo">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/logo-mark.png" alt="Sierra Estates" />
+                <img src="/assets/logo-shield.png" alt="Sierra Estates" />
               </span>
               <span>
-                <b>Sierra Estates</b>
-                <small>{t('brandSub')}</small>
+                <b style={{ letterSpacing: '0.04em' }}>{isAr ? 'سييرا إيستيتس' : 'Sierra Estates'}</b>
+                <small style={{ color: '#EAB308', fontWeight: 700, letterSpacing: '0.08em' }}>{t('brandSub')}</small>
               </span>
             </Link>
             <p className="blurb">{t('footBlurb')}</p>

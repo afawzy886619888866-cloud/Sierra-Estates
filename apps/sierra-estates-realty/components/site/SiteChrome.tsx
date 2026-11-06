@@ -55,11 +55,11 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           <Link href="/" className="brand" aria-label="Sierra Estates Homepage">
             <span className="mark logo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/logo-mark.png" alt="Sierra Estates" />
+              <img src="/assets/logo-shield.png" alt="Sierra Estates" />
             </span>
             <span>
-              <b>Sierra Estates</b>
-              <small>{t('brandSub')}</small>
+              <b style={{ letterSpacing: '0.04em' }}>{isAr ? 'سييرا إيستيتس' : 'Sierra Estates'}</b>
+              <small style={{ letterSpacing: '0.08em', fontWeight: 700, color: '#EAB308' }}>{t('brandSub')}</small>
             </span>
           </Link>
 
@@ -155,10 +155,14 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
             <div className="mobile-drawer-header">
               <div className="drawer-brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/logo-mark.png" alt="Sierra Estates" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                <img src="/assets/logo-shield.png" alt="Sierra Estates" style={{ width: 34, height: 34, objectFit: 'contain' }} />
                 <div>
-                  <b style={{ color: '#e9c176', fontSize: 16, display: 'block' }}>Sierra Estates</b>
-                  <small style={{ color: '#94a3b8', fontSize: 11 }}>{t('brandSub')}</small>
+                  <b style={{ color: '#ffffff', fontSize: 16, display: 'block', letterSpacing: '0.04em' }}>
+                    {isAr ? 'سييرا إيستيتس' : 'Sierra Estates'}
+                  </b>
+                  <small style={{ color: '#EAB308', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+                    {t('brandSub')}
+                  </small>
                 </div>
               </div>
               <button
