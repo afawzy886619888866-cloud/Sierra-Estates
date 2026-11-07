@@ -205,6 +205,7 @@ function sendJson(res, code, obj) {
   });
   res.end(body);
 }
+const json = sendJson;
 
 /** Uniform 401/429 denial for protected routes (fail-closed + abuse guard). */
 function deny(res, req) {

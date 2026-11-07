@@ -32,7 +32,7 @@ const DATA: any = {
       mainAr: 'أفضل القرارات، مدعومة بالذكاء الاصطناعي. عقارات حصرية للبيع والإيجار.',
       sub: 'Algorithmic valuation, verified owner direct inventory, and instant cadastral GIS matching.',
       subAr: 'تقييم خوارزمي دقيق، وحدات حصرية مباشرة من الملاك، ومطابقة عقارية فورية بنظام GIS.',
-      img: '/hero/hero-sierra-luxury-ai.webp',
+      img: '/hero/hero-sierra-luxury-ai.jpg',
       badge: '🛡️ SIERRA ESTATES · THE BEST DECISIONS, AI-DRIVEN.',
       badgeAr: '🛡️ سييرا إيستيتس · أفضل القرارات، مدعومة بالذكاء الاصطناعي',
       cta: 'Explore Master Registry',

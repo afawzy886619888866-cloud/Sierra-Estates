@@ -1,4 +1,4 @@
-'use client';
+"use client";
 /**
  * InventoryMap — Sierra Estates Houzez-Style Interactive Spatial GIS Map
  *
@@ -12,11 +12,19 @@
  * Governed by: /google-maps-platform, /sierra-map-agent, /threat-mitigation-mapping, /impeccable, /ui-ux-pro-max
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, useMap, Circle, Tooltip, Polygon } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMap,
+  Circle,
+  Tooltip,
+  Polygon,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   Camera,
@@ -34,7 +42,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Phone,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   TARGET_14_COMPOUND_POLYGONS,
   NEW_CAIRO_LANDMARKS,
@@ -42,32 +50,40 @@ import {
   calculateDriveTimeMin,
   getCompoundGisData,
   type CompoundGisData,
-} from '@/lib/gis/compound-polygons';
-import type { InventoryUnit, InventoryStatus } from '@/lib/inventory/types';
-import { hasPendingPhoto } from '@/lib/inventory/normalize';
-import { NEW_CAIRO_COMPOUNDS, type CompoundLocation } from '@/components/Maps/compounds-data';
-import { MapCommanderAgent } from '@/lib/services/MapCommanderAgent';
+} from "@/lib/gis/compound-polygons";
+import type { InventoryUnit, InventoryStatus } from "@/lib/inventory/types";
+import { hasPendingPhoto } from "@/lib/inventory/normalize";
+import {
+  NEW_CAIRO_COMPOUNDS,
+  type CompoundLocation,
+} from "@/components/Maps/compounds-data";
+import { MapCommanderAgent } from "@/lib/services/MapCommanderAgent";
 
-export const SIERRA_WHATSAPP_PHONE = '201092048333';
-export const SIERRA_CONTACT_PHONE = '01092048333';
+export const SIERRA_WHATSAPP_PHONE = "201092048333";
+export const SIERRA_CONTACT_PHONE = "01092048333";
 
 /* ── Tile Layer Configurations ─────────────────────────────────────────── */
-export type MapTileStyle = 'dark' | 'light' | 'satellite';
+export type MapTileStyle = "dark" | "light" | "satellite";
 
-const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string; maxZoom: number }> = {
+const TILE_LAYERS: Record<
+  MapTileStyle,
+  { url: string; attrib: string; maxZoom: number }
+> = {
   dark: {
-    url: 'https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    url: "https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attrib:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 22,
   },
   light: {
-    url: 'https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    url: "https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attrib:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 22,
   },
   satellite: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attrib: '&copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics',
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attrib: "&copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics",
     maxZoom: 22,
   },
 };
@@ -75,19 +91,49 @@ const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string; maxZoom: 
 const NEW_CAIRO_CENTER: [number, number] = [30.025, 31.54];
 
 export const ZONE_PRESETS = [
-  { id: 'all', nameEn: 'All New Cairo', nameAr: 'القاهرة الجديدة كاملة', coords: [30.025, 31.54] as [number, number], zoom: 12 },
-  { id: 'golden-square', nameEn: 'Golden Square', nameAr: 'المربع الذهبي', coords: [30.015, 31.605] as [number, number], zoom: 14 },
-  { id: 'south-90', nameEn: 'South 90th', nameAr: 'التسعين الجنوبي', coords: [30.005, 31.520] as [number, number], zoom: 14 },
-  { id: 'north-exp', nameEn: 'North Expansions', nameAr: 'التوسعات الشمالية', coords: [30.055, 31.595] as [number, number], zoom: 14 },
-  { id: 'capital-axis', nameEn: 'New Capital Axis', nameAr: 'محور العاصمة', coords: [30.020, 31.670] as [number, number], zoom: 14 },
+  {
+    id: "all",
+    nameEn: "All New Cairo",
+    nameAr: "القاهرة الجديدة كاملة",
+    coords: [30.025, 31.54] as [number, number],
+    zoom: 12,
+  },
+  {
+    id: "golden-square",
+    nameEn: "Golden Square",
+    nameAr: "المربع الذهبي",
+    coords: [30.015, 31.605] as [number, number],
+    zoom: 14,
+  },
+  {
+    id: "south-90",
+    nameEn: "South 90th",
+    nameAr: "التسعين الجنوبي",
+    coords: [30.005, 31.52] as [number, number],
+    zoom: 14,
+  },
+  {
+    id: "north-exp",
+    nameEn: "North Expansions",
+    nameAr: "التوسعات الشمالية",
+    coords: [30.055, 31.595] as [number, number],
+    zoom: 14,
+  },
+  {
+    id: "capital-axis",
+    nameEn: "New Capital Axis",
+    nameAr: "محور العاصمة",
+    coords: [30.02, 31.67] as [number, number],
+    zoom: 14,
+  },
 ];
 
 /* ── Houzez Brand Status Colors ────────────────────────────────────────── */
 export const _STATUS_COLORS: Record<InventoryStatus, string> = {
-  available: '#16a34a', // Emerald green
-  follow_up: '#d97706', // Amber gold
-  no_answer: '#64748b', // Slate
-  unavailable: '#94a3b8', // Gray
+  available: "#16a34a", // Emerald green
+  follow_up: "#d97706", // Amber gold
+  no_answer: "#64748b", // Slate
+  unavailable: "#94a3b8", // Gray
 };
 
 interface PlacedUnit extends InventoryUnit {
@@ -131,7 +177,7 @@ function placeUnits(units: InventoryUnit[]): PlacedUnit[] {
  * Custom Houzez Luxury Marker Icon
  */
 function isUnitGem(u: InventoryUnit): { isGem: boolean; discountPct: number } {
-  if (!u.price || u.price <= 0 || !u.area || u.area <= 0 || u.mode !== 'sale') {
+  if (!u.price || u.price <= 0 || !u.area || u.area <= 0 || u.mode !== "sale") {
     return { isGem: false, discountPct: 0 };
   }
   const comp = getCompoundGisData(u.compound || u.location);
@@ -139,21 +185,29 @@ function isUnitGem(u: InventoryUnit): { isGem: boolean; discountPct: number } {
     return { isGem: false, discountPct: 0 };
   }
   const unitPriceSqm = Math.round(u.price / u.area);
-  const discountPct = Math.round(((comp.avgPriceSqmEgp - unitPriceSqm) / comp.avgPriceSqmEgp) * 100);
+  const discountPct = Math.round(
+    ((comp.avgPriceSqmEgp - unitPriceSqm) / comp.avgPriceSqmEgp) * 100,
+  );
   return { isGem: discountPct >= 15, discountPct };
 }
 
 function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
-  const isSale = u.mode === 'sale';
-  const badgeColor = isSale ? '#16a34a' : '#00aeff';
-  const ringColor = isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)';
-  const glow = isSelected ? '0 0 16px rgba(0,174,255,0.9), 0 4px 12px rgba(0,0,0,0.45)' : '0 2px 8px rgba(0,0,0,0.3)';
-  const priceDisplay = u.priceLabel ? u.priceLabel.split(' ')[0] : (isSale ? 'S' : 'R');
+  const isSale = u.mode === "sale";
+  const badgeColor = isSale ? "#16a34a" : "#00aeff";
+  const ringColor = isSelected ? "#ffffff" : "rgba(255,255,255,0.85)";
+  const glow = isSelected
+    ? "0 0 16px rgba(0,174,255,0.9), 0 4px 12px rgba(0,0,0,0.45)"
+    : "0 2px 8px rgba(0,0,0,0.3)";
+  const priceDisplay = u.priceLabel
+    ? u.priceLabel.split(" ")[0]
+    : isSale
+      ? "S"
+      : "R";
   const aiScore = u.aiScore ? u.aiScore.toFixed(1) : undefined;
   const { isGem, discountPct } = isUnitGem(u);
 
   return L.divIcon({
-    className: 'houzez-unit-marker',
+    className: "houzez-unit-marker",
     html: `
       <div style="
         display: inline-flex;
@@ -161,16 +215,16 @@ function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
         gap: 4px;
         background: ${badgeColor};
         color: #ffffff;
-        padding: ${isSelected ? '4px 9px' : '3px 7px'};
+        padding: ${isSelected ? "4px 9px" : "3px 7px"};
         border-radius: 999px;
-        border: 2px solid ${isGem ? '#C9A84C' : ringColor};
-        box-shadow: ${isGem ? '0 0 14px rgba(201,168,76,0.9), ' + glow : glow};
+        border: 2px solid ${isGem ? "#C9A84C" : ringColor};
+        box-shadow: ${isGem ? "0 0 14px rgba(201,168,76,0.9), " + glow : glow};
         font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
         font-weight: 800;
-        font-size: ${isSelected ? '12px' : '11px'};
+        font-size: ${isSelected ? "12px" : "11px"};
         line-height: 1;
         cursor: pointer;
-        transform: translate(-50%, -50%) ${isSelected ? 'scale(1.12)' : 'scale(1)'};
+        transform: translate(-50%, -50%) ${isSelected ? "scale(1.12)" : "scale(1)"};
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         white-space: nowrap;
       ">
@@ -181,10 +235,10 @@ function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
           border-radius: 50%;
           background: #ffffff;
         "></span>
-        <span style="display: inline-block; font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,0.25); font-weight: 900; text-transform: uppercase;">${isSale ? 'Resale' : 'Rent'}</span>
+        <span style="display: inline-block; font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,0.25); font-weight: 900; text-transform: uppercase;">${isSale ? "Resale" : "Rent"}</span>
         <span>${priceDisplay}</span>
-        ${aiScore ? `<span style="font-size: 9.5px; opacity: 0.95; padding-left: 2px;">★${aiScore}</span>` : ''}
-        ${isGem ? `<span style="background: linear-gradient(135deg, #C9A84C, #10B981); color: #0A1628; border-radius: 4px; padding: 1px 4px; font-size: 9px; font-weight: 900;">💎 -${discountPct}%</span>` : ''}
+        ${aiScore ? `<span style="font-size: 9.5px; opacity: 0.95; padding-left: 2px;">★${aiScore}</span>` : ""}
+        ${isGem ? `<span style="background: linear-gradient(135deg, #C9A84C, #10B981); color: #0A1628; border-radius: 4px; padding: 1px 4px; font-size: 9px; font-weight: 900;">💎 -${discountPct}%</span>` : ""}
       </div>
     `,
     iconSize: [isGem ? 130 : 80, 24],
@@ -192,19 +246,23 @@ function createUnitMarkerIcon(u: InventoryUnit, isSelected: boolean) {
   });
 }
 
-function createCentroidPillIcon(comp: CompoundGisData, count: number, isAr: boolean) {
+function createCentroidPillIcon(
+  comp: CompoundGisData,
+  count: number,
+  isAr: boolean,
+) {
   const label = isAr ? comp.nameAr : comp.nameEn;
-  const countText = count > 0 ? ` · ${count}` : '';
+  const countText = count > 0 ? ` · ${count}` : "";
   const borderColor = comp.borderColor;
   const glowColor =
-    borderColor === '#00F0FF'
-      ? 'rgba(0, 240, 255, 0.65)'
-      : borderColor === '#10B981'
-      ? 'rgba(16, 185, 129, 0.65)'
-      : 'rgba(201, 168, 76, 0.75)';
+    borderColor === "#00F0FF"
+      ? "rgba(0, 240, 255, 0.65)"
+      : borderColor === "#10B981"
+        ? "rgba(16, 185, 129, 0.65)"
+        : "rgba(201, 168, 76, 0.75)";
 
   return L.divIcon({
-    className: 'gis-centroid-pill',
+    className: "gis-centroid-pill",
     html: `
       <div style="
         display: inline-flex;
@@ -242,9 +300,13 @@ function createCentroidPillIcon(comp: CompoundGisData, count: number, isAr: bool
   });
 }
 
-function createCompoundHubIcon(comp: CompoundLocation, count: number, isVerified: boolean) {
+function createCompoundHubIcon(
+  comp: CompoundLocation,
+  count: number,
+  isVerified: boolean,
+) {
   return L.divIcon({
-    className: 'houzez-compound-hub',
+    className: "houzez-compound-hub",
     html: `
       <div style="
         display: inline-flex;
@@ -265,8 +327,8 @@ function createCompoundHubIcon(comp: CompoundLocation, count: number, isVerified
       ">
         <span style="color: #00aeff; font-size: 12px;">★</span>
         <span>${comp.nameEn}</span>
-        ${count > 0 ? `<span style="background: rgba(0,174,255,0.25); color: #00aeff; padding: 1px 5px; border-radius: 4px; font-size: 10px;">${count}</span>` : ''}
-        ${isVerified ? `<span style="color: #22c55e; font-size: 11px;">✓</span>` : ''}
+        ${count > 0 ? `<span style="background: rgba(0,174,255,0.25); color: #00aeff; padding: 1px 5px; border-radius: 4px; font-size: 10px;">${count}</span>` : ""}
+        ${isVerified ? `<span style="color: #22c55e; font-size: 11px;">✓</span>` : ""}
       </div>
     `,
     iconSize: [110, 28],
@@ -280,7 +342,7 @@ export interface HarvesterPulse {
   type: string;
   price: number;
   areaSqm?: number;
-  mode: 'sale' | 'rent';
+  mode: "sale" | "rent";
   discountPct?: number;
   hotDeal?: boolean;
   lat: number;
@@ -290,11 +352,11 @@ export interface HarvesterPulse {
 
 function createHarvesterPulseIcon(pulse: HarvesterPulse) {
   const isHot = pulse.hotDeal || (pulse.discountPct && pulse.discountPct >= 8);
-  const pulseColor = isHot ? '#f59e0b' : '#00aeff';
-  const pulseBorder = isHot ? '#ef4444' : '#0284c7';
+  const pulseColor = isHot ? "#f59e0b" : "#00aeff";
+  const pulseBorder = isHot ? "#ef4444" : "#0284c7";
 
   return L.divIcon({
-    className: 'houzez-harvester-pulse-marker',
+    className: "houzez-harvester-pulse-marker",
     html: `
       <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); cursor: pointer;">
         <div style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: ${pulseColor}; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
@@ -307,7 +369,13 @@ function createHarvesterPulseIcon(pulse: HarvesterPulse) {
 }
 
 /** Component to programmatically fly map to coordinate */
-function MapFlyer({ target, zoom }: { target: [number, number] | null; zoom?: number }) {
+function MapFlyer({
+  target,
+  zoom,
+}: {
+  target: [number, number] | null;
+  zoom?: number;
+}) {
   const map = useMap();
   useEffect(() => {
     if (target) {
@@ -322,7 +390,7 @@ export interface InventoryMapProps {
   selectedId?: string | null;
   onSelect?: (u: InventoryUnit) => void;
   onSelectCompound?: (compoundName: string) => void;
-  lang?: 'en' | 'ar';
+  lang?: "en" | "ar";
   isDarkMode?: boolean;
   hideToolbar?: boolean;
 }
@@ -332,29 +400,35 @@ export default function InventoryMap({
   selectedId: controlledSelectedId,
   onSelect,
   onSelectCompound,
-  lang = 'en',
+  lang = "en",
   isDarkMode = true,
   hideToolbar = false,
 }: InventoryMapProps) {
-  const isAr = lang === 'ar';
+  const isAr = lang === "ar";
 
   const [units, setUnits] = useState<InventoryUnit[]>(initialUnits || []);
   const [selectedUnit, setSelectedUnit] = useState<InventoryUnit | null>(null);
-  const [activeZone, setActiveZone] = useState<string>('all');
-  const [modeFilter, setModeFilter] = useState<'all' | 'sale' | 'rent'>('all');
+  const [activeZone, setActiveZone] = useState<string>("all");
+  const [modeFilter, setModeFilter] = useState<"all" | "sale" | "rent">("all");
   const [photoFilter, setPhotoFilter] = useState<boolean>(false);
-  const [tileStyle, setTileStyle] = useState<MapTileStyle>(isDarkMode ? 'dark' : 'light');
+  const [tileStyle, setTileStyle] = useState<MapTileStyle>(
+    isDarkMode ? "dark" : "light",
+  );
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const [flyZoom, setFlyZoom] = useState<number | undefined>(undefined);
   const [showRadarRings, setShowRadarRings] = useState<boolean>(true);
-  const [photoRequestStatus, setPhotoRequestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'cooldown'>>({});
+  const [photoRequestStatus, setPhotoRequestStatus] = useState<
+    Record<string, "idle" | "loading" | "success" | "cooldown">
+  >({});
   const [activeLandmark, setActiveLandmark] = useState<string | null>(null);
-  const [showUnitDetailModal, setShowUnitDetailModal] = useState<boolean>(false);
+  const [showUnitDetailModal, setShowUnitDetailModal] =
+    useState<boolean>(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState<boolean>(false);
 
   // Real-time Harvester Live Opportunities & Telemetry (HARV-030-003)
   const [harvesterPulses, setHarvesterPulses] = useState<HarvesterPulse[]>([]);
-  const [latestOpportunityAlert, setLatestOpportunityAlert] = useState<HarvesterPulse | null>(null);
+  const [latestOpportunityAlert, setLatestOpportunityAlert] =
+    useState<HarvesterPulse | null>(null);
   const [sseConnected, setSseConnected] = useState<boolean>(false);
 
   // Real-time Harvester SSE Stream Connection (HARV-030-003)
@@ -363,23 +437,27 @@ export default function InventoryMap({
     let pulseExpiryTimer: NodeJS.Timeout | null = null;
 
     try {
-      eventSource = new EventSource('/api/harvester/stream');
+      eventSource = new EventSource("/api/harvester/stream");
 
-      eventSource.addEventListener('connected', () => {
+      eventSource.addEventListener("connected", () => {
         setSseConnected(true);
       });
 
-      eventSource.addEventListener('opportunity', (e: MessageEvent) => {
+      eventSource.addEventListener("opportunity", (e: MessageEvent) => {
         try {
           const data = JSON.parse(e.data);
-          if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+          if (
+            data &&
+            typeof data.lat === "number" &&
+            typeof data.lng === "number"
+          ) {
             const pulse: HarvesterPulse = {
               id: data.id || `pulse-${Date.now()}`,
-              compound: data.compound || 'New Cairo',
-              type: data.type || 'Property',
+              compound: data.compound || "New Cairo",
+              type: data.type || "Property",
               price: data.price || 0,
               areaSqm: data.areaSqm,
-              mode: data.mode || 'sale',
+              mode: data.mode || "sale",
               discountPct: data.discountPct,
               hotDeal: Boolean(data.hotDeal),
               lat: data.lat,
@@ -391,11 +469,13 @@ export default function InventoryMap({
             setLatestOpportunityAlert(pulse);
 
             setTimeout(() => {
-              setLatestOpportunityAlert((current) => (current?.id === pulse.id ? null : current));
+              setLatestOpportunityAlert((current) =>
+                current?.id === pulse.id ? null : current,
+              );
             }, 8000);
           }
         } catch (err) {
-          console.warn('[InventoryMap] Failed to parse opportunity SSE:', err);
+          console.warn("[InventoryMap] Failed to parse opportunity SSE:", err);
         }
       });
 
@@ -403,12 +483,14 @@ export default function InventoryMap({
         setSseConnected(false);
       };
     } catch (err) {
-      console.warn('[InventoryMap] SSE connection failed:', err);
+      console.warn("[InventoryMap] SSE connection failed:", err);
     }
 
     pulseExpiryTimer = setInterval(() => {
       const now = Date.now();
-      setHarvesterPulses((prev) => prev.filter((p) => now - p.timestamp < 180000));
+      setHarvesterPulses((prev) =>
+        prev.filter((p) => now - p.timestamp < 180000),
+      );
     }, 30000);
 
     return () => {
@@ -427,7 +509,7 @@ export default function InventoryMap({
   // If no units passed, fetch live /api/inventory
   useEffect(() => {
     if (!initialUnits || initialUnits.length === 0) {
-      fetch('/api/inventory?limit=500')
+      fetch("/api/inventory?limit=500")
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data && Array.isArray(data.units)) {
@@ -440,18 +522,21 @@ export default function InventoryMap({
 
   // Sync tileStyle with isDarkMode if user changes it
   useEffect(() => {
-    setTileStyle(isDarkMode ? 'dark' : 'light');
+    setTileStyle(isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   // Filtered unit set
   const filteredUnits = useMemo(() => {
     return units.filter((u) => {
-      if (modeFilter !== 'all' && u.mode !== modeFilter) return false;
+      if (modeFilter !== "all" && u.mode !== modeFilter) return false;
       if (photoFilter && hasPendingPhoto(u.img)) return false;
-      if (activeZone !== 'all') {
+      if (activeZone !== "all") {
         const zoneObj = ZONE_PRESETS.find((z) => z.id === activeZone);
         if (zoneObj && zoneObj.coords) {
-          const dist = Math.hypot(u.lat - zoneObj.coords[0], u.lng - zoneObj.coords[1]);
+          const dist = Math.hypot(
+            u.lat - zoneObj.coords[0],
+            u.lng - zoneObj.coords[1],
+          );
           if (dist > 0.04) return false;
         }
       }
@@ -471,7 +556,7 @@ export default function InventoryMap({
       lat: u.lat,
       lng: u.lng,
       priceLabel: u.priceLabel || `${u.price.toLocaleString()} EGP`,
-      type: u.propertyType || u.type || 'Property',
+      type: u.propertyType || u.type || "Property",
       mode: u.mode,
       img: u.img,
       featured: u.featured,
@@ -487,36 +572,36 @@ export default function InventoryMap({
       setFlyZoom(15);
       if (onSelect) onSelect(u);
     },
-    [onSelect]
+    [onSelect],
   );
 
   // Handle Photo Harvesting trigger
   const handleRequestPhotos = async (unit: InventoryUnit) => {
     const code = unit.code || unit.id;
-    setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'loading' }));
+    setPhotoRequestStatus((prev) => ({ ...prev, [code]: "loading" }));
 
     try {
-      const res = await fetch('/api/inventory/request-photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/inventory/request-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           unitCode: code,
           compound: unit.compound || unit.location,
           unitId: unit.id,
-          requesterName: 'Sierra Client Portal User',
+          requesterName: "Sierra Client Portal User",
         }),
       });
 
       const data = await res.json().catch(() => ({}));
       if (data.alreadyRequested) {
-        setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'cooldown' }));
+        setPhotoRequestStatus((prev) => ({ ...prev, [code]: "cooldown" }));
       } else if (res.ok && data.success) {
-        setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'success' }));
+        setPhotoRequestStatus((prev) => ({ ...prev, [code]: "success" }));
       } else {
-        setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'idle' }));
+        setPhotoRequestStatus((prev) => ({ ...prev, [code]: "idle" }));
       }
     } catch {
-      setPhotoRequestStatus((prev) => ({ ...prev, [code]: 'idle' }));
+      setPhotoRequestStatus((prev) => ({ ...prev, [code]: "idle" }));
     }
   };
 
@@ -530,174 +615,214 @@ export default function InventoryMap({
   };
 
   return (
-    <div className="relative w-full h-170 rounded-2xl overflow-hidden border border-[#00aeff]/30 shadow-2xl bg-[#001f38] flex flex-col font-sans select-none" style={{ position: 'relative', width: '100%', height: 680, minHeight: 680, display: 'flex', flexDirection: 'column' }}>
+    <div
+      className="relative w-full h-170 rounded-2xl overflow-hidden border border-[#00aeff]/30 shadow-2xl bg-[#001f38] flex flex-col font-sans select-none"
+      style={{
+        position: "relative",
+        width: "100%",
+        height: 680,
+        minHeight: 680,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {!hideToolbar && (
-      <div className="z-30 w-full px-4 py-3 bg-[#002b4b]/95 backdrop-blur-md border-b border-[#00aeff]/25 flex flex-wrap items-center justify-between gap-3 text-xs text-white">
-        {/* Left: Zone Jump Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
-          <span className="text-[#00aeff] font-bold uppercase tracking-wider text-[11px] whitespace-nowrap flex items-center gap-1">
-            <Compass className="w-3.5 h-3.5 text-[#00aeff]" />
-            <span>{isAr ? 'المناطق:' : 'Zones:'}</span>
-          </span>
-          {ZONE_PRESETS.map((z) => (
-            <button
-              key={z.id}
-              onClick={() => handleZoneSelect(z.id)}
-              className={`px-3 py-1 rounded-md text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 ${
-                activeZone === z.id
-                  ? 'bg-[#00aeff] text-[#002b4b] shadow-sm font-bold'
-                  : 'bg-[#001f38]/80 text-slate-300 hover:text-white hover:bg-[#003865] border border-white/10'
-              }`}
-            >
-              {isAr ? z.nameAr : z.nameEn}
-            </button>
-          ))}
-        </div>
-
-        {/* Middle: Landmark Proximity Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 border-t sm:border-t-0 sm:border-l sm:border-r border-white/10 px-2">
-          <span className="text-[#00F0FF] font-bold uppercase tracking-wider text-[11px] whitespace-nowrap flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" />
-            <span>{isAr ? 'المعالم والقرب:' : 'Proximity:'}</span>
-          </span>
-          {NEW_CAIRO_LANDMARKS.map((lm) => {
-            const refCoords: [number, number] = selectedUnit ? [selectedUnit.lat, selectedUnit.lng] : NEW_CAIRO_CENTER;
-            const distKm = calculateHaversineDistanceKm(refCoords[0], refCoords[1], lm.coords[0], lm.coords[1]);
-            const driveMin = calculateDriveTimeMin(distKm);
-            const isSelected = activeLandmark === lm.id;
-
-            return (
+        <div className="z-30 w-full px-4 py-3 bg-[#002b4b]/95 backdrop-blur-md border-b border-[#00aeff]/25 flex flex-wrap items-center justify-between gap-3 text-xs text-white">
+          {/* Left: Zone Jump Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+            <span className="text-[#00aeff] font-bold uppercase tracking-wider text-[11px] whitespace-nowrap flex items-center gap-1">
+              <Compass className="w-3.5 h-3.5 text-[#00aeff]" />
+              <span>{isAr ? "المناطق:" : "Zones:"}</span>
+            </span>
+            {ZONE_PRESETS.map((z) => (
               <button
-                key={lm.id}
-                onClick={() => {
-                  if (activeLandmark === lm.id) {
-                    setActiveLandmark(null);
-                    setFlyTarget(NEW_CAIRO_CENTER);
-                    setFlyZoom(12);
-                  } else {
-                    setActiveLandmark(lm.id);
-                    setFlyTarget(lm.coords);
-                    setFlyZoom(14);
-                  }
-                }}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 border ${
-                  isSelected
-                    ? 'bg-[#C9A84C] text-[#0A1628] border-[#F5D78E] shadow-[0_0_12px_rgba(201,168,76,0.6)] font-extrabold'
-                    : 'bg-[#001f38]/90 text-slate-200 hover:text-white hover:bg-[#002b4b] border-white/15'
+                key={z.id}
+                onClick={() => handleZoneSelect(z.id)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                  activeZone === z.id
+                    ? "bg-[#00aeff] text-[#002b4b] shadow-sm font-bold"
+                    : "bg-[#001f38]/80 text-slate-300 hover:text-white hover:bg-[#003865] border border-white/10"
                 }`}
-                title={`Drive time ~${driveMin} min (${distKm} km)`}
               >
-                <span>{lm.icon}</span>
-                <span>{isAr ? lm.nameAr : lm.nameEn}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${isSelected ? 'bg-[#0A1628]/20 text-[#0A1628] font-bold' : 'bg-[#00F0FF]/15 text-[#00F0FF]'}`}>
-                  ~{driveMin} {isAr ? 'د' : 'min'}
-                </span>
+                {isAr ? z.nameAr : z.nameEn}
               </button>
-            );
-          })}
-        </div>
-
-{/* Right: Filters & Tile Switcher */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Rent/Sale Mode Filter */}
-          <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
-            <button
-              onClick={() => setModeFilter('all')}
-              className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
-                modeFilter === 'all' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              {isAr ? 'الكل' : 'All'}
-            </button>
-            <button
-              onClick={() => setModeFilter('sale')}
-              className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
-                modeFilter === 'sale' ? 'bg-[#16a34a] text-white' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              {isAr ? 'بيع' : 'Sale'}
-            </button>
-            <button
-              onClick={() => setModeFilter('rent')}
-              className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
-                modeFilter === 'rent' ? 'bg-[#00aeff] text-white' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              {isAr ? 'إيجار' : 'Rent'}
-            </button>
+            ))}
           </div>
 
-          {/* Photo completeness filter */}
-          <button
-            onClick={() => setPhotoFilter(!photoFilter)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all ${
-              photoFilter
-                ? 'bg-[#00aeff]/20 border-[#00aeff] text-[#00aeff]'
-                : 'bg-[#001f38] border-white/15 text-slate-300 hover:text-white'
-            }`}
-            title="Filter properties with verified real photos"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>{isAr ? 'صور مؤكدة' : 'Verified Photos'}</span>
-          </button>
+          {/* Middle: Landmark Proximity Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 border-t sm:border-t-0 sm:border-l sm:border-r border-white/10 px-2">
+            <span className="text-[#00F0FF] font-bold uppercase tracking-wider text-[11px] whitespace-nowrap flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" />
+              <span>{isAr ? "المعالم والقرب:" : "Proximity:"}</span>
+            </span>
+            {NEW_CAIRO_LANDMARKS.map((lm) => {
+              const refCoords: [number, number] = selectedUnit
+                ? [selectedUnit.lat, selectedUnit.lng]
+                : NEW_CAIRO_CENTER;
+              const distKm = calculateHaversineDistanceKm(
+                refCoords[0],
+                refCoords[1],
+                lm.coords[0],
+                lm.coords[1],
+              );
+              const driveMin = calculateDriveTimeMin(distKm);
+              const isSelected = activeLandmark === lm.id;
 
-          {/* Radar Circles Toggle */}
-          <button
-            onClick={() => setShowRadarRings(!showRadarRings)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all ${
-              showRadarRings
-                ? 'bg-[#e9c176]/25 border-[#e9c176] text-[#e9c176]'
-                : 'bg-[#001f38] border-white/15 text-slate-300 hover:text-white'
-            }`}
-            title="Toggle AUC & Strategic Radar Rings"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#e9c176]" />
-            <span className="hidden sm:inline">{isAr ? 'الرادار' : 'Radar'}</span>
-          </button>
+              return (
+                <button
+                  key={lm.id}
+                  onClick={() => {
+                    if (activeLandmark === lm.id) {
+                      setActiveLandmark(null);
+                      setFlyTarget(NEW_CAIRO_CENTER);
+                      setFlyZoom(12);
+                    } else {
+                      setActiveLandmark(lm.id);
+                      setFlyTarget(lm.coords);
+                      setFlyZoom(14);
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 border ${
+                    isSelected
+                      ? "bg-[#C9A84C] text-[#0A1628] border-[#F5D78E] shadow-[0_0_12px_rgba(201,168,76,0.6)] font-extrabold"
+                      : "bg-[#001f38]/90 text-slate-200 hover:text-white hover:bg-[#002b4b] border-white/15"
+                  }`}
+                  title={`Drive time ~${driveMin} min (${distKm} km)`}
+                >
+                  <span>{lm.icon}</span>
+                  <span>{isAr ? lm.nameAr : lm.nameEn}</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${isSelected ? "bg-[#0A1628]/20 text-[#0A1628] font-bold" : "bg-[#00F0FF]/15 text-[#00F0FF]"}`}
+                  >
+                    ~{driveMin} {isAr ? "د" : "min"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Tile Layer Switcher */}
-          <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
+          {/* Right: Filters & Tile Switcher */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Rent/Sale Mode Filter */}
+            <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
+              <button
+                onClick={() => setModeFilter("all")}
+                className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                  modeFilter === "all"
+                    ? "bg-[#00aeff] text-[#002b4b]"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                {isAr ? "الكل" : "All"}
+              </button>
+              <button
+                onClick={() => setModeFilter("sale")}
+                className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                  modeFilter === "sale"
+                    ? "bg-[#16a34a] text-white"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                {isAr ? "بيع" : "Sale"}
+              </button>
+              <button
+                onClick={() => setModeFilter("rent")}
+                className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                  modeFilter === "rent"
+                    ? "bg-[#00aeff] text-white"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                {isAr ? "إيجار" : "Rent"}
+              </button>
+            </div>
+
+            {/* Photo completeness filter */}
             <button
-              onClick={() => setTileStyle('dark')}
-              className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
-                tileStyle === 'dark' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300'
+              onClick={() => setPhotoFilter(!photoFilter)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all ${
+                photoFilter
+                  ? "bg-[#00aeff]/20 border-[#00aeff] text-[#00aeff]"
+                  : "bg-[#001f38] border-white/15 text-slate-300 hover:text-white"
               }`}
-              title="Houzez Obsidian Dark"
+              title="Filter properties with verified real photos"
             >
-              <Moon className="w-3 h-3" />
+              <Camera className="w-3.5 h-3.5" />
+              <span>{isAr ? "صور مؤكدة" : "Verified Photos"}</span>
             </button>
+
+            {/* Radar Circles Toggle */}
             <button
-              onClick={() => setTileStyle('light')}
-              className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
-                tileStyle === 'light' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300'
+              onClick={() => setShowRadarRings(!showRadarRings)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border flex items-center gap-1.5 cursor-pointer transition-all ${
+                showRadarRings
+                  ? "bg-[#e9c176]/25 border-[#e9c176] text-[#e9c176]"
+                  : "bg-[#001f38] border-white/15 text-slate-300 hover:text-white"
               }`}
-              title="Houzez Alabaster Light"
+              title="Toggle AUC & Strategic Radar Rings"
             >
-              <Sun className="w-3 h-3" />
+              <Sparkles className="w-3.5 h-3.5 text-[#e9c176]" />
+              <span className="hidden sm:inline">
+                {isAr ? "الرادار" : "Radar"}
+              </span>
             </button>
-            <button
-              onClick={() => setTileStyle('satellite')}
-              className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
-                tileStyle === 'satellite' ? 'bg-[#00aeff] text-[#002b4b]' : 'text-slate-300'
-              }`}
-              title="Esri Photorealistic Satellite"
-            >
-              <Globe className="w-3 h-3" />
-            </button>
+
+            {/* Tile Layer Switcher */}
+            <div className="inline-flex rounded-lg p-0.5 bg-[#001f38] border border-white/15">
+              <button
+                onClick={() => setTileStyle("dark")}
+                className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                  tileStyle === "dark"
+                    ? "bg-[#00aeff] text-[#002b4b]"
+                    : "text-slate-300"
+                }`}
+                title="Houzez Obsidian Dark"
+              >
+                <Moon className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setTileStyle("light")}
+                className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                  tileStyle === "light"
+                    ? "bg-[#00aeff] text-[#002b4b]"
+                    : "text-slate-300"
+                }`}
+                title="Houzez Alabaster Light"
+              >
+                <Sun className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setTileStyle("satellite")}
+                className={`px-2 py-1 rounded text-[11px] font-bold cursor-pointer ${
+                  tileStyle === "satellite"
+                    ? "bg-[#00aeff] text-[#002b4b]"
+                    : "text-slate-300"
+                }`}
+                title="Esri Photorealistic Satellite"
+              >
+                <Globe className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-
-      
       )}
       {/* ── Main Leaflet Map Stage ────────────────────────────────────── */}
-      <div className="relative flex-1 w-full h-full" style={{ position: 'relative', flex: 1, width: '100%', height: 620, minHeight: 600 }}>
+      <div
+        className="relative flex-1 w-full h-full"
+        style={{
+          position: "relative",
+          flex: 1,
+          width: "100%",
+          height: 620,
+          minHeight: 600,
+        }}
+      >
         <MapContainer
           center={NEW_CAIRO_CENTER}
           zoom={12}
           maxZoom={22}
           scrollWheelZoom={true}
-          style={{ height: '100%', width: '100%', background: '#001f38' }}
+          style={{ height: "100%", width: "100%", background: "#001f38" }}
         >
           <TileLayer
             url={TILE_LAYERS[tileStyle].url}
@@ -713,19 +838,33 @@ export default function InventoryMap({
               <Circle
                 center={[30.019, 31.501]} // AUC New Cairo
                 radius={3000}
-                pathOptions={{ color: '#00aeff', weight: 1, dashArray: '4, 6', fillOpacity: 0.03, fillColor: '#00aeff' }}
+                pathOptions={{
+                  color: "#00aeff",
+                  weight: 1,
+                  dashArray: "4, 6",
+                  fillOpacity: 0.03,
+                  fillColor: "#00aeff",
+                }}
               />
               <Circle
                 center={[30.019, 31.501]}
                 radius={6000}
-                pathOptions={{ color: '#00aeff', weight: 1, dashArray: '4, 8', fillOpacity: 0.02, fillColor: '#00aeff' }}
+                pathOptions={{
+                  color: "#00aeff",
+                  weight: 1,
+                  dashArray: "4, 8",
+                  fillOpacity: 0.02,
+                  fillColor: "#00aeff",
+                }}
               />
             </>
           )}
 
           {/* Target 14 Compound GPS Glowing Polygons & Centroid Pills */}
           {Object.entries(TARGET_14_COMPOUND_POLYGONS).map(([cKey, comp]) => {
-            const stat = compoundStats.find((s) => s.compoundCode === comp.code);
+            const stat = compoundStats.find(
+              (s) => s.compoundCode === comp.code,
+            );
             const count = stat ? stat.totalUnits : 0;
             return (
               <React.Fragment key={`target-compound-${comp.code}`}>
@@ -759,19 +898,26 @@ export default function InventoryMap({
                   }}
                 >
                   <Tooltip direction="top" offset={[0, -14]} opacity={0.96}>
-                    <div className="text-xs p-1.5 font-sans" style={{ minWidth: 170 }}>
-                      <div className="font-bold text-[#002b4b]" style={{ color: comp.borderColor }}>
+                    <div
+                      className="text-xs p-1.5 font-sans"
+                      style={{ minWidth: 170 }}
+                    >
+                      <div
+                        className="font-bold text-[#002b4b]"
+                        style={{ color: comp.borderColor }}
+                      >
                         {isAr ? comp.nameAr : comp.nameEn}
                       </div>
                       <div className="text-slate-600 text-[11px] font-semibold mt-0.5">
                         {comp.developer}
                       </div>
                       <div className="text-slate-700 text-[11px] mt-1">
-                        {isAr ? 'متوسط سعر المتر:' : 'Avg Price/m²:'}{' '}
+                        {isAr ? "متوسط سعر المتر:" : "Avg Price/m²:"}{" "}
                         <b>{comp.avgPriceSqmEgp.toLocaleString()} EGP</b>
                       </div>
                       <div className="text-emerald-600 text-[11px] font-bold">
-                        {isAr ? 'عائد الإيجار المتوقع:' : 'Expected Yield:'} {comp.rentalYieldRange}
+                        {isAr ? "عائد الإيجار المتوقع:" : "Expected Yield:"}{" "}
+                        {comp.rentalYieldRange}
                       </div>
                     </div>
                   </Tooltip>
@@ -781,14 +927,25 @@ export default function InventoryMap({
           })}
 
           {/* Master Compound Hub Markers */}
-          {NEW_CAIRO_COMPOUNDS.filter((comp) => !Object.values(TARGET_14_COMPOUND_POLYGONS).some((t) => t.code === comp.code)).map((comp) => {
-            const stat = compoundStats.find((s) => s.compoundCode === comp.code);
+          {NEW_CAIRO_COMPOUNDS.filter(
+            (comp) =>
+              !Object.values(TARGET_14_COMPOUND_POLYGONS).some(
+                (t) => t.code === comp.code,
+              ),
+          ).map((comp) => {
+            const stat = compoundStats.find(
+              (s) => s.compoundCode === comp.code,
+            );
             const count = stat ? stat.totalUnits : 0;
             return (
               <Marker
                 key={`hub-${comp.code}`}
                 position={[comp.lat, comp.lng]}
-                icon={createCompoundHubIcon(comp, count, Boolean(comp.isGpsVerified))}
+                icon={createCompoundHubIcon(
+                  comp,
+                  count,
+                  Boolean(comp.isGpsVerified),
+                )}
                 eventHandlers={{
                   click: () => {
                     if (onSelectCompound) onSelectCompound(comp.nameEn);
@@ -799,13 +956,20 @@ export default function InventoryMap({
               >
                 <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
                   <div className="text-xs p-1 font-sans">
-                    <div className="font-bold text-[#002b4b]">{comp.nameEn} ({comp.nameAr})</div>
+                    <div className="font-bold text-[#002b4b]">
+                      {comp.nameEn} ({comp.nameAr})
+                    </div>
                     <div className="text-slate-600">
-                      {isAr ? `${count} وحدات متوفرة` : `${count} available units`}
+                      {isAr
+                        ? `${count} وحدات متوفرة`
+                        : `${count} available units`}
                     </div>
                     {comp.isGpsVerified && (
                       <div className="text-emerald-600 font-semibold text-[10px]">
-                        ✓ {isAr ? 'إحداثيات GIS معتمدة' : 'Verified GIS Coordinates'}
+                        ✓{" "}
+                        {isAr
+                          ? "إحداثيات GIS معتمدة"
+                          : "Verified GIS Coordinates"}
                       </div>
                     )}
                   </div>
@@ -816,7 +980,8 @@ export default function InventoryMap({
 
           {/* Live Inventory Unit Pins */}
           {placedUnits.map((u) => {
-            const isSelected = selectedUnit?.id === u.id || controlledSelectedId === u.id;
+            const isSelected =
+              selectedUnit?.id === u.id || controlledSelectedId === u.id;
             return (
               <Marker
                 key={`unit-${u.id}`}
@@ -825,7 +990,7 @@ export default function InventoryMap({
                 eventHandlers={{
                   click: () => handleSelectUnit(u),
                 }}
-                zIndexOffset={isSelected ? 1000 : u.mode === 'sale' ? 200 : 100}
+                zIndexOffset={isSelected ? 1000 : u.mode === "sale" ? 200 : 100}
               />
             );
           })}
@@ -837,11 +1002,11 @@ export default function InventoryMap({
                 center={[pulse.lat, pulse.lng]}
                 radius={pulse.hotDeal ? 650 : 350}
                 pathOptions={{
-                  color: pulse.hotDeal ? '#ef4444' : '#00aeff',
-                  fillColor: pulse.hotDeal ? '#f59e0b' : '#00aeff',
+                  color: pulse.hotDeal ? "#ef4444" : "#00aeff",
+                  fillColor: pulse.hotDeal ? "#f59e0b" : "#00aeff",
                   fillOpacity: 0.22,
                   weight: 2,
-                  dashArray: '3, 6',
+                  dashArray: "3, 6",
                 }}
               />
               <Marker
@@ -858,11 +1023,20 @@ export default function InventoryMap({
                 <Tooltip direction="top" offset={[0, -16]} opacity={0.95}>
                   <div className="text-xs p-1 font-sans">
                     <div className="flex items-center gap-1 font-bold text-[#002b4b]">
-                      <span>⚡ {pulse.hotDeal ? '🔥 Hot Deal Opportunity' : 'Live Harvester Intake'}</span>
+                      <span>
+                        ⚡{" "}
+                        {pulse.hotDeal
+                          ? "🔥 Hot Deal Opportunity"
+                          : "Live Harvester Intake"}
+                      </span>
                     </div>
-                    <div className="font-semibold text-slate-800">{pulse.compound}</div>
+                    <div className="font-semibold text-slate-800">
+                      {pulse.compound}
+                    </div>
                     <div className="text-emerald-700 font-bold">
-                      {pulse.price ? `${pulse.price.toLocaleString()} EGP` : 'Price on Inquiry'}
+                      {pulse.price
+                        ? `${pulse.price.toLocaleString()} EGP`
+                        : "Price on Inquiry"}
                     </div>
                     {pulse.discountPct ? (
                       <div className="text-amber-600 font-bold text-[10px]">
@@ -888,7 +1062,10 @@ export default function InventoryMap({
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               className="absolute top-4 left-1/2 -translate-x-1/2 z-500 flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#002b4b]/95 border border-[#00aeff]/60 shadow-2xl backdrop-blur-md cursor-pointer hover:border-[#00aeff] transition-all"
               onClick={() => {
-                setFlyTarget([latestOpportunityAlert.lat, latestOpportunityAlert.lng]);
+                setFlyTarget([
+                  latestOpportunityAlert.lat,
+                  latestOpportunityAlert.lng,
+                ]);
                 setFlyZoom(15);
               }}
             >
@@ -897,11 +1074,17 @@ export default function InventoryMap({
               </span>
               <div className="text-xs">
                 <span className="font-bold text-white">
-                  {latestOpportunityAlert.hotDeal ? '🔥 Hot Deal Detected: ' : '⚡ Live Harvester Offer: '}
+                  {latestOpportunityAlert.hotDeal
+                    ? "🔥 Hot Deal Detected: "
+                    : "⚡ Live Harvester Offer: "}
                 </span>
-                <span className="text-[#00aeff] font-semibold">{latestOpportunityAlert.compound}</span>
+                <span className="text-[#00aeff] font-semibold">
+                  {latestOpportunityAlert.compound}
+                </span>
                 <span className="text-slate-300 ml-1.5 font-mono">
-                  {latestOpportunityAlert.price ? `${latestOpportunityAlert.price.toLocaleString()} EGP` : ''}
+                  {latestOpportunityAlert.price
+                    ? `${latestOpportunityAlert.price.toLocaleString()} EGP`
+                    : ""}
                 </span>
               </div>
               <button
@@ -922,37 +1105,53 @@ export default function InventoryMap({
           <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-white/10">
             <span className="font-bold text-[#00aeff] flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAr ? 'رادار المخزون الذكي (Map Commander)' : 'Map Commander Live Radar'}</span>
+              <span>
+                {isAr
+                  ? "رادار المخزون الذكي (Map Commander)"
+                  : "Map Commander Live Radar"}
+              </span>
             </span>
             <div className="flex items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
                   sseConnected
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                 }`}
-                title={sseConnected ? 'Connected to /api/harvester/stream' : 'Connecting to SSE feed'}
+                title={
+                  sseConnected
+                    ? "Connected to /api/harvester/stream"
+                    : "Connecting to SSE feed"
+                }
               >
-                <Radio className={`w-2.5 h-2.5 ${sseConnected ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
-                <span>{sseConnected ? 'LIVE FEED' : 'SYNCING'}</span>
+                <Radio
+                  className={`w-2.5 h-2.5 ${sseConnected ? "animate-pulse text-emerald-400" : "text-amber-400"}`}
+                />
+                <span>{sseConnected ? "LIVE FEED" : "SYNCING"}</span>
               </span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
-                {filteredUnits.length} {isAr ? 'وحدة' : 'Units'}
+                {filteredUnits.length} {isAr ? "وحدة" : "Units"}
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
             <div>
-              <span className="text-slate-400 block">{isAr ? 'نطاق القاهرة الجديدة:' : 'New Cairo Bounds:'}</span>
-              <span className="font-semibold text-emerald-400">100% {isAr ? 'معتمد' : 'Compliant'}</span>
+              <span className="text-slate-400 block">
+                {isAr ? "نطاق القاهرة الجديدة:" : "New Cairo Bounds:"}
+              </span>
+              <span className="font-semibold text-emerald-400">
+                100% {isAr ? "معتمد" : "Compliant"}
+              </span>
             </div>
             <div>
-              <span className="text-slate-400 block">{isAr ? 'نسبة الصور المعتمدة:' : 'Photo Coverage:'}</span>
+              <span className="text-slate-400 block">
+                {isAr ? "نسبة الصور المعتمدة:" : "Photo Coverage:"}
+              </span>
               <span className="font-semibold text-cyan-300">
                 {units.length > 0
-                  ? `${Math.round(((units.filter((u) => !hasPendingPhoto(u.img)).length) / units.length) * 100)}%`
-                  : '100%'}
+                  ? `${Math.round((units.filter((u) => !hasPendingPhoto(u.img)).length / units.length) * 100)}%`
+                  : "100%"}
               </span>
             </div>
           </div>
@@ -965,8 +1164,8 @@ export default function InventoryMap({
               initial={{ x: isAr ? -380 : 380, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: isAr ? -380 : 380, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} bottom-4 z-600 w-80 sm:w-96 bg-[#002b4b]/98 backdrop-blur-xl border border-[#00aeff]/50 rounded-2xl p-4 shadow-2xl text-white flex flex-col justify-between overflow-y-auto`}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className={`absolute top-4 ${isAr ? "left-4" : "right-4"} bottom-4 z-600 w-80 sm:w-96 bg-[#002b4b]/98 backdrop-blur-xl border border-[#00aeff]/50 rounded-2xl p-4 shadow-2xl text-white flex flex-col justify-between overflow-y-auto`}
             >
               <div>
                 {/* Header with Close */}
@@ -974,13 +1173,23 @@ export default function InventoryMap({
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
-                        selectedUnit.mode === 'sale' ? 'bg-[#16a34a] text-white' : 'bg-[#00aeff] text-[#002b4b]'
+                        selectedUnit.mode === "sale"
+                          ? "bg-[#16a34a] text-white"
+                          : "bg-[#00aeff] text-[#002b4b]"
                       }`}
                     >
-                      {selectedUnit.mode === 'sale' ? (isAr ? 'للبيع' : 'FOR SALE') : (isAr ? 'للإيجار' : 'FOR RENT')}
+                      {selectedUnit.mode === "sale"
+                        ? isAr
+                          ? "للبيع"
+                          : "FOR SALE"
+                        : isAr
+                          ? "للإيجار"
+                          : "FOR RENT"}
                     </span>
                     {selectedUnit.code && (
-                      <span className="font-mono text-xs text-slate-300 font-semibold">{selectedUnit.code}</span>
+                      <span className="font-mono text-xs text-slate-300 font-semibold">
+                        {selectedUnit.code}
+                      </span>
                     )}
                   </div>
                   <button
@@ -1004,14 +1213,17 @@ export default function InventoryMap({
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-400 p-4 text-center">
                       <Camera className="w-8 h-8 text-[#00aeff]/60" />
                       <span className="text-xs font-semibold">
-                        {isAr ? 'صور الوحدة قيد الاعتماد من المالك' : 'Real Photos Pending Owner Verification'}
+                        {isAr
+                          ? "صور الوحدة قيد الاعتماد من المالك"
+                          : "Real Photos Pending Owner Verification"}
                       </span>
                     </div>
                   )}
 
                   {/* Price Tag Overlay */}
                   <div className="absolute bottom-2 left-2 px-3 py-1 rounded-lg bg-[#002b4b]/90 backdrop-blur-md border border-[#00aeff]/40 text-sm font-extrabold text-white">
-                    {selectedUnit.priceLabel || `${selectedUnit.price.toLocaleString()} EGP`}
+                    {selectedUnit.priceLabel ||
+                      `${selectedUnit.price.toLocaleString()} EGP`}
                   </div>
                 </div>
 
@@ -1022,21 +1234,36 @@ export default function InventoryMap({
                     <span>{selectedUnit.location}</span>
                   </h3>
                   <p className="text-xs text-slate-300 mt-1">
-                    {selectedUnit.zone} {selectedUnit.approxLocation ? '· (Approx GPS)' : '· Verified Coordinate'}
+                    {selectedUnit.zone}{" "}
+                    {selectedUnit.approxLocation
+                      ? "· (Approx GPS)"
+                      : "· Verified Coordinate"}
                   </p>
 
                   <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10 text-center text-xs">
                     <div className="bg-[#001f38] p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-400 block text-[10px]">{isAr ? 'الغرف' : 'Beds'}</span>
-                      <span className="font-bold text-white">{selectedUnit.beds || '—'}</span>
+                      <span className="text-slate-400 block text-[10px]">
+                        {isAr ? "الغرف" : "Beds"}
+                      </span>
+                      <span className="font-bold text-white">
+                        {selectedUnit.beds || "—"}
+                      </span>
                     </div>
                     <div className="bg-[#001f38] p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-400 block text-[10px]">{isAr ? 'الحمامات' : 'Baths'}</span>
-                      <span className="font-bold text-white">{selectedUnit.bath || '—'}</span>
+                      <span className="text-slate-400 block text-[10px]">
+                        {isAr ? "الحمامات" : "Baths"}
+                      </span>
+                      <span className="font-bold text-white">
+                        {selectedUnit.bath || "—"}
+                      </span>
                     </div>
                     <div className="bg-[#001f38] p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-400 block text-[10px]">{isAr ? 'المساحة' : 'Area'}</span>
-                      <span className="font-bold text-white">{selectedUnit.area ? `${selectedUnit.area} m²` : '—'}</span>
+                      <span className="text-slate-400 block text-[10px]">
+                        {isAr ? "المساحة" : "Area"}
+                      </span>
+                      <span className="font-bold text-white">
+                        {selectedUnit.area ? `${selectedUnit.area} m²` : "—"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1048,24 +1275,46 @@ export default function InventoryMap({
                 {hasPendingPhoto(selectedUnit.img) && (
                   <button
                     onClick={() => handleRequestPhotos(selectedUnit)}
-                    disabled={photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'loading'}
+                    disabled={
+                      photoRequestStatus[
+                        selectedUnit.code || selectedUnit.id
+                      ] === "loading"
+                    }
                     className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${
-                      photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'success'
-                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
-                        : photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'cooldown'
-                        ? 'bg-amber-600/20 border-amber-500 text-amber-300'
-                        : 'bg-[#00aeff]/15 hover:bg-[#00aeff]/25 border-[#00aeff]/50 text-[#00aeff]'
+                      photoRequestStatus[
+                        selectedUnit.code || selectedUnit.id
+                      ] === "success"
+                        ? "bg-emerald-600/20 border-emerald-500 text-emerald-300"
+                        : photoRequestStatus[
+                              selectedUnit.code || selectedUnit.id
+                            ] === "cooldown"
+                          ? "bg-amber-600/20 border-amber-500 text-amber-300"
+                          : "bg-[#00aeff]/15 hover:bg-[#00aeff]/25 border-[#00aeff]/50 text-[#00aeff]"
                     }`}
                   >
                     <Camera className="w-3.5 h-3.5" />
                     <span>
-                      {photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'loading'
-                        ? (isAr ? 'جاري إرسال الطلب...' : 'Requesting Photos...')
-                        : photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'success'
-                        ? (isAr ? '✓ تم إرسال طلب الصور للمالك' : '✓ Photo Request Dispatched')
-                        : photoRequestStatus[selectedUnit.code || selectedUnit.id] === 'cooldown'
-                        ? (isAr ? 'الطلب قيد المتابعة خلال 24 ساعة' : 'Request Pending (24h Cooldown)')
-                        : (isAr ? 'طلب صور الوحدة عبر واتساب' : 'Request Owner Photos via WhatsApp')}
+                      {photoRequestStatus[
+                        selectedUnit.code || selectedUnit.id
+                      ] === "loading"
+                        ? isAr
+                          ? "جاري إرسال الطلب..."
+                          : "Requesting Photos..."
+                        : photoRequestStatus[
+                              selectedUnit.code || selectedUnit.id
+                            ] === "success"
+                          ? isAr
+                            ? "✓ تم إرسال طلب الصور للمالك"
+                            : "✓ Photo Request Dispatched"
+                          : photoRequestStatus[
+                                selectedUnit.code || selectedUnit.id
+                              ] === "cooldown"
+                            ? isAr
+                              ? "الطلب قيد المتابعة خلال 24 ساعة"
+                              : "Request Pending (24h Cooldown)"
+                            : isAr
+                              ? "طلب صور الوحدة عبر واتساب"
+                              : "Request Owner Photos via WhatsApp"}
                     </span>
                   </button>
                 )}
@@ -1073,14 +1322,18 @@ export default function InventoryMap({
                 {/* Direct WhatsApp Concierge Booking */}
                 <a
                   href={`https://wa.me/${SIERRA_WHATSAPP_PHONE}?text=${encodeURIComponent(
-                    `Hello Sierra Estates, I am inquiring about unit [${selectedUnit.code || selectedUnit.id}] in ${selectedUnit.location} (${selectedUnit.priceLabel}). Please schedule a VIP viewing.`
+                    `Hello Sierra Estates, I am inquiring about unit [${selectedUnit.code || selectedUnit.id}] in ${selectedUnit.location} (${selectedUnit.priceLabel}). Please schedule a VIP viewing.`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 px-3 rounded-lg bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                 >
                   <MessageCircle className="w-4 h-4 fill-white" />
-                  <span>{isAr ? 'حجز معاينة فورية عبر واتساب' : 'Book Viewing via WhatsApp'}</span>
+                  <span>
+                    {isAr
+                      ? "حجز معاينة فورية عبر واتساب"
+                      : "Book Viewing via WhatsApp"}
+                  </span>
                 </a>
 
                 {/* Synchronize to Excel Sheet */}
@@ -1090,7 +1343,11 @@ export default function InventoryMap({
                     className="w-full py-2 px-3 rounded-lg bg-[#001f38] hover:bg-[#002e52] border border-white/20 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-[#00aeff]" />
-                    <span>{isAr ? 'معاينة في جدول الوحدات' : 'Inspect in Registry Sheet'}</span>
+                    <span>
+                      {isAr
+                        ? "معاينة في جدول الوحدات"
+                        : "Inspect in Registry Sheet"}
+                    </span>
                   </button>
                 )}
               </div>

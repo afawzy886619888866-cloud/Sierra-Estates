@@ -304,8 +304,7 @@ async function initSession(sessionId) {
         '--disable-default-apps',
         '--disable-sync',
         '--mute-audio',
-        '--renderer-process-limit=1',
-        '--js-flags=--max-old-space-size=256',
+        '--js-flags=--max-old-space-size=1024',
         '--enable-local-storage',
         '--unlimited-storage',
         '--disable-background-timer-throttling',
@@ -371,37 +370,55 @@ async function initSession(sessionId) {
     s.lastActive = new Date().toISOString();
     console.log(`[${sessionId}] Connected successfully! Phone: +${s.phone || 'unknown'}`);
 
-    // Listen for state changes with auto-recovery for mobile sleep / timeout
+    // Listen for state changes with resilient auto-recovery for mobile sleep / timeout
     // Note: WhatsApp Multi-Device runs independently of mobile screen state once paired;
     // transient TIMEOUT/DISCONNECTED states are automatically healed without killing Chrome.
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    const scheduleReconnect = (state) => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(async () => {
+        if (!s.client || s.status === 'READY') return;
+        reconnectAttempts++;
+        console.log(`[${sessionId}] Auto-restore attempt #${reconnectAttempts} (state was: ${state})...`);
+        try {
+          if (state === 'CONFLICT' && typeof s.client.useHere === 'function') {
+            await s.client.useHere();
+          } else if (typeof s.client.refresh === 'function') {
+            await s.client.refresh();
+          }
+          const postState = typeof s.client.getConnectionState === 'function'
+            ? await s.client.getConnectionState().catch(() => null)
+            : null;
+          if (postState === 'CONNECTED') {
+            s.status = 'READY';
+            s.lastActive = new Date().toISOString();
+            reconnectAttempts = 0;
+            console.log(`[${sessionId}] ✅ Connection restored successfully to READY!`);
+            return;
+          }
+        } catch (rErr) {
+          console.warn(`[${sessionId}] Auto-restore attempt #${reconnectAttempts} failed:`, rErr.message);
+        }
+        if (reconnectAttempts < 10) {
+          scheduleReconnect(state);
+        } else {
+          console.warn(`[${sessionId}] ⚠️ Max reconnect attempts reached. Session will remain in DISCONNECTED until pulse or reload.`);
+          reconnectAttempts = 0;
+        }
+      }, 8000);
+    };
+
     client.onStateChanged((state) => {
       console.log(`[${sessionId}] State changed: ${state}`);
       if (state === 'CONFLICT' || state === 'UNLAUNCHED' || state === 'DISCONNECTED' || state === 'TIMEOUT') {
         s.status = 'DISCONNECTED';
-        setTimeout(async () => {
-          if (s.status === 'DISCONNECTED' && s.client) {
-            console.log(`[${sessionId}] Attempting automatic connection restore from state: ${state}...`);
-            try {
-              if (state === 'CONFLICT' && typeof s.client.useHere === 'function') {
-                await s.client.useHere();
-              } else if (typeof s.client.refresh === 'function') {
-                await s.client.refresh();
-              }
-              const postState = typeof s.client.getConnectionState === 'function'
-                ? await s.client.getConnectionState().catch(() => null)
-                : null;
-              if (postState === 'CONNECTED') {
-                s.status = 'READY';
-                s.lastActive = new Date().toISOString();
-              }
-            } catch (rErr) {
-              console.warn(`[${sessionId}] Auto-restore attempt error:`, rErr.message);
-            }
-          }
-        }, 4000);
+        scheduleReconnect(state);
       } else if (state === 'CONNECTED') {
         s.status = 'READY';
         s.lastActive = new Date().toISOString();
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectAttempts = 0;
       }
     });
 

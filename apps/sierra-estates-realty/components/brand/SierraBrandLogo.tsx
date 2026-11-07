@@ -96,8 +96,8 @@ export default function SierraBrandLogo({
 
   const brandNameEn = "SIERRA ESTATES";
   const brandNameAr = "سييرا إيستيتس";
-  const sloganEn = "FUTURE OF REAL ESTATE";
-  const sloganAr = "مستقبل الاستثمار العقاري";
+  const sloganEn = "THE BEST DECISIONS, AI-DRIVEN.";
+  const sloganAr = "أفضل القرارات، مدعومة بالذكاء الاصطناعي";
 
   const titleText = isAr ? brandNameAr : brandNameEn;
   const sloganText = isAr ? sloganAr : sloganEn;
@@ -348,7 +348,7 @@ export default function SierraBrandLogo({
               {/* Slogan Badges */}
               <div className="mt-2.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
                 <p className="text-[11px] font-extrabold tracking-widest uppercase text-amber-400">
-                  FUTURE OF REAL ESTATE · مستقبل الاستثمار العقاري
+                  THE BEST DECISIONS, AI-DRIVEN · أفضل القرارات، مدعومة بالذكاء الاصطناعي
                 </p>
               </div>
 
