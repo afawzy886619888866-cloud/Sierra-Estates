@@ -6,8 +6,8 @@ import { Compound, UnitListing, COMPOUNDS, UNIT_LISTINGS } from './registryData'
 import SierraBrandLogo from '../brand/SierraBrandLogo';
 
 interface MasterHeaderProps {
-  currentTab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier';
-  onSelectTab?: (tab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => void;
+  currentTab: 'map' | 'excel' | 'add-listing' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier';
+  onSelectTab?: (tab: 'map' | 'excel' | 'add-listing' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => void;
   setCurrentTab?: (tab: any) => void;
   lang: 'en' | 'ar';
   onToggleLang?: () => void;
@@ -38,7 +38,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
   onSelectCompound,
   onSelectUnit,
 }) => {
-  const handleSelectTab = (tab: 'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => {
+  const handleSelectTab = (tab: 'map' | 'excel' | 'add-listing' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier') => {
     if (onSelectTab) onSelectTab(tab);
     else if (setCurrentTab) setCurrentTab(tab);
   };
@@ -242,6 +242,18 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           >
             <FileText className="w-3.5 h-3.5 text-[#00aeff]" />
             <span>{isAr ? 'الملف' : 'Dossier'}</span>
+          </button>
+
+          <button
+            onClick={() => handleSelectTab('add-listing')}
+            className={`whitespace-nowrap shrink-0 transition-all cursor-pointer py-1 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold ${
+              currentTab === 'add-listing'
+                ? 'bg-amber-500 text-stone-950 font-bold shadow-xs'
+                : 'text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-medium border border-amber-500/30'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{isAr ? '+ أضف عقارك' : '+ Add Listing'}</span>
           </button>
         </nav>
 

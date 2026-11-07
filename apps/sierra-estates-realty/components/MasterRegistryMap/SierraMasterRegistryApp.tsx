@@ -17,6 +17,7 @@ import { YieldHeatmapView } from './YieldHeatmapView';
 import { UnitListing, Compound, COMPOUNDS, UNIT_LISTINGS, hydrateRegistryWithLiveInventory } from './registryData';
 import type { InventoryUnit } from '@/lib/inventory/types';
 import { Sparkles, ArrowUpRight, Moon, Sun, Building2, Map, Globe } from 'lucide-react';
+import AddListingForm from '@/components/client/AddListingForm';
 
 const InventoryMap = dynamic(() => import('@/components/client/InventoryMap'), {
   ssr: false,
@@ -39,7 +40,7 @@ export default function SierraMasterRegistryApp({
   initialDarkMode = false,
   initialCompoundId,
 }: SierraMasterRegistryAppProps) {
-  const [currentTab, setCurrentTab] = useState<'map' | 'excel' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier'>('map');
+  const [currentTab, setCurrentTab] = useState<'map' | 'excel' | 'add-listing' | 'threed' | 'yield' | 'compounds' | 'radar' | 'dossier'>('map');
   const [lang, setLang] = useState<'en' | 'ar'>('en');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(initialDarkMode);
 
@@ -507,6 +508,12 @@ export default function SierraMasterRegistryApp({
                 setCurrentTab('map');
               }}
             />
+          </div>
+        )}
+
+        {currentTab === 'add-listing' && (
+          <div className="animate-fade-in py-6">
+            <AddListingForm defaultLang={lang} />
           </div>
         )}
       </main>

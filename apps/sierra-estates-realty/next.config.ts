@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { withWorkflow } from "workflow/next";
 
 // Packages that use Node.js native binaries — must never be bundled client-side
 const SERVER_ONLY_PACKAGES = [
@@ -176,7 +177,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withWorkflow(nextConfig);
 
 // cache-bust 2026-10-19: the f8ea737 Vercel build hit a poisoned FULL TURBO
 // remote-cache entry and failed at the "Deploying outputs" step on both

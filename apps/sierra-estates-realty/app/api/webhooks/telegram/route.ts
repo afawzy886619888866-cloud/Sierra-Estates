@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
             await insertRecord('listings', {
               id: unitCode,
               compound: details.compound || 'Unspecified Compound',
-              locationArea: details.region || 'New Cairo',
-              propertyType: (details.unit_type || 'Apartment').toLowerCase(),
+              locationArea: details.region || details.compound || 'Unspecified Region',
+              propertyType: (details.unit_type || 'unspecified').toLowerCase(),
               offerType: details.deal_type || 'sale',
               bedrooms: details.bedrooms ?? null,
               bathrooms: details.bathrooms ?? null,

@@ -356,6 +356,14 @@ export default function AddListingForm({
     targetTab?: string;
   } | null>(null);
 
+  // Dirty write prevention & draft management (VS Code pattern)
+  const [draftRestored, setDraftRestored] = useState<string | null>(null);
+  const [conflictData, setConflictData] = useState<{
+    code: string;
+    existing: any;
+    incoming: any;
+  } | null>(null);
+
   // Refs for focusing
   const compoundRef = useRef<HTMLInputElement>(null);
   const areaRef = useRef<HTMLInputElement>(null);
@@ -367,7 +375,100 @@ export default function AddListingForm({
   useEffect(() => {
     const storedLang = window.localStorage.getItem("hzp-lang");
     if (storedLang === "ar" || storedLang === "en") setLang(storedLang);
+
+    // Auto-restore draft if present and inputs are empty
+    try {
+      const saved = window.localStorage.getItem("sierra_add_listing_draft_v2");
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (p && (p.rawText || p.compound || p.price)) {
+          if (p.rawText) setRawText(p.rawText);
+          if (p.compound) setCompound(p.compound);
+          if (p.purpose) setPurpose(p.purpose);
+          if (p.price) setPrice(p.price);
+          if (p.area) setArea(p.area);
+          if (p.gardenArea) setGardenArea(p.gardenArea);
+          if (p.propertyType) setPropertyType(p.propertyType);
+          if (p.beds !== undefined) setBeds(p.beds);
+          if (p.baths !== undefined) setBaths(p.baths);
+          if (p.finishing) setFinishing(p.finishing);
+          if (p.sierraCode) setSierraCode(p.sierraCode);
+          if (p.notes) setNotes(p.notes);
+          if (p.submitterPreset) setSubmitterPreset(p.submitterPreset);
+          if (p.customAgentName) setCustomAgentName(p.customAgentName);
+          if (p.ownerName) setOwnerName(p.ownerName);
+          if (p.ownerPhone) setOwnerPhone(p.ownerPhone);
+          if (p.brokerName) setBrokerName(p.brokerName);
+          if (p.brokerPhone) setBrokerPhone(p.brokerPhone);
+          if (Array.isArray(p.photos)) setPhotos(p.photos);
+          setDraftRestored(new Date(p.savedAt || Date.now()).toLocaleTimeString());
+        }
+      }
+    } catch (_) {}
   }, []);
+
+  // Autosave draft debounced (VS Code hot-exit pattern)
+  useEffect(() => {
+    if (!rawText && !compound && !price && !area && !ownerPhone) return;
+    const timer = setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          "sierra_add_listing_draft_v2",
+          JSON.stringify({
+            rawText,
+            compound,
+            purpose,
+            price,
+            area,
+            gardenArea,
+            propertyType,
+            beds,
+            baths,
+            finishing,
+            sierraCode,
+            notes,
+            submitterPreset,
+            customAgentName,
+            ownerName,
+            ownerPhone,
+            brokerName,
+            brokerPhone,
+            photos,
+            savedAt: Date.now(),
+          })
+        );
+      } catch (_) {}
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [
+    rawText,
+    compound,
+    purpose,
+    price,
+    area,
+    gardenArea,
+    propertyType,
+    beds,
+    baths,
+    finishing,
+    sierraCode,
+    notes,
+    submitterPreset,
+    customAgentName,
+    ownerName,
+    ownerPhone,
+    brokerName,
+    brokerPhone,
+    photos,
+  ]);
+
+  function discardDraft() {
+    try {
+      window.localStorage.removeItem("sierra_add_listing_draft_v2");
+    } catch (_) {}
+    setDraftRestored(null);
+    handleClear();
+  }
 
   const t = T[lang];
   const isAr = lang === "ar";
@@ -463,22 +564,31 @@ export default function AddListingForm({
   function handleClear() {
     setRawText("");
     setCompound("");
+    setPurpose("sale");
     setPrice("");
     setArea("");
     setGardenArea("");
+    setPropertyType("Apartment");
     setBeds(3);
     setBaths(2);
     setFinishing("Fully finished");
     setSierraCode("");
+    setNotes("");
+    setSubmitterPreset("agent:closer-bot");
+    setCustomAgentName("");
     setOwnerName("");
     setOwnerPhone("");
     setBrokerName("");
     setBrokerPhone("");
-    setNotes("");
     setPhotos([]);
     setParseFeedback(null);
     setErr("");
     setBadField(null);
+    setConflictData(null);
+    setDraftRestored(null);
+    try {
+      window.localStorage.removeItem("sierra_add_listing_draft_v2");
+    } catch (_) {}
   }
 
   async function handleAutoParse() {
@@ -613,8 +723,8 @@ export default function AddListingForm({
     setPhotos((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // Submit Listing
-  async function handleSubmit() {
+  // Submit Listing with Conflict & Dirty-Write handling
+  async function handleSubmit(conflictAction?: "merge" | "new_code" | "overwrite") {
     const cpdVal = compound.trim();
     const areaClean = digits(area);
     const priceClean = digits(price);
@@ -692,13 +802,33 @@ export default function AddListingForm({
           comment: notes.trim(),
           photos,
           images: photos,
+          conflictAction,
         }),
       });
 
       const result = await res.json().catch(() => null);
+
+      // Handle 409 Conflict: VS Code Dirty-Write Prevention
+      if (res.status === 409 && result?.conflict) {
+        setConflictData({
+          code: result.code,
+          existing: result.existing,
+          incoming: result.incoming,
+        });
+        setSending(false);
+        return;
+      }
+
       if (!res.ok || !result?.success) {
         throw new Error(result?.error || "Failed to submit listing");
       }
+
+      // Clear collision modal and saved draft on success
+      setConflictData(null);
+      try {
+        window.localStorage.removeItem("sierra_add_listing_draft_v2");
+      } catch (_) {}
+      setDraftRestored(null);
 
       const mintedRef: string =
         result?.code ||
@@ -762,6 +892,27 @@ export default function AddListingForm({
           </h1>
           <p className={s.subtitle}>{t.subtitle}</p>
         </header>
+
+        {/* Draft Auto-Restore Notification (VS Code hot-exit pattern) */}
+        {draftRestored && (
+          <div className={s.draftBanner}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Sparkles style={{ width: 15, height: 15 }} />
+              <span>
+                {isAr
+                  ? `✨ تم استرجاع مسودة غير محفوظة تلقائياً (الساعة ${draftRestored})`
+                  : `✨ Restored unsaved intake draft from ${draftRestored}`}
+              </span>
+            </div>
+            <button
+              type="button"
+              className={s.discardBtn}
+              onClick={discardDraft}
+            >
+              {isAr ? "مسح المسودة والبدء من جديد" : "Discard Draft"}
+            </button>
+          </div>
+        )}
 
         {/* Unified Intake Card */}
         <div className={s.formCard}>
@@ -1332,7 +1483,7 @@ export default function AddListingForm({
               <button
                 type="button"
                 className={s.submitBtn}
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={sending}
               >
                 <Send style={{ width: 15, height: 15 }} />
@@ -1341,6 +1492,128 @@ export default function AddListingForm({
             </div>
           </div>
         </div>
+
+        {/* Conflict Resolution & Merge Modal (VS Code Dirty-Write Prevention) */}
+        {conflictData && (
+          <div className={s.conflictOverlay}>
+            <div className={s.conflictCard}>
+              <div className={s.conflictHeader}>
+                <div className={s.conflictIconBox}>
+                  <ShieldCheck style={{ width: 24, height: 24 }} />
+                </div>
+                <div>
+                  <h3 className={s.conflictTitle}>
+                    {isAr
+                      ? `⚠️ كود الوحدة مسجل بالفعل: ${conflictData.code}`
+                      : `⚠️ Unit Code Already Exists: ${conflictData.code}`}
+                  </h3>
+                  <p className={s.conflictSub}>
+                    {isAr
+                      ? "اكتشف النظام وجود عقار مسجل مسبقاً بهذا الكود في السجل العقاري. لتفادي تضارب البيانات، اختر الإجراء المناسب:"
+                      : "A listing with this code is already registered in the database. Choose how to handle this collision:"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Side-by-side diff table */}
+              <table className={s.diffTable}>
+                <thead>
+                  <tr>
+                    <th>{isAr ? "المواصفة" : "Specification"}</th>
+                    <th>{isAr ? "المسجل حالياً في السجل" : "Existing in Registry"}</th>
+                    <th>{isAr ? "البيانات المدخلة الآن" : "Incoming Submission"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={conflictData.existing?.price !== conflictData.incoming?.price ? s.diffRowDiff : ""}>
+                    <td className={s.diffLabel}>{isAr ? "السعر المطلوب" : "Price"}</td>
+                    <td className={s.diffExisting}>
+                      {conflictData.existing?.price
+                        ? `${Number(conflictData.existing.price).toLocaleString("en-US")} EGP`
+                        : "—"}
+                    </td>
+                    <td className={s.diffIncoming}>
+                      {conflictData.incoming?.price
+                        ? `${Number(conflictData.incoming.price).toLocaleString("en-US")} EGP`
+                        : "—"}
+                    </td>
+                  </tr>
+                  <tr className={conflictData.existing?.compound !== conflictData.incoming?.compound ? s.diffRowDiff : ""}>
+                    <td className={s.diffLabel}>{isAr ? "الكمبوند / المنطقة" : "Compound"}</td>
+                    <td className={s.diffExisting}>{conflictData.existing?.compound || "—"}</td>
+                    <td className={s.diffIncoming}>{conflictData.incoming?.compound || "—"}</td>
+                  </tr>
+                  <tr className={conflictData.existing?.areaSqm !== conflictData.incoming?.areaSqm ? s.diffRowDiff : ""}>
+                    <td className={s.diffLabel}>{isAr ? "المساحة (م²)" : "Area (m²)"}</td>
+                    <td className={s.diffExisting}>{conflictData.existing?.areaSqm ? `${conflictData.existing.areaSqm} m²` : "—"}</td>
+                    <td className={s.diffIncoming}>{conflictData.incoming?.areaSqm ? `${conflictData.incoming.areaSqm} m²` : "—"}</td>
+                  </tr>
+                  <tr>
+                    <td className={s.diffLabel}>{isAr ? "الغرف والحمامات" : "Beds / Baths"}</td>
+                    <td className={s.diffExisting}>
+                      {conflictData.existing?.bedrooms ?? "—"}B · {conflictData.existing?.bathrooms ?? "—"}Ba
+                    </td>
+                    <td className={s.diffIncoming}>
+                      {conflictData.incoming?.bedrooms ?? "—"}B · {conflictData.incoming?.bathrooms ?? "—"}Ba
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={s.diffLabel}>{isAr ? "هاتف التواصل" : "Contact Phone"}</td>
+                    <td className={s.diffExisting}>
+                      {conflictData.existing?.ownerPhone || conflictData.existing?.brokerPhone || "—"}
+                    </td>
+                    <td className={s.diffIncoming}>
+                      {conflictData.incoming?.ownerPhone || conflictData.incoming?.brokerPhone || "—"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={s.diffLabel}>{isAr ? "تاريخ آخر تحديث" : "Last Updated"}</td>
+                    <td className={s.diffExisting}>
+                      {conflictData.existing?.updatedAt
+                        ? new Date(conflictData.existing.updatedAt).toLocaleString()
+                        : "—"}
+                    </td>
+                    <td className={s.diffIncoming}>{isAr ? "الآن (مسودة)" : "Just now"}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className={s.conflictActions}>
+                <button
+                  type="button"
+                  className={s.btnCancelModal}
+                  onClick={() => setConflictData(null)}
+                >
+                  {isAr ? "إلغاء والعودة للنموذج" : "Cancel & Review"}
+                </button>
+                <button
+                  type="button"
+                  className={s.btnFork}
+                  onClick={() => handleSubmit("new_code")}
+                  disabled={sending}
+                >
+                  {isAr ? "🔀 إنشاء نسخة برمز جديد (-V2)" : "🔀 Mint New Variant (V2)"}
+                </button>
+                <button
+                  type="button"
+                  className={s.btnMerge}
+                  onClick={() => handleSubmit("merge")}
+                  disabled={sending}
+                >
+                  {isAr ? "⚡ دمج وتحديث البيانات الحالية" : "⚡ Merge & Update Unit"}
+                </button>
+                <button
+                  type="button"
+                  className={s.btnOverwrite}
+                  onClick={() => handleSubmit("overwrite")}
+                  disabled={sending}
+                >
+                  {isAr ? "⚠️ استبدال شامل (Overwrite)" : "⚠️ Overwrite"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Success Modal */}
         {done && (

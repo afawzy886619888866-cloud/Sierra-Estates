@@ -21,6 +21,7 @@ jest.mock('@sierra-estates/db', () => ({
 }));
 
 jest.mock('@/lib/server/auth-guard', () => ({
+  verifyRequest: (...args: unknown[]) => verifyAdminRequestMock(...args),
   verifyAdminRequest: (...args: unknown[]) => verifyAdminRequestMock(...args),
   unauthorizedResponse: () =>
     new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
@@ -236,6 +237,7 @@ describe('/api/contracts/[id]/sign — no invented contracts, real audit trail',
 describe('/api/openclaw/scan-whatsapp-groups — scan target is the caller\'s call', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    verifyAdminRequestMock.mockResolvedValue({ authenticated: true, uid: 'admin-1', role: 'admin' });
     runOpenClawDailyScanMock.mockResolvedValue({ filesScanned: 0 });
   });
 

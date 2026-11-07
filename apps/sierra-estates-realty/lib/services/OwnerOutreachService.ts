@@ -463,8 +463,6 @@ export class OwnerOutreachService {
       path.resolve(process.cwd(), '..', '..'),
       path.resolve(process.cwd(), '..'),
       process.cwd(),
-      'h:/Sierra Estates',
-      'H:/Sierra Estates'
     ];
 
     let contactedCsvPath: string | null = null;

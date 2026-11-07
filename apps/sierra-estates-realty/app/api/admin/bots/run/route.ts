@@ -382,7 +382,7 @@ async function runEngine3Valuation(): Promise<Record<string, number>> {
         offered_purchase_price: dealType === 'Sale' ? price : undefined,
         offered_rent: dealType === 'Rent' ? price : undefined,
         size_sqm: num(row.areaSqm) || undefined,
-        location: String(row.compound || 'New Cairo'),
+        location: String(row.compound || row.locationArea || 'Unspecified'),
       });
       evaluated += 1;
       const isGem = Boolean(val.investment_metrics?.is_arbitrage_play);

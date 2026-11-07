@@ -1,26 +1,33 @@
 /**
- * /api/listings/submit — public submissions are not inventory.
- *
- * The endpoint is deliberately unauthenticated so property owners can submit
- * without an account, and it is reachable from the public /add-listing form.
- * It used to write `status: 'Available'` straight into the `listings` and
- * `houyez_listings` collections, which /api/listings then served to everyone:
- * anyone on the internet could publish a listing on the site. Submissions must
- * now land pending review, and both public read modes must filter them out.
- *
- * The store is Supabase (public.listings) rather than Firestore since the
- * migration, and the two collections are one table, so the write is a single
- * insert — but the moderation guarantees are identical.
+ * The public listing endpoint waits for the durable workflow's result so it
+ * can preserve the form's success and duplicate-code conflict responses.
  */
 import {
   LISTING_STATUS_PENDING_REVIEW,
   isPubliclyVisibleListingStatus,
 } from '@/lib/models/schema';
 
-const insertMock = jest.fn(async (..._args: unknown[]) => ({ id: 'generated-doc-id' }));
+const mockInsert = jest.fn(async (..._args: unknown[]) => ({ id: 'generated-doc-id' }));
+const mockListRecords = jest.fn(async (..._args: unknown[]) => [] as Record<string, unknown>[]);
+
+jest.mock('workflow/api', () => ({
+  start: jest.fn(async (workflow: (arg: unknown) => Promise<unknown>, args: [unknown]) => ({
+    returnValue: workflow(args[0]),
+  })),
+}));
+
+jest.mock('workflow', () => ({
+  FatalError: class FatalError extends Error {},
+}));
 
 jest.mock('@sierra-estates/db', () => ({
-  insertRecord: (...args: unknown[]) => insertMock(...args),
+  insertRecord: (...args: unknown[]) => mockInsert(...args),
+  listRecords: (...args: unknown[]) => mockListRecords(...args),
+  updateRecord: jest.fn(async () => undefined),
+}));
+
+jest.mock('@/app/api/inventory/route', () => ({
+  bustInventoryCache: jest.fn(),
 }));
 
 jest.mock('@/lib/server/rate-limit', () => ({
@@ -31,7 +38,7 @@ jest.mock('@/lib/server/rate-limit', () => ({
 // ---------------------------------------------------------------------------
 // Side-effect mocks — these modules are invoked after the single DB write and
 // must be stubbed so (a) server-only imports don't blow up in Jest, and (b)
-// the insertMock call-count assertions remain unambiguous.
+// the mockInsert call-count assertions remain unambiguous.
 // ---------------------------------------------------------------------------
 jest.mock('@/lib/services/ExcelInventoryService', () => ({
   appendToExcelInventory: jest.fn(async () => undefined),
@@ -59,6 +66,8 @@ jest.mock('@/lib/services/AugustOwnersAgentService', () => ({
   AUGUST_OWNERS_GROUP_ID: '120363044918239011@g.us',
 }));
 
+import { start } from 'workflow/api';
+import { listingSubmissionWorkflow } from '@/lib/workflow/listing-submission-workflow';
 import { POST } from '@/app/api/listings/submit/route';
 
 const validSubmission = {
@@ -86,9 +95,9 @@ describe('/api/listings/submit — publication & persistence', () => {
     const res = await POST(submit(validSubmission));
     expect(res.status).toBe(201);
 
-    expect(insertMock).toHaveBeenCalledTimes(1);
-    expect(insertMock.mock.calls[0][0]).toBe('listings');
-    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(mockInsert.mock.calls[0][0]).toBe('listings');
+    const written = mockInsert.mock.calls[0][1] as Record<string, unknown>;
 
     expect(written.status).toBe('active');
     expect(written.publishStatus).toBe('PUBLISHABLE');
@@ -96,9 +105,56 @@ describe('/api/listings/submit — publication & persistence', () => {
     expect(written.verified).toBe(true);
   });
 
+  it('starts the durable workflow and returns the client success payload', async () => {
+    const res = await POST(submit(validSubmission));
+    const body = await res.json();
+
+    expect(start).toHaveBeenCalledWith(
+      listingSubmissionWorkflow,
+      [expect.objectContaining({ compound: 'Mivida', requestOrigin: 'http://localhost' })],
+    );
+    expect(body).toMatchObject({
+      success: true,
+      code: expect.any(String),
+      id: 'generated-doc-id',
+      isMerged: false,
+      targetTab: 'owners resale',
+      listing: { id: 'generated-doc-id', mobile: '+201092048333' },
+    });
+  });
+
+  it('returns the established 409 conflict payload when a listing code exists', async () => {
+    mockListRecords.mockResolvedValueOnce([
+      {
+        id: 'existing-unit',
+        code: 'SE-CONFLICT',
+        compound: 'Mivida',
+        price: 5_000_000,
+        areaSqm: 120,
+        bedrooms: 2,
+        bathrooms: 2,
+        propertyType: 'Apartment',
+        dealType: 'Resale',
+        images: [],
+      },
+    ]);
+
+    const res = await POST(submit({ ...validSubmission, code: 'SE-CONFLICT' }));
+    const body = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(body).toMatchObject({
+      success: false,
+      conflict: true,
+      code: 'SE-CONFLICT',
+      existing: { id: 'existing-unit', code: 'SE-CONFLICT' },
+      incoming: { code: 'SE-CONFLICT', compound: 'Mivida' },
+    });
+  });
+
   it('sets aiScore for client feed ranking and enables publishToClient', async () => {
     await POST(submit(validSubmission));
-    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
+    const written = mockInsert.mock.calls[0][1] as Record<string, unknown>;
 
     expect(written.publishToClient).toBe(true);
     expect(written.aiScore).toBeGreaterThan(0);
@@ -107,8 +163,8 @@ describe('/api/listings/submit — publication & persistence', () => {
   it('writes the submission exactly once — the dual-write collection is gone', async () => {
     await POST(submit(validSubmission));
 
-    expect(insertMock).toHaveBeenCalledTimes(1);
-    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    const written = mockInsert.mock.calls[0][1] as Record<string, unknown>;
     expect(written.status).toBe('active');
   });
 
@@ -133,7 +189,7 @@ describe('/api/listings/submit — publication & persistence', () => {
   it('still rejects an invalid payload before touching the database', async () => {
     const res = await POST(submit({ compound: '', price: 'not-a-number' }));
     expect(res.status).toBe(400);
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it('refuses to invent unit specs — missing beds/baths/area is a 400, not a default', async () => {
@@ -156,13 +212,13 @@ describe('/api/listings/submit — publication & persistence', () => {
     expect(flat).toContain('beds');
     expect(flat).toContain('baths');
     expect(flat).toContain('area');
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it('never attaches stock photos or an invented zone to a media-less submission', async () => {
     const res = await POST(submit(validSubmission));
     expect(res.status).toBe(201);
-    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
+    const written = mockInsert.mock.calls[0][1] as Record<string, unknown>;
     const rawData = (written.rawData ?? {}) as Record<string, unknown>;
 
     // No hardcoded PropertyFinder CDN imagery may ride along with a

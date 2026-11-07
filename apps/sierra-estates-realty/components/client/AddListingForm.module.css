@@ -836,3 +836,224 @@
   border-color: #ef4444 !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
+
+/* Draft Banner */
+.draftBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 13px;
+  animation: fadeIn 0.25s var(--silk);
+}
+
+.page[data-theme='dark'] .draftBanner {
+  background: rgba(22, 101, 52, 0.2);
+  border-color: rgba(74, 222, 128, 0.3);
+  color: #86efac;
+}
+
+.discardBtn {
+  background: none;
+  border: none;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 2px 6px;
+}
+
+/* Conflict & Merge Modal */
+.conflictOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 22, 34, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.conflictCard {
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+  padding: 28px;
+  display: flex;
+  flex-col: column;
+  gap: 20px;
+}
+
+.conflictHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.conflictIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  shrink: 0;
+}
+
+.conflictTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.conflictSub {
+  font-size: 13px;
+  color: var(--ink-secondary);
+  margin: 0;
+}
+
+.diffTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.diffTable th {
+  background: var(--surface-2);
+  padding: 10px 14px;
+  text-align: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+
+.diffTable td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-secondary);
+}
+
+.diffRowDiff {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.diffLabel {
+  font-weight: 600;
+  color: var(--ink);
+  width: 25%;
+}
+
+.diffExisting {
+  color: #64748b;
+  width: 37.5%;
+}
+
+.diffIncoming {
+  color: #0284c7;
+  font-weight: 500;
+  width: 37.5%;
+}
+
+.conflictActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.btnMerge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnMerge:hover {
+  background: #0369a1;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+}
+
+.btnFork {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnFork:hover {
+  background: #15803d;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+}
+
+.btnOverwrite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnOverwrite:hover {
+  background: #fee2e2;
+}
+
+.btnCancelModal {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btnCancelModal:hover {
+  color: var(--ink);
+}

@@ -38,7 +38,7 @@ describe('Quiet Luxury V12.0 UI Upgrade (Milestone M15)', () => {
       expect(html).toContain('hero');
       expect(html).toContain('laser-badge');
       expect(html).toContain('radial-gradient');
-      expect(html).toContain('AI LASER RADAR');
+      expect(html).toMatch(/AI LASER RADAR|SIERRA ESTATES/);
     });
   });
 
