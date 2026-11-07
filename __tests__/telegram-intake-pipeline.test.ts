@@ -312,23 +312,31 @@ describe('Telegram intake pipeline — sheet contracts', () => {
     const adder = fs.readFileSync(path.join(ROOT_DIR, 'workflows', '05-unit-adder', 'add.js'), 'utf-8');
     expect(adder).toContain("'new_units'!A:M");
     expect(adder).toContain("=== 'PENDING'");
+    expect(adder).toContain("const SHEET_ID = resolveSpreadsheetId()");
   });
 
   it('resolves the spreadsheet id with the documented fallback chain', () => {
     const prev = {
-      G: process.env.GOOGLE_SHEET_ID,
-      T: process.env.TELEGRAM_MASTER_SHEET_ID,
-      U: process.env.UNITS_SHEET_ID,
+      GOOGLE_SHEET_ID: process.env.GOOGLE_SHEET_ID,
+      TELEGRAM_MASTER_SHEET_ID: process.env.TELEGRAM_MASTER_SHEET_ID,
+      UNITS_SHEET_ID: process.env.UNITS_SHEET_ID,
+      BROKER_INBOX_SHEET_ID: process.env.BROKER_INBOX_SHEET_ID,
     };
     try {
       delete process.env.GOOGLE_SHEET_ID;
       delete process.env.TELEGRAM_MASTER_SHEET_ID;
+      delete process.env.BROKER_INBOX_SHEET_ID;
       process.env.UNITS_SHEET_ID = 'units-default';
       expect(sheetsLib.resolveSpreadsheetId()).toBe('units-default');
       process.env.TELEGRAM_MASTER_SHEET_ID = 'master';
       expect(sheetsLib.resolveSpreadsheetId()).toBe('master');
       process.env.GOOGLE_SHEET_ID = 'explicit';
       expect(sheetsLib.resolveSpreadsheetId()).toBe('explicit');
+      delete process.env.GOOGLE_SHEET_ID;
+      delete process.env.TELEGRAM_MASTER_SHEET_ID;
+      delete process.env.UNITS_SHEET_ID;
+      process.env.BROKER_INBOX_SHEET_ID = 'broker-fallback';
+      expect(sheetsLib.resolveSpreadsheetId()).toBe('broker-fallback');
     } finally {
       for (const [k, v] of Object.entries(prev)) {
         if (v === undefined) delete process.env[k];

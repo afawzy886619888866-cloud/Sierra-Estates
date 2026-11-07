@@ -8,17 +8,17 @@
  * `REVIEW_REQUIRED` for human audit).
  *
  * Env: NEXT_PUBLIC_SUPABASE_URL / SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *      BROKER_INBOX_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_KEY / GOOGLE_SERVICE_ACCOUNT_JSON
+ *      shared Google Sheet ID and GOOGLE_SERVICE_ACCOUNT_KEY / GOOGLE_SERVICE_ACCOUNT_JSON
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+const { loadWorkflowEnv, resolveSpreadsheetId, createSheetsClient } = require('../lib/google-sheets');
 const { computeUnitSyncHash } = require('../lib/unit-sync-hash');
 
 loadWorkflowEnv(path.join(__dirname, '..'));
 
-const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
+const SHEET_ID = resolveSpreadsheetId();
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 

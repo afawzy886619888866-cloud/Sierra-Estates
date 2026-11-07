@@ -57,8 +57,10 @@ docker compose -f infra/docker-compose.runner.yml up -d --build
 docker compose -f infra/docker-compose.runner.yml logs -f telegram-intake
 ```
 
-Without the token/group vars the container **never breaks the runner**: it
-sleeps 10 minutes and retries (honest `UNCONFIGURED` + unhealthy status).
+Without a token the container **never breaks the runner**: it reports
+`UNCONFIGURED`, waits 10 minutes, then exits for the compose restart policy.
+If the token is present but no sender allowlist is configured, the bot can
+reply to `/chatid` setup commands but rejects all listing messages.
 
 ## 2. Google Sheet
 
@@ -90,10 +92,10 @@ Share the spreadsheet with the service account e-mail (**Editor**).
 | Variable | Required | Default | Meaning |
 | --- | --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | yes | — | BotFather token |
-| `TELEGRAM_AGENT_GROUP_IDS` | one allowlist required | — | Comma-separated `id:Name` pairs (name optional); only these groups may submit listings |
-| `TELEGRAM_AGENT_USER_IDS` | optional | — | Comma-separated numeric Telegram user IDs allowed to submit via direct message |
+| `TELEGRAM_AGENT_GROUP_IDS` | optional | — | Comma-separated `id:Name` pairs (name optional); only these groups may submit listings |
+| `TELEGRAM_AGENT_USER_IDS` | required if no group IDs are set | — | Comma-separated numeric Telegram user IDs allowed to submit via direct message |
 | `TELEGRAM_GENERAL_GROUP_ID` | yes for broadcast | — | General/team broadcast group |
-| `TELEGRAM_MASTER_SHEET_ID` / `GOOGLE_SHEET_ID` / `UNITS_SHEET_ID` | fallback chain | runner default | Master Inventory spreadsheet id |
+| `GOOGLE_SHEET_ID` / `TELEGRAM_MASTER_SHEET_ID` / `UNITS_SHEET_ID` / `BROKER_INBOX_SHEET_ID` | fallback chain | runner default | Master Inventory spreadsheet id; the bot and unit-adder use the same resolver |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` (= `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` alias) or `GOOGLE_SERVICE_ACCOUNT_KEY` | for sheet sync | — | Service-account creds (inline JSON/base64 or file path) |
 | `TELEGRAM_INTAKE_TAB` | no | `Telegram Intake` | Ledger tab name |
 | `TELEGRAM_INTAKE_NEW_UNITS_TAB` | no | `new_units` | Inventory feed tab name |

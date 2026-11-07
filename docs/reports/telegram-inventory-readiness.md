@@ -57,6 +57,10 @@ counts. No workbook data was modified.
   to the `Telegram Intake` and `new_units` tabs, and place database listings
   in `REVIEW_REQUIRED` for human approval.
 - The `new_units` tab uses columns A–M, with column M carrying Rent/Sale.
+- The unit-adder previously read only `BROKER_INBOX_SHEET_ID`, while
+  Telegram intake used the Google/Telegram/Units sheet-ID fallback chain.
+  With the documented runner default, that could leave pending units unread.
+  Both now share one sheet-ID resolver.
 - Before this update, normal accepted submissions were written to Supabase
   both directly and by workflow 05, which could create duplicate inventory
   records. The normal route now uses workflow 05 as its sole writer; the

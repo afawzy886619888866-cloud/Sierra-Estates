@@ -509,6 +509,9 @@ function buildMessage(r) {
     if (areaNum <= 0) {
       missingPrompts.push('• تأكيد المساحة الإجمالية بالمتر المربع (م²)');
     }
+    if (process.env.WF_INQUIRE_PRICE === '1' && (!r.price || Number(r.price) <= 0)) {
+      missingPrompts.push('• تأكيد السعر النهائي المطلوب حالياً');
+    }
   }
 
   let inquiryBody = 'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.';

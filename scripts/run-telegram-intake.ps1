@@ -26,6 +26,8 @@ finally {
     if ($tokenPointer -ne [IntPtr]::Zero) {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($tokenPointer)
     }
-    $secureToken.Dispose()
+    if ($secureToken) {
+        $secureToken.Dispose()
+    }
     Pop-Location
 }

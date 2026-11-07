@@ -191,7 +191,7 @@ async function main() {
       'owner-negotiation',
       CONTACT_TEMPLATE
         .replace('___PRICE___', item.price || 'السعر المعروض')
-        .replace('___LOCATION___', item.location || 'التجمع الخامس')
+        .replace('___LOCATION___', item.location ? item.location : 'القاهرة الجديدة')
     );
 
     if (DRY_RUN) {

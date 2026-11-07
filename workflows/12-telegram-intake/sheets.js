@@ -21,7 +21,11 @@
  * blips must spool, not crash the poller.
  */
 
-const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+const {
+  loadWorkflowEnv,
+  resolveSpreadsheetId: resolveSharedSpreadsheetId,
+  createSheetsClient,
+} = require('../lib/google-sheets');
 
 loadWorkflowEnv(__dirname + '/..');
 
@@ -61,12 +65,7 @@ async function retry(fn, label, attempts = 3) {
 
 /** Resolve which spreadsheet id to use (user-facing name → repo convention). */
 function resolveSpreadsheetId() {
-  return (
-    process.env.GOOGLE_SHEET_ID ||
-    process.env.TELEGRAM_MASTER_SHEET_ID ||
-    process.env.UNITS_SHEET_ID ||
-    ''
-  ).trim();
+  return resolveSharedSpreadsheetId();
 }
 
 function intakeTab() {

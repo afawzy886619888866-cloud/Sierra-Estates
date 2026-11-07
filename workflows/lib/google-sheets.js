@@ -89,6 +89,16 @@ function resolveGoogleCredentials() {
   return null;
 }
 
+function resolveSpreadsheetId() {
+  return (
+    process.env.GOOGLE_SHEET_ID ||
+    process.env.TELEGRAM_MASTER_SHEET_ID ||
+    process.env.UNITS_SHEET_ID ||
+    process.env.BROKER_INBOX_SHEET_ID ||
+    ''
+  ).trim();
+}
+
 function createSheetsClient(scopes = ['https://www.googleapis.com/auth/spreadsheets']) {
   const creds = resolveGoogleCredentials();
   if (!creds) return null;
@@ -105,5 +115,6 @@ function createSheetsClient(scopes = ['https://www.googleapis.com/auth/spreadshe
 module.exports = {
   loadWorkflowEnv,
   resolveGoogleCredentials,
+  resolveSpreadsheetId,
   createSheetsClient,
 };
