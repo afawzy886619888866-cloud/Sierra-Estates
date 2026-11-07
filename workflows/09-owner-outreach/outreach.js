@@ -485,18 +485,21 @@ const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_S
 (لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
 
 function buildMessage(r) {
-  const loc = r.location && r.location.trim() ? ('في ' + r.location.trim()) : 'بالتجمع الخامس';
-  const unitRef = r.code ? (' (كود: ' + r.code + ')') : '';
+  const rawLoc = (r.location || r.compound || '').trim();
+  let loc = 'في القاهرة الجديدة';
+  if (rawLoc) {
+    if (/^(new cairo|القاهرة الجديدة|التجمع|التجمع الخامس|5th settlement)$/i.test(rawLoc)) {
+      loc = 'في القاهرة الجديدة';
+    } else {
+      loc = 'في ' + rawLoc;
+    }
+  }
   const isRent = String(r.dealType || '').toLowerCase() === 'rent' || (Number(r.price) > 0 && Number(r.price) < 500000);
   const dealLabel = isRent ? 'للإيجار' : 'للبيع';
 
   // Optional dynamic missing info inquiries (enabled only via WF_DYNAMIC_INQUIRY=1; default is clean simple message per operator instruction)
   const missingPrompts = [];
   if (process.env.WF_DYNAMIC_INQUIRY === '1') {
-    const priceNum = Number(String(r.price || '').replace(/[^\d]/g, '')) || 0;
-    if (priceNum <= 0) {
-      missingPrompts.push(isRent ? '• تأكيد القيمة الإيجارية الشهرية المطلوبة حالياً' : '• تأكيد السعر النهائي المطلوب حالياً');
-    }
     const photoNum = Number(r.photoCount || 0);
     if (photoNum < 6) {
       const needed = Math.max(1, 6 - photoNum);
@@ -508,7 +511,7 @@ function buildMessage(r) {
     }
   }
 
-  let inquiryBody = 'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + unitRef + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.';
+  let inquiryBody = 'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.';
   if (missingPrompts.length > 0) {
     inquiryBody += '\n\nوفي حال إتاحتها نرجو التكرم بالتوضيح التالي:\n' + missingPrompts.join('\n');
   }

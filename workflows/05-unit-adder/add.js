@@ -11,10 +11,10 @@
  *      BROKER_INBOX_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_KEY / GOOGLE_SERVICE_ACCOUNT_JSON
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
-const crypto = require('crypto');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+const { computeUnitSyncHash } = require('../lib/unit-sync-hash');
 
 loadWorkflowEnv(path.join(__dirname, '..'));
 
@@ -22,7 +22,7 @@ const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const summary = { pending: 0, added: 0, deduplicated: 0, errors: 0 };
+const summary = { pending: 0, added: 0, alreadyAdded: 0, deduplicated: 0, errors: 0 };
 
 function failUnconfigured(msg) {
   console.log(`UNCONFIGURED: ${msg}`);
@@ -45,22 +45,8 @@ function generateSBRCode(compound, bedrooms, furnishing, price) {
   return `${compoundAbbr}-${bedrooms}${furnishCode}-${priceAbbr}`;
 }
 
-// Dedup identity: canonical compound + area + price + bedrooms + unit type
-// + deal type (sheet-real fields). 2026-11-01: widened from
-// compound|area|price|bedrooms so rent-vs-sale twins and type variants no
-// longer collide, and canonicalized via the shared gazetteer so "cfc" and
-// "Cairo Festival City" hash to the same identity.
-const { resolveCanonicalCompound } = require('../lib/compound-canonical');
 function computeSyncHash(compound, area, price, bedrooms, propertyType, dealType) {
-  const key = [
-    resolveCanonicalCompound(compound),
-    area,
-    price,
-    bedrooms,
-    String(propertyType || 'apartment').toLowerCase(),
-    String(dealType || 'sale').toLowerCase(),
-  ].join('|');
-  return crypto.createHash('sha256').update(key).digest('hex');
+  return computeUnitSyncHash({ compound, area, price, bedrooms, propertyType, dealType });
 }
 
 async function getPendingUnits() {
@@ -71,8 +57,8 @@ async function getPendingUnits() {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      // M (Deal Type) is an optional 13th column written by the Telegram
-      // intake (2026-11-01); A:L rows without it keep the historical
+      // M (Deal Type) is a 13th column written by the Telegram intake
+      // (2026-11-01); A:L rows without it keep the historical
       // default. Never widen beyond M — column N+ is reserved.
       range: "'new_units'!A:M",
     });
@@ -90,14 +76,14 @@ async function getPendingUnits() {
 async function checkDuplicate(syncHash) {
   const { data, error } = await supabase
     .from('listings')
-    .select('id')
+    .select('id,sync_source')
     .eq('dupe_check_hash', syncHash)
     .limit(1);
   if (error) {
     console.error(`dedup check error: ${error.message}`);
     return false;
   }
-  return Boolean(data && data.length > 0);
+  return data && data.length > 0 ? data[0] : null;
 }
 
 async function addUnitToSupabase(unit, syncHash) {
@@ -187,12 +173,26 @@ async function main() {
     };
 
     try {
-      const syncHash = computeSyncHash(unit.compound, unit.area, unit.price, unit.bedrooms, unit.propertyType, unit.dealType);
+      const syncHash = computeSyncHash(
+        unit.compound,
+        unit.area,
+        unit.price,
+        unit.bedrooms,
+        unit.propertyType,
+        unit.dealType,
+      );
 
-      if (await checkDuplicate(syncHash)) {
-        await updateUnitStatus(sheetRow, 'DUPLICATE');
-        summary.deduplicated++;
-        console.log(`duplicate skipped: ${unit.compound} ${unit.area}m²`);
+      const existing = await checkDuplicate(syncHash);
+      if (existing) {
+        const alreadyAddedByTelegram = existing.sync_source === 'telegram_intake';
+        await updateUnitStatus(sheetRow, alreadyAddedByTelegram ? 'ALREADY_ADDED' : 'DUPLICATE');
+        if (alreadyAddedByTelegram) {
+          summary.alreadyAdded++;
+          console.log(`already added by Telegram fallback: ${unit.compound} ${unit.area}m²`);
+        } else {
+          summary.deduplicated++;
+          console.log(`duplicate skipped: ${unit.compound} ${unit.area}m²`);
+        }
         continue;
       }
 

@@ -10,7 +10,7 @@
  *      lives: Internal Private Notes (real numbers) + Landlord Contact
  *      (Scrubbed) (masked 100***1490 form).
  *
- *   2. "new_units"        — the 12-column A–L feed that workflow 05
+ *   2. "new_units"        — the 13-column A–M feed that workflow 05
  *      (unit-adder) already consumes: PENDING rows are inserted into
  *      Supabase `listings` (publish_status=REVIEW_REQUIRED — human audit
  *      stays in the loop) and marked ADDED. Same tab format the broker
@@ -163,7 +163,7 @@ async function appendIntakeRow(row) {
   return rowNumber;
 }
 
-/** Append one 12-column new_units row (status PENDING) for unit-adder. */
+/** Append one 13-column new_units row (status PENDING) for unit-adder. */
 async function appendNewUnitsRow(row12) {
   const ctx = client();
   if (!ctx) throw new Error('sheets client unconfigured');

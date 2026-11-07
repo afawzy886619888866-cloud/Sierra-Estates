@@ -75,11 +75,13 @@ them with headers on first run):
     name/phones + raw intake text — share the sheet with admins/concierge
     only (editor access for the team should hide/delete this column).
   - *Landlord Contact (Scrubbed)* shows masked forms (`100***1490`).
-- **`new_units`** — the A–L feed that workflow `05-unit-adder` already
-  consumes (`PENDING` → Supabase `listings`, `publish_status=REVIEW_
-  REQUIRED` so a human approves publication). The bot triggers unit-adder
-  inline right after appending, so inventory is near-instant; the cron lane
-  remains the safety net.
+- **`new_units`** — the A–M feed that workflow `05-unit-adder` already
+  consumes (`PENDING` → Supabase `listings`, `publish_status=REVIEW_REQUIRED`
+  so a human approves publication). Column M carries Rent/Sale and is part
+  of the 13-column A–M contract. Workflow `05-unit-adder` is the single
+  normal-path Supabase writer. If Sheets is unavailable, the bot spools the
+  listing and uses the same deduplication hash for its direct Supabase
+  fallback; spool recovery will not insert a second copy.
 
 Share the spreadsheet with the service account e-mail (**Editor**).
 
@@ -88,7 +90,8 @@ Share the spreadsheet with the service account e-mail (**Editor**).
 | Variable | Required | Default | Meaning |
 | --- | --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | yes | — | BotFather token |
-| `TELEGRAM_AGENT_GROUP_IDS` | yes | — | `id:Name` pairs (name optional — resolved from the chat title) |
+| `TELEGRAM_AGENT_GROUP_IDS` | one allowlist required | — | Comma-separated `id:Name` pairs (name optional); only these groups may submit listings |
+| `TELEGRAM_AGENT_USER_IDS` | optional | — | Comma-separated numeric Telegram user IDs allowed to submit via direct message |
 | `TELEGRAM_GENERAL_GROUP_ID` | yes for broadcast | — | General/team broadcast group |
 | `TELEGRAM_MASTER_SHEET_ID` / `GOOGLE_SHEET_ID` / `UNITS_SHEET_ID` | fallback chain | runner default | Master Inventory spreadsheet id |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` (= `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` alias) or `GOOGLE_SERVICE_ACCOUNT_KEY` | for sheet sync | — | Service-account creds (inline JSON/base64 or file path) |
@@ -118,20 +121,53 @@ Share the spreadsheet with the service account e-mail (**Editor**).
 - **No duplicates**: identical text+agent inside the cooldown window is
   answered with the existing code, no second row.
 - **Fail-closed routing**: only configured agent groups are ingested;
-  unknown chats are logged and ignored. Bot messages are ignored.
+  direct messages require an explicit `TELEGRAM_AGENT_USER_IDS` allowlist.
+  When no allowlist is configured, listing messages are rejected (only
+  `/chatid` and `/id` setup commands respond). Unknown chats and bot
+  messages are ignored.
 - **Commands**: `/chatid` (setup), `/ping` (health: sheet/broadcast/spool),
   `/start` `/help`.
 
 ## 5. Local development
 
-```bash
-cd workflows
-TELEGRAM_BOT_TOKEN=… TELEGRAM_AGENT_GROUP_IDS=-100…:Fareda \
-TELEGRAM_GENERAL_GROUP_ID=-100… node 12-telegram-intake/bot.js
+From the repository root, start the **listing intake** bot with a hidden
+terminal prompt for the token:
+
+```powershell
+.\scripts\run-telegram-intake.ps1
 ```
 
-Tests: `pnpm test:root` (root vitest suite picks up
-`__tests__/telegram-intake-pipeline.test.ts`).
+Paste the BotFather token at the secure prompt; it is not echoed or written
+to a file. The script runs `pnpm telegram:intake` and clears the token from
+the current PowerShell process when the bot exits. Configure the sheet
+credentials/ID, Supabase service-role key, and one or more authorized group
+or user IDs in an ignored local environment file before expecting units to
+reach inventory. Without Sheets configuration, units are only spooled
+locally; without Supabase configuration, they are not added to the database.
+Use `/chatid` in the intended Telegram group to discover its ID. Stop any
+other poller/webhook using the same bot token before starting this
+long-polling process.
+
+The older `pnpm telegram:bot` command runs the general-purpose bot, not the
+listing intake. For listing submissions, use `pnpm telegram:intake` or the
+secure PowerShell launcher above.
+
+To run the offline intake tests in the terminal:
+
+```powershell
+pnpm exec vitest run __tests__/telegram-intake-pipeline.test.ts
+```
+
+The test command does not contact Telegram, Google Sheets, or Supabase.
+
+For the OpenClaw task runner (separate from the live Telegram poller):
+
+```bash
+pnpm openclaw:task "Summarize recent listing additions and check inventory integrity"
+```
+
+Do not run a bulk `ingest:all` task against production unless the inventory
+source and intended database target have been confirmed.
 
 ## 6. Property Finder linkage (next step, not auto-enabled)
 
