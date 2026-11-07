@@ -55,6 +55,7 @@ const sheets = require('./sheets');
 const render = require('./render');
 const dedupIndex = require('../lib/dedup-index');
 const { resolveCanonicalCompound } = require('../lib/compound-canonical');
+const { computeUnitSyncHash } = require('../lib/unit-sync-hash');
 
 // ── configuration ──────────────────────────────────────────────────────────
 const BOT_TOKEN = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
@@ -85,6 +86,24 @@ function parseAgentGroups(raw) {
 }
 
 const AGENT_GROUPS = parseAgentGroups(process.env.TELEGRAM_AGENT_GROUP_IDS || process.env.AGENT_GROUP_IDS || '');
+const AGENT_USER_IDS = parseAgentUserIds(process.env.TELEGRAM_AGENT_USER_IDS || '');
+
+function parseAgentUserIds(raw) {
+  return new Set(
+    String(raw || '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => /^\d+$/.test(id)),
+  );
+}
+
+function isAuthorizedIntake(message, agentGroups = AGENT_GROUPS, agentUserIds = AGENT_USER_IDS) {
+  const chatId = String(message.chat?.id ?? '');
+  if (message.chat?.type === 'private') {
+    return agentUserIds.has(String(message.from?.id ?? ''));
+  }
+  return agentGroups.has(chatId);
+}
 
 function log(...args) {
   console.log(new Date().toISOString(), '[telegram-intake]', ...args);
@@ -120,10 +139,20 @@ async function insertDirectToSupabase(listing, text, agentName, ownerPhones, pho
   const sb = getSupabaseClient();
   if (!sb) return false;
   try {
+    const syncHash = computeUnitSyncHash({
+      compound: listing.compoundCanonical || listing.compound || listing.district,
+      area: listing.areaSqm,
+      price: listing.price ? listing.price.amount : 0,
+      bedrooms: listing.bedrooms,
+      propertyType: listing.propertyType,
+      dealType: listing.listingType,
+    });
     const { error } = await sb.from('listings').upsert({
       id: listing.code,
-      compound: listing.compoundCanonical || listing.compound || 'Unspecified Compound',
-      location_area: listing.district || 'New Cairo',
+      code: listing.code,
+      dupe_check_hash: syncHash,
+      compound: listing.compoundCanonical || listing.compound || listing.district || 'Unspecified Compound',
+      location_area: listing.district || listing.compoundCanonical || listing.compound || null,
       property_type: (listing.propertyType || 'apartment').toLowerCase(),
       offer_type: listing.listingType === 'rent' ? 'rent' : 'sale',
       bedrooms: listing.bedrooms != null ? Number(listing.bedrooms) : null,
@@ -167,8 +196,8 @@ function validateStartup() {
     console.error('UNCONFIGURED: TELEGRAM_BOT_TOKEN missing — get one from @BotFather.');
     return 'TELEGRAM_BOT_TOKEN missing';
   }
-  if (!AGENT_GROUPS.size) {
-    log('NOTE: TELEGRAM_AGENT_GROUP_IDS not set — OpenClaw Easy Listing mode active (accepting DMs & joined groups; use /chatid to pin specific group IDs).');
+  if (!AGENT_GROUPS.size && !AGENT_USER_IDS.size) {
+    log('UNCONFIGURED: set TELEGRAM_AGENT_GROUP_IDS or TELEGRAM_AGENT_USER_IDS; only /chatid setup commands are accepted until an intake allowlist is configured.');
   }
   if (!GENERAL_GROUP_ID) {
     log('NOTE: TELEGRAM_GENERAL_GROUP_ID not set — units will be logged + confirmed, but NOT broadcast.');
@@ -434,9 +463,9 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     dedupDecision.dqeFlag ? 'DQE Flag — price variance' : 'Active',
   ];
 
-  // 5. The new_units feed row (A–L contract of workflow 05 unit-adder).
+  // 5. The new_units feed row (A–M contract of workflow 05 unit-adder).
   const newUnitsRow = [
-    listing.compoundCanonical || listing.compound || '—',
+    listing.compoundCanonical || listing.compound || listing.district || '—',
     String(listing.bedrooms ?? 0),
     String(listing.bathrooms ?? 0),
     String(listing.areaSqm ?? 0),
@@ -495,8 +524,7 @@ async function handleIntake(chatId, text, photoFileIds, replyToMessageId, agentN
     } catch (e) { log(`photo ${i + 1} archive failed for ${code}: ${e.message}`); }
   }
 
-  // 8. Inventory: run direct Supabase upsert AND workflow 05 unit-adder inline
-  await insertDirectToSupabase(listing, text, agentName, ownerPhones, photoFileIds);
+  // 8. Inventory: workflow 05 is the single normal-path Supabase writer.
   if (RUN_UNIT_ADDER && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     runUnitAdder().catch((e) => log(`unit-adder inline run failed: ${e.message}`));
   }
@@ -583,6 +611,9 @@ async function flushSpool() {
     try {
       const rowNumber = await sheets.appendIntakeRow(entry.masterRow);
       await sheets.appendNewUnitsRow(entry.newUnitsRow);
+      if (RUN_UNIT_ADDER && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        await runUnitAdder().catch((e) => log(`unit-adder spool recovery failed: ${e.message}`));
+      }
       // Re-broadcast the delayed unit (photos by file_id still valid).
       const listingLike = {
         code: entry.masterRow[1],
@@ -627,6 +658,8 @@ async function handleCommand(text, chatId, fromUser) {
       `• Sheet sync: ${sheets.configured() ? 'configured ✅' : 'NOT configured ⚠️ (units spool locally)'}`,
       `• General broadcast: ${GENERAL_GROUP_ID ? 'configured ✅' : 'not set ⚠️'}`,
       `• Agent groups: ${AGENT_GROUPS.size}`,
+      `• Authorized direct senders: ${AGENT_USER_IDS.size}`,
+      `• Supabase unit-adder: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured ✅' : 'NOT configured ⚠️'}`,
       `• Spooled units awaiting sheet: ${spoolN}`,
     ].join('\n')).catch(() => {});
   }
@@ -656,23 +689,17 @@ async function handleUpdate(update) {
   if (message.date && Date.now() / 1000 - message.date > 86400) return;
 
   const chatId = String(message.chat.id);
-  const isPrivateDm = message.chat.type === 'private';
   const text = String(message.text || message.caption || '');
+  const authorized = isAuthorizedIntake(message);
 
   if (text.startsWith('/')) {
+    const isChatIdSetup = /^\/(?:chatid|id)(?:@\w+)?$/i.test(text.trim());
+    if (!authorized && !isChatIdSetup) return;
     await handleCommand(text, chatId, message.from);
     return;
   }
 
-  // OpenClaw Easy Listing Intake: accept Direct Messages (from agents/owners)
-  // AND configured agent groups (or any joined group when TELEGRAM_AGENT_GROUP_IDS is open).
-  const strictGroupsOnly = process.env.TELEGRAM_STRICT_GROUPS_ONLY === '1';
-  if (!isPrivateDm && AGENT_GROUPS.size > 0 && !AGENT_GROUPS.has(chatId) && strictGroupsOnly) {
-    return;
-  }
-  if (AGENT_GROUPS.size > 0 && !isPrivateDm && !AGENT_GROUPS.has(chatId)) {
-    return;
-  }
+  if (!authorized) return;
 
   if (message.photo && message.media_group_id) {
     bufferMediaMessage(message); // flushed after the album settles
@@ -694,7 +721,7 @@ async function main() {
     await new Promise((r) => setTimeout(r, 10 * 60 * 1000));
     process.exit(2);
   }
-  log(`starting — agent groups: ${[...AGENT_GROUPS.keys()].join(', ')} | general: ${GENERAL_GROUP_ID || '(none)'} | sheet: ${sheets.resolveSpreadsheetId() || '(default)'}`);
+  log(`starting — agent groups: ${[...AGENT_GROUPS.keys()].join(', ') || '(none)'} | authorized direct senders: ${AGENT_USER_IDS.size} | general: ${GENERAL_GROUP_ID || '(none)'} | sheet: ${sheets.resolveSpreadsheetId() || '(default)'}`);
   const me = await tg.getMe();
   log(`connected as @${me.username} (${me.first_name})`);
 
@@ -761,6 +788,8 @@ if (require.main === module) {
 
 module.exports = {
   parseAgentGroups,
+  parseAgentUserIds,
+  isAuthorizedIntake,
   handleIntake,
   broadcastListing,
   flushSpool,

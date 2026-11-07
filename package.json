@@ -34,6 +34,7 @@
     "migrate:supabase": "tsx scripts/migrate-data-to-supabase.ts",
     "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
     "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
+    "telegram:intake": "node workflows/12-telegram-intake/bot.js",
     "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
     "inventory:excel:pull": "node scripts/sync-inventory-excel-supabase.mjs pull",
     "inventory:excel:push": "node scripts/sync-inventory-excel-supabase.mjs push",

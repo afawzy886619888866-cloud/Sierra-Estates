@@ -16,6 +16,7 @@ const codes = require('../workflows/12-telegram-intake/codes.js');
 const render = require('../workflows/12-telegram-intake/render.js');
 const bot = require('../workflows/12-telegram-intake/bot.js');
 const sheetsLib = require('../workflows/12-telegram-intake/sheets.js');
+const { computeUnitSyncHash } = require('../workflows/lib/unit-sync-hash.js');
 
 const COMPOSE = fs.readFileSync(path.join(ROOT_DIR, 'infra', 'docker-compose.runner.yml'), 'utf-8');
 const DOCKERFILE = fs.readFileSync(path.join(ROOT_DIR, 'workflows', 'Dockerfile'), 'utf-8');
@@ -252,6 +253,41 @@ describe('Telegram intake pipeline — agent group routing (fail-closed)', () =>
     };
     await expect(bot.handleUpdate(update)).resolves.toBeUndefined();
   });
+
+  it('requires explicit group or user allowlisting for listing intake', () => {
+    const groups = new Map([['-100111', 'Fareda']]);
+    const users = new Set(['42']);
+
+    expect(bot.isAuthorizedIntake(
+      { chat: { id: -100111, type: 'supergroup' }, from: { id: 8 } },
+      groups,
+      users,
+    )).toBe(true);
+    expect(bot.isAuthorizedIntake(
+      { chat: { id: -100999, type: 'group' }, from: { id: 8 } },
+      groups,
+      users,
+    )).toBe(false);
+    expect(bot.isAuthorizedIntake(
+      { chat: { id: 42, type: 'private' }, from: { id: 42 } },
+      groups,
+      users,
+    )).toBe(true);
+    expect(bot.isAuthorizedIntake(
+      { chat: { id: 99, type: 'private' }, from: { id: 99 } },
+      groups,
+      users,
+    )).toBe(false);
+    expect(bot.isAuthorizedIntake(
+      { chat: { id: 99, type: 'private' }, from: { id: 99 } },
+      new Map(),
+      new Set(),
+    )).toBe(false);
+  });
+
+  it('parses only numeric Telegram user IDs', () => {
+    expect([...bot.parseAgentUserIds('42, 87, bad, -5')]).toEqual(['42', '87']);
+  });
 });
 
 describe('Telegram intake pipeline — sheet contracts', () => {
@@ -276,29 +312,58 @@ describe('Telegram intake pipeline — sheet contracts', () => {
     const adder = fs.readFileSync(path.join(ROOT_DIR, 'workflows', '05-unit-adder', 'add.js'), 'utf-8');
     expect(adder).toContain("'new_units'!A:M");
     expect(adder).toContain("=== 'PENDING'");
+    expect(adder).toContain("const SHEET_ID = resolveSpreadsheetId()");
   });
 
   it('resolves the spreadsheet id with the documented fallback chain', () => {
     const prev = {
-      G: process.env.GOOGLE_SHEET_ID,
-      T: process.env.TELEGRAM_MASTER_SHEET_ID,
-      U: process.env.UNITS_SHEET_ID,
+      GOOGLE_SHEET_ID: process.env.GOOGLE_SHEET_ID,
+      TELEGRAM_MASTER_SHEET_ID: process.env.TELEGRAM_MASTER_SHEET_ID,
+      UNITS_SHEET_ID: process.env.UNITS_SHEET_ID,
+      BROKER_INBOX_SHEET_ID: process.env.BROKER_INBOX_SHEET_ID,
     };
     try {
       delete process.env.GOOGLE_SHEET_ID;
       delete process.env.TELEGRAM_MASTER_SHEET_ID;
+      delete process.env.BROKER_INBOX_SHEET_ID;
       process.env.UNITS_SHEET_ID = 'units-default';
       expect(sheetsLib.resolveSpreadsheetId()).toBe('units-default');
       process.env.TELEGRAM_MASTER_SHEET_ID = 'master';
       expect(sheetsLib.resolveSpreadsheetId()).toBe('master');
       process.env.GOOGLE_SHEET_ID = 'explicit';
       expect(sheetsLib.resolveSpreadsheetId()).toBe('explicit');
+      delete process.env.GOOGLE_SHEET_ID;
+      delete process.env.TELEGRAM_MASTER_SHEET_ID;
+      delete process.env.UNITS_SHEET_ID;
+      process.env.BROKER_INBOX_SHEET_ID = 'broker-fallback';
+      expect(sheetsLib.resolveSpreadsheetId()).toBe('broker-fallback');
     } finally {
       for (const [k, v] of Object.entries(prev)) {
         if (v === undefined) delete process.env[k];
         else process.env[k] = v;
       }
     }
+  });
+
+  it('uses the same unit identity hash for Telegram fallback and sheet unit-adder rows', () => {
+    const telegramFallback = computeUnitSyncHash({
+      compound: 'Mivida',
+      area: 190,
+      price: 14_500_000,
+      bedrooms: 3,
+      propertyType: 'apartment',
+      dealType: 'sale',
+    });
+    const sheetUnit = computeUnitSyncHash({
+      compound: 'Mivida',
+      area: '190',
+      price: '14500000',
+      bedrooms: '3',
+      propertyType: 'Apartment',
+      dealType: 'Sale',
+    });
+
+    expect(telegramFallback).toBe(sheetUnit);
   });
 });
 
