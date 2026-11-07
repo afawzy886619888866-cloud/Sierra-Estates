@@ -704,7 +704,6 @@ export default function InventoryMap({
             attribution={TILE_LAYERS[tileStyle].attrib}
             maxZoom={22}
             maxNativeZoom={19}
-            // @ts-ignore
             detectRetina={true}
           />
 
