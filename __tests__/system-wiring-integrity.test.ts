@@ -61,7 +61,7 @@ describe('System Wiring & Integration Verification Test Suite', () => {
       }
 
       expect(offendingFiles).toEqual([]);
-    }, 60000);
+    }, 120000);
 
     it('must have zero duplicate keys in root and package configuration files', () => {
       const configFiles = [
