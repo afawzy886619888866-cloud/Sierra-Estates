@@ -540,7 +540,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function mergeSupabaseOwners({ candidates, contacted, phoneFirstIdx, summary, client = null }) {
   const ENABLED = !/^(0|false|no)$/i.test(process.env.WF_INCLUDE_SUPABASE_OWNERS || '1');
   if (!ENABLED) return 0;
-  if (DRY_RUN && process.env.WF_INCLUDE_SUPABASE_IN_DRY_RUN !== '1') return 0;
+  const allowDryRun = process.env.WF_INCLUDE_SUPABASE_IN_DRY_RUN === '1' || (DRY_RUN && (candidates.length === 0 || !/^(0|false|no)$/i.test(process.env.WF_INCLUDE_SUPABASE_IN_DRY_RUN || '1')));
+  if (DRY_RUN && !allowDryRun) return 0;
   const sb = client || getAuditClient();
   if (!sb) return 0;
 
