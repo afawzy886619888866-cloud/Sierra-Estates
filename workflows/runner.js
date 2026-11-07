@@ -105,6 +105,7 @@ const SLUGS = [
   'ops-watchdog',
   'contact-partitioner',
   'daily-outreach-report',
+  'broker-sync',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -140,6 +141,7 @@ const SCRIPTS = {
   'ops-watchdog': '19-ops-watchdog/watchdog.js',
   'contact-partitioner': '09-owner-outreach/contact-partitioner.js',
   'daily-outreach-report': 'lib/daily-outreach-report.js',
+  'broker-sync': '20-broker-sync/sync.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -946,6 +948,24 @@ async function main() {
     });    if (seeded) log('whatsapp-dispatch row present in workflows registry');
   } catch (e) {
     log(`whatsapp-dispatch seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the broker-sync row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'broker-sync',
+      name: 'Broker & WhatsApp Harvester Sync',
+      name_ar: 'مزامنة عروض البروكرز من جروبات واتساب',
+      description: 'Aggregates, deduplicates, and synchronizes real-time WhatsApp broker group listings and buyer requests across all active lines into Google Sheets (Brokers_Inventory, Client_Requests, Owners_Rent_Master) and Supabase.',
+      status: 'active',
+      schedule: '*/30 * * * *',
+      category: 'ingestion',
+      trigger_type: 'cron',
+      source_path: 'workflows/20-broker-sync/sync.js',
+    });
+    if (seeded) log('broker-sync row present in workflows registry');
+  } catch (e) {
+    log(`broker-sync seeding skipped: ${e.message}`);
   }
 
   // ensure one-shot seeding of the sheets-supabase-sync row (idempotent)
