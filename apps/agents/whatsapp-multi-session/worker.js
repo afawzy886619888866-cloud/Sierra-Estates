@@ -290,8 +290,8 @@ async function initSession(sessionId) {
       killProcessOnBrowserClose: false,
       popup: false,
       logConsole: false,
-      authTimeout: 600,
-      qrTimeout: 600,
+      authTimeout: 0,
+      qrTimeout: 0,
       chromiumArgs: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -504,6 +504,16 @@ async function initSession(sessionId) {
     console.error(`[${sessionId}] Failed to initialize:`, err.message);
     s.status = 'ERROR';
     s.error = err.message;
+    // Auto-recover from errors or timeouts after 12 seconds so lines never stay permanently dead
+    setTimeout(() => {
+      if (s.status === 'ERROR') {
+        console.log(`[${sessionId}] Auto-recovering session from ERROR state (${err.message})...`);
+        s.status = 'INITIALIZING';
+        s.error = null;
+        s.qrDataUrl = null;
+        initSession(sessionId);
+      }
+    }, 12000);
   }
 }
 
