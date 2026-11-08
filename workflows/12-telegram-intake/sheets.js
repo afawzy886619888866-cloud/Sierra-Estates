@@ -10,7 +10,7 @@
  *      lives: Internal Private Notes (real numbers) + Landlord Contact
  *      (Scrubbed) (masked 100***1490 form).
  *
- *   2. "new_units"        — the 12-column A–L feed that workflow 05
+ *   2. "new_units"        — the 13-column A–M feed that workflow 05
  *      (unit-adder) already consumes: PENDING rows are inserted into
  *      Supabase `listings` (publish_status=REVIEW_REQUIRED — human audit
  *      stays in the loop) and marked ADDED. Same tab format the broker
@@ -21,7 +21,11 @@
  * blips must spool, not crash the poller.
  */
 
-const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
+const {
+  loadWorkflowEnv,
+  resolveSpreadsheetId: resolveSharedSpreadsheetId,
+  createSheetsClient,
+} = require('../lib/google-sheets');
 
 loadWorkflowEnv(__dirname + '/..');
 
@@ -61,12 +65,7 @@ async function retry(fn, label, attempts = 3) {
 
 /** Resolve which spreadsheet id to use (user-facing name → repo convention). */
 function resolveSpreadsheetId() {
-  return (
-    process.env.GOOGLE_SHEET_ID ||
-    process.env.TELEGRAM_MASTER_SHEET_ID ||
-    process.env.UNITS_SHEET_ID ||
-    ''
-  ).trim();
+  return resolveSharedSpreadsheetId();
 }
 
 function intakeTab() {
@@ -163,7 +162,7 @@ async function appendIntakeRow(row) {
   return rowNumber;
 }
 
-/** Append one 12-column new_units row (status PENDING) for unit-adder. */
+/** Append one 13-column new_units row (status PENDING) for unit-adder. */
 async function appendNewUnitsRow(row12) {
   const ctx = client();
   if (!ctx) throw new Error('sheets client unconfigured');

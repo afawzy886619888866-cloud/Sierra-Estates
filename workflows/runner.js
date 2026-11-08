@@ -262,82 +262,102 @@ async function runWorkflow(slug, trigger = 'cron') {
   }
 
   running.add(slug);
-  const started = Date.now();
-  log(`${slug}: ${trigger} run started`);
-  state.save(slug, { lastRun: new Date().toISOString() });
-
-  const exit = await new Promise((resolve) => {
-    const child = spawn('node', [path.join(WF_DIR, scriptRel)], {
-      cwd: WF_DIR,
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let out = '';
-    let errOut = '';
-    const cap = (s) => s.length > 8000 ? `${s.slice(0, 8000)}…[truncated]` : s;
-    child.stdout.on('data', (d) => { out += d.toString(); if (out.length > 200000) out = out.slice(-100000); });
-    child.stderr.on('data', (d) => { errOut += d.toString(); if (errOut.length > 200000) errOut = errOut.slice(-100000); });
-
-    const childTimeoutMs = CHILD_TIMEOUTS_MS[slug] || CHILD_TIMEOUT_MS;
-    const killer = setTimeout(() => {
-      log(`${slug}: timeout after ${childTimeoutMs / 1000}s — killing`);
-      child.kill('SIGKILL');
-    }, childTimeoutMs);
-
-    child.on('exit', (code, signal) => {
-      clearTimeout(killer);
-      resolve({ code, signal, out: cap(out), err: cap(errOut) });
-    });
-    child.on('error', (e) => {
-      clearTimeout(killer);
-      resolve({ code: -1, signal: null, out: '', err: `spawn error: ${e.message}` });
-    });
-  });
-
-  const durationMs = Date.now() - started;
-  const combined = `${exit.out}\n${exit.err}`.trim();
-  const summaryLine =
-    (combined.match(/^SUMMARY (.+)$/m) || [])[1] ||
-    (combined.match(/^UNCONFIGURED: (.+)$/m) || [])[1] ||
-    (combined.match(/^BLOCKED: (.+)$/m) || [])[1] ||
-    (combined.split('\n').filter(Boolean).pop() || '').slice(0, 300);
-
-  let exitKind = 'error';
-  if (exit.signal || exit.code === -1) exitKind = 'timeout';
-  else if (exit.code === 0) exitKind = 'ok';
-  else if (exit.code === 2) exitKind = 'unconfigured';
-
-  const entry = {
-    at: new Date().toISOString(),
-    exit: exitKind,
-    ms: durationMs,
-    trigger,
-    summary: summaryLine.slice(0, 300),
-  };
-  const st = state.save(slug, {
-    lastDurationMs: durationMs,
-    lastExit: exitKind,
-    lastSummary: summaryLine.slice(0, 300),
-  }, entry);
-
-  // Telemetry → Supabase (best-effort; runner must survive SB outages)
-  // Label carries the exit kind so the Studio shows the truth at a glance.
   try {
-    const current = await sb.getWorkflows([slug]);
-    const runsNow = current.length ? (current[0].runs || 0) + 1 : 1;
-    await sb.patchTelemetry(slug, {
-      lastRunMs: durationMs,
-      successRate: st.successRate ?? undefined,
-      runsBump: runsNow,
-      label: `${RUNNER_LABEL}:${exitKind}`,
-    });
-  } catch (e) {
-    log(`${slug}: telemetry patch failed: ${e.message}`);
-  }
+    const started = Date.now();
+    log(`${slug}: ${trigger} run started`);
+    try {
+      state.save(slug, { lastRun: new Date().toISOString() });
+    } catch (saveErr) {
+      log(`${slug}: initial state.save failed: ${saveErr.message}`);
+    }
 
-  log(`${slug}: ${trigger} run ${exitKind} in ${(durationMs / 1000).toFixed(1)}s — ${summaryLine.slice(0, 120)}`);
-  running.delete(slug);
-  return { skipped: false, exitKind, durationMs, summary: summaryLine };
+    const exit = await new Promise((resolve) => {
+      const child = spawn('node', [path.join(WF_DIR, scriptRel)], {
+        cwd: WF_DIR,
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let out = '';
+      let errOut = '';
+      const cap = (s) => s.length > 8000 ? `${s.slice(0, 8000)}…[truncated]` : s;
+      child.stdout.on('data', (d) => { out += d.toString(); if (out.length > 200000) out = out.slice(-100000); });
+      child.stderr.on('data', (d) => { errOut += d.toString(); if (errOut.length > 200000) errOut = errOut.slice(-100000); });
+
+      const childTimeoutMs = CHILD_TIMEOUTS_MS[slug] || CHILD_TIMEOUT_MS;
+      const killer = setTimeout(() => {
+        log(`${slug}: timeout after ${childTimeoutMs / 1000}s — killing`);
+        if (process.platform === 'win32' && child.pid) {
+          try {
+            require('child_process').execSync(`taskkill /pid ${child.pid} /t /f`);
+          } catch (_) {
+            try { child.kill(); } catch (_) {}
+          }
+        } else {
+          try { child.kill('SIGKILL'); } catch (_) {}
+        }
+      }, childTimeoutMs);
+
+      child.on('exit', (code, signal) => {
+        clearTimeout(killer);
+        resolve({ code, signal, out: cap(out), err: cap(errOut) });
+      });
+      child.on('error', (e) => {
+        clearTimeout(killer);
+        resolve({ code: -1, signal: null, out: '', err: `spawn error: ${e.message}` });
+      });
+    });
+
+    const durationMs = Date.now() - started;
+    const combined = `${exit.out}\n${exit.err}`.trim();
+    const summaryLine =
+      (combined.match(/^SUMMARY (.+)$/m) || [])[1] ||
+      (combined.match(/^UNCONFIGURED: (.+)$/m) || [])[1] ||
+      (combined.match(/^BLOCKED: (.+)$/m) || [])[1] ||
+      (combined.split('\n').filter(Boolean).pop() || '').slice(0, 300);
+
+    let exitKind = 'error';
+    if (exit.signal || exit.code === -1) exitKind = 'timeout';
+    else if (exit.code === 0) exitKind = 'ok';
+    else if (exit.code === 2) exitKind = 'unconfigured';
+
+    const entry = {
+      at: new Date().toISOString(),
+      exit: exitKind,
+      ms: durationMs,
+      trigger,
+      summary: summaryLine.slice(0, 300),
+    };
+    let st = null;
+    try {
+      st = state.save(slug, {
+        lastDurationMs: durationMs,
+        lastExit: exitKind,
+        lastSummary: summaryLine.slice(0, 300),
+      }, entry);
+    } catch (saveErr) {
+      log(`${slug}: final state.save failed: ${saveErr.message}`);
+    }
+
+    // Telemetry → Supabase (best-effort; runner must survive SB outages)
+    // Label carries the exit kind so the Studio shows the truth at a glance.
+    try {
+      const current = await sb.getWorkflows([slug]);
+      const runsNow = current.length ? (current[0].runs || 0) + 1 : 1;
+      await sb.patchTelemetry(slug, {
+        lastRunMs: durationMs,
+        successRate: st?.successRate ?? undefined,
+        runsBump: runsNow,
+        label: `${RUNNER_LABEL}:${exitKind}`,
+      });
+    } catch (e) {
+      log(`${slug}: telemetry patch failed: ${e.message}`);
+    }
+
+    log(`${slug}: ${trigger} run ${exitKind} in ${(durationMs / 1000).toFixed(1)}s — ${summaryLine.slice(0, 120)}`);
+    return { skipped: false, exitKind, durationMs, summary: summaryLine };
+  } finally {
+    running.delete(slug);
+  }
 }
 
 /** Read a request body with a hard cap (for the inbound webhook). */

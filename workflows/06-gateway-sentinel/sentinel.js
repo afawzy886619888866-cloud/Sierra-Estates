@@ -26,6 +26,7 @@ const { loadWorkflowEnv } = require('../lib/google-sheets'); loadWorkflowEnv(req
 const fs = require('fs');
 const path = require('path');
 const { GatewayClient, normalizeChatId } = require('../lib/gateway-client');
+const { safeWriteFileSync } = require('../lib/state');
 
 const STATE_FILE = path.join(__dirname, '..', '.state', 'gateway-health.json');
 const SENTINEL_STATE = path.join(__dirname, '..', '.state', 'sentinel-state.json');
@@ -38,10 +39,7 @@ function readState() {
 }
 function writeState(st) {
   try {
-    fs.mkdirSync(path.dirname(SENTINEL_STATE), { recursive: true });
-    const tmp = `${SENTINEL_STATE}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(st, null, 1));
-    fs.renameSync(tmp, SENTINEL_STATE);
+    safeWriteFileSync(SENTINEL_STATE, JSON.stringify(st, null, 1));
   } catch (_) { /* best effort */ }
 }
 function appendAlert(entry) {
@@ -91,10 +89,7 @@ async function main() {
   }
 
   try {
-    fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
-    const tmp = `${STATE_FILE}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(health, null, 1));
-    fs.renameSync(tmp, STATE_FILE);
+    safeWriteFileSync(STATE_FILE, JSON.stringify(health, null, 1));
   } catch (err) {
     console.error(`state write failed: ${err.message}`);
   }

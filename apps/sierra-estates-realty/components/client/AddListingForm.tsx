@@ -148,6 +148,13 @@ const SUBMITTER_PRESETS = [
     labelEn: "🤝 Authorized Broker Desk",
   },
   {
+    id: "role:agent",
+    type: "employee",
+    name: "Real Estate Agent",
+    labelAr: "👤 وكيل عقاري معتمد (Agent Desk)",
+    labelEn: "👤 Authorized Real Estate Agent",
+  },
+  {
     id: "custom",
     type: "employee",
     name: "Other Submitter / Manual Entry",
@@ -770,7 +777,7 @@ export default function AddListingForm({
         | "employee"
         | "bot";
       const effectiveAgentName =
-        submitterPreset === "custom" && customAgentName.trim()
+        (submitterPreset === "custom" || submitterPreset === "role:agent") && customAgentName.trim()
           ? customAgentName.trim()
           : selectedPreset?.name || "Sierra Advisory Staff";
 
@@ -1290,7 +1297,7 @@ export default function AddListingForm({
                     </option>
                   ))}
                 </select>
-                {submitterPreset === "custom" && (
+                {(submitterPreset === "custom" || submitterPreset === "role:agent") && (
                   <input
                     type="text"
                     className={s.input}
@@ -1298,8 +1305,8 @@ export default function AddListingForm({
                     onChange={(e) => setCustomAgentName(e.target.value)}
                     placeholder={
                       isAr
-                        ? "اسم مقدم الطلب / الموظف"
-                        : "Submitter / staff name"
+                        ? "اسم الوكيل / مقدم الطلب (Agent Name)"
+                        : "Agent / Submitter full name"
                     }
                   />
                 )}

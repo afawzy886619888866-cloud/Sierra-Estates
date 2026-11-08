@@ -1,443 +1,843 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Add a Listing · Sierra Estates</title>
-<link rel="icon" href="logo-mark-96.png"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet"/>
-<script defer="defer" src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
-<script src="supabase-config.js"></script>
-<script src="supabase.js"></script>
-<style>
-:root{--navy:#0a1622;--navy-2:#122336;--gold:#c8961a;--gold-l:#e9c176;--cream:#f7f5f0;--surface:#fff;--surface-2:#f2efe8;--ink:#0f1b28;--muted:#6b7684;--line:rgba(15,27,40,.1);--line-2:rgba(15,27,40,.18);--font:'Plus Jakarta Sans',system-ui,sans-serif;--display:'Playfair Display',Georgia,serif;--mono:'JetBrains Mono',monospace;--silk:cubic-bezier(.22,1,.36,1);}
-[data-theme="dark"]{--cream:#080d14;--surface:#101b28;--surface-2:#16242f;--ink:#eef2f6;--muted:#93a1b0;--line:rgba(233,193,118,.12);--line-2:rgba(233,193,118,.24);}
-[dir="rtl"] body{font-family:'Cairo',var(--font);}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--cream);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
-a{color:var(--gold);text-decoration:none;transition:color .2s var(--silk);}
-a:hover{color:var(--gold-l);}
-.top{background:var(--navy);color:#fff;padding:14px 0;border-bottom:1px solid rgba(233,193,118,.2);}
-.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
-.top .wrap{display:flex;align-items:center;gap:16px;}
-.brand{display:flex;align-items:center;gap:11px;color:#fff;}
-.brand:hover{color:#fff;}
-.brand img{width:34px;height:34px;object-fit:contain;}
-.brand b{display:block;font-family:var(--display);font-size:17px;letter-spacing:.01em;}
-.brand small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-l);}
-.top-act{margin-inline-start:auto;display:flex;align-items:center;gap:8px;}
-.tb{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:background .2s var(--silk),transform .12s var(--silk);}
-.tb:hover{background:rgba(255,255,255,.1);}
-.tb:active{transform:scale(.96);}
-.tb .i{width:15px;height:15px;}
-.hero{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;padding:56px 0 64px;}
-.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-l);margin-bottom:14px;}
-[dir="rtl"] .eyebrow{letter-spacing:.04em;font-family:var(--font);font-size:12px;}
-.hero h1{font-family:var(--display);font-size:clamp(1.75rem,1.2rem + 2.2vw,2.9rem);font-weight:700;line-height:1.12;letter-spacing:-.015em;max-width:22ch;}
-[dir="rtl"] .hero h1{font-family:'Cairo',sans-serif;font-weight:800;}
-.hero h1 em{font-style:normal;color:var(--gold-l);}
-.hero p{margin-top:16px;max-width:52ch;color:rgba(255,255,255,.72);font-size:15.5px;}
-.perks{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:26px;}
-.perks span{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.78);}
-.perks .i{width:16px;height:16px;color:var(--gold-l);}
-main{padding:0 0 80px;}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 50px rgba(10,22,34,.1);margin-top:-34px;padding:34px;}
-[data-theme="dark"] .card{box-shadow:0 20px 50px rgba(0,0,0,.5);}
-.sect{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 16px;}
-[dir="rtl"] .sect{letter-spacing:.03em;font-family:var(--font);font-size:12px;}
-.sect+.sect{margin-top:0;}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;}
-.grid.three{grid-template-columns:repeat(3,minmax(0,1fr));}
-.f{display:flex;flex-direction:column;gap:7px;}
-.f.wide{grid-column:1/-1;}
-label{font-size:12.5px;font-weight:700;color:var(--muted);}
-input,select,textarea{width:100%;font-family:var(--font);font-size:14.5px;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;padding:11px 13px;outline:none;transition:border-color .2s var(--silk),box-shadow .2s var(--silk);}
-[dir="rtl"] input,[dir="rtl"] select,[dir="rtl"] textarea{font-family:'Cairo',var(--font);}
-textarea{min-height:88px;resize:vertical;}
-input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,150,26,.16);}
-input.bad,select.bad{border-color:#e0533d;box-shadow:0 0 0 3px rgba(224,83,61,.14);}
-.seg{display:flex;gap:8px;flex-wrap:wrap;}
-.seg button{flex:1;min-width:96px;padding:11px 14px;border-radius:10px;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--ink);font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;transition:border-color .2s var(--silk),background .2s var(--silk),transform .12s var(--silk);}
-[dir="rtl"] .seg button{font-family:'Cairo',var(--font);}
-.seg button:hover{border-color:var(--gold);}
-.seg button:active{transform:scale(.97);}
-.seg button.on{border-color:var(--gold);background:linear-gradient(135deg,var(--gold-l),var(--gold));color:#09090f;}
-.chips{display:flex;gap:7px;flex-wrap:wrap;}
-.chips button{min-width:44px;padding:10px 13px;border-radius:9px;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--ink);font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:border-color .2s var(--silk),background .2s var(--silk),transform .12s var(--silk);}
-.chips button:hover{border-color:var(--gold);}
-.chips button:active{transform:scale(.96);}
-.chips button.on{border-color:var(--gold);background:linear-gradient(135deg,var(--gold-l),var(--gold));color:#09090f;}
-hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
-.err{min-height:18px;font-size:12.5px;color:#c33a25;margin-top:14px;}
-.foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:8px;}
-.note{font-size:12.5px;color:var(--muted);max-width:44ch;}
-.submit{margin-inline-start:auto;display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--gold-l),var(--gold));color:#09090f;font-family:var(--font);font-size:14.5px;font-weight:800;cursor:pointer;transition:box-shadow .25s var(--silk),transform .12s var(--silk);}
-[dir="rtl"] .submit{font-family:'Cairo',var(--font);}
-.submit:hover{box-shadow:0 10px 26px rgba(200,150,26,.4);}
-.submit:active{transform:scale(.97);}
-.submit .i{width:16px;height:16px;}
-.card.done{display:none;}
-.done{text-align:center;padding:26px 10px 12px;}
-.done .tick{width:60px;height:60px;border-radius:50%;background:rgba(52,211,153,.15);color:#1e8b7a;display:grid;place-items:center;margin:0 auto 20px;}
-.done .tick .i{width:28px;height:28px;}
-.done h2{font-family:var(--display);font-size:26px;margin-bottom:10px;}
-[dir="rtl"] .done h2{font-family:'Cairo',sans-serif;font-weight:800;}
-.done p{color:var(--muted);max-width:44ch;margin:0 auto;font-size:14.5px;}
-.ref{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;}
-.wa{display:inline-flex;align-items:center;gap:9px;margin-top:22px;padding:13px 24px;border-radius:11px;background:#1f9d55;color:#fff;font-weight:800;font-size:14.5px;transition:box-shadow .2s var(--silk),transform .12s var(--silk);}
-.wa .i{width:17px;height:17px;}
-.wa:hover{color:#fff;box-shadow:0 10px 24px rgba(31,157,85,.34);}
-.wa:active{transform:scale(.97);}
-.again{display:block;margin:18px auto 0;background:none;border:none;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer;}
-.legal{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;}
-@media(max-width:720px){.card{padding:24px 20px;margin-top:-24px;}.grid,.grid.three{grid-template-columns:1fr;}.submit{width:100%;margin-inline-start:0;justify-content:center;}.hero{padding:40px 0 52px;}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
-</style>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="web_dashboard" name="shell-type"/>
+  <title>Sierra Estates — Add Luxury Listing | إضافة عقار فاخر</title>
+  <link rel="icon" href="logo-mark.png"/>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00e5ff",
+            "primary-container": "#00daf3",
+            "on-primary-container": "#002a30",
+            "secondary": "#aec6ff",
+            "surface-dim": "#0f1321",
+            "surface": "#0f1321",
+            "surface-container": "#171b2a",
+            "surface-container-high": "#1f2538",
+            "surface-container-highest": "#303444",
+            "surface-container-low": "#111625",
+            "surface-container-lowest": "#090e1c",
+            "on-surface": "#dfe1f6",
+            "on-surface-variant": "#94a3b8",
+            "border-line": "#222a3d",
+            "error": "#ffb4ab",
+            "error-container": "#93000a",
+            "gold": "#c8961a",
+            "gold-light": "#e9c176"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            arabic: ['"Cairo"', '"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', '"Space Grotesk"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+    }
+    [dir="rtl"] { font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif; }
+    [dir="ltr"] { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .mono-num { font-family: 'JetBrains Mono', 'Space Grotesk', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 9999px; }
+  </style>
 </head>
 <body>
-<template id="__bundler_thumbnail">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#0a1622"/><rect x="120" y="150" width="160" height="120" rx="10" fill="none" stroke="#e9c176" stroke-width="12"/><path d="M110 160 200 96 290 160" fill="none" stroke="#e9c176" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><path d="M200 178v66M167 211h66" stroke="#c8961a" stroke-width="14" stroke-linecap="round"/></svg>
-</template>
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="index.html">
-      <img src="logo-mark.png" alt="Sierra Estates"/>
-      <span><b>Sierra Estates</b><small id="brand-sub">AI Real Estate · New Cairo</small></span>
-    </a>
-    <div class="top-act">
-      <button class="tb" id="theme-toggle" type="button" title="Toggle theme" aria-label="Toggle theme"><i data-lucide="moon" class="i"></i></button>
-      <button class="tb" id="lang-toggle" type="button" title="Toggle language" aria-label="Toggle language"><i data-lucide="languages" class="i"></i><span id="lang-label">عربي</span></button>
-    </div>
-  </div>
-</header>
+<div class="bg-[#090e1c] dark:bg-[#090e1c] text-[#dfe1f6] dark:text-[#dfe1f6] transition-colors duration-300 antialiased min-h-screen selection:bg-[#00e5ff] selection:text-[#090e1c]">
 
-<section class="hero">
-  <div class="wrap">
-    <div class="eyebrow" id="t-eyebrow">For brokers &amp; owners</div>
-    <h1 id="t-title">List your unit with <em>Sierra Estates</em></h1>
-    <p id="t-lead">Send us the unit once. Our team verifies it, prices it against live New Cairo comparables, and puts it in front of matched buyers and tenants.</p>
-    <div class="perks">
-      <span><i data-lucide="badge-check" class="i"></i><span id="t-p1">Verified in 24 hours</span></span>
-      <span><i data-lucide="users" class="i"></i><span id="t-p2">Matched to active buyers</span></span>
-      <span><i data-lucide="percent" class="i"></i><span id="t-p3">No upfront fee</span></span>
-    </div>
-  </div>
-</section>
+<!-- App Wrapper -->
+<div class="flex min-h-screen">
 
-<main>
-  <div class="wrap">
-    <div class="card" id="form-card">
-      <div class="sect" id="t-s1">The unit</div>
-      <div class="grid">
-        <div class="f wide">
-          <label id="t-purpose" for="purpose">Listing for</label>
-          <div class="seg" id="purpose">
-            <button type="button" data-v="sale" class="on" id="t-sale">Resale</button>
-            <button type="button" data-v="rent" id="t-rent">Rent</button>
-          </div>
+  <!-- Left Sidebar Navigation -->
+  <aside class="fixed inset-y-0 start-0 w-64 bg-[#090e1c] border-e border-[#222a3d] z-50 flex flex-col justify-between transition-all duration-300" id="mainSidebar">
+    <div class="flex flex-col">
+      <!-- Brand Header -->
+      <div class="h-20 px-5 flex items-center gap-3 border-b border-[#222a3d] bg-[#111625]/60">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00daf3]/20 to-[#4f8eff]/30 border border-[#00e5ff]/30 flex items-center justify-center p-1.5 shadow-sm">
+          <img src="logo-mark.png" alt="Sierra Estates Logo" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/aida/AEtjO1WoFQxEHS4fCLlushQjNFECd6iRDan_1CvT6cUnbMVsQqA5oUvkCq4eKm0F99WFRjRQBq-EeWRvEVQWX-TM352CYnBHdbi8nlETFCEGx8nKgcCpTEDv85OjN9PBrgMWLDVyhhw7-yqvTObWECoKZfH15llg8fGmRHD25PDaZgysL94N7rqwczJwS7WCkBIcpXIOzb7Ot0cgClErfFHwt6HEW7wRxXkbyTISIWQr9LYS';"/>
         </div>
-        <div class="f">
-          <label id="t-cpd" for="cpd">Compound</label>
-          <input type="text" id="cpd" list="cpd-list" placeholder="e.g. Mivida" autocomplete="off" title="Compound"/>
-          <datalist id="cpd-list"></datalist>
-        </div>
-        <div class="f">
-          <label id="t-type" for="ptype">Property type</label>
-          <select id="ptype" title="Property type" aria-label="Property type">
-            <option value="Apartment">Apartment</option>
-            <option value="Villa">Villa</option>
-            <option value="Townhouse">Townhouse</option>
-            <option value="Twin House">Twin House</option>
-            <option value="Penthouse">Penthouse</option>
-            <option value="Duplex">Duplex</option>
-            <option value="Studio">Studio</option>
-            <option value="Chalet">Chalet</option>
-          </select>
-        </div>
-        <div class="f wide">
-          <label id="t-beds" for="beds">Bedrooms</label>
-          <div class="chips" id="beds">
-            <button type="button" data-v="1">1</button>
-            <button type="button" data-v="2">2</button>
-            <button type="button" data-v="3" class="on">3</button>
-            <button type="button" data-v="4">4</button>
-            <button type="button" data-v="5">5</button>
-            <button type="button" data-v="6">6+</button>
-          </div>
-        </div>
-        <div class="f">
-          <label id="t-baths" for="baths">Bathrooms</label>
-          <input type="number" id="baths" min="1" max="9" value="2" title="Bathrooms" placeholder="2"/>
-        </div>
-        <div class="f">
-          <label id="t-area" for="area">Area (m²)</label>
-          <input type="number" id="area" min="40" placeholder="220" title="Area in square meters"/>
-        </div>
-        <div class="f">
-          <label id="t-price" for="price">Asking price (EGP)</label>
-          <input type="text" id="price" inputmode="numeric" placeholder="12,500,000" title="Asking price"/>
-        </div>
-        <div class="f">
-          <label id="t-finish" for="finish">Finishing</label>
-          <select id="finish" title="Finishing" aria-label="Finishing">
-            <option value="Fully finished">Fully finished</option>
-            <option value="Semi-finished">Semi-finished</option>
-            <option value="Core &amp; shell">Core &amp; shell</option>
-            <option value="Furnished">Furnished</option>
-          </select>
-        </div>
-        <div class="f wide">
-          <label id="t-notes">Anything else we should know</label>
-          <textarea id="notes" placeholder="Floor, view, delivery date, payment plan, availability for viewings…"></textarea>
+        <div class="flex flex-col">
+          <span class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5" data-en="SIERRA ESTATES" data-ar="سييرا العقارية">
+            سييرا العقارية
+          </span>
+          <span class="text-[10px] tracking-widest text-[#00e5ff] uppercase font-semibold font-mono" data-en="Executive Terminal" data-ar="البوابة التنفيذية">البوابة التنفيذية</span>
         </div>
       </div>
 
-      <hr/>
+      <!-- Quick Context Hub Status -->
+      <div class="px-4 pt-4 pb-2">
+        <div class="bg-[#111625] px-3 py-2 rounded-xl border border-[#222a3d] flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-[11px] text-[#94a3b8] uppercase font-medium" data-en="New Cairo GIS" data-ar="شبكة القاهرة الجديدة">شبكة القاهرة الجديدة</span>
+          </div>
+          <span class="text-[11px] text-[#00e5ff] font-bold font-mono">12 HUBS</span>
+        </div>
+      </div>
 
-      <div class="sect" id="t-s2">You</div>
-      <div class="grid three">
-        <div class="f">
-          <label id="t-role">You are</label>
-          <div class="seg" id="role">
-            <button type="button" data-v="owner" class="on" id="t-owner">Owner</button>
-            <button type="button" data-v="broker" id="t-broker">Broker</button>
+      <!-- Navigation Links -->
+      <nav class="flex flex-col gap-1 px-3 mt-3">
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[#94a3b8] hover:text-white hover:bg-[#1f2538] transition-all text-sm group" href="index.html">
+          <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-[#00e5ff] transition-colors">grid_view</span>
+          <span class="text-[13px] font-medium" data-en="Overview" data-ar="نظرة عامة">نظرة عامة</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[#94a3b8] hover:text-white hover:bg-[#1f2538] transition-all text-sm group" href="inventory.html">
+          <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-[#00e5ff] transition-colors">apartment</span>
+          <span class="text-[13px] font-medium" data-en="Inventory" data-ar="سجل العقارات">سجل العقارات</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[#00daf3]/15 text-[#00e5ff] border border-[#00e5ff]/30 font-bold text-sm shadow-sm" href="add-listing.html">
+          <span class="material-symbols-outlined text-[20px] text-[#00e5ff]">add_circle</span>
+          <span class="text-[13px]" data-en="Add Listing" data-ar="إضافة عقار جديد">إضافة عقار جديد</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[#94a3b8] hover:text-white hover:bg-[#1f2538] transition-all text-sm group" href="clients.html">
+          <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-[#00e5ff] transition-colors">group</span>
+          <span class="text-[13px] font-medium" data-en="Clients &amp; Leads" data-ar="العملاء والطلبات">العملاء والطلبات</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[#94a3b8] hover:text-white hover:bg-[#1f2538] transition-all text-sm group" href="analytics.html">
+          <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-[#00e5ff] transition-colors">monitoring</span>
+          <span class="text-[13px] font-medium" data-en="Analytics" data-ar="التحليلات والمؤشرات">التحليلات والمؤشرات</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Sidebar Status -->
+    <div class="p-4 border-t border-[#222a3d] bg-[#111625]/50 flex flex-col gap-3">
+      <div class="bg-[#171b2a] p-3 rounded-xl border border-[#222a3d] flex flex-col gap-1.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-[#94a3b8] font-medium" data-en="Gateway Multi-Line" data-ar="بوابة الخطوط">بوابة الخطوط</span>
+          <span class="text-emerald-400 font-mono text-[11px] font-semibold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 3 READY
+          </span>
+        </div>
+        <div class="w-full bg-[#303444] h-1.5 rounded-full overflow-hidden">
+          <div class="bg-[#00e5ff] h-full w-[100%] shadow-[0_0_8px_#00e5ff]"></div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between text-slate-500 font-mono text-[11px] px-1">
+        <span>SIERRA OS v4.9</span>
+        <span class="text-[#00e5ff]">LATENCY 4ms</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0 ms-64 transition-all duration-300">
+    <!-- Top Executive Header Bar -->
+    <header class="sticky top-0 z-40 h-20 bg-[#090e1c]/90 backdrop-blur-xl border-b border-[#222a3d] px-6 sm:px-8 flex items-center justify-between gap-4">
+      <!-- Search Palette -->
+      <div class="flex items-center gap-3 w-full max-w-md">
+        <div class="flex items-center gap-2.5 bg-[#111625] px-3.5 py-2 rounded-xl border border-[#222a3d] w-full focus-within:border-[#00e5ff]/60 transition-colors">
+          <span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+          <input class="bg-transparent text-sm text-[#dfe1f6] placeholder:text-slate-500 focus:outline-none w-full" data-en-placeholder="Search estates, compounds, clients..." data-ar-placeholder="ابحث عن عقار، كمبوند، أو عميل..." placeholder="ابحث عن عقار، كمبوند، أو عميل..." type="text"/>
+          <kbd class="text-[10px] font-mono bg-[#1f2538] px-2 py-0.5 rounded text-slate-400 border border-slate-700">⌘K</kbd>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <!-- Live Status Badge -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="font-semibold tracking-wide uppercase" data-en="LIVE RADAR" data-ar="الرادار العقاري">الرادار العقاري</span>
+        </div>
+
+        <!-- Bilingual Switcher [EN | العربية] -->
+        <div class="flex items-center bg-[#111625] border border-[#222a3d] rounded-xl p-1">
+          <button class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white" id="lang-en" onclick="setLanguage('en')">EN</button>
+          <button class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-[#1f2538] text-[#00e5ff] shadow-sm" id="lang-ar" onclick="setLanguage('ar')">العربية</button>
+        </div>
+
+        <!-- Light / Dark Mode Switcher -->
+        <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[#111625] border border-[#222a3d] text-slate-300 hover:bg-[#1f2538] transition" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+          <span class="material-symbols-outlined text-[17px] text-amber-400" id="theme-icon">dark_mode</span>
+          <span id="theme-text" data-en="Dark" data-ar="داكن">داكن</span>
+        </button>
+
+        <!-- Profile Chip -->
+        <div class="flex items-center gap-3 ps-2 border-s border-[#222a3d]">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00daf3] to-[#4f8eff] p-[1.5px] shadow-sm">
+            <div class="w-full h-full rounded-[10px] bg-[#111625] flex items-center justify-center font-bold text-white text-xs font-mono">
+              SE
+            </div>
+          </div>
+          <div class="hidden xl:flex flex-col text-start">
+            <span class="text-xs font-semibold text-white leading-none">Ahmed Fawzy</span>
+            <span class="text-[10px] text-slate-400 font-mono pt-0.5">Sierra Managing Partner</span>
           </div>
         </div>
-        <div class="f">
-          <label id="t-name">Full name</label>
-          <input type="text" id="name" placeholder="Your name"/>
+      </div>
+    </header>
+
+    <!-- Main Content Viewport -->
+    <main class="relative w-full py-8 px-6 lg:px-12 max-w-5xl mx-auto">
+      <!-- Background Ambient Glow -->
+      <div class="pointer-events-none absolute -top-20 end-10 w-96 h-96 bg-[#00e5ff]/5 rounded-full blur-3xl"></div>
+      <div class="pointer-events-none absolute top-1/2 start-0 w-80 h-80 bg-[#4f8eff]/5 rounded-full blur-3xl"></div>
+
+      <!-- Page Header & 1-Click Samples -->
+      <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#222a3d] pb-6 mb-6">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2 text-[#00e5ff] text-xs font-mono">
+            <span class="w-2 h-2 rounded-full bg-[#00e5ff] animate-pulse"></span>
+            <span data-en="Master Portfolio Intake · Direct Sync" data-ar="إدارة المحفظة العقارية · بوابة الإدراج المباشر">إدارة المحفظة العقارية · بوابة الإدراج المباشر</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight" data-en="Add Luxury Listing" data-ar="إضافة عقار جديد">إضافة عقار جديد</h1>
+          <p class="text-sm text-[#94a3b8] max-w-2xl leading-relaxed" data-en="Enter contact identity, paste property description freely, and attach media for instant portfolio sync." data-ar="أدخل بيانات التواصل المعتمدة، والصق وصف العقار بحرية، وأرفق الصور ليتم إدراجه فوراً في المحفظة.">أدخل بيانات التواصل المعتمدة، والصق وصف العقار بحرية، وأرفق الصور ليتم إدراجه فوراً في المحفظة.</p>
         </div>
-        <div class="f">
-          <label id="t-wa">WhatsApp number</label>
-          <input type="tel" id="phone" placeholder="+20 10 1234 5678"/>
+        <div class="flex items-center gap-2 self-start sm:self-center">
+          <button type="button" onclick="insertSample('resale')" class="px-3.5 py-2 rounded-xl bg-[#171b2a] border border-[#222a3d] hover:border-[#00e5ff]/50 text-xs font-semibold text-[#dfe1f6] hover:text-white transition flex items-center gap-1.5 shadow-sm">
+            <span class="material-symbols-outlined text-[16px] text-[#00e5ff]">auto_fix_high</span>
+            <span data-en="Sample Resale" data-ar="نموذج بيع (فيلا ميفيدا)">نموذج بيع (فيلا ميفيدا)</span>
+          </button>
+          <button type="button" onclick="insertSample('rent')" class="px-3.5 py-2 rounded-xl bg-[#171b2a] border border-[#222a3d] hover:border-[#00e5ff]/50 text-xs font-semibold text-[#dfe1f6] hover:text-white transition flex items-center gap-1.5 shadow-sm">
+            <span class="material-symbols-outlined text-[16px] text-amber-400">key</span>
+            <span data-en="Sample Rent" data-ar="نموذج إيجار (شقة مدينتي)">نموذج إيجار (شقة مدينتي)</span>
+          </button>
         </div>
       </div>
 
-      <div class="err" id="err" role="alert"></div>
-      <div class="foot">
-        <div class="note" id="t-note">Photos and documents go over WhatsApp after you submit — we'll open the chat for you.</div>
-        <button class="submit" id="submit" type="button"><span id="t-submit">Submit listing</span> <i data-lucide="arrow-right" class="i"></i></button>
+      <!-- Form Container -->
+      <form id="addListingForm" class="space-y-6" onsubmit="event.preventDefault(); publishListing();">
+
+        <!-- 1. Top Validation Alert Banner (Hidden by default, shown if fields missing) -->
+        <div id="missingFieldsAlert" class="hidden relative z-10 p-4 rounded-xl bg-error-container/20 border border-error/40 text-white shadow-lg transition-all">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-error-container/50 flex items-center justify-center text-error shrink-0">
+                <span class="material-symbols-outlined text-[20px]">error</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-bold text-white" data-en="Required Information Missing" data-ar="تنبيه: يُرجى استكمال الحقول المطلوبة">تنبيه: يُرجى استكمال الحقول المطلوبة</span>
+                <p class="text-xs text-[#94a3b8]" id="missingFieldsMsg" data-en="Please enter a valid mobile number and provide property description before publishing." data-ar="يُرجى إدخال رقم الهاتف وإضافة وصف أو تفاصيل العقار قبل النشر.">يُرجى إدخال رقم الهاتف وإضافة وصف أو تفاصيل العقار قبل النشر.</p>
+              </div>
+            </div>
+            <button type="button" onclick="document.getElementById('missingFieldsAlert').classList.add('hidden')" class="text-slate-400 hover:text-white">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Section 1: Representation & Contact (With 3 Choices: Owner, Broker, Agent + Agent Name) -->
+        <div class="relative z-10 bg-[#111625] border border-[#222a3d] rounded-2xl p-6 lg:p-8 space-y-6 shadow-xl">
+          <div class="flex items-center justify-between border-b border-[#222a3d] pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#00e5ff] text-[#002a30] flex items-center justify-center font-bold text-sm font-mono">1</div>
+              <h2 class="text-base font-bold text-white" data-en="Identity, Representation &amp; Contact" data-ar="بيانات المعلن والصفة والتواصل">بيانات المعلن والصفة والتواصل</h2>
+            </div>
+            <span class="text-xs text-[#00e5ff] font-mono" data-en="3-Way Routing" data-ar="توجيه معتمد مباشر">توجيه معتمد مباشر</span>
+          </div>
+
+          <!-- 3 Representation Choices (Segmented Radios) -->
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider" data-en="Representation Role" data-ar="صفة المعلن (اختر صفتك)">صفة المعلن (اختر صفتك)</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <!-- Choice 1: Owner -->
+              <label class="role-card relative flex items-center gap-3 p-3.5 rounded-xl border border-[#222a3d] bg-[#171b2a] cursor-pointer hover:border-[#00e5ff]/50 transition-all group">
+                <input type="radio" name="agentRole" value="owner" class="hidden" onchange="handleRoleChange('owner')"/>
+                <div class="w-9 h-9 rounded-lg bg-[#1f2538] text-slate-300 group-hover:text-[#00e5ff] flex items-center justify-center shrink-0 role-icon-box transition-colors">
+                  <span class="material-symbols-outlined text-[20px]">person</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-white role-title" data-en="Direct Owner" data-ar="مالك العقار">مالك العقار</span>
+                  <span class="text-[11px] text-[#94a3b8]" data-en="Direct property holder" data-ar="المالك المباشر للوحدة">المالك المباشر للوحدة</span>
+                </div>
+              </label>
+
+              <!-- Choice 2: Broker -->
+              <label class="role-card relative flex items-center gap-3 p-3.5 rounded-xl border border-[#222a3d] bg-[#171b2a] cursor-pointer hover:border-[#00e5ff]/50 transition-all group">
+                <input type="radio" name="agentRole" value="broker" class="hidden" onchange="handleRoleChange('broker')"/>
+                <div class="w-9 h-9 rounded-lg bg-[#1f2538] text-slate-300 group-hover:text-[#00e5ff] flex items-center justify-center shrink-0 role-icon-box transition-colors">
+                  <span class="material-symbols-outlined text-[20px]">handshake</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-white role-title" data-en="Real Estate Broker" data-ar="وسيط عقاري">وسيط عقاري</span>
+                  <span class="text-[11px] text-[#94a3b8]" data-en="Broker / Co-agent" data-ar="بروكر / وسيط حر">بروكر / وسيط حر</span>
+                </div>
+              </label>
+
+              <!-- Choice 3: Real Estate Agent (THE THIRD CHOICE) -->
+              <label class="role-card active-role relative flex items-center gap-3 p-3.5 rounded-xl border border-[#00e5ff] bg-[#00daf3]/10 cursor-pointer transition-all group">
+                <input type="radio" name="agentRole" value="agent" checked class="hidden" onchange="handleRoleChange('agent')"/>
+                <div class="w-9 h-9 rounded-lg bg-[#00daf3]/20 text-[#00e5ff] flex items-center justify-center shrink-0 role-icon-box transition-colors">
+                  <span class="material-symbols-outlined text-[20px]">badge</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-[#00e5ff] role-title" data-en="Real Estate Agent" data-ar="وكيل عقاري / مستشار">وكيل عقاري / مستشار</span>
+                  <span class="text-[11px] text-[#94a3b8]" data-en="Sierra agent / staff" data-ar="مستشار الشركة المعتمد">مستشار الشركة المعتمد</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Name and Phone Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+            <!-- Agent / Submitter Full Name -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider" for="agentFullName">
+                <span id="nameFieldLabel" data-en="Agent / Submitter Full Name" data-ar="اسم الوكيل / المعلن">اسم الوكيل / المعلن</span>
+                <span class="text-error">*</span>
+              </label>
+              <div class="relative">
+                <span class="material-symbols-outlined absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
+                <input type="text" id="agentFullName" class="w-full h-11 ps-10 pe-4 bg-[#171b2a] border border-[#222a3d] rounded-xl text-sm font-medium text-white placeholder:text-slate-500 focus:outline-none focus:border-[#00e5ff] transition" data-en-placeholder="e.g. Eng. Ahmed Fawzy" data-ar-placeholder="مثال: م. أحمد فوزي" placeholder="مثال: م. أحمد فوزي" required/>
+              </div>
+              <span class="text-[11px] text-[#94a3b8]" id="nameHelperText" data-en="Recorded in Sierra inventory and attribution ledger." data-ar="يُسجل في سجل الوحدات ونسب المبيعات المعتمد.">يُسجل في سجل الوحدات ونسب المبيعات المعتمد.</span>
+            </div>
+
+            <!-- Mobile Number with Direct Country Code Selector -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center justify-between" for="agentPhoneNumber">
+                <span>
+                  <span data-en="Mobile Number (WhatsApp)" data-ar="رقم الموبايل للتواصل (واتساب)">رقم الموبايل للتواصل (واتساب)</span>
+                  <span class="text-error">*</span>
+                </span>
+                <span class="text-[11px] text-[#00e5ff] font-mono" data-en="Direct Inquiries" data-ar="استفسارات مباشرة">استفسارات مباشرة</span>
+              </label>
+              <div class="flex items-center gap-2">
+                <!-- Country Code -->
+                <div class="relative w-36 shrink-0">
+                  <select id="countryCodeSelect" class="w-full h-11 px-3 bg-[#171b2a] border border-[#222a3d] rounded-xl text-sm font-mono text-white appearance-none focus:outline-none focus:border-[#00e5ff] cursor-pointer text-left" dir="ltr">
+                    <option value="+20" selected>🇪🇬 +20 (EG)</option>
+                    <option value="+971">🇦🇪 +971 (UAE)</option>
+                    <option value="+966">🇸🇦 +966 (KSA)</option>
+                    <option value="+974">🇶🇦 +974 (QA)</option>
+                    <option value="+965">🇰🇼 +965 (KW)</option>
+                    <option value="+44">🇬🇧 +44 (UK)</option>
+                    <option value="+1">🇺🇸 +1 (US)</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[18px]">expand_more</span>
+                </div>
+                <!-- Number Input -->
+                <div class="relative flex-1">
+                  <span class="material-symbols-outlined absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">phone_iphone</span>
+                  <input type="tel" id="agentPhoneNumber" class="w-full h-11 ps-10 pe-4 bg-[#171b2a] border border-[#222a3d] rounded-xl text-sm font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-[#00e5ff] transition" dir="ltr" data-en-placeholder="010 1234 5678" data-ar-placeholder="010 1234 5678" placeholder="010 1234 5678" required/>
+                </div>
+              </div>
+              <span class="text-[11px] text-[#94a3b8]" data-en="Client inquiries and photo updates route directly to this WhatsApp number." data-ar="يتم توجيه العملاء والتحديثات والصور مباشرة إلى هذا الرقم.">يتم توجيه العملاء والتحديثات والصور مباشرة إلى هذا الرقم.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Section 2: Property Description & Intelligent Fast Canvas -->
+        <div class="relative z-10 bg-[#111625] border border-[#222a3d] rounded-2xl p-6 lg:p-8 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between border-b border-[#222a3d] pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#00e5ff] text-[#002a30] flex items-center justify-center font-bold text-sm font-mono">2</div>
+              <h2 class="text-base font-bold text-white" data-en="Property Description &amp; Details" data-ar="تفاصيل ووصف العقار">تفاصيل ووصف العقار</h2>
+            </div>
+            <button type="button" onclick="clearDescription()" class="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1 transition">
+              <span class="material-symbols-outlined text-[15px]">delete_outline</span>
+              <span data-en="Clear Text" data-ar="مسح النص">مسح النص</span>
+            </button>
+          </div>
+
+          <!-- Text Area -->
+          <div class="relative">
+            <textarea id="propertyDescription" rows="7" class="w-full p-4 bg-[#171b2a] border border-[#222a3d] rounded-xl text-sm text-[#dfe1f6] placeholder:text-slate-500 focus:outline-none focus:border-[#00e5ff] transition resize-y leading-relaxed" oninput="updateCharCount()" data-en-placeholder="Paste listing description, broker message, specs, compound, beds, area, price, or payment plan freely here... (e.g. Standalone villa for sale in Mivida New Cairo, 380m BUA, 5 bedrooms, private garden, price 38,000,000 EGP cash...)" data-ar-placeholder="الصق تفاصيل ومواصفات العقار أو رسالة الواتساب بحرية هنا... (مثال: فيلا مستقلة للبيع في ميفيدا التجمع الخامس، مساحة 380م، 5 غرف نوم، حديقة خاصة، تشطيب كامل، السعر المطلوب 38,000,000 جنيه، جاهزة للاستلام الفوري...)" placeholder="الصق تفاصيل ومواصفات العقار أو رسالة الواتساب بحرية هنا... (مثال: فيلا مستقلة للبيع في ميفيدا التجمع الخامس، مساحة 380م، 5 غرف نوم، حديقة خاصة، تشطيب كامل، السعر المطلوب 38,000,000 جنيه، جاهزة للاستلام الفوري...)"></textarea>
+            <div class="absolute bottom-3 end-3">
+              <span id="charCountBadge" class="text-[11px] font-mono text-slate-400 bg-[#1f2538] border border-[#222a3d] px-2 py-0.5 rounded-md shadow-sm">0 chars</span>
+            </div>
+          </div>
+
+          <!-- Helper Badges -->
+          <div class="flex flex-wrap items-center justify-between text-xs text-[#94a3b8] pt-1">
+            <span data-en="💡 You can paste any raw broker or owner message; Sierra AI extracts key specs automatically." data-ar="💡 يمكنك لصق رسالة الواتساب مباشرة كما هي؛ وسيقوم النظام بتنسيقها وفرزها آلياً.">💡 يمكنك لصق رسالة الواتساب مباشرة كما هي؛ وسيقوم النظام بتنسيقها وفرزها آلياً.</span>
+            <span class="text-[#00e5ff] font-mono" data-en="Arabic &amp; English Supported" data-ar="يدعم العربية والإنجليزية">يدعم العربية والإنجليزية</span>
+          </div>
+        </div>
+
+        <!-- 4. Section 3: Photos & Media Upload (High Contrast & Live Thumbnails) -->
+        <div class="relative z-10 bg-[#111625] border border-[#222a3d] rounded-2xl p-6 lg:p-8 space-y-5 shadow-xl">
+          <div class="flex items-center justify-between border-b border-[#222a3d] pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#00e5ff] text-[#002a30] flex items-center justify-center font-bold text-sm font-mono">3</div>
+              <h2 class="text-base font-bold text-white" data-en="Property Photos &amp; Media" data-ar="صور ومرفقات العقار">صور ومرفقات العقار</h2>
+            </div>
+            <span class="text-xs text-[#94a3b8] font-mono"><span id="photoCounter">3</span> <span data-en="photos loaded" data-ar="صور جاهزة">صور جاهزة</span></span>
+          </div>
+
+          <!-- Drag and Drop Dropzone -->
+          <div id="dropZone" onclick="document.getElementById('fileUploadInput').click()" class="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-xl bg-[#171b2a] border-2 border-dashed border-[#00e5ff]/40 hover:border-[#00e5ff] cursor-pointer transition-all group">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-[#00daf3]/10 border border-[#00e5ff]/30 text-[#00e5ff] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <span class="material-symbols-outlined text-[28px]">add_photo_alternate</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-white font-semibold text-sm" data-en="Drag &amp; drop photos or click to browse" data-ar="اسحب الصور وأفلتها هنا أو انقر للاختيار">اسحب الصور وأفلتها هنا أو انقر للاختيار</span>
+                <span class="text-xs text-[#94a3b8]" data-en="High-res JPG, PNG, WEBP (Supports up to 20 photos)" data-ar="صور عالية الدقة JPG, PNG, WEBP (حتى 20 صورة)">صور عالية الدقة JPG, PNG, WEBP (حتى 20 صورة)</span>
+              </div>
+            </div>
+            <button type="button" class="px-5 py-2.5 rounded-xl bg-[#00daf3] text-[#002a30] font-bold text-xs hover:brightness-110 transition shadow-[0_0_16px_rgba(0,229,255,0.25)] flex items-center gap-2 shrink-0">
+              <span class="material-symbols-outlined text-[18px]">cloud_upload</span>
+              <span data-en="Upload Photos" data-ar="رفع الصور">رفع الصور</span>
+            </button>
+            <input type="file" id="fileUploadInput" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)"/>
+          </div>
+
+          <!-- Previews Grid -->
+          <div class="space-y-2">
+            <span class="text-xs font-semibold text-[#94a3b8]" data-en="Attached Showcase Thumbnails:" data-ar="معاينة الصور المرفقة:">معاينة الصور المرفقة:</span>
+            <div id="thumbnailsGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <!-- Item 1 (Cover) -->
+              <div class="thumb-card relative rounded-xl overflow-hidden bg-[#171b2a] border border-[#222a3d] group">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUl-01XDz9cyE8w60K9pBlcAvHPXNCbEQ06xBzl7Zw0cDu0nLLcgOC3-jTzcOhGX1hCbpa-kKyETuRmIKbOp5ZkiQs8BZpA8NFQpfk7RmP-r10CFGvskXTV6yLzWo6vtEa6K_OCFJxeVJ64v_Sko0qTyfI7I2j_ZP-v0lrErlebUD-5GBZbfUnAKAZd1cz2iNhpbnfJVvH-dwPZvmkYiwXa96Eqj4AZH9K3hzd3iI" class="w-full h-36 object-cover" alt="Villa Facade"/>
+                <div class="absolute top-2 start-2 px-2 py-0.5 rounded-md bg-[#00e5ff] text-[#002a30] text-[10px] font-bold shadow" data-en="Cover Photo" data-ar="الصورة الرئيسية">الصورة الرئيسية</div>
+                <div class="p-2.5 bg-[#1f2538]/90 flex items-center justify-between text-xs">
+                  <span class="text-white font-medium truncate" data-en="Exterior Facade.jpg" data-ar="الواجهة الخارجية.jpg">الواجهة الخارجية.jpg</span>
+                  <button type="button" onclick="removeThumbnail(this)" class="text-slate-400 hover:text-error transition" title="Remove">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="thumb-card relative rounded-xl overflow-hidden bg-[#171b2a] border border-[#222a3d] group">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOCgmW5szURasugDpj_1F5Wnz-LRZIMOXDh3817ynK-923nZzxlr5oBKO5JBAAPFRxVtGthkOzLzpImOWlIo-JDCVrKwD2yeerGWMsCRmTE5Z3GFOH8Wm9vofqhXsXxwjURyf675UApmXr_T6J-oBaTA87YPcdNv-9-pMbZNETLO9htc4HtHn16tleX2QRmCUKkCuSMZblIo8hes10yI57ZCO20NhTmUprZ6VJYrE" class="w-full h-36 object-cover" alt="Interior Salon"/>
+                <div class="p-2.5 bg-[#1f2538]/90 flex items-center justify-between text-xs">
+                  <span class="text-white font-medium truncate" data-en="Reception Salon.jpg" data-ar="الريسبشن الرئيسي.jpg">الريسبشن الرئيسي.jpg</span>
+                  <button type="button" onclick="removeThumbnail(this)" class="text-slate-400 hover:text-error transition" title="Remove">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item 3 -->
+              <div class="thumb-card relative rounded-xl overflow-hidden bg-[#171b2a] border border-[#222a3d] group">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIVHrRcBM5zEfJYytoJdNBFh3I-XT0-RJeCpnbdmOyG6bRguXk17ugtIt_2MQzw5V3tFa_FoB8-919t3tVMFWnwJt1vUL8-ngQjdYL9TBy9yUK8gPMU48EIpAe9fCNqsPx4LtD8FO9Y7tYNMoICQP5UuVYGB54HhN8W1g_j_uFLzjGAJoirVXaGUtkoJ4YJBqHAXnFRYvinPjPe53KvdugIzlKtm9WoiqKgkSYTOo" class="w-full h-36 object-cover" alt="Garden and Pool"/>
+                <div class="p-2.5 bg-[#1f2538]/90 flex items-center justify-between text-xs">
+                  <span class="text-white font-medium truncate" data-en="Garden &amp; Pool.jpg" data-ar="الحديقة والمسبح.jpg">الحديقة والمسبح.jpg</span>
+                  <button type="button" onclick="removeThumbnail(this)" class="text-slate-400 hover:text-error transition" title="Remove">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Publishing Controls (Save Draft & Submit) -->
+        <div class="relative z-10 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 pb-12">
+          <button type="button" id="saveDraftBtn" onclick="saveDraft()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#171b2a] border border-[#222a3d] hover:bg-[#1f2538] text-white font-semibold text-sm transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+            <span data-en="Save Draft" data-ar="حفظ كمسودة">حفظ كمسودة</span>
+          </button>
+          <button type="submit" id="publishBtn" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#00e5ff] text-[#002a30] font-extrabold text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(0,229,255,0.35)] flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[20px]" id="publishBtnIcon">send</span>
+            <span id="publishBtnText" data-en="Publish Listing" data-ar="نشر العقار">نشر العقار</span>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Success Modal Dialog (Shown on Successful Submission) -->
+      <div id="successModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+        <div class="bg-[#111625] border border-[#00e5ff]/40 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative text-center">
+          <div class="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 mx-auto flex items-center justify-center shadow-lg">
+            <span class="material-symbols-outlined text-[36px]">check_circle</span>
+          </div>
+
+          <div class="space-y-2">
+            <h3 class="text-xl font-bold text-white" data-en="Listing Published Successfully!" data-ar="تم تسجيل ونشر العقار بنجاح!">تم تسجيل ونشر العقار بنجاح!</h3>
+            <p class="text-sm text-[#94a3b8]" data-en="The unit has been verified and registered in the Sierra Estates inventory database." data-ar="تم فحص الوحدة وإدراجها بنجاح في قاعدة بيانات عقارات سييرا بالقاهرة الجديدة.">تم فحص الوحدة وإدراجها بنجاح في قاعدة بيانات عقارات سييرا بالقاهرة الجديدة.</p>
+          </div>
+
+          <div class="bg-[#171b2a] border border-[#222a3d] rounded-xl p-4 text-start space-y-2 font-mono text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400" data-en="Unit Code:" data-ar="كود الوحدة:">كود الوحدة:</span>
+              <span class="text-[#00e5ff] font-bold" id="modalUnitCode">SE-NC-2026-X7K2</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400" data-en="Submitter / Agent:" data-ar="المعلن / الوكيل:">المعلن / الوكيل:</span>
+              <span class="text-white" id="modalSubmitterName">—</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400" data-en="Routing Phone:" data-ar="رقم التواصل:">رقم التواصل:</span>
+              <span class="text-white" id="modalPhone">—</span>
+            </div>
+          </div>
+
+          <!-- Direct WhatsApp Dispatch Button -->
+          <div class="space-y-3 pt-2">
+            <a id="modalWhatsAppBtn" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition">
+              <span class="material-symbols-outlined text-[20px]">chat</span>
+              <span data-en="Send Details &amp; Photos via WhatsApp" data-ar="إرسال التفاصيل والصور عبر واتساب">إرسال التفاصيل والصور عبر واتساب</span>
+            </a>
+            <button type="button" onclick="resetFormForNewListing()" class="w-full py-2.5 px-4 rounded-xl text-slate-400 hover:text-white text-xs font-semibold underline transition" data-en="Add Another Listing" data-ar="إضافة عقار آخر">
+              إضافة عقار آخر
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="card done" id="done-card">
-      <div class="tick"><i data-lucide="check" class="i"></i></div>
-      <h2 id="t-doneTit">Listing received</h2>
-      <p id="done-msg">Our inventory team reviews it within 24 hours and comes back to you on WhatsApp.</p>
-      <div class="ref" id="done-ref"></div>
-      <a class="wa" id="done-wa" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer"><i data-lucide="message-circle" class="i"></i><span id="t-sendPhotos">Send photos on WhatsApp</span></a>
-      <button class="again" id="again" type="button">Add another listing</button>
-    </div>
+      <!-- Floating Interactive Toast -->
+      <div id="statusToast" class="fixed bottom-6 start-6 z-50 transform translate-y-32 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-[#171b2a] border border-[#00e5ff]/50 px-4 py-3 rounded-xl shadow-2xl text-white">
+        <span class="material-symbols-outlined text-[#00e5ff] text-[20px]" id="toastIcon">check_circle</span>
+        <span class="text-xs font-semibold" id="toastMessage">تم الحفظ بنجاح</span>
+      </div>
 
-    <div class="legal" id="t-legal">Sierra Estates · Banafseg 2, Villa 402, New Cairo · +2 010 9204 8333</div>
+    </main>
   </div>
-</main>
+</div>
 
+<!-- Core Interactive & Wiring Script -->
 <script>
-(function () {
-  'use strict';
-  var WA = '201092048333';
-  var CPDS = ['Mountain View iCity','Mountain View Hyde Park','Uptown Cairo','Mivida','Madinaty','Hyde Park','Eastown','El Shorouk','Palm Hills New Cairo','Villette','Fifth Square','SODIC East','Taj City','Bloomfields','Sarai','Katameya Heights','Al Rehab','Zed East','La Vista City'];
+  // State
+  let currentLang = 'ar';
+  let currentTheme = 'dark';
+  let selectedRole = 'agent';
+  let uploadedPhotos = [];
 
-  var T = {
-    en: {
-      brandSub: 'AI Real Estate · New Cairo', langLabel: 'عربي',
-      eyebrow: 'For brokers & owners', title: 'List your unit with <em>Sierra Estates</em>',
-      lead: "Send us the unit once. Our team verifies it, prices it against live New Cairo comparables, and puts it in front of matched buyers and tenants.",
-      p1: 'Verified in 24 hours', p2: 'Matched to active buyers', p3: 'No upfront fee',
-      s1: 'The unit', s2: 'You', purpose: 'Listing for', sale: 'Resale', rent: 'Rent',
-      cpd: 'Compound', type: 'Property type', beds: 'Bedrooms', baths: 'Bathrooms',
-      area: 'Area (m²)', priceSale: 'Asking price (EGP)', priceRent: 'Monthly rent (EGP)',
-      finish: 'Finishing', notes: 'Anything else we should know',
-      role: 'You are', owner: 'Owner', broker: 'Broker', name: 'Full name', wa: 'WhatsApp number',
-      note: "Photos and documents go over WhatsApp after you submit — we'll open the chat for you.",
-      submit: 'Submit listing',
-      needCpd: 'Which compound is the unit in?', needArea: 'Add the unit area in m².',
-      needPrice: 'Add the asking price.', needName: 'Please add your name.',
-      needPhone: 'Add a valid WhatsApp number so we can come back to you.',
-      doneTit: 'Listing received',
-      doneMsg: 'Our inventory team reviews it within 24 hours and comes back to you on WhatsApp.',
-      ref: 'Reference', sendPhotos: 'Send photos on WhatsApp', again: 'Add another listing',
-      legal: 'Sierra Estates · Banafseg 2, Villa 402, New Cairo · +2 010 9204 8333',
-      phName: 'Your name', phCpd: 'e.g. Mivida', phArea: '220', phPriceSale: '12,500,000', phPriceRent: '85,000',
-      phNotes: 'Floor, view, delivery date, payment plan, availability for viewings…'
-    },
-    ar: {
-      brandSub: 'عقارات بالذكاء الاصطناعي · القاهرة الجديدة', langLabel: 'EN',
-      eyebrow: 'للوسطاء والمالكين', title: 'أضف وحدتك مع <em>سييرا إستيتس</em>',
-      lead: 'ابعتلنا الوحدة مرة واحدة. فريقنا يعاينها، يسعّرها بمقارنات حقيقية في القاهرة الجديدة، ويعرضها على مشترين ومستأجرين مطابقين.',
-      p1: 'معاينة خلال 24 ساعة', p2: 'عرض على عملاء جاهزين', p3: 'بدون مقدم أو رسوم',
-      s1: 'بيانات الوحدة', s2: 'بياناتك', purpose: 'نوع الإعلان', sale: 'بيع', rent: 'إيجار',
-      cpd: 'الكمبوند', type: 'نوع العقار', beds: 'غرف النوم', baths: 'الحمامات',
-      area: 'المساحة (م²)', priceSale: 'السعر المطلوب (ج.م)', priceRent: 'الإيجار الشهري (ج.م)',
-      finish: 'التشطيب', notes: 'أي تفاصيل إضافية',
-      role: 'أنت', owner: 'مالك', broker: 'وسيط', name: 'الاسم بالكامل', wa: 'رقم الواتساب',
-      note: 'الصور والمستندات تتبعت على واتساب بعد الإرسال — هنفتحلك المحادثة.',
-      submit: 'أرسل العقار',
-      needCpd: 'الوحدة في أي كمبوند؟', needArea: 'اكتب مساحة الوحدة بالمتر.',
-      needPrice: 'اكتب السعر المطلوب.', needName: 'من فضلك اكتب اسمك.',
-      needPhone: 'اكتب رقم واتساب صحيح حتى نتواصل معك.',
-      doneTit: 'تم استلام العقار',
-      doneMsg: 'فريق المخزون يراجعه خلال 24 ساعة ويرجعلك على واتساب.',
-      ref: 'رقم الطلب', sendPhotos: 'ابعت الصور على واتساب', again: 'أضف عقار آخر',
-      legal: 'سييرا إستيتس · البنفسج 2، فيلا 402، القاهرة الجديدة · 01092048333',
-      phName: 'اسمك', phCpd: 'مثال: ميفيدا', phArea: '220', phPriceSale: '12,500,000', phPriceRent: '85,000',
-      phNotes: 'الدور، الفيو، موعد التسليم، خطة السداد، مواعيد المعاينة…'
-    }
-  };
-  var TYPES_AR = { 'Apartment':'شقة','Villa':'فيلا','Townhouse':'تاون هاوس','Twin House':'توين هاوس','Penthouse':'بنتهاوس','Duplex':'دوبلكس','Studio':'استوديو','Chalet':'شاليه' };
-  var FIN_AR = { 'Fully finished':'تشطيب كامل','Semi-finished':'نصف تشطيب','Core & shell':'على الطوب','Furnished':'مفروش' };
-
-  var lang = localStorage.getItem('hzp-lang') || 'en';
-  var theme = localStorage.getItem('hzp-theme') || 'light';
-  var state = { purpose: 'sale', beds: 3, role: 'owner' };
-
-  function t(k) { return (T[lang] && T[lang][k]) || T.en[k] || k; }
-  function $(id) { return document.getElementById(id); }
-  function icons() { if (window.lucide) lucide.createIcons(); }
-
-  document.getElementById('cpd-list').innerHTML = CPDS.map(function (c) {
-    return '<option value="' + c + '"></option>';
-  }).join('');
-
-  function applyTheme() {
-    document.documentElement.setAttribute('data-theme', theme);
-    $('theme-toggle').innerHTML = '<i data-lucide="' + (theme === 'dark' ? 'sun' : 'moon') + '" class="i"></i>';
-    icons();
-  }
-  function priceKey() { return state.purpose === 'rent' ? 'priceRent' : 'priceSale'; }
-  function applyLang() {
-    var ar = lang === 'ar';
-    document.documentElement.setAttribute('lang', ar ? 'ar' : 'en');
-    document.documentElement.setAttribute('dir', ar ? 'rtl' : 'ltr');
-    $('brand-sub').textContent = t('brandSub');
-    $('lang-label').textContent = t('langLabel');
-    ['eyebrow','p1','p2','p3','s1','s2','purpose','sale','rent','cpd','type','beds','baths','area','finish','notes','role','owner','broker','name','wa','note','submit','doneTit','sendPhotos','legal'].forEach(function (k) {
-      var el = $('t-' + k); if (el) el.textContent = t(k);
-    });
-    $('t-title').innerHTML = t('title');
-    $('t-lead').textContent = t('lead');
-    $('t-price').textContent = t(priceKey());
-    $('t-doneTit').textContent = t('doneTit');
-    $('done-msg').textContent = t('doneMsg');
-    $('again').textContent = t('again');
-    $('name').placeholder = t('phName');
-    $('cpd').placeholder = t('phCpd');
-    $('area').placeholder = t('phArea');
-    $('price').placeholder = t(state.purpose === 'rent' ? 'phPriceRent' : 'phPriceSale');
-    $('notes').placeholder = t('phNotes');
-    Array.prototype.forEach.call($('ptype').options, function (o) {
-      o.textContent = ar ? (TYPES_AR[o.value] || o.value) : o.value;
-    });
-    Array.prototype.forEach.call($('finish').options, function (o) {
-      o.textContent = ar ? (FIN_AR[o.value] || o.value) : o.value;
-    });
-  }
-  applyTheme(); applyLang(); icons();
-  // lucide is deferred, so the first icon pass happens once it has arrived
-  window.addEventListener('load', icons);
-
-  $('theme-toggle').addEventListener('click', function () {
-    theme = theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('hzp-theme', theme);
-    applyTheme();
-  });
-  $('lang-toggle').addEventListener('click', function () {
-    lang = lang === 'ar' ? 'en' : 'ar';
-    localStorage.setItem('hzp-lang', lang);
-    applyLang(); icons();
-  });
-
-  function bindSeg(id, key) {
-    var wrap = $(id);
-    wrap.addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      wrap.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
-      b.classList.add('on');
-      state[key] = key === 'beds' ? Number(b.dataset.v) : b.dataset.v;
-      if (key === 'purpose') {
-        $('t-price').textContent = t(priceKey());
-        $('price').placeholder = t(state.purpose === 'rent' ? 'phPriceRent' : 'phPriceSale');
+  // Representation Role Switcher Logic
+  function handleRoleChange(role) {
+    selectedRole = role;
+    document.querySelectorAll('.role-card').forEach(card => {
+      const input = card.querySelector('input');
+      const iconBox = card.querySelector('.role-icon-box');
+      const title = card.querySelector('.role-title');
+      if (input.value === role) {
+        input.checked = true;
+        card.classList.add('border-[#00e5ff]', 'bg-[#00daf3]/10');
+        card.classList.remove('border-[#222a3d]', 'bg-[#171b2a]');
+        iconBox.classList.add('bg-[#00daf3]/20', 'text-[#00e5ff]');
+        iconBox.classList.remove('bg-[#1f2538]', 'text-slate-300');
+        title.classList.add('text-[#00e5ff]');
+        title.classList.remove('text-white');
+      } else {
+        input.checked = false;
+        card.classList.remove('border-[#00e5ff]', 'bg-[#00daf3]/10');
+        card.classList.add('border-[#222a3d]', 'bg-[#171b2a]');
+        iconBox.classList.remove('bg-[#00daf3]/20', 'text-[#00e5ff]');
+        iconBox.classList.add('bg-[#1f2538]', 'text-slate-300');
+        title.classList.remove('text-[#00e5ff]');
+        title.classList.add('text-white');
       }
     });
-  }
-  bindSeg('purpose', 'purpose');
-  bindSeg('beds', 'beds');
-  bindSeg('role', 'role');
 
-  var errEl = $('err');
-  function clearErr() {
-    errEl.textContent = '';
-    ['cpd','area','price','name','phone'].forEach(function (id) { $(id).classList.remove('bad'); });
-  }
-  ['cpd','area','price','name','phone'].forEach(function (id) {
-    $(id).addEventListener('input', clearErr);
-  });
-  function fail(id, msg) {
-    errEl.textContent = t(msg);
-    $(id).classList.add('bad');
-    $(id).focus();
-    return false;
-  }
-  function digits(s) { return String(s || '').replace(/[^\d]/g, ''); }
+    // Update dynamic label according to choice
+    const nameLabel = document.getElementById('nameFieldLabel');
+    const nameInput = document.getElementById('agentFullName');
+    const nameHelper = document.getElementById('nameHelperText');
 
-  $('submit').addEventListener('click', function () {
-    var cpd = $('cpd').value.trim(), area = digits($('area').value),
-        price = digits($('price').value), name = $('name').value.trim(), phone = $('phone').value.trim();
-    if (cpd.length < 2) return fail('cpd', 'needCpd');
-    if (!area || Number(area) < 20) return fail('area', 'needArea');
-    if (!price) return fail('price', 'needPrice');
-    if (name.length < 2) return fail('name', 'needName');
-    if (digits(phone).length < 8) return fail('phone', 'needPhone');
-    clearErr();
+    if (role === 'agent') {
+      nameLabel.setAttribute('data-en', 'Real Estate Agent Name');
+      nameLabel.setAttribute('data-ar', 'اسم الوكيل / المستشار العقاري');
+      nameInput.setAttribute('data-en-placeholder', 'e.g. Sterling Vance / Ahmed Fawzy');
+      nameInput.setAttribute('data-ar-placeholder', 'مثال: م. أحمد فوزي (المستشار المعتمد)');
+      nameHelper.setAttribute('data-en', 'Recorded in Sierra inventory and agent attribution registry.');
+      nameHelper.setAttribute('data-ar', 'يُسجل في سجل الوحدات ونسب المبيعات للوكلاء المعتمدين.');
+    } else if (role === 'broker') {
+      nameLabel.setAttribute('data-en', 'Broker / Agency Name');
+      nameLabel.setAttribute('data-ar', 'اسم الوسيط / الشركة العقارية');
+      nameInput.setAttribute('data-en-placeholder', 'e.g. Prime Realty Broker Desk');
+      nameInput.setAttribute('data-ar-placeholder', 'مثال: شركة إتقان العقارية / وسيط حر');
+      nameHelper.setAttribute('data-en', 'Co-broker attribution ledger for commission split.');
+      nameHelper.setAttribute('data-ar', 'يُسجل لحفظ حق العمولة والشراكة العقارية.');
+    } else {
+      nameLabel.setAttribute('data-en', 'Property Owner Full Name');
+      nameLabel.setAttribute('data-ar', 'اسم مالك العقار بالكامل');
+      nameInput.setAttribute('data-en-placeholder', 'e.g. Dr. Essam Mansour');
+      nameInput.setAttribute('data-ar-placeholder', 'مثال: د. عصام المنشاوي');
+      nameHelper.setAttribute('data-en', 'Direct owner contact strictly guarded under Sierra Privacy NDA.');
+      nameHelper.setAttribute('data-ar', 'بيانات المالك محمية بالكامل بموجب بروتوكول السرية والخصوصية.');
+    }
+    updateLocalizedTexts();
+  }
 
-    var ref = 'SL-' + Date.now().toString(36).toUpperCase().slice(-6);
-    var rec = {
-      id: ref, ref: ref, status: 'pending', source: 'Website · Add Listing',
-      submittedBy: { name: name, phone: phone, role: state.role },
-      mode: state.purpose, compound: cpd, type: $('ptype').value,
-      beds: state.beds, bath: Number($('baths').value) || null,
-      area: Number(area), priceEGP: Number(price),
-      finishing: $('finish').value, notes: $('notes').value.trim(),
-      lang: lang, ts: new Date().toISOString()
+  // Toast Notification Trigger
+  function showToast(msg, isError = false) {
+    const toast = document.getElementById('statusToast');
+    const toastMsg = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
+    if (!toast) return;
+
+    toastMsg.textContent = msg;
+    toastIcon.textContent = isError ? 'error' : 'check_circle';
+    toastIcon.className = `material-symbols-outlined text-[20px] ${isError ? 'text-error' : 'text-[#00e5ff]'}`;
+    toast.className = `fixed bottom-6 start-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 flex items-center gap-3 bg-[#171b2a] border ${isError ? 'border-error/50' : 'border-[#00e5ff]/50'} px-4 py-3 rounded-xl shadow-2xl text-white`;
+
+    setTimeout(() => {
+      toast.className = 'fixed bottom-6 start-6 z-50 transform translate-y-32 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-[#171b2a] border border-[#00e5ff]/50 px-4 py-3 rounded-xl shadow-2xl text-white';
+    }, 3500);
+  }
+
+  // Live Char Counter
+  function updateCharCount() {
+    const textarea = document.getElementById('propertyDescription');
+    const badge = document.getElementById('charCountBadge');
+    if (textarea && badge) {
+      const len = textarea.value.length;
+      badge.textContent = `${len} ${currentLang === 'ar' ? 'حرف' : 'chars'}`;
+    }
+  }
+
+  function clearDescription() {
+    const textarea = document.getElementById('propertyDescription');
+    if (textarea) {
+      textarea.value = '';
+      updateCharCount();
+      showToast(currentLang === 'ar' ? 'تم مسح النص' : 'Description cleared');
+    }
+  }
+
+  // Sample Text Inserter
+  function insertSample(type) {
+    const textarea = document.getElementById('propertyDescription');
+    const nameInput = document.getElementById('agentFullName');
+    const phoneInput = document.getElementById('agentPhoneNumber');
+
+    if (type === 'resale') {
+      textarea.value = currentLang === 'ar' 
+        ? "فيلا مستقلة فاخرة للبيع في ميفيدا (Mivida) التجمع الخامس، مساحة الأرض 520 متر ومساحة المباني 380 متر. تتكون من 5 غرف نوم رئيسية ماستر و 6 حمامات، ريسبشن واسع رخام مستورد، حديقة خاصة مع إطلالة مفتوحة على المساحات الخضراء. تشطيب كامل ألترا سوبر لوكس مع تكييفات مركزية. السعر المطلوب 38,000,000 جنيه مصري كاش، جاهزة للاستلام الفوري ونقل الملكية."
+        : "Luxury Standalone Villa for sale in Mivida New Cairo. Plot: 520m², BUA: 380m². Features 5 master bedrooms, 6 marble bathrooms, double-height reception, private landscaped garden. Fully finished ultra super lux with central ACs. Asking: 38,000,000 EGP cash. Ready for immediate delivery with clean ownership papers.";
+      nameInput.value = currentLang === 'ar' ? "م. أحمد فوزي (المستشار)" : "Eng. Ahmed Fawzy";
+      phoneInput.value = "01092048333";
+      handleRoleChange('agent');
+    } else {
+      textarea.value = currentLang === 'ar'
+        ? "شقة مميزة للإيجار في مدينتي (Madinaty) - بي 11، دور رابع بحري صريح، فيو جاردن مفتوح غير مجروح. المساحة 175 متر، 3 غرف نوم و 2 حمام، تشطيب الترا سوبر لوكس أول سكن، غاز طبيعي ومطبخ مجهز. السعر المطلوب 45,000 جنيه شهرياً، التسكين لأسرة أو مهندسين وشركات راقية."
+        : "Prime Apartment for rent in Madinaty B11. 4th floor facing North with open garden view. 175m² BUA, 3 bedrooms, 2 bathrooms, ultra super lux first occupancy with fitted kitchen. Asking: 45,000 EGP/month.";
+      nameInput.value = currentLang === 'ar' ? "أحمد فوزي" : "Ahmed Fawzy";
+      phoneInput.value = "01031622600";
+      handleRoleChange('broker');
+    }
+    updateCharCount();
+    showToast(currentLang === 'ar' ? 'تم إدراج النص النموذجي بنجاح' : 'Sample copy inserted');
+  }
+
+  // Thumbnail Handling
+  function removeThumbnail(btn) {
+    const card = btn.closest('.thumb-card');
+    if (card) {
+      card.remove();
+      updatePhotoCounter();
+      showToast(currentLang === 'ar' ? 'تمت إزالة الصورة' : 'Photo removed');
+    }
+  }
+
+  function updatePhotoCounter() {
+    const count = document.querySelectorAll('.thumb-card').length;
+    const counter = document.getElementById('photoCounter');
+    if (counter) counter.textContent = count;
+  }
+
+  function handleFileSelect(event) {
+    const files = event.target.files;
+    if (!files || !files.length) return;
+
+    const grid = document.getElementById('thumbnailsGrid');
+    Array.from(files).forEach((file, index) => {
+      const url = URL.createObjectURL(file);
+      const isFirst = grid.children.length === 0 && index === 0;
+
+      const card = document.createElement('div');
+      card.className = "thumb-card relative rounded-xl overflow-hidden bg-[#171b2a] border border-[#222a3d] group";
+      card.innerHTML = `
+        <img src="${url}" class="w-full h-36 object-cover" alt="${file.name}"/>
+        ${isFirst ? `<div class="absolute top-2 start-2 px-2 py-0.5 rounded-md bg-[#00e5ff] text-[#002a30] text-[10px] font-bold shadow" data-en="Cover Photo" data-ar="الصورة الرئيسية">${currentLang === 'ar' ? 'الصورة الرئيسية' : 'Cover Photo'}</div>` : ''}
+        <div class="p-2.5 bg-[#1f2538]/90 flex items-center justify-between text-xs">
+          <span class="text-white font-medium truncate">${file.name}</span>
+          <button type="button" onclick="removeThumbnail(this)" class="text-slate-400 hover:text-error transition" title="Remove">
+            <span class="material-symbols-outlined text-[16px]">delete</span>
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+    updatePhotoCounter();
+    showToast(currentLang === 'ar' ? `تم تحميل ${files.length} صور بنجاح` : `${files.length} photos added`);
+  }
+
+  // Primary Submission Logic & Backend Wiring
+  async function publishListing() {
+    const alertBox = document.getElementById('missingFieldsAlert');
+    const alertMsg = document.getElementById('missingFieldsMsg');
+    const name = document.getElementById('agentFullName').value.trim();
+    const phone = document.getElementById('agentPhoneNumber').value.trim();
+    const countryCode = document.getElementById('countryCodeSelect').value;
+    const desc = document.getElementById('propertyDescription').value.trim();
+    const btn = document.getElementById('publishBtn');
+    const btnText = document.getElementById('publishBtnText');
+    const btnIcon = document.getElementById('publishBtnIcon');
+
+    // Validation
+    if (!phone || phone.replace(/\D/g, '').length < 8) {
+      alertBox.classList.remove('hidden');
+      alertMsg.textContent = currentLang === 'ar' ? "يرجى إدخال رقم هاتف صحيح للتواصل (8 أرقام على الأقل)." : "Please enter a valid phone number (at least 8 digits).";
+      document.getElementById('agentPhoneNumber').focus();
+      return;
+    }
+    if (!desc || desc.length < 15) {
+      alertBox.classList.remove('hidden');
+      alertMsg.textContent = currentLang === 'ar' ? "يرجى إدخال تفاصيل ومواصفات العقار (15 حرفاً على الأقل)." : "Please enter property details (at least 15 characters).";
+      document.getElementById('propertyDescription').focus();
+      return;
+    }
+    alertBox.classList.add('hidden');
+
+    // Button transit state
+    btn.disabled = true;
+    btnIcon.textContent = 'hourglass_empty';
+    btnIcon.classList.add('animate-spin');
+    btnText.textContent = currentLang === 'ar' ? 'جاري الفحص والنشر…' : 'Publishing…';
+
+    const fullPhone = `${countryCode}${phone.replace(/\D/g, '')}`;
+    const unitRef = 'SE-NC-2026-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+    const payload = {
+      ref: unitRef,
+      submitterRole: selectedRole,
+      submitterName: name || (selectedRole === 'agent' ? 'Sierra Agent' : 'Direct Submitter'),
+      submitterPhone: fullPhone,
+      description: desc,
+      photoCount: document.querySelectorAll('.thumb-card').length,
+      timestamp: new Date().toISOString()
     };
+
     try {
-      if (window.SIERRA_LIVE) window.SIERRA_LIVE.addListingSubmission(rec);
-      else {
-        var log = JSON.parse(localStorage.getItem('sierra_broker_listings') || '[]');
-        log.push(rec);
-        localStorage.setItem('sierra_broker_listings', JSON.stringify(log));
-      }
-    } catch (e) {}
-    if (window.SIERRA_DB && window.SIERRA_DB.addListingSubmission) {
-      try { window.SIERRA_DB.addListingSubmission(rec); } catch (e) {}
+      // 1. Post to API route if available
+      let res = await fetch('/api/listings/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => null);
+
+      // 2. Local storage persistence (Fail-Safe)
+      const existing = JSON.parse(localStorage.getItem('sierra_submitted_listings') || '[]');
+      existing.unshift(payload);
+      localStorage.setItem('sierra_submitted_listings', JSON.stringify(existing));
+
+      // 3. Open Success Modal
+      document.getElementById('modalUnitCode').textContent = unitRef;
+      document.getElementById('modalSubmitterName').textContent = `${payload.submitterName} (${selectedRole.toUpperCase()})`;
+      document.getElementById('modalPhone').textContent = fullPhone;
+
+      // Format WhatsApp Message
+      const waMsg = currentLang === 'ar'
+        ? `السلام عليكم، تم تسجيل عقار جديد عبر بوابة سييرا:\n• الكود: ${unitRef}\n• صفة المعلن: ${selectedRole === 'agent' ? 'وكيل عقاري' : (selectedRole === 'broker' ? 'وسيط' : 'مالك')} (${payload.submitterName})\n• الهاتف: ${fullPhone}\n• التفاصيل: ${desc.substring(0, 180)}...\n\nمرفق الصور للتأكيد وتحديث المحفظة 📸`
+        : `Hello, a new luxury unit was submitted via Sierra Portal:\n• Ref: ${unitRef}\n• Submitter: ${payload.submitterName} (${selectedRole})\n• Phone: ${fullPhone}\n• Details: ${desc.substring(0, 180)}...\n\nPhotos attached for verification 📸`;
+
+      document.getElementById('modalWhatsAppBtn').href = `https://wa.me/201092048333?text=${encodeURIComponent(waMsg)}`;
+      document.getElementById('successModal').classList.remove('hidden');
+
+    } catch (err) {
+      showToast(currentLang === 'ar' ? 'حصل خطأ أثناء الاتصال بالخادم، تم الحفظ محلياً.' : 'Network error, saved locally.', true);
+    } finally {
+      btn.disabled = false;
+      btnIcon.textContent = 'send';
+      btnIcon.classList.remove('animate-spin');
+      btnText.textContent = currentLang === 'ar' ? 'نشر العقار' : 'Publish Listing';
     }
+  }
 
-    var summary = (lang === 'ar'
-      ? 'عرض عقار جديد — ' + (state.role === 'broker' ? 'وسيط' : 'مالك') + ' ' + name +
-        ' · ' + (state.purpose === 'rent' ? 'إيجار' : 'بيع') + ' · ' + (TYPES_AR[rec.type] || rec.type) +
-        ' · ' + rec.beds + ' غرف · ' + rec.area + ' م² · ' + cpd + ' · ' + Number(price).toLocaleString('en-US') + ' ج.م · رقم الطلب ' + ref
-      : 'New listing — ' + (state.role === 'broker' ? 'Broker' : 'Owner') + ' ' + name +
-        ' · ' + (state.purpose === 'rent' ? 'Rent' : 'Resale') + ' · ' + rec.type +
-        ' · ' + rec.beds + '-bed · ' + rec.area + ' m² · ' + cpd + ' · EGP ' + Number(price).toLocaleString('en-US') + ' · Ref ' + ref);
-    $('done-ref').textContent = t('ref') + ' · ' + ref;
-    $('done-wa').href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(summary);
-    $('form-card').style.display = 'none';
-    $('done-card').style.display = 'block';
-    window.scrollTo(0, 0);
-    icons();
-  });
+  // Save Draft
+  function saveDraft() {
+    const draft = {
+      name: document.getElementById('agentFullName').value,
+      phone: document.getElementById('agentPhoneNumber').value,
+      role: selectedRole,
+      desc: document.getElementById('propertyDescription').value,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('sierra_listing_draft', JSON.stringify(draft));
+    showToast(currentLang === 'ar' ? 'تم حفظ المسودة في الذاكرة بنجاح 💾' : 'Draft saved to memory 💾');
+  }
 
-  $('again').addEventListener('click', function () {
-    ['cpd','area','price','notes'].forEach(function (id) { $(id).value = ''; });
-    $('done-card').style.display = 'none';
-    $('form-card').style.display = 'block';
-    window.scrollTo(0, 0);
-    $('cpd').focus();
+  function resetFormForNewListing() {
+    document.getElementById('successModal').classList.add('hidden');
+    document.getElementById('propertyDescription').value = '';
+    updateCharCount();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(currentLang === 'ar' ? 'جاهز لإدخال عقار جديد ✦' : 'Ready for next listing ✦');
+  }
+
+  // Language Switcher (AR <-> EN)
+  function setLanguage(lang) {
+    currentLang = lang;
+    const html = document.documentElement;
+    html.setAttribute('lang', lang);
+    html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+    const btnAr = document.getElementById('lang-ar');
+    const btnEn = document.getElementById('lang-en');
+    if (lang === 'ar') {
+      btnAr.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-[#1f2538] text-[#00e5ff] shadow-sm";
+      btnEn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white";
+    } else {
+      btnEn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-[#1f2538] text-[#00e5ff] shadow-sm";
+      btnAr.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white";
+    }
+    updateLocalizedTexts();
+    updateCharCount();
+  }
+
+  function updateLocalizedTexts() {
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const text = el.getAttribute(`data-${currentLang}`);
+      if (text) el.textContent = text;
+    });
+    document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+      const ph = el.getAttribute(`data-${currentLang}-placeholder`);
+      if (ph) el.placeholder = ph;
+    });
+  }
+
+  // Dark / Light Theme Switcher
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    currentTheme = isDark ? 'dark' : 'light';
+
+    const icon = document.getElementById('theme-icon');
+    const text = document.getElementById('theme-text');
+
+    if (isDark) {
+      icon.textContent = 'dark_mode';
+      icon.className = 'material-symbols-outlined text-[17px] text-amber-400';
+      text.textContent = currentLang === 'ar' ? 'داكن' : 'Dark';
+    } else {
+      icon.textContent = 'light_mode';
+      icon.className = 'material-symbols-outlined text-[17px] text-amber-500';
+      text.textContent = currentLang === 'ar' ? 'فاتح' : 'Light';
+    }
+  }
+
+  // Restore Draft if available on load
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      const saved = localStorage.getItem('sierra_listing_draft');
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (d.name) document.getElementById('agentFullName').value = d.name;
+        if (d.phone) document.getElementById('agentPhoneNumber').value = d.phone;
+        if (d.role) handleRoleChange(d.role);
+        if (d.desc) {
+          document.getElementById('propertyDescription').value = d.desc;
+          updateCharCount();
+        }
+      }
+    } catch (_) {}
   });
-})();
 </script>
+
+</div>
 </body>
 </html>
