@@ -287,7 +287,7 @@ const INITIAL_FEATURED_LISTINGS: CardListing[] = [
 ];
 
 export default function HomePage() {
-  const { t, isAr } = useSite();
+  const { t, isAr, theme } = useSite();
   const [listings, setListings] = useState<CardListing[]>(INITIAL_FEATURED_LISTINGS);
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('ready');
@@ -617,20 +617,21 @@ export default function HomePage() {
           className="search-card rv"
           style={{
             padding: '6px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: theme === 'light' ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.03)',
             borderRadius: '24px',
             backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+            border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: theme === 'light' ? '0 20px 48px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.02)' : '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
           }}
         >
           <div
             className="search-card-inner"
             style={{
-              background: 'rgba(15, 23, 42, 0.72)',
+              background: theme === 'light' ? '#ffffff' : 'rgba(15, 23, 42, 0.72)',
               borderRadius: '18px',
               padding: '18px',
-              boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)',
+              border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.04)' : 'none',
+              boxShadow: theme === 'light' ? 'none' : 'inset 0 1px 4px rgba(0,0,0,0.5)',
             }}
           >
             {/* Top Bar: Tabs + Live Match Counter + Reset Button */}
@@ -670,9 +671,9 @@ export default function HomePage() {
                     gap: 6,
                     padding: '5px 12px',
                     borderRadius: 999,
-                    background: 'rgba(201, 148, 54, 0.12)',
-                    border: '1px solid rgba(201, 148, 54, 0.3)',
-                    color: '#e9c176',
+                    background: theme === 'light' ? 'rgba(184, 151, 88, 0.12)' : 'rgba(201, 148, 54, 0.12)',
+                    border: theme === 'light' ? '1px solid rgba(184, 151, 88, 0.28)' : '1px solid rgba(201, 148, 54, 0.3)',
+                    color: theme === 'light' ? '#8a6a2c' : '#e9c176',
                     fontSize: 11.5,
                     fontWeight: 700,
                   }}
@@ -696,9 +697,9 @@ export default function HomePage() {
                       gap: 5,
                       padding: '5px 10px',
                       borderRadius: 999,
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      color: 'rgba(255, 255, 255, 0.75)',
+                      background: theme === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
+                      border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.15)',
+                      color: theme === 'light' ? '#424245' : 'rgba(255, 255, 255, 0.75)',
                       fontSize: 11,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -917,7 +918,7 @@ export default function HomePage() {
           </div>
 
           {/* Interactive Master Cartographic Map Canvas */}
-          <div className="map-workspace rv" style={{ borderRadius: 16, overflow: 'hidden' }}>
+          <div className="map-workspace rv" style={{ borderRadius: 20, overflow: 'hidden', border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(200, 150, 26, 0.25)', boxShadow: theme === 'light' ? '0 16px 40px rgba(0, 0, 0, 0.05)' : '0 25px 60px rgba(0, 0, 0, 0.85)', background: theme === 'light' ? '#ffffff' : '#061122' }}>
             <CartographicMap
               lang={isAr ? 'ar' : 'en'}
               isDarkMode={homepageMapTheme === 'dark'}

@@ -241,6 +241,17 @@ export default function AvailabilityInquiryModal({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* 25% Website Commission Discount Banner */}
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-[#c9a84c]/20 via-[#0e1626] to-[#0e1626] border border-[#c9a84c]/50 text-xs text-white shadow-lg">
+                <span className="px-2.5 py-1 rounded-lg bg-[#c9a84c]/30 border border-[#c9a84c] text-[#fbf5d5] font-black text-[11px] whitespace-nowrap">
+                  🎁 خصم 25%
+                </span>
+                <div className="leading-relaxed">
+                  <strong className="text-[#e9c176] font-bold">عرض الحجز الرقمي المباشر:</strong>{' '}
+                  يحصل كل عميل يسجل طلب التحقق أو المعاينة عبر منصة سييرا استيتس مباشرة على خصم 25% من إجمالي عمولة السعي.
+                </div>
+              </div>
+
               {/* SLA Banner */}
               <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#002b4b]/40 border border-[#0077cc]/30 text-xs text-sky-200">
                 <Clock className="w-4 h-4 text-sky-400 mt-0.5 shrink-0" />

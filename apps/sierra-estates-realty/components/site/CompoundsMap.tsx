@@ -1735,6 +1735,63 @@ export default function CompoundsMap({
                   </div>
                 )}
 
+                {/* Permanent Glowing Compound Name Badge (Google Stitch + Obsidian Luxury Tokens) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: `translate(-50%, -50%) scale(${isSelected || isHovered ? 1.14 : 1})`,
+                    background: 'rgba(6, 17, 34, 0.88)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: isSelected ? '1.5px solid #FDE047' : '1px solid rgba(201, 168, 76, 0.65)',
+                    borderRadius: 999,
+                    padding: '3px 9px',
+                    fontFamily: "'Plus Jakarta Sans', 'Cairo', system-ui, sans-serif",
+                    fontWeight: 800,
+                    fontSize: 10.5,
+                    color: '#FFFFFF',
+                    textShadow: '0 0 8px rgba(201, 168, 76, 0.95), 0 0 20px rgba(201, 168, 76, 0.55)',
+                    boxShadow: isSelected || isHovered
+                      ? '0 0 24px rgba(201, 168, 76, 0.85), inset 0 0 8px rgba(201, 168, 76, 0.35)'
+                      : '0 0 16px rgba(201, 168, 76, 0.45)',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                    willChange: 'transform',
+                    zIndex: isSelected ? 40 : isHovered ? 35 : 15,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: isSelected ? '#FDE047' : '#C9A84C',
+                      boxShadow: '0 0 6px #C9A84C',
+                    }}
+                  />
+                  <span>{spot.name}</span>
+                  {liveCompoundCounts[spot.name] ? (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        color: '#FDE047',
+                        background: 'rgba(201, 168, 76, 0.2)',
+                        padding: '1px 4px',
+                        borderRadius: 4,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {liveCompoundCounts[spot.name]}
+                    </span>
+                  ) : null}
+                </div>
+
                 {(isHovered || isSelected) && (
                   <div
                     style={{

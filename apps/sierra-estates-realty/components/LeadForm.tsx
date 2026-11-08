@@ -113,6 +113,47 @@ export default function LeadForm({
 
   return (
     <form className="vc-lead-form" onSubmit={handleSubmit} noValidate>
+      {/* 25% Commission Discount Banner */}
+      <div
+        className="vc-discount-banner"
+        style={{
+          background: 'linear-gradient(135deg, rgba(201, 168, 76, 0.16) 0%, rgba(6, 17, 34, 0.92) 100%)',
+          border: '1px solid rgba(201, 168, 76, 0.55)',
+          boxShadow: '0 0 16px rgba(201, 168, 76, 0.22)',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          marginBottom: '18px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+        }}
+      >
+        <div
+          style={{
+            background: 'rgba(201, 168, 76, 0.22)',
+            border: '1px solid #C9A84C',
+            borderRadius: '8px',
+            padding: '6px 10px',
+            color: '#FBF5D5',
+            fontWeight: 800,
+            fontSize: '0.85rem',
+            whiteSpace: 'nowrap',
+            letterSpacing: '0.04em',
+          }}
+        >
+          🎁 25% OFF
+        </div>
+        <div style={{ fontSize: '0.8125rem', color: '#E2E8F0', lineHeight: 1.4 }}>
+          <strong style={{ color: '#C9A84C', display: 'block', fontSize: '0.875rem' }}>
+            {isAr ? 'خصم 25% على عمولة الموقع' : 'Exclusive 25% Website Commission Discount'}
+          </strong>
+          <span style={{ opacity: 0.88 }}>
+            {isAr
+              ? 'احصل على خصم فوري 25% من إجمالي عمولة السعي عند إرسال طلبك ومواصفاتك مباشرة عبر الموقع الإلكتروني اليوم.'
+              : 'Submit your request directly online to lock in an instant 25% discount off standard advisory brokerage fees.'}
+          </span>
+        </div>
+      </div>
       <div className="vc-form-row">
         <div className="vc-form-group">
           <label htmlFor="vc-name">{isAr ? 'الاسم' : 'Full name'}</label>

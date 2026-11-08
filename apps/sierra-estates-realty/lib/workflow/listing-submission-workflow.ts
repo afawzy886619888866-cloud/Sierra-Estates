@@ -12,6 +12,7 @@ import {
   type WebsiteSheetSyncInput,
 } from '@/lib/services/GoogleSheetSyncService';
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
+import { SheetsIntegrationService } from '@/lib/services/SheetsIntegrationService';
 
 export type ListingSubmissionWorkflowInput = {
   code?: string;
@@ -107,6 +108,10 @@ export async function listingSubmissionWorkflow(
   await Promise.allSettled([
     appendExcelInventoryStep({
       ...persisted.listing,
+    }),
+    syncMasterInventoryStep({
+      listing: persisted.listing,
+      code: persisted.code,
     }),
     sendTelegramAlertStep({
       ...persisted.listing,
@@ -592,3 +597,33 @@ async function broadcastToAugustGroupStep({
     // Non-fatal side effect.
   }
 }
+
+async function syncMasterInventoryStep({
+  listing,
+  code,
+}: {
+  listing: PersistedListing;
+  code: string;
+}) {
+  'use step';
+  try {
+    await SheetsIntegrationService.syncUnitToMaster({
+      unitCode: code,
+      dealType: String(listing.mode === 'rent' ? 'Rent' : 'Resale'),
+      compound: String(listing.compound || 'New Cairo'),
+      unitType: String(listing.propertyType || 'Apartment'),
+      areaSqm: Number(listing.area) || undefined,
+      bedrooms: Number(listing.beds) || undefined,
+      bathrooms: Number(listing.baths) || undefined,
+      priceEgp: Number(listing.price) || 0,
+      ownerName: String(listing.ownerName || ''),
+      ownerPhone: String(listing.mobile || ''),
+      contactStatus: 'Not Contacted Yet',
+      listingStatus: 'Pending Verification',
+      sourcedByAgent: 'Website Easy Listing',
+    });
+  } catch {
+    // Non-fatal side effect.
+  }
+}
+

@@ -1278,3 +1278,211 @@
   border-color: #dfad3a;
   color: #f6d88b;
 }
+
+
+/* ============================================================================
+   SIERRA ESTATES · 4K Glowing Cartographic & GIS Overhaul Tokens
+   ============================================================================ */
+
+.permanentCompoundBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(6, 17, 34, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201, 168, 76, 0.65);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), 'Cairo', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  color: #FFFFFF;
+  text-shadow: 0 0 8px rgba(201, 168, 76, 0.95), 0 0 20px rgba(201, 168, 76, 0.55);
+  box-shadow: 0 0 18px rgba(201, 168, 76, 0.45);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 25;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+
+.permanentCompoundBadgeHover,
+.permanentCompoundBadgeActive {
+  border-color: #FDE047;
+  transform: translate(-50%, -50%) scale(1.14);
+  box-shadow: 0 0 28px rgba(201, 168, 76, 0.85), inset 0 0 10px rgba(201, 168, 76, 0.35);
+  animation: pulseNeonGold 1.8s infinite alternate ease-in-out;
+}
+
+@keyframes pulseNeonGold {
+  0% {
+    box-shadow: 0 0 16px rgba(201, 168, 76, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(201, 168, 76, 0.95), 0 0 14px rgba(0, 240, 255, 0.65);
+  }
+}
+
+.badgeGlowDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C9A84C;
+  box-shadow: 0 0 8px #C9A84C;
+}
+
+.badgeUnitsCount {
+  font-size: 9.5px;
+  color: #FDE047;
+  background: rgba(201, 168, 76, 0.18);
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 3px;
+  font-weight: 700;
+}
+
+/* Live Inventory Pin on 4K Masterplan */
+.masterplanUnitPin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(6, 17, 34, 0.92);
+  color: #FFFFFF;
+  padding: 2.5px 7px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(201, 168, 76, 0.7);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 30;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+.masterplanUnitPin:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  border-color: #FDE047;
+  box-shadow: 0 0 16px rgba(201, 168, 76, 0.85);
+}
+
+.pinModeChipRent {
+  background: #00A3FF;
+  color: #FFFFFF;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pinModeChipSale {
+  background: #10B981;
+  color: #FFFFFF;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pinGemBadge {
+  background: linear-gradient(135deg, #C9A84C, #10B981);
+  color: #061122;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 8.5px;
+  font-weight: 900;
+}
+
+/* ============================================================================
+   SIERRA ESTATES · Apple-Grade Mobile Responsive Overrides & Touch Tuning
+   ============================================================================ */
+@media (max-width: 768px) {
+  .viewport {
+    min-height: 340px !important;
+    max-height: 420px !important;
+    aspect-ratio: 4 / 3 !important;
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .mapFrameWrapper {
+    padding: 4px 8px !important;
+  }
+
+  .editorialFrame {
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .toolbar {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .zoneFilters {
+    width: 100% !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .zoneFilters::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .zoneBtn {
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .toolbarControls {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+  }
+
+  .engineBtn {
+    padding: 4px 8px !important;
+    font-size: 10.5px !important;
+  }
+
+  .hudBanner {
+    top: 6px !important;
+    padding: 3px 10px !important;
+    max-width: 92% !important;
+    font-size: 9.5px !important;
+  }
+
+  .hudBannerTitle {
+    font-size: 9.5px !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .hudBannerSub,
+  .hudBannerDomain {
+    display: none !important;
+  }
+
+  .editorialFrame :global(.leaflet-container) {
+    height: 360px !important;
+    min-height: 320px !important;
+  }
+}

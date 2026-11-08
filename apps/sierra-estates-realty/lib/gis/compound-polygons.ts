@@ -64,6 +64,17 @@ export const NEW_CAIRO_LANDMARKS: Landmark[] = [
   },
 ];
 
+export const EXTENDED_LANDMARKS: Landmark[] = [
+  ...NEW_CAIRO_LANDMARKS,
+  {
+    id: 'airport',
+    nameEn: 'Cairo International Airport',
+    nameAr: 'مطار القاهرة الدولي',
+    coords: [30.1219, 31.4056],
+    icon: '✈️',
+  },
+];
+
 /**
  * Full GPS bounding polygons and benchmarks for all 14 target compounds.
  */
@@ -322,6 +333,28 @@ export const TARGET_14_COMPOUND_POLYGONS: Record<string, CompoundGisData> = {
   },
 };
 
+export const EXTENDED_COMPOUND_POLYGONS: Record<string, CompoundGisData> = {
+  ...TARGET_14_COMPOUND_POLYGONS,
+  'Uptown Cairo': {
+    code: 'UPC',
+    nameEn: 'Uptown Cairo',
+    nameAr: 'أب تاون كايرو',
+    developer: 'Emaar Misr',
+    centroid: [30.011, 31.297],
+    polygon: [
+      [30.022, 31.285],
+      [30.020, 31.310],
+      [30.002, 31.308],
+      [30.005, 31.283],
+    ],
+    borderColor: '#C9A84C', // Emaar Gold
+    fillColor: 'rgba(201, 168, 76, 0.16)',
+    avgPriceSqmEgp: 95000,
+    rentalYieldRange: '8.5% - 9.9%',
+    aliases: ['Uptown Cairo', 'Aurora', 'Celesta Hills', 'Uptown', 'اب تاون كايرو', 'أبتاون كايرو', 'UPC'],
+  },
+};
+
 /**
  * Great-circle distance using Haversine formula in kilometers.
  */
@@ -377,11 +410,12 @@ export function calculateLandmarkDriveTimes(
  */
 export function getCompoundGisData(name: string): CompoundGisData | undefined {
   if (!name) return undefined;
-  const direct = TARGET_14_COMPOUND_POLYGONS[name];
+  const catalog = typeof EXTENDED_COMPOUND_POLYGONS !== 'undefined' ? EXTENDED_COMPOUND_POLYGONS : TARGET_14_COMPOUND_POLYGONS;
+  const direct = catalog[name];
   if (direct) return direct;
 
   const normalized = name.trim().toLowerCase();
-  for (const [key, data] of Object.entries(TARGET_14_COMPOUND_POLYGONS)) {
+  for (const [key, data] of Object.entries(catalog)) {
     if (key.toLowerCase() === normalized) return data;
     if (data.nameEn.toLowerCase() === normalized) return data;
     if (data.nameAr.toLowerCase() === normalized) return data;
@@ -392,7 +426,7 @@ export function getCompoundGisData(name: string): CompoundGisData | undefined {
   }
 
   // Partial containment fallback
-  for (const [key, data] of Object.entries(TARGET_14_COMPOUND_POLYGONS)) {
+  for (const [key, data] of Object.entries(catalog)) {
     if (normalized.includes(key.toLowerCase()) || key.toLowerCase().includes(normalized)) {
       return data;
     }

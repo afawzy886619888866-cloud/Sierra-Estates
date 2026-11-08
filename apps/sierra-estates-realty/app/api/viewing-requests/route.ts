@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 2. Canonical viewing row (public.viewings — migration 014) ─────────
+    const goldenHourAt = new Date(new Date(`${data.preferredDate}T12:00:00Z`).getTime() + 60 * 60 * 1000).toISOString();
     const viewing = await insertRecord<{ id: string }>('viewings', {
       ...(leadId ? { leadId } : {}),
       propertyCode: data.propertyCode,
@@ -129,6 +130,10 @@ export async function POST(request: NextRequest) {
       ...(data.message ? { message: data.message } : {}),
       status: 'pending_approval',
       source: 'website',
+      ceoEmail: 'a.fawzy8866@gmail.com',
+      teamLeaderEmail: 'teamleader@sierra-estates.net',
+      salesAdvisorEmail: 'advisory@sierra-estates.net',
+      goldenHourAt,
       createdAt: now,
       updatedAt: now,
     });
@@ -150,11 +155,15 @@ export async function POST(request: NextRequest) {
     );
     const waNumber = phone.startsWith('+') ? phone.replace('+', '') : `2${phone.replace(/^0+/, '')}`;
     const calDate = data.preferredDate.replace(/-/g, '');
+    const attendees = ['a.fawzy8866@gmail.com', 'teamleader@sierra-estates.net', 'advisory@sierra-estates.net', data.visitorEmail]
+      .filter(Boolean)
+      .join(',');
     const calendarLink =
       `https://calendar.google.com/calendar/render?action=TEMPLATE` +
       `&text=${encodeURIComponent(`Property Viewing — ${data.propertyCode} (Sierra Estates)`)}` +
       `&dates=${calDate}T100000Z/${calDate}T110000Z` +
-      `&details=${encodeURIComponent(`Viewing requested by ${data.visitorName} · ${phone}. Unit ${data.propertyCode}.`)}`;
+      `&details=${encodeURIComponent(`Viewing requested by ${data.visitorName} · ${phone}. Unit ${data.propertyCode}. Eligible for 25% Website Commission Discount. 60-Minute Golden Hour Follow-Up Tracker Active.`)}` +
+      `&add=${encodeURIComponent(attendees)}`;
 
     return NextResponse.json(
       {

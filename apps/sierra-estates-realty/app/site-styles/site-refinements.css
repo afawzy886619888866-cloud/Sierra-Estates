@@ -96,11 +96,42 @@
 
 /* ── 2. Floating Island Navigation & Glassmorphism ─────────────────── */
 .nav {
-  background: rgba(6, 17, 34, 0.90) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
   transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav.scrolled {
+  background: rgba(255, 255, 255, 0.95) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.nav .brand b {
+  color: #1d1d1f !important;
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.nav .brand small {
+  color: #86868b !important;
+  font-family: var(--mono, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nav .menu a {
+  color: #424245 !important;
+}
+.nav .menu a:hover,
+.nav .menu a.active {
+  color: #1d1d1f !important;
 }
 
 .nav.scrolled {
@@ -196,26 +227,53 @@
 }
 
 .search-card {
-  background: rgba(11, 23, 42, 0.82) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-radius: 24px !important;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02) !important;
   overflow: visible !important;
 }
 
 .search-card-inner {
-  background: rgba(8, 18, 33, 0.72) !important;
+  background: #ffffff !important;
   border-radius: 18px !important;
   padding: 18px !important;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  box-shadow: none !important;
 }
 
 /* Search Tabs */
 .search-tabs {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
   gap: 6px !important;
+}
+
+.search-tabs button {
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  color: #6e6e73 !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.search-tabs button:hover {
+  color: #1d1d1f !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.search-tabs button.active {
+  color: #ffffff !important;
+  background: #1d1d1f !important;
+  border-color: #1d1d1f !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .search-tabs button {
@@ -3023,12 +3081,27 @@ textarea:focus-visible {
 }
 
 .rv {
-  animation: luxuryReveal 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: opacity, transform;
 }
-.rv.d1 { animation-delay: 80ms; }
-.rv.d2 { animation-delay: 160ms; }
-.rv.d3 { animation-delay: 240ms; }
-.rv.d4 { animation-delay: 320ms; }
+.rv.in {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.rv.d1 { transition-delay: 80ms !important; }
+.rv.d2 { transition-delay: 160ms !important; }
+.rv.d3 { transition-delay: 240ms !important; }
+.rv.d4 { transition-delay: 320ms !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
 
 .btn-pri:active,
 .btn-hero-cinematic:active,
@@ -3039,3 +3112,194 @@ textarea:focus-visible {
 
 
 
+
+
+/* ==========================================================================
+   SIERRA ESTATES · Apple-Grade Mobile Content Distribution & De-cluttering
+   Translates vertical walls of text into clean, horizontal swipe tracks & bento grids
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Generous Apple Section Breathing Room */
+  .block {
+    padding: 42px 0 !important;
+  }
+  .sec-head {
+    margin-bottom: 20px !important;
+  }
+  .sec-head h2 {
+    font-size: clamp(22px, 5.6vw, 28px) !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
+    margin-bottom: 6px !important;
+    color: #1d1d1f !important;
+  }
+  .sec-head p {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+    color: #86868b !important;
+    max-width: 44ch !important;
+  }
+
+  /* AI Hub Grid: Elegant Horizontal Swipe Track */
+  #ai-grid,
+  .ai-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 12px !important;
+    padding: 8px 16px 20px !important;
+    margin: 0 -16px !important;
+    scrollbar-width: none !important;
+  }
+  #ai-grid::-webkit-scrollbar,
+  .ai-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+  #ai-grid .ai-card,
+  .ai-grid .ai-card {
+    flex: 0 0 260px !important;
+    min-width: 260px !important;
+    scroll-snap-align: start !important;
+    padding: 20px 16px !important;
+    border-radius: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
+  }
+  #ai-grid .ai-card:active,
+  .ai-grid .ai-card:active {
+    transform: scale(0.975) !important;
+  }
+
+  /* Popular Compounds: Horizontal Swipe Gallery */
+  #comp-grid,
+  .grid-comp {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 12px !important;
+    padding: 8px 16px 20px !important;
+    margin: 0 -16px !important;
+    scrollbar-width: none !important;
+  }
+  #comp-grid::-webkit-scrollbar,
+  .grid-comp::-webkit-scrollbar {
+    display: none !important;
+  }
+  #comp-grid .comp,
+  .grid-comp .comp {
+    flex: 0 0 230px !important;
+    min-width: 230px !important;
+    height: 205px !important;
+    scroll-snap-align: start !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06) !important;
+  }
+  #comp-grid .comp:active,
+  .grid-comp .comp:active {
+    transform: scale(0.975) !important;
+  }
+
+  /* Why Sierra: Compact 2x2 Bento Grid */
+  .grid-feat {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .feat {
+    padding: 16px 14px !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+  }
+  .feat h4 {
+    font-size: 13.5px !important;
+    margin: 8px 0 4px !important;
+    color: #1d1d1f !important;
+  }
+  .feat p {
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+    color: #86868b !important;
+  }
+
+  /* Testimonials: Horizontal Snap Track */
+  #testi-grid,
+  .grid-testi {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 12px !important;
+    padding: 8px 16px 20px !important;
+    margin: 0 -16px !important;
+    scrollbar-width: none !important;
+  }
+  #testi-grid::-webkit-scrollbar,
+  .grid-testi::-webkit-scrollbar {
+    display: none !important;
+  }
+  #testi-grid .tcard,
+  .grid-testi .tcard {
+    flex: 0 0 270px !important;
+    min-width: 270px !important;
+    scroll-snap-align: start !important;
+    padding: 18px 16px !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+  }
+
+  /* Property Category Filter: Smooth Horizontal Pill Rail */
+  #properties .sec-head > div > div {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+  }
+  #properties .sec-head > div > div::-webkit-scrollbar {
+    display: none !important;
+  }
+  #properties .sec-head > div > div > div {
+    flex-wrap: nowrap !important;
+  }
+
+  /* Stats: Crisp 2x2 Layout */
+  .stats .wrap {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    text-align: center !important;
+  }
+  .stat b {
+    font-size: clamp(26px, 7vw, 36px) !important;
+    color: #1d1d1f !important;
+  }
+  .stat span {
+    font-size: 11.5px !important;
+    color: #86868b !important;
+  }
+
+  /* Tactile Feedback on Buttons & Cards */
+  .btn,
+  .pcard,
+  .comp,
+  .ai-card,
+  .tcard {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
+  }
+  .btn:active,
+  .pcard:active,
+  .comp:active,
+  .ai-card:active,
+  .tcard:active {
+    transform: scale(0.975) !important;
+  }
+}

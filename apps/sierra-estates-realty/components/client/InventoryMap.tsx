@@ -253,13 +253,7 @@ function createCentroidPillIcon(
 ) {
   const label = isAr ? comp.nameAr : comp.nameEn;
   const countText = count > 0 ? ` · ${count}` : "";
-  const borderColor = comp.borderColor;
-  const glowColor =
-    borderColor === "#00F0FF"
-      ? "rgba(0, 240, 255, 0.65)"
-      : borderColor === "#10B981"
-        ? "rgba(16, 185, 129, 0.65)"
-        : "rgba(201, 168, 76, 0.75)";
+  const borderColor = comp.borderColor || "#C9A84C";
 
   return L.divIcon({
     className: "gis-centroid-pill",
@@ -267,22 +261,26 @@ function createCentroidPillIcon(
       <div style="
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        background: rgba(10, 22, 40, 0.94);
-        border: 1.5px solid ${borderColor};
-        color: #F5D78E;
-        box-shadow: 0 0 16px ${glowColor}, inset 0 0 8px ${glowColor};
-        padding: 4px 10px;
+        gap: 6px;
+        background: rgba(6, 17, 34, 0.88);
+        border: 1px solid rgba(201, 168, 76, 0.65);
+        color: #FFFFFF;
+        text-shadow: 0 0 8px rgba(201, 168, 76, 0.95), 0 0 20px rgba(201, 168, 76, 0.55);
+        box-shadow: 0 0 18px rgba(201, 168, 76, 0.45);
+        padding: 4px 11px;
         border-radius: 999px;
-        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-family: 'Plus Jakarta Sans', 'Cairo', system-ui, sans-serif;
         font-weight: 800;
         font-size: 11px;
         white-space: nowrap;
         pointer-events: auto;
         cursor: pointer;
         transform: translate(-50%, -50%);
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         letter-spacing: 0.02em;
+        will-change: transform;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
       ">
         <span style="
           display: inline-block;
@@ -295,8 +293,8 @@ function createCentroidPillIcon(
         <span>${label}${countText}</span>
       </div>
     `,
-    iconSize: [120, 26],
-    iconAnchor: [60, 13],
+    iconSize: [130, 28],
+    iconAnchor: [65, 14],
   });
 }
 

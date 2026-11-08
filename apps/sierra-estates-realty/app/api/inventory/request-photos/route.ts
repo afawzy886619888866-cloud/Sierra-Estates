@@ -367,6 +367,21 @@ export async function POST(req: NextRequest) {
 
     markUnitRequested(unitCode);
 
+    // Auto-alert Admin OS and Ops channel for high-priority GEM units missing photos
+    const isGem = Boolean(listing?.is_featured_gem || listing?.isGem);
+    if (isGem || !listing?.images || (Array.isArray(listing.images) && listing.images.length === 0)) {
+      import('@/lib/services/telegram-controller').then(({ sendTelegramMessage }) => {
+        sendTelegramMessage(
+          `💎 <b>GEM / High-Priority Asset Missing Photos</b>\n` +
+          `Unit: <code>${unitCode}</code>\n` +
+          `Compound: ${compoundName}\n` +
+          `Status: Photo request dispatched to owner/broker.\n` +
+          `⚠️ <i>Alert raised in Admin OS: Monitor for upload within 15 minutes.</i>`,
+          process.env.TELEGRAM_ADMIN_CHAT_ID
+        ).catch(() => {});
+      }).catch(() => {});
+    }
+
     // SECURITY & PRIVACY: NEVER leak phone or PII in the client response
     return NextResponse.json({
       success: true,

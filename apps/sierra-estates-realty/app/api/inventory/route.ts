@@ -34,6 +34,7 @@ import { hasPendingPhoto } from "@/lib/inventory/normalize";
 import { getSupabase } from "@sierra-estates/db";
 import { appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import { scrubOwnerContactText } from "@/lib/server/owner-privacy";
+import { getCompoundGisData } from "@/lib/gis/compound-polygons";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 
 export const runtime = "nodejs";
@@ -201,9 +202,22 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
         null;
       const hasPhoto = Boolean(primaryImg);
 
+      const compGis = getCompoundGisData(label);
+      const benchmarkPriceSqm = compGis?.avgPriceSqmEgp || 78000;
+      const unitArea = Number(listing.area_sqm) || 0;
+      const unitPriceSqm = unitArea > 0 && price > 0 ? Math.round(price / unitArea) : 0;
+      const discountPct = unitPriceSqm > 0 && benchmarkPriceSqm > 0 && mode === "sale"
+        ? Math.round(((benchmarkPriceSqm - unitPriceSqm) / benchmarkPriceSqm) * 100)
+        : 0;
+      const isGem = Boolean(listing.is_hot_deal) || (mode === "sale" && discountPct >= 15);
+      const aiFairPrice = unitArea > 0 ? unitArea * benchmarkPriceSqm : undefined;
+
       return {
         id: listing.id,
         code: listing.code || listing.sbr_code || listing.ref_id || listing.id,
+        isGem,
+        discountPct: isGem ? discountPct : undefined,
+        aiFairPrice,
         title: listing.title ? scrubOwnerContactText(listing.title) : undefined,
         titleAr: listing.title_ar ? scrubOwnerContactText(listing.title_ar) : undefined,
         descriptionAr: scrubOwnerContactText(listing.description_ar) || undefined,

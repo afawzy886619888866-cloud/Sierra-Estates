@@ -64,6 +64,9 @@ export interface InventoryUnit {
   comment?: string | null;
   featured?: boolean;
   hasPhoto?: boolean;
+  isGem?: boolean;
+  discountPct?: number;
+  aiFairPrice?: number;
   sourceType?: 'excel' | 'airtable' | 'supabase' | 'whatsapp' | string;
   finishingQuality?: string;
   updatedAt?: string | null;

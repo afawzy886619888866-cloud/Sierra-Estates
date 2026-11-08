@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleSheetBridge } from '@/lib/services/GoogleSheetBridge';
+import { SheetsIntegrationService } from '@/lib/services/SheetsIntegrationService';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,32 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => ({}));
+    const action = String(body.action || '').toLowerCase();
+
+    if (action === 'reset_outreach') {
+      const resetResult = await SheetsIntegrationService.resetOutreachStatus();
+      return NextResponse.json({
+        success: true,
+        action: 'reset_outreach',
+        resetCount: resetResult.resetCount,
+        lockedCount: resetResult.lockedCount,
+      });
+    }
+
+    if (action === 'mirror_real_available') {
+      const mirrorResult = await SheetsIntegrationService.mirrorRealAvailableUnits();
+      return NextResponse.json({
+        success: true,
+        action: 'mirror_real_available',
+        mirroredCount: mirrorResult.mirroredCount,
+        removedCount: mirrorResult.removedCount,
+      });
+    }
+
+    if (action === 'sync_unit' && body.unit) {
+      const syncResult = await SheetsIntegrationService.syncUnitToMaster(body.unit);
+      return NextResponse.json(syncResult);
+    }
     
     // Test push
     const testUnit = body.unit || {

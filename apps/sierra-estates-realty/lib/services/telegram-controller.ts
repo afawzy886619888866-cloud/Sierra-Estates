@@ -237,3 +237,43 @@ async function cmdRecommend(leadId: string, chatId: string) {
     await sendTelegramMessage("❌ Failed to generate RAG recommendations.", chatId);
   }
 }
+
+/**
+ * Broadcasts a sanitized unit card to the Telegram General broadcast channel
+ * when a unit enters Real_Available_Units.
+ * Strips all owner phone numbers and private building/flat numbers (Sanitizer v3).
+ */
+export async function broadcastToTelegramGeneral(unit: {
+  code: string;
+  compound: string;
+  unitType: string;
+  price: number;
+  dealType: string;
+  areaSqm?: number | null;
+  bedrooms?: number | null;
+  isGem?: boolean;
+}) {
+  const channelId = process.env.TELEGRAM_GENERAL_CHAT_ID || process.env.TELEGRAM_CHANNEL_ID || process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+  if (!channelId) return;
+
+  const mode = String(unit.dealType || '').toLowerCase() === 'rent' ? 'For Rent' : 'For Sale';
+  const priceFormatted = Number(unit.price || 0).toLocaleString('en-US') + (String(unit.dealType || '').toLowerCase() === 'rent' ? ' EGP/mo' : ' EGP');
+  const gemBadge = unit.isGem ? ' 💎 [HIGH-YIELD GEM]' : '';
+
+  const msg = [
+    `🏛️ <b>Sierra Estates — Verified Available Unit</b>${gemBadge}`,
+    ``,
+    `📌 <b>Unit Code:</b> <code>${unit.code}</code>`,
+    `📍 <b>Compound:</b> ${unit.compound}`,
+    `🏢 <b>Property Type:</b> ${unit.unitType}`,
+    unit.areaSqm ? `📐 <b>Area:</b> ${unit.areaSqm} m²` : null,
+    unit.bedrooms ? `🛏 <b>Bedrooms:</b> ${unit.bedrooms}` : null,
+    `💰 <b>Price:</b> ${priceFormatted} (${mode})`,
+    ``,
+    `🛡️ <i>Sanitizer v3: 100% Verified Availability. Public inquiries routing to concierge: +201092048333</i>`,
+    `🔗 https://sierra-estates.net/inventory?code=${encodeURIComponent(unit.code)}`
+  ].filter(Boolean).join('\n');
+
+  await sendTelegramMessage(msg, channelId);
+}
+

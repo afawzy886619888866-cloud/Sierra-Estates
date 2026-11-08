@@ -87,7 +87,46 @@ export async function POST(request: Request) {
       console.error('[inquiries] CRM leads mirror failed:', mirrorErr);
     }
 
-    return NextResponse.json({ id: created.id, status: 'received' });
+    // Buyer Concierge: queue advisory reply & notify sales rep (25% Commission Discount applied)
+    const advisoryNote = `Dear ${rest.name}, thank you for choosing Sierra Estates 🏛️\nAI Discovers. We Advise. You Decide.\nWe are verifying owner availability for your request and will confirm within 24 hours.\nYour 25% Website Commission Discount has been locked in.`;
+
+    try {
+      if (rest.phone) {
+        const { enqueueWhatsAppJob } = await import('@/lib/server/whatsapp-queue');
+        await enqueueWhatsAppJob({
+          purpose: 'general-outreach',
+          toPhone: rest.phone,
+          toName: rest.name,
+          body: advisoryNote,
+          metadata: { inquiryId: created.id, discount: '25%' },
+        }).catch(() => {});
+      }
+    } catch {
+      // WhatsApp queue is best-effort
+    }
+
+    try {
+      const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
+      const salesChatId = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+      await sendTelegramMessage(
+        `🎯 <b>New Website Lead (${rest.mode.toUpperCase()}) — 25% Discount Applied</b>\n` +
+        `👤 Client: <b>${rest.name}</b> (${rest.phone})\n` +
+        (rest.zone ? `📍 Preferred Zone: ${rest.zone}\n` : '') +
+        (type ? `🏢 Unit Type: ${type}\n` : '') +
+        (rest.budget ? `💰 Budget: ${rest.budget} EGP\n` : '') +
+        `💡 <i>Buyer Concierge: Availability check in progress (24h SLA).</i>`,
+        salesChatId
+      ).catch(() => {});
+    } catch {
+      // Telegram notify is best-effort
+    }
+
+    return NextResponse.json({
+      id: created.id,
+      status: 'received',
+      discountApplied: '25%',
+      advisoryNote: 'AI Discovers. We Advise. You Decide. We are verifying owner availability within 24 hours.',
+    });
   } catch (error) {
     console.error('[inquiries] Supabase write failed:', error);
     if (process.env.NODE_ENV !== 'production') {

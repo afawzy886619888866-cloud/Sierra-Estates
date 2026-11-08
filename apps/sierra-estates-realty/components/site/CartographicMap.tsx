@@ -50,6 +50,15 @@ import {
   X,
 } from "lucide-react";
 
+function isUnitGem(u: any, avgPriceSqm: number = 78000): { isGem: boolean; discountPct: number } {
+  if (!u.price || u.price <= 0 || !u.area || u.area <= 0 || u.mode !== "sale") {
+    return { isGem: false, discountPct: 0 };
+  }
+  const unitPriceSqm = Math.round(u.price / u.area);
+  const discountPct = Math.round(((avgPriceSqm - unitPriceSqm) / avgPriceSqm) * 100);
+  return { isGem: discountPct >= 15, discountPct };
+}
+
 interface CartographicMapProps {
   lang: "en" | "ar";
   isDarkMode: boolean;
@@ -180,6 +189,29 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
   };
 
   const handleMouseUp = () => setIsDragging(false);
+
+  // Mobile Touch pan handlers (Apple-style smooth single-finger drag)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragStart({ x: touch.clientX - panOffset.x, y: touch.clientY - panOffset.y });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const maxPan = 450 * zoomLevel;
+    const nextX = touch.clientX - dragStart.x;
+    const nextY = touch.clientY - dragStart.y;
+    setPanOffset({
+      x: Math.max(-maxPan, Math.min(maxPan, nextX)),
+      y: Math.max(-maxPan, Math.min(maxPan, nextY)),
+    });
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
 
   // Toggle fullscreen
   const toggleFullscreen = () => {
@@ -507,6 +539,10 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
               onWheel={handleWheel}
               className={`${styles.viewport} ${isDragging ? styles.viewportDragging : ""}`}
             >
@@ -624,6 +660,26 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                       </feMerge>
                     </filter>
                     <filter
+                      id="goldDropGlow"
+                      x="-50%"
+                      y="-50%"
+                      width="200%"
+                      height="200%"
+                    >
+                      <feDropShadow
+                        dx="0"
+                        dy="0"
+                        stdDeviation="5"
+                        floodColor="#C9A84C"
+                        floodOpacity="0.85"
+                      />
+                      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    <filter
                       id="softGlow"
                       x="-30%"
                       y="-30%"
@@ -721,15 +777,17 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                               ? activeDarkMode
                                 ? "#FDE047"
                                 : "#B45309"
-                              : activeDarkMode
-                                ? "rgba(212, 175, 55, 0.65)"
-                                : "rgba(180, 83, 9, 0.55)"
+                              : c.nameEn.toLowerCase().includes("katameya") || c.nameEn.toLowerCase().includes("taj")
+                                ? "#10B981"
+                                : c.nameEn.toLowerCase().includes("mountain") || c.nameEn.toLowerCase().includes("villette") || c.nameEn.toLowerCase().includes("eastown")
+                                  ? "#00F0FF"
+                                  : "#C9A84C"
                           }
                           strokeWidth={
-                            (isHovered ? 2.2 : 1.1) / Math.sqrt(zoomLevel)
+                            (isHovered ? 3.0 : 2.5) / Math.sqrt(zoomLevel)
                           }
-                          strokeDasharray={isHovered ? "none" : "3 3"}
-                          filter={isHovered ? "url(#goldNeonGlow)" : undefined}
+                          strokeDasharray={isHovered ? "none" : "4 2"}
+                          filter={isHovered ? "url(#goldDropGlow)" : "url(#goldNeonGlow)"}
                         />
 
                         {/* Progressive Vector CAD Detail when zoomed in or hovered */}
@@ -864,22 +922,24 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                       onMouseLeave={() => setHoveredCompoundId(null)}
                       title={`Click to open ${compound.nameEn} Excel Sheet`}
                     >
-                      {/* Quiet, delicate number pill that glows on hover */}
+                      {/* Permanent Glowing Compound Name Badges (Google Stitch + Obsidian Luxury Tokens) */}
                       <div
-                        className={`${styles.compoundPill} ${
-                          isHovered
-                            ? activeDarkMode
-                              ? styles.compoundPillHoverDark
-                              : styles.compoundPillHoverLight
-                            : activeDarkMode
-                              ? styles.compoundPillNormalDark
-                              : styles.compoundPillNormalLight
+                        className={`${styles.permanentCompoundBadge} ${
+                          isHovered || compound.id === selectedCompoundId
+                            ? styles.permanentCompoundBadgeHover
+                            : ""
                         }`}
+                        style={{
+                          transform: `translate(-50%, -50%) scale(${Math.max(0.72, Math.min(1.25, 1 / Math.sqrt(zoomLevel)))})`,
+                        }}
                       >
-                        №{" "}
-                        {compound.indexNumber < 10
-                          ? `0${compound.indexNumber}`
-                          : compound.indexNumber}
+                        <span className={styles.badgeGlowDot} />
+                        <span>{isAr ? compound.nameAr : compound.nameEn}</span>
+                        {compound.unitsCount > 0 && (
+                          <span className={styles.badgeUnitsCount}>
+                            {compound.unitsCount}
+                          </span>
+                        )}
                       </div>
 
                       {/* Optional Yield Heat Pill when layer active */}
@@ -1032,6 +1092,58 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
                             <ArrowRight style={{ width: 14, height: 14 }} />
                           </div>
                         </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Live Verified Inventory Pins (Supabase / Real_Available_Units) */}
+                {rawLiveUnits.slice(0, 45).map((u, idx) => {
+                  const matchedCompound = COMPOUNDS.find(
+                    (c) =>
+                      u.compound &&
+                      (c.nameEn.toLowerCase().includes(u.compound.toLowerCase()) ||
+                        u.compound.toLowerCase().includes(c.nameEn.toLowerCase()))
+                  );
+                  if (!matchedCompound) return null;
+
+                  const angle = (idx * 137.5 * Math.PI) / 180;
+                  const radius = 2.4 + (idx % 3) * 1.5;
+                  const posX = matchedCompound.xPct + Math.cos(angle) * radius;
+                  const posY = matchedCompound.yPct + Math.sin(angle) * (radius * 0.7);
+
+                  const isRent = u.mode === "rent";
+                  const { isGem, discountPct } = isUnitGem(u, 78000);
+                  const priceText = u.priceLabel ? u.priceLabel.split(" ")[0] : isRent ? "Rent" : "Resale";
+
+                  return (
+                    <div
+                      key={`live-unit-${u.id || idx}`}
+                      className={styles.masterplanUnitPin}
+                      style={{
+                        left: `${posX}%`,
+                        top: `${posY}%`,
+                        transform: `translate(-50%, -50%) scale(${Math.max(0.72, Math.min(1.15, 1 / Math.sqrt(zoomLevel)))})`,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectUnit?.(u);
+                      }}
+                      title={`${u.compound} · ${u.propertyType || "Unit"} · ${u.priceLabel || ""}`}
+                    >
+                      <span className={isRent ? styles.pinModeChipRent : styles.pinModeChipSale}>
+                        {isRent ? "Rent" : "Resale"}
+                      </span>
+                      <span>{priceText}</span>
+                      {u.aiScore && (
+                        <span style={{ fontSize: 9, opacity: 0.9, color: "#FDE047" }}>
+                          ★{Number(u.aiScore).toFixed(1)}
+                        </span>
+                      )}
+                      {isGem && (
+                        <span className={styles.pinGemBadge}>
+                          💎 -{discountPct}%
+                        </span>
                       )}
                     </div>
                   );
