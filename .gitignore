@@ -1,113 +1,293 @@
+# ==============================================================================
+# Sierra Estates — Comprehensive Git Ignore Policy
+# ==============================================================================
+
 # Dependencies
-**/node_modules
+node_modules/
 .pnpm-store/
+.pnpmrc
 
-# Build outputs
-dist/
+# Next.js & Turborepo build outputs
+.next/
+out/
 build/
-*.dist
+dist/
+.turbo/
+staging/
+graphify-out/
 
-# Environment variables
+# Vercel CLI cache & local configs
+.vercel/
+.tunnel-url
+
+# TypeScript cache & compiled twins
+*.tsbuildinfo
+apps/sierra-estates-realty/lib/**/*.js
+apps/sierra-estates-realty/components/**/*.js
+apps/sierra-estates-realty/app/**/*.js
+apps/sierra-estates-realty/__tests__/**/*.js
+
+# Environment variables & secrets (CRITICAL: NEVER COMMIT SECRETS)
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+**/.secrets.env
+apps/agents/**/.env
+apps/agents/**/.env.*
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+*aws_credentials*
 
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# WhatsApp, OpenWA & Container runtime data
+/openwa/
+**/openwa-data/
+**/whatsapp-auth/
+**/n8n-data/
+**/wa_sessions/
+**/.wwebjs_auth/
+**/.wwebjs_cache/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Legacy and Archive
+firebase/
+_unused_archive/
 
-# Logs
-logs
+# Python & Virtual Environments
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pkl
+.pytest_cache/
+.coverage
+htmlcov/
+*checkpoint.json
+sierra_checkpoint.json
+
+
+# Logs & Diagnostics
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+scratch/
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# OS & Editor artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.~lock*
 
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
+# Archives & Temporary Dumps
+*.zip
+*.tar.gz
 *.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-
-# Gatsby files
-.cache/
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
+*.rar
+*.7z
+*.tmp
+*.bak
+*.dump
+*.dmp
+*.rdb
+*.sql.dump
+*.sql.bak
+*.sql.gz
+*.sql.tar
+*.sql.zip
+*.db.dump
+testrun/
+scripts/test-results/
+output/
+work-items-out/
 temp/
+.rpa/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Jupyter
+.ipynb_checkpoints/
+.virtual_documents/
 
-# Webdev artifacts (checkpoint zips, migrations, etc.)
-.webdev/
+# Data files — inventory lives in Supabase, NOT git
+# 2026-11-01 hardening: the public/downloads CSV allowlist was REMOVED — the
+# owner exports carry raw owner mobiles (PII) and were publicly downloadable
+# from sierra-estates.net. They are quarantined to ./quarantine/ (ignored)
+# and the Master Sheet now ingests via the two-way API sync (workflow 14)
+# instead of IMPORTDATA over public CSV URLs.
+data/
+*.xlsx
+*.csv
+Inventory_with_Photos_Airtable.csv
+inventory_*.csv
+memory_*.csv
+Sierra_Estates_*.csv
+owner_media_matches.json
+obsidian-store.json
+!apps/sierra-estates-realty/data/online-sheet-units.json
+!apps/sierra-estates-realty/data/consolidated-master-inventory.json
+# NOTE: snapshot.json is deliberately COMMITTED — four routes statically import
+# it (inventory, listings, inventory/download, admin whatsapp scan) and the
+# public map serves it as the offline fallback, so a clean checkout must
+# contain it. scripts/generate-inventory-snapshot.mjs refreshes it at build.
+# Build artifact: prebuild mirrors repo supabase/migrations into the app for
+# the runtime applier lambda. NOTE: when Vercel builds with
+# rootDirectory=apps/sierra-estates-realty the repo root is unreachable, so
+# the TRACKED mirror files are the only migration source there — new mirror
+# migrations MUST be force-added (git add -f apps/sierra-estates-realty/
+# supabase/migrations/<file>). __tests__/supabase-migration-mirror.test.ts
+# fails if a mirror file is on disk but not committed.
+apps/sierra-estates-realty/supabase/
+apps/sierra-estates-realty/data/master-inventory-9k.json
 
-# Manus version file (auto-generated, not part of source)
-client/public/__manus__/version.json
-.project-config.json
+# Stale agent workspaces & configs
+.claude-flow/
+.factory/
+.qwen/
+.zencoder/
+
+# CircuitPython / hardware artifacts (wrong repo)
+libArchive/
+stubArchive/
+
+# Unused automation tool configs
+.bruin.yml
+conda.yaml
+robot.yaml
+tasks.py
+
+# Test coverage & nested worktrees / agent workspaces
+coverage/
+**/coverage/
+.amazonq/
+.claude/settings.local.json
+SE-Vercel-deploy-main*/
+tools/deer-flow/
+tools/openai-agents-python/
+# Local workspace artifacts — never push (agent environment, evidence, deliverables)
+/skills/
+/download/
+/tool-results/
+worklog.md
+dev.log
+obsidian-store.json
+.vercel
+.env*
+*se.env*
+!.env.example
+!infra/.env.example
+!apps/easy-listing/.env.example
+
+# ============================================================================
+# Removed from repo (kept local): AI tooling artifacts & vendored dev tooling.
+# Not referenced by any build, CI workflow, or runtime code. (2026-09 audit)
+# ============================================================================
+.amphion/
+tools/claude-proxy/
+
+# NOTE: apps/sierra-estates-realty/supabase/ is intentionally gitignored, but
+# ALL files in supabase/migrations/ inside it are FORCE-TRACKED (git add -f):
+# the turbo-cached build replay lstats them at their app-dir paths, and any
+# traced-but-absent file breaks Vercel builds with ENOENT (observed for both
+# 011/012 and the mirrored 2025*/2026* files). Canonical copies live in
+# supabase/migrations/ at repo root; the prebuild mirror overwrites these app
+# copies with root content at every build, so no drift is possible.
+# IF YOU ADD A MIGRATION: commit it in BOTH supabase/migrations/ (canonical)
+# AND apps/sierra-estates-realty/supabase/migrations/ (git add -f).
+workflows/.state/
+**/workflows.env
+# PC auto-start boot log (ENABLE-AUTO-START.bat writes .state/autostart.log)
+.state/
+
+# Phase 1 pipeline stash (regenerated by build_master_inventory.py)
+scripts/_phase1_data.json
+
+# Sales-kit PDFs >5MB live in the Supabase 'sales-kits' public bucket —
+# see docs/sales-kits/README.md for the URL manifest (2026-10-22).
+docs/sales-kits/*.pdf
+
+# ============================================================================
+# Sierra Evolution desktop engine — LOCAL runtime state (never commit).
+# The webhook/orchestrator run on the owner's machine; their working files
+# contain owner phone numbers and checkpoint state, and the Excel ledger is a
+# growing binary (repo-bloat + PII). CI uploads them as workflow artifacts
+# instead of committing them. See docs/EVOLUTION_WHATSAPP_RUNBOOK.md.
+# ============================================================================
+sierra_checkpoint.json
+sierra_checkpoint.json.tmp
+Sierra_Estates_Master_Units.xlsx
+.env.sierra*
+pair_*.html
+
+# Ephemeral WhatsApp QR codes
+apps/agents/whatsapp-multi-session/qr_*.png
+apps/agents/whatsapp-multi-session/.tmp/
+
+# Large multi-MB Property Finder bulk XML drafts (generated locally / CI artifacts;
+# canonical tracked sample propertyfinder-feed.xml stays <5MB per git-weight policy)
+docs/drafts/propertyfinder/propertyfinder-all-units.xml
+docs/drafts/propertyfinder/propertyfinder-owners-full.xml
+docs/drafts/propertyfinder/propertyfinder-photos-only.xml
+docs/drafts/propertyfinder/propertyfinder-full-feed.xml
+!workflows/.env.example
+
+# Archived Agent Skills
+.agents/skills-archive/
+
+tools/autoclaw/Inbox/
+
+
+apps/sierra-estates-realty/public/downloads/*.xlsx
+
+# Quarantined dumps and raw spreadsheets
+quarantine/
+
+# ============================================================================
+# 2026-11-01 secrets & dump hardening (Mission 1)
+# ============================================================================
+# Master secrets file — loaded first by workflows/lib/google-sheets.js
+# loadWorkflowEnv() and by the compose env_file directives. NEVER commit.
+infra/.secrets.env
+**/infra/.secrets.env
+# Raw SQL dumps: a blanket *.sql with explicit negations for the tracked
+# migration sources (already-tracked files are unaffected by ignore rules;
+# the negations keep `git add` working for NEW migrations).
+*.sql
+!supabase/migrations/**/*.sql
+!infra/supabase/migrations/**/*.sql
+!packages/open-memory/**/*.sql
+!schema.sql
+!apps/sierra-estates-realty/supabase/schema.sql
+!apps/sierra-estates-realty/supabase/tests/*.sql
+# NOTE: apps/sierra-estates-realty/supabase/migrations/ is ignored by the
+# apps/ rule above on purpose — its files are FORCE-ADDED (git add -f) per
+# the documented mirror workflow; the *.sql blanket does not change that.
+# Tracked runtime artifacts of local AI tooling — never commit.
+.node-persist/
+.playwright-mcp/
+.reports/
+
+ANTIGRAVITY-PROMPT-*.md
+Activate-WhatsAppGateway.ps1
+
+*.code-workspace
