@@ -106,6 +106,8 @@ const SLUGS = [
   'contact-partitioner',
   'daily-outreach-report',
   'broker-sync',
+  'usb-phone-harvester',
+  'outreach-2h-digest',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -142,12 +144,16 @@ const SCRIPTS = {
   'contact-partitioner': '09-owner-outreach/contact-partitioner.js',
   'daily-outreach-report': 'lib/daily-outreach-report.js',
   'broker-sync': '20-broker-sync/sync.js',
+  'usb-phone-harvester': '21-usb-phone-harvester/index.js',
+  'outreach-2h-digest': 'lib/two-hour-outreach-digest.js',
 };
 
 const running = new Set(); // slugs currently executing
 const lastFiredMinute = new Map(); // slug → "YYYY-MM-DD HH:MM" already handled
 const lastFiredHour = new Map(); // slug → "YYYY-MM-DD-HH" already handled for hourly active slots
 const manualQueue = new Map(); // slug → trigger origin ('cron' | 'manual' | 'studio')
+let lastOutreachFinishedAt = 0;
+const lastFiredTwoHour = new Map(); // slug → "YYYY-MM-DD-HH"
 const startedAt = Date.now();
 
 function log(...args) {
@@ -316,9 +322,19 @@ async function runWorkflow(slug, trigger = 'cron') {
       (combined.split('\n').filter(Boolean).pop() || '').slice(0, 300);
 
     let exitKind = 'error';
-    if (exit.signal || exit.code === -1) exitKind = 'timeout';
-    else if (exit.code === 0) exitKind = 'ok';
-    else if (exit.code === 2) exitKind = 'unconfigured';
+    if (exit.signal || exit.code === -1) {
+      exitKind = 'timeout';
+    } else if (exit.code === 2) {
+      exitKind = 'unconfigured';
+    } else if (exit.code === 0) {
+      const hasFailedSummary = /"sent":\s*0\b/.test(summaryLine) && /"failed":\s*[1-9]\d*/.test(summaryLine);
+      const isExplicitFail = /\bFAILED:/i.test(summaryLine) || /^FAILED\b/i.test(summaryLine);
+      if (hasFailedSummary || isExplicitFail) {
+        exitKind = 'error';
+      } else {
+        exitKind = 'ok';
+      }
+    }
 
     const entry = {
       at: new Date().toISOString(),
@@ -357,6 +373,9 @@ async function runWorkflow(slug, trigger = 'cron') {
     return { skipped: false, exitKind, durationMs, summary: summaryLine };
   } finally {
     running.delete(slug);
+    if (slug === 'owner-outreach') {
+      lastOutreachFinishedAt = Date.now();
+    }
   }
 }
 
@@ -408,14 +427,7 @@ async function schedulerTick() {
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (09:00–22:00 Cairo time; 30-min slots fire 09:00..21:30 —
-  // outreach.js re-gates and stops cleanly at 22:00 / 10:00 PM) for owner-outreach.
-  // Owner requirement 2026-10-31: the WhatsApp lane must be open AT LEAST
-  // 09:00–21:00 Cairo; slots therefore start at 09:00 sharp.
-  // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
-  // A paused/draft workflow must never execute from a local timer, and the
-  // status is re-verified again inside runWorkflow() immediately before the
-  // child is spawned (guard against a mid-minute pause).
+  // Hourly window check (09:00-22:00 Cairo time) — Owner Outreach Continuous / 30m Slot Scheduler
   try {
     const cairoFmt = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Cairo',
@@ -432,19 +444,87 @@ async function schedulerTick() {
     const slotMin = cairoMin < 30 ? '00' : '30';
     const hourKey = `${cairoDate}-${cairoHour}:${slotMin}`;
 
+    // Read config
+    let outreachConfig = { continuous: true, cooldownSec: 90, dailyCap: 150, activeHours: [9, 22] };
+    try {
+      const cfgPath = path.join(state.STATE_DIR, 'owner-outreach-config.json');
+      if (fs.existsSync(cfgPath)) {
+        outreachConfig = { ...outreachConfig, ...JSON.parse(fs.readFileSync(cfgPath, 'utf8')) };
+      }
+    } catch (_) {}
+
+    // Read daily sent
+    let dailySent = 0;
+    try {
+      const dPath = path.join(state.STATE_DIR, 'owner-outreach-daily.json');
+      if (fs.existsSync(dPath)) {
+        const dObj = JSON.parse(fs.readFileSync(dPath, 'utf8'));
+        if (dObj.date === cairoDate) dailySent = dObj.sent || 0;
+      }
+    } catch (_) {}
+
     const outreachRow = rowBySlug.get('owner-outreach');
+    const isOutreachActive = outreachRow && String(outreachRow.status || '').toLowerCase() === 'active';
+    const customStart = outreachConfig.activeHours?.[0] ?? 9;
+    const customEnd = outreachConfig.activeHours?.[1] ?? 22;
+    const inActiveHours = (customStart === 9 && customEnd === 22)
+      ? (cairoHour >= 9 && cairoHour < 22)
+      : (cairoHour >= customStart && cairoHour < customEnd);
+    const underCap = dailySent < (outreachConfig.dailyCap || 150);
+
+    if (inActiveHours && isOutreachActive && !running.has('owner-outreach') && !manualQueue.has('owner-outreach')) {
+      if (underCap) {
+        if (outreachConfig.continuous) {
+          const cooldownMs = (outreachConfig.cooldownSec || 90) * 1000;
+          const elapsed = Date.now() - lastOutreachFinishedAt;
+          if (elapsed >= cooldownMs) {
+            log(`Continuous autonomous outreach: queueing next rotated batch (${dailySent}/${outreachConfig.dailyCap} today)`);
+            manualQueue.set('owner-outreach', 'continuous-loop');
+          }
+        } else {
+          if (lastFiredHour.get('owner-outreach') !== hourKey) {
+            log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing 25-msg batch`);
+            lastFiredHour.set('owner-outreach', hourKey);
+            manualQueue.set('owner-outreach', '30m-window');
+          }
+        }
+      }
+    }
+
+    // ── 2-Hour Executive Outreach Digest (every 2 hours in 09:00–22:00 Cairo) ──
+    const twoHourBlock = Math.floor(cairoHour / 2) * 2;
+    const twoHourKey = `${cairoDate}-${twoHourBlock}`;
+    const digestRow = rowBySlug.get('outreach-2h-digest');
+    const isDigestActive = !digestRow || String(digestRow.status || '').toLowerCase() === 'active';
+    let reportStale = false;
+    try {
+      const repFile = path.join(state.STATE_DIR, 'two-hour-outreach-report.json');
+      if (!fs.existsSync(repFile)) {
+        reportStale = true;
+      } else {
+        const repObj = JSON.parse(fs.readFileSync(repFile, 'utf8'));
+        const genMs = repObj && repObj.generated_at ? Date.parse(repObj.generated_at) : 0;
+        if (!genMs || Date.now() - genMs >= 2 * 3600 * 1000) reportStale = true;
+      }
+    } catch (_) {
+      reportStale = true;
+    }
+
     if (
-      cairoHour >= 9 && cairoHour < 22 &&
-      outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
-      !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
-      lastFiredHour.get('owner-outreach') !== hourKey
+      DISPATCH_SLUGS.includes('outreach-2h-digest') &&
+      cairoHour >= 9 && cairoHour <= 22 &&
+      (cairoHour % 2 === 0 || reportStale) &&
+      isDigestActive &&
+      !running.has('outreach-2h-digest') &&
+      !manualQueue.has('outreach-2h-digest') &&
+      lastFiredTwoHour.get('outreach-2h-digest') !== twoHourKey
     ) {
-      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing 25-msg rotated sender batch`);
-      lastFiredHour.set('owner-outreach', hourKey);
-      manualQueue.set('owner-outreach', '30m-window');
+      log(`2-hour executive digest due: Cairo hour ${cairoHour} (${twoHourKey}, stale=${reportStale}) — queueing outreach-2h-digest`);
+      lastFiredTwoHour.set('outreach-2h-digest', twoHourKey);
+      manualQueue.set('outreach-2h-digest', '2h-digest-slot');
     }
   } catch (err) {
-    log(`30m window check failed: ${err.message}`);
+    log(`outreach / 2h-digest scheduler error: ${err.message}`);
   }
 
   const now = new Date();
@@ -454,7 +534,8 @@ async function schedulerTick() {
     const slug = row.slug;
     if (!SCRIPTS[slug]) continue;
     if (row.status !== 'active') continue;
-    if (slug === 'owner-outreach') continue; // Handled exclusively by Cairo 30m active slot scheduler above
+    if (slug === 'owner-outreach') continue; // Handled exclusively by Cairo continuous / slot scheduler above
+    if (slug === 'outreach-2h-digest') continue; // Handled exclusively by Cairo 2h digest scheduler above
 
     // admin pressed "Run now" in the Studio? (Layer-2 patch sets last_run_label='run-requested')
     if (row.last_run_label === 'run-requested' && !manualQueue.has(slug)) {
@@ -701,6 +782,76 @@ setInterval(tick,5000);
         manualQueue.set(slug, 'manual');
         setImmediate(() => schedulerTick().catch((e) => log(`manual tick error: ${e.message}`)));
         return json(res, 202, { ok: true, accepted: slug });
+      }
+
+      const patchMatch = p.match(/^\/api\/workflows\/([\w-]+)$/);
+      if (patchMatch && (req.method === 'PATCH' || req.method === 'POST')) {
+        if (!authorized(req)) { deny(res, req); return; }
+        const slug = patchMatch[1];
+        if (!SCRIPTS[slug]) return json(res, 404, { ok: false, error: 'unknown workflow' });
+        let body = {};
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) {}
+        const patch = {};
+        if (typeof body.status === 'string' && ['active', 'paused', 'draft'].includes(body.status.toLowerCase())) {
+          patch.status = body.status.toLowerCase();
+        }
+        if (typeof body.schedule === 'string' && body.schedule.trim()) {
+          patch.schedule = body.schedule.trim();
+        }
+        if (!Object.keys(patch).length) {
+          return json(res, 400, { ok: false, error: 'nothing_to_patch' });
+        }
+        const ok = sb.configured() ? await sb.patchWorkflowRow(slug, patch) : false;
+        return json(res, 200, { ok, slug, patched: patch });
+      }
+
+      if (p === '/api/outreach/radar' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const repFile = path.join(state.STATE_DIR, 'two-hour-outreach-report.json');
+        const cfgFile = path.join(state.STATE_DIR, 'owner-outreach-config.json');
+        let report = null;
+        if (fs.existsSync(repFile)) {
+          try { report = JSON.parse(fs.readFileSync(repFile, 'utf8')); } catch (_) {}
+        }
+        let config = {
+          continuous: true,
+          cooldownSec: 90,
+          dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+          activeHours: [9, 22],
+        };
+        if (fs.existsSync(cfgFile)) {
+          try { config = { ...config, ...JSON.parse(fs.readFileSync(cfgFile, 'utf8')) }; } catch (_) {}
+        }
+        return json(res, 200, { ok: true, report, config });
+      }
+
+      if (p === '/api/outreach/config' && req.method === 'POST') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const cfgFile = path.join(state.STATE_DIR, 'owner-outreach-config.json');
+        let config = {
+          continuous: true,
+          cooldownSec: 90,
+          dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+          activeHours: [9, 22],
+        };
+        if (fs.existsSync(cfgFile)) {
+          try { config = { ...config, ...JSON.parse(fs.readFileSync(cfgFile, 'utf8')) }; } catch (_) {}
+        }
+        let body = {};
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) {}
+        if (body.continuous !== undefined) config.continuous = Boolean(body.continuous);
+        if (Number.isFinite(Number(body.cooldownSec)) && Number(body.cooldownSec) >= 15) {
+          config.cooldownSec = Number(body.cooldownSec);
+        }
+        if (Number.isFinite(Number(body.dailyCap)) && Number(body.dailyCap) >= 1) {
+          config.dailyCap = Number(body.dailyCap);
+        }
+        if (Array.isArray(body.activeHours) && body.activeHours.length === 2) {
+          config.activeHours = [Number(body.activeHours[0]) || 9, Number(body.activeHours[1]) || 22];
+        }
+        fs.mkdirSync(state.STATE_DIR, { recursive: true });
+        fs.writeFileSync(cfgFile, JSON.stringify(config, null, 2), 'utf8');
+        return json(res, 200, { ok: true, config });
       }
 
       // ── Local → GitHub fleet dispatch bridge (Production agent fleet) ──
@@ -1047,6 +1198,30 @@ async function main() {
       description: 'Mission 4 Bot 5: every 15 minutes — Docker containers, OpenWA lines, Supabase RLS + latency, public/admin API health, WhatsApp queue backlog; auto-restarts stalled workers via the runner control plane; daily 03:00 Cairo executive briefing to Telegram; learns incidents into unified_memory.',
       schedule: '*/15 * * * *',
       category: 'guardian',
+    },
+    {
+      slug: 'usb-phone-harvester',
+      name: 'USB Phone WhatsApp Group Harvester & Date Organizer',
+      name_ar: 'جامع ومصنف وحدات واتساب عبر كابل USB حسب تاريخ النشر',
+      description: 'Automatically pulls and scrapes WhatsApp group chat exports from connected Samsung/Android phones over USB MTP twice a week (Sunday & Wednesday 10:00 AM Cairo) and upon USB cable connect; extracts all property units and buyer requests, parses exact posted dates, organizes multi-tab Excel/CSV spreadsheets, and syncs listings to Supabase.',
+      schedule: '0 10 * * 0,3',
+      category: 'harvester',
+    },
+    {
+      slug: 'outreach-2h-digest',
+      name: '2-Hour Outreach Radar Digest',
+      name_ar: 'تقرير متابعة تواصل الملاك كل ساعتين',
+      description: 'Every 2 hours during 09:00–22:00 Cairo — evaluates owner outreach sends, line rotation, sheet cursor progress, and owner replies, writes .state/two-hour-outreach-report.json and dispatches an Arabic executive briefing via WhatsApp to the admin phone.',
+      schedule: '0 9-21/2 * * *',
+      category: 'outreach',
+    },
+    {
+      slug: 'daily-outreach-report',
+      name: 'Daily Outreach & Replies Audit',
+      name_ar: 'تقرير المراسلات والردود اليومي',
+      description: 'Daily audit of all contacted owners, inbound replies, opt-outs, and sheet write-back verification.',
+      schedule: '30 21 * * *',
+      category: 'outreach',
     },
   ];
   for (const g of GUARDIANS) {

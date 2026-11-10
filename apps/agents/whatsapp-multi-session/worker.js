@@ -201,12 +201,19 @@ function ensureCliSink(waAutomate) {
     : { promptChoice: async () => "chrome", write: () => {}, status: () => {}, qr: () => {} };
   waAutomate.setCliOutputSink({
     ...baseSink,
+    write: (msg) => {
+      if (!msg) return;
+      const str = typeof msg === 'string' ? msg : JSON.stringify(msg);
+      if (str.includes('page_console') || str.includes('ErrorUtils') || str.includes('unresolved dependencies') || str.includes('WAWebSocketModel') || str.includes('WAWeb')) return;
+      if (baseSink && typeof baseSink.write === 'function') baseSink.write(msg);
+    },
     qr: async (payload) => {
       const sid = payload && payload.sessionId;
       const qrCode = payload && payload.qr;
       if (!sid || !qrCode) return;
       const s = sessions.get(sid);
       if (!s) return;
+      if (s.status === "READY" && s.engineLoaded && s.phone) return;
       s.status = "AWAITING_QR";
       try {
         if (QRCode) {
@@ -267,6 +274,30 @@ async function initSession(sessionId) {
     }
   } catch (_) {}
 
+  // Session Vault Protection: prevent transient QR boots from wiping valid .data.json files
+  try {
+    const dataFile = path.join(AUTH_BASE_DIR, `${sessionId}.data.json`);
+    const vaultFile = path.join(AUTH_BASE_DIR, `${sessionId}.data.json.vault`);
+    const bakFile = path.join(AUTH_BASE_DIR, `${sessionId}.data.json.bak`);
+    const dataSize = fs.existsSync(dataFile) ? fs.statSync(dataFile).size : 0;
+    if (dataSize > 1000) {
+      fs.copyFileSync(dataFile, vaultFile);
+      fs.copyFileSync(dataFile, bakFile);
+    } else {
+      const vaultSize = fs.existsSync(vaultFile) ? fs.statSync(vaultFile).size : 0;
+      const bakSize = fs.existsSync(bakFile) ? fs.statSync(bakFile).size : 0;
+      if (vaultSize > 1000) {
+        fs.copyFileSync(vaultFile, dataFile);
+        console.log(`[${sessionId}] 🛡️ Restored session credentials from vault (${vaultSize} bytes)`);
+      } else if (bakSize > 1000) {
+        fs.copyFileSync(bakFile, dataFile);
+        console.log(`[${sessionId}] 🛡️ Restored session credentials from backup (${bakSize} bytes)`);
+      }
+    }
+  } catch (vErr) {
+    console.warn(`[${sessionId}] Session vault check warning:`, vErr.message);
+  }
+
   const possibleChromePaths = [
     process.env.CHROME_BIN,
     process.env.PUPPETEER_EXECUTABLE_PATH,
@@ -283,7 +314,7 @@ async function initSession(sessionId) {
       cacheEnabled: false,
       blockCrashLogs: true,
       disableSpins: true,
-      headless: process.env.HEADLESS !== 'false',
+      headless: process.env.HEADLESS === 'true',
       sessionDataPath: AUTH_BASE_DIR,
       userDataDir: path.join(AUTH_BASE_DIR, `profile-${sessionId}`),
       ...(resolvedChrome ? { executablePath: resolvedChrome } : { useChrome: true }),
@@ -316,6 +347,7 @@ async function initSession(sessionId) {
         '--keep-alive-for-test'
       ],
       qrCallback: async (qrCode, asciiQR, urlCode) => {
+        if (s.status === 'READY' && s.engineLoaded && s.phone) return;
         s.status = 'AWAITING_QR';
         s.qrAscii = asciiQR;
         try {
@@ -347,7 +379,9 @@ async function initSession(sessionId) {
           s.qrDataUrl = null;
           s.qrAscii = null;
         } else if (statusSession === 'notLogged') {
-          s.status = 'AWAITING_QR';
+          if (!(s.status === 'READY' && s.engineLoaded && s.phone)) {
+            s.status = 'AWAITING_QR';
+          }
         } else if (statusSession === 'qrReadSuccess') {
           s.status = 'AUTHENTICATING';
         }
@@ -367,7 +401,16 @@ async function initSession(sessionId) {
     } catch (_) {}
 
     s.status = 'READY';
+    s.qrDataUrl = null;
+    s.qrAscii = null;
     s.lastActive = new Date().toISOString();
+    try {
+      const dataFile = path.join(AUTH_BASE_DIR, `${sessionId}.data.json`);
+      const vaultFile = path.join(AUTH_BASE_DIR, `${sessionId}.data.json.vault`);
+      if (fs.existsSync(dataFile) && fs.statSync(dataFile).size > 1000) {
+        fs.copyFileSync(dataFile, vaultFile);
+      }
+    } catch (_) {}
     console.log(`[${sessionId}] Connected successfully! Phone: +${s.phone || 'unknown'}`);
 
     // Listen for state changes with resilient auto-recovery for mobile sleep / timeout
@@ -571,6 +614,19 @@ async function processQueue(sessionId) {
 
   const formattedChatId = `${digits}@c.us`;
 
+  // Pre-flight check: if number does not exist on WhatsApp, reject immediately without wasting 25s
+  if (typeof s.client.checkNumberStatus === 'function') {
+    try {
+      const chk = await s.client.checkNumberStatus(formattedChatId);
+      if (chk && (chk.status === 404 || chk.numberExists === false || chk.canReceiveMessage === false)) {
+        console.warn(`[${sessionId}] Recipient ${formattedChatId} does not exist on WhatsApp (checkNumberStatus 404)`);
+        resolve({ ok: false, error: 'number_not_registered_on_whatsapp', permanent: true });
+        s.isSending = false;
+        return;
+      }
+    } catch (_) {}
+  }
+
   try {
     const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage().catch(() => null) : null);
     let res = null;
@@ -623,7 +679,7 @@ async function processQueue(sessionId) {
     try {
       res = await Promise.race([
         s.client.sendText(formattedChatId, text),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText slow (>8s)')), 8000))
+        new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText slow (>25s)')), 25000))
       ]);
     } catch (sendErr) {
       if (page) {
@@ -673,7 +729,8 @@ async function processQueue(sessionId) {
     } else {
       const isUnregistered = err && err.message && (
         err.message.includes("Starting a chat with a new number") ||
-        err.message.includes("Not a contact")
+        err.message.includes("not_registered") ||
+        err.message.includes("numberExists:false")
       );
       if (isUnregistered) {
         console.warn(`[${sessionId}] Recipient ${chatId} has no active WhatsApp account: ${err.message}`);

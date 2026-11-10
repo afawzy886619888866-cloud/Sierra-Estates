@@ -1,5 +1,5 @@
 @echo off
-title Sierra Estates - Local Control Plane & 8-Line Parallel Outreach
+title Sierra Estates - Visible WhatsApp Outreach (Your Phone)
 echo ========================================================
 echo Sierra Estates - 100%% LOCAL CONTROL PLANE (ZERO AWS EC2)
 echo Mode     : Rotating Single Sender every 30 min (WF_ROTATE_SINGLE_LINE=1)
@@ -11,6 +11,7 @@ echo ========================================================
 cd /d "%~dp0"
 
 set WF_DRY_RUN=0
+set HEADLESS=false
 
 REM ────────────────────────────────────────────────────────────────
 REM GATEWAY: Local OpenWA / Multi-Session Gateway on port 2785.
@@ -35,8 +36,8 @@ REM slot, switching to the next ready WhatsApp number every 30 min.
 REM ────────────────────────────────────────────────────────────────
 set WF_HOST_SIDE=split
 set WF_ROTATE_SINGLE_LINE=1
-set WF_PARALLEL_LINES=1
-set OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4,line-5,line-6,line-7,line-8
+set WF_PARALLEL_LINES=3
+set OPENWA_SESSION_IDS=line-1,line-2,line-3,line-6
 set WF_SLOT_BATCH=25
 set WF_SLOT_DEADLINE_MS=1380000
 set WF_OWNER_CONTACT_DAILY_CAP=600
@@ -70,7 +71,7 @@ curl -s --connect-timeout 2 http://127.0.0.1:2785/api/health >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
   if exist "apps\agents\whatsapp-multi-session\worker.js" (
     echo [1/4] Starting Local Multi-Session WhatsApp Gateway on :2785...
-    start "Sierra WhatsApp Gateway (:2785)" /min cmd /k "cd /d %~dp0apps\agents\whatsapp-multi-session && node worker.js"
+    start "Sierra WhatsApp Gateway (:2785)" cmd /k "cd /d %~dp0apps\agents\whatsapp-multi-session && node worker.js"
   ) else (
     echo [1/4] Starting Local WhatsApp Gateway on :2785...
     start "Sierra WhatsApp Gateway (:2785)" /min cmd /k "cd /d %~dp0infra\whatsapp-scraper && npm start"
@@ -94,6 +95,6 @@ start "Sierra Cloudflare Tunnel" /min cmd /k "cd /d %~dp0 && node scripts\tunnel
 
 REM ── Step 4: Start Workflow Runner Control Plane (:2786) ──────────
 echo [4/4] Starting Workflow Engine (ALL workflows, 8-line split mode)...
-start "Sierra Workflow Engine (:2786)" /min cmd /k "cd /d %~dp0workflows && node runner.js"
+start "Sierra Workflow Engine (:2786)" cmd /k "cd /d %~dp0workflows && node runner.js"
 
 echo Done. All services are running 100%% locally (Gateway :2785, Runner :2786, Admin Bridge :2790, Cloudflare Tunnel).

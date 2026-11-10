@@ -61,7 +61,8 @@ const RUNNER_SLUGS = new Set([
   'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach',
   'whatsapp-dispatch', 'sheets-supabase-sync', 'scribe-guardian',
   'curator-guardian', 'atlas-sync-guardian', 'antigravity-closer-guardian',
-  'ops-watchdog', 'contact-partitioner', 'daily-outreach-report',
+  'ops-watchdog', 'contact-partitioner', 'daily-outreach-report', 'broker-sync',
+  'usb-phone-harvester', 'outreach-2h-digest',
 ]);
 
 function opsHeaders(): Record<string, string> {

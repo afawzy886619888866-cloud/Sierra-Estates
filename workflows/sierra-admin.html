@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sierra Estates — Production Engine & Outreach Bridge</title>
+  <title>Sierra Estates — Autonomous Control Center & 2-Hour Outreach Radar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: rgba(18, 24, 38, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --accent-gold: #c5a880;
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.88);
+      --card-border: rgba(212, 175, 55, 0.22);
+      --accent-gold: #d4af37;
       --accent-emerald: #10b981;
       --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
@@ -20,396 +20,663 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: var(--bg);
+      background: radial-gradient(circle at top right, #131c31 0%, var(--bg) 60%);
       color: var(--text-primary);
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 2rem;
+      padding: 1.75rem 2rem;
     }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       border-bottom: 1px solid var(--card-border);
-      padding-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.9rem;
     }
     .brand h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
+      font-size: 1.45rem;
+      font-weight: 800;
       letter-spacing: -0.02em;
+      color: #fff;
     }
-    .brand .badge {
-      font-size: 0.75rem;
+    .badge {
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: rgba(197, 168, 128, 0.15);
+      letter-spacing: 0.06em;
+      background: rgba(212, 175, 55, 0.15);
       color: var(--accent-gold);
-      padding: 0.25rem 0.6rem;
+      padding: 0.25rem 0.65rem;
       border-radius: 9999px;
-      border: 1px solid rgba(197, 168, 128, 0.3);
-    }
-    .cairo-clock {
-      text-align: right;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    .cairo-clock .time {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      font-weight: 700;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
     }
     .card {
       background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 1rem;
-      padding: 1.5rem;
+      padding: 1.35rem;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.9rem;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    }
+    .card.gold-border {
+      border-color: rgba(212, 175, 55, 0.35);
     }
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 0.5rem;
     }
     .card-title {
-      font-size: 0.875rem;
+      font-size: 0.82rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       color: var(--text-secondary);
+      font-weight: 700;
     }
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      padding: 0.25rem 0.6rem;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.22rem 0.6rem;
       border-radius: 9999px;
     }
     .status-pill.online {
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.16);
       color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.35);
     }
     .status-pill.offline {
-      background: rgba(239, 68, 68, 0.15);
+      background: rgba(239, 68, 68, 0.16);
       color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .status-pill.warn {
+      background: rgba(245, 158, 11, 0.16);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
     .stat-number {
-      font-size: 2.25rem;
-      font-weight: 700;
+      font-size: 2.1rem;
+      font-weight: 800;
       color: var(--text-primary);
+      line-height: 1.1;
     }
     .stat-sub {
-      font-size: 0.8125rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-    }
-    .session-list, .slot-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
     }
     .item-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.6rem 0.8rem;
-      background: rgba(255, 255, 255, 0.03);
+      padding: 0.55rem 0.75rem;
+      background: rgba(255, 255, 255, 0.035);
       border-radius: 0.5rem;
-      font-size: 0.875rem;
+      font-size: 0.84rem;
+      gap: 0.5rem;
     }
     .item-row .val {
       font-family: monospace;
-      font-weight: 600;
+      font-weight: 700;
     }
-    .slot-tag {
-      padding: 0.2rem 0.5rem;
-      border-radius: 0.25rem;
-      background: rgba(197, 168, 128, 0.1);
-      color: var(--accent-gold);
-      font-weight: 600;
+    .btn {
+      padding: 0.5rem 0.95rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f8fafc;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #d4af37, #997a15);
+      color: #090d16;
+      border: none;
+    }
+    .btn-emerald {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .btn-amber {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.875rem;
+      font-size: 0.84rem;
     }
     th, td {
       text-align: left;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--card-border);
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     th {
       color: var(--text-secondary);
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       letter-spacing: 0.05em;
     }
-    td { color: var(--text-primary); }
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #111827;
+      border: 1px solid var(--accent-gold);
+      color: #f8fafc;
+      padding: 0.85rem 1.25rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 9999;
+      display: none;
+    }
     .footer {
       margin-top: auto;
       text-align: center;
-      font-size: 0.8125rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      padding-top: 2rem;
+      padding-top: 1.5rem;
     }
   </style>
 </head>
 <body>
+  <div id="toast" class="toast"></div>
+
   <div class="header">
     <div class="brand">
-      <h1>Sierra Estates</h1>
-      <span class="badge">Production Admin Bridge</span>
+      <h1>Sierra Estates — Autonomous Control Center</h1>
+      <span class="badge">Runs 24/7 Even When App Closed</span>
     </div>
-    <div class="cairo-clock">
-      <div>Africa/Cairo Time</div>
-      <div class="time" id="cairo-time">Loading...</div>
+    <div style="display:flex; align-items:center; gap:1rem;">
+      <a href="http://127.0.0.1:2785" target="_blank" class="btn">📱 Multi-Line Station (:2785)</a>
+      <button class="btn" onclick="refreshStatus()">⟳ Refresh Now</button>
+      <div style="text-align:right;">
+        <div style="font-size:0.75rem; color:var(--text-secondary);">Africa/Cairo Time</div>
+        <div style="font-size:1rem; font-weight:700;" id="cairo-time">Loading...</div>
+      </div>
     </div>
   </div>
 
+  <!-- 2-HOUR EXECUTIVE OUTREACH RADAR & CONTROLS -->
+  <div class="card gold-border" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="flex-wrap:wrap;">
+      <div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.3rem;">📊</span>
+          <span style="font-size:1.05rem; font-weight:800; color:#f3e5ab;">2-Hour Outreach Radar & Autonomous Control (رادار التواصل كل ساعتين)</span>
+          <span id="radar-mode-pill" class="status-pill online">CONTINUOUS ON</span>
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">
+          Automatically rotates ready WhatsApp lines during 09:00–22:00 Cairo and sends a full WhatsApp executive report every 2 hours.
+        </div>
+      </div>
+      <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+        <button class="btn btn-emerald" id="btn-run-outreach" onclick="triggerWorkflow('owner-outreach')">
+          🚀 Run Outreach Batch Now
+        </button>
+        <button class="btn btn-gold" id="btn-send-2h-report" onclick="sendTwoHourReportNow()">
+          📲 Send 2-Hour Report to WhatsApp Now
+        </button>
+        <button class="btn btn-amber" id="btn-toggle-continuous" onclick="toggleContinuousMode()">
+          ⏸ Toggle Autonomous Loop
+        </button>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-bottom:0; margin-top:0.4rem;">
+      <div class="item-row" style="flex-direction:column; align-items:flex-start; padding:0.9rem;">
+        <span style="font-size:0.74rem; color:var(--text-secondary); text-transform:uppercase; font-weight:700;">Sent in Last 2 Hours</span>
+        <div class="stat-number" id="stat-sent-2h" style="color:#34d399;">0</div>
+        <span class="stat-sub" id="stat-last-report-time">Last report: --</span>
+      </div>
+      <div class="item-row" style="flex-direction:column; align-items:flex-start; padding:0.9rem;">
+        <span style="font-size:0.74rem; color:var(--text-secondary); text-transform:uppercase; font-weight:700;">Sent Today / Daily Cap</span>
+        <div class="stat-number" id="stat-sent-today" style="color:#f3e5ab;">0 / 600</div>
+        <span class="stat-sub">Replies (Last 2h / Today): <strong id="stat-replies-2h">0 / 0</strong></span>
+      </div>
+      <div class="item-row" style="flex-direction:column; align-items:flex-start; padding:0.9rem;">
+        <span style="font-size:0.74rem; color:var(--text-secondary); text-transform:uppercase; font-weight:700;">Total Owners Contacted (All-Time)</span>
+        <div class="stat-number" id="stat-total-alltime">0</div>
+        <span class="stat-sub" id="stat-cursors">Sheet Cursors: Top #0 | Bottom #0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GATEWAY SESSIONS + RUNNER HEALTH + RECENT SENDS -->
   <div class="grid">
-    <!-- WhatsApp Gateway Card -->
+    <!-- OpenWA Multi-Session Gateway -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">OpenWA Gateway</span>
+        <span class="card-title">WhatsApp Lines (:2785)</span>
         <span id="gateway-status-pill" class="status-pill offline">Checking...</span>
       </div>
-      <div class="session-list" id="sessions-container">
-        <div class="item-row">
-          <span>Port</span>
-          <span class="val">2785</span>
-        </div>
-        <div class="item-row">
-          <span>Session (Default)</span>
-          <span class="val" id="sess-default">+201092048333</span>
-        </div>
-        <div class="item-row">
-          <span>Line-2</span>
-          <span class="val" id="sess-line2">201092048333</span>
-        </div>
+      <div id="sessions-container" style="display:flex; flex-direction:column; gap:0.55rem;">
+        <div class="item-row"><span>Loading sessions...</span></div>
       </div>
     </div>
 
-    <!-- Outreach Tracker Card -->
+    <!-- Workflow Runner Daemon -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">Owner Outreach Tracker</span>
-        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3)">Real Mode ON</span>
-      </div>
-      <div>
-        <div class="stat-number" id="tracker-rows-count">--</div>
-        <div class="stat-sub">Historical Contacts Recorded in Ledger</div>
+        <span class="card-title">Workflow Control Daemon (:2786)</span>
+        <span id="runner-status-pill" class="status-pill offline">Checking...</span>
       </div>
       <div class="item-row">
-        <span>Today's Sent / Cap</span>
-        <span class="val" id="daily-sent-stat">0 / 180</span>
+        <span>Runner Uptime</span>
+        <span class="val" id="runner-uptime">--</span>
       </div>
-    </div>
-
-    <!-- Schedule & Slots Card -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Outreach Dispatch Slots</span>
-        <span class="badge">Africa/Cairo</span>
+      <div class="item-row">
+        <span>Currently Executing</span>
+        <span class="val" id="runner-active-jobs">Idle</span>
       </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
-        <span class="slot-tag">10:00 AM</span>
-        <span class="slot-tag">12:00 PM</span>
-        <span class="slot-tag">02:00 PM</span>
-        <span class="slot-tag">04:00 PM</span>
-        <span class="slot-tag">06:00 PM</span>
-        <span class="slot-tag">08:00 PM</span>
+      <div class="item-row">
+        <span>2-Hour Schedule</span>
+        <span class="val" style="color:var(--accent-gold);">10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00</span>
       </div>
-      <div class="stat-sub" style="margin-top: 0.5rem;">
-        Runner Port: <strong>2786</strong> | Bridge Port: <strong>2790</strong> | Gateway: <strong>2785</strong>
-      </div>
-    </div>
-  </div>
-
-  <!-- WhatsApp Workstation Instant Sender Card -->
-  <div class="card" style="margin-bottom: 2rem; border-color: rgba(16, 185, 129, 0.3);">
-    <div class="card-header">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span style="font-size: 1.25rem;">💬</span>
-        <span class="card-title" style="color: #34d399; font-weight: 700;">WhatsApp Workstation · Stealth Human Sender</span>
-      </div>
-      <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3)">
-        Anti-Bot Shield: Active
-      </span>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
-      <div>
-        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 600;">
-          Select Sender Line
-        </label>
-        <select id="send-session-select" style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--text-primary); font-family: inherit;">
-          <option value="auto">🔄 Auto Round-Robin (All Ready Lines)</option>
-          <option value="line-1">📱 Line 1: Ahmed Fawzy (+201092048333)</option>
-          <option value="line-2">📱 Line 2: Ahmed Fawzy (201092048333)</option>
-          <option value="line-3">📱 Line 3: Sierra Estates (+201092048333)</option>
-        </select>
-      </div>
-
-      <div>
-        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 600;">
-          Recipient Phone Number
-        </label>
-        <input type="text" id="send-recipient-phone" placeholder="e.g. +201092048333" style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--text-primary); font-family: monospace;">
-      </div>
-    </div>
-
-    <div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-        <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">
-          Message Content
-        </label>
-        <div style="display: flex; gap: 0.4rem;">
-          <button type="button" onclick="setAdminTemplate('listing')" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 0.3rem; color: var(--text-secondary); cursor: pointer;">🏡 New Unit</button>
-          <button type="button" onclick="setAdminTemplate('reminder')" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 0.3rem; color: var(--text-secondary); cursor: pointer;">📅 Viewing</button>
+      <div class="item-row">
+        <span>Daily Cap Setting</span>
+        <div style="display:flex; gap:0.4rem; align-items:center;">
+          <input id="input-daily-cap" type="number" min="10" max="2000" value="600" style="width:80px; padding:0.25rem 0.4rem; background:#0b0f19; border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:0.35rem; font-family:monospace;">
+          <button class="btn" style="padding:0.25rem 0.55rem; font-size:0.72rem;" onclick="saveDailyCap()">Save</button>
         </div>
       </div>
-      <textarea id="send-message-text" rows="3" placeholder="Type WhatsApp message here..." style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--text-primary); font-family: inherit; resize: vertical;"></textarea>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span id="send-status-pill" style="font-size: 0.8125rem; color: var(--text-muted);">Ready to dispatch.</span>
-      <button type="button" id="send-dispatch-btn" onclick="dispatchAdminMessage()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 0.5rem; padding: 0.6rem 1.4rem; font-weight: 700; cursor: pointer; font-size: 0.875rem;">
-        🚀 Send via WhatsApp (Stealth Emulation)
-      </button>
+    <!-- Recent Contacted Owners -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Latest Contacted Owners</span>
+        <span class="badge">Live Audit</span>
+      </div>
+      <div id="recent-sent-container" style="display:flex; flex-direction:column; gap:0.45rem; max-height:210px; overflow-y:auto;">
+        <div class="item-row"><span>No recent sends loaded yet.</span></div>
+      </div>
     </div>
   </div>
 
-  <!-- Workflows Section -->
-  <div class="card" style="margin-bottom: 2rem;">
+  <!-- INSTANT WHATSAPP SENDER -->
+  <div class="card" style="margin-bottom: 1.5rem; border-color: rgba(16, 185, 129, 0.3);">
     <div class="card-header">
-      <span class="card-title">Active Engine Workflows</span>
+      <span class="card-title" style="color:#34d399;">💬 Instant WhatsApp Sender (Stealth Human Emulation)</span>
+      <span class="badge" style="color:#34d399; border-color:rgba(16,185,129,0.35); background:rgba(16,185,129,0.12);">Anti-Ban Typing Active</span>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Workflow</th>
-          <th>Status</th>
-          <th>Category</th>
-        </tr>
-      </thead>
-      <tbody id="workflows-table-body">
-        <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Loading telemetry...</td></tr>
-      </tbody>
-    </table>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:0.85rem;">
+      <div>
+        <label style="display:block; font-size:0.72rem; color:var(--text-secondary); margin-bottom:0.3rem; font-weight:700;">SENDER LINE</label>
+        <select id="send-session-select" style="width:100%; padding:0.55rem; background:#0b0f19; border:1px solid rgba(255,255,255,0.12); border-radius:0.45rem; color:#fff;">
+          <option value="auto">🔄 Auto (First Ready Line)</option>
+          <option value="line-1">📱 line-1</option>
+          <option value="line-2">📱 line-2 (+201061399688)</option>
+          <option value="line-3">📱 line-3 (+201032206443)</option>
+          <option value="line-6">📱 line-6 (+201031622600)</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block; font-size:0.72rem; color:var(--text-secondary); margin-bottom:0.3rem; font-weight:700;">RECIPIENT PHONE</label>
+        <input type="text" id="send-recipient-phone" placeholder="e.g. 201061399688" style="width:100%; padding:0.55rem; background:#0b0f19; border:1px solid rgba(255,255,255,0.12); border-radius:0.45rem; color:#fff; font-family:monospace;">
+      </div>
+    </div>
+    <textarea id="send-message-text" rows="2" placeholder="Type WhatsApp message here..." style="width:100%; padding:0.6rem; background:#0b0f19; border:1px solid rgba(255,255,255,0.12); border-radius:0.45rem; color:#fff; font-family:inherit;"></textarea>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span id="send-status-pill" style="font-size:0.8rem; color:var(--text-muted);">Ready to send.</span>
+      <button class="btn btn-emerald" id="send-dispatch-btn" onclick="dispatchAdminMessage()">🚀 Send via WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- WORKFLOWS CONTROL TABLE -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">All Server Workflows (Run Now / Pause / Resume)</span>
+      <span class="badge" id="workflows-count-badge">0 Workflows</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Workflow</th>
+            <th>Schedule</th>
+            <th>Status</th>
+            <th>Last Run</th>
+            <th>Last Result</th>
+            <th style="text-align:right;">Controls</th>
+          </tr>
+        </thead>
+        <tbody id="workflows-table-body">
+          <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Loading workflows...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="footer">
-    Sierra Estates Autonomous Outreach Engine · Host: Laptop Production Worker (No EC2 Runner)
+    Sierra Estates Autonomous Engine · Protected by Windows OS Watchdog (Runs independently of IDE/Browser)
   </div>
 
   <script>
+    let currentContinuous = true;
+
+    function notify(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { t.style.display = 'none'; }, 4500);
+    }
+
     async function refreshStatus() {
       try {
-        const res = await fetch('/admin/api/status');
-        if (!res.ok) throw new Error('Status endpoint failed');
+        const res = await fetch('/admin/api/status', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Status failed');
         const data = await res.json();
 
-        // Cairo Time
         document.getElementById('cairo-time').textContent = data.cairoTime || new Date().toLocaleString();
 
-        // Gateway
+        // Gateway & Sessions
         const gwPill = document.getElementById('gateway-status-pill');
         if (data.gateway && data.gateway.reachable) {
           gwPill.className = 'status-pill online';
-          gwPill.textContent = 'ONLINE';
+          gwPill.textContent = `ONLINE (${data.gateway.readyCount || 0}/${data.gateway.totalSessions || 0} READY)`;
         } else {
           gwPill.className = 'status-pill offline';
           gwPill.textContent = 'OFFLINE';
         }
 
-        // Tracker
-        document.getElementById('tracker-rows-count').textContent = data.tracker ? data.tracker.rows : 0;
-        if (data.tracker && data.tracker.dailySent !== undefined) {
-          document.getElementById('daily-sent-stat').textContent = `${data.tracker.dailySent} / 180`;
+        const sessContainer = document.getElementById('sessions-container');
+        if (data.gateway && Array.isArray(data.gateway.sessions) && data.gateway.sessions.length > 0) {
+          sessContainer.innerHTML = data.gateway.sessions.map(s => {
+            const isReady = String(s.status || '').toLowerCase() === 'ready';
+            const pillClass = isReady ? 'online' : 'warn';
+            const label = isReady ? 'READY' : String(s.status || 'QR').toUpperCase();
+            return `
+              <div class="item-row">
+                <div>
+                  <strong>${s.id}</strong>
+                  <span style="color:var(--text-secondary); font-size:0.78rem; margin-left:0.4rem;">
+                    ${s.phone ? '+' + s.phone : 'Needs QR Scan'} ${s.pushName ? '(' + s.pushName + ')' : ''}
+                  </span>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <span class="status-pill ${pillClass}">${label}</span>
+                  <button class="btn" style="padding:0.2rem 0.5rem; font-size:0.7rem;" onclick="restartSession('${s.id}')">↻</button>
+                </div>
+              </div>
+            `;
+          }).join('');
         }
 
-        // Workflows
-        const tb = document.getElementById('workflows-table-body');
-        if (Array.isArray(data.workflows) && data.workflows.length > 0) {
-          tb.innerHTML = data.workflows.map(w => `
-            <tr>
-              <td><strong>${w.name || w.slug}</strong></td>
-              <td><span class="status-pill online" style="font-size:0.75rem;">${w.status || 'active'}</span></td>
-              <td style="color:var(--text-secondary);">${w.category || 'daemon'}</td>
-            </tr>
+        // Runner status
+        const runPill = document.getElementById('runner-status-pill');
+        if (data.runner && data.runner.reachable) {
+          runPill.className = 'status-pill online';
+          runPill.textContent = 'ONLINE';
+          const up = Number(data.runner.uptimeSec || 0);
+          document.getElementById('runner-uptime').textContent = up > 3600 ? `${(up/3600).toFixed(1)}h` : `${Math.round(up/60)}m`;
+          document.getElementById('runner-active-jobs').textContent =
+            (data.runner.running && data.runner.running.length) ? data.runner.running.join(', ') : 'Idle (Waiting for slot)';
+        } else {
+          runPill.className = 'status-pill offline';
+          runPill.textContent = 'OFFLINE';
+        }
+
+        // 2-Hour Radar & Tracker
+        const rep = data.twoHourReport || {};
+        const cfg = data.outreachConfig || {};
+        currentContinuous = cfg.continuous !== false;
+        const modePill = document.getElementById('radar-mode-pill');
+        modePill.className = currentContinuous ? 'status-pill online' : 'status-pill warn';
+        modePill.textContent = currentContinuous ? 'CONTINUOUS ON (09:00–22:00)' : 'PAUSED / MANUAL';
+
+        const dailyCap = cfg.dailyCap || (data.tracker && data.tracker.dailyCap) || 600;
+        if (document.activeElement !== document.getElementById('input-daily-cap')) {
+          document.getElementById('input-daily-cap').value = dailyCap;
+        }
+
+        document.getElementById('stat-sent-2h').textContent = rep.sent_in_last_2h ?? 0;
+        document.getElementById('stat-last-report-time').textContent =
+          rep.cairo_time ? `Last 2h report: ${rep.cairo_time} (${rep.cairo_date || ''})` : 'Click "Send 2-Hour Report" to generate now';
+        document.getElementById('stat-sent-today').textContent =
+          `${rep.sent_today_total ?? (data.tracker ? data.tracker.dailySent : 0)} / ${dailyCap}`;
+        document.getElementById('stat-replies-2h').textContent =
+          `${rep.replies_in_last_2h ?? 0} / ${rep.replies_today_total ?? 0}`;
+        document.getElementById('stat-total-alltime').textContent =
+          rep.total_all_time ?? (data.tracker ? data.tracker.rows : 0);
+
+        const cp = data.checkpoint || {};
+        document.getElementById('stat-cursors').textContent =
+          `Sheet Cursors: Top #${rep.top_cursor ?? cp.topCursor ?? 0} | Bottom #${rep.bottom_cursor ?? cp.bottomCursor ?? 0} (of ${rep.total_candidates || cp.totalCount || 0})`;
+
+        // Recent sent list
+        const recBox = document.getElementById('recent-sent-container');
+        if (Array.isArray(rep.recent_sent) && rep.recent_sent.length > 0) {
+          recBox.innerHTML = rep.recent_sent.slice(0, 6).map(r => `
+            <div class="item-row" style="font-size:0.78rem;">
+              <div>
+                <span class="val" style="color:#f3e5ab;">+${String(r.phone || '').replace(/^\+/, '')}</span>
+                <span style="color:var(--text-secondary); margin-left:0.4rem;">${r.code || ''}</span>
+              </div>
+              <div style="color:var(--text-muted);">
+                ${r.session || 'line'} · ${r.at ? new Date(r.at).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) : ''}
+              </div>
+            </div>
           `).join('');
         }
+
+        // Workflows Table
+        const tb = document.getElementById('workflows-table-body');
+        if (Array.isArray(data.workflows) && data.workflows.length > 0) {
+          document.getElementById('workflows-count-badge').textContent = `${data.workflows.length} Workflows`;
+          tb.innerHTML = data.workflows.map(w => {
+            const isAct = String(w.status || 'active').toLowerCase() === 'active';
+            const lastAt = (w.local && w.local.lastRun) || w.last_run_at || null;
+            const lastExit = (w.local && w.local.lastExit) || w.last_run_label || '—';
+            const nextStatus = isAct ? 'paused' : 'active';
+            return `
+              <tr>
+                <td>
+                  <strong>${w.name || w.slug}</strong>
+                  <div style="font-size:0.75rem; color:var(--text-secondary);">${w.name_ar || w.slug}</div>
+                </td>
+                <td style="font-family:monospace; color:var(--text-secondary);">${w.schedule || 'cron'}</td>
+                <td>
+                  <span class="status-pill ${isAct ? 'online' : 'warn'}">${w.status || 'active'}</span>
+                </td>
+                <td style="color:var(--text-secondary); font-size:0.78rem;">
+                  ${lastAt ? new Date(lastAt).toLocaleString('en-GB', { timeZone: 'Africa/Cairo' }) : 'Never'}
+                </td>
+                <td style="font-family:monospace; font-size:0.78rem;">${lastExit}</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <button class="btn btn-emerald" style="padding:0.3rem 0.65rem; font-size:0.74rem;" onclick="triggerWorkflow('${w.slug}')">▶ Run Now</button>
+                  <button class="btn" style="padding:0.3rem 0.65rem; font-size:0.74rem;" onclick="toggleWorkflowStatus('${w.slug}', '${nextStatus}')">
+                    ${isAct ? '⏸ Pause' : '▶ Resume'}
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
       } catch (err) {
-        console.error('Refresh failed:', err);
+        console.error('Refresh error:', err);
       }
     }
 
-    function setAdminTemplate(type) {
-      const txt = document.getElementById('send-message-text');
-      if (type === 'listing') {
-        txt.value = 'مرحباً، لدينا وحدة مميزة جديدة متاحة اليوم في كمبوند ميفيدا بالتجمع الخامس بسعر مغري جداً. هل تود تفاصيل المعاينة؟\nSierra Estates';
-      } else if (type === 'reminder') {
-        txt.value = 'عزيزي العميل، نود تذكيرك بموعد المعاينة المحدد غداً الساعة 4:00 عصراً. مستشارك العقاري سيكون بانتظارك.\nSierra Estates';
+    async function triggerWorkflow(slug) {
+      notify(`Triggering workflow "${slug}"...`);
+      try {
+        const res = await fetch(`/admin/api/workflows/${encodeURIComponent(slug)}/run`, { method: 'POST' });
+        const d = await res.json();
+        if (res.ok || d.ok) {
+          notify(`✓ Workflow "${slug}" queued & running!`);
+        } else {
+          notify(`⚠ ${d.error || 'Could not trigger workflow'}`);
+        }
+      } catch (e) {
+        notify(`✗ Error: ${e.message}`);
       }
+      setTimeout(refreshStatus, 1500);
+    }
+
+    async function toggleWorkflowStatus(slug, status) {
+      notify(`Updating "${slug}" to ${status}...`);
+      try {
+        const res = await fetch(`/admin/api/workflows/${encodeURIComponent(slug)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        const d = await res.json();
+        if (res.ok && d.ok) {
+          notify(`✓ "${slug}" is now ${status.toUpperCase()}`);
+        } else {
+          notify(`⚠ Failed updating status`);
+        }
+      } catch (e) {
+        notify(`✗ Error: ${e.message}`);
+      }
+      setTimeout(refreshStatus, 1000);
+    }
+
+    async function sendTwoHourReportNow() {
+      const btn = document.getElementById('btn-send-2h-report');
+      btn.disabled = true;
+      btn.textContent = '⏳ Generating & Sending Report...';
+      try {
+        const res = await fetch('/admin/api/report/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sendWhatsApp: true }),
+        });
+        const d = await res.json();
+        if (res.ok && d.ok) {
+          const delivered = (d.report && d.report.deliveredTo && d.report.deliveredTo.length)
+            ? d.report.deliveredTo.join(', ')
+            : 'saved to dashboard';
+          notify(`✓ 2-Hour Report generated & sent to WhatsApp (${delivered})!`);
+        } else {
+          notify(`⚠ Report error: ${d.error || 'Failed'}`);
+        }
+      } catch (e) {
+        notify(`✗ Error: ${e.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📲 Send 2-Hour Report to WhatsApp Now';
+        refreshStatus();
+      }
+    }
+
+    async function toggleContinuousMode() {
+      const next = !currentContinuous;
+      try {
+        const res = await fetch('/admin/api/outreach/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ continuous: next }),
+        });
+        const d = await res.json();
+        if (res.ok && d.ok) {
+          notify(`✓ Continuous Autonomous Outreach is now ${next ? 'ON' : 'PAUSED'}`);
+        }
+      } catch (e) {
+        notify(`✗ Error: ${e.message}`);
+      }
+      refreshStatus();
+    }
+
+    async function saveDailyCap() {
+      const val = parseInt(document.getElementById('input-daily-cap').value, 10);
+      if (!val || val < 1) return;
+      try {
+        const res = await fetch('/admin/api/outreach/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dailyCap: val }),
+        });
+        if (res.ok) notify(`✓ Daily cap updated to ${val} owners/day`);
+      } catch (e) {
+        notify(`✗ Error: ${e.message}`);
+      }
+      refreshStatus();
+    }
+
+    async function restartSession(id) {
+      notify(`Restarting WhatsApp session ${id}...`);
+      try {
+        await fetch(`/admin/api/sessions/${encodeURIComponent(id)}/restart`, { method: 'POST' });
+        notify(`✓ Restart signal sent to ${id}`);
+      } catch (e) {
+        notify(`✗ Error: ${e.message}`);
+      }
+      setTimeout(refreshStatus, 2500);
     }
 
     async function dispatchAdminMessage() {
-      const phoneInput = document.getElementById('send-recipient-phone');
-      const textInput = document.getElementById('send-message-text');
-      const sessionSelect = document.getElementById('send-session-select');
+      const phone = document.getElementById('send-recipient-phone').value.trim();
+      const text = document.getElementById('send-message-text').value.trim();
+      const sessionId = document.getElementById('send-session-select').value;
       const statusPill = document.getElementById('send-status-pill');
       const btn = document.getElementById('send-dispatch-btn');
 
-      const phone = phoneInput.value.trim();
-      const text = textInput.value.trim();
-      const sessionId = sessionSelect.value;
-
       if (!phone || !text) {
-        statusPill.innerHTML = '<span style="color: #f87171;">Please enter recipient phone and message text.</span>';
+        statusPill.textContent = 'Please enter phone and message.';
         return;
       }
-
       btn.disabled = true;
-      btn.textContent = 'Simulating typing & sending...';
-      statusPill.innerHTML = '<span style="color: #60a5fa;">Simulating human presence (seen + typing 1.5-4s)...</span>';
-
+      statusPill.textContent = 'Sending via OpenWA stealth emulation...';
       try {
         const res = await fetch('/admin/api/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, text, sessionId })
+          body: JSON.stringify({ phone, text, sessionId }),
         });
-        const data = await res.json();
-        if (data && (data.ok || data.messageId || data.status === 'sent')) {
-          statusPill.innerHTML = `<span style="color: #34d399;">✓ Message dispatched successfully! (ID: ${data.messageId || data.data?.messageId || 'sent'})</span>`;
-          textInput.value = '';
+        const d = await res.json();
+        if (res.ok && d.ok) {
+          statusPill.textContent = '✓ Sent successfully!';
+          document.getElementById('send-message-text').value = '';
         } else {
-          statusPill.innerHTML = `<span style="color: #f87171;">✗ Dispatch failed: ${data.error || 'Gateway returned error'}</span>`;
+          statusPill.textContent = `✗ Failed: ${d.error || 'Gateway error'}`;
         }
-      } catch (err) {
-        statusPill.innerHTML = `<span style="color: #f87171;">✗ Error: ${err.message}</span>`;
+      } catch (e) {
+        statusPill.textContent = `✗ Error: ${e.message}`;
       } finally {
         btn.disabled = false;
-        btn.textContent = '🚀 Send via WhatsApp (Stealth Emulation)';
       }
     }
 

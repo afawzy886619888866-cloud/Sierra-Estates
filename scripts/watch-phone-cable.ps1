@@ -3,8 +3,8 @@
 # ==============================================================================
 # Monitors USB cable connection for Samsung Galaxy S24 Ultra / Android devices.
 # When connected with file transfer enabled, automatically extracts WhatsApp
-# chat exports, photos, and documents, ingests them into Supabase, and updates
-# Property Finder ad pipelines.
+# chat exports, parses all property units stamped by their exact POSTED DATE,
+# generates organized Excel/CSV spreadsheets, and syncs listings to Supabase.
 # ==============================================================================
 
 $Root = Split-Path -Parent $PSScriptRoot
@@ -25,6 +25,7 @@ function Write-Log($msg) {
 Write-Log "Sierra Estates Phone Watcher daemon started."
 
 $lastSyncHash = ""
+$lastPhoneStatus = $false
 
 while ($true) {
     try {
@@ -40,6 +41,11 @@ while ($true) {
         }
 
         if ($phone) {
+            if (-not $lastPhoneStatus) {
+                Write-Log "USB Cable Plug-in Detected! Phone: $($phone.Name)"
+                $lastPhoneStatus = $true
+            }
+
             $phoneFolder = $phone.GetFolder
             $internalStorage = $null
             foreach ($sub in $phoneFolder.Items()) {
@@ -50,7 +56,6 @@ while ($true) {
             }
 
             if ($internalStorage) {
-                # Look for Download folder
                 $downloadFolder = $null
                 foreach ($item in $internalStorage.Items()) {
                     if ($item.Name -eq "Download") {
@@ -74,12 +79,25 @@ while ($true) {
                             
                             $destFolder = $shell.Namespace($ImportDir)
                             $newPullCount = 0
+                            $existingFiles = @(Get-ChildItem -LiteralPath $ImportDir -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
                             foreach ($item in $foundItems) {
-                                $destPath = Join-Path $ImportDir $item.Name
-                                if (-not (Test-Path $destPath)) {
-                                    Write-Log "  -> Pulling new export: $($item.Name)"
-                                    $destFolder.CopyHere($item, 16 + 512 + 1024)
-                                    $newPullCount++
+                                $rawName = [string]$item.Name
+                                $prefix = if ($rawName.Length -gt 15) { $rawName.Substring(0, 15) } else { $rawName }
+                                $isDuplicate = $false
+                                foreach ($ef in $existingFiles) {
+                                    if ($ef -eq $rawName -or ($prefix -and $ef.StartsWith($prefix))) {
+                                        $isDuplicate = $true
+                                        break
+                                    }
+                                }
+                                if (-not $isDuplicate) {
+                                    Write-Log "  -> Pulling new export: $rawName"
+                                    try {
+                                        $destFolder.CopyHere($item, 16 + 512 + 1024)
+                                        $newPullCount++
+                                    } catch {
+                                        Write-Log "  -> Failed to pull $rawName: $($_.Exception.Message)"
+                                    }
                                 }
                             }
 
@@ -87,19 +105,26 @@ while ($true) {
                                 Start-Sleep -Seconds 3
                             }
 
-                            Write-Log "Running ingestion into Supabase & Property Finder pipeline..."
-                            $nodeProc = Start-Process -FilePath "node" -ArgumentList @((Join-Path $Root "scripts\import-whatsapp-chat.mjs"), "--all-staged", "--sync-db") -Wait -PassThru -NoNewWindow
+                            Write-Log "Executing Workflow 21: USB Phone Harvester & Date Organizer..."
+                            $harvesterScript = Join-Path $Root "workflows\21-usb-phone-harvester\index.js"
+                            $nodeProc = Start-Process -FilePath "node" -ArgumentList @($harvesterScript) -Wait -PassThru -NoNewWindow
                             
-                            Write-Log "Ingestion completed with exit code: $($nodeProc.ExitCode)"
+                            Write-Log "Harvester completed with exit code: $($nodeProc.ExitCode)"
                             $lastSyncHash = $currentHash
                         }
                     }
                 }
+            }
+        } else {
+            if ($lastPhoneStatus) {
+                Write-Log "Phone disconnected from USB cable."
+                $lastPhoneStatus = $false
+                $lastSyncHash = ""
             }
         }
     } catch {
         Write-Log "Watcher error: $($_.Exception.Message)"
     }
 
-    Start-Sleep -Seconds 30
+    Start-Sleep -Seconds 20
 }

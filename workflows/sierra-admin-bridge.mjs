@@ -1,296 +1,386 @@
-#!/usr/bin/env node
-/**
- * sierra-admin-bridge.mjs — Read-only Admin Bridge for Sierra Estates Control Plane
- * ─────────────────────────────────────────────────────────────────────────────────
- * Serves the read-only dashboard on http://127.0.0.1:2790/admin
- * Exposes http://127.0.0.1:2790/admin/api/status with live gateway & workflow telemetry.
- * 
- * STRICT COMPLIANCE:
- *   - Read-only on port 2790. No write endpoints exist.
- */
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-for (const envCandidate of [
-  path.join(__dirname, '.env'),
-  path.join(__dirname, '..', '.env.local'),
-  path.join(__dirname, '..', 'apps', 'sierra-estates-realty', '.env.local'),
-  path.join(__dirname, '..', 'apps', 'agents', 'whatsapp-multi-session', '.env'),
-]) {
-  try {
-    if (!fs.existsSync(envCandidate)) continue;
-    for (const rawLine of fs.readFileSync(envCandidate, 'utf8').split(/\r?\n/)) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith('#')) continue;
-      const eq = line.indexOf('=');
-      if (eq <= 0) continue;
-      const k = line.slice(0, eq).trim();
-      const v = line.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
-      if (k && !process.env[k]) process.env[k] = v;
-    }
-  } catch {
-    /* ignore optional env file */
-  }
+const { loadWorkflowEnv } = require('./lib/google-sheets.js');
+loadWorkflowEnv(__dirname);
+
+const PORT = Number(process.env.ADMIN_BRIDGE_PORT || 2790);
+const GATEWAY_URL = (process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785').replace(/\/+$/, '');
+const RUNNER_URL = (process.env.WORKFLOW_OPS_URL || 'http://127.0.0.1:2786').replace(/\/+$/, '');
+const GATEWAY_TOKEN =
+  process.env.OPENWA_OPERATOR_KEY ||
+  process.env.WHATSAPP_API_KEY ||
+  process.env.WHATSAPP_API_TOKEN ||
+  process.env.OPENWA_ADMIN_API_KEY ||
+  '';
+const RUNNER_KEY = String(process.env.RUNNER_API_KEY || '').trim();
+
+function runnerHeaders(extra = {}) {
+  return { ...(RUNNER_KEY ? { 'X-API-Key': RUNNER_KEY } : {}), ...extra };
 }
 
-const PORT = parseInt(process.env.ADMIN_BRIDGE_PORT || '2790', 10);
-const BIND = process.env.ADMIN_BRIDGE_BIND || '127.0.0.1';
-const HTML_FILE = path.join(__dirname, 'sierra-admin.html');
 const STATE_DIR = path.join(__dirname, '.state');
-const LEDGER_PATH = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
-const DAILY_PATH = path.join(STATE_DIR, 'owner-outreach-daily.json');
-const CHECKPOINT_PATH = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
 
-const RUNNER_URL = process.env.RUNNER_URL || 'http://127.0.0.1:2786';
-const GATEWAY_URL = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
-
-/**
- * P0 2.4: runner authentication header — NO fallback credential. The runner
- * fails closed without a key, so the bridge reports unreachable honestly
- * instead of dialing with an invented dev credential.
- */
-function runnerHeaders() {
-  const key = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
-  return key ? { 'X-API-Key': key } : {};
+function log(...args) {
+  console.log(`[${new Date().toISOString()}] [admin-bridge]`, ...args);
 }
 
-function cairoTimeStr() {
-  return new Intl.DateTimeFormat('en-GB', {
+function getCairoTime() {
+  return new Date().toLocaleString('en-US', {
     timeZone: 'Africa/Cairo',
-    dateStyle: 'full',
-    timeStyle: 'medium'
-  }).format(new Date());
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+  });
 }
 
 async function probeGateway() {
-  // P0 2.4/7.1: HONEST telemetry only. The previous version fabricated two
-  // "ready" sessions when the gateway response lacked a session list, and
-  // coerced `reachable` to true from a missing runner field — both removed.
-  const result = {
-    reachable: false,
-    url: GATEWAY_URL,
-    sessions: [],
-    sessionsKnown: false,
-    error: null
+  try {
+    const headers = GATEWAY_TOKEN ? { 'X-API-Key': GATEWAY_TOKEN } : {};
+    const [healthRes, sessRes] = await Promise.all([
+      fetch(`${GATEWAY_URL}/api/health`, { signal: AbortSignal.timeout(4000) }).catch(() => null),
+      fetch(`${GATEWAY_URL}/api/sessions`, { headers, signal: AbortSignal.timeout(5000) }).catch(() => null),
+    ]);
+    // Honest telemetry: never fabricate readiness from a missing or unauthenticated /api/sessions call.
+    const sessionsKnown = Boolean(sessRes && sessRes.ok);
+    let sessions = [];
+    if (sessionsKnown) {
+      const sData = await sessRes.json().catch(() => ({}));
+      sessions = Array.isArray(sData) ? sData : Array.isArray(sData.data) ? sData.data : Array.isArray(sData.sessions) ? sData.sessions : [];
+    }
+    const readyCount = sessionsKnown
+      ? sessions.filter((s) => String(s.status || '').toLowerCase() === 'ready').length
+      : null;
+    return {
+      reachable: Boolean((healthRes && healthRes.ok) || sessionsKnown),
+      sessionsKnown,
+      readyCount,
+      totalSessions: sessionsKnown ? sessions.length : null,
+      sessions,
+    };
+  } catch (err) {
+    return { reachable: false, sessionsKnown: false, readyCount: null, totalSessions: null, sessions: [], error: err.message };
+  }
+}
+
+async function probeRunner() {
+  try {
+    const headers = runnerHeaders();
+    const [hRes, wfRes] = await Promise.all([
+      fetch(`${RUNNER_URL}/api/health`, { headers, signal: AbortSignal.timeout(4000) }).catch(() => null),
+      fetch(`${RUNNER_URL}/api/workflows`, { headers, signal: AbortSignal.timeout(5000) }).catch(() => null),
+    ]);
+    const health = hRes && hRes.ok ? await hRes.json().catch(() => ({ ok: true })) : { ok: false };
+    const wfJson = wfRes && wfRes.ok ? await wfRes.json().catch(() => ({})) : {};
+    return {
+      reachable: Boolean(hRes && hRes.ok),
+      health,
+      workflows: Array.isArray(wfJson.workflows) ? wfJson.workflows : [],
+    };
+  } catch (err) {
+    return { reachable: false, health: { ok: false }, workflows: [], error: err.message };
+  }
+}
+
+function readLocalState() {
+  const state = {
+    trackerRows: 0,
+    dailySent: 0,
+    dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+    twoHourReport: null,
+    outreachConfig: {
+      continuous: true,
+      cooldownSec: 90,
+      dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+      activeHours: [9, 22],
+    },
+    checkpoint: null,
+    workflows: [],
   };
 
   try {
-    const res = await fetch(`${GATEWAY_URL}/api/health`, { signal: AbortSignal.timeout(3000) });
-    if (res.ok) {
-      const data = await res.json().catch(() => ({}));
-      result.reachable = true;
-      if (data.sessions && Array.isArray(data.sessions)) {
-        result.sessions = data.sessions;
-        result.sessionsKnown = true;
+    const ledgerPath = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
+    if (fs.existsSync(ledgerPath)) {
+      const content = fs.readFileSync(ledgerPath, 'utf8').trim();
+      state.trackerRows = content ? content.split('\n').filter(Boolean).length : 0;
+    }
+
+    const dailyPath = path.join(STATE_DIR, 'owner-outreach-daily.json');
+    if (fs.existsSync(dailyPath)) {
+      const daily = JSON.parse(fs.readFileSync(dailyPath, 'utf8'));
+      state.dailySent = daily.sent || 0;
+    }
+
+    const repPath = path.join(STATE_DIR, 'two-hour-outreach-report.json');
+    if (fs.existsSync(repPath)) {
+      state.twoHourReport = JSON.parse(fs.readFileSync(repPath, 'utf8'));
+      if (state.twoHourReport?.total_all_time > state.trackerRows) {
+        state.trackerRows = state.twoHourReport.total_all_time;
       }
-      // no session list → report unknown, never fabricate readiness
+      if (state.twoHourReport?.sent_today_total > state.dailySent) {
+        state.dailySent = state.twoHourReport.sent_today_total;
+      }
+    }
+
+    const cfgPath = path.join(STATE_DIR, 'owner-outreach-config.json');
+    if (fs.existsSync(cfgPath)) {
+      state.outreachConfig = {
+        ...state.outreachConfig,
+        ...JSON.parse(fs.readFileSync(cfgPath, 'utf8')),
+      };
+      state.dailyCap = state.outreachConfig.dailyCap || state.dailyCap;
+    }
+
+    const cpPath = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
+    if (fs.existsSync(cpPath)) {
+      state.checkpoint = JSON.parse(fs.readFileSync(cpPath, 'utf8'));
+    }
+
+    const wfCachePath = path.join(STATE_DIR, 'workflows-cache.json');
+    if (fs.existsSync(wfCachePath)) {
+      state.workflows = JSON.parse(fs.readFileSync(wfCachePath, 'utf8'));
     }
   } catch (err) {
-    result.error = err.message;
-    // Check if runner's health reports gateway — but only trust an EXPLICIT
-    // true/false field; a missing field is not proof of reachability.
-    try {
-      const runnerRes = await fetch(`${RUNNER_URL}/api/health`, {
-        headers: runnerHeaders(),
-        signal: AbortSignal.timeout(3000)
-      });
-      if (runnerRes.ok) {
-        const runnerData = await runnerRes.json();
-        if (runnerData.gateway && typeof runnerData.gateway.reachable === 'boolean') {
-          result.reachable = runnerData.gateway.reachable;
-        }
-      }
-    } catch {}
+    log('Error reading local state:', err.message);
   }
-  return result;
+
+  return state;
 }
 
-function readTrackerData() {
-  let rows = 0;
-  let lastEntry = null;
-
-  if (fs.existsSync(LEDGER_PATH)) {
-    try {
-      const lines = fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean);
-      rows = lines.length;
-      if (rows > 0) {
-        lastEntry = JSON.parse(lines[rows - 1]);
-      }
-    } catch (e) {
-      console.error('[bridge] error reading ledger:', e.message);
-    }
-  }
-
-  let daily = { sent: 0, date: '' };
-  if (fs.existsSync(DAILY_PATH)) {
-    try {
-      daily = JSON.parse(fs.readFileSync(DAILY_PATH, 'utf8'));
-    } catch {}
-  }
-
-  let checkpoint = {};
-  if (fs.existsSync(CHECKPOINT_PATH)) {
-    try {
-      checkpoint = JSON.parse(fs.readFileSync(CHECKPOINT_PATH, 'utf8'));
-    } catch {}
-  }
-
-  return {
-    rows,
-    lastEntry,
-    daily,
-    checkpoint
-  };
-}
-
-async function getWorkflowsData() {
-  try {
-    const res = await fetch(`${RUNNER_URL}/api/workflows`, {
-      headers: runnerHeaders(),
-      signal: AbortSignal.timeout(3000)
+function readJsonBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+      if (body.length > 1e6) req.destroy();
     });
-    if (res.ok) {
-      const data = await res.json();
-      return data.workflows || data;
-    }
-  } catch {}
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch {
+        resolve({});
+      }
+    });
+  });
+}
 
-  // Fallback to scanning .state files — LOCAL RUN STATE ONLY. The default
-  // `status:'active'` here is the runner-side display default and must never
-  // be read as a server-confirmed workflow registry state; the dashboard
-  // labels the source explicitly.
-  const slugs = ['whatsapp-scraper', 'owner-search', 'owner-contact', 'email-sender', 'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach'];
-  const list = [];
-  for (const s of slugs) {
-    const file = path.join(STATE_DIR, `${s}.json`);
-    let info = { slug: s, status: 'unknown', state: 'idle', source: 'local-state-fallback' };
-    if (fs.existsSync(file)) {
-      try { info = { ...info, ...JSON.parse(fs.readFileSync(file, 'utf8')) }; } catch {}
-    }
-    list.push(info);
-  }
-  return list;
+function sendJson(res, status, payload) {
+  const body = JSON.stringify(payload, null, 2);
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+  });
+  res.end(body);
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = url.pathname;
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const p = url.pathname;
 
-  // Allowed methods: GET/HEAD for status/pages, POST for workstation send
-  if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.method === 'POST' && pathname === '/admin/api/send')) {
-    res.writeHead(405, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    return res.end(JSON.stringify({ ok: false, error: 'Method Not Allowed' }));
-  }
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
 
-  // Route 1: /admin -> HTML page
-  if (pathname === '/admin' || pathname === '/admin/') {
-    if (fs.existsSync(HTML_FILE)) {
-      const html = fs.readFileSync(HTML_FILE, 'utf8');
-      res.writeHead(200, {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache'
-      });
-      return res.end(html);
-    }
-    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    return res.end('Sierra Estates Admin Bridge (HTML template missing)');
-  }
-
-  // Route 2: /admin/api/status -> JSON status
-  if (pathname === '/admin/api/status') {
-    const [gateway, tracker, workflows] = await Promise.all([
-      probeGateway(),
-      readTrackerData(),
-      getWorkflowsData()
-    ]);
-
-    const statusPayload = {
-      ok: true,
-      timestamp: new Date().toISOString(),
-      cairoTime: cairoTimeStr(),
-      gateway: {
-        reachable: gateway.reachable,
-        url: gateway.url,
-        sessions: gateway.sessions
-      },
-      tracker: {
-        count: tracker.rows,
-        rows: tracker.rows,
-        dailySent: tracker.daily.sent,
-        dailyDate: tracker.daily.date,
-        checkpoint: tracker.checkpoint,
-        lastContact: tracker.lastEntry
-      },
-      workflows: workflows
-    };
-
-    res.writeHead(200, {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'no-cache'
-    });
-    return res.end(JSON.stringify(statusPayload, null, 2));
-  }
-
-  // Route 3: POST /admin/api/send -> Dispatch message through OpenWA gateway
-  if (req.method === 'POST' && pathname === '/admin/api/send') {
-    let bodyStr = '';
-    req.on('data', chunk => { bodyStr += chunk; });
-    req.on('end', async () => {
-      try {
-        const body = JSON.parse(bodyStr || '{}');
-        const { phone, text, sessionId = 'auto' } = body;
-
-        if (!phone || !text) {
-          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ ok: false, error: 'phone and text are required' }));
-        }
-
-        const cleanDigits = String(phone).replace(/\D/g, '');
-        let normalizedDigits = cleanDigits;
-        if (normalizedDigits.startsWith('01') && normalizedDigits.length === 11) {
-          normalizedDigits = `20${normalizedDigits.slice(1)}`;
-        }
-        const chatId = `${normalizedDigits}@c.us`;
-
-        if (chatId.includes('@g.us') || chatId.startsWith('120363')) {
-          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          return res.end(JSON.stringify({ ok: false, error: 'Group messaging blocked by safety guard' }));
-        }
-
-        const targetEndpoint = sessionId && sessionId !== 'auto'
-          ? `${GATEWAY_URL}/api/sessions/${sessionId}/messages/send-text`
-          : `${GATEWAY_URL}/api/messages/send-text`;
-
-        const gwRes = await fetch(targetEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chatId, text }),
-          signal: AbortSignal.timeout(45000)
-        });
-
-        const gwData = await gwRes.json().catch(() => ({}));
-        res.writeHead(gwRes.status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify(gwData));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        return res.end(JSON.stringify({ ok: false, error: err.message }));
-      }
-    });
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
     return;
   }
 
-  // Fallback 404
-  res.writeHead(404, { 'Content-Type': 'application/json' });
-  return res.end(JSON.stringify({ ok: false, error: 'Not Found' }));
+  // ── 1. Health & Live Status ──────────────────────────────────────────────
+  if (p === '/api/health' || p === '/admin/api/status') {
+    const [gateway, runner] = await Promise.all([probeGateway(), probeRunner()]);
+    const localState = readLocalState();
+    const workflows = runner.workflows.length ? runner.workflows : localState.workflows;
+
+    return sendJson(res, 200, {
+      ok: true,
+      service: 'sierra-admin-bridge',
+      cairoTime: getCairoTime(),
+      gateway,
+      runner: {
+        reachable: runner.reachable,
+        running: runner.health?.running || [],
+        uptimeSec: runner.health?.uptimeSec || 0,
+      },
+      tracker: {
+        rows: localState.trackerRows,
+        dailySent: localState.dailySent,
+        dailyCap: localState.dailyCap,
+      },
+      twoHourReport: localState.twoHourReport,
+      outreachConfig: localState.outreachConfig,
+      checkpoint: localState.checkpoint,
+      workflows,
+    });
+  }
+
+  // ── 2. 2-Hour Outreach Report (GET & Trigger POST) ───────────────────────
+  if (p === '/admin/api/report' && req.method === 'GET') {
+    const localState = readLocalState();
+    return sendJson(res, 200, {
+      ok: true,
+      report: localState.twoHourReport,
+      config: localState.outreachConfig,
+    });
+  }
+
+  if (p === '/admin/api/report/send' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const { generateAndSendTwoHourDigest } = require('./lib/two-hour-outreach-digest.js');
+      const report = await generateAndSendTwoHourDigest({
+        sendWhatsApp: body.sendWhatsApp !== false,
+        adminPhone: body.adminPhone || undefined,
+      });
+      return sendJson(res, 200, { ok: true, report });
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: err.message });
+    }
+  }
+
+  // ── 3. Outreach Config Control (Continuous Mode / Cap / Cooldown) ────────
+  if (p === '/admin/api/outreach/config' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const cfgPath = path.join(STATE_DIR, 'owner-outreach-config.json');
+      let config = {
+        continuous: true,
+        cooldownSec: 90,
+        dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+        activeHours: [9, 22],
+      };
+      if (fs.existsSync(cfgPath)) {
+        try { config = { ...config, ...JSON.parse(fs.readFileSync(cfgPath, 'utf8')) }; } catch (_) {}
+      }
+      if (body.continuous !== undefined) config.continuous = Boolean(body.continuous);
+      if (Number.isFinite(Number(body.cooldownSec)) && Number(body.cooldownSec) >= 15) {
+        config.cooldownSec = Number(body.cooldownSec);
+      }
+      if (Number.isFinite(Number(body.dailyCap)) && Number(body.dailyCap) >= 1) {
+        config.dailyCap = Number(body.dailyCap);
+      }
+      if (Array.isArray(body.activeHours) && body.activeHours.length === 2) {
+        config.activeHours = [Number(body.activeHours[0]) || 9, Number(body.activeHours[1]) || 22];
+      }
+      fs.mkdirSync(STATE_DIR, { recursive: true });
+      fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2), 'utf8');
+      return sendJson(res, 200, { ok: true, config });
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: err.message });
+    }
+  }
+
+  // ── 4. Trigger Any Workflow Immediately ──────────────────────────────────
+  const runMatch = p.match(/^\/admin\/api\/workflows\/([\w-]+)\/run$/);
+  if (runMatch && req.method === 'POST') {
+    const slug = runMatch[1];
+    try {
+      const headers = runnerHeaders({ 'Content-Type': 'application/json' });
+      const r = await fetch(`${RUNNER_URL}/api/workflows/${encodeURIComponent(slug)}/run`, {
+        method: 'POST',
+        headers,
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = await r.json().catch(() => ({}));
+      return sendJson(res, r.status, { ok: r.ok, slug, ...data });
+    } catch (err) {
+      return sendJson(res, 502, { ok: false, error: err.message });
+    }
+  }
+
+  // ── 5. Pause / Resume / Patch Workflow Status ────────────────────────────
+  const patchMatch = p.match(/^\/admin\/api\/workflows\/([\w-]+)$/);
+  if (patchMatch && (req.method === 'PATCH' || req.method === 'POST')) {
+    const slug = patchMatch[1];
+    try {
+      const body = await readJsonBody(req);
+      const headers = runnerHeaders({ 'Content-Type': 'application/json' });
+      const r = await fetch(`${RUNNER_URL}/api/workflows/${encodeURIComponent(slug)}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = await r.json().catch(() => ({}));
+      return sendJson(res, r.status, { ok: r.ok, slug, ...data });
+    } catch (err) {
+      return sendJson(res, 502, { ok: false, error: err.message });
+    }
+  }
+
+  // ── 6. Restart / Re-init a WhatsApp Session Line ─────────────────────────
+  const sessRestartMatch = p.match(/^\/admin\/api\/sessions\/([\w-]+)\/restart$/);
+  if (sessRestartMatch && req.method === 'POST') {
+    const sid = sessRestartMatch[1];
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (GATEWAY_TOKEN) headers['X-API-Key'] = GATEWAY_TOKEN;
+      const r = await fetch(`${GATEWAY_URL}/api/sessions/${encodeURIComponent(sid)}/restart`, {
+        method: 'POST',
+        headers,
+        signal: AbortSignal.timeout(10000),
+      });
+      const data = await r.json().catch(() => ({}));
+      return sendJson(res, r.status, { ok: r.ok, sessionId: sid, ...data });
+    } catch (err) {
+      return sendJson(res, 502, { ok: false, error: err.message });
+    }
+  }
+
+  // ── 7. Instant WhatsApp Message Dispatch (Stealth Human Sender) ──────────
+  if ((p === '/admin/api/send' || p === '/api/send') && req.method === 'POST') {
+    try {
+      const payload = await readJsonBody(req);
+      const { phone, text, sessionId } = payload;
+      if (!phone || !text) {
+        return sendJson(res, 400, { ok: false, error: 'Phone and text are required' });
+      }
+      const cleanPhone = String(phone).replace(/[^\d]/g, '');
+      const chatId = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@c.us`;
+      const headers = { 'Content-Type': 'application/json' };
+      if (GATEWAY_TOKEN) headers['X-API-Key'] = GATEWAY_TOKEN;
+
+      const sendPath = sessionId && sessionId !== 'auto'
+        ? `/api/sessions/${encodeURIComponent(sessionId)}/messages/send-text`
+        : '/api/messages/send-text';
+      const gwRes = await fetch(`${GATEWAY_URL}${sendPath}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          chatId,
+          phone: cleanPhone,
+          text,
+          simulateTyping: true,
+        }),
+      });
+      const gwData = await gwRes.json().catch(() => ({}));
+      return sendJson(res, gwRes.status, { ok: gwRes.ok, ...gwData });
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: err.message });
+    }
+  }
+
+  // ── 8. Serve Admin Control Dashboard UI ──────────────────────────────────
+  if (p === '/' || p === '/admin' || p === '/admin/') {
+    const htmlPath = path.join(__dirname, 'sierra-admin.html');
+    if (fs.existsSync(htmlPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(fs.readFileSync(htmlPath, 'utf8'));
+      return;
+    }
+  }
+
+  sendJson(res, 404, { error: 'Not Found', path: p });
 });
 
-server.listen(PORT, BIND, () => {
-  console.log(`[sierra-admin-bridge] running at http://${BIND}:${PORT}/admin`);
-  console.log(`[sierra-admin-bridge] status api: http://${BIND}:${PORT}/admin/api/status`);
+server.listen(PORT, '0.0.0.0', () => {
+  log(`Sierra Admin Bridge listening on http://127.0.0.1:${PORT}/admin`);
+  log(`Connected to OpenWA Gateway (${GATEWAY_URL}) and Workflow Runner (${RUNNER_URL})`);
 });

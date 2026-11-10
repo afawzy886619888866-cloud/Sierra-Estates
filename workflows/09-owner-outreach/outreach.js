@@ -742,7 +742,7 @@ async function main() {
       sheetContacted.add(phone);
     }
     const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
-    if (!phone) continue; // no usable mobile
+    if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue; // no usable Egyptian mobile
     if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
     // FIRST-OCCURRENCE-WINS (two-host parallel, Oct 2026): an owner with
     // several listings must get ONE intro ever — via their FIRST sheet row.
@@ -1012,7 +1012,18 @@ async function main() {
             // Canonical audit row (migration 033) — fire-and-forget, REAL
             // sends only (dry-run never fabricates contact records, §21).
             void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
-            console.log(`sent [${lane.direction}][#${idx}] → ${toLocalPhone(phone)} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+            console.log('\n┌─────────────────────────────────────────────────────────────┐');
+            console.log('│ 📤 [إرسال ناجح للواتساب] [' + lane.direction + '][#' + idx + ']');
+            console.log('│ 👤 المالك: ' + (cand.name || 'مالك مباشر') + ' | 📱 الرقم: ' + toLocalPhone(phone));
+            console.log('│ 🏠 الوحدة: ' + (cand.code || 'بدون كود') + ' | 📍 الكمبوند/الموقع: ' + (cand.location || 'القاهرة الجديدة'));
+            console.log('│ 💰 السعر: ' + (cand.price ? cand.price + ' EGP' : 'غير محدد') + ' | 🏷️ النوع: ' + (cand.dealType || 'بيع'));
+            console.log('│ 📡 الخط المستخدم: ' + usedSession + ' | 📊 إجمالي اليوم: [' + daily.sent + '/' + DAILY_CAP + ']');
+            console.log('├─────────────────────────────────────────────────────────────┤');
+            console.log('│ 💬 نص الرسالة المرسلة:');
+            for (const l of text.split('\n')) {
+              console.log('│   ' + l);
+            }
+            console.log('└─────────────────────────────────────────────────────────────┘\n');
             await writeSheetDate(phone, cand.rawMobile, formatCairoDate(), cand.code, 'تم التواصل');
             appendOutreachSpreadsheet(cand, usedSession, formatCairoDate());
             saveCheckpoint(checkpoint);
@@ -1029,11 +1040,8 @@ async function main() {
           } catch (err) {
             summary.failed++;
             console.error(`Send failed for ${phone} via ${lane.name}: ${err.message}`);
-            const isInvalidPhone = err.permanent || err.httpStatus === 400 || (err.message && (
-              err.message.includes('400') ||
+            const isInvalidPhone = err.permanent || (err.message && (
               err.message.includes('not_registered') ||
-              err.message.includes('license') ||
-              err.message.includes('contact') ||
               err.message.includes('unusable chatId')
             ));
             if (isInvalidPhone) {
@@ -1065,7 +1073,17 @@ async function main() {
         // 25 messages finish in ~14.5 minutes inside the 30-min slot before the
         // sending number rotates and rests for 90+ minutes.
         const paceMs = DRY_RUN ? 100 : PACE_MIN_MS + Math.floor(Math.random() * PACE_JITTER_MS);
-        await sleep(paceMs);
+        if (!DRY_RUN) {
+          const paceSec = Math.round(paceMs / 1000);
+          console.log('⏳ فاصل أمان بشري مانع للحظر (' + paceSec + ' ثانية) قبل المالك التالي...');
+          for (let rem = paceSec; rem > 0; rem -= 5) {
+            await sleep(Math.min(5000, rem * 1000));
+            if (rem - 5 > 0) process.stdout.write('... متبقي ' + (rem - 5) + ' ثانية ');
+          }
+          console.log('\n🚀 جاهز للانتقال للمالك التالي!\n');
+        } else {
+          await sleep(paceMs);
+        }
       } else {
         summary.skippedDup++;
       }
@@ -1098,6 +1116,10 @@ async function main() {
 
   console.log(`[outreach] Completed slot: ${summary.sent} sent, ${summary.failed} failed, ${summary.skippedDup} skipped-dup | byDirection: top ${summary.byDirection.top} / bottom ${summary.byDirection.bottom}`);
   console.log(`SUMMARY ${JSON.stringify(summary)}`);
+  if (!DRY_RUN && summary.failed > 0 && summary.sent === 0) {
+    console.error(`owner-outreach FAILED: all ${summary.failed} attempted sends failed in this slot (0 sent)`);
+    process.exit(1);
+  }
   console.log('owner-outreach: done');
   return;
 }

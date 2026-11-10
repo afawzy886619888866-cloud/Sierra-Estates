@@ -8,14 +8,16 @@
  * 
  * Features:
  *  - Runner Health Telemetry (Uptime, Timezone, Supabase sync, Active jobs)
- *  - Dedicated Control for 10 Server Workflows (including Morning Broker Dispatch)
+ *  - 2-Hour Executive Outreach Radar (Live 2h window metrics, Daily Cap, Line Distribution)
+ *  - Continuous Autonomous Outreach Engine Toggle & On-Demand Batch Triggers
+ *  - Dedicated Control for 12 Server Workflows (including Harvester & 2h Digest)
  *  - One-Click 'Run Now', Instant DB-Marker Fallback, Live Output Log Inspector
  *  - High-Contrast Obsidian & Champagne Gold Aesthetics (WCAG 2.2 compliant)
  *  - Full Bilingual Craft (Arabic RTL & English LTR)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { HyouzCard, HyouzCounter, HyouzBeacon, HyouzMagneticButton } from '@/components/admin/HyouzMotion';
 
 type RunEntry = { at: string; exit: string; ms: number; trigger: string; summary: string };
@@ -55,7 +57,66 @@ type Health = {
   gateway?: { reachable?: boolean; status?: string; phone?: string; pushName?: string; error?: string };
 };
 
+interface RecentSentItem {
+  phone: string;
+  code?: string;
+  session?: string;
+  at: string;
+  idx?: number;
+  text?: string;
+}
+
+interface RadarReport {
+  generated_at?: string;
+  cairo_time?: string;
+  window_hours?: number;
+  sent_in_last_2h?: number;
+  sent_today_total?: number;
+  daily_cap?: number;
+  replies_in_last_2h?: number;
+  top_cursor?: number;
+  bottom_cursor?: number;
+  total_candidates?: number;
+  ready_lines?: string[];
+  sessions_used_2h?: Record<string, number>;
+  recent_sent?: RecentSentItem[];
+}
+
+interface RadarConfig {
+  continuous: boolean;
+  cooldownSec: number;
+  dailyCap: number;
+  activeHours: number[];
+}
+
 const DEFAULT_WORKFLOWS: Wf[] = [
+  {
+    slug: 'owner-outreach',
+    name: 'Owner WhatsApp Outreach',
+    name_ar: 'مراسلة وتفاوض الملاك المباشرين',
+    description: 'Autonomous continuous WhatsApp outreach pool with human-jitter pacing and line rotation across New Cairo inventory.',
+    description_ar: 'تشغيل ذاتي متواصل لمراسلة الملاك عبر خطوط الواتساب بنظام الجيتر المانع للحظر وتدوير الخطوط كل دفعة.',
+    status: 'active',
+    schedule: 'Continuous Loop · 09:00–22:00',
+  },
+  {
+    slug: 'outreach-2h-digest',
+    name: '2-Hour Outreach Radar Digest',
+    name_ar: 'ملخص متابعة تواصل الملاك كل ساعتين',
+    description: 'Evaluates outreach metrics every 2 hours: messages sent, line rotation, and delivers WhatsApp executive digest to management.',
+    description_ar: 'تقييم شامل كل ساعتين لعمليات التواصل مع الملاك، دوران خطوط الواتساب، وإرسال التقرير للإدارة عبر الواتساب.',
+    status: 'active',
+    schedule: '0 */2 * * *',
+  },
+  {
+    slug: 'usb-phone-harvester',
+    name: 'USB Phone Group Harvester',
+    name_ar: 'جامع وحدات الواتساب عبر كابل الموبايل',
+    description: 'Extracts WhatsApp property group chats over USB cable twice weekly and on plug-in, parsing posted dates and syncing to DB & Drive.',
+    description_ar: 'سحب وفحص جروبات عقارات القاهرة الجديدة تلقائياً عبر كابل USB مرتين أسبوعياً وعند توصيل الهاتف، وتصنيف الوحدات بحسب تاريخ النشر.',
+    status: 'active',
+    schedule: '0 10 * * 0,3',
+  },
   {
     slug: 'whatsapp-dispatch',
     name: 'Morning Broker Dispatch',
@@ -93,20 +154,11 @@ const DEFAULT_WORKFLOWS: Wf[] = [
     schedule: '30 10 * * *',
   },
   {
-    slug: 'owner-outreach',
-    name: 'Owner WhatsApp Outreach',
-    name_ar: 'مراسلة وتفاوض الملاك المباشرين',
-    description: 'Automated 5-stage closer outreach via WhatsApp pool with jitter pacing to negotiate exclusivity.',
-    description_ar: 'مراسلة الملاك عبر خطوط الواتساب بنظام الجيتر المانع للحظر للتفاوض على توقيع عقود التسويق الحصري.',
-    status: 'active',
-    schedule: '0 11,15 * * *',
-  },
-  {
     slug: 'gateway-sentinel',
     name: 'WhatsApp Gateway Sentinel',
     name_ar: 'حارس جاهزية البوابة والخطوط',
-    description: 'Probes all 8 WhatsApp lines, tests network latency, and restarts stalled browser engines.',
-    description_ar: 'فحص فوري لجاهزية الخطوط الثمانية، قياس زمن الاستجابة، وإعادة إنعاش المتصفحات المتوقفة تلقائياً.',
+    description: 'Probes all WhatsApp lines, tests network latency, and restarts stalled browser engines.',
+    description_ar: 'فحص فوري لجاهزية الخطوط، قياس زمن الاستجابة، وإعادة إنعاش المتصفحات المتوقفة تلقائياً.',
     status: 'active',
     schedule: '*/5 * * * *',
   },
@@ -134,6 +186,19 @@ const L = {
   en: {
     title: 'Server-Side Workflow Control Plane',
     sub: 'Live scheduler and autonomous operations control for New Cairo real estate workflows (owner search, outreach, unit sync, and sentinels).',
+    radarTitle: 'Owner Outreach 2-Hour Performance Radar',
+    radarSub: 'Continuous autonomous loop active during 09:00–22:00 Cairo time with human anti-ban pacing & line rotation.',
+    sent2h: 'Sent in Last 2h',
+    sentToday: 'Today Total / Cap',
+    replies2h: 'Replies (Last 2h)',
+    loopMode: 'Autonomous Loop',
+    loopContinuous: 'CONTINUOUS (AUTONOMOUS)',
+    loopSlot: 'SLOT CADENCE (MANUAL)',
+    triggerBatch: 'Send Next Batch Now',
+    triggerDigest: 'Send 2h Digest to WhatsApp',
+    toggleContinuous: 'Toggle Autonomous Loop',
+    cursorProgress: 'Inventory Progress',
+    activeLines: 'Active Sender Lines',
     health: 'Runner Health',
     uptime: 'Uptime',
     tz: 'Timezone',
@@ -159,6 +224,19 @@ const L = {
   ar: {
     title: 'مركز التحكم بمهام الخادم المؤتمتة',
     sub: 'المجدول المباشر والمشغل الآلي لسير العمل بالقاهرة الجديدة (بحث الملاك، المراسلات، مزامنة الوحدات، الحارس الذكي).',
+    radarTitle: 'رادار متابعة تواصل الملاك (كل ساعتين والتشغيل الذاتي)',
+    radarSub: 'نظام تشغيل ذاتي متواصل يعمل طوال ساعات العمل 09:00-22:00 بتوقيت القاهرة مع تدوير الخطوط وفواصل الأمان البشري.',
+    sent2h: 'المرسل خلال آخر ساعتين',
+    sentToday: 'إجمالي اليوم / الحد اليومي',
+    replies2h: 'الردود المستلمة (ساعتين)',
+    loopMode: 'وضع التشغيل الذاتي',
+    loopContinuous: 'يعمل ذاتياً ومستمر',
+    loopSlot: 'نظام الفترات المنفصلة',
+    triggerBatch: 'تشغيل دفعة تواصل الآن',
+    triggerDigest: 'إرسال تقرير الساعتين للواتساب الآن',
+    toggleContinuous: 'تبديل وضع التشغيل الذاتي',
+    cursorProgress: 'مؤشر التقدم في المخزون',
+    activeLines: 'الخطوط النشطة الجاهزة',
     health: 'حالة المشغل',
     uptime: 'مدة التشغيل',
     tz: 'المنطقة الزمنية',
@@ -201,10 +279,24 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ msg: string; err?: boolean } | null>(null);
 
+  // 2-Hour Radar State
+  const [radar, setRadar] = useState<{ report: RadarReport | null; config: RadarConfig | null } | null>(null);
+  const [radarBusy, setRadarBusy] = useState<string | null>(null);
+
   const showNotice = (msg: string, err = false) => {
     setNotice({ msg, err });
     setTimeout(() => setNotice(null), 5000);
   };
+
+  const loadRadar = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/whatsapp/owner-outreach?action=radar', { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success) {
+        setRadar({ report: json.report, config: json.config });
+      }
+    } catch (_) {}
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -214,7 +306,6 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
 
       const serverList = Array.isArray(data?.workflows) ? data.workflows : [];
       if (serverList.length > 0) {
-        // Merge server list with rich defaults for any missing descriptions
         const serverMap = new Map(serverList.map((w: Wf) => [w.slug, w]));
         const merged = DEFAULT_WORKFLOWS.map((def) => {
           const live = serverMap.get(def.slug);
@@ -225,16 +316,19 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
         setWfs(DEFAULT_WORKFLOWS);
       }
     } catch {
-      // Keep rich catalog visible if proxy is booting
       setWfs((prev) => (prev.length > 0 ? prev : DEFAULT_WORKFLOWS));
     }
   }, []);
 
   useEffect(() => {
     load();
-    const iv = setInterval(load, 15000);
+    loadRadar();
+    const iv = setInterval(() => {
+      load();
+      loadRadar();
+    }, 15000);
     return () => clearInterval(iv);
-  }, [load]);
+  }, [load, loadRadar]);
 
   const runNow = async (slug: string) => {
     setBusy(slug);
@@ -246,7 +340,6 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
       });
       const data = await res.json();
       if (!res.ok && data?.error === 'runner_unreachable') {
-        // Fall back to the DB marker path
         await fetch('/api/admin/workflow-ops', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -266,6 +359,62 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
     }
   };
 
+  // 2-Hour Radar Actions
+  const triggerOutreachBatch = async () => {
+    setRadarBusy('batch');
+    try {
+      const res = await fetch('/api/admin/whatsapp/owner-outreach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'trigger-batch' }),
+      });
+      const d = await res.json();
+      showNotice(d.message || (isAr ? 'تم بدء دفعة التواصل بنجاح!' : 'Batch started!'));
+    } catch (err: any) {
+      showNotice(err.message, true);
+    } finally {
+      setRadarBusy(null);
+      setTimeout(() => { load(); loadRadar(); }, 2500);
+    }
+  };
+
+  const trigger2hDigest = async () => {
+    setRadarBusy('digest');
+    try {
+      const res = await fetch('/api/admin/whatsapp/owner-outreach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'trigger-two-hour-digest' }),
+      });
+      const d = await res.json();
+      showNotice(d.message || (isAr ? 'تم إرسال تقرير الساعتين للواتساب بنجاح!' : '2h Digest sent!'));
+    } catch (err: any) {
+      showNotice(err.message, true);
+    } finally {
+      setRadarBusy(null);
+      setTimeout(() => { load(); loadRadar(); }, 2500);
+    }
+  };
+
+  const toggleContinuous = async () => {
+    setRadarBusy('continuous');
+    try {
+      const nextState = !radar?.config?.continuous;
+      const res = await fetch('/api/admin/whatsapp/owner-outreach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle-continuous', continuous: nextState }),
+      });
+      const d = await res.json();
+      showNotice(d.message || (isAr ? 'تم تحديث وضع التشغيل الذاتي!' : 'Continuous mode updated!'));
+    } catch (err: any) {
+      showNotice(err.message, true);
+    } finally {
+      setRadarBusy(null);
+      setTimeout(() => { load(); loadRadar(); }, 1500);
+    }
+  };
+
   const toggleLogs = async (slug: string) => {
     if (openLogs === slug) return setOpenLogs(null);
     setOpenLogs(slug);
@@ -282,7 +431,7 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
     } catch (_) {}
   };
 
-  const gw = health?.gateway;
+  const isContinuous = Boolean(radar?.config?.continuous ?? true);
 
   return (
     <div
@@ -375,7 +524,7 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
           </HyouzMagneticButton>
 
           <button
-            onClick={load}
+            onClick={() => { load(); loadRadar(); }}
             style={{
               padding: '9px 14px',
               fontSize: 12,
@@ -390,6 +539,291 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
             ⟳ {isAr ? 'تحديث' : 'Refresh'}
           </button>
         </div>
+      </div>
+
+      {/* ── 2-HOUR OUTREACH EXECUTIVE RADAR ───────────────────────────── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(11, 17, 30, 0.99))',
+          border: '1px solid rgba(212, 175, 55, 0.4)',
+          borderRadius: 16,
+          padding: '20px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+          boxShadow: '0 10px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(212, 175, 55, 0.15)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20 }}>📊</span>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#f3e5ab', margin: 0 }}>
+                {t.radarTitle}
+              </h3>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  color: '#d4af37',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                }}
+              >
+                {radar?.report?.cairo_time || (isAr ? 'مباشر الآن' : 'Live')}
+              </span>
+            </div>
+            <p style={{ fontSize: 11.5, color: '#94a3b8', margin: '4px 0 0 0' }}>
+              {t.radarSub}
+            </p>
+          </div>
+
+          {/* Radar Control Buttons */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={triggerOutreachBatch}
+              disabled={radarBusy === 'batch'}
+              style={{
+                padding: '8px 14px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                borderRadius: 8,
+                cursor: 'pointer',
+                border: '1px solid rgba(52, 211, 153, 0.4)',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>⚡</span>
+              <span>{radarBusy === 'batch' ? (isAr ? 'جارٍ البدء…' : 'Starting…') : t.triggerBatch}</span>
+            </button>
+
+            <button
+              onClick={toggleContinuous}
+              disabled={radarBusy === 'continuous'}
+              style={{
+                padding: '8px 14px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                borderRadius: 8,
+                cursor: 'pointer',
+                border: `1px solid ${isContinuous ? 'rgba(212, 175, 55, 0.5)' : 'rgba(148, 163, 184, 0.3)'}`,
+                background: isContinuous ? 'rgba(212, 175, 55, 0.18)' : 'rgba(30, 41, 59, 0.6)',
+                color: isContinuous ? '#f3e5ab' : '#94a3b8',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>{isContinuous ? '🟢' : '⏸️'}</span>
+              <span>
+                {isAr
+                  ? (isContinuous ? 'الوضع الذاتي: نشط مستمر' : 'الوضع الذاتي: موقوف')
+                  : (isContinuous ? 'Auto Loop: ON' : 'Auto Loop: PAUSED')}
+              </span>
+            </button>
+
+            <button
+              onClick={trigger2hDigest}
+              disabled={radarBusy === 'digest'}
+              style={{
+                padding: '8px 14px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                borderRadius: 8,
+                cursor: 'pointer',
+                border: '1px solid rgba(212, 175, 55, 0.4)',
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(153, 122, 21, 0.2))',
+                color: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>📲</span>
+              <span>{radarBusy === 'digest' ? (isAr ? 'جارٍ الإرسال…' : 'Sending…') : t.triggerDigest}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Radar Metric Badges */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>📤 {t.sent2h}</span>
+            <div style={{ fontSize: 24, fontWeight: 900, color: '#34d399' }}>
+              <HyouzCounter value={radar?.report?.sent_in_last_2h ?? 0} />
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#94a3b8', marginInlineStart: 4 }}>
+                {isAr ? 'مالك' : 'owners'}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>📈 {t.sentToday}</span>
+            <div style={{ fontSize: 24, fontWeight: 900, color: '#f3e5ab' }}>
+              <HyouzCounter value={radar?.report?.sent_today_total ?? 0} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b', marginInlineStart: 4 }}>
+                / {radar?.report?.daily_cap ?? 150}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>💬 {t.replies2h}</span>
+            <div style={{ fontSize: 24, fontWeight: 900, color: '#60a5fa' }}>
+              <HyouzCounter value={radar?.report?.replies_in_last_2h ?? 0} />
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#94a3b8', marginInlineStart: 4 }}>
+                {isAr ? 'رد وارد' : 'inbox'}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>⚡ {t.loopMode}</span>
+            <div style={{ fontSize: 15, fontWeight: 800, color: isContinuous ? '#34d399' : '#fbbf24', display: 'flex', alignItems: 'center', gap: 6, height: 32 }}>
+              <HyouzBeacon color={isContinuous ? '#34d399' : '#fbbf24'} size={8} glow={isContinuous} />
+              <span>{isContinuous ? t.loopContinuous : t.loopSlot}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Lines and Progress Footer */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10,
+            fontSize: 11.5,
+            color: '#94a3b8',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            paddingTop: 10,
+          }}
+        >
+          <div>
+            🟢 <b style={{ color: '#cbd5e1' }}>{t.activeLines}:</b>{' '}
+            <span style={{ color: '#d4af37' }}>
+              {radar?.report?.ready_lines?.length ? radar.report.ready_lines.join(' · ') : '3 خطوط نشطة جاهزة للتدوير'}
+            </span>
+          </div>
+
+          <div>
+            🎯 <b style={{ color: '#cbd5e1' }}>{t.cursorProgress}:</b>{' '}
+            <span style={{ color: '#f3e5ab' }}>
+              {radar?.report?.top_cursor ?? 0} من البداية / {radar?.report?.bottom_cursor ?? 0} من النهاية (إجمالي {radar?.report?.total_candidates ?? 4198})
+            </span>
+          </div>
+        </div>
+
+        {/* Live Sent Messages Stream */}
+        {radar?.report?.recent_sent && radar.report.recent_sent.length > 0 && (
+          <div
+            style={{
+              marginTop: 6,
+              background: 'rgba(0, 0, 0, 0.45)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 12,
+              padding: '12px 14px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#f3e5ab' }}>
+                👁️ {isAr ? 'البث المباشر لآخر رسائل تم إرسالها للملاك' : 'Live Stream of Recently Contacted Owners'}
+              </span>
+              <span style={{ fontSize: 10.5, color: '#94a3b8' }}>
+                {isAr ? 'محدث لحظياً كل 15 ثانية' : 'Live updating every 15s'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
+              {radar.report.recent_sent.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: '#0d1321',
+                    border: '1px solid #1e293b',
+                    borderRadius: 8,
+                    padding: '8px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    fontSize: 11.5,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: '#34d399', fontWeight: 800 }}>+{item.phone}</span>
+                      <code style={{ fontSize: 10.5, color: '#d4af37', background: 'rgba(212, 175, 55, 0.1)', padding: '1px 6px', borderRadius: 4 }}>
+                        {item.code || 'Unit Code'}
+                      </code>
+                      <span style={{ fontSize: 10, color: '#60a5fa', background: 'rgba(96, 165, 250, 0.1)', padding: '1px 6px', borderRadius: 4 }}>
+                        {item.session || 'line-1'}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 10.5, color: '#64748b' }}>{fmtAgo(item.at, lang)}</span>
+                  </div>
+                  {item.text && (
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', fontStyle: 'italic', lineHeight: 1.4, whiteSpace: 'pre-line' }}>
+                      {item.text}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── NOTICE ALERT ─────────────────────────────────────────────── */}
@@ -423,7 +857,6 @@ export default function WorkflowOpsView({ lang = 'en' }: { lang?: string }) {
       >
         {wfs.map((w) => {
           const loc = w.local;
-          const lastExit = loc?.lastExit;
           const isBusyThis = busy === w.slug;
 
           return (
