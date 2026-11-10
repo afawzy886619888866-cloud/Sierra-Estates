@@ -3,6 +3,7 @@
 /** Port of deploy/index.html with direct 3D virtual tour and embedded interactive masterplan map. */
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { SIERRA_ADD_LISTING_URL } from '@/lib/site/external-links';
 import dynamic from 'next/dynamic';
 import {
   FileSpreadsheet,
@@ -1438,9 +1439,9 @@ export default function HomePage() {
               <p>{t('ctaSub')}</p>
             </div>
             <div className="ct-act">
-              <Link href="/add-listing" className="btn btn-white" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+              <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="btn btn-white" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Plus className="i" /> <span>{t('ctaBtn1')}</span>
-              </Link>
+              </a>
               <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" className="btn btn-out" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Phone className="i" /> <span>+2 01092048333</span>
               </a>

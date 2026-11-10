@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { ArrowRight, MapPin, Phone, Mail } from 'lucide-react';
 import { Facebook, Instagram, Linkedin, Twitter } from './SocialIcons';
 import { useSite } from '@/lib/site/SiteContext';
+import { SIERRA_ADD_LISTING_URL, SIERRA_RECRUITMENT_URL } from '@/lib/site/external-links';
 
 export default function SiteFooter() {
   const { t, lang } = useSite();
   const isAr = lang === 'ar';
   const cairoPlazaHref = isAr ? '/ar/cairo-plaza' : '/cairo-plaza';
-  const careerHref = isAr ? '/ar/career' : '/career';
   const infoBankHref = isAr ? '/ar/notebookllm' : '/notebookllm';
 
   return (
@@ -45,9 +45,9 @@ export default function SiteFooter() {
             <Link href="/net" style={{ color: '#e9c176', fontWeight: 600 }}>
               🎯 {isAr ? 'الخريطة والرادار العقاري' : 'Map & Radar Scanner'}
             </Link>
-            <Link href="/add-listing" style={{ color: '#10b981', fontWeight: 600 }}>
+            <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#10b981', fontWeight: 600 }}>
               ➕ {isAr ? 'إضافة عقار (مالك أو وسيط)' : 'Add Property Listing'}
-            </Link>
+            </a>
             <Link href="/#contact">
               📝 {isAr ? 'طلب وحدة مخصصة' : 'Request Bespoke Unit'}
             </Link>
@@ -61,9 +61,9 @@ export default function SiteFooter() {
             <Link href={infoBankHref} style={{ color: '#d4af37', fontWeight: 600 }}>
               🏦 {isAr ? 'بنك معلومات القاهرة الجديدة' : 'New Cairo Info Bank'}
             </Link>
-            <Link href={careerHref}>
+            <a href={SIERRA_RECRUITMENT_URL} target="_blank" rel="noopener noreferrer">
               💼 {isAr ? 'انضم لفريقنا (وظائف)' : 'Careers & Opportunities'}
-            </Link>
+            </a>
             <Link href="/#contact">{t('fAgent')}</Link>
           </div>
 

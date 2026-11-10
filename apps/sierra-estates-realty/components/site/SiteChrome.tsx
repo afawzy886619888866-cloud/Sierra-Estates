@@ -19,6 +19,7 @@ import {
   Radar,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
+import { SIERRA_ADD_LISTING_URL } from '@/lib/site/external-links';
 
 export type ActiveNav = 'home' | 'cpds' | 'best' | 'net' | 'properties' | 'contact' | 'projects' | 'career' | null;
 
@@ -71,10 +72,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           </div>
 
           <div className="nav-right">
-            <Link href="/add-listing" className="add-listing-btn" title={t('addListingNote')}>
+            <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="add-listing-btn" title={t('addListingNote')}>
               <span className="al-text">{t('addListing')}</span>
               <span className="al-note">{t('addListingNote')}</span>
-            </Link>
+            </a>
             <Link href="/#contact" className="req-now-btn" title={t('reqNote')}>
               <span className="req-text">{t('reqNow')}</span>
               <span className="req-note">{t('reqNote')}</span>
@@ -200,10 +201,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <Map className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navCpds')}</span>
               </Link>
-              <Link href="/add-listing" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
+              <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <PlusCircle className="i" style={{ width: 18, height: 18, color: '#10b981' }} />
                 <span>{t('addListing')}</span>
-              </Link>
+              </a>
               <Link href={infoBankHref} className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
@@ -322,10 +323,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           <Building2 className="i" style={active === 'cpds' ? { color: '#e9c176' } : undefined} />
           <span>{t('navCpds')}</span>
         </Link>
-        <Link href="/add-listing" className="bn-item" title={t('addListing')}>
+        <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="bn-item" title={t('addListing')}>
           <PlusCircle className="i" style={{ color: '#10b981' }} />
           <span>{t('addListing')}</span>
-        </Link>
+        </a>
         <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`} title={t('reqNow')}>
           <Phone className="i" style={{ color: '#e9c176' }} />
           <span>{t('reqNow')}</span>
