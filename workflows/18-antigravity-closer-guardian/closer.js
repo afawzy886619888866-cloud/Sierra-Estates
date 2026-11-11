@@ -54,9 +54,9 @@ async function matchPropertiesToLead(sb, lead, topN = 5) {
   if (/rent|إيجار|ايجار/.test(intent)) wantRent = true;
   else if (/buy|sale|purchase|شراء/.test(intent)) wantRent = false;
 
-  const budget = Number(String(lead.budget || lead.max_price || '').replace(/[^\d.]/g, '')) || null;
-  const compoundHint = resolveCanonicalCompound(lead.compound || lead.area || '');
-  const bedsWanted = Number(lead.bedrooms) || null;
+  const budget = Number(String(lead.budget || lead.max_price || lead.budget_max || lead.budget_min || '').replace(/[^\d.]/g, '')) || null;
+  const compoundHint = resolveCanonicalCompound(lead.compound || lead.target_compound || lead.zone || lead.area || lead.interest || '');
+  const bedsWanted = Number(lead.bedrooms || lead.preferred_bedrooms) || null;
 
   let units = [];
   try {
@@ -166,13 +166,12 @@ async function closerGuardian(ctx) {
   let freshLeads = [];
   try {
     const { data, error } = await withBackoff(() => sb.from('leads')
-      .select('id,name,full_name,email,phone,intent,interest,compound,area,budget,max_price,bedrooms,source,ai_reply_sent,status,created_at')
+      .select('id,full_name,email,phone,intent,interest,target_compound,zone,budget_min,budget_max,preferred_bedrooms,source,status,created_at,automation,metadata')
       .in('source', ['property_finder', 'website', 'Property Finder', 'Website', 'portal'])
-      .or('ai_reply_sent.is.false,ai_reply_sent.is.null')
       .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
       .limit(100), 'fresh-leads');
     if (error) throw error;
-    freshLeads = data || [];
+    freshLeads = (data || []).filter((l) => !(l.automation?.ai_reply_sent || l.metadata?.ai_reply_sent));
   } catch (e) { ctx.log(`leads read failed: ${e.message}`); }
 
   for (const lead of freshLeads) {
@@ -181,10 +180,10 @@ async function closerGuardian(ctx) {
     const reply = advisoryReply(lead);
     try {
       await withBackoff(() => sb.from('whatsapp_queue').insert({
-        phone: lead.phone || '',
-        message: reply,
-        reference: `advisory-reply:${lead.id}`,
-        status: lead.phone ? 'queued' : 'skipped',
+        recipient_phone: lead.phone || '',
+        message_body: reply,
+        status: lead.phone ? 'pending' : 'failed',
+        metadata: { reference: `advisory-reply:${lead.id}` },
         created_at: new Date().toISOString(),
       }), `advisory:${lead.id}`);
     } catch (e) { ctx.log(`advisory enqueue failed ${lead.id}: ${e.message}`); }
@@ -194,10 +193,14 @@ async function closerGuardian(ctx) {
     const matches = await matchPropertiesToLead(sb, lead, 5);
     stats.matches += matches.length;
     try {
-      await withBackoff(() => sb.from('leads').update({
+      const automation = {
+        ...(lead.automation || {}),
         ai_reply_sent: true,
         ai_reply_at: new Date().toISOString(),
         matched_units: matches.map((m) => ({ code: m.code || m.id, compound: m.compound, price: m.price, score: m.matchScore })),
+      };
+      await withBackoff(() => sb.from('leads').update({
+        automation,
         updated_at: new Date().toISOString(),
       }).eq('id', lead.id), `lead-update:${lead.id}`);
     } catch (e) { ctx.log(`lead update failed ${lead.id}: ${e.message}`); }
@@ -213,7 +216,7 @@ async function closerGuardian(ctx) {
     await ctx.learn('antigravity-closer-guardian', {
       kind: 'buyer_inquiry',
       title: `Inquiry ${lead.id} — ${matches.length} matches`,
-      body: { lead: { source: lead.source, compound: lead.compound, budget: lead.budget }, topMatches: matches.slice(0, 3).map((m) => m.code) },
+      body: { lead: { source: lead.source, compound: lead.target_compound || lead.zone, budget: lead.budget_max || lead.budget_min }, topMatches: matches.slice(0, 3).map((m) => m.code) },
       tags: ['buyer', 'matching'],
       ttlDays: 60,
     });
@@ -223,27 +226,25 @@ async function closerGuardian(ctx) {
   let viewings = [];
   try {
     const { data, error } = await withBackoff(() => sb.from('viewings')
-      .select('id,lead_id,unit_code,listing_id,scheduled_at,status,client_email,ceo_email,team_leader_email,sales_advisor_email,calendar_event_id,golden_hour_at,created_at')
-      .eq('status', 'confirmed')
-      .or('calendar_event_id.is.null,golden_hour_at.is.null')
+      .select('id,lead_id,property_code,scheduled_at,status,notes,calendar_link,visitor_name,visitor_email,visitor_phone,created_at')
+      .in('status', ['confirmed', 'scheduled'])
       .limit(50), 'confirmed-viewings');
     if (error) throw error;
-    viewings = data || [];
+    viewings = (data || []).filter((v) => !v.calendar_link);
   } catch (e) {
     ctx.log(`viewings read failed (table present?): ${e.message}`);
   }
 
   for (const v of viewings) {
     const patch = {};
-    if (!v.calendar_event_id) {
+    if (!v.calendar_link) {
       const booking = await bookViewingOnCalendar(v);
       if (booking.ok) {
-        patch.calendar_event_id = booking.eventId;
         patch.calendar_link = booking.htmlLink;
         stats.viewingsBooked++;
         await ctx.activity('antigravity-closer-guardian',
-          `📅 Viewing booked via Google Calendar — ${v.unit_code} @ ${v.scheduled_at}. Invites dispatched to CEO, Team Leader and Sales Advisor.`,
-          { viewing: v.id, unit: v.unit_code });
+          `📅 Viewing booked via Google Calendar — ${v.property_code || v.id} @ ${v.scheduled_at}.`,
+          { viewing: v.id, unit: v.property_code });
       } else {
         await ctx.learn('antigravity-closer-guardian', {
           kind: 'calendar_failure',
@@ -254,15 +255,7 @@ async function closerGuardian(ctx) {
         });
       }
     }
-    if (!v.golden_hour_at) {
-      // 60-Minute Golden Hour: first follow-up checkpoint 60 min after the
-      // viewing slot ends. The lead-timers cron lane (app/api/cron/lead-timers)
-      // fires the actual follow-up; this guardian owns the tracking stamp.
-      const scheduledEnd = new Date(new Date(v.scheduled_at).getTime() + 60 * 60 * 1000);
-      patch.golden_hour_at = scheduledEnd.toISOString();
-      stats.goldenHourTracked++;
-    }
-    if (Object.keys(patch).length) {
+    if (patch.calendar_link) {
       try {
         await withBackoff(() => sb.from('viewings').update(patch).eq('id', v.id), `viewing:${v.id}`);
       } catch (e) { ctx.log(`viewing update failed ${v.id}: ${e.message}`); }

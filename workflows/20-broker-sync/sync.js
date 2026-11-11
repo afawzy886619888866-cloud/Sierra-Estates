@@ -21,18 +21,23 @@
  * Exit: 0 ok · 1 error · 2 unconfigured
  */
 
+const fs = require('fs');
 const { spawn } = require('child_process');
 const path = require('path');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-const SCRIPT_PATH = path.join(REPO_ROOT, 'scripts', 'sync-scraped-owners-brokers.mjs');
+const LOCAL_SCRIPT = path.join(__dirname, 'sync-scraped-owners-brokers.mjs');
+const SCRIPT_PATH = fs.existsSync(LOCAL_SCRIPT)
+  ? LOCAL_SCRIPT
+  : path.join(REPO_ROOT, 'scripts', 'sync-scraped-owners-brokers.mjs');
+const WORKING_DIR = fs.existsSync(LOCAL_SCRIPT) ? path.resolve(__dirname, '..') : REPO_ROOT;
 
 async function runBrokerSync() {
   console.log(`broker-sync: starting → executing ${path.basename(SCRIPT_PATH)}`);
 
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [SCRIPT_PATH], {
-      cwd: REPO_ROOT,
+      cwd: WORKING_DIR,
       env: { ...process.env },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

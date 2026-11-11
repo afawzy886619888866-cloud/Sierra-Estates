@@ -713,12 +713,13 @@ async function handleUpdate(update) {
 async function main() {
   const invalid = validateStartup();
   if (invalid) {
-    console.error(`telegram-intake bot FAILED to start: ${invalid}`);
-    // Honest retry loop: sleep 10 min, then exit 2 — the compose restart
-    // policy relaunches us, so filling infra/.env goes live within ~10 min
-    // without a fast crash-loop spamming the logs.
-    console.error('retrying in 10 minutes (fill infra/.env to go live immediately + docker restart sierra-telegram-intake)');
-    await new Promise((r) => setTimeout(r, 10 * 60 * 1000));
+    console.error(`telegram-intake bot STANDBY: ${invalid}`);
+    console.error('Standby mode: Provide TELEGRAM_BOT_TOKEN in infra/.env to activate live intake. Heartbeat active.');
+    // Standby loop: heartbeat every 60s for 10 minutes so Docker container stays healthy
+    for (let i = 0; i < 10; i++) {
+      stateWrite(HEARTBEAT_FILE, { at: new Date().toISOString(), status: 'standby', reason: invalid });
+      await new Promise((r) => setTimeout(r, 60 * 1000));
+    }
     process.exit(2);
   }
   log(`starting — agent groups: ${[...AGENT_GROUPS.keys()].join(', ') || '(none)'} | authorized direct senders: ${AGENT_USER_IDS.size} | general: ${GENERAL_GROUP_ID || '(none)'} | sheet: ${sheets.resolveSpreadsheetId() || '(default)'}`);

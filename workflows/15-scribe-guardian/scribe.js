@@ -124,19 +124,28 @@ async function scribeGuardian(ctx) {
       .in('source_channel', ['Direct Owner', 'sheets_new_units', 'owner_direct', 'sheets', 'direct'])
       .limit(200), 'photoless-units');
 
-    for (const unit of photoless || []) {
-      const ageH = (Date.now() - Date.parse(unit.created_at || 0)) / 3600000;
-      if (!unit.owner_phone) continue;
+    // Batch query existing photo requests in one network roundtrip
+    const { data: existingQueue } = await sb.from('whatsapp_queue')
+      .select('status,created_at,metadata')
+      .not('metadata', 'is', null)
+      .limit(1000);
 
-      // Already queued? (whatsapp_queue dedupe by reference)
-      const { data: existing } = await sb.from('whatsapp_queue')
-        .select('id,status,created_at')
-        .eq('reference', `photo-request:${unit.code || unit.id}`)
-        .limit(1);
-      if (existing && existing.length) {
+    const existingMap = new Map();
+    for (const q of existingQueue || []) {
+      const ref = q.metadata?.reference;
+      if (ref) existingMap.set(ref, q);
+    }
+
+    const toInsert = [];
+    for (const unit of photoless || []) {
+      if (!unit.owner_phone) continue;
+      const ref = `photo-request:${unit.code || unit.id}`;
+      const existing = existingMap.get(ref);
+
+      if (existing) {
         // 12h unanswered → alert the Admin OS once.
-        const queuedAt = Date.parse(existing[0].created_at || 0);
-        if (existing[0].status !== 'sent' && Date.now() - queuedAt > PHOTO_REQUEST_TIMEOUT_H * 3600000) {
+        const queuedAt = Date.parse(existing.created_at || 0);
+        if (existing.status !== 'sent' && Date.now() - queuedAt > PHOTO_REQUEST_TIMEOUT_H * 3600000) {
           await ctx.telegramAlert(
             `📸 <b>Photo request unanswered ${Math.round((Date.now() - queuedAt) / 3600000)}h</b> — ` +
             `unit <code>${unit.code || unit.id}</code> (${resolveCanonicalCompound(unit.compound)}), ` +
@@ -146,21 +155,31 @@ async function scribeGuardian(ctx) {
         continue;
       }
 
-      // Enqueue a WhatsApp photo-request job (the dispatch lane sends it).
-      await withBackoff(() => sb.from('whatsapp_queue').insert({
-        phone: unit.owner_phone,
-        message: [
+      toInsert.push({
+        recipient_phone: unit.owner_phone,
+        message_body: [
           `مساء الخير 🌟 معك فريق Sierra Estates.`,
           `بخصوص وحدتكم ${resolveCanonicalCompound(unit.compound)}${unit.code ? ` (كود ${unit.code})` : ''} —`,
           `ممكن صور الوحدة؟ الصور بتزود فرص العرض بشكل كبير.`,
           `لإلغاء الرسائل رد بكلمة "إلغاء"`,
         ].join('\n'),
-        reference: `photo-request:${unit.code || unit.id}`,
-        status: 'queued',
-        priority: unit.is_featured_gem ? 'high' : 'normal',
+        status: 'pending',
+        metadata: {
+          reference: ref,
+          priority: unit.is_featured_gem ? 'high' : 'normal',
+        },
         created_at: new Date().toISOString(),
-      }), `photo-request:${unit.id}`);
+      });
+      existingMap.set(ref, { status: 'pending', created_at: new Date().toISOString() });
       stats.photoRequests++;
+    }
+
+    if (toInsert.length) {
+      // Chunked insert for efficiency
+      for (let i = 0; i < toInsert.length; i += 50) {
+        const chunk = toInsert.slice(i, i + 50);
+        await withBackoff(() => sb.from('whatsapp_queue').insert(chunk), `photo-requests-chunk-${i}`);
+      }
     }
   } catch (e) { ctx.log(`photo queue failed: ${e.message}`); }
 

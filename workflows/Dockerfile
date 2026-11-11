@@ -46,6 +46,7 @@ COPY 17-atlas-sync-guardian ./17-atlas-sync-guardian
 COPY 18-antigravity-closer-guardian ./18-antigravity-closer-guardian
 COPY 19-ops-watchdog ./19-ops-watchdog
 COPY 20-broker-sync ./20-broker-sync
+COPY 21-usb-phone-harvester ./21-usb-phone-harvester
 
 # Run-state (overlap locks, last-run summaries) survives restarts via the
 # compose volume mount at /app/.state.

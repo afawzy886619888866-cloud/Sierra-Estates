@@ -4,21 +4,24 @@ name: Deploy Vercel (Client + Admin)
 #
 # Contract pinned by __tests__/deployment.test.ts and
 # __tests__/actions-and-workflows.test.ts:
-#   • production deploys require a successful ci.yml run (or an audited
-#     emergency_override),
-#   • preview deploys bypass the production CI gate by design,
+#   • production deploys run only after a successful CI workflow on main (or
+#     an audited emergency_override),
+#   • manually requested preview deploys bypass the production CI gate by
+#     design,
 #   • one deployment at a time (max-parallel: 1) with 429 backoff,
 #   • separate client (sierra-estates.net) and admin
 #     (admin.sierra-estates.net) Vercel projects from the same
 #     apps/sierra-estates-realty codebase,
 #   • credentials fail LOUDLY — never a silent skipped deploy.
 #
-# Note: GitHub-hosted runners are free for public repositories, so the
-# push/PR triggers here do not consume paid quota (see
-# docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md section 0 for the private-era
-# history that temporarily reduced ci.yml to manual-only).
+# A workflow_run deployment checks out the exact commit CI validated. Do not
+# change it to a pull-request trigger: this workflow has deployment secrets.
 
 on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       target_env:
@@ -34,22 +37,20 @@ on:
         required: false
         default: false
         type: boolean
-  push:
-    tags:
-      - 'v*'
-
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: deploy-vercel-${{ github.ref }}
+  # Production releases share one queue. A newer green release supersedes an
+  # obsolete in-progress release; preview runs remain isolated by ref.
+  group: deploy-vercel-${{ github.event_name == 'workflow_run' && 'production' || github.ref }}
   cancel-in-progress: true
 
 env:
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-  TARGET_ENV: ${{ inputs.target_env || 'preview' }}
+  TARGET_ENV: ${{ github.event_name == 'workflow_run' && 'production' || inputs.target_env || 'preview' }}
 
 jobs:
   gate:
@@ -61,10 +62,34 @@ jobs:
     steps:
       - name: Decide deployment authorization
         id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CI_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          CI_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          CI_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          DEPLOY_SHA: ${{ github.sha }}
         run: |
-          TARGET_ENV="${{ inputs.target_env || 'preview' }}"
+          TARGET_ENV="$TARGET_ENV"
           EMERGENCY_OVERRIDE="${{ inputs.emergency_override || 'false' }}"
           echo "TARGET_ENV=$TARGET_ENV" >> "$GITHUB_ENV"
+
+          # workflow_run is privileged because it receives deployment secrets.
+          # Only deploy a successful CI run for this repository's main branch,
+          # and deploy that exact tested SHA below.
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            if [ "$CI_CONCLUSION" = "success" ] && \
+              [ "$CI_HEAD_BRANCH" = "main" ] && \
+              [ "$CI_HEAD_REPOSITORY" = "${{ github.repository }}" ] && \
+              [ -n "$CI_HEAD_SHA" ]; then
+              echo "CI gate satisfied for tested main SHA $CI_HEAD_SHA."
+              echo "proceed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::error::CI workflow run is not an eligible successful main-branch run for this repository. Production deploy blocked."
+              echo "proceed=false" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
 
           if [ "$TARGET_ENV" = "preview" ]; then
             echo "CI production gate bypassed for preview environment — preview deploys never require the production CI gate (by design)."
@@ -78,17 +103,18 @@ jobs:
             exit 0
           fi
 
-          # Production without override: require the latest ci.yml run on
-          # this commit (or this ref) to be completed successfully.
-          CONCLUSION=$(gh run list --workflow=ci.yml --repo "${{ github.repository }}" --branch "${{ github.ref_name }}" --limit 1 --json status,conclusion,headSha --jq '.[0] | "\(.status) \(.conclusion) \(.headSha)"' || echo "unknown unknown unknown")
+          # Manually requested production deploys must have a successful CI run
+          # for the exact selected commit, not merely a newer green run on main.
+          CONCLUSION=$(gh run list --workflow=ci.yml --repo "${{ github.repository }}" --branch "${{ github.ref_name }}" --commit "$DEPLOY_SHA" --limit 1 --json status,conclusion,headSha --jq '.[0] | "\(.status) \(.conclusion) \(.headSha)"' || echo "unknown unknown unknown")
           echo "Latest ci.yml run: $CONCLUSION"
           STATUS=$(echo "$CONCLUSION" | cut -d' ' -f1)
           RESULT=$(echo "$CONCLUSION" | cut -d' ' -f2)
-          if [ "$STATUS" = "completed" ] && [ "$RESULT" = "success" ]; then
+          HEAD_SHA=$(echo "$CONCLUSION" | cut -d' ' -f3)
+          if [ "$STATUS" = "completed" ] && [ "$RESULT" = "success" ] && [ "$HEAD_SHA" = "$DEPLOY_SHA" ]; then
             echo "CI gate satisfied — production deploy authorized."
             echo "proceed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::CI gate failed: latest ci.yml run is '$STATUS/$RESULT'. Production deploy BLOCKED. Use emergency_override only for audited emergencies."
+            echo "::error::CI gate failed: ci.yml for '$DEPLOY_SHA' is '$STATUS/$RESULT/$HEAD_SHA'. Production deploy BLOCKED. Use emergency_override only for audited emergencies."
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           fi
         env:
@@ -116,6 +142,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           submodules: false  # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - name: Setup pnpm

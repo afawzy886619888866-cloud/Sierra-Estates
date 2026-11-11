@@ -49,6 +49,8 @@ services:
         required: false
     ports:
       - "127.0.0.1:2786:2786"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
       - TZ=Africa/Cairo
@@ -57,8 +59,8 @@ services:
       - RUNNER_LABEL=docker-runner
       # ── Control API auth (required) ──
       - RUNNER_API_KEY=${RUNNER_API_KEY:?Set RUNNER_API_KEY in infra/.env (strong random value) — the runner control API fails closed without it}
-      # ── Gateway wiring (same network as the RAG station) ──
-      - WHATSAPP_API_URL=http://whatsapp-rag-station:2785
+      # ── Gateway wiring (points to host.docker.internal:2785 for authenticated Windows sessions) ──
+      - WHATSAPP_API_URL=${WHATSAPP_API_URL:-http://host.docker.internal:2785}
       - WHATSAPP_API_TOKEN=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY in infra/.env — the runner cannot drive the gateway without a key}
       - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY}
       # ⚠ NEVER add line-2 (201092048333, the flagship concierge) to this pool.
@@ -140,12 +142,14 @@ services:
     env_file:
       - path: .secrets.env
         required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
       - TZ=Africa/Cairo
       - RUNNER_LABEL=paced-outreach
-      # ── Gateway wiring (same network as the RAG station) ──
-      - WHATSAPP_API_URL=http://whatsapp-rag-station:2785
+      # ── Gateway wiring (points to host.docker.internal:2785 for authenticated Windows sessions) ──
+      - WHATSAPP_API_URL=${WHATSAPP_API_URL:-http://host.docker.internal:2785}
       - WHATSAPP_API_TOKEN=${OPENWA_ADMIN_API_KEY:-}
       - OPENWA_ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:-}
       - OPENWA_SESSION_IDS=${OPENWA_SESSION_IDS:-line-1,line-3,line-4,line-5,line-6,line-7,line-8}
