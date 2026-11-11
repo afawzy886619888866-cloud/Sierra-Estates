@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
-import Image from "next/image";
 import {
   ShieldCheck,
   Phone,
   MessageSquare,
   Copy,
   Check,
-  Globe,
   X,
   ExternalLink,
   Sparkles,
