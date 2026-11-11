@@ -38,10 +38,6 @@ import {
   Compass,
   Radio,
   Zap,
-  TrendingUp,
-  ShieldCheck,
-  CheckCircle2,
-  Phone,
 } from "lucide-react";
 import {
   TARGET_14_COMPOUND_POLYGONS,
@@ -419,9 +415,6 @@ export default function InventoryMap({
     Record<string, "idle" | "loading" | "success" | "cooldown">
   >({});
   const [activeLandmark, setActiveLandmark] = useState<string | null>(null);
-  const [showUnitDetailModal, setShowUnitDetailModal] =
-    useState<boolean>(false);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState<boolean>(false);
 
   // Real-time Harvester Live Opportunities & Telemetry (HARV-030-003)
   const [harvesterPulses, setHarvesterPulses] = useState<HarvesterPulse[]>([]);
@@ -859,7 +852,7 @@ export default function InventoryMap({
           )}
 
           {/* Target 14 Compound GPS Glowing Polygons & Centroid Pills */}
-          {Object.entries(TARGET_14_COMPOUND_POLYGONS).map(([cKey, comp]) => {
+          {Object.entries(TARGET_14_COMPOUND_POLYGONS).map(([_cKey, comp]) => {
             const stat = compoundStats.find(
               (s) => s.compoundCode === comp.code,
             );
