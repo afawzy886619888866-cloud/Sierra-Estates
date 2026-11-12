@@ -19,7 +19,7 @@ describe('Admin DB & Hero Regression Test Suite', () => {
       expect(cairoPlazaSlide).toBeDefined();
       expect(cairoPlazaSlide.main).toContain('Al-Mataria Metro Station.');
       expect(cairoPlazaSlide.mainAr).toContain('محطة مترو المطرية.');
-      expect(cairoPlazaSlide.img).toBe('/cairo-plaza/real-facade-ai-enhanced.jpg');
+      expect(cairoPlazaSlide.img).toBe('/cairo-plaza/real-facade-ai-enhanced.webp');
       expect(cairoPlazaSlide.href).toBe('/cairo-plaza');
       expect(cairoPlazaSlide.objectPosition).toBe('center 35%');
       expect(cairoPlazaSlide.sub).toContain('Explore current project evidence');
