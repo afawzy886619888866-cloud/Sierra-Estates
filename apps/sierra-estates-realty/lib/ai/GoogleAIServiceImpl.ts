@@ -95,11 +95,12 @@ export class GoogleAIServiceImpl implements AIService {
   private selectModel(
     requested: AIModel,
     content: string | any
-  ): 'gemini-3.6-flash' | 'gemini-3.1-pro-preview' {
+  ): string {
+    const defaultModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     if (requested === 'vision' || Array.isArray(content)) {
-      return 'gemini-3.1-pro-preview';
+      return process.env.GEMINI_VISION_MODEL || defaultModel;
     }
-    return 'gemini-3.6-flash';
+    return defaultModel;
   }
 }
 

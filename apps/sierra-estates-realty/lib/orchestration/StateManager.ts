@@ -83,6 +83,203 @@ export class StateManager {
   }
 
   /**
+   * Translates incoming document-style or agent updates into valid table-specific
+   * Postgres column values, merging nested objects into JSONB columns rather than
+   * passing dotted keys to PostgREST.
+   */
+  static buildPayload(
+    targetTable: string,
+    currentRow: any,
+    updates?: Record<string, any>,
+    nextState?: OrchestrationState
+  ): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+
+    if (nextState) {
+      payload.orchestration_state = nextState;
+    }
+
+    if (!updates || Object.keys(updates).length === 0) {
+      return payload;
+    }
+
+    if (targetTable === 'broker_listings') {
+      const intelligence: Record<string, any> = { ...(currentRow?.intelligence || {}) };
+      const extractedData: Record<string, any> = {
+        ...(currentRow?.extractedData || currentRow?.extracted_data || {}),
+      };
+
+      for (const [key, val] of Object.entries(updates)) {
+        if (key.startsWith('intelligence.')) {
+          const subKey = key.slice('intelligence.'.length);
+          intelligence[subKey] = val;
+        } else if (key.startsWith('extractedData.') || key.startsWith('extracted_data.')) {
+          const subKey = key.replace(/^extracted_?data\./i, '');
+          extractedData[subKey] = val;
+        } else if (key === 'beds' || key === 'rooms') {
+          extractedData.bedrooms = val;
+          extractedData.beds = val;
+          intelligence.beds = val;
+        } else if (key === 'baths' || key === 'bathrooms') {
+          extractedData.bathrooms = val;
+          extractedData.baths = val;
+          intelligence.baths = val;
+        } else if (key === 'intelligence' && typeof val === 'object' && val !== null) {
+          Object.assign(intelligence, val);
+        } else if (
+          (key === 'extractedData' || key === 'extracted_data') &&
+          typeof val === 'object' &&
+          val !== null
+        ) {
+          Object.assign(extractedData, val);
+        } else if (key === 'status') {
+          payload.status = val;
+        } else if (key === 'isVerified' || key === 'is_verified') {
+          payload.is_verified = Boolean(val);
+        } else if (key === 'senderInfo' || key === 'sender_info') {
+          payload.sender_info = val;
+        } else if (key === 'sourceGroup' || key === 'source_group') {
+          payload.source_group = val;
+        } else if (key === 'sourcePlatform' || key === 'source_platform') {
+          payload.source_platform = val;
+        } else if (key === 'rawMessage' || key === 'raw_message') {
+          payload.raw_message = val;
+        } else {
+          if (key.includes('.')) {
+            const parts = key.split('.');
+            let cur = intelligence;
+            for (let i = 0; i < parts.length - 1; i++) {
+              cur[parts[i]] = cur[parts[i]] || {};
+              cur = cur[parts[i]];
+            }
+            cur[parts[parts.length - 1]] = val;
+          } else {
+            intelligence[key] = val;
+          }
+        }
+      }
+
+      payload.intelligence = intelligence;
+      payload.extracted_data = extractedData;
+      payload.updated_at = new Date().toISOString();
+      return payload;
+    }
+
+    if (targetTable === 'listings') {
+      const automation: Record<string, any> = { ...(currentRow?.automation || {}) };
+
+      const KNOWN_LISTING_COLS = new Set([
+        'title', 'title_ar', 'description', 'description_ar', 'compound', 'developer',
+        'location_area', 'city', 'property_type', 'deal_type', 'price', 'price_currency',
+        'bedrooms', 'bathrooms', 'area_sqm', 'finishing_type', 'delivery_year', 'down_payment',
+        'installment_years', 'monthly_installment', 'roi_percentage', 'cap_rate',
+        'valuation_status', 'status', 'verified', 'publish_to_client', 'code', 'zone',
+        'egp_m', 'usd', 'ai_score', 'tag', 'agent', 'ago', 'img', 'photos', 'garden_area',
+        'owner_type', 'pf_reference_number', 'pf_status', 'sync_hash', 'sync_source',
+        'last_sync_at', 'furnishing_status'
+      ]);
+
+      for (const [key, val] of Object.entries(updates)) {
+        if (key.startsWith('automation.')) {
+          const subKey = key.slice('automation.'.length);
+          automation[subKey] = val;
+        } else if (key === 'automation' && typeof val === 'object' && val !== null) {
+          Object.assign(automation, val);
+        } else if (key === 'descriptionEn' || key === 'description') {
+          payload.description = val;
+        } else if (key === 'descriptionAr' || key === 'description_ar') {
+          payload.description_ar = val;
+        } else if (key === 'beds' || key === 'rooms' || key === 'bedrooms') {
+          payload.bedrooms = Number(val) || 0;
+        } else if (key === 'baths' || key === 'bathrooms') {
+          payload.bathrooms = Number(val) || 0;
+        } else if (key === 'brandedMediaUrls' || key === 'photos') {
+          payload.photos = Array.isArray(val) ? val : [val];
+        } else if (key === 'tagline') {
+          automation.tagline = val;
+        } else if (key.includes('.')) {
+          const parts = key.split('.');
+          let cur = automation;
+          for (let i = 0; i < parts.length - 1; i++) {
+            cur[parts[i]] = cur[parts[i]] || {};
+            cur = cur[parts[i]];
+          }
+          cur[parts[parts.length - 1]] = val;
+        } else {
+          const snakeKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+          if (KNOWN_LISTING_COLS.has(snakeKey)) {
+            payload[snakeKey] = val;
+          } else {
+            automation[key] = val;
+          }
+        }
+      }
+
+      payload.automation = automation;
+      payload.updated_at = new Date().toISOString();
+      return payload;
+    }
+
+    if (targetTable === 'leads') {
+      const aiProfiling: Record<string, any> = {
+        ...(currentRow?.aiProfiling || currentRow?.ai_profiling || {}),
+      };
+      const automation: Record<string, any> = { ...(currentRow?.automation || {}) };
+      const metadata: Record<string, any> = { ...(currentRow?.metadata || {}) };
+
+      const KNOWN_LEAD_COLS = new Set([
+        'full_name', 'phone', 'email', 'channel', 'lead_type', 'status', 'target_compound',
+        'target_property_type', 'budget_min', 'budget_max', 'budget_currency',
+        'preferred_bedrooms', 'preferred_delivery_year', 'lead_score', 'assigned_agent_id',
+        'summary_notes', 'tags', 'external_message_id', 'source', 'mode', 'zone', 'phase',
+        'priority', 'via', 'interest', 'capital_allocation', 'locale', 'stage', 'whatsapp'
+      ]);
+
+      for (const [key, val] of Object.entries(updates)) {
+        if (key.startsWith('aiProfiling.') || key.startsWith('ai_profiling.')) {
+          const subKey = key.replace(/^ai_?profiling\./i, '');
+          aiProfiling[subKey] = val;
+        } else if (key.startsWith('automation.')) {
+          const subKey = key.slice('automation.'.length);
+          automation[subKey] = val;
+        } else if (key.startsWith('metadata.')) {
+          const subKey = key.slice('metadata.'.length);
+          metadata[subKey] = val;
+        } else if (key.includes('.')) {
+          const parts = key.split('.');
+          let cur = metadata;
+          for (let i = 0; i < parts.length - 1; i++) {
+            cur[parts[i]] = cur[parts[i]] || {};
+            cur = cur[parts[i]];
+          }
+          cur[parts[parts.length - 1]] = val;
+        } else {
+          const snakeKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+          if (KNOWN_LEAD_COLS.has(snakeKey)) {
+            payload[snakeKey] = val;
+          } else {
+            metadata[key] = val;
+          }
+        }
+      }
+
+      payload.ai_profiling = aiProfiling;
+      payload.automation = automation;
+      payload.metadata = metadata;
+      return payload;
+    }
+
+    // Generic fallback for any other table
+    for (const [key, val] of Object.entries(updates)) {
+      if (!key.includes('.')) {
+        const snakeKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+        payload[snakeKey] = val;
+      }
+    }
+    return payload;
+  }
+
+  /**
    * Mark stage as complete and advance to next.
    *
    * Monotonic (forward-only): if another concurrent agent has already moved the
@@ -103,20 +300,37 @@ export class StateManager {
     const hasUpdates = Boolean(updates && Object.keys(updates).length > 0);
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      const current = await readState(docId, collection);
+      const currentRow = await getRecord<any>(table(collection), docId);
+      const current = currentRow?.orchestrationState ?? {};
 
       // Already at or past the target — apply non-stage updates only, don't regress.
       if (stageIndex(current.stage) >= stageIndex(nextStage)) {
-        if (hasUpdates) await updateRecord(table(collection), docId, updates!);
+        if (hasUpdates) {
+          const payload = StateManager.buildPayload(table(collection), currentRow, updates);
+          const { error } = await getSupabaseAdmin()
+            .from(table(collection))
+            .update(payload)
+            .eq('id', docId);
+          if (error) {
+            throw new Error(`[supabase:completeStage ${table(collection)}] ${error.message}`);
+          }
+        }
         return;
       }
 
-      const applied = await StateManager.casState(docId, collection, current, {
-        ...current,
-        stage: nextStage,
-        status: 'completed',
-        lastCompletedAt: new Date().toISOString(),
-      }, updates);
+      const applied = await StateManager.casState(
+        docId,
+        collection,
+        current,
+        {
+          ...current,
+          stage: nextStage,
+          status: 'completed',
+          lastCompletedAt: new Date().toISOString(),
+        },
+        updates,
+        currentRow
+      );
 
       if (applied) return;
     }
@@ -141,12 +355,10 @@ export class StateManager {
     collection: keyof typeof COLLECTIONS,
     observed: OrchestrationState,
     next: OrchestrationState,
-    updates?: Record<string, any>
+    updates?: Record<string, any>,
+    currentRow?: any
   ): Promise<boolean> {
-    const payload: Record<string, unknown> = {
-      ...(updates ?? {}),
-      orchestration_state: next,
-    };
+    const payload = StateManager.buildPayload(table(collection), currentRow, updates, next);
 
     let query = getSupabaseAdmin()
       .from(table(collection))

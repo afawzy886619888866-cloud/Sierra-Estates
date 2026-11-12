@@ -211,7 +211,7 @@ export async function POST(req: NextRequest) {
               system: LEILA_PROMPT.system,
               user: rawMessage
             },
-            { model: 'gemini-1.5-flash', temperature: 0.3 }
+            { model: process.env.GEMINI_MODEL || 'gemini-3.5-flash', temperature: 0.3 }
           );
           
           leilaReply = {
