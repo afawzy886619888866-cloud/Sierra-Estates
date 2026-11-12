@@ -763,6 +763,14 @@ CREATE TABLE IF NOT EXISTS public.viewings (
     source TEXT DEFAULT 'website'
         CHECK (source IN ('website', 'whatsapp', 'admin', 'property-finder', 'concierge')),
     calendar_link TEXT,
+    -- Migration 043: 3-way dispatch roster + Golden Hour deadline for the
+    -- public viewing flow (app/api/viewing-requests). Before this, the route
+    -- inserted these as columns that existed nowhere, so PostgREST rejected
+    -- every public viewing request (PGRST204).
+    ceo_email TEXT,
+    team_leader_email TEXT,
+    sales_advisor_email TEXT,
+    golden_hour_at TIMESTAMPTZ,
     -- Phase 9 (migration 015): client-survey capability token, minted when
     -- an agent marks the viewing completed. The public survey endpoint
     -- validates it server-side (service-role lookup, token = capability);

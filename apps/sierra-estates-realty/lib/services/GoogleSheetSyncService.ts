@@ -145,7 +145,14 @@ export async function syncWebsiteSubmissionToSheet(
   timeoutMs = 90_000
 ): Promise<WebsiteSheetSyncResult> {
   const url = process.env.SHEETS_WEBAPP_URL || process.env.WF_SHEET_WRITE_URL;
-  const secret = process.env.SHEETS_WEBAPP_SECRET || process.env.WF_SHEET_WRITE_SECRET || 'SE_OUTREACH_SECRET_2026_CAIRO';
+  // Secret chain mirrors /api/sync/sheet-webhook: SIERRA_SECRET_KEY is the
+  // canonical rotation point; the legacy vars and constant keep already-
+  // configured deployments authenticating.
+  const secret =
+    process.env.SIERRA_SECRET_KEY ||
+    process.env.SHEETS_WEBAPP_SECRET ||
+    process.env.WF_SHEET_WRITE_SECRET ||
+    'SE_OUTREACH_SECRET_2026_CAIRO';
 
   if (!url) {
     logger.info(

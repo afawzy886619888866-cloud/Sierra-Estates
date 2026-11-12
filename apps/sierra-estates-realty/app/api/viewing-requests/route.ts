@@ -117,21 +117,27 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 2. Canonical viewing row (public.viewings — migration 014) ─────────
-    // 3-way dispatch roster + golden-hour deadline. These used to ride as
-    // four insert columns (ceo_email / team_leader_email /
-    // sales_advisor_email / golden_hour_at) that exist in NO schema or
-    // migration, so PostgREST rejected every insert (PGRST204) and the
-    // public viewing form returned 500. The viewings table has no such
-    // columns, so the roster + deadline now park in `notes` (a real column,
-    // already free-text) where the ops dashboard still reads them.
+    // 3-way dispatch roster + golden-hour deadline in REAL columns
+    // (migration 043). History: these four fields used to ride as insert
+    // columns that existed in no schema or migration, so PostgREST rejected
+    // every insert (PGRST204) and the public viewing form returned 500 on
+    // every submission. Migration 043 adds them for real; until it is
+    // applied on a given project, the insert falls back to parking the
+    // roster + deadline in `notes` (a real column) so the request still
+    // lands.
     const goldenHourAt = new Date(new Date(`${data.preferredDate}T12:00:00Z`).getTime() + 60 * 60 * 1000).toISOString();
-    const dispatchRoster =
-      `CEO: a.fawzy8866@gmail.com | Team Leader: teamleader@sierra-estates.net | ` +
-      `Sales Advisor: advisory@sierra-estates.net | Golden Hour deadline: ${goldenHourAt}`;
-    const visitorNotes = data.message?.trim()
-      ? `${data.message.trim()}\n\n---\n${dispatchRoster}`
-      : dispatchRoster;
-    const viewing = await insertRecord<{ id: string }>('viewings', {
+    const dispatchRoster = {
+      ceoEmail: 'a.fawzy8866@gmail.com',
+      teamLeaderEmail: 'teamleader@sierra-estates.net',
+      salesAdvisorEmail: 'advisory@sierra-estates.net',
+    };
+    const rosterText =
+      `CEO: ${dispatchRoster.ceoEmail} | Team Leader: ${dispatchRoster.teamLeaderEmail} | ` +
+      `Sales Advisor: ${dispatchRoster.salesAdvisorEmail} | Golden Hour deadline: ${goldenHourAt}`;
+    const notesFallback = data.message?.trim()
+      ? `${data.message.trim()}\n\n---\n${rosterText}`
+      : rosterText;
+    const viewingBase = {
       ...(leadId ? { leadId } : {}),
       propertyCode: data.propertyCode,
       visitorName: data.visitorName,
@@ -140,12 +146,62 @@ export async function POST(request: NextRequest) {
       preferredDate: data.preferredDate,
       preferredTime: data.preferredTime || 'morning',
       numberOfPeople: data.numberOfPeople || 1,
-      notes: visitorNotes,
       status: 'pending_approval',
       source: 'website',
       createdAt: now,
       updatedAt: now,
-    });
+    };
+    let viewing: { id: string };
+    try {
+      viewing = await insertRecord<{ id: string }>('viewings', {
+        ...viewingBase,
+        ...dispatchRoster,
+        goldenHourAt,
+        ...(data.message?.trim() ? { notes: data.message.trim() } : {}),
+      });
+    } catch (colErr) {
+      // Pre-migration-043 table: PostgREST answers "Could not find the
+      // 'ceo_email' column of 'viewings' in the schema cache" (PGRST204).
+      // Retry once with the roster parked in notes; anything else rethrows.
+      const msg = colErr instanceof Error ? colErr.message : String(colErr);
+      if (!/could not find the .* column|schema cache|does not exist|PGRST204/i.test(msg)) {
+        throw colErr;
+      }
+      logger.warn(
+        '[viewing-requests] viewings dispatch columns missing (migration 043 not applied yet) — parking roster in notes'
+      );
+      viewing = await insertRecord<{ id: string }>('viewings', {
+        ...viewingBase,
+        notes: notesFallback,
+      });
+    }
+
+    // ── 2b. Golden Hour follow-up task (public.followups — real table) ─────
+    // The 60-minute timer was previously only a string inside the calendar
+    // event text; nothing operational ever acted on it. A real followup row
+    // (type 'viewing', due at the golden-hour deadline) makes the timer
+    // visible on the CRM task board and lets /api/cron/lead-timers flip it
+    // to 'overdue' when it lapses. Best-effort: a followups failure must
+    // never break the visitor's 201.
+    try {
+      await insertRecord('followups', {
+        ...(leadId ? { leadId } : {}),
+        type: 'viewing',
+        title: `Golden Hour follow-up — ${data.propertyCode} (${data.visitorName})`,
+        notes:
+          `60-minute Golden Hour window after the viewing slot. ` +
+          `Unit ${data.propertyCode}, client ${data.visitorName} (${phone}). ` +
+          `Confirm advisor assignment and log the call outcome. 25% Website Commission Discount applies.`,
+        dueAt: goldenHourAt,
+        status: 'pending',
+        priority: 'high',
+        createdBy: 'viewing-requests-bot',
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch (followupErr) {
+      logger.warn('[viewing-requests] Golden Hour followup row failed (non-fatal):', followupErr);
+    }
 
     // ── 2b. Golden Hour follow-up task (public.followups — real table) ─────
     // The 60-minute timer was previously only a string inside the calendar
