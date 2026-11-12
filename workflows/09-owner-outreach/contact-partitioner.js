@@ -39,18 +39,21 @@ function cairoDateStr() {
 
 function loadContactedLedger() {
   const seen = new Set();
-  try {
-    if (fs.existsSync(LEDGER)) {
-      const lines = fs.readFileSync(LEDGER, 'utf8').split('\n');
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const entry = JSON.parse(line);
-          if (entry && entry.phone) seen.add(entry.phone);
-        } catch (_) {}
+  const PACED_LEDGER = path.join(STATE_DIR, 'paced-outreach-ledger.jsonl');
+  for (const file of [LEDGER, PACED_LEDGER]) {
+    try {
+      if (fs.existsSync(file)) {
+        const lines = fs.readFileSync(file, 'utf8').split('\n');
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const entry = JSON.parse(line);
+            if (entry && entry.phone) seen.add(entry.phone);
+          } catch (_) {}
+        }
       }
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
   return seen;
 }
 
@@ -119,7 +122,7 @@ async function fetchSheetCandidates(contactedSet) {
     }
 
     const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
-    if (avail && (avail.includes('sold') || avail.includes('تم البيع') || avail.includes('not available') || avail.includes('غير متاح'))) {
+    if (avail && (avail.includes('sold') || avail.includes('تم البيع') || avail.includes('rented') || avail.includes('تم الإيجار'))) {
       continue;
     }
 

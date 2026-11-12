@@ -152,13 +152,24 @@ function slotBudgetLeft(worker) {
   return { slot: Math.max(0, SLOT_BUDGET - used), day: Math.max(0, DAILY_CAP_TOTAL - (c.dayTotal || 0)) };
 }
 
-/** Has this phone been contacted by `worker` within its re-contact window? */
+/** Has this phone been contacted by `worker` (or 09-owner-outreach) within its re-contact window? */
 function recentlyContacted(phone, worker) {
   const days = worker === 'active-renting' ? RECONTACT_DAYS_RENT : RECONTACT_DAYS_MASSIVE;
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
   for (const e of ledgerRead()) {
-    if (e.phone === phone && e.worker === worker && Date.parse(e.at) > cutoff) return true;
+    if (e.phone === phone && (!e.worker || e.worker === worker) && Date.parse(e.at) > cutoff) return true;
   }
+  try {
+    const ownerLedger = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
+    if (fs.existsSync(ownerLedger)) {
+      const lines = fs.readFileSync(ownerLedger, 'utf8').split('\n');
+      for (const l of lines) {
+        if (!l.trim()) continue;
+        const e = JSON.parse(l);
+        if (e && e.phone === phone && (!e.at || Date.parse(e.at) > cutoff)) return true;
+      }
+    }
+  } catch (_) {}
   return false;
 }
 
@@ -257,6 +268,7 @@ async function loadCandidates() {
       const rawPhone = r.Mobile || r.Phone || r.owner_phone || r.Owner_Mobile_Internal || r.mobile;
       const phone = normalizePhone(rawPhone);
       if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue;
+      if (['201031622600', '201092048333', '201032206443', '201061399688', '201009006157', '201112345678', '201119876543'].includes(phone)) continue;
 
       const rawDeal = String(r.Deal_Type || r.Type || r.deal_type || r.type || 'rent').toLowerCase().trim();
       const dealType = (rawDeal.includes('rent') || rawDeal.includes('ايجار') || rawDeal.includes('إيجار')) ? 'rent' : 'sale';
@@ -414,10 +426,14 @@ const gateway = new GatewayClient();
 
 /** Split the ready pool between the two workers, NEVER touching line-2. */
 function assignLines(readyLines) {
-  const usable = (readyLines || []).filter((l) => l !== CONCIERGE_LINE);
+  const normalized = (readyLines || [])
+    .map((l) => (typeof l === 'string' ? l : (l && (l.uuid || l.name || l.id)) || ''))
+    .filter(Boolean);
+  const usable = normalized.filter((l) => l !== CONCIERGE_LINE);
   const a = [];
   const b = [];
   usable.forEach((l, i) => (i % 2 === 0 ? a : b).push(l));
+  if (a.length && !b.length) b.push(a[0]);
   return { 'active-renting': a, 'massive-owners': b };
 }
 

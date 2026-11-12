@@ -24,6 +24,7 @@ const { buildDailyOutreachReport } = require('./daily-outreach-report');
 
 const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
 const LEDGER_FILE = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
+const PACED_LEDGER_FILE = path.join(STATE_DIR, 'paced-outreach-ledger.jsonl');
 const DAILY_FILE = path.join(STATE_DIR, 'owner-outreach-daily.json');
 const CHECKPOINT_FILE = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
 const CONFIG_FILE = path.join(STATE_DIR, 'owner-outreach-config.json');
@@ -103,19 +104,26 @@ async function generateAndSendTwoHourDigest(options = {}) {
   const twoHoursAgoMs = now.getTime() - 2 * 60 * 60 * 1000;
   const todayDate = getCairoDateStr(now);
 
-  // 1. Parse local ledger entries
+  // 1. Parse local ledger entries (both owner-outreach and paced-outreach)
   let ledgerEntries = [];
-  if (fs.existsSync(LEDGER_FILE)) {
-    try {
-      const raw = fs.readFileSync(LEDGER_FILE, 'utf8');
-      for (const line of raw.split('\n')) {
-        if (!line.trim()) continue;
-        try {
-          const obj = JSON.parse(line);
-          if (obj && obj.phone) ledgerEntries.push(obj);
-        } catch (_) {}
-      }
-    } catch (_) {}
+  for (const lf of [LEDGER_FILE, PACED_LEDGER_FILE]) {
+    if (fs.existsSync(lf)) {
+      try {
+        const raw = fs.readFileSync(lf, 'utf8');
+        for (const line of raw.split('\n')) {
+          if (!line.trim()) continue;
+          try {
+            const obj = JSON.parse(line);
+            if (obj && obj.phone && !obj.dryRun) {
+              const sess = typeof obj.session === 'string'
+                ? obj.session
+                : (typeof obj.sessionId === 'string' ? obj.sessionId : (obj.sessionId?.name || obj.sessionId?.uuid || 'line-1'));
+              ledgerEntries.push({ ...obj, session: sess });
+            }
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
   }
 
   // 2. Fetch Supabase owner_outreach_log stats & merge today's rows
@@ -255,6 +263,13 @@ async function generateAndSendTwoHourDigest(options = {}) {
     ? Object.entries(bySession2h).map(([k, v]) => `• ${k}: ${v} رسالة`).join('\n')
     : '• لا توجد إرسالات جديدة في آخر ساعتين';
 
+  const recentContactsText = sentLast2h.length
+    ? sentLast2h.slice(-15).reverse().map((e) => {
+        const p = String(e.phone || '').replace(/\D/g, '');
+        return `• +${p} — كود: ${e.code || '—'} (${e.session || 'line-1'})`;
+      }).join('\n')
+    : '• لم يتم إرسال رسائل جديدة خلال آخر ساعتين';
+
   const readySummaryText = readySessions.length
     ? readySessions.map((s) => `${s.id} (+${s.phone || '?'})`).join(' ، ')
     : '⚠️ لا يوجد خط متصل حالياً';
@@ -274,7 +289,10 @@ async function generateAndSendTwoHourDigest(options = {}) {
     `📡 *توزيع الإرسال (آخر ساعتين):*`,
     sessionLinesText,
     `────────────────────`,
-    `🤖 _يعمل النظام تلقائياً في الخلفية حتى عند إغلاق البرنامج، ويمكن التحكم الكامل من لوحة الإدارة._`,
+    `📋 *أحدث الملاك المتواصل معهم (اضغط على الرقم لفتح المحادثة):*`,
+    recentContactsText,
+    `────────────────────`,
+    `🤖 _جميع المحادثات مفتوحة وظاهرة مباشرة على واتساب في الخطوط المرسلة للمتابعة الفورية._`,
   ].join('\n');
 
   const sendWhatsApp = options.sendWhatsApp !== false;

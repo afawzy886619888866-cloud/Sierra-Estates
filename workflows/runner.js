@@ -445,7 +445,8 @@ async function schedulerTick() {
     const hourKey = `${cairoDate}-${cairoHour}:${slotMin}`;
 
     // Read config
-    let outreachConfig = { continuous: true, cooldownSec: 90, dailyCap: 150, activeHours: [9, 22] };
+    const defaultDailyCap = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '240', 10);
+    let outreachConfig = { continuous: true, cooldownSec: 90, dailyCap: defaultDailyCap, activeHours: [9, 22] };
     try {
       const cfgPath = path.join(state.STATE_DIR, 'owner-outreach-config.json');
       if (fs.existsSync(cfgPath)) {
@@ -470,7 +471,7 @@ async function schedulerTick() {
     const inActiveHours = (customStart === 9 && customEnd === 22)
       ? (cairoHour >= 9 && cairoHour < 22)
       : (cairoHour >= customStart && cairoHour < customEnd);
-    const underCap = dailySent < (outreachConfig.dailyCap || 150);
+    const underCap = dailySent < (outreachConfig.dailyCap || defaultDailyCap);
 
     if (inActiveHours && isOutreachActive && !running.has('owner-outreach') && !manualQueue.has('owner-outreach')) {
       if (underCap) {

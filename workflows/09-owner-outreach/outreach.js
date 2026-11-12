@@ -228,7 +228,7 @@ const BATCH_CAP = parseInt(process.env.WF_SLOT_BATCH || '25', 10);
 // kill < the 30-min slot cadence. Anything already mid-send finishes first.
 const SLOT_DEADLINE_MS = parseInt(process.env.WF_SLOT_DEADLINE_MS || '1380000', 10);
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
-const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer')
+const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer,not available,متاح,غير متاح')
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const AH_ENV = String(process.env.WF_OUTREACH_ACTIVE_HOURS || '9-22').split('-');
 const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || AH_ENV[1] === '' || parseInt(AH_ENV[1], 10) > 23 ? 24 : parseInt(AH_ENV[1], 10)];
@@ -417,21 +417,25 @@ const RECONTACT_AFTER_DAYS = Math.max(0, parseInt(process.env.WF_RECONTACT_AFTER
 function loadLedgerPhones() {
   const seen = new Set();
   const cutoffMs = RECONTACT_AFTER_DAYS > 0 ? Date.now() - RECONTACT_AFTER_DAYS * 86400_000 : 0;
-  try {
-    const lines = fs.readFileSync(LEDGER, 'utf8').split('\n');
-    for (const l of lines) {
-      if (!l.trim()) continue;
-      try {
-        const entry = JSON.parse(l);
-        if (!entry || !entry.phone) continue;
-        if (cutoffMs > 0 && entry.at) {
-          const ts = Date.parse(entry.at);
-          if (!Number.isNaN(ts) && ts < cutoffMs) continue;
-        }
-        seen.add(entry.phone);
-      } catch { /* skip bad line */ }
-    }
-  } catch { /* first run */ }
+  const PACED_LEDGER = path.join(STATE_DIR, 'paced-outreach-ledger.jsonl');
+  for (const file of [LEDGER, PACED_LEDGER]) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const lines = fs.readFileSync(file, 'utf8').split('\n');
+      for (const l of lines) {
+        if (!l.trim()) continue;
+        try {
+          const entry = JSON.parse(l);
+          if (!entry || !entry.phone) continue;
+          if (cutoffMs > 0 && entry.at) {
+            const ts = Date.parse(entry.at);
+            if (!Number.isNaN(ts) && ts < cutoffMs) continue;
+          }
+          seen.add(entry.phone);
+        } catch { /* skip bad line */ }
+      }
+    } catch { /* first run */ }
+  }
   return seen;
 }
 
@@ -665,6 +669,15 @@ async function main() {
   const readyEntries = [];
   if (poolEntries.length) {
     DAILY_CAP = CAP_EXPLICIT ? PER_LINE_DAILY_CAP : PER_LINE_DAILY_CAP * poolEntries.length;
+    try {
+      const cfgPath = path.join(STATE_DIR, 'owner-outreach-config.json');
+      if (fs.existsSync(cfgPath)) {
+        const cfgObj = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        if (cfgObj && Number(cfgObj.dailyCap) > DAILY_CAP) {
+          DAILY_CAP = Number(cfgObj.dailyCap);
+        }
+      }
+    } catch (_) {}
     for (const e of poolEntries) {
       try {
         const one = await gw.statusFor(e.uuid);
@@ -743,6 +756,7 @@ async function main() {
     }
     const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
     if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue; // no usable Egyptian mobile
+    if (['201031622600', '201092048333', '201032206443', '201061399688', '201009006157', '201112345678', '201119876543'].includes(phone)) continue; // internal / test numbers
     if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
     // FIRST-OCCURRENCE-WINS (two-host parallel, Oct 2026): an owner with
     // several listings must get ONE intro ever — via their FIRST sheet row.
@@ -998,11 +1012,28 @@ async function main() {
             batchDone = true;
             break;
           }
+          let sentThisRow = false;
           try {
             const sendOpts = { retries: 2 };
             if (lane.uuid) sendOpts.sessionId = lane.uuid;
-            const sendRes = await gw.sendText(phone, text, sendOpts);
+            let sendRes;
+            try {
+              sendRes = await gw.sendText(phone, text, sendOpts);
+            } catch (primaryErr) {
+              const isPerm = primaryErr.permanent || (primaryErr.message && (
+                primaryErr.message.includes('not_registered') ||
+                primaryErr.message.includes('unusable chatId')
+              ));
+              const altEntry = !isPerm && readyEntries.find((e) => e.uuid && e.uuid !== lane.uuid);
+              if (altEntry) {
+                console.warn(`[outreach] Primary line ${lane.name} failed (${primaryErr.message}) — failing over to ${altEntry.name}...`);
+                sendRes = await gw.sendText(phone, text, { retries: 1, sessionId: altEntry.uuid });
+              } else {
+                throw primaryErr;
+              }
+            }
             const usedSession = sendRes.session || lane.name;
+            sentThisRow = true;
             summary.sent++;
             summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
             summary.byDirection[lane.direction]++;
@@ -1057,16 +1088,17 @@ async function main() {
                   }).or('code.eq.' + cand.code + ',unit_code.eq.' + cand.code).then(() => null).catch(() => null);
                 }
               }
+            } else {
+              // Transient error: rewind cursor so this owner is not skipped without receiving a message
+              rewind(claimed);
             }
             if (err.httpStatus === 401 || err.httpStatus === 403) {
               console.error('gateway authentication failure — aborting batch');
               abortBatch = true;
               break;
             }
-            // transient failure on this line: the gateway client benches the
-            // line; this lane keeps claiming (next send picks a healthy line
-            // when uuid is unset, or retries the same line next slot).
           }
+          if (!sentThisRow) continue;
         }
         contacted.add(phone);
         // Human anti-ban pacing per LINE: default 30–40 s (100 ms in dry-run) so

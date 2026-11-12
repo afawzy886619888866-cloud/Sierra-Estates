@@ -470,9 +470,19 @@ async function initSession(sessionId) {
     s.keepAliveTimer = setInterval(async () => {
       if (!s.client) return;
       try {
+        let evalErr = null;
         const conn = typeof s.client.evaluate === 'function'
-          ? await s.client.evaluate(() => (window.Store?.AppState?.state || 'CONNECTED')).catch(() => null)
+          ? await s.client.evaluate(() => (window.Store?.AppState?.state || 'CONNECTED')).catch((e) => { evalErr = e; return null; })
           : null;
+        if (evalErr && /detached Frame|Target closed|Session closed|Execution context was destroyed|Protocol error/i.test(String(evalErr.message || evalErr))) {
+          console.warn(`[${sessionId}] Keep-alive detected detached/closed browser frame (${evalErr.message}) — relaunching session...`);
+          clearInterval(s.keepAliveTimer);
+          s.status = 'RESTARTING';
+          try { await s.client.kill(); } catch (_) {}
+          s.client = null;
+          initSession(sessionId);
+          return;
+        }
         if (conn === 'CONNECTED') {
           if (s.status !== 'READY') s.status = 'READY';
           s.lastActive = new Date().toISOString();
@@ -613,6 +623,7 @@ async function processQueue(sessionId) {
   }
 
   const formattedChatId = `${digits}@c.us`;
+  let resolvedTargetJid = formattedChatId;
 
   // Pre-flight check: if number does not exist on WhatsApp, reject immediately without wasting 25s
   if (typeof s.client.checkNumberStatus === 'function') {
@@ -624,24 +635,134 @@ async function processQueue(sessionId) {
         s.isSending = false;
         return;
       }
-    } catch (_) {}
+      if (chk && chk.id) {
+        resolvedTargetJid = typeof chk.id === 'string' ? chk.id : (chk.id._serialized || formattedChatId);
+      }
+    } catch (chkErr) {
+      if (/detached Frame|Target closed|Session closed|Protocol error/i.test(String(chkErr?.message || ''))) {
+        console.warn(`[${sessionId}] Browser frame detached during checkNumberStatus — restarting ${sessionId}...`);
+        s.status = 'RESTARTING';
+        s.isSending = false;
+        setTimeout(() => initSession(sessionId), 500);
+        reject(new Error(`Session ${sessionId} browser frame detached — restarting line`));
+        return;
+      }
+    }
   }
 
   try {
-    const page = s.client.page || (typeof s.client.getPage === 'function' ? await s.client.getPage().catch(() => null) : null);
+    const canEval = typeof s.client.evaluate === 'function';
     let res = null;
+
+    // 0. Ensure live WAPI.sendMessage & Store.Chat.prototype.sendMessage are patched in the page
+    //    AND pre-open the recipient chat visibly in the WhatsApp Web UI so the operator sees it live.
+    if (canEval) {
+      await s.client.evaluate(async ({ cId, rJid }) => {
+        try {
+          const realSendFn = (typeof require === 'function' && require('WAWebSendTextMsgChatAction')?.sendTextMsgToChat)
+            ? require('WAWebSendTextMsgChatAction').sendTextMsgToChat
+            : window.Store?.SendTextMsgToChat;
+          if (realSendFn && window.Store) {
+            window.Store.SendTextMsgToChat = realSendFn;
+            if (window.Store.Chat && window.Store.Chat.modelClass) {
+              window.Store.Chat.modelClass.prototype.sendMessage = function () {
+                return realSendFn(this, ...arguments);
+              };
+            }
+          }
+          if (window.WAPI) {
+            const customSendMessage = async function (id, message) {
+              /* Not a contact */
+              if (id === 'status@broadcast') return 'Not able to send message to broadcast';
+              const widInput = (window.Store && window.Store.WidFactory && window.Store.WidFactory.createWid)
+                ? window.Store.WidFactory.createWid(id)
+                : id;
+              let resolvedWid = widInput;
+              try {
+                if (window.Store && window.Store.WapQuery && typeof window.Store.WapQuery.queryExist === 'function') {
+                  const q = await Promise.race([
+                    window.Store.WapQuery.queryExist(widInput),
+                    new Promise((r) => setTimeout(() => r(null), 5000))
+                  ]).catch(() => null);
+                  if (q && (q.wid || q.jid)) resolvedWid = q.wid || q.jid;
+                }
+              } catch (_) {}
+              const resolvedIdStr = (resolvedWid && resolvedWid._serialized) ? resolvedWid._serialized : String(id);
+              let chat = (window.Store && window.Store.Chat && window.Store.Chat.get)
+                ? (window.Store.Chat.get(resolvedIdStr) || window.Store.Chat.get(id))
+                : window.WAPI.getChat(id);
+              if (!chat && typeof require === 'function') {
+                try {
+                  const fc = require('WAWebFindChatAction');
+                  if (fc && typeof fc.findOrCreateLatestChat === 'function') {
+                    const r = await fc.findOrCreateLatestChat(resolvedWid).catch(() => null);
+                    if (r) chat = r.chat || r;
+                  }
+                } catch (_) {}
+              }
+              if (!chat) chat = window.WAPI.getChat(resolvedIdStr) || window.WAPI.getChat(id);
+              if (chat !== undefined && chat !== null) {
+                try {
+                  const cmd = (typeof require === 'function' ? require('WAWebCmd')?.Cmd : null) || (window.Store && window.Store.Cmd);
+                  if (cmd && typeof cmd.openChatBottom === 'function') {
+                    await Promise.resolve(cmd.openChatBottom({ chat })).catch(() => Promise.resolve(cmd.openChatBottom(chat)).catch(() => null));
+                  }
+                } catch (_) {}
+                const sendFn = (typeof require === 'function' && require('WAWebSendTextMsgChatAction')?.sendTextMsgToChat)
+                  ? require('WAWebSendTextMsgChatAction').sendTextMsgToChat
+                  : window.Store?.SendTextMsgToChat;
+                if (typeof sendFn === 'function') {
+                  await Promise.race([
+                    Promise.resolve(sendFn(chat, message)),
+                    new Promise((r) => setTimeout(r, 3000))
+                  ]);
+                  await new Promise((r) => setTimeout(r, 400));
+                }
+                const jidStr = (chat.id && chat.id._serialized) ? chat.id._serialized : (String(resolvedIdStr).includes('@') ? String(resolvedIdStr) : (String(resolvedIdStr) + '@c.us'));
+                const msgModels = (chat.msgs && (chat.msgs._models || chat.msgs.models)) || [];
+                const lastModelKey = msgModels.length > 0 ? (msgModels[msgModels.length - 1]?.id?._serialized) : null;
+                const rawKey = lastModelKey || (chat.lastReceivedKey && chat.lastReceivedKey._serialized) || (`true_${jidStr}_${Date.now()}`);
+                return /^(true|false)_[^\s_]+@[^\s_]+_[^\s]+$/.test(rawKey) ? rawKey : `true_${jidStr}_${Date.now()}`;
+              }
+              return false;
+            };
+            window.WAPI = Object.assign({}, window.WAPI, { sendMessage: customSendMessage });
+          }
+          // Pre-open chat in UI before typing delay so operator sees conversation open & type live
+          const widInput = window.Store?.WidFactory?.createWid ? window.Store.WidFactory.createWid(cId) : cId;
+          let targetWid = widInput;
+          if (window.Store?.WapQuery?.queryExist) {
+            const q = await Promise.race([
+              window.Store.WapQuery.queryExist(widInput),
+              new Promise((r) => setTimeout(() => r(null), 4000))
+            ]).catch(() => null);
+            if (q && (q.wid || q.jid)) targetWid = q.wid || q.jid;
+          }
+          let chat = window.Store?.Chat?.get?.(targetWid?._serialized || rJid || cId);
+          if (!chat && typeof require === 'function') {
+            try {
+              const fc = require('WAWebFindChatAction');
+              if (fc && typeof fc.findOrCreateLatestChat === 'function') {
+                const resChat = await fc.findOrCreateLatestChat(targetWid).catch(() => null);
+                if (resChat) chat = resChat.chat || resChat;
+              }
+            } catch (_) {}
+          }
+          if (chat) {
+            const cmd = (typeof require === 'function' ? require('WAWebCmd')?.Cmd : null) || (window.Store && window.Store.Cmd);
+            if (cmd && typeof cmd.openChatBottom === 'function') {
+              await Promise.resolve(cmd.openChatBottom({ chat })).catch(() => Promise.resolve(cmd.openChatBottom(chat)).catch(() => null));
+            }
+          }
+        } catch (_) {}
+      }, { cId: formattedChatId, rJid: resolvedTargetJid }).catch(() => {});
+    }
 
     // ── Human Stealth Emulation ──────────────────────────────────────
     // 1. Mark chat as seen (simulates opening conversation like a real user)
     try {
       if (typeof s.client.sendSeen === 'function') {
         await s.client.sendSeen(formattedChatId).catch(() => {});
-      } else if (page) {
-        await page.evaluate(async (id) => {
-          if (window.WAPI && typeof window.WAPI.sendSeen === 'function') {
-            await window.WAPI.sendSeen(id).catch(() => {});
-          }
-        }, formattedChatId).catch(() => {});
       }
     } catch (_) {}
 
@@ -649,17 +770,10 @@ async function processQueue(sessionId) {
     try {
       if (typeof s.client.simulateTyping === 'function') {
         await s.client.simulateTyping(formattedChatId, true).catch(() => {});
-      } else if (page) {
-        await page.evaluate(async (id) => {
-          if (window.WAPI && typeof window.WAPI.simulateTyping === 'function') {
-            await window.WAPI.simulateTyping(id, true).catch(() => {});
-          }
-        }, formattedChatId).catch(() => {});
       }
     } catch (_) {}
 
     // 3. Natural human typing delay proportional to message length
-    // Average human typing speed: ~25-30ms per character + cognitive pause (1.2s - 4.5s total)
     const typingDuration = Math.min(4500, Math.max(1200, Math.floor(String(text).length * 28) + Math.floor(Math.random() * 800)));
     await new Promise((r) => setTimeout(r, typingDuration));
 
@@ -667,12 +781,6 @@ async function processQueue(sessionId) {
     try {
       if (typeof s.client.simulateTyping === 'function') {
         await s.client.simulateTyping(formattedChatId, false).catch(() => {});
-      } else if (page) {
-        await page.evaluate(async (id) => {
-          if (window.WAPI && typeof window.WAPI.simulateTyping === 'function') {
-            await window.WAPI.simulateTyping(id, false).catch(() => {});
-          }
-        }, formattedChatId).catch(() => {});
       }
     } catch (_) {}
 
@@ -682,53 +790,36 @@ async function processQueue(sessionId) {
         new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText slow (>25s)')), 25000))
       ]);
     } catch (sendErr) {
-      if (page) {
-        console.log(`[${sessionId}] Attempting direct WAPI sendMessage fallback for ${formattedChatId}...`);
+      if (canEval) {
+        console.log(`[${sessionId}] Attempting direct WAPI.sendMessage evaluate fallback for ${formattedChatId}...`);
         try {
           res = await Promise.race([
-            page.evaluate(async ({ id, msg }) => {
-              try {
-                if (window.Store && window.Store.Chat) {
-                  const wid = window.Store.WidFactory && window.Store.WidFactory.createWid ? window.Store.WidFactory.createWid(id) : id;
-                  let chat = await window.Store.Chat.find(wid).catch(() => null);
-                  if (!chat && window.Store.Chat.get) chat = window.Store.Chat.get(wid);
-                  if (chat) {
-                    if (typeof chat.sendMessage === 'function') {
-                      await chat.sendMessage(msg);
-                      return chat.lastReceivedKey?._serialized || ('msg_' + Date.now());
-                    }
-                    if (window.Store.SendTextMsgToChat) {
-                      await window.Store.SendTextMsgToChat(chat, msg);
-                      return chat.lastReceivedKey?._serialized || ('msg_' + Date.now());
-                    }
-                  }
-                }
-              } catch (e) {}
+            s.client.evaluate(async ({ id, msg }) => {
               if (window.WAPI && typeof window.WAPI.sendMessage === 'function') {
                 const wRes = await window.WAPI.sendMessage(id, msg);
                 if (wRes && wRes !== 'Not a contact' && typeof wRes === 'string') return wRes;
               }
               return null;
             }, { id: formattedChatId, msg: text }),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('WAPI timeout (>10s)')), 10000))
+            new Promise((_, rej) => setTimeout(() => rej(new Error('WAPI evaluate timeout (>15s)')), 15000))
           ]);
         } catch (wapiErr) {
-          console.warn(`[${sessionId}] WAPI fallback failed:`, wapiErr.message);
+          console.warn(`[${sessionId}] WAPI evaluate fallback failed:`, wapiErr.message);
         }
       }
       if (!res) throw sendErr;
     }
     s.totalSent += 1;
     s.lastActive = new Date().toISOString();
-    resolve({ ok: true, data: { messageId: res || `msg_${Date.now()}`, status: 'sent', session: sessionId } });
+    resolve({ ok: true, data: { messageId: res, status: 'sent', session: sessionId, targetJid: resolvedTargetJid } });
   } catch (err) {
-    if (err && err.message && err.message.includes("could not confirm the result")) {
-      s.totalSent += 1;
-      s.lastActive = new Date().toISOString();
-      resolve({ ok: true, data: { messageId: `sent_unconfirmed_${Date.now()}`, status: "sent", session: sessionId } });
+    if (err && err.message && /detached Frame|Target closed|Session closed|Protocol error/i.test(err.message)) {
+      console.warn(`[${sessionId}] Browser frame detached during send — restarting ${sessionId}...`);
+      s.status = 'RESTARTING';
+      setTimeout(() => initSession(sessionId), 500);
+      reject(new Error(`Session ${sessionId} browser frame detached — restarting line`));
     } else {
       const isUnregistered = err && err.message && (
-        err.message.includes("Starting a chat with a new number") ||
         err.message.includes("not_registered") ||
         err.message.includes("numberExists:false")
       );
@@ -887,29 +978,43 @@ app.get('/api/debug-chat/:sessionId/:groupId', async (req, res) => {
     if (typeof s.client.evaluate === 'function') {
       evalTest = await s.client.evaluate(async (gid) => {
         const store = window.Store;
-        const wapi = window.WAPI;
         let chat = null;
+        let resolvedJid = gid;
+        try {
+          if (store && store.WapQuery && typeof store.WapQuery.queryExist === 'function') {
+            const q = await store.WapQuery.queryExist(gid).catch(() => null);
+            if (q && q.jid) resolvedJid = q.jid._serialized || q.jid;
+          }
+        } catch (_) {}
+        const allChats = store && store.Chat
+          ? (typeof store.Chat.getModelsArray === 'function' ? store.Chat.getModelsArray() : (store.Chat._models || store.Chat.models || []))
+          : [];
         if (store && store.Chat) {
-          if (typeof store.Chat.get === 'function') chat = store.Chat.get(gid);
-          if (!chat && store.Chat.models) chat = store.Chat.models.find(c => c && (c.id?._serialized === gid || c.id === gid));
+          if (typeof store.Chat.get === 'function') {
+            chat = store.Chat.get(gid) || store.Chat.get(resolvedJid);
+          }
+          if (!chat && Array.isArray(allChats)) {
+            chat = allChats.find(c => c && (c.id?._serialized === gid || c.id?._serialized === resolvedJid || c.historyChatId?._serialized === gid));
+          }
         }
         let msgCount = 0;
         let lastMsg = null;
         if (chat) {
-          if (chat.msgs && chat.msgs.models) {
-            msgCount = chat.msgs.models.length;
-            if (msgCount > 0) {
-              const lm = chat.msgs.models[msgCount - 1];
-              lastMsg = { body: (lm.body || lm.caption || '').slice(0, 100), t: lm.t };
-            }
+          const mArr = chat.msgs ? (typeof chat.msgs.getModelsArray === 'function' ? chat.msgs.getModelsArray() : (chat.msgs._models || chat.msgs.models || [])) : [];
+          msgCount = mArr.length;
+          if (msgCount > 0) {
+            const lm = mArr[msgCount - 1];
+            lastMsg = { id: lm.id?._serialized, body: (lm.body || lm.caption || '').slice(0, 120), t: lm.t, ack: lm.ack };
           }
         }
         return {
           hasChat: Boolean(chat),
+          chatId: chat ? (chat.id?._serialized || chat.id) : null,
+          resolvedJid,
           chatTitle: chat ? (chat.name || chat.formattedTitle) : null,
           msgCount,
           lastMsg,
-          totalChatModels: store && store.Chat && store.Chat.models ? store.Chat.models.length : 0
+          totalChatModels: Array.isArray(allChats) ? allChats.length : 0
         };
       }, req.params.groupId).catch(e => ({ error: e.message }));
     }
