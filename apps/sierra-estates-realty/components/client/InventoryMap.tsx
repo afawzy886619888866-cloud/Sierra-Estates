@@ -21,6 +21,7 @@ import {
   Circle,
   Tooltip,
   Polygon,
+  SVGOverlay,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -258,12 +259,12 @@ function createCentroidPillIcon(
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: rgba(6, 17, 34, 0.88);
-        border: 1px solid rgba(201, 168, 76, 0.65);
+        background: rgba(6, 17, 34, 0.92);
+        border: 1.5px solid rgba(201, 168, 76, 0.85);
         color: #FFFFFF;
-        text-shadow: 0 0 8px rgba(201, 168, 76, 0.95), 0 0 20px rgba(201, 168, 76, 0.55);
-        box-shadow: 0 0 18px rgba(201, 168, 76, 0.45);
-        padding: 4px 11px;
+        text-shadow: 0 0 10px rgba(201, 168, 76, 0.95), 0 0 20px rgba(201, 168, 76, 0.5);
+        box-shadow: 0 0 16px rgba(201, 168, 76, 0.45), 0 4px 14px rgba(0, 0, 0, 0.6);
+        padding: 4px 12px;
         border-radius: 999px;
         font-family: 'Plus Jakarta Sans', 'Cairo', system-ui, sans-serif;
         font-weight: 800;
@@ -271,12 +272,15 @@ function createCentroidPillIcon(
         white-space: nowrap;
         pointer-events: auto;
         cursor: pointer;
-        transform: translate(-50%, -50%);
+        transform: translate3d(-50%, -50%, 0);
+        -webkit-transform: translate3d(-50%, -50%, 0);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
         letter-spacing: 0.02em;
         will-change: transform;
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
       ">
         <span style="
           display: inline-block;
@@ -415,6 +419,11 @@ export default function InventoryMap({
     Record<string, "idle" | "loading" | "success" | "cooldown">
   >({});
   const [activeLandmark, setActiveLandmark] = useState<string | null>(null);
+
+  const svgRenderer = useMemo(
+    () => (typeof window !== "undefined" ? L.svg({ padding: 0.5 }) : undefined),
+    [],
+  );
 
   // Real-time Harvester Live Opportunities & Telemetry (HARV-030-003)
   const [harvesterPulses, setHarvesterPulses] = useState<HarvesterPulse[]>([]);
@@ -821,7 +830,115 @@ export default function InventoryMap({
             maxZoom={22}
             maxNativeZoom={19}
             detectRetina={true}
+            tileSize={512}
+            zoomOffset={-1}
           />
+
+          {/* High-Resolution Vector SVG Masterplan Overlays Anchored to GPS Bounds */}
+          <SVGOverlay bounds={[[29.997, 31.560], [30.021, 31.588]]}>
+            <svg
+              viewBox="0 0 1000 800"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ width: "100%", height: "100%", pointerEvents: "none" }}
+            >
+              <defs>
+                <linearGradient id="hpGreenSpine" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10B981" stopOpacity="0.32" />
+                  <stop offset="100%" stopColor="#059669" stopOpacity="0.16" />
+                </linearGradient>
+                <linearGradient id="hpGoldAvenue" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#C9A84C" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#EAB308" stopOpacity="0.65" />
+                </linearGradient>
+                <filter id="hpGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <polygon
+                points="120,40 880,110 840,740 80,680"
+                fill="rgba(6, 17, 34, 0.45)"
+                stroke="#C9A84C"
+                strokeWidth="2.5"
+                strokeDasharray="6,4"
+              />
+              <path
+                d="M 220 200 Q 480 260 760 210 Q 720 540 460 520 Q 240 500 220 200 Z"
+                fill="url(#hpGreenSpine)"
+                stroke="#10B981"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M 180 150 Q 500 130 820 180 Q 780 660 480 640 Q 160 620 180 150"
+                fill="none"
+                stroke="url(#hpGoldAvenue)"
+                strokeWidth="3"
+                strokeDasharray="8,6"
+                filter="url(#hpGlow)"
+              />
+              <ellipse cx="490" cy="360" rx="95" ry="45" fill="rgba(0, 240, 255, 0.35)" stroke="#00F0FF" strokeWidth="1.5" />
+              <rect x="250" y="240" width="85" height="55" rx="6" fill="#061122" stroke="#C9A84C" strokeWidth="1.2" opacity="0.85" />
+              <text x="292" y="272" fill="#E2E8F0" fontSize="13" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">Park Corner</text>
+              <rect x="630" y="250" width="95" height="55" rx="6" fill="#061122" stroke="#C9A84C" strokeWidth="1.2" opacity="0.85" />
+              <text x="677" y="282" fill="#E2E8F0" fontSize="13" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">The Residence</text>
+              <rect x="440" y="450" width="110" height="45" rx="6" fill="#061122" stroke="#10B981" strokeWidth="1.2" opacity="0.85" />
+              <text x="495" y="478" fill="#A7F3D0" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">Club Park</text>
+              <text x="500" y="70" fill="#C9A84C" fontSize="18" fontWeight="900" letterSpacing="3" textAnchor="middle" filter="url(#hpGlow)">HYDE PARK MASTERPLAN</text>
+            </svg>
+          </SVGOverlay>
+
+          <SVGOverlay bounds={[[30.047, 31.547], [30.064, 31.572]]}>
+            <svg
+              viewBox="0 0 1000 800"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ width: "100%", height: "100%", pointerEvents: "none" }}
+            >
+              <defs>
+                <linearGradient id="mvLagoon" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#0284C7" stopOpacity="0.2" />
+                </linearGradient>
+                <filter id="mvCyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <polygon
+                points="140,60 890,90 850,710 110,650"
+                fill="rgba(6, 17, 34, 0.45)"
+                stroke="#00F0FF"
+                strokeWidth="2.5"
+                strokeDasharray="6,4"
+              />
+              <path
+                d="M 180 340 Q 380 260 560 360 Q 740 450 820 350 Q 800 480 620 490 Q 360 490 180 340 Z"
+                fill="url(#mvLagoon)"
+                stroke="#00F0FF"
+                strokeWidth="2"
+                filter="url(#mvCyanGlow)"
+              />
+              <path
+                d="M 210 160 Q 520 120 790 180 Q 760 620 480 610 Q 180 590 210 160"
+                fill="none"
+                stroke="#C9A84C"
+                strokeWidth="2.5"
+                strokeDasharray="10,6"
+              />
+              <rect x="230" y="220" width="95" height="50" rx="6" fill="#061122" stroke="#00F0FF" strokeWidth="1.2" opacity="0.85" />
+              <text x="277" y="250" fill="#E2E8F0" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">Lagoon Beach</text>
+              <rect x="620" y="240" width="105" height="50" rx="6" fill="#061122" stroke="#00F0FF" strokeWidth="1.2" opacity="0.85" />
+              <text x="672" y="270" fill="#E2E8F0" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">Royal Park</text>
+              <rect x="420" y="470" width="130" height="50" rx="6" fill="#061122" stroke="#C9A84C" strokeWidth="1.2" opacity="0.85" />
+              <text x="485" y="500" fill="#FDE047" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">iCity Central Club</text>
+              <text x="500" y="75" fill="#00F0FF" fontSize="18" fontWeight="900" letterSpacing="3" textAnchor="middle" filter="url(#mvCyanGlow)">MOUNTAIN VIEW iCITY</text>
+            </svg>
+          </SVGOverlay>
 
           {/* AUC Distance Radar Rings */}
           {showRadarRings && (
@@ -861,12 +978,14 @@ export default function InventoryMap({
               <React.Fragment key={`target-compound-${comp.code}`}>
                 <Polygon
                   positions={comp.polygon}
+                  renderer={svgRenderer}
                   pathOptions={{
                     color: comp.borderColor,
                     weight: 2.5,
                     opacity: 0.95,
                     fillColor: comp.fillColor,
                     fillOpacity: 0.22,
+                    className: "vectorSvgPath",
                   }}
                   eventHandlers={{
                     click: () => {

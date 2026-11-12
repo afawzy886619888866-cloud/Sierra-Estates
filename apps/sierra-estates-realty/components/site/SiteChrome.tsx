@@ -76,9 +76,27 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               <span className="al-text">{t('addListing')}</span>
               <span className="al-note">{t('addListingNote')}</span>
             </a>
-            <Link href="/#contact" className="req-now-btn" title={t('reqNote')}>
+            <Link href="/request" className="req-now-btn" title={t('reqNote')}>
               <span className="req-text">{t('reqNow')}</span>
               <span className="req-note">{t('reqNote')}</span>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 7px',
+                  borderRadius: 999,
+                  background: 'linear-gradient(135deg, #c9a84c 0%, #dfad3a 100%)',
+                  color: '#061122',
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: '0.04em',
+                  boxShadow: '0 0 14px rgba(201, 168, 76, 0.85)',
+                  marginLeft: isAr ? 0 : 6,
+                  marginRight: isAr ? 6 : 0,
+                }}
+              >
+                25%
+              </span>
             </Link>
             
             {/* High-End Theme Switcher */}
@@ -221,9 +239,24 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <Phone className="i" style={{ width: 18, height: 18, color: '#10b981' }} />
                 <span>{isAr ? 'واتساب بزنس (+20 109 204 8333)' : 'WhatsApp Business (+20 109 204 8333)'}</span>
               </a>
-              <Link href="/#contact" className={`mobile-drawer-link${active === 'contact' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/request" className={`mobile-drawer-link${active === 'contact' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
                 <Phone className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('reqNow')}</span>
+                <span
+                  style={{
+                    padding: '2px 7px',
+                    borderRadius: 999,
+                    background: 'linear-gradient(135deg, #c9a84c 0%, #dfad3a 100%)',
+                    color: '#061122',
+                    fontSize: 9.5,
+                    fontWeight: 900,
+                    marginLeft: isAr ? 0 : 'auto',
+                    marginRight: isAr ? 'auto' : 0,
+                    boxShadow: '0 0 10px rgba(201, 168, 76, 0.7)',
+                  }}
+                >
+                  25%
+                </span>
               </Link>
 
               <div style={{ margin: '14px 0 6px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
@@ -241,7 +274,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
 
             <div className="mobile-drawer-footer">
               <Link
-                href="/#contact"
+                href="/request"
                 className="btn btn-pri"
                 onClick={() => setMobileMenuOpen(false)}
                 style={{
@@ -259,6 +292,18 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 }}
               >
                 <span>{t('reqNow')}</span>
+                <span
+                  style={{
+                    padding: '2px 7px',
+                    borderRadius: 999,
+                    background: '#061122',
+                    color: '#fde047',
+                    fontSize: 10,
+                    fontWeight: 900,
+                  }}
+                >
+                  25%
+                </span>
               </Link>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
@@ -327,7 +372,23 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           <PlusCircle className="i" style={{ color: '#10b981' }} />
           <span>{t('addListing')}</span>
         </a>
-        <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`} title={t('reqNow')}>
+        <Link href="/request" className={`bn-item${active === 'contact' ? ' active' : ''}`} title={t('reqNow')} style={{ position: 'relative' }}>
+          <span
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: '18%',
+              background: '#C9A84C',
+              color: '#061122',
+              fontSize: 8.5,
+              fontWeight: 900,
+              padding: '1px 4px',
+              borderRadius: 6,
+              boxShadow: '0 0 8px rgba(201, 168, 76, 0.7)',
+            }}
+          >
+            25%
+          </span>
           <Phone className="i" style={{ color: '#e9c176' }} />
           <span>{t('reqNow')}</span>
         </Link>

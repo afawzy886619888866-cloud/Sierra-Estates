@@ -393,6 +393,49 @@ export default function SmartFilterBar({
                 {!value.compound && <Check style={{ width: 14, height: 14 }} />}
               </button>
 
+              {/* Quick Proximity Filter Chips: Near New Capital, Near AUC, Golden Square */}
+              <div style={{ marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ display: 'block', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#00F0FF', marginBottom: 5 }}>
+                  {isAr ? 'القرب والمعالم الرئيسية' : 'Proximity & Strategic Landmarks'}
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {[
+                    { id: 'Golden Square', labelEn: 'Golden Square', labelAr: 'المربع الذهبي', icon: '🏢' },
+                    { id: 'AUC', labelEn: 'Near AUC', labelAr: 'قريب من الجامعة الأمريكية', icon: '🏛️' },
+                    { id: 'New Capital', labelEn: 'Near New Capital', labelAr: 'قريب من العاصمة الإدارية', icon: '🏛️' },
+                  ].map((prox) => {
+                    const isSel = value.compound.toLowerCase().includes(prox.id.toLowerCase());
+                    return (
+                      <button
+                        key={prox.id}
+                        type="button"
+                        onClick={() => {
+                          patch({ compound: prox.id });
+                          setOpenChip(null);
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '3px 8px',
+                          borderRadius: 999,
+                          fontSize: 10.5,
+                          fontWeight: isSel ? 800 : 600,
+                          background: isSel ? 'rgba(0, 240, 255, 0.25)' : 'rgba(6, 17, 34, 0.65)',
+                          border: isSel ? '1px solid #00F0FF' : '1px solid rgba(201, 168, 76, 0.45)',
+                          color: isSel ? '#00F0FF' : '#E2E8F0',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <span>{prox.icon}</span>
+                        <span>{isAr ? prox.labelAr : prox.labelEn}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Popular quick picks */}
               {!cpdQuery && popularCompounds.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>

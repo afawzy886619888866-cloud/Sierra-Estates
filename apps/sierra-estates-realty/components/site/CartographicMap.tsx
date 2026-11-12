@@ -139,15 +139,29 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
     activeZoneFilter === "all"
       ? COMPOUNDS
       : activeZoneFilter === "golden-square"
-        ? COMPOUNDS.filter((c) => c.zoneEn.includes("Golden Square"))
-        : activeZoneFilter === "suez-axis"
-          ? COMPOUNDS.filter((c) => c.zoneEn.includes("Suez"))
-          : activeZoneFilter === "southern"
+        ? COMPOUNDS.filter((c) => c.zoneEn.toLowerCase().includes("golden square"))
+        : activeZoneFilter === "near-auc"
+          ? COMPOUNDS.filter(
+              (c) =>
+                (c.driveTimeToAucMin && c.driveTimeToAucMin <= 10) ||
+                c.zoneEn.toLowerCase().includes("auc") ||
+                c.zoneEn.toLowerCase().includes("golden square"),
+            )
+          : activeZoneFilter === "near-capital"
             ? COMPOUNDS.filter(
                 (c) =>
-                  c.zoneEn.includes("South") || c.zoneEn.includes("Sokhna"),
+                  (c.driveTimeToNewCapitalMin && c.driveTimeToNewCapitalMin <= 15) ||
+                  c.zoneEn.toLowerCase().includes("suez") ||
+                  c.nameEn.toLowerCase().includes("mostakbal"),
               )
-            : COMPOUNDS;
+            : activeZoneFilter === "suez-axis"
+              ? COMPOUNDS.filter((c) => c.zoneEn.includes("Suez"))
+              : activeZoneFilter === "southern"
+                ? COMPOUNDS.filter(
+                    (c) =>
+                      c.zoneEn.includes("South") || c.zoneEn.includes("Sokhna"),
+                  )
+                : COMPOUNDS;
 
   // Zoom handlers with smooth clamping between 0.85x and 3.0x
   const handleZoomIn = () =>
@@ -260,8 +274,18 @@ export const CartographicMap: React.FC<CartographicMapProps> = ({
             },
             {
               id: "golden-square",
-              en: "Golden Square (المربع الذهبي)",
+              en: "Golden Square",
               ar: "المربع الذهبي",
+            },
+            {
+              id: "near-auc",
+              en: "Near AUC (قريب من الجامعة الأمريكية)",
+              ar: "قريب من الجامعة الأمريكية",
+            },
+            {
+              id: "near-capital",
+              en: "Near New Capital (قريب من العاصمة)",
+              ar: "قريب من العاصمة الإدارية",
             },
             { id: "suez-axis", en: "Suez Road Axis", ar: "محور طريق السويس" },
             {
