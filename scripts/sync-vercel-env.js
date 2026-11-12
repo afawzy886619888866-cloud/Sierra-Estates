@@ -234,18 +234,43 @@ function vercelRequest(method, endpoint, body = null) {
 export async function syncVarsToProject(projectName, projectId, envVars) {
   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
 
-  // 1. Fetch all existing project env vars — PAGINATED and DUPLICATE-AWARE.
-  //    /v9 returns 100/page (this project set is larger), and a key can
-  //    legitimately have SEVERAL entries (one per target environment —
-  //    the 2026-11-12 outage left stale [development]-only copies next to
-  //    production copies). Keying a Map by name alone hides duplicates;
-  //    keep every copy.
+  // 1. Fetch all existing project env vars — DUPLICATE-AWARE.
+  //    A key can legitimately have SEVERAL entries (one per target
+  //    environment — the 2026-11-12 outage left stale [development]-only
+  //    copies next to production copies). Keying a Map by name alone hides
+  //    duplicates; keep every copy.
+  //
+  //    PAGINATION: this endpoint has NO `page` parameter — it is cursor
+  //    based (`pagination.next` = timestamp). PR #53's `page=N` loop
+  //    refetched page 1 forever (the param is ignored) and hung deploy
+  //    jobs in env-sync; the 9a71149ed revert stopped the hang but a
+  //    single GET truncates when the project outgrows the default page
+  //    size. Vercel's own CLI does a single GET (get-env-records.ts) and
+  //    the schema documents `pagination.next` — so: fetch the first page,
+  //    then follow `next` ONLY while the API returns one, with a hard
+  //    page cap and id-dedup so a non-advancing cursor terminates.
+  const MAX_ENV_PAGES = 10;
   const fetchAll = async () => {
-    const res = await vercelRequest('GET', `/v9/projects/${projectId}/env`);
-    if (!res || res.error || !Array.isArray(res.envs)) {
-      throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
+    const all = [];
+    const seenIds = new Set();
+    let query = '';
+    for (let page = 1; page <= MAX_ENV_PAGES; page++) {
+      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env${query}`);
+      if (!res || res.error || !Array.isArray(res.envs)) {
+        throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
+      }
+      let added = 0;
+      for (const e of res.envs) {
+        if (e.id && seenIds.has(e.id)) continue; // cursor replayed a page — stop, don't hang
+        if (e.id) seenIds.add(e.id);
+        all.push(e);
+        added++;
+      }
+      const next = res.pagination?.next;
+      if (added === 0 || next == null) break;
+      query = `?next=${encodeURIComponent(next)}`;
     }
-    return res.envs;
+    return all;
   };
 
   let allExisting = [];
