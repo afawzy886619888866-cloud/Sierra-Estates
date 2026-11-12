@@ -28,6 +28,12 @@ const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || process.env.VERC
 export const CLIENT_ENV_VARS = {
   // Supabase is the canonical public backend configuration.
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  // Runtime fallback (no NEXT_PUBLIC_ prefix → read at RUNTIME, not
+  // inlined at build). The app resolves the URL via
+  // NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL || POSTGRES_URL
+  // (packages/db/lib/supabase.ts) — if a build ever inlines an empty
+  // NEXT_PUBLIC_* value, this runtime var keeps the server working.
+  SUPABASE_URL: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -227,18 +233,31 @@ function vercelRequest(method, endpoint, body = null) {
 
 export async function syncVarsToProject(projectName, projectId, envVars) {
   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
-  
-  // 1. Fetch all existing project env vars
+
+  // 1. Fetch all existing project env vars — PAGINATED. This project set
+  //    has 100+ variables and /v9 returns 100 per page by default; the old
+  //    unpaginated fetch silently truncated the tail, so later POSTs hit
+  //    "already exists" for vars the map had never seen (and the sync then
+  //    skipped updating them — see the loop below).
   let existingMap = new Map();
   for (let attempt = 1; attempt <= 5; attempt++) {
     try {
-      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env`);
-      if (res && res.envs) {
-        for (const e of res.envs) {
-          existingMap.set(e.key, e);
+      let page = 1;
+      let fetched = 0;
+      existingMap = new Map();
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
+        if (!res || res.error || !Array.isArray(res.envs)) {
+          throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
         }
-        break;
+        for (const e of res.envs) existingMap.set(e.key, e);
+        fetched += res.envs.length;
+        if (res.envs.length < 100) break;
+        page += 1;
       }
+      console.log(`   📋 Existing project env vars fetched: ${existingMap.size}`);
+      break;
     } catch (err) {
       console.warn(`   ⏳ [${attempt}/5] Fetching existing envs failed: ${err.message}, retrying...`);
       await sleep(attempt * 2000);
@@ -253,6 +272,7 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
   // key was skipped, and the deploy shipped without them).
   const CRITICAL_KEYS = [
     'NEXT_PUBLIC_SUPABASE_URL',
+    'SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
   ];
 
@@ -266,6 +286,38 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
 
     const existing = existingMap.get(key);
     const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
+
+    // TARGET REPAIR — a var whose target environments exclude 'production'
+    // is invisible to production deployments no matter how many times its
+    // value is PATCHed (Vercel PATCH cannot change targets). This is the
+    // second half of the 2026-11-12 outage: the sync reported success
+    // while production stayed degraded. Delete + recreate with both
+    // targets for critical keys; diagnose loudly for the rest.
+    const existingTargets = Array.isArray(existing?.target) ? existing.target : [];
+    if (existing && !existingTargets.includes('production')) {
+      if (CRITICAL_KEYS.includes(key)) {
+        console.warn(`   🔧 ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — MISSING 'production'. Recreating with ['production','preview'].`);
+        const del = await vercelRequest('DELETE', `/v9/projects/${projectId}/env/${existing.id}`);
+        if (del && del.error) {
+          console.warn(`   ⚠️ ${key} -> target repair failed (delete: status ${del.status}):`, del.data?.error?.message || '');
+          continue;
+        }
+        const post = await vercelRequest('POST', `/v10/projects/${projectId}/env`, {
+          key,
+          value: String(value),
+          type: varType,
+          target: ['production', 'preview'],
+        });
+        if (post && !post.error) {
+          console.log(`   ✅ ${key} -> Recreated with targets ['production','preview'].`);
+          await sleep(150);
+          continue;
+        }
+        console.warn(`   ⚠️ ${key} -> target repair recreate failed (status ${post?.status}):`, post?.data?.error?.message || '');
+        continue;
+      }
+      console.warn(`   ⚠️ ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — missing 'production' but not critical; value synced anyway, fix targets in the dashboard if needed.`);
+    }
 
     for (let attempt = 1; attempt <= 5; attempt++) {
       try {
@@ -293,8 +345,10 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
             continue;
           }
           if (res.status === 400 && String(res.data?.error?.message || '').includes('already exists')) {
-            // Already exists, resolve by updating
-            console.log(`   ℹ️ ${key} -> Already exists, updating target/value.`);
+            // Exists but was NOT in our fetched map — the paginated map
+            // should make this rare. Log it honestly: the value was NOT
+            // updated by this branch (PATCH by key path would be needed).
+            console.warn(`   ⚠️ ${key} -> 'already exists' but absent from the fetched map — NOT updated. Re-run the sync or update via dashboard.`);
             break;
           }
           console.warn(`   ⚠️ ${key} -> Failed (Status: ${res.status}):`, res.data?.error?.message || res.raw || '');
@@ -337,6 +391,7 @@ async function main() {
     console.log('\n🎉 [Success] All environment variables successfully synced to Vercel!');
   } catch (e) {
     console.error('❌ Sync failed:', e.message);
+    process.exitCode = 1;
   }
 }
 
