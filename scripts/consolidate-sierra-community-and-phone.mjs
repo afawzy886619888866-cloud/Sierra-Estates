@@ -31,6 +31,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1083,10 +1087,59 @@ async function main() {
         snap.lastUpdated = new Date().toISOString();
         fs.writeFileSync(snapshotPath, JSON.stringify(snap, null, 2), 'utf8');
       }
-      console.log(`[4/4] Wired ${addedToMap} new coded community units into Client Map snapshot (${snapshotPath})`);
+      console.log(`[4/5] Wired ${addedToMap} new coded community units into Client Map snapshot (${snapshotPath})`);
     } catch (err) {
       console.warn('      Map snapshot update warning:', err.message);
     }
+  }
+
+  // 7. Upsert into Supabase `public.listings` (status: 'active', publish_status: 'PUBLISHABLE')
+  const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (sbUrl && sbKey) {
+    const sb = createClient(sbUrl, sbKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    let sbCount = 0;
+    for (const u of codedCommunityUnits) {
+      const id = `sierra-comm-${u.unifiedCode.toLowerCase()}`;
+      const nowIso = new Date().toISOString();
+      const { error } = await sb.from('listings').upsert({
+        id,
+        code: u.unifiedCode,
+        sbr_code: u.unifiedCode,
+        title: `${u.bedrooms ? `${u.bedrooms}BR ` : ''}${u.propertyType} in ${u.compound}`,
+        title_ar: u.descriptionAr.slice(0, 90),
+        description: u.descriptionEn,
+        description_ar: u.descriptionAr,
+        compound: u.compound,
+        location_area: u.subArea || u.compound,
+        property_type: u.propertyType.toLowerCase(),
+        deal_type: u.dealType.toLowerCase() === 'rent' ? 'rent' : 'sale',
+        price: u.priceEgp,
+        bedrooms: u.bedrooms || 3,
+        bathrooms: u.bathrooms || 2,
+        area_sqm: u.areaSqm || 150,
+        garden_sqm: u.gardenSqm || null,
+        furnishing_status: u.finishing === 'Furnished' ? 'furnished' : 'unfurnished',
+        owner_name: u.ownerName,
+        owner_phone: u.ownerPhone,
+        latitude: u.lat,
+        longitude: u.lng,
+        status: 'active',
+        publish_status: 'PUBLISHABLE',
+        source_channel: u.isCommunityOwnerUnit ? 'whatsapp_owner' : 'whatsapp_broker',
+        sync_source: 'sierra-community-consolidated',
+        raw_data: {
+          unifiedCode: u.unifiedCode,
+          sourcedByName: u.sourcedByName,
+          sourcedByPhone: u.sourcedByPhone,
+          sourceGroup: u.sourceGroup,
+          missingFields: u.missingFields,
+        },
+        updated_at: nowIso,
+      }, { onConflict: 'id' });
+      if (!error) sbCount++;
+    }
+    console.log(`[5/5] Upserted ${sbCount}/${codedCommunityUnits.length} coded community units into Supabase public.listings (PUBLISHABLE)`);
   }
 }
 
