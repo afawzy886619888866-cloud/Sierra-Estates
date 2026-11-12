@@ -1,14 +1,14 @@
 # Sierra Estates — Backend Completions: End-to-End Audit, Fixes & Landing Report
 
-**Date:** 2026-11-12 · **Repo:** `afawzy886619888866-cloud/Sierra-Estates` · **Final main head verified:** `0512b23a3` (CI green)
+**Date:** 2026-11-12 · **Repo:** `afawzy886619888866-cloud/Sierra-Estates` · **Final main head verified:** `afcb67557` (CI green)
 **Role:** Principal Backend Architect / AI Orchestration Lead / DevOps
-**Outcome:** all findings fixed, all follow-ups closed, three PRs squash-merged to `main` (**#45** `d62337b03`, **#46** `c22ac4848`, **#47** `8a16ec080d`), plus two pre-existing `main`-branch breakages discovered and repaired along the way.
+**Outcome:** all findings fixed, all follow-ups closed, ten PRs squash-merged to `main` across the session (**#45** `d62337b03`, **#46** `c22ac4848`, **#47** `8a16ec080d`, then recovery **#48–#54**), both pre-existing `main`-branch breakages repaired, and — after the evening production outage — **both production sites restored and verified healthy** (Part 5).
 
 ---
 
 ## Executive Summary
 
-The original audit (Task 1–4) found **one production-breaking bug** and **three functional gaps**; all four were fixed. The three follow-ups from that audit (viewings migration, Apps Script secret rotation, lead-timers cron) were then completed. Landing on `main` surfaced two **pre-existing** breakages that had been hiding behind a broken lint gate — a `turbo.json` parse error introduced by a Vercel bot commit and a pure-mode CSS-modules violation in the new CartographicMap stylesheet — both root-caused and fixed. Final state: **CI fully green on the latest `main` head**, including the previously-red "Realty app · Type-check + Lint + Test + Build" job.
+The original audit (Task 1–4) found **one production-breaking bug** and **three functional gaps**; all four were fixed. The three follow-ups from that audit (viewings migration, Apps Script secret rotation, lead-timers cron) were then completed. Landing on `main` surfaced two **pre-existing** breakages that had been hiding behind a broken lint gate — a `turbo.json` parse error introduced by a Vercel bot commit and a pure-mode CSS-modules violation in the new CartographicMap stylesheet — both root-caused and fixed. Applying migration 043 then exposed a four-deep chain of pipeline breakages (PRs #48–#52) that had silently kept Supabase env vars off the Vercel projects, causing a **production outage of both sites**; the last mile (PRs #53–#54) repaired the env-sync itself and production recovered (Part 5). Final state: **CI fully green, both production sites verified healthy** (client 21:00 UTC, admin 21:34 UTC, 2026-11-12).
 
 | # | Finding | Severity | Status |
 |---|---|---|---|
@@ -114,15 +114,46 @@ Applying migration 043 (the report's operator action #1) surfaced and then repai
 
 **Supabase env vars ARE restored on both Vercel projects** — the `env_sync_only` dispatch (`43291439796`) verified `✅ NEXT_PUBLIC_SUPABASE_URL -> Synced to Production & Preview` on client + admin, along with the publishable/anon/service-role keys.
 
-### The one open item (timed, not fixable from here)
+### ~~The one open item (timed, not fixable from here)~~ — RESOLVED, superseded by Part 5
+
+The quota-blocker diagnosis below was wrong (or rather, incomplete): the deploy quota did reset and deploys resumed, but production stayed degraded — the env-sync was writing entries that production deployments could not see. PRs #53/#54 (Part 5) fixed that, and both sites came back healthy on 2026-11-12 at 21:00 (client) / 21:34 (admin) UTC. The paragraph below is kept for the record.
 
 The live runtime instance still serves the pre-recovery build, so `/api/health` shows `degraded` and `/api/inventory` is empty until a new deployment ships — and deploys are blocked by the **Vercel free-tier daily quota (resets ~24h after 19:22 UTC today)**. Everything is staged for automatic recovery: `main` @ `232c67ab1a` is fully CI-green, the deploy gate passes, and the next successful deploy will both carry all fixes and sync env correctly. Either wait for the quota window, or (faster) upgrade the Vercel project / ask the owner to redeploy from the Vercel dashboard — the dashboard's own deploy button is a different quota path in some plans. After that deploy, verify: `/api/health` → `ok`, `/api/inventory` → `source: supabase` with live units.
 
 ### Operator actions (updated)
 
 1. ~~Apply migration 043~~ ✅ **done** (see above).
-2. **Redeploy when the Vercel quota resets** (or from the Vercel dashboard) — production then picks up: all route fixes, CSS-modules fix, migration 043 columns, and the restored Supabase env. Verify `/api/health` + `/api/inventory`.
+2. ~~Redeploy when the Vercel quota resets~~ ✅ **resolved** — see Part 5; the redeploy happened via the repaired pipeline and both sites are healthy.
 3. ~~Rotate the sheet secret when ready~~ — mechanism landed in #45 (`SIERRA_SECRET_KEY` everywhere); still optional to actually rotate.
 4. ~~Role chat ids~~ — still open (Telegram CEO/Team-Leader/Sales-Advisor chat ids), unchanged.
 
-Files: `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#52).
+Files: `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#54, incl. the Part-5 extension).
+
+---
+
+## Part 5 — Final recovery status (2026-11-12, 21:34 UTC)
+
+**BOTH PRODUCTION SITES RECOVERED — verified live:**
+
+| Check | Client (sierra-estates.net) | Admin (admin.sierra-estates.net) |
+|---|---|---|
+| `/api/health` | **healthy**, supabase **healthy** | **healthy**, supabase **healthy** |
+| Active properties | 26,184 | 26,184 |
+| Homepage | HTTP 200 | 307 → `/admin/login` (expected auth redirect), login page 200 |
+| Inventory | source: **supabase**, 3,850 live units | — |
+
+**What the last mile took (PRs #53, #54):** the outage had a second half. Even after #51/#52, the env-sync was writing to entries that production deployments could not see:
+- **PR #53** (`5ca2ddabe2`) — pagination (the project list endpoint truncates at 100 vars), "already exists" no longer silently skips, target repair for critical keys, runtime `SUPABASE_URL` fallback (the app resolves `NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL || POSTGRES_URL` at runtime).
+- **PR #54** (`25297b7a1b`) — duplicate-aware handling (stale `[development]`-only copies existed beside production copies), PATCH-first target repair, key-refetch repair for "already exists", and a post-sync verification pass that fails loudly when a CRITICAL_KEY lacks a production-target copy.
+
+The decisive evidence came from PR #54's repair path: every variable — including all Supabase keys — was "repaired via key-refetch PATCH (production copy)" at 20:45 UTC, after which the ~21:00 deployment booted healthy. The Vercel API list-endpoint rate limit (`api-projects-get` >300/h, exhausted by the day's churn) prevented the verification pass from printing its report, but the per-key PATCH successes plus the now-healthy production endpoints are conclusive.
+
+Recovery timeline (2026-11-12, UTC): env-sync repaired → 20:45 repair PATCHes land → 20:59 workflow run starts → ~21:00 client aliases healthy deployment → 21:34 admin aliases healthy deployment (queued behind client, max-parallel: 1).
+
+**Operator actions (final):**
+1. ~~Apply migration 043~~ ✅ done.
+2. ~~Restore production~~ ✅ done — both client and admin verified healthy (client: health ok, inventory supabase/3,850 units, homepage 200; admin: health ok, 26,184 props, login flow 200).
+3. Optional hygiene: delete the stale `[development]`-only duplicate env entries in the Vercel dashboards (both projects) — the sync now diagnoses them loudly but only repairs CRITICAL keys.
+4. Still open from before: Telegram role chat ids (CEO/Team-Leader/Sales-Advisor) for the follow-up router.
+
+Files: `download/sierra-estates-audit-report.md`, `download/sierra-estates-backend-completions.patch`, `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#54).
