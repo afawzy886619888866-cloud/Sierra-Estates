@@ -1,16 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
-import { extractEcoSmartTags } from '@/lib/services/listing-normalize';
-import { logger } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { buildSierraCodeMetadata } from "@/lib/services/coding-algorithm";
+import { extractEcoSmartTags } from "@/lib/services/listing-normalize";
+import { logger } from "@/lib/logger";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const rawInputSchema = z.object({
-  rawText: z.string().min(5, 'Listing text must be at least 5 characters'),
-  source: z.enum(['whatsapp', 'broker_feed', 'manual', 'voice_transcript']).default('manual'),
+  rawText: z.string().min(5, "Listing text must be at least 5 characters"),
+  source: z
+    .enum(["whatsapp", "broker_feed", "manual", "voice_transcript"])
+    .default("manual"),
   images: z.array(z.string()).optional().default([]),
 });
 
@@ -23,7 +25,7 @@ const rawInputSchema = z.object({
 interface ParsedListingResult {
   compound: string | null;
   propertyType: string | null;
-  mode: 'sale' | 'rent' | null;
+  mode: "sale" | "rent" | null;
   beds: number | null;
   baths: number | null;
   area: number | null;
@@ -44,33 +46,40 @@ interface ParsedListingResult {
 }
 
 const KEY_FIELDS = [
-  'compound',
-  'propertyType',
-  'mode',
-  'beds',
-  'baths',
-  'area',
-  'price',
-  'mobile',
+  "compound",
+  "propertyType",
+  "mode",
+  "beds",
+  "baths",
+  "area",
+  "price",
+  "mobile",
 ] as const;
 
-function completeness(result: Pick<ParsedListingResult, (typeof KEY_FIELDS)[number]>): number {
-  const found = KEY_FIELDS.filter((k) => result[k] !== null && result[k] !== undefined).length;
+function completeness(
+  result: Pick<ParsedListingResult, (typeof KEY_FIELDS)[number]>
+): number {
+  const found = KEY_FIELDS.filter(
+    k => result[k] !== null && result[k] !== undefined
+  ).length;
   return Number((found / KEY_FIELDS.length).toFixed(2));
 }
 
-function missingFields(result: Pick<ParsedListingResult, (typeof KEY_FIELDS)[number]>): string[] {
-  return KEY_FIELDS.filter((k) => result[k] === null || result[k] === undefined);
+function missingFields(
+  result: Pick<ParsedListingResult, (typeof KEY_FIELDS)[number]>
+): string[] {
+  return KEY_FIELDS.filter(k => result[k] === null || result[k] === undefined);
 }
 
-const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+const API_KEY =
+  process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "";
 
 /**
  * Fallback heuristic extractor when AI API key is unavailable in dev/offline.
  * Detects ONLY what the text literally states; everything else stays null.
  */
 function normalizeDigits(s: string): string {
-  return s.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+  return s.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 
 function heuristicFallbackParse(rawText: string): ParsedListingResult {
@@ -79,85 +88,164 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // Detect Compound with comprehensive New Cairo & Egyptian gazetteer
   const compounds = [
-    { name: 'Fifth Square', matches: ['fifth square', 'فيفث سكوير', 'المراسم'] },
-    { name: 'Al Rehab', matches: ['al rehab', 'rehab', 'الرحاب', 'مدينة الرحاب'] },
-    { name: 'Madinaty', matches: ['madinaty', 'مدينتي'] },
-    { name: 'Mivida', matches: ['mivida', 'ميفيدا', 'ميفيلد'] },
-    { name: 'Hyde Park', matches: ['hyde park', 'هايد بارك', 'هايدبارك'] },
-    { name: 'Mountain View iCity', matches: ['mountain view', 'ماونتن فيو', 'ماونتن', 'icity', 'اي سيتي'] },
-    { name: 'Villette', matches: ['villette', 'فيليت', 'ڤيليت', 'sodic villette'] },
-    { name: 'Palm Hills NC', matches: ['palm hills', 'بالم هيلز', 'بالم'] },
-    { name: 'Eastown', matches: ['eastown', 'ايست تاون', 'ايستاون'] },
-    { name: 'Beit El Watan', matches: ['beit el watan', 'beit elwatan', 'بيت الوطن'] },
-    { name: 'Katameya Dunes', matches: ['katameya dunes', 'قطامية ديونز'] },
-    { name: 'Katameya Heights', matches: ['katameya heights', 'قطامية هايتس'] },
-    { name: 'Katameya Residence', matches: ['katameya residence', 'قطاميا ريزيدنس', 'قطامية ريزيدنس'] },
-    { name: 'Cairo Festival City', matches: ['cairo festival city', 'cairo festival', 'cfc', 'كايرو فيستيفال', 'كايرو فستيفال', 'اوريانا', 'oriana'] },
-    { name: 'Taj City', matches: ['taj city', 'تاج سيتي', 'تاج سيتى'] },
-    { name: 'Sarai', matches: ['sarai', 'سراي'] },
-    { name: 'Noor City', matches: ['noor city', 'نور سيتي'] },
-    { name: 'The Waterway', matches: ['the waterway', 'waterway', 'ووتر واي', 'الووتر واي'] },
-    { name: '90 Avenue', matches: ['90 avenue', '90 افينيو', 'افينيو 90'] },
-    { name: 'Lake View', matches: ['lake view', 'ليك فيو', 'lakeview'] },
-    { name: 'Uptown Cairo', matches: ['uptown', 'اب تاون', 'أب تاون'] },
-    { name: 'Swan Lake', matches: ['swan lake', 'سوان ليك'] },
-    { name: 'Zed East', matches: ['zed east', 'زد ايست', 'زد'] },
-    { name: 'Badya', matches: ['badya', 'باديا'] },
-    { name: 'Il Bosco', matches: ['il bosco', 'البوسكو', 'إل بوسكو'] },
+    {
+      name: "Fifth Square",
+      matches: ["fifth square", "فيفث سكوير", "المراسم"],
+    },
+    {
+      name: "Al Rehab",
+      matches: ["al rehab", "rehab", "الرحاب", "مدينة الرحاب"],
+    },
+    { name: "Madinaty", matches: ["madinaty", "مدينتي"] },
+    { name: "Mivida", matches: ["mivida", "ميفيدا", "ميفيلد"] },
+    { name: "Hyde Park", matches: ["hyde park", "هايد بارك", "هايدبارك"] },
+    {
+      name: "Mountain View iCity",
+      matches: ["mountain view", "ماونتن فيو", "ماونتن", "icity", "اي سيتي"],
+    },
+    {
+      name: "Villette",
+      matches: ["villette", "فيليت", "ڤيليت", "sodic villette"],
+    },
+    { name: "Palm Hills NC", matches: ["palm hills", "بالم هيلز", "بالم"] },
+    { name: "Eastown", matches: ["eastown", "ايست تاون", "ايستاون"] },
+    {
+      name: "Beit El Watan",
+      matches: ["beit el watan", "beit elwatan", "بيت الوطن"],
+    },
+    { name: "Katameya Dunes", matches: ["katameya dunes", "قطامية ديونز"] },
+    { name: "Katameya Heights", matches: ["katameya heights", "قطامية هايتس"] },
+    {
+      name: "Katameya Residence",
+      matches: ["katameya residence", "قطاميا ريزيدنس", "قطامية ريزيدنس"],
+    },
+    {
+      name: "Cairo Festival City",
+      matches: [
+        "cairo festival city",
+        "cairo festival",
+        "cfc",
+        "كايرو فيستيفال",
+        "كايرو فستيفال",
+        "اوريانا",
+        "oriana",
+      ],
+    },
+    { name: "Taj City", matches: ["taj city", "تاج سيتي", "تاج سيتى"] },
+    { name: "Sarai", matches: ["sarai", "سراي"] },
+    { name: "Noor City", matches: ["noor city", "نور سيتي"] },
+    {
+      name: "The Waterway",
+      matches: ["the waterway", "waterway", "ووتر واي", "الووتر واي"],
+    },
+    { name: "90 Avenue", matches: ["90 avenue", "90 افينيو", "افينيو 90"] },
+    { name: "Lake View", matches: ["lake view", "ليك فيو", "lakeview"] },
+    { name: "Uptown Cairo", matches: ["uptown", "اب تاون", "أب تاون"] },
+    { name: "Swan Lake", matches: ["swan lake", "سوان ليك"] },
+    { name: "Zed East", matches: ["zed east", "زد ايست", "زد"] },
+    { name: "Badya", matches: ["badya", "باديا"] },
+    { name: "Il Bosco", matches: ["il bosco", "البوسكو", "إل بوسكو"] },
   ];
 
   const detectedCompound: string | null =
-    compounds.find((c) => c.matches.some((m) => lower.includes(m)))?.name ?? null;
+    compounds.find(c => c.matches.some(m => lower.includes(m)))?.name ?? null;
 
   // Detect Property Type (null when the text never says)
   let propertyType: string | null = null;
-  if (lower.includes('villa') || lower.includes('فيلا') || lower.includes('standalone') || lower.includes('مستقلة')) {
-    propertyType = 'Standalone Villa';
-  } else if (lower.includes('townhouse') || lower.includes('تاون هاوس') || lower.includes('تاون')) {
-    propertyType = 'Townhouse';
-  } else if (lower.includes('twin house') || lower.includes('توين هاوس') || lower.includes('توين')) {
-    propertyType = 'Twin House';
-  } else if (lower.includes('penthouse') || lower.includes('بنتهاوس') || lower.includes('روف')) {
-    propertyType = 'Penthouse';
-  } else if (lower.includes('duplex') || lower.includes('دوبلكس')) {
-    propertyType = 'Duplex';
-  } else if (lower.includes('studio') || lower.includes('استوديو')) {
-    propertyType = 'Studio';
-  } else if (lower.includes('apartment') || lower.includes('شقة') || lower.includes('شقه') || lower.includes('شقق')) {
-    propertyType = 'Apartment';
+  if (
+    lower.includes("villa") ||
+    lower.includes("فيلا") ||
+    lower.includes("standalone") ||
+    lower.includes("مستقلة")
+  ) {
+    propertyType = "Standalone Villa";
+  } else if (
+    lower.includes("townhouse") ||
+    lower.includes("تاون هاوس") ||
+    lower.includes("تاون")
+  ) {
+    propertyType = "Townhouse";
+  } else if (
+    lower.includes("twin house") ||
+    lower.includes("توين هاوس") ||
+    lower.includes("توين")
+  ) {
+    propertyType = "Twin House";
+  } else if (
+    lower.includes("penthouse") ||
+    lower.includes("بنتهاوس") ||
+    lower.includes("روف")
+  ) {
+    propertyType = "Penthouse";
+  } else if (lower.includes("duplex") || lower.includes("دوبلكس")) {
+    propertyType = "Duplex";
+  } else if (lower.includes("studio") || lower.includes("استوديو")) {
+    propertyType = "Studio";
+  } else if (
+    lower.includes("apartment") ||
+    lower.includes("شقة") ||
+    lower.includes("شقه") ||
+    lower.includes("شقق")
+  ) {
+    propertyType = "Apartment";
   }
 
   // Detect Mode (null when neither rent nor sale wording appears)
-  let mode: 'sale' | 'rent' | null = null;
-  if (lower.includes('rent') || lower.includes('ايجار') || lower.includes('إيجار') || lower.includes('للايجار') || lower.includes('للإيجار')) {
-    mode = 'rent';
-  } else if (lower.includes('sale') || lower.includes('for sale') || lower.includes('للبيع') || lower.includes('بيع')) {
-    mode = 'sale';
+  let mode: "sale" | "rent" | null = null;
+  if (
+    lower.includes("rent") ||
+    lower.includes("ايجار") ||
+    lower.includes("إيجار") ||
+    lower.includes("للايجار") ||
+    lower.includes("للإيجار")
+  ) {
+    mode = "rent";
+  } else if (
+    lower.includes("sale") ||
+    lower.includes("for sale") ||
+    lower.includes("للبيع") ||
+    lower.includes("بيع")
+  ) {
+    mode = "sale";
   }
 
   // Detect Beds & Baths
-  const bedsMatch = normalizedText.match(/(\d+)\s*(?:bed|bd|غرف|نوم|rooms)/i) || rawText.match(/(?:bed|bd|غرف|نوم)\s*(\d+)/i);
+  const bedsMatch =
+    normalizedText.match(/(\d+)\s*(?:bed|bd|غرف|نوم|rooms)/i) ||
+    rawText.match(/(?:bed|bd|غرف|نوم)\s*(\d+)/i);
   const beds = bedsMatch ? parseInt(bedsMatch[1], 10) : null;
 
-  const bathsMatch = normalizedText.match(/(\d+)\s*(?:bath|ba|حمام|حمامات)/i) || rawText.match(/(?:bath|ba|حمام)\s*(\d+)/i);
+  const bathsMatch =
+    normalizedText.match(/(\d+)\s*(?:bath|ba|حمام|حمامات)/i) ||
+    rawText.match(/(?:bath|ba|حمام)\s*(\d+)/i);
   const baths = bathsMatch ? parseInt(bathsMatch[1], 10) : null;
 
   // Detect Area
-  const areaMatch = normalizedText.match(/(\d{2,4})\s*(?:m2|sqm|متر|م²|م(?!\p{L})|m\b)/iu) || rawText.match(/(?:area|مساحة)\s*[:=]?\s*(\d{2,4})/i);
+  const areaMatch =
+    normalizedText.match(/(\d{2,4})\s*(?:m2|sqm|متر|م²|م(?!\p{L})|m\b)/iu) ||
+    rawText.match(/(?:area|مساحة)\s*[:=]?\s*(\d{2,4})/i);
   const area = areaMatch ? parseInt(areaMatch[1], 10) : null;
 
   // Detect Garden
-  const gardenMatch = normalizedText.match(/garden\s*(\d{2,4})/i) || rawText.match(/حديقة\s*(\d{2,4})/i) || rawText.match(/جاردن\s*(\d{2,4})/i);
+  const gardenMatch =
+    normalizedText.match(/garden\s*(\d{2,4})/i) ||
+    rawText.match(/حديقة\s*(\d{2,4})/i) ||
+    rawText.match(/جاردن\s*(\d{2,4})/i);
   const gardenArea = gardenMatch ? parseInt(gardenMatch[1], 10) : null;
 
   // Detect Price
   let price: number | null = null;
-  const priceNumberMatch = normalizedText.match(/(?:price|سعر|السعر|بسعر|مطلوب|كاش|إجمالي)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(1?\d{1,3}(?:,\d{3})+)/);
-  const priceMillionMatch = normalizedText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:million|مليون)/i)
-    || rawText.match(/(\d+(?:\.\d+)?)\s*(?:million|مليون)/i);
+  const priceNumberMatch =
+    normalizedText.match(
+      /(?:price|سعر|السعر|بسعر|مطلوب|كاش|إجمالي)\s*[:=]?\s*(\d[\d,\.]{4,})/i
+    ) || rawText.match(/(1?\d{1,3}(?:,\d{3})+)/);
+  const priceMillionMatch =
+    normalizedText.match(
+      /(?:price|السعر|مطلوب)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:million|مليون)/i
+    ) || rawText.match(/(\d+(?:\.\d+)?)\s*(?:million|مليون)/i);
 
   if (priceNumberMatch) {
-    const cleanNum = parseInt(priceNumberMatch[1].replace(/,/g, ''), 10);
+    const cleanNum = parseInt(priceNumberMatch[1].replace(/,/g, ""), 10);
     if (!isNaN(cleanNum) && cleanNum > 50000) {
       price = cleanNum;
     }
@@ -170,14 +258,32 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // Detect Finishing
   let finishing: string | null = null;
-  if (lower.includes('core') || lower.includes('shell') || lower.includes('طوب احمر') || lower.includes('ع المحارة')) {
-    finishing = 'Core & Shell';
-  } else if (lower.includes('semi') || lower.includes('نصف تشطيب') || lower.includes('نص تشطيب')) {
-    finishing = 'Semi Finished';
-  } else if (lower.includes('furnished') || lower.includes('مفروش') || lower.includes('بالفرش')) {
-    finishing = 'Fully Furnished';
-  } else if (lower.includes('fully finished') || lower.includes('سوبر لوكس') || lower.includes('الترا') || lower.includes('تشطيب كامل')) {
-    finishing = 'Fully Finished';
+  if (
+    lower.includes("core") ||
+    lower.includes("shell") ||
+    lower.includes("طوب احمر") ||
+    lower.includes("ع المحارة")
+  ) {
+    finishing = "Core & Shell";
+  } else if (
+    lower.includes("semi") ||
+    lower.includes("نصف تشطيب") ||
+    lower.includes("نص تشطيب")
+  ) {
+    finishing = "Semi Finished";
+  } else if (
+    lower.includes("furnished") ||
+    lower.includes("مفروش") ||
+    lower.includes("بالفرش")
+  ) {
+    finishing = "Fully Furnished";
+  } else if (
+    lower.includes("fully finished") ||
+    lower.includes("سوبر لوكس") ||
+    lower.includes("الترا") ||
+    lower.includes("تشطيب كامل")
+  ) {
+    finishing = "Fully Finished";
   }
 
   // Detect Phone — only a real match, never a placeholder
@@ -186,20 +292,23 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // SBR Code — only derivable from fields the text actually provided
   const codeMeta =
-    detectedCompound !== null && beds !== null && price !== null && finishing !== null
+    detectedCompound !== null &&
+    beds !== null &&
+    price !== null &&
+    finishing !== null
       ? buildSierraCodeMetadata({
           compound: detectedCompound,
           rooms: beds,
           furnishingStatus:
-            finishing === 'Core & Shell'
-              ? 'core_and_shell'
-              : finishing === 'Semi Finished'
-                ? 'semi_finished'
-                : finishing === 'Fully Furnished'
-                  ? 'fully_furnished'
-                  : 'fully_finished',
+            finishing === "Core & Shell"
+              ? "core_and_shell"
+              : finishing === "Semi Finished"
+                ? "semi_finished"
+                : finishing === "Fully Furnished"
+                  ? "fully_furnished"
+                  : "fully_finished",
           price,
-          features: gardenArea ? ['GD'] : [],
+          features: gardenArea ? ["GD"] : [],
         })
       : null;
 
@@ -210,7 +319,8 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
   if (beds !== null) summaryParts.push(`${beds} bedrooms`);
   if (baths !== null) summaryParts.push(`${baths} bathrooms`);
   if (finishing) summaryParts.push(`${finishing} finishing`);
-  const aiSummary = summaryParts.length > 0 ? summaryParts.join(', ') + '.' : null;
+  const aiSummary =
+    summaryParts.length > 0 ? summaryParts.join(", ") + "." : null;
 
   const result: ParsedListingResult = {
     compound: detectedCompound,
@@ -224,7 +334,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
     finishing,
     ownerName: null,
     mobile,
-    features: gardenArea !== null ? ['Garden'] : [],
+    features: gardenArea !== null ? ["Garden"] : [],
     tags: extractEcoSmartTags(rawText),
     sierraCode: codeMeta?.code ?? null,
     aiScore: null,
@@ -246,7 +356,11 @@ export async function POST(req: NextRequest) {
 
     if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: parseResult.error.flatten() },
+        {
+          success: false,
+          error: "Validation failed",
+          details: parseResult.error.flatten(),
+        },
         { status: 400 }
       );
     }
@@ -257,7 +371,9 @@ export async function POST(req: NextRequest) {
     if (API_KEY) {
       try {
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-3.5-flash' });
+        const model = genAI.getGenerativeModel({
+          model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+        });
 
         const prompt = `You are the Sierra Estates AI Scribe (Easy Listing Extractor).
 Analyze the following raw real estate text (Arabic, English, or mixed) and extract structured listing data.
@@ -289,28 +405,50 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
 }`;
 
         const aiResponse = await model.generateContent(prompt);
-        const responseText = aiResponse.response.text().trim().replace(/^```json/i, '').replace(/```$/i, '').trim();
+        const responseText = aiResponse.response
+          .text()
+          .trim()
+          .replace(/^```json/i, "")
+          .replace(/```$/i, "")
+          .trim();
         const extracted = JSON.parse(responseText);
 
-        const compound = typeof extracted.compound === 'string' && extracted.compound.trim() ? extracted.compound.trim() : null;
-        const beds = Number.isFinite(Number(extracted.beds)) && Number(extracted.beds) > 0 ? Number(extracted.beds) : null;
-        const price = Number.isFinite(Number(extracted.price)) && Number(extracted.price) > 0 ? Number(extracted.price) : null;
-        const finishing = typeof extracted.finishing === 'string' && extracted.finishing.trim() ? extracted.finishing : null;
+        const compound =
+          typeof extracted.compound === "string" && extracted.compound.trim()
+            ? extracted.compound.trim()
+            : null;
+        const beds =
+          Number.isFinite(Number(extracted.beds)) && Number(extracted.beds) > 0
+            ? Number(extracted.beds)
+            : null;
+        const price =
+          Number.isFinite(Number(extracted.price)) &&
+          Number(extracted.price) > 0
+            ? Number(extracted.price)
+            : null;
+        const finishing =
+          typeof extracted.finishing === "string" && extracted.finishing.trim()
+            ? extracted.finishing
+            : null;
 
         // Sierra code is only derivable when the text supplied its inputs
-        const codeInputsReady = compound !== null && beds !== null && price !== null && finishing !== null;
+        const codeInputsReady =
+          compound !== null &&
+          beds !== null &&
+          price !== null &&
+          finishing !== null;
         const codeMeta = codeInputsReady
           ? buildSierraCodeMetadata({
               compound,
               rooms: beds,
               furnishingStatus:
-                finishing === 'Core & Shell'
-                  ? 'core_and_shell'
-                  : finishing === 'Semi Finished'
-                    ? 'semi_finished'
-                    : finishing === 'Fully Furnished'
-                      ? 'fully_furnished'
-                      : 'fully_finished',
+                finishing === "Core & Shell"
+                  ? "core_and_shell"
+                  : finishing === "Semi Finished"
+                    ? "semi_finished"
+                    : finishing === "Fully Furnished"
+                      ? "fully_furnished"
+                      : "fully_finished",
               price,
               features: [],
             })
@@ -319,28 +457,61 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
         const result: ParsedListingResult = {
           compound,
           propertyType:
-            typeof extracted.propertyType === 'string' && extracted.propertyType.trim() ? extracted.propertyType : null,
-          mode: extracted.mode === 'rent' ? 'rent' : extracted.mode === 'sale' ? 'sale' : null,
+            typeof extracted.propertyType === "string" &&
+            extracted.propertyType.trim()
+              ? extracted.propertyType
+              : null,
+          mode:
+            extracted.mode === "rent"
+              ? "rent"
+              : extracted.mode === "sale"
+                ? "sale"
+                : null,
           beds,
-          baths: Number.isFinite(Number(extracted.baths)) && Number(extracted.baths) > 0 ? Number(extracted.baths) : null,
-          area: Number.isFinite(Number(extracted.area)) && Number(extracted.area) > 0 ? Number(extracted.area) : null,
+          baths:
+            Number.isFinite(Number(extracted.baths)) &&
+            Number(extracted.baths) > 0
+              ? Number(extracted.baths)
+              : null,
+          area:
+            Number.isFinite(Number(extracted.area)) &&
+            Number(extracted.area) > 0
+              ? Number(extracted.area)
+              : null,
           gardenArea:
-            Number.isFinite(Number(extracted.gardenArea)) && Number(extracted.gardenArea) > 0
+            Number.isFinite(Number(extracted.gardenArea)) &&
+            Number(extracted.gardenArea) > 0
               ? Number(extracted.gardenArea)
               : null,
           price,
           downpayment:
-            Number.isFinite(Number(extracted.downpayment)) && Number(extracted.downpayment) > 0
+            Number.isFinite(Number(extracted.downpayment)) &&
+            Number(extracted.downpayment) > 0
               ? Number(extracted.downpayment)
               : null,
           finishing,
-          ownerName: typeof extracted.ownerName === 'string' && extracted.ownerName.trim() ? extracted.ownerName : null,
-          mobile: typeof extracted.mobile === 'string' && extracted.mobile.trim() ? extracted.mobile : null,
-          features: Array.isArray(extracted.features) ? extracted.features.filter((f: unknown) => typeof f === 'string' && f) : [],
+          ownerName:
+            typeof extracted.ownerName === "string" &&
+            extracted.ownerName.trim()
+              ? extracted.ownerName
+              : null,
+          mobile:
+            typeof extracted.mobile === "string" && extracted.mobile.trim()
+              ? extracted.mobile
+              : null,
+          features: Array.isArray(extracted.features)
+            ? extracted.features.filter(
+                (f: unknown) => typeof f === "string" && f
+              )
+            : [],
           tags: extractEcoSmartTags(rawText),
           sierraCode: codeMeta?.code ?? null,
           aiScore: null,
-          aiSummary: typeof extracted.aiSummary === 'string' && extracted.aiSummary.trim() ? extracted.aiSummary : null,
+          aiSummary:
+            typeof extracted.aiSummary === "string" &&
+            extracted.aiSummary.trim()
+              ? extracted.aiSummary
+              : null,
           confidence: 0,
         };
 
@@ -348,19 +519,24 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
         // range; otherwise fall back to the honest completeness ratio.
         const modelConfidence = Number(extracted.confidence);
         result.confidence =
-          Number.isFinite(modelConfidence) && modelConfidence > 0 && modelConfidence <= 1
+          Number.isFinite(modelConfidence) &&
+          modelConfidence > 0 &&
+          modelConfidence <= 1
             ? Number(modelConfidence.toFixed(2))
             : completeness(result);
 
         return NextResponse.json({
           success: true,
           data: result,
-          source: 'gemini-ai',
+          source: "gemini-ai",
           missing: missingFields(result),
           images: images || [],
         });
       } catch (geminiErr) {
-        logger.warn('[EASY_PARSE] Gemini extraction failed, falling back to heuristic:', geminiErr);
+        logger.warn(
+          "[EASY_PARSE] Gemini extraction failed, falling back to heuristic:",
+          geminiErr
+        );
       }
     }
 
@@ -369,14 +545,14 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
     return NextResponse.json({
       success: true,
       data: fallbackResult,
-      source: 'heuristic-engine',
+      source: "heuristic-engine",
       missing: missingFields(fallbackResult),
       images: images || [],
     });
   } catch (error: any) {
-    logger.error('[EASY_PARSE] Error:', error);
+    logger.error("[EASY_PARSE] Error:", error);
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to parse listing' },
+      { success: false, error: error?.message || "Failed to parse listing" },
       { status: 500 }
     );
   }
