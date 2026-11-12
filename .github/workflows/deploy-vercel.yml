@@ -198,10 +198,29 @@ jobs:
           done
 
       - name: Re-sync environment variables to the ${{ matrix.role }} project
+        # The sync script reads its values from process.env (see
+        # CLIENT_ENV_VARS / ADMIN_ENV_VARS) and silently skips any var that
+        # is unset ('if (!value) continue;'). This step MUST therefore be
+        # given the Supabase backend values — until 2026-11-12 it ran with
+        # nothing but VERCEL_TOKEN, so NEXT_PUBLIC_SUPABASE_URL was never
+        # re-synced and production ran without it (/api/health degraded,
+        # /api/inventory empty).
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
           VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_TOKEN }}"
           [ -z "$VERCEL_TOKEN_VALUE" ] && VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_AUTH_TOKEN }}"
+          # Fail loudly if the canonical backend values are absent — a sync
+          # that silently skips Supabase is how production lost them.
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Supabase backend env values are missing — refusing to run a sync that would silently skip them."
+            exit 1
+          fi
           # 429 Rate limited-aware: the script itself backs off with sleeps.
           VERCEL_TOKEN="$VERCEL_TOKEN_VALUE" node scripts/sync-vercel-env.js --role ${{ matrix.role }} || {
             echo "::warning::Env sync for ${{ matrix.role }} failed — deployment stands, re-run scripts/sync-vercel-env.js manually."
