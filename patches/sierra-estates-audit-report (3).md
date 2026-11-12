@@ -69,7 +69,7 @@ All in `apps/sierra-estates-realty/app/api/**` (boundary-respecting; landed to `
 
 ## Files changed (this session's three PRs)
 
-```
+```text
 PR #45 (d62337b03) — migration + secret rotation:
   supabase/migrations/20261112_043_viewing_dispatch_golden_hour_columns.sql  (new, + app mirror)
   supabase/schema.sql                                                        (viewings columns)

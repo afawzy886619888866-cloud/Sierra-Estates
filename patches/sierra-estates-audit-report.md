@@ -70,7 +70,7 @@ All rules verified present in `lib/services/SheetsIntegrationService.ts` (778 li
 
 ## Files Changed (all within the allowed boundary)
 
-```
+```text
 apps/sierra-estates-realty/app/api/viewing-requests/route.ts   | 100 +++++++++--
 apps/sierra-estates-realty/app/api/inquiries/route.ts          |  88 ++++++++-
 apps/sierra-estates-realty/app/api/sync/sheet-webhook/route.ts |  14 ++-
