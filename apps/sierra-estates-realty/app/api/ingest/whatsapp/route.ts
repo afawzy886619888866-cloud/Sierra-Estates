@@ -408,7 +408,7 @@ export async function POST(req: NextRequest) {
       leilaReply
     });
   } catch (error: any) {
-    logger.error('[WhatsApp Ingest Error]:', error);
+    logger.error(`[WhatsApp Ingest Error]: ${error?.message || error}\n${error?.stack || ''}`);
     return NextResponse.json(
       {
         success: false,
