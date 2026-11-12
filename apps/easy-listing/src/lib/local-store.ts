@@ -21,6 +21,14 @@ export const DEFAULT_SHEET_LINK =
  * Shared secret of the team's Apps Script engine (CONFIG.OUTREACH_SECRET).
  * The merged script rejects any POST without it, so it is prefilled —
  * change it here only if you change it inside the script.
+ *
+ * Rotation note (2026-11-12): the server side resolves SIERRA_SECRET_KEY
+ * first (/api/sync/sheet-webhook, GoogleSheetSyncService, and the Apps
+ * Script engines themselves read the SIERRA_SECRET_KEY Script Property).
+ * This browser tool has no env access, so its prefilled default stays the
+ * legacy value — when the secret is rotated, paste the new value once in
+ * the tool's Settings dialog (it persists in localStorage, overriding
+ * this default).
  */
 export const DEFAULT_SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO'
 

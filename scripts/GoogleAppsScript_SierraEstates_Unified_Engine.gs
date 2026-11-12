@@ -7,7 +7,10 @@
  *      and click "Run ▶" — audits all sheets, outputs detailed execution logs.
  *      WORKS IN BOTH CONTAINER-BOUND AND STANDALONE APPS SCRIPT EDITORS.
  *   1. Preserved & Enhanced Owner Outreach Write-Back Endpoint (doGet & doPost).
- *      - Secret: SE_OUTREACH_SECRET_2026_CAIRO
+ *      - Secret: Script Property SIERRA_SECRET_KEY if set, else the legacy
+ *        SE_OUTREACH_SECRET_2026_CAIRO constant (rotate via File > Project
+ *        Properties > Script Properties — no code edit needed; the Next.js
+ *        side reads the same env var on /api/sync/sheet-webhook).
  *      - Updates «تاريخ اخر تواصل» / Last Action Date matched by clean mobile.
  *   2. Famous Canonical Compound Unification (e.g. CFC, كايرو فيستيفال -> Cairo Festival City).
  *   3. 400,000 EGP Rent Ceiling Guard (Rent <= 400k | Resale = Millions).
@@ -19,9 +22,16 @@
  */
 
 // Core Configuration
+// OUTREACH_SECRET resolution: the Script Property SIERRA_SECRET_KEY wins when
+// set (File > Project Properties > Script Properties), so the shared secret
+// can be rotated without touching this code. The legacy constant stays as
+// the fallback so already-deployed copies keep authenticating until the
+// property is added.
 const CONFIG = {
   SPREADSHEET_ID: "1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk",
-  OUTREACH_SECRET: "SE_OUTREACH_SECRET_2026_CAIRO",
+  OUTREACH_SECRET:
+    PropertiesService.getScriptProperties().getProperty("SIERRA_SECRET_KEY") ||
+    "SE_OUTREACH_SECRET_2026_CAIRO",
   TARGET_GID: 1127958606, // Original Owners-Rent GID
   DATE_COL_NAME: "تاريخ اخر تواصل",
   PRICE_RENT_MAX: 400000, // 400k EGP ceiling for Rent
@@ -1127,7 +1137,7 @@ function showBotGuidanceDialog() {
       "<p>Send JSON POST to this script's Web App URL:</p>" +
       "<pre style='background:#0F172A;color:#38BDF8;padding:12px;border-radius:6px;font-size:11px;'>" +
       JSON.stringify({
-        "secret": "SE_OUTREACH_SECRET_2026_CAIRO",
+        "secret": CONFIG.OUTREACH_SECRET,
         "mobile": "+201092048333",
         "compound": "cfc",
         "deal_type": "Rent",
