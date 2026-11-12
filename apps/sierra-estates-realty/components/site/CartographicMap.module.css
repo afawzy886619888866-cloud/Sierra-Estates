@@ -960,7 +960,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3.5px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   font-family: var(
     --font-jakarta,
@@ -975,18 +975,23 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
   pointer-events: none;
-  background: rgba(6, 17, 34, 0.9);
+  background: rgba(6, 17, 34, 0.92);
   color: #ffffff;
-  border: 1px solid rgba(201, 168, 76, 0.75);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  border: 1.5px solid rgba(201, 168, 76, 0.85);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-shadow:
     0 0 10px rgba(201, 168, 76, 1),
-    0 0 22px rgba(201, 168, 76, 0.6);
+    0 0 22px rgba(201, 168, 76, 0.65);
   box-shadow:
-    0 0 14px rgba(201, 168, 76, 0.35),
-    0 4px 12px rgba(0, 0, 0, 0.5);
+    0 0 16px rgba(201, 168, 76, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.6);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .permanentGlowingPillHovered {
@@ -1024,6 +1029,43 @@
   border-radius: 12px;
   overflow: hidden;
   background: #001f38;
+}
+
+/* 4K Vector SVG Geometric Precision & Non-Scaling Stroke */
+:global(.leaflet-container) svg,
+:global(.leaflet-pane) svg,
+.vectorMasterplanSvg {
+  shape-rendering: geometricPrecision !important;
+}
+
+:global(.leaflet-container) svg path,
+:global(.leaflet-pane) svg path,
+:global(.leaflet-overlay-pane) path,
+.vectorSvgPath {
+  shape-rendering: geometricPrecision !important;
+  vector-effect: non-scaling-stroke !important;
+}
+
+/* GPU-Accelerated Centroid Badges in Leaflet */
+:global(.gis-centroid-pill > div) {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  border: 1.5px solid rgba(201, 168, 76, 0.85) !important;
+  background: rgba(6, 17, 34, 0.92) !important;
+  text-shadow: 0 0 10px rgba(201, 168, 76, 0.95), 0 0 20px rgba(201, 168, 76, 0.5) !important;
+  box-shadow: 0 0 16px rgba(201, 168, 76, 0.45), 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  will-change: transform;
+}
+
+:global(.gis-centroid-pill > div:hover) {
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 22px rgba(0, 240, 255, 0.8), 0 0 32px rgba(201, 168, 76, 0.65), 0 6px 18px rgba(0, 0, 0, 0.7) !important;
+  text-shadow: 0 0 12px #00f0ff, 0 0 24px rgba(201, 168, 76, 0.9) !important;
+  transform: translate3d(0, -2px, 0) scale(1.06) !important;
 }
 
 /* ============================================================================
