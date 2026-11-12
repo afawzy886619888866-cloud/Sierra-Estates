@@ -37,6 +37,11 @@ on:
         required: false
         default: false
         type: boolean
+      env_sync_only:
+        description: 'Only re-sync environment variables (no deploy — does not consume the Vercel deploy quota)'
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: read
   actions: read
@@ -69,6 +74,7 @@ jobs:
           CI_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
           CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           DEPLOY_SHA: ${{ github.sha }}
+          ENV_SYNC_ONLY: ${{ inputs.env_sync_only || 'false' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
@@ -90,6 +96,15 @@ jobs:
               echo "::error::CI workflow run is not an eligible successful main-branch run for this repository. Production deploy blocked."
               echo "proceed=false" >> "$GITHUB_OUTPUT"
             fi
+            exit 0
+          fi
+
+          if [ "$ENV_SYNC_ONLY" = "true" ]; then
+            # Env-var re-sync only: no artifact leaves the repo, so the
+            # production CI gate does not apply (the values pushed are the
+            # repository's own secrets/vars, not built code). Audited here.
+            echo "::notice::env_sync_only dispatch — skipping deploy, re-syncing environment variables only."
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -167,6 +182,10 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Deploy ${{ matrix.role }} project (${{ matrix.domain }})
+        # env_sync_only dispatches skip the deploy entirely — env-var PATCHes
+        # are not deployments and do not consume the Vercel deploy quota
+        # (which is what blocks deploys on the free tier at >100/day).
+        if: ${{ inputs.env_sync_only != true }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
           VERCEL_PROJECT_ID: ${{ matrix.projectId }}
@@ -198,6 +217,12 @@ jobs:
           done
 
       - name: Re-sync environment variables to the ${{ matrix.role }} project
+        # ALWAYS run — even when the deploy step failed (e.g. the free-tier
+        # daily deploy quota, api-deployments-free-per-day). The env vars
+        # must reach the project regardless; a failed deploy would otherwise
+        # strand the project without its backend config, which is exactly
+        # how production lost NEXT_PUBLIC_SUPABASE_URL on 2026-11-12.
+        if: ${{ always() }}
         # The sync script reads its values from process.env (see
         # CLIENT_ENV_VARS / ADMIN_ENV_VARS) and silently skips any var that
         # is unset ('if (!value) continue;'). This step MUST therefore be
