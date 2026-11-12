@@ -18,14 +18,10 @@ import {
   Check,
   Send,
   MessageCircle,
-  Building2,
-  Calendar,
   Phone,
   User,
   Mail,
-  ShieldCheck,
   Flame,
-  ArrowRight,
   RotateCcw,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
