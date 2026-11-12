@@ -10,11 +10,19 @@ export const dynamic = 'force-dynamic';
  * Mirrors the Google Apps Script doGet/doPost contract from
  * scripts/GoogleAppsScript_SierraEstates_Unified_Engine.gs.
  *
- * Secret: SE_OUTREACH_SECRET_2026_CAIRO
+ * Secret resolution (in order):
+ *   1. SIERRA_SECRET_KEY env — the canonical bridge secret for the sheet
+ *      tabs (Master_Inventory / Real_Available_Units) and all sheet
+ *      write-back callers. Set it to rotate the shared secret without a
+ *      code change.
+ *   2. Legacy fallback 'SE_OUTREACH_SECRET_2026_CAIRO' — the value the
+ *      deployed Apps Script engine hardcodes, kept so the existing sheet
+ *      keeps working until its CONFIG is rotated to the env value.
  * Matches by phone → updates public.listings.last_contact_date
  * Busts the in-memory /api/inventory cache on success.
  */
-const EXPECTED_SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO';
+const LEGACY_SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO';
+const EXPECTED_SECRET = process.env.SIERRA_SECRET_KEY?.trim() || LEGACY_SECRET;
 
 /**
  * GET /api/sync/sheet-webhook
@@ -34,7 +42,7 @@ export async function GET() {
  * Accepts Google Apps Script outreach write-back payloads.
  *
  * Body: {
- *   secret: "SE_OUTREACH_SECRET_2026_CAIRO",
+ *   secret: "<SIERRA_SECRET_KEY env value, or the legacy Apps Script secret>",
  *   rows: [{ phone: "01xxxxxxxxx", date?: "dd/MM/yyyy" }]
  * }
  *

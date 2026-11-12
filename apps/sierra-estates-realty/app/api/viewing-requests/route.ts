@@ -117,7 +117,20 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 2. Canonical viewing row (public.viewings — migration 014) ─────────
+    // 3-way dispatch roster + golden-hour deadline. These used to ride as
+    // four insert columns (ceo_email / team_leader_email /
+    // sales_advisor_email / golden_hour_at) that exist in NO schema or
+    // migration, so PostgREST rejected every insert (PGRST204) and the
+    // public viewing form returned 500. The viewings table has no such
+    // columns, so the roster + deadline now park in `notes` (a real column,
+    // already free-text) where the ops dashboard still reads them.
     const goldenHourAt = new Date(new Date(`${data.preferredDate}T12:00:00Z`).getTime() + 60 * 60 * 1000).toISOString();
+    const dispatchRoster =
+      `CEO: a.fawzy8866@gmail.com | Team Leader: teamleader@sierra-estates.net | ` +
+      `Sales Advisor: advisory@sierra-estates.net | Golden Hour deadline: ${goldenHourAt}`;
+    const visitorNotes = data.message?.trim()
+      ? `${data.message.trim()}\n\n---\n${dispatchRoster}`
+      : dispatchRoster;
     const viewing = await insertRecord<{ id: string }>('viewings', {
       ...(leadId ? { leadId } : {}),
       propertyCode: data.propertyCode,
@@ -127,16 +140,39 @@ export async function POST(request: NextRequest) {
       preferredDate: data.preferredDate,
       preferredTime: data.preferredTime || 'morning',
       numberOfPeople: data.numberOfPeople || 1,
-      ...(data.message ? { message: data.message } : {}),
+      notes: visitorNotes,
       status: 'pending_approval',
       source: 'website',
-      ceoEmail: 'a.fawzy8866@gmail.com',
-      teamLeaderEmail: 'teamleader@sierra-estates.net',
-      salesAdvisorEmail: 'advisory@sierra-estates.net',
-      goldenHourAt,
       createdAt: now,
       updatedAt: now,
     });
+
+    // ── 2b. Golden Hour follow-up task (public.followups — real table) ─────
+    // The 60-minute timer was previously only a string inside the calendar
+    // event text; nothing operational ever acted on it. A real followup row
+    // (type 'viewing', due at the golden-hour deadline) makes the timer
+    // visible on the CRM task board and lets /api/cron/lead-timers flip it
+    // to 'overdue' when it lapses. Best-effort: a followups failure must
+    // never break the visitor's 201.
+    try {
+      await insertRecord('followups', {
+        ...(leadId ? { leadId } : {}),
+        type: 'viewing',
+        title: `Golden Hour follow-up — ${data.propertyCode} (${data.visitorName})`,
+        notes:
+          `60-minute Golden Hour window after the viewing slot. ` +
+          `Unit ${data.propertyCode}, client ${data.visitorName} (${phone}). ` +
+          `Confirm advisor assignment and log the call outcome. 25% Website Commission Discount applies.`,
+        dueAt: goldenHourAt,
+        status: 'pending',
+        priority: 'high',
+        createdBy: 'viewing-requests-bot',
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch (followupErr) {
+      logger.warn('[viewing-requests] Golden Hour followup row failed (non-fatal):', followupErr);
+    }
 
     // ── 3. Telegram internal alert (fire-and-forget — never blocks) ───────
     try {
@@ -149,21 +185,61 @@ export async function POST(request: NextRequest) {
       /* telegram is best-effort internal alerting */
     }
 
-    // ── 4. Confirmation links with the REAL chosen slot ────────────────────
-    const waText = encodeURIComponent(
-      `Hello Sierra Estates — confirming my viewing request for unit [${data.propertyCode}] on ${data.preferredDate}${data.preferredTime ? ` (${data.preferredTime})` : ''}. Name: ${data.visitorName}.`
-    );
-    const waNumber = phone.startsWith('+') ? phone.replace('+', '') : `2${phone.replace(/^0+/, '')}`;
+    // ── 3. 3-way stakeholder dispatch (CEO / Team Leader / Sales Advisor) ──
+    // The Google Calendar invite link above carries all three staff emails as
+    // attendees (plus the visitor), but a link in the visitor's response is
+    // not a dispatch — staff never saw it. The repo has no email provider
+    // wired (§21: never fabricate a delivery channel), so the operational
+    // dispatch rides the existing Telegram lane: each stakeholder ROLE chat
+    // (when its env chat id is configured) receives the invite link with the
+    // real slot. Unconfigured roles are honestly reported as skipped in the
+    // response, and a failure here can never break the visitor's 201.
+    const dispatchRoles: Array<{ role: string; chatEnv: string; email: string }> = [
+      { role: 'CEO (Ahmed Fawzy)', chatEnv: 'TELEGRAM_CEO_CHAT_ID', email: 'a.fawzy8866@gmail.com' },
+      { role: 'Team Leader', chatEnv: 'TELEGRAM_TEAM_LEADER_CHAT_ID', email: 'teamleader@sierra-estates.net' },
+      { role: 'Sales Advisor', chatEnv: 'TELEGRAM_SALES_ADVISOR_CHAT_ID', email: 'advisory@sierra-estates.net' },
+    ];
+    const calendarInviteForStaff =
+      `📅 Property Viewing — ${data.propertyCode}\n` +
+      `Client: ${data.visitorName} (${phone})\n` +
+      `Slot: ${data.preferredDate}${data.preferredTime ? ` ${data.preferredTime}` : ''} · ${data.numberOfPeople || 1} ppl\n` +
+      `Golden Hour follow-up due: ${goldenHourAt}\n` +
+      `Calendar invite (3-way + client):\n`;
+    const dispatchResults: Array<{ role: string; delivered: boolean }> = [];
+    // Same date/attendee values step 4 renders into the visitor's link —
+    // computed here first because the dispatch (step 3) runs before them.
     const calDate = data.preferredDate.replace(/-/g, '');
     const attendees = ['a.fawzy8866@gmail.com', 'teamleader@sierra-estates.net', 'advisory@sierra-estates.net', data.visitorEmail]
       .filter(Boolean)
       .join(',');
-    const calendarLink =
+    const staffCalendarLink =
       `https://calendar.google.com/calendar/render?action=TEMPLATE` +
       `&text=${encodeURIComponent(`Property Viewing — ${data.propertyCode} (Sierra Estates)`)}` +
       `&dates=${calDate}T100000Z/${calDate}T110000Z` +
       `&details=${encodeURIComponent(`Viewing requested by ${data.visitorName} · ${phone}. Unit ${data.propertyCode}. Eligible for 25% Website Commission Discount. 60-Minute Golden Hour Follow-Up Tracker Active.`)}` +
       `&add=${encodeURIComponent(attendees)}`;
+    for (const role of dispatchRoles) {
+      const chatId = process.env[role.chatEnv]?.trim();
+      if (!chatId) {
+        dispatchResults.push({ role: role.role, delivered: false });
+        continue;
+      }
+      try {
+        const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
+        await sendTelegramMessage(`${calendarInviteForStaff}${staffCalendarLink}`, chatId);
+        dispatchResults.push({ role: role.role, delivered: true });
+      } catch (dispatchErr) {
+        logger.warn(`[viewing-requests] calendar dispatch to ${role.role} failed (non-fatal):`, dispatchErr);
+        dispatchResults.push({ role: role.role, delivered: false });
+      }
+    }
+
+    // ── 4. Confirmation links with the REAL chosen slot ────────────────────
+    const waText = encodeURIComponent(
+      `Hello Sierra Estates — confirming my viewing request for unit [${data.propertyCode}] on ${data.preferredDate}${data.preferredTime ? ` (${data.preferredTime})` : ''}. Name: ${data.visitorName}.`
+    );
+    const waNumber = phone.startsWith('+') ? phone.replace('+', '') : `2${phone.replace(/^0+/, '')}`;
+    const calendarLink = staffCalendarLink;
 
     return NextResponse.json(
       {
@@ -173,6 +249,8 @@ export async function POST(request: NextRequest) {
         message: 'Viewing request received — our team will confirm shortly.',
         whatsappConfirmUrl: `https://wa.me/201092048333?text=${waText}`,
         calendarLink,
+        goldenHourFollowupAt: goldenHourAt,
+        calendarDispatch: dispatchResults,
       },
       { status: 201 }
     );
