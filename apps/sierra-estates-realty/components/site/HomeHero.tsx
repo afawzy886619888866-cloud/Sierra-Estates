@@ -134,6 +134,9 @@ export default function HomeHero() {
             <img
               src={sl.img}
               alt=""
+              loading={i === 0 ? 'eager' : 'lazy'}
+              fetchPriority={i === 0 ? 'high' : 'low'}
+              decoding={i === 0 ? 'sync' : 'async'}
               style={{
                 transform: `translate3d(${tilt.x * -0.6}px, ${tilt.y * -0.6}px, 0) scale(1.04)`,
                 transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',

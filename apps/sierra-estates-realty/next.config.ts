@@ -72,6 +72,7 @@ const nextConfig: NextConfig = {
     'twilio',
   ],
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: '**.googleusercontent.com' },
       { protocol: 'https', hostname: '**.supabase.co' },
@@ -146,6 +147,12 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
+      },
+      {
+        source: '/(hero|cairo-plaza|maps|assets)/:all*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
     ];

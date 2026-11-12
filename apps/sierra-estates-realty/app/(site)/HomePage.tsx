@@ -24,8 +24,6 @@ import {
   type SmartFilterValue,
 } from '@/lib/site/smart-search';
 import HomeHero from '@/components/site/HomeHero';
-import PropertyShowcaseVideo from '@/components/site/PropertyShowcaseVideo';
-import VirtualTourBanner from '@/components/site/VirtualTourBanner';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
@@ -33,10 +31,26 @@ import { usePublicListings } from '@/lib/site/usePublicListings';
 import { getCuratedListingImage, isStockPhotoUrl } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
+const PropertyShowcaseVideo = dynamic(() => import('@/components/site/PropertyShowcaseVideo'), {
+  ssr: false,
+  loading: () => <div style={{ height: 360, background: 'rgba(255,255,255,0.03)', borderRadius: 16 }} />,
+});
+
+const VirtualTourBanner = dynamic(() => import('@/components/site/VirtualTourBanner'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: 480, background: '#071523', borderRadius: 18, color: '#E9C176', fontSize: 14, fontWeight: 600 }}>
+      Loading 3D Walkthrough…
+    </div>
+  ),
+});
+
 const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
   ssr: false,
 });
-import { UnitDetailModal } from '@/components/MasterRegistryMap/UnitDetailModal';
+const UnitDetailModal = dynamic(() => import('@/components/MasterRegistryMap/UnitDetailModal').then(m => m.UnitDetailModal), {
+  ssr: false,
+});
 import type { UnitListing as CadastralUnitListing } from '@/components/MasterRegistryMap/registryData';
 
 const CartographicMap = dynamic(() => import('@/components/site/CartographicMap'), {

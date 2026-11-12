@@ -16,6 +16,7 @@ export const TOUR_SRC = 'https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd2
 export default function VirtualTourBanner() {
   const { isAr } = useSite();
   const reduce = useReducedMotion();
+  const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [key, setKey] = useState(0);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -74,27 +75,29 @@ export default function VirtualTourBanner() {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            type="button"
-            onClick={reloadTour}
-            title={isAr ? 'إعادة تحميل' : 'Reset view'}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 600,
-              background: 'var(--surface-2, rgba(255,255,255,0.06))',
-              border: '1px solid var(--line, rgba(255,255,255,0.15))',
-              color: 'var(--ink, #fff)',
-              cursor: 'pointer',
-            }}
-          >
-            <RotateCcw style={{ width: 13, height: 13 }} />
-            <span>{isAr ? 'إعادة ضبط' : 'Reset'}</span>
-          </button>
+          {started && (
+            <button
+              type="button"
+              onClick={reloadTour}
+              title={isAr ? 'إعادة تحميل' : 'Reset view'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                background: 'var(--surface-2, rgba(255,255,255,0.06))',
+                border: '1px solid var(--line, rgba(255,255,255,0.15))',
+                color: 'var(--ink, #fff)',
+                cursor: 'pointer',
+              }}
+            >
+              <RotateCcw style={{ width: 13, height: 13 }} />
+              <span>{isAr ? 'إعادة ضبط' : 'Reset'}</span>
+            </button>
+          )}
           <a
             href={TOUR_SRC}
             target="_blank"
@@ -137,66 +140,133 @@ export default function VirtualTourBanner() {
           background: '#071523',
         }}
       >
-        {!loaded && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 12,
-            background: 'linear-gradient(180deg, #0a1b2d 0%, #06111d 100%)',
-            color: '#E9C176',
-            zIndex: 2,
-          }}>
-            <Loader2 style={{ width: 36, height: 36, animation: 'spin 1s linear infinite' }} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#CBD5E1' }}>
-              {isAr ? 'جارٍ تحميل الجولة ثلاثية الأبعاد…' : 'Loading direct 3D virtual tour…'}
-            </span>
-          </div>
-        )}
-
-        <iframe
-          key={key}
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 0,
-            display: 'block',
-          }}
-          title={isAr ? 'جولة ثلاثية الأبعاد' : '3D Virtual Tour'}
-          src={TOUR_SRC}
-          allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking"
-          allowFullScreen
-          onLoad={() => setLoaded(true)}
-        />
-
-        {loaded && (
-          <button
-            type="button"
-            onClick={goFullscreen}
-            aria-label={isAr ? 'ملء الشاشة' : 'Enter fullscreen'}
+        {!started ? (
+          <div
+            onClick={() => setStarted(true)}
             style={{
               position: 'absolute',
-              insetInlineEnd: 16,
-              top: 16,
-              zIndex: 10,
-              display: 'grid',
-              placeItems: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.25)',
-              background: 'rgba(7, 21, 35, 0.85)',
-              backdropFilter: 'blur(8px)',
-              color: '#fff',
+              inset: 0,
               cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundImage: 'radial-gradient(circle at center, rgba(7, 21, 35, 0.72) 0%, rgba(7, 21, 35, 0.94) 100%), url(/hero/hero-07.webp)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              padding: '24px',
+              textAlign: 'center',
+              gap: '16px',
             }}
           >
-            <Maximize2 style={{ width: 18, height: 18 }} />
-          </button>
+            <div
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #E9C176, #C8961A)',
+                display: 'grid',
+                placeItems: 'center',
+                color: '#071523',
+                boxShadow: '0 0 32px rgba(233, 193, 118, 0.6), 0 4px 16px rgba(0,0,0,0.4)',
+                transition: 'transform 0.3s ease',
+              }}
+            >
+              <Video style={{ width: 32, height: 32, marginLeft: isAr ? 0 : 3 }} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 'clamp(20px, 2.5vw, 26px)', color: '#F8FAFC', fontWeight: 800 }}>
+                {isAr ? 'ابدأ الجولة الافتراضية ثلاثية الأبعاد (4K)' : 'Launch Interactive 3D Virtual Tour (4K)'}
+              </h3>
+              <p style={{ margin: '8px 0 0', fontSize: 14, color: '#CBD5E1', maxWidth: 520 }}>
+                {isAr
+                  ? 'انقر للتنقل الحر ثلاثي الأبعاد داخل أحدث الفلل واستعراض المخطط والتفاصيل بدقة سينمائية'
+                  : 'Click to explore room-by-room walkthrough, interactive floor plan & 360° architectural details'}
+              </p>
+            </div>
+            <button
+              type="button"
+              style={{
+                marginTop: 8,
+                padding: '10px 24px',
+                borderRadius: 999,
+                background: 'linear-gradient(135deg, #E9C176, #C8961A)',
+                color: '#071523',
+                fontWeight: 700,
+                fontSize: 14,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(200, 150, 26, 0.4)',
+              }}
+            >
+              {isAr ? 'عرض الجولة ثلاثية الأبعاد الآن' : 'Start 3D Tour Now'}
+            </button>
+          </div>
+        ) : (
+          <>
+            {!loaded && (
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                background: 'linear-gradient(180deg, #0a1b2d 0%, #06111d 100%)',
+                color: '#E9C176',
+                zIndex: 2,
+              }}>
+                <Loader2 style={{ width: 36, height: 36, animation: 'spin 1s linear infinite' }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#CBD5E1' }}>
+                  {isAr ? 'جارٍ تحميل الجولة ثلاثية الأبعاد…' : 'Loading direct 3D virtual tour…'}
+                </span>
+              </div>
+            )}
+
+            <iframe
+              key={key}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 0,
+                display: 'block',
+              }}
+              title={isAr ? 'جولة ثلاثية الأبعاد' : '3D Virtual Tour'}
+              src={TOUR_SRC}
+              allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking"
+              allowFullScreen
+              loading="lazy"
+              onLoad={() => setLoaded(true)}
+            />
+
+            {loaded && (
+              <button
+                type="button"
+                onClick={goFullscreen}
+                aria-label={isAr ? 'ملء الشاشة' : 'Enter fullscreen'}
+                style={{
+                  position: 'absolute',
+                  insetInlineEnd: 16,
+                  top: 16,
+                  zIndex: 10,
+                  display: 'grid',
+                  placeItems: 'center',
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  background: 'rgba(7, 21, 35, 0.85)',
+                  backdropFilter: 'blur(8px)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+                }}
+              >
+                <Maximize2 style={{ width: 18, height: 18 }} />
+              </button>
+            )}
+          </>
         )}
       </motion.div>
     </div>
