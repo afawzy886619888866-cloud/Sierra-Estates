@@ -88,6 +88,17 @@ async function runImport() {
     console.log('ℹ️  No active USB cable detected. Scanning local staging directory.');
   }
 
+  // Step 1b: Live Mobile WhatsApp Multi-Session CDP Scrape (line-1, line-2, line-3, line-6)
+  const cdpScrapeScript = path.join(ROOT, 'scripts', 'scrape-sierra-community-cdp.mjs');
+  if (fs.existsSync(cdpScrapeScript) && !args.includes('--skip-live-scrape')) {
+    console.log('\n📲 Scraping live mobile WhatsApp sessions (line-1, line-2, line-3, line-6)...');
+    try {
+      execSync(`node "${cdpScrapeScript}"`, { stdio: 'inherit', timeout: 180000 });
+    } catch (e) {
+      console.warn(`[ingest] Live mobile scrape notice: ${e.message}`);
+    }
+  }
+
   // Step 2: Run WhatsApp Chat & Media Importer
   console.log('\n🚀 Processing WhatsApp chat archives and media from staging directory...');
   const importScript = path.join(ROOT, 'scripts', 'import-whatsapp-chat.mjs');
@@ -102,6 +113,17 @@ async function runImport() {
   } catch (err) {
     console.error(`❌ Ingestion failed: ${err.message}`);
     process.exit(1);
+  }
+
+  // Step 2b: Consolidate Scraped Mobile Owners, Brokers, DMs & Requests into Inventory
+  const scrapedSyncScript = path.join(ROOT, 'scripts', 'sync-scraped-owners-brokers.mjs');
+  if (fs.existsSync(scrapedSyncScript)) {
+    console.log('\n🔄 Consolidating & upserting all scraped mobile units into Supabase & Master Sheets batch...');
+    try {
+      execSync(`node "${scrapedSyncScript}"`, { stdio: 'inherit', timeout: 180000 });
+    } catch (err) {
+      console.warn(`[ingest] Scraped owners/brokers sync notice: ${err.message}`);
+    }
   }
 
   // Step 3: Synchronize Map Inventory

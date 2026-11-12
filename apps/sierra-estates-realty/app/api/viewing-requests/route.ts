@@ -203,33 +203,6 @@ export async function POST(request: NextRequest) {
       logger.warn('[viewing-requests] Golden Hour followup row failed (non-fatal):', followupErr);
     }
 
-    // ── 2b. Golden Hour follow-up task (public.followups — real table) ─────
-    // The 60-minute timer was previously only a string inside the calendar
-    // event text; nothing operational ever acted on it. A real followup row
-    // (type 'viewing', due at the golden-hour deadline) makes the timer
-    // visible on the CRM task board and lets /api/cron/lead-timers flip it
-    // to 'overdue' when it lapses. Best-effort: a followups failure must
-    // never break the visitor's 201.
-    try {
-      await insertRecord('followups', {
-        ...(leadId ? { leadId } : {}),
-        type: 'viewing',
-        title: `Golden Hour follow-up — ${data.propertyCode} (${data.visitorName})`,
-        notes:
-          `60-minute Golden Hour window after the viewing slot. ` +
-          `Unit ${data.propertyCode}, client ${data.visitorName} (${phone}). ` +
-          `Confirm advisor assignment and log the call outcome. 25% Website Commission Discount applies.`,
-        dueAt: goldenHourAt,
-        status: 'pending',
-        priority: 'high',
-        createdBy: 'viewing-requests-bot',
-        createdAt: now,
-        updatedAt: now,
-      });
-    } catch (followupErr) {
-      logger.warn('[viewing-requests] Golden Hour followup row failed (non-fatal):', followupErr);
-    }
-
     // ── 3. Telegram internal alert (fire-and-forget — never blocks) ───────
     try {
       const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');

@@ -28,9 +28,11 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 const { loadWorkflowEnv } = require(path.join(ROOT_DIR, 'workflows', 'lib', 'google-sheets.js'));
 loadWorkflowEnv(path.join(ROOT_DIR, 'workflows'));
+loadWorkflowEnv(ROOT_DIR);
 
 const { resolveCanonicalCompound, isKnownCompound } = require(path.join(ROOT_DIR, 'workflows', 'lib', 'compound-canonical.js'));
 const { generateDailyOutreachReport } = require(path.join(ROOT_DIR, 'workflows', 'lib', 'daily-outreach-report.js'));
+const { generateInstitutionalCopy } = require(path.join(ROOT_DIR, 'workflows', 'lib', 'listing-copywriter.js'));
 const { createClient } = require('@supabase/supabase-js');
 
 const SCRATCH_DIR = process.env.SYNC_SCRATCH_DIR
@@ -39,6 +41,7 @@ const SCRATCH_DIR = process.env.SYNC_SCRATCH_DIR
 const HARVESTED_JSONL = path.join(ROOT_DIR, 'apps', 'agents', 'whatsapp-multi-session', 'whatsapp-auth', 'harvested_units.jsonl');
 const CLIENT_REQ_JSONL = path.join(ROOT_DIR, 'apps', 'agents', 'whatsapp-multi-session', 'whatsapp-auth', 'client_requests.jsonl');
 const INBOX_JSONL = path.join(ROOT_DIR, 'workflows', '.state', 'inbox.jsonl');
+const COMMUNITY_RAW_JSON = path.join(ROOT_DIR, 'data', 'sierra-community-scraped-raw.json');
 const PARTITIONS_JSON = path.join(ROOT_DIR, 'workflows', '.state', 'owner-partitions.json');
 const PENDING_WEB_JSONL = path.join(ROOT_DIR, 'data', 'pending_sheet_submissions.jsonl');
 const SUMMARY_OUT = path.join(ROOT_DIR, 'data', 'scraped_sync_summary.json');
@@ -449,6 +452,42 @@ async function main() {
     }
   }
 
+  // 2b. Load hydrated mobile/CDP group & DM snapshots from data/sierra-community-scraped-raw.json
+  if (fs.existsSync(COMMUNITY_RAW_JSON)) {
+    try {
+      const snapshots = JSON.parse(fs.readFileSync(COMMUNITY_RAW_JSON, 'utf8'));
+      const OWNER_GROUP_RE = /owners\s+units|owners\s+august|owners\s+inventory|owners\s+project|direct\s+from\s+the\s+owner|عقارات\s+من\s+المالك/i;
+      for (const snap of Array.isArray(snapshots) ? snapshots : []) {
+        const groupName = String(snap.groupName || snap.groupId || 'WhatsApp Group').trim();
+        const isGroup = snap.isGroup !== false && !groupName.startsWith('DM:');
+        const isOwnerChannel = !isGroup || OWNER_GROUP_RE.test(groupName);
+        const isRequestChannel = /request|ريكوست|طلبات/i.test(groupName);
+        for (const m of Array.isArray(snap.messages) ? snap.messages : []) {
+          const body = String(m?.body || '').trim();
+          if (!body || body.length < 18 || /^\/9j\/|^iVBOR/i.test(body)) continue;
+          rawCandidates.push({
+            rawText: body,
+            compoundHint: '',
+            dealHint: '',
+            typeHint: '',
+            priceHint: 0,
+            areaHint: null,
+            bedsHint: null,
+            phoneHint: m.authorPhone || '',
+            contactName: m.authorName || (isOwnerChannel ? 'Verified Owner' : 'Group Broker'),
+            sourceChat: `${groupName} (${snap.sessionId || 'mobile'})`,
+            capturedByLine: snap.sessionId || 'line-2',
+            at: m.isoTime || new Date().toISOString(),
+            isDirectOwnerDm: isOwnerChannel,
+            forceRequest: isRequestChannel && isClientRequestText(body, groupName),
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[sync-scraped-owners-brokers] Failed reading COMMUNITY_RAW_JSON:', err.message);
+    }
+  }
+
   // Also synthesize the consolidated Privado Madinaty 65m² Studio DM owner reply so it's saved as a clean unit!
   const dailyReport = generateDailyOutreachReport();
   for (const resp of dailyReport.respondents || []) {
@@ -665,50 +704,121 @@ async function main() {
       }
     } catch (_) {}
 
-    // Upsert verified scraped units into Supabase `public.listings` (capped cleanly, deduplicated by dupe_check_hash)
-    for (const u of supabaseUnits.slice(0, 150)) {
+    // Upsert verified scraped units into Supabase `public.listings` (batched, deduplicated by dupe_check_hash)
+    const COMPOUND_COORDS = {
+      'Mivida': { lat: 30.007, lng: 31.589, zone: '5th Settlement' },
+      'Mountain View Hyde Park': { lat: 30.008, lng: 31.645, zone: '5th Settlement' },
+      'Hyde Park': { lat: 30.015, lng: 31.635, zone: '5th Settlement' },
+      'Fifth Square': { lat: 30.025, lng: 31.578, zone: '5th Settlement' },
+      'Palm Hills New Cairo': { lat: 30.012, lng: 31.615, zone: '5th Settlement' },
+      'Madinaty': { lat: 30.101, lng: 31.664, zone: 'Madinaty' },
+      'Privado (Madinaty)': { lat: 30.095, lng: 31.652, zone: 'Madinaty' },
+      'Al Rehab': { lat: 30.058, lng: 31.514, zone: 'Al Rehab' },
+      'Beit Al Watan': { lat: 30.045, lng: 31.585, zone: 'Beit Al Watan' },
+      'Eastown': { lat: 30.018, lng: 31.505, zone: '5th Settlement' },
+      'Villette': { lat: 30.010, lng: 31.555, zone: '5th Settlement' },
+      'Sarai': { lat: 30.085, lng: 31.695, zone: 'Suez Road' },
+      'Taj City': { lat: 30.072, lng: 31.425, zone: 'Ring Road' },
+      'Al Burouj': { lat: 30.155, lng: 31.725, zone: 'Suez Road' },
+      'Swan Lake': { lat: 30.052, lng: 31.475, zone: '1st Settlement' },
+      'Cairo Festival City': { lat: 30.030, lng: 31.405, zone: '5th Settlement' },
+      'The Waterway': { lat: 30.042, lng: 31.508, zone: 'Northern 90' },
+      'Lake View': { lat: 30.019, lng: 31.535, zone: 'Golden Square' },
+      'Uptown Cairo': { lat: 30.021, lng: 31.305, zone: 'Mokattam' },
+      'Azad': { lat: 30.023, lng: 31.498, zone: '5th Settlement' },
+      'Galleria Moon Valley': { lat: 30.016, lng: 31.548, zone: 'Golden Square' },
+      'Al Narges': { lat: 30.005, lng: 31.475, zone: '5th Settlement' },
+      'Al Yasmeen': { lat: 30.045, lng: 31.465, zone: '1st Settlement' },
+      'Al Banafseg': { lat: 30.055, lng: 31.485, zone: '1st Settlement' },
+      'Al Lotus': { lat: 30.022, lng: 31.525, zone: '5th Settlement' },
+      'Al Andalus': { lat: 29.998, lng: 31.518, zone: '5th Settlement' },
+      'Al Koronfel': { lat: 30.052, lng: 31.548, zone: '1st Settlement' },
+    };
+
+    const preparedRows = [];
+    const seenSyncHashes = new Set();
+    for (const u of supabaseUnits) {
+      const syncHash = crypto
+        .createHash('sha256')
+        .update([u.compound, u.areaSqm, u.priceEgp, u.beds, u.propType.toLowerCase(), u.dealType].join('|'))
+        .digest('hex');
+      if (seenSyncHashes.has(syncHash)) continue;
+      seenSyncHashes.add(syncHash);
+
+      const coords = COMPOUND_COORDS[u.compound] || { lat: 30.025, lng: 31.495, zone: u.compound };
+      const copy = generateInstitutionalCopy({
+        code: u.code,
+        compound: u.compound,
+        zone: coords.zone,
+        propertyType: u.propType,
+        dealType: u.dealType,
+        price: u.priceEgp,
+        bedrooms: u.beds || 3,
+        bathrooms: u.baths || 2,
+        areaSqm: u.areaSqm || 0,
+        finishing: u.finishing,
+      });
+
+      const nowIso = new Date().toISOString();
+      preparedRows.push({
+        code: u.code,
+        dupe_check_hash: syncHash,
+        title: copy.titleEn || `${u.beds ? `${u.beds}BR ` : ''}${u.propType} in ${u.compound}`,
+        title_ar: copy.titleAr || null,
+        description: copy.descriptionEn || `${u.propType} in ${u.compound}`,
+        description_ar: copy.descriptionAr || null,
+        compound: u.compound,
+        location_area: coords.zone,
+        property_type: u.propType.toLowerCase(),
+        deal_type: u.dealType,
+        price: u.priceEgp,
+        bedrooms: u.beds,
+        bathrooms: u.baths,
+        area_sqm: u.areaSqm,
+        furnishing_status: u.finishing === 'Furnished' ? 'furnished' : 'unfurnished',
+        owner_name: u.contactName || null,
+        owner_phone: u.mobileDigits || null,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        status: 'active',
+        publish_status: 'PUBLISHABLE',
+        sync_source: 'whatsapp-scraper-sync',
+        source_channel: u.advertiserType === 'Direct Owner' ? 'whatsapp_owner' : 'whatsapp_broker',
+        raw_data: {
+          advertiserType: u.advertiserType,
+          contactName: u.contactName,
+          mobile: u.mobileDigits,
+          sourceChat: u.sourceChat,
+          notes: u.notes,
+        },
+        created_at: nowIso,
+        updated_at: nowIso,
+      });
+    }
+
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < preparedRows.length; i += CHUNK_SIZE) {
+      const chunk = preparedRows.slice(i, i + CHUNK_SIZE);
+      const hashes = chunk.map((r) => r.dupe_check_hash);
       try {
-        const syncHash = crypto
-          .createHash('sha256')
-          .update([u.compound, u.areaSqm, u.priceEgp, u.beds, u.propType.toLowerCase(), u.dealType].join('|'))
-          .digest('hex');
-
-        const { data: existing } = await supabase
+        const { data: existingRows } = await supabase
           .from('listings')
-          .select('id')
-          .eq('dupe_check_hash', syncHash)
-          .limit(1);
-        if (existing && existing.length > 0) continue;
-
-        const nowIso = new Date().toISOString();
-        const { error: insErr } = await supabase.from('listings').insert({
-          code: u.code,
-          dupe_check_hash: syncHash,
-          title: `${u.beds ? `${u.beds}BR ` : ''}${u.propType} in ${u.compound}`,
-          compound: u.compound,
-          location_area: u.compound,
-          property_type: u.propType.toLowerCase(),
-          deal_type: u.dealType,
-          price: u.priceEgp,
-          bedrooms: u.beds,
-          bathrooms: u.baths,
-          area_sqm: u.areaSqm,
-          furnishing_status: u.finishing === 'Furnished' ? 'furnished' : 'unfurnished',
-          status: 'available',
-          publish_status: 'REVIEW_REQUIRED',
-          sync_source: 'whatsapp-scraper-sync',
-          source_channel: u.advertiserType === 'Direct Owner' ? 'whatsapp_owner' : 'whatsapp_broker',
-          raw_data: {
-            advertiserType: u.advertiserType,
-            contactName: u.contactName,
-            mobile: u.mobileDigits,
-            sourceChat: u.sourceChat,
-            notes: u.notes,
-          },
-          created_at: nowIso,
-          updated_at: nowIso,
-        });
-        if (!insErr) supabaseInserted += 1;
+          .select('dupe_check_hash')
+          .in('dupe_check_hash', hashes);
+        const existingSet = new Set((existingRows || []).map((r) => r.dupe_check_hash));
+        const toInsert = chunk.filter((r) => !existingSet.has(r.dupe_check_hash));
+        if (toInsert.length > 0) {
+          const { error: insErr } = await supabase.from('listings').insert(toInsert);
+          if (!insErr) {
+            supabaseInserted += toInsert.length;
+          } else {
+            // Fallback row-by-row on unique code collision
+            for (const row of toInsert) {
+              const { error: singleErr } = await supabase.from('listings').insert(row);
+              if (!singleErr) supabaseInserted += 1;
+            }
+          }
+        }
       } catch (_) {}
     }
   }

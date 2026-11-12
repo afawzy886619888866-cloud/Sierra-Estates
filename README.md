@@ -31,7 +31,45 @@
 * **4K Ultra-HD Glowing Cartographic GIS Map:** High-DPI Retina tiles (`detectRetina`, zoom 22), glowing metallic-gold (`#C9A84C`) / emerald (`#10B981`) / cyan (`#00F0FF`) compound polygons, permanent obsidian glass compound badges, and live Supabase pin binding (`Rent`/`Resale` chips, `💎 GEM` badges, AI Fair-Price benchmarks).
 * **Two-Way Google Sheets ↔ Supabase Engine (`SheetsIntegrationService`):** Strict intake normalization gate (Egyptian mobile validation, zero blank cells, 400k EGP rent ceiling, 30+ compound aliases, smart unit codes), upsert-in-place deduplication, 1-click outreach reset locking `Sold`/`Rented`, and automatic `Real_Available_Units` mirroring.
 * **Buyer Concierge, 25% Website Discount & Calendar Closing:** Exclusive **25% Commission Discount** banners on online inquiry forms (`/api/inquiries` & `LeadForm`), instant WhatsApp concierge verification (`+201092048333` Sanitizer v3 concierge routing), Top 3 property matching, and Google Calendar booking inviting CEO (`a.fawzy8866@gmail.com`), Team Leader, and Assigned Advisor with a 60-Minute Golden Hour follow-up timer.
-* **USB Phone Harvester (`21-usb-phone-harvester`):** Automated extraction of WhatsApp property group exports over USB MTP twice weekly and on cable plug-in, chronological Sheet & Drive organization by unit code.
+* **USB Phone & Live WhatsApp Community Harvester (`21-usb-phone-harvester` & `scripts/consolidate-sierra-community-and-phone.mjs`):** Automated extraction of WhatsApp property group exports over USB MTP (`data/whatsapp-phone-import/`) plus live CDP hydration of the **Sierra-Estates WhatsApp Community (`120363399254642581@g.us`)**, enforcing strict isolation (**ONLY Sierra-Estates Community units enter `Owners_Rent_Master` / `Owners_Resale_Master`**, while external broker groups route to `Brokers_Inventory`).
+* **Unified Sierra Phone-Linked Coding System (`[O/B][Compound][NameInitial][Last3PhoneDigits]`):** Single canonical unit code system across Google Sheets (`Available Properties`, `Owners_Rent_Master`, `Owners_Resale_Master`), GIS Map (`snapshot.json`), Client Portal, and WhatsApp (`data/sierra-unit-code-registry.json` & `data/sierra-available-coded-units.csv`). From any code (e.g., `ORK125`, `OUA333`, `OEA356`, `ONN170`), the team can immediately resolve the **Owner's Name & Full Phone Number** via the last 3 digits while keeping owner contact details hidden on public surfaces.
+* **Live Foreground WhatsApp Outreach (`WAWebCmd.Cmd.openChatBottom`):** Every outgoing owner outreach message visibly opens the target chat window inside WhatsApp Web before sending via `WAWebSendTextMsgChatAction.sendTextMsgToChat`, ensuring 100% real-time visibility on WhatsApp Web & mobile alongside the automated 2-hour digest.
+
+---
+
+## 🔑 Unified Unit Coding System & Owner vs. Broker Workflow
+
+### 1. Canonical Sierra Code Formula (`Code → Owner Phone`)
+Every unit is assigned **one canonical code**:
+```text
+[O/B] + [Compound Initial] + [Owner/Agent First Initial] + [Last 3 Digits of Phone]
+```
+* **Position 1 (`O` or `B`):** `O` = Direct Owner (`Owner`), `B` = Broker (`Broker`).
+* **Position 2 (Compound Initial):** `R` = Al Rehab, `M` = Madinaty, `V` = Mivida, `F` = Fifth Square, `H` = Hyde Park, `U` = Uptown Cairo, `S` = SODIC / Villette, `C` = Cairo Festival City, `L` = Lake View, `W` = The Waterway, `N` = Al Narges / New Cairo, `B` = Al Banafseg, `A` = Al Andalus, `E` = Entrada New Capital / Eastown, `G` = North Coast / Galleria.
+* **Position 3 (Person Initial):** `K` = Karima / Kareem, `A` = Ahmed / Amr, `E` = Eman / Ehab, `H` = Heba / Hanan, `M` = Mohamed / Marwan, `S` = Sherif / Sawy, `N` = Nasser / Nabil, `P` = Peter.
+* **Digits (`Last 3 Digits of Phone`):** Matches the last 3 digits of the owner's (or responsible agent's) phone number (`e.g. ORK125 → 01223876125`).
+* **Authoritative Lookup Files:**
+  * [`data/sierra-unit-code-registry.json`](./data/sierra-unit-code-registry.json)
+  * [`data/sierra-available-coded-units.csv`](./data/sierra-available-coded-units.csv)
+
+### 2. Perfect End-to-End Inventory Workflow (Zero Owner/Broker Confusion)
+1. **Channel 1 — Sierra-Estates WhatsApp Community (`120363399254642581@g.us`):**
+   * Team members drop direct owner listings into `Owners August 2026`, `Owners Units`, or `Planning & Discussion`.
+   * Run `node scripts/scrape-sierra-community-cdp.mjs` followed by `node scripts/consolidate-sierra-community-and-phone.mjs`.
+   * **ONLY** Sierra-Estates Community owner units are appended to `Owners_Rent_Master` (`<= 400,000 EGP`) and `Owners_Resale_Master` (`> 400,000 EGP`), marked `Available`, and mirrored into the single `Available Properties` tab and Client GIS Map.
+2. **Channel 2 — External Broker Groups & USB Mobile Exports (`data/whatsapp-phone-import/`):**
+   * Run `node workflows/21-usb-phone-harvester/index.js`.
+   * Buyer requests (`مطلوب`) are automatically filtered out (`Client_Requests`), and external broker listings are strictly isolated in `Brokers_Inventory` so they never pollute the Direct Owners Master tabs.
+3. **Channel 3 — Single Consolidated Available Catalog:**
+   * All verified available units live in **one single sheet tab (`Available Properties`)** and **one single WhatsApp group (`🏡Availability Unit's For Sierra Blue Realty`)** using their Unified Sierra Code (`ORK125`, `OUA333`, etc.).
+
+### 3. Current Missing Information Audit (Sierra-Estates Community Units)
+* **Complete Ready Units (0 Missing Fields):** `ORK125` (Al Rehab 2 Ground+Garden Sale, Owner `01223876125`), `OUA333` (Uptown Cairo Sector 14 Rent, `01092048333`).
+* **Units Needing Field Completion from Team:**
+  * **Posted by `.` (`01206532356`):** `OEA356` (Entrada R7 208m² Sale, 8M EGP) — *Missing: Owner full name & finishing status*.
+  * **Posted by Heba Ahmad (`01032962712`) / Ehab (`01151089188`):** `OHE188` (Hyde Park Centerville 165m² Ground Rent, 50k EGP) — *Missing: Garden area (m²) & confirmation if Ehab is direct owner or broker*.
+  * **Posted by Eman Zaki (`01067042440`):** `ORE440` (Al Rehab Group 126 Bldg 16 Apt 53 Rent, 37k EGP) — *Missing: Area (m²) & Direct Owner personal phone number*.
+  * **Posted by Karima (`kmehesen hr` — `01508181814`):** 13 units (`ORK814`, `ONK814`, `OFK814`, `ONK814-2`, `OGK814`, `OMK814`, `OHK814`, `OBK814`, `OAK814`, `OUK814`, `OMK814-2`, `OMK814-3`, `OGK814-2`) — *Missing: Direct Owner personal phone numbers (left blank or replaced by Karima's number in group posts), Area (m²) on `ORK814` & `ONK814`, Bedroom/Bathroom count on `OHK814`, and total remaining installment price on `OMK814-2`, `OMK814-3`, `OGK814-2`*.
 
 ---
 

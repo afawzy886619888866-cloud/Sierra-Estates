@@ -21,7 +21,7 @@ const { execSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
 const { loadWorkflowEnv } = require('../lib/google-sheets');
 
-loadWorkflowEnv(__dirname);
+loadWorkflowEnv(path.join(__dirname, '..'));
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const IMPORT_DIR = path.join(ROOT_DIR, 'data', 'whatsapp-phone-import');
