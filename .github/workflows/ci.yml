@@ -98,6 +98,16 @@ jobs:
       - name: Root vitest suite (workflows, contracts, hygiene, memory)
         run: pnpm test:root
 
+      - name: CSS modules purity check
+        # 2026-11-12: CartographicMap.module.css shipped selectors like
+        # `:global(.leaflet-container) svg` — global group + bare element,
+        # no local class — which css-loader rejects in pure mode ("Selector
+        # ... is not pure"). The build failed 3x deterministically while the
+        # retry wrapper below labeled it a network flake. This fast static
+        # check catches that class of error before the build and names the
+        # file:line directly.
+        run: node scripts/check-css-modules-purity.mjs
+
       - name: Build realty app (bounded retry — known next/font Google-fetch flake)
         # 2026-10-22: next/font/google fetches font metadata from
         # fonts.googleapis.com at build time; GitHub's Azure runner IPs are
@@ -109,14 +119,26 @@ jobs:
         # keeps the flake class from masking real regressions. The deployed
         # artifact is always built by Vercel (unaffected network path), so
         # this step is validation-only and a retry cannot ship a bad build.
+        #
+        # 2026-11-12: retries are now SIGNATURE-GATED. The loop used to
+        # retry (and mislabel) ANY failure as the font flake — a real CSS
+        # syntax error burned 3 attempts and surfaced under a "known flake"
+        # warning. A failing build now retries only when its log matches the
+        # flake signature (fonts.googleapis.com fetch failure or the
+        # null-read loader crash); everything else fails fast with the
+        # actual error at the top of the output.
         run: |
           set +e
           attempt=1
           while [ "$attempt" -le 3 ]; do
-            pnpm --filter sierra-estates-client-page build
-            code=$?
+            pnpm --filter sierra-estates-client-page build 2>&1 | tee /tmp/build-attempt.log
+            code=${PIPESTATUS[0]}
             if [ "$code" -eq 0 ]; then
               exit 0
+            fi
+            if ! grep -Eq "fonts\.googleapis\.com|reading '1'" /tmp/build-attempt.log; then
+              echo "::error::build failed (exit ${code}) with a NON-flake error — failing fast; the retry loop is reserved for the known next/font fonts.googleapis.com fetch flake on runner IPs."
+              exit "$code"
             fi
             echo "::warning::build attempt ${attempt} failed (exit ${code}) — known next/font fonts.googleapis.com fetch flake on runner IPs; retrying after backoff"
             if [ "$attempt" -eq 3 ]; then
