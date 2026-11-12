@@ -234,35 +234,50 @@ function vercelRequest(method, endpoint, body = null) {
 export async function syncVarsToProject(projectName, projectId, envVars) {
   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
 
-  // 1. Fetch all existing project env vars — PAGINATED. This project set
-  //    has 100+ variables and /v9 returns 100 per page by default; the old
-  //    unpaginated fetch silently truncated the tail, so later POSTs hit
-  //    "already exists" for vars the map had never seen (and the sync then
-  //    skipped updating them — see the loop below).
-  let existingMap = new Map();
+  // 1. Fetch all existing project env vars — PAGINATED and DUPLICATE-AWARE.
+  //    /v9 returns 100/page (this project set is larger), and a key can
+  //    legitimately have SEVERAL entries (one per target environment —
+  //    the 2026-11-12 outage left stale [development]-only copies next to
+  //    production copies). Keying a Map by name alone hides duplicates;
+  //    keep every copy.
+  const fetchAll = async () => {
+    let page = 1;
+    const all = [];
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
+      if (!res || res.error || !Array.isArray(res.envs)) {
+        throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
+      }
+      all.push(...res.envs);
+      if (res.envs.length < 100) break;
+      page += 1;
+    }
+    return all;
+  };
+
+  let allExisting = [];
   for (let attempt = 1; attempt <= 5; attempt++) {
     try {
-      let page = 1;
-      let fetched = 0;
-      existingMap = new Map();
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
-        if (!res || res.error || !Array.isArray(res.envs)) {
-          throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
-        }
-        for (const e of res.envs) existingMap.set(e.key, e);
-        fetched += res.envs.length;
-        if (res.envs.length < 100) break;
-        page += 1;
-      }
-      console.log(`   📋 Existing project env vars fetched: ${existingMap.size}`);
+      allExisting = await fetchAll();
       break;
     } catch (err) {
       console.warn(`   ⏳ [${attempt}/5] Fetching existing envs failed: ${err.message}, retrying...`);
       await sleep(attempt * 2000);
     }
   }
+  // key -> array of entries, plus a convenience single-entry lookup that
+  // prefers the copy whose targets include production.
+  const entriesByKey = new Map();
+  for (const e of allExisting) {
+    if (!entriesByKey.has(e.key)) entriesByKey.set(e.key, []);
+    entriesByKey.get(e.key).push(e);
+  }
+  const pickExisting = (key) => {
+    const copies = entriesByKey.get(key) || [];
+    return copies.find((c) => (c.target || []).includes('production')) || copies[0];
+  };
+  console.log(`   📋 Existing project env vars fetched: ${allExisting.length} entries, ${entriesByKey.size} unique keys, ${allExisting.length - entriesByKey.size} duplicate-key extra copies`);
 
   // 2. Sync each var
   // Backend values the site cannot boot without. When one of these is
@@ -276,6 +291,20 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
     'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
   ];
 
+  const reportCriticalState = () => {
+    console.log('   🔍 CRITICAL KEY STATE (post-sync):');
+    for (const key of CRITICAL_KEYS) {
+      const copies = entriesByKey.get(key) || [];
+      if (copies.length === 0) {
+        console.log(`      • ${key}: ABSENT from project`);
+      } else {
+        for (const c of copies) {
+          console.log(`      • ${key}: targets [${(c.target || []).join(',') || 'none'}] updated ${c.updatedAt || 'unknown'}`);
+        }
+      }
+    }
+  };
+
   for (const [key, value] of Object.entries(envVars)) {
     if (!value) {
       if (CRITICAL_KEYS.includes(key)) {
@@ -284,19 +313,33 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
       continue;
     }
 
-    const existing = existingMap.get(key);
+    const copies = entriesByKey.get(key) || [];
+    const existing = pickExisting(key);
     const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
 
-    // TARGET REPAIR — a var whose target environments exclude 'production'
-    // is invisible to production deployments no matter how many times its
-    // value is PATCHed (Vercel PATCH cannot change targets). This is the
-    // second half of the 2026-11-12 outage: the sync reported success
-    // while production stayed degraded. Delete + recreate with both
-    // targets for critical keys; diagnose loudly for the rest.
+    // TARGET REPAIR — an entry whose targets exclude 'production' is
+    // invisible to production deployments no matter how many times its
+    // value is PATCHed (Vercel PATCH cannot change targets). When NO copy
+    // of the key targets production: PATCH the entry to also cover
+    // production (PATCH on /v9 supports target changes when the entry is
+    // unique for that key); if that fails, fall back to DELETE + POST.
+    // When a production copy already exists, PATCH its value in place.
     const existingTargets = Array.isArray(existing?.target) ? existing.target : [];
-    if (existing && !existingTargets.includes('production')) {
+    const hasProdCopy = copies.some((c) => (c.target || []).includes('production'));
+    if (existing && !existingTargets.includes('production') && !hasProdCopy) {
       if (CRITICAL_KEYS.includes(key)) {
-        console.warn(`   🔧 ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — MISSING 'production'. Recreating with ['production','preview'].`);
+        console.warn(`   🔧 ${key} -> all copies target [${existingTargets.join(', ') || 'none'}] — MISSING 'production'. PATCHing targets to ['production','preview'].`);
+        const patch = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${existing.id}`, {
+          value: String(value),
+          target: ['production', 'preview'],
+          type: varType,
+        });
+        if (patch && !patch.error) {
+          console.log(`   ✅ ${key} -> targets repaired to ['production','preview'] via PATCH.`);
+          await sleep(150);
+          continue;
+        }
+        console.warn(`   🔧 ${key} -> PATCH target repair failed (status ${patch?.status}): ${patch?.data?.error?.message || ''} — falling back to DELETE + POST.`);
         const del = await vercelRequest('DELETE', `/v9/projects/${projectId}/env/${existing.id}`);
         if (del && del.error) {
           console.warn(`   ⚠️ ${key} -> target repair failed (delete: status ${del.status}):`, del.data?.error?.message || '');
@@ -316,14 +359,16 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
         console.warn(`   ⚠️ ${key} -> target repair recreate failed (status ${post?.status}):`, post?.data?.error?.message || '');
         continue;
       }
-      console.warn(`   ⚠️ ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — missing 'production' but not critical; value synced anyway, fix targets in the dashboard if needed.`);
+      if (copies.length > 0) {
+        console.warn(`   ⚠️ ${key} -> all copies target [${copies.map((c) => (c.target || []).join(',')).join(' / ') || 'none'}] — missing 'production'; not critical, dashboard fix if needed.`);
+      }
     }
 
     for (let attempt = 1; attempt <= 5; attempt++) {
       try {
         let res;
         if (existing) {
-          // Update existing env var
+          // Update the existing entry (production-target copy preferred)
           res = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${existing.id}`, {
             value: String(value),
             target: ['production', 'preview'],
@@ -345,10 +390,22 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
             continue;
           }
           if (res.status === 400 && String(res.data?.error?.message || '').includes('already exists')) {
-            // Exists but was NOT in our fetched map — the paginated map
-            // should make this rare. Log it honestly: the value was NOT
-            // updated by this branch (PATCH by key path would be needed).
-            console.warn(`   ⚠️ ${key} -> 'already exists' but absent from the fetched map — NOT updated. Re-run the sync or update via dashboard.`);
+            // Exists but was NOT in our fetched map — log honestly and
+            // try to repair by key: Vercel supports PATCH by env id only,
+            // so re-fetch this key's entries and PATCH the production copy.
+            const refetch = await vercelRequest('GET', `/v9/projects/${projectId}/env?key=${encodeURIComponent(key)}`);
+            const prodCopy = (refetch?.envs || []).find((c) => (c.target || []).includes('production'));
+            if (prodCopy?.id) {
+              const fix = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${prodCopy.id}`, {
+                value: String(value),
+                target: ['production', 'preview'],
+              });
+              if (fix && !fix.error) {
+                console.log(`   ✅ ${key} -> repaired via key-refetch PATCH (production copy).`);
+                break;
+              }
+            }
+            console.warn(`   ⚠️ ${key} -> 'already exists' and repair PATCH failed (status ${fix?.status ?? 'n/a'}) — NOT updated. Fix via dashboard.`);
             break;
           }
           console.warn(`   ⚠️ ${key} -> Failed (Status: ${res.status}):`, res.data?.error?.message || res.raw || '');
@@ -367,6 +424,56 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
         }
       }
     }
+  }
+
+  // 3. VERIFY — never trust the writes alone. Re-fetch and assert every
+  //    critical key has at least one copy whose targets include
+  //    'production'. This is the check that would have caught the entire
+  //    2026-11-12 outage (values "synced" to entries that production
+  //    deployments could not see).
+  let verified = false;
+  for (let attempt = 1; attempt <= 3 && !verified; attempt++) {
+    try {
+      const after = await fetchAll();
+      const afterByKey = new Map();
+      for (const e of after) {
+        if (!afterByKey.has(e.key)) afterByKey.set(e.key, []);
+        afterByKey.get(e.key).push(e);
+      }
+      reportCriticalState();
+      let allOk = true;
+      for (const key of CRITICAL_KEYS) {
+        const copies = afterByKey.get(key) || [];
+        const prodCopy = copies.find((c) => (c.target || []).includes('production'));
+        if (!prodCopy) {
+          allOk = false;
+          console.error(`   ❌ VERIFICATION FAILED: ${key} has NO production-target copy after sync (copies: ${copies.map((c) => `[${(c.target || []).join(',')}]`).join(' ') || 'none'})`);
+        } else {
+          console.log(`   ✔️ ${key}: production-target copy present (id ${prodCopy.id}, targets [${(prodCopy.target || []).join(',')}]).`);
+        }
+      }
+      // Show the latest deployments so the operator can correlate env
+      // updates with what production is actually serving.
+      try {
+        const deps = await vercelRequest('GET', `/v6/deployments?projectId=${projectId}&limit=3&state=READY`);
+        if (Array.isArray(deps?.deployments)) {
+          console.log('   🛰️ Latest READY deployments (env changes apply to NEW deployments only):');
+          for (const d of deps.deployments) {
+            console.log(`      • ${d.url} (created ${d.created ? new Date(d.created).toISOString().slice(0, 19) : 'unknown'}, target ${(d.target && d.target[0]) || 'unknown'})`);
+          }
+        }
+      } catch { /* diagnostics only */ }
+      verified = true;
+      if (!allOk) {
+        throw new Error(`CRITICAL KEY VERIFICATION FAILED for ${projectName} — see log above`);
+      }
+    } catch (err) {
+      console.warn(`   ⏳ verification pass [${attempt}/3] failed: ${err.message}`);
+      await sleep(attempt * 2000);
+    }
+  }
+  if (!verified) {
+    throw new Error(`Could not verify critical keys for ${projectName}`);
   }
 }
 
