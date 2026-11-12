@@ -118,6 +118,9 @@ CREATE TABLE IF NOT EXISTS public.listings (
     raw_data JSONB DEFAULT '{}'::jsonb,
     embedding vector(1536),
     embedding_768 vector(768),          -- Gemini gemini-embedding-001 target (see 013)
+    -- Migration 042: last owner-contact date (dd/MM/yyyy string) written
+    -- back by the Google Sheets outreach sync (/api/sync/sheet-webhook).
+    last_contact_date TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -2452,22 +2455,198 @@ BEGIN
 END $$;
 
 -- ─── 47. Proximity Search Function (New Capital & Compound Radius) ────────────
-CREATE OR REPLACE FUNCTION get_listings_near_capital(capital_lat numeric, capital_lng numeric, radius_meters numeric)
-RETURNS SETOF public.listings AS $$
-BEGIN
-  RETURN QUERY
-  SELECT *
-  FROM public.listings
-  WHERE location_coords IS NOT NULL
-    AND ST_DWithin(
-      location_coords,
-      ST_SetSRID(ST_MakePoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
+-- Baseline parity with migration 041 (2026-11-01): the RPC returns a TABLE
+-- over exactly the anon-granted public-safe columns — never SELECT *, so
+-- owner/broker PII cannot leave the database. The return type changed from
+-- the original SETOF public.listings, so a drop-guard precedes the create
+-- (CREATE OR REPLACE alone cannot change a return type: 42P13).
+drop function if exists public.get_listings_near_capital(numeric, numeric, numeric);
+
+create or replace function public.get_listings_near_capital(
+  capital_lat numeric, capital_lng numeric, radius_meters numeric
+)
+returns table (
+  id text,
+  ref_id text,
+  title text,
+  title_ar text,
+  description text,
+  description_ar text,
+  compound text,
+  developer text,
+  location_area text,
+  city text,
+  property_type text,
+  deal_type text,
+  offer_type text,
+  listing_type text,
+  price numeric,
+  price_currency text,
+  price_per_sqm numeric,
+  bedrooms integer,
+  bathrooms integer,
+  area_sqm numeric,
+  garden_sqm numeric,
+  roof_sqm numeric,
+  terrace_sqm numeric,
+  plot_sqm numeric,
+  floor_number integer,
+  unit_view text,
+  finishing_type text,
+  furnishing_status text,
+  delivery_year integer,
+  delivery_quarter text,
+  down_payment numeric,
+  installment_years integer,
+  monthly_installment numeric,
+  maintenance_fee_per_sqm numeric,
+  roi_percentage numeric,
+  cap_rate numeric,
+  valuation_status text,
+  status text,
+  publish_status text,
+  stale boolean,
+  featured boolean,
+  is_hot_deal boolean,
+  is_featured_gem boolean,
+  source_channel text,
+  images text[],
+  img text,
+  tag text,
+  ai_score numeric,
+  amenities text[],
+  floor_plan_url text,
+  virtual_tour_url text,
+  photo_count integer,
+  has_floor_plan boolean,
+  has_virtual_tour boolean,
+  data_quality_score integer,
+  freshness_score integer,
+  verified boolean,
+  publish_to_client boolean,
+  availability text,
+  days_on_market integer,
+  se_code text,
+  code text,
+  sbr_code text,
+  unit_code text,
+  reference_code text,
+  pf_reference_number text,
+  pf_status text,
+  project_id text,
+  compound_id text,
+  developer_id text,
+  latitude double precision,
+  longitude double precision,
+  agent_name text,
+  automation jsonb,
+  sync_source text,
+  last_sync_at timestamptz,
+  created_at timestamptz,
+  updated_at timestamptz,
+  published_at timestamptz,
+  verified_at timestamptz
+)
+language plpgsql
+stable
+as $function$
+begin
+  return query
+  select
+    l.id,
+    l.ref_id,
+    l.title,
+    l.title_ar,
+    l.description,
+    l.description_ar,
+    l.compound,
+    l.developer,
+    l.location_area,
+    l.city,
+    l.property_type,
+    l.deal_type,
+    l.offer_type,
+    l.listing_type,
+    l.price,
+    l.price_currency,
+    l.price_per_sqm,
+    l.bedrooms,
+    l.bathrooms,
+    l.area_sqm,
+    l.garden_sqm,
+    l.roof_sqm,
+    l.terrace_sqm,
+    l.plot_sqm,
+    l.floor_number,
+    l.unit_view,
+    l.finishing_type,
+    l.furnishing_status,
+    l.delivery_year,
+    l.delivery_quarter,
+    l.down_payment,
+    l.installment_years,
+    l.monthly_installment,
+    l.maintenance_fee_per_sqm,
+    l.roi_percentage,
+    l.cap_rate,
+    l.valuation_status,
+    l.status,
+    l.publish_status,
+    l.stale,
+    l.featured,
+    l.is_hot_deal,
+    l.is_featured_gem,
+    l.source_channel,
+    l.images,
+    l.img,
+    l.tag,
+    l.ai_score,
+    l.amenities,
+    l.floor_plan_url,
+    l.virtual_tour_url,
+    l.photo_count,
+    l.has_floor_plan,
+    l.has_virtual_tour,
+    l.data_quality_score,
+    l.freshness_score,
+    l.verified,
+    l.publish_to_client,
+    l.availability,
+    l.days_on_market,
+    l.se_code,
+    l.code,
+    l.sbr_code,
+    l.unit_code,
+    l.reference_code,
+    l.pf_reference_number,
+    l.pf_status,
+    l.project_id,
+    l.compound_id,
+    l.developer_id,
+    l.latitude,
+    l.longitude,
+    l.agent_name,
+    l.automation,
+    l.sync_source,
+    l.last_sync_at,
+    l.created_at,
+    l.updated_at,
+    l.published_at,
+    l.verified_at
+  from public.listings l
+  where l.location_coords is not null
+    and st_dwithin(
+      l.location_coords,
+      st_setsrid(st_makepoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
       radius_meters::float8
     )
-    AND (status = 'available' OR status = 'active')
-    AND publish_status = 'PUBLISHABLE';
-END;
-$$ LANGUAGE plpgsql;
+    and (l.status = 'available' or l.status = 'active')
+    and l.publish_status = 'PUBLISHABLE';
+end;
+$function$;
+
+comment on function public.get_listings_near_capital is
+'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).
 
 -- ─── 48. Supabase Realtime Publication ────────────────────────────────────────
 DO $$
