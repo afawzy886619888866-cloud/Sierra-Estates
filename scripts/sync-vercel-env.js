@@ -241,19 +241,11 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
   //    production copies). Keying a Map by name alone hides duplicates;
   //    keep every copy.
   const fetchAll = async () => {
-    let page = 1;
-    const all = [];
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
-      if (!res || res.error || !Array.isArray(res.envs)) {
-        throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
-      }
-      all.push(...res.envs);
-      if (res.envs.length < 100) break;
-      page += 1;
+    const res = await vercelRequest('GET', `/v9/projects/${projectId}/env`);
+    if (!res || res.error || !Array.isArray(res.envs)) {
+      throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
     }
-    return all;
+    return res.envs;
   };
 
   let allExisting = [];
