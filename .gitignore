@@ -137,6 +137,7 @@ temp/
 # instead of IMPORTDATA over public CSV URLs.
 data/
 *.xlsx
+!patches/*.xlsx
 *.csv
 Inventory_with_Photos_Airtable.csv
 inventory_*.csv
