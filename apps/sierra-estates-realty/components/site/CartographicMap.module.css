@@ -1031,23 +1031,29 @@
   background: #001f38;
 }
 
-/* 4K Vector SVG Geometric Precision & Non-Scaling Stroke */
-:global(.leaflet-container) svg,
-:global(.leaflet-pane) svg,
-.vectorMasterplanSvg {
+/* 4K Vector SVG Geometric Precision & Non-Scaling Stroke
+   (.module.css runs css-loader in PURE mode — a selector must carry at
+   least one local class, so every rule is anchored to .gisEmbedWrap, the
+   wrapper div around the Leaflet map. The SVG paths are rendered by
+   Leaflet outside React, so their raw DOM classes must stay :global.) */
+.gisEmbedWrap :global(.leaflet-container svg),
+.gisEmbedWrap :global(.leaflet-pane svg),
+.gisEmbedWrap :global(.vectorMasterplanSvg) {
   shape-rendering: geometricPrecision !important;
 }
 
-:global(.leaflet-container) svg path,
-:global(.leaflet-pane) svg path,
-:global(.leaflet-overlay-pane) path,
-.vectorSvgPath {
+.gisEmbedWrap :global(.leaflet-container svg path),
+.gisEmbedWrap :global(.leaflet-pane svg path),
+.gisEmbedWrap :global(.leaflet-overlay-pane path),
+.gisEmbedWrap :global(.vectorSvgPath) {
   shape-rendering: geometricPrecision !important;
   vector-effect: non-scaling-stroke !important;
 }
 
-/* GPU-Accelerated Centroid Badges in Leaflet */
-:global(.gis-centroid-pill > div) {
+/* GPU-Accelerated Centroid Badges in Leaflet
+   (anchored to .gisEmbedWrap for pure-mode CSS modules; the pills are
+   Leaflet divIcon DOM, so their classes stay :global) */
+.gisEmbedWrap :global(.gis-centroid-pill > div) {
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
   -webkit-backdrop-filter: blur(16px) !important;
@@ -1061,7 +1067,7 @@
   will-change: transform;
 }
 
-:global(.gis-centroid-pill > div:hover) {
+.gisEmbedWrap :global(.gis-centroid-pill > div:hover) {
   border-color: #00f0ff !important;
   box-shadow: 0 0 22px rgba(0, 240, 255, 0.8), 0 0 32px rgba(201, 168, 76, 0.65), 0 6px 18px rgba(0, 0, 0, 0.7) !important;
   text-shadow: 0 0 12px #00f0ff, 0 0 24px rgba(201, 168, 76, 0.9) !important;
