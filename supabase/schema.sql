@@ -2646,7 +2646,7 @@ end;
 $function$;
 
 comment on function public.get_listings_near_capital is
-'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).
+'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).';
 
 -- ─── 48. Supabase Realtime Publication ────────────────────────────────────────
 DO $$
@@ -2672,8 +2672,8 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.broker_sessions (
     id              BIGSERIAL PRIMARY KEY,
     session_id      TEXT UNIQUE NOT NULL,
-    messages        JSONB NOT NULL DEFAULT '[]',
-    profile         JSONB NOT NULL DEFAULT '{}',
+    messages        JSONB NOT NULL DEFAULT '[]'::jsonb,
+    profile         JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
