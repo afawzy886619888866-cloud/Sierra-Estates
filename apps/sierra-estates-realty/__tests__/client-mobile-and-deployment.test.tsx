@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SiteChrome from '../components/site/SiteChrome';
 import { SiteProvider } from '../lib/site/SiteContext';
+import { SIERRA_ADD_LISTING_URL } from '../lib/site/external-links';
 
 describe('Client Page Mobile Architecture & Deployment Readiness', () => {
   it('renders mobile bottom navigation bar with responsive items', () => {
@@ -18,7 +19,7 @@ describe('Client Page Mobile Architecture & Deployment Readiness', () => {
     // Assert key mobile links exist (Map, Compounds, Add Listing)
     expect(html).toContain('href="/compounds"');
     expect(html).toContain('href="/net"');
-    expect(html).toContain('href="/add-listing"');
+    expect(html).toContain(`href="${SIERRA_ADD_LISTING_URL}"`);
   });
 
   it('renders language and theme toggle controls for mobile/desktop headers', () => {

@@ -378,7 +378,7 @@ export class SheetsIntegrationService {
     }
 
     // Rule 2: NO BLANK CELLS (populate non-mandatory missing with "NULL")
-    const unitType = String(raw.unitType || 'Apartment').trim() || 'Apartment';
+    const unitType = String(raw.unitType || '').trim() || NULL_CELL;
     const area = Number(raw.areaSqm) > 0 ? Number(raw.areaSqm) : NULL_CELL;
     const beds = Number(raw.bedrooms) >= 0 && raw.bedrooms !== '' ? Number(raw.bedrooms) : NULL_CELL;
     const baths = Number(raw.bathrooms) >= 0 && raw.bathrooms !== '' ? Number(raw.bathrooms) : NULL_CELL;
@@ -672,7 +672,7 @@ export class SheetsIntegrationService {
             broadcastToTelegramGeneral({
               code: u.code || u.id,
               compound: SheetsIntegrationService.resolveCanonicalCompound(u.compound),
-              unitType: u.property_type || 'Apartment',
+              unitType: u.property_type || 'Unit',
               price: Number(u.price || 0),
               dealType: u.deal_type || 'Sale',
               areaSqm: u.area_sqm ? Number(u.area_sqm) : null,
@@ -692,7 +692,7 @@ export class SheetsIntegrationService {
           nowIso, // Verified_Available_Date
           u.deal_type === 'rent' ? 'Rent' : 'Resale',
           this.resolveCanonicalCompound(u.compound),
-          u.property_type || 'Apartment',
+          u.property_type || NULL_CELL,
           u.area_sqm || NULL_CELL,
           u.bedrooms || NULL_CELL,
           u.bathrooms || NULL_CELL,

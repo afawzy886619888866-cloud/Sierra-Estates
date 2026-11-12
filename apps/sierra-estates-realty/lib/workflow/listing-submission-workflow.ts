@@ -610,8 +610,8 @@ async function syncMasterInventoryStep({
     await SheetsIntegrationService.syncUnitToMaster({
       unitCode: code,
       dealType: String(listing.mode === 'rent' ? 'Rent' : 'Resale'),
-      compound: String(listing.compound || 'New Cairo'),
-      unitType: String(listing.propertyType || 'Apartment'),
+      compound: String(listing.compound || ''),
+      unitType: String(listing.propertyType || ''),
       areaSqm: Number(listing.area) || undefined,
       bedrooms: Number(listing.beds) || undefined,
       bathrooms: Number(listing.baths) || undefined,
