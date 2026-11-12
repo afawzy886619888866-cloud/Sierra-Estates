@@ -1,0 +1,1544 @@
+# Sierra Estates — production recovery fixes (2026-11-12, part 2)
+# Squash-merged PRs, in order:
+#   PR #48 857b092f2e fix(db): baseline parity with migrations 041/042 — unblock Deploy Supabase (42P13)
+#   PR #49 1f0109f4ff fix(db): restore 041 function comment terminator in schema.sql
+#   PR #50 021cd96d2c fix(hygiene): untrack data/ working files (restore CI green)
+#   PR #51 5a99c6ab18 fix(deploy): env-sync step actually passes the Supabase backend values
+#   PR #52 232c67ab1a feat(deploy): env_sync_only dispatch mode + env-sync runs even when deploy fails
+#   PR #53 5ca2ddabe2 fix(sync): env vars actually usable by production — pagination, target repair, runtime SUPABASE_URL
+#   PR #54 25297b7a1b fix(sync): duplicate-aware env repair + post-sync verification
+#
+
+########################################################################
+commit 857b092f2ec0151c44dba99828dbecee5bb5faf6
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 20:16:37 2026 +0200
+
+    fix(db): baseline parity with migrations 041/042 — unblock Deploy Supabase (42P13) (#48)
+    
+    schema.sql now carries 041's exact get_listings_near_capital (drop-guard + RETURNS TABLE over public-safe columns) and 042's listings.last_contact_date. The ledger is untouched; on the migrated production database every statement is an idempotent re-assert.
+
+diff --git a/supabase/schema.sql b/supabase/schema.sql
+index 4f1f4329d..1e397ca58 100644
+--- a/supabase/schema.sql
++++ b/supabase/schema.sql
+@@ -118,6 +118,9 @@ CREATE TABLE IF NOT EXISTS public.listings (
+     raw_data JSONB DEFAULT '{}'::jsonb,
+     embedding vector(1536),
+     embedding_768 vector(768),          -- Gemini gemini-embedding-001 target (see 013)
++    -- Migration 042: last owner-contact date (dd/MM/yyyy string) written
++    -- back by the Google Sheets outreach sync (/api/sync/sheet-webhook).
++    last_contact_date TEXT,
+     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+ );
+@@ -2452,22 +2455,198 @@ BEGIN
+ END $$;
+ 
+ -- ─── 47. Proximity Search Function (New Capital & Compound Radius) ────────────
+-CREATE OR REPLACE FUNCTION get_listings_near_capital(capital_lat numeric, capital_lng numeric, radius_meters numeric)
+-RETURNS SETOF public.listings AS $$
+-BEGIN
+-  RETURN QUERY
+-  SELECT *
+-  FROM public.listings
+-  WHERE location_coords IS NOT NULL
+-    AND ST_DWithin(
+-      location_coords,
+-      ST_SetSRID(ST_MakePoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
++-- Baseline parity with migration 041 (2026-11-01): the RPC returns a TABLE
++-- over exactly the anon-granted public-safe columns — never SELECT *, so
++-- owner/broker PII cannot leave the database. The return type changed from
++-- the original SETOF public.listings, so a drop-guard precedes the create
++-- (CREATE OR REPLACE alone cannot change a return type: 42P13).
++drop function if exists public.get_listings_near_capital(numeric, numeric, numeric);
++
++create or replace function public.get_listings_near_capital(
++  capital_lat numeric, capital_lng numeric, radius_meters numeric
++)
++returns table (
++  id text,
++  ref_id text,
++  title text,
++  title_ar text,
++  description text,
++  description_ar text,
++  compound text,
++  developer text,
++  location_area text,
++  city text,
++  property_type text,
++  deal_type text,
++  offer_type text,
++  listing_type text,
++  price numeric,
++  price_currency text,
++  price_per_sqm numeric,
++  bedrooms integer,
++  bathrooms integer,
++  area_sqm numeric,
++  garden_sqm numeric,
++  roof_sqm numeric,
++  terrace_sqm numeric,
++  plot_sqm numeric,
++  floor_number integer,
++  unit_view text,
++  finishing_type text,
++  furnishing_status text,
++  delivery_year integer,
++  delivery_quarter text,
++  down_payment numeric,
++  installment_years integer,
++  monthly_installment numeric,
++  maintenance_fee_per_sqm numeric,
++  roi_percentage numeric,
++  cap_rate numeric,
++  valuation_status text,
++  status text,
++  publish_status text,
++  stale boolean,
++  featured boolean,
++  is_hot_deal boolean,
++  is_featured_gem boolean,
++  source_channel text,
++  images text[],
++  img text,
++  tag text,
++  ai_score numeric,
++  amenities text[],
++  floor_plan_url text,
++  virtual_tour_url text,
++  photo_count integer,
++  has_floor_plan boolean,
++  has_virtual_tour boolean,
++  data_quality_score integer,
++  freshness_score integer,
++  verified boolean,
++  publish_to_client boolean,
++  availability text,
++  days_on_market integer,
++  se_code text,
++  code text,
++  sbr_code text,
++  unit_code text,
++  reference_code text,
++  pf_reference_number text,
++  pf_status text,
++  project_id text,
++  compound_id text,
++  developer_id text,
++  latitude double precision,
++  longitude double precision,
++  agent_name text,
++  automation jsonb,
++  sync_source text,
++  last_sync_at timestamptz,
++  created_at timestamptz,
++  updated_at timestamptz,
++  published_at timestamptz,
++  verified_at timestamptz
++)
++language plpgsql
++stable
++as $function$
++begin
++  return query
++  select
++    l.id,
++    l.ref_id,
++    l.title,
++    l.title_ar,
++    l.description,
++    l.description_ar,
++    l.compound,
++    l.developer,
++    l.location_area,
++    l.city,
++    l.property_type,
++    l.deal_type,
++    l.offer_type,
++    l.listing_type,
++    l.price,
++    l.price_currency,
++    l.price_per_sqm,
++    l.bedrooms,
++    l.bathrooms,
++    l.area_sqm,
++    l.garden_sqm,
++    l.roof_sqm,
++    l.terrace_sqm,
++    l.plot_sqm,
++    l.floor_number,
++    l.unit_view,
++    l.finishing_type,
++    l.furnishing_status,
++    l.delivery_year,
++    l.delivery_quarter,
++    l.down_payment,
++    l.installment_years,
++    l.monthly_installment,
++    l.maintenance_fee_per_sqm,
++    l.roi_percentage,
++    l.cap_rate,
++    l.valuation_status,
++    l.status,
++    l.publish_status,
++    l.stale,
++    l.featured,
++    l.is_hot_deal,
++    l.is_featured_gem,
++    l.source_channel,
++    l.images,
++    l.img,
++    l.tag,
++    l.ai_score,
++    l.amenities,
++    l.floor_plan_url,
++    l.virtual_tour_url,
++    l.photo_count,
++    l.has_floor_plan,
++    l.has_virtual_tour,
++    l.data_quality_score,
++    l.freshness_score,
++    l.verified,
++    l.publish_to_client,
++    l.availability,
++    l.days_on_market,
++    l.se_code,
++    l.code,
++    l.sbr_code,
++    l.unit_code,
++    l.reference_code,
++    l.pf_reference_number,
++    l.pf_status,
++    l.project_id,
++    l.compound_id,
++    l.developer_id,
++    l.latitude,
++    l.longitude,
++    l.agent_name,
++    l.automation,
++    l.sync_source,
++    l.last_sync_at,
++    l.created_at,
++    l.updated_at,
++    l.published_at,
++    l.verified_at
++  from public.listings l
++  where l.location_coords is not null
++    and st_dwithin(
++      l.location_coords,
++      st_setsrid(st_makepoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
+       radius_meters::float8
+     )
+-    AND (status = 'available' OR status = 'active')
+-    AND publish_status = 'PUBLISHABLE';
+-END;
+-$$ LANGUAGE plpgsql;
++    and (l.status = 'available' or l.status = 'active')
++    and l.publish_status = 'PUBLISHABLE';
++end;
++$function$;
++
++comment on function public.get_listings_near_capital is
++'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).
+ 
+ -- ─── 48. Supabase Realtime Publication ────────────────────────────────────────
+ DO $$
+
+########################################################################
+commit 1f0109f4ff1f05934e934bf1a013c6bcc6406630
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 20:20:44 2026 +0200
+
+    fix(db): restore 041 function comment terminator in schema.sql (#49)
+    
+    The #48 block extraction dropped the closing quote + semicolon of the function comment; the unterminated literal swallowed the rest of the file and the next apply died with 42601. Baseline now parses 351/351 statements under the real Postgres grammar.
+
+diff --git a/supabase/schema.sql b/supabase/schema.sql
+index 1e397ca58..9abdb889e 100644
+--- a/supabase/schema.sql
++++ b/supabase/schema.sql
+@@ -2646,7 +2646,7 @@ end;
+ $function$;
+ 
+ comment on function public.get_listings_near_capital is
+-'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).
++'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).';
+ 
+ -- ─── 48. Supabase Realtime Publication ────────────────────────────────────────
+ DO $$
+@@ -2672,8 +2672,8 @@ END $$;
+ CREATE TABLE IF NOT EXISTS public.broker_sessions (
+     id              BIGSERIAL PRIMARY KEY,
+     session_id      TEXT UNIQUE NOT NULL,
+-    messages        JSONB NOT NULL DEFAULT '[]',
+-    profile         JSONB NOT NULL DEFAULT '{}',
++    messages        JSONB NOT NULL DEFAULT '[]'::jsonb,
++    profile         JSONB NOT NULL DEFAULT '{}'::jsonb,
+     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+ );
+
+########################################################################
+commit 021cd96d2c0926339ba02b49b01a772aa3f0e4c3
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 20:40:54 2026 +0200
+
+    fix(hygiene): untrack data/ working files added by 580dcba1c (#50)
+    
+    The two data/ files tripped the data-hygiene pin, failed CI, and the deploy gate then blocked every production deploy — leaving prod on a stale build missing NEXT_PUBLIC_SUPABASE_URL. Files stay on disk; only git tracking is removed per the documented policy.
+
+diff --git a/data/sierra-available-coded-units.csv b/data/sierra-available-coded-units.csv
+deleted file mode 100644
+index 90a798d1f..000000000
+--- a/data/sierra-available-coded-units.csv
++++ /dev/null
+@@ -1,23 +0,0 @@
+-﻿Unified_Code,Party,Deal_Type,Compound,Sub_Area,Property_Type,Price_EGP,Area_SQM,Garden_SQM,Bedrooms,Bathrooms,Finishing,Owner_Phone,Sourced_By_Name,Sourced_By_Phone,Source_Group,Availability,Missing_Information,Description_AR
+-"ORK814","Owner","Rent","Al Rehab","Al Rehab Phase 2 (الرحاب ٢)","Apartment","40000","MISSING","","3","3","Furnished","'01508181814","Karima (kmehesen hr)","'01508181814","Owners August 2026","Available","Area (m²) not specified ; Direct Owner personal phone not written in post (only Karima 01508181814 attached)","شقة للإيجار مفروش في الرحاب ٢، الدور الثالث، ٣ غرف نوم، ٣ حمام، ريسبشن واسع ومطبخ كبير، مفروشة بالكامل (من المالك)"
+-"ONK814","Owner","Rent","Al Narges","Narges Buildings (عمارات النرجس - بعد مسجد المصطفى)","Studio","45000","MISSING","","1","1","Furnished","'01508181814","Karima (kmehesen hr)","'01508181814","Owners August 2026","Available","Direct Owner (Sherif) phone number missing ([ضع رقم هاتفك هنا]) ; Area (m²) not specified ; Floor number not specified","استوديوهات فندقية مفروشة للإيجار في التجمع الخامس عمارات النرجس بعد مسجد المصطفى (شريف) شامل الإنترنت والتكييفات والأجهزة"
+-"OFK814","Owner","Rent","Fifth Square","Al Marasem Fifth Square (كمبوند المراسم)","Apartment","50000","160","","3","3","Furnished","'01508181814","Karima (kmehesen hr)","'01508181814","Owners August 2026","Available","Direct Owner phone number missing ([أدخل رقم الهاتف] placeholder left in post)","شقة فندقية فاخرة للإيجار في كمبوند المراسم فيفث سكوير، ١٦٠ م²، ٣ غرف نوم (١ ماستر بدريسنج)، ٣ حمام، دور ثاني، باركيه، جراج خاص"
+-"OEO356","Owner","Resale","Entrada (New Capital R7)","R7 New Capital - Entrada Compound","Apartment","8000000","208","","3","3","Not Specified","'01206532356","Direct Owner (.)","'01206532356","Owners August 2026","Available","Owner full name is ""."" (phone 01206532356 is present) ; Finishing status not explicitly stated","شقة للبيع في كمبوند انترادا R7 العاصمة الإدارية، ٢٠٨ م²، دور سادس، استلام فوري، ٣ غرف، ٣ حمام، ليفنج، مطبخ أمريكان، جراج، خالصة"
+-"ONK814-2","Owner","Resale","1st Settlement (South Youth)","الشباب الجنوبي - نموذج اللوتس (بجوار بوابة 6 و 9 الرحاب)","Apartment","1850000","75","","2","1","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","Direct Owner personal phone number (only Karima 01508181814 listed)","شقة للبيع بالتجمع الأول الشباب الجنوبي نموذج اللوتس، ٧٥ م²، تشطيب عريس جديد، غرفتين كبار، ريسبشن، حمام، ٢ بلكونة، دور رابع أخير معزول"
+-"OGK814","Owner","Resale","North Coast (Farah 2)","قرية فرح 2 - الكيلو 133 سيدي عبد الرحمن بجوار مراسي","Penthouse","7175000","130","","3","2","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","Direct Owner personal phone number (only Karima 01508181814 listed in post)","شاليه بالروف للبيع في قرية فرح ٢ الساحل الشمالي ك ١٣٣ بجوار مراسي، ١٣٠ م² + روف ١٣٠ م²، ٣ غرف، ٢ حمام، فيو حمام سباحة، من المالك مباشرة"
+-"OMK814","Owner","Rent","Madinaty","Madinaty B10 - Naro Garden Building 101 (نارو جاردن عمارة 101)","Apartment","28000","78","","2","1","Furnished","'01508181814","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","Direct Owner phone number left blank after ""📞 للتواصل والمعاينة:""","شقة مفروشة أول سكن للإيجار في مدينتي B10 نارو جاردن عمارة ١٠١، الدور الثاني، ٧٨ م²، ٢ غرف نوم، ١ حمام، ريسبشن"
+-"OHK814","Owner","Resale","Hyde Park","Hyde Park - Park Corner (بارك كورنر)","Apartment","14500000","207","","MISSING","MISSING","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","Bedrooms count not specified ; Bathrooms count not specified ; Direct Owner phone number not written (Karima 01508181814)","شقة للبيع في كمبوند هايد بارك مرحلة بارك كورنر، ٢٠٧ م²، دور رابع قبل الأخير، بحري، فيو مفتوح لاندسكيب، متشطبة بالكامل بالتكييفات"
+-"ORO125","Owner","Resale","Al Rehab","Al Rehab 2 - Group 131 Building 6 (مجموعة 131 عمارة 6)","Apartment","11300000","170","70","3","2","Fully Finished","'01223876125","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","COMPLETE","شقة بالرحاب 2 للبيع من المالك مباشرة (01223876125)، مجموعة 131 عمارة 6، مساحة 170 م² + جاردن 70 م²، 3 غرف، 2 حمام، ريسبشن فيو جاردن"
+-"OBK814","Owner","Rent","Al Banafseg","Al Banafseg 11 (البنفسج ١١)","Apartment","25000","200","","3","2","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","Direct Owner phone number missing from post (Karima 01508181814)","شقة للإيجار في البنفسج ١١ التجمع الخامس، ٢٠٠ م²، ألترا سوبر لوكس (ريسبشن رخام وغرف باركيه)، دور ثاني بدون أسانسير، ٣ غرف، ٢ حمام، تراس"
+-"OAK814","Owner","Resale","Al Andalus","Al Andalus 2 - In front of Mivida Gate 2 (الأندلس ٢ أمام ميفيدا بوابة ٢)","Duplex","7200000","279","80","3","3","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","Planning & Discussion","Available","Direct Owner phone number missing from post (Karima 01508181814) ; Exact garden area (m²) not specified","دوبلكس للبيع في الأندلس ٢ أمام ميفيدا بوابة ٢، ٢٧٩ م² متشطب، أرضي مرتفع + بيزمنت بحديقة كبيرة، ٣ غرف (١ ماستر بدريسنج)، ٣ حمام، ليفنج"
+-"ORE440","Owner","Rent","Al Rehab","Al Rehab Group 126 Building 16 Apt 53 (مجموعة 126 عمارة 16 شقة 53)","Apartment","37000","MISSING","","3","2","Furnished","'01067042440","Eman Zaki (ايمان)","'01067042440","Requests","Available","Area (m²) not specified ; Direct Owner personal phone number (posted by Eman Zaki 01067042440)","شقة مفروشة للإيجار في الرحاب مجموعة ١٢٦ عمارة ١٦ شقة ٥٣، ٣ غرف نوم، ٢ حمام، متاحة الآن للأجانب مدة قصيرة أو سنة"
+-"OHE188","Owner","Rent","Hyde Park","Hyde Park Centerville (سنترفيل)","Apartment","50000","165","","3","3","Furnished","'01151089188","Heba Ahmad / Ehab","'01032962712","معاينات سييرا بلو","Available","Garden area (m²) not specified for ground floor unit ; Confirm whether Ehab (01151089188) is direct owner or co-broker","شقة أرضي مفروشة للإيجار في هايد بارك سنترفيل، ١٦٥ م²، ٣ غرف نوم، ٣ حمام، دور أرضي، مفروشة بالكامل"
+-"OUK814","Owner","Rent","Uptown Cairo","Uptown Cairo - Levana (ليفانا)","Twinhouse","160000","227","143","3","3","Furnished","'01508181814","Karima (kmehesen hr)","'01508181814","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Available","Direct Owner personal phone number (posted by Karima 01508181814)","توين هاوس مفروش بالكامل للإيجار في أب تاون كايرو مرحلة ليفانا، مباني ٢٢٧ م² + جاردن ١٤٣ م²، ٣ غرف نوم + غرفة مربية، ٣ حمام"
+-"OMK814-2","Owner","Resale","Madinaty","Madinaty B14 (مدينتي B14 أرضي بجاردن)","Apartment","2018000","67","35","2","1","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Available","Total contract price / remaining installments not specified ; Direct Owner phone number (posted by Karima 01508181814)","شقة أرضي بجاردن للبيع في مدينتي B14، مساحة ٦٧ م² + جاردن ٣٥ م²، المدفوع ١,٥١٨,٠٠٠ + أوفر ٥٠٠,٠٠٠ (إجمالي مطلوب ٢,٠١٨,٠٠٠)، استلام سنتين"
+-"OMK814-3","Owner","Resale","Madinaty","Madinaty B8 Group 89 (مدينتي B8 مجموعة 89)","Apartment","2277000","77","","2","1","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Available","Total remaining installments not specified ; Direct Owner phone number (posted by Karima 01508181814)","شقة للبيع في مدينتي B8 مجموعة ٨٩، دور ثاني، ٧٧ م²، ٢ غرف نوم، المدفوع ١,٧٧٧,٠٠٠ + أوفر ٥٠٠,٠٠٠ (إجمالي مطلوب ٢,٢٧٧,٠٠٠)"
+-"OGK814-2","Owner","Resale","North Coast (Southmed)","Southmed TMG North Coast (ساوث ميد الساحل الشمالي)","Penthouse","2500000","118","","2","2","Fully Finished","'01508181814","Karima (kmehesen hr)","'01508181814","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Available","Total contract price not specified ; Direct Owner phone number (posted by Karima 01508181814)","شاليه للبيع في ساوث ميد الساحل الشمالي (طلعت مصطفى)، ١١٨ م²، ٢ غرف، ٢ حمام، فيو كريستال لاجون، المدفوع ٢,٥٠٠,٠٠٠ بدون أوفر"
+-"OUA333","Owner","Rent","Uptown Cairo","Uptown Cairo - Sector Fourteen (سيكتور فورتين)","Apartment","70000","235","","3","3","Fully Finished","'01092048333","Ahmed Fawzy (Sierra Estates)","'01092048333","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Available","COMPLETE","شقة للإيجار في أب تاون كايرو (Sector Fourteen)، دور ثالث، ٢٣٥ م²، ٣ غرف نوم + غرفة مربية، ٣ حمام، مطبخ وتكييفات"
+-"BVP497","Broker","Rent","Mivida","Mivida Emaar","Duplex","180000","320","100","4","3","Furnished","'01103455497","Peter Midhat (Vilino Broker)","'01103455497","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Not Confirmed","Broker unit (not direct owner) — routed to Brokers_Inventory","دوبلكس مفروش بالكامل للإيجار في ميفيدا، ٣٢٠ م²، ٤ غرف، ٣ حمام، ٢ حديقة كبيرة (كود البروكر BR870)"
+-"BWA768","Broker","Resale","The Waterway","Waterway 1 New Cairo","Apartment","15000000","167","","3","2","Fully Finished","'01147811768","Ahmed Villette Broker","'01147811768","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Not Confirmed","Broker unit (not direct owner) — routed to Brokers_Inventory","شقة للبيع في واتر واي ١ التجمع الخامس، ١٦٧ م²، ٣ غرف، ٢ حمام، متشطبة بالكامل"
+-"BSA768","Broker","Resale","Villette","Sodic Villette Sky Condos","Apartment","16000000","162","","3","3","Semi Finished","'01147811768","Ahmed Villette Broker","'01147811768","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Not Confirmed","Broker unit (not direct owner) — routed to Brokers_Inventory","شقة للبيع في سوديك فيليت سكاي كوندوز، ١٦٢ م²، ٣ غرف، ٣ حمام، نصف تشطيب، فيو لاندسكيب"
+-"BLA768","Broker","Resale","Lake View Residence","Lake View Residence Golden Square","Apartment","25500000","280","","3","3","Fully Finished","'01147811768","Ahmed Villette Broker","'01147811768","New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)","Not Confirmed","Broker unit (not direct owner) — routed to Brokers_Inventory","شقة للبيع في ليك فيو ريزيدنس، ٢٨٠ م²، ٣ غرف، ٣ حمام، متشطبة بالكامل"
+\ No newline at end of file
+diff --git a/data/sierra-unit-code-registry.json b/data/sierra-unit-code-registry.json
+deleted file mode 100644
+index 2efc77925..000000000
+--- a/data/sierra-unit-code-registry.json
++++ /dev/null
+@@ -1,681 +0,0 @@
+-{
+-  "generatedAt": "2026-11-12T18:28:38.814Z",
+-  "codingFormula": {
+-    "pattern": "[O/B][CompoundLetter][PersonInitial][Last3PhoneDigits]",
+-    "explanation": "Letter 1: O=Owner / B=Broker | Letter 2: Compound Initial (R=Rehab, M=Madinaty, F=Fifth Square, H=Hyde Park, U=Uptown, N=Narges/New Cairo, B=Banafseg, A=Andalus, E=Entrada) | Letter 3: Owner/Agent First Initial (K=Karima, A=Ahmed, E=Eman/Ehab, H=Heba, S=Sherif) | Digits: Last 3 digits of Owner/Agent phone number.",
+-    "lookupExample": "Code ORK125 -> O (Owner) + R (Rehab) + K (Karima) + 125 (Phone ending in 125 = 01223876125)"
+-  },
+-  "totalCommunityUnits": 22,
+-  "communityOwnerUnitsCount": 18,
+-  "communityBrokerUnitsCount": 4,
+-  "unitsByCode": {
+-    "ORK814": {
+-      "unifiedCode": "ORK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Al Rehab",
+-      "subArea": "Al Rehab Phase 2 (الرحاب ٢)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 40000,
+-      "priceNote": "40,000 EGP/mo (note also mentions من المالك 45)",
+-      "areaSqm": null,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "3rd Floor",
+-      "finishing": "Furnished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Owners August 2026",
+-      "postedDate": "2026-10-16 14:43:29",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Area (m²) not specified",
+-        "Direct Owner personal phone not written in post (only Karima 01508181814 attached)"
+-      ],
+-      "descriptionAr": "شقة للإيجار مفروش في الرحاب ٢، الدور الثالث، ٣ غرف نوم، ٣ حمام، ريسبشن واسع ومطبخ كبير، مفروشة بالكامل (من المالك)",
+-      "descriptionEn": "Furnished 3BR/3BA Apartment for Rent in Al Rehab 2, 3rd floor, wide reception & large kitchen (Direct from Owner via Karima)."
+-    },
+-    "ONK814": {
+-      "unifiedCode": "ONK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Al Narges",
+-      "subArea": "Narges Buildings (عمارات النرجس - بعد مسجد المصطفى)",
+-      "propertyType": "Studio",
+-      "priceEgp": 45000,
+-      "priceNote": "45,000 EGP/mo (1,500 EGP/day)",
+-      "areaSqm": null,
+-      "gardenSqm": null,
+-      "bedrooms": 1,
+-      "bathrooms": 1,
+-      "floor": "Not Specified",
+-      "finishing": "Furnished",
+-      "ownerName": "أ. شريف (Sherif - via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Owners August 2026",
+-      "postedDate": "2026-10-17 19:21:18",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner (Sherif) phone number missing ([ضع رقم هاتفك هنا])",
+-        "Area (m²) not specified",
+-        "Floor number not specified"
+-      ],
+-      "descriptionAr": "استوديوهات فندقية مفروشة للإيجار في التجمع الخامس عمارات النرجس بعد مسجد المصطفى (شريف) شامل الإنترنت والتكييفات والأجهزة",
+-      "descriptionEn": "Hotel-style Furnished Studios for Rent in Al Narges Buildings (after Al Mostafa Mosque), 1-2 beds, ACs, Wi-Fi (Owner: Sherif)."
+-    },
+-    "OFK814": {
+-      "unifiedCode": "OFK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Fifth Square",
+-      "subArea": "Al Marasem Fifth Square (كمبوند المراسم)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 50000,
+-      "priceNote": "50,000 EGP/mo (3,000 EGP/day)",
+-      "areaSqm": 160,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "2nd Floor",
+-      "finishing": "Furnished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Owners August 2026",
+-      "postedDate": "2026-10-18 14:43:39",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner phone number missing ([أدخل رقم الهاتف] placeholder left in post)"
+-      ],
+-      "descriptionAr": "شقة فندقية فاخرة للإيجار في كمبوند المراسم فيفث سكوير، ١٦٠ م²، ٣ غرف نوم (١ ماستر بدريسنج)، ٣ حمام، دور ثاني، باركيه، جراج خاص",
+-      "descriptionEn": "Luxury Furnished Apartment for Rent in Fifth Square (Al Marasem), 160 m², 3BR (1 master), 3BA, 2nd floor, parquet, garage."
+-    },
+-    "OEO356": {
+-      "unifiedCode": "OEO356",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "Entrada (New Capital R7)",
+-      "subArea": "R7 New Capital - Entrada Compound",
+-      "propertyType": "Apartment",
+-      "priceEgp": 8000000,
+-      "priceNote": "8,000,000 EGP (خالصة مع الشركة معهاش أقساط)",
+-      "areaSqm": 208,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "6th Floor",
+-      "finishing": "Not Specified",
+-      "ownerName": "مالك انترادا (.)",
+-      "ownerPhone": "01206532356",
+-      "hasDirectOwnerPhone": true,
+-      "sourcedByName": "Direct Owner (.)",
+-      "sourcedByPhone": "01206532356",
+-      "sourceGroup": "Owners August 2026",
+-      "postedDate": "2026-11-01 23:25:17",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Owner full name is \".\" (phone 01206532356 is present)",
+-        "Finishing status not explicitly stated"
+-      ],
+-      "descriptionAr": "شقة للبيع في كمبوند انترادا R7 العاصمة الإدارية، ٢٠٨ م²، دور سادس، استلام فوري، ٣ غرف، ٣ حمام، ليفنج، مطبخ أمريكان، جراج، خالصة",
+-      "descriptionEn": "Apartment for Sale in Entrada Compound R7 New Capital, 208 m², 6th floor, immediate delivery, 3BR, 3BA, living, garage, fully paid."
+-    },
+-    "ONK814-2": {
+-      "unifiedCode": "ONK814-2",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "1st Settlement (South Youth)",
+-      "subArea": "الشباب الجنوبي - نموذج اللوتس (بجوار بوابة 6 و 9 الرحاب)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 1850000,
+-      "priceNote": "1,850,000 EGP (مليون 850)",
+-      "areaSqm": 75,
+-      "gardenSqm": null,
+-      "bedrooms": 2,
+-      "bathrooms": 1,
+-      "floor": "4th & Last Floor (Insulated Roof)",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-10-06 16:40:44",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner personal phone number (only Karima 01508181814 listed)"
+-      ],
+-      "descriptionAr": "شقة للبيع بالتجمع الأول الشباب الجنوبي نموذج اللوتس، ٧٥ م²، تشطيب عريس جديد، غرفتين كبار، ريسبشن، حمام، ٢ بلكونة، دور رابع أخير معزول",
+-      "descriptionEn": "Apartment for Sale in 1st Settlement South Youth (Lotus Model), 75 m², newly finished, 2BR, 1BA, 2 balconies, 4th floor."
+-    },
+-    "OGK814": {
+-      "unifiedCode": "OGK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "North Coast (Farah 2)",
+-      "subArea": "قرية فرح 2 - الكيلو 133 سيدي عبد الرحمن بجوار مراسي",
+-      "propertyType": "Penthouse",
+-      "priceEgp": 7175000,
+-      "priceNote": "7,175,000 EGP Cash (تسليم فوري من المالك مباشرة)",
+-      "areaSqm": 130,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 2,
+-      "floor": "Upper with 130 m² Roof",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-10-07 14:43:39",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner personal phone number (only Karima 01508181814 listed in post)"
+-      ],
+-      "descriptionAr": "شاليه بالروف للبيع في قرية فرح ٢ الساحل الشمالي ك ١٣٣ بجوار مراسي، ١٣٠ م² + روف ١٣٠ م²، ٣ غرف، ٢ حمام، فيو حمام سباحة، من المالك مباشرة",
+-      "descriptionEn": "Chalet with Roof for Sale in Farah 2 North Coast (KM 133 next to Marassi), 130 m² + 130 m² roof, 3BR, 2BA, pool view."
+-    },
+-    "OMK814": {
+-      "unifiedCode": "OMK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Madinaty",
+-      "subArea": "Madinaty B10 - Naro Garden Building 101 (نارو جاردن عمارة 101)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 28000,
+-      "priceNote": "28,000 EGP/mo (عقد سنوي - أول سكن)",
+-      "areaSqm": 78,
+-      "gardenSqm": null,
+-      "bedrooms": 2,
+-      "bathrooms": 1,
+-      "floor": "2nd Floor",
+-      "finishing": "Furnished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-10-08 17:17:17",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner phone number left blank after \"📞 للتواصل والمعاينة:\""
+-      ],
+-      "descriptionAr": "شقة مفروشة أول سكن للإيجار في مدينتي B10 نارو جاردن عمارة ١٠١، الدور الثاني، ٧٨ م²، ٢ غرف نوم، ١ حمام، ريسبشن",
+-      "descriptionEn": "First-use Furnished Apartment for Rent in Madinaty B10 (Naro Garden Bldg 101), 2nd floor, 78 m², 2BR, 1BA."
+-    },
+-    "OHK814": {
+-      "unifiedCode": "OHK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "Hyde Park",
+-      "subArea": "Hyde Park - Park Corner (بارك كورنر)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 14500000,
+-      "priceNote": "14,500,000 EGP (14.5 مليون)",
+-      "areaSqm": 207,
+-      "gardenSqm": null,
+-      "bedrooms": null,
+-      "bathrooms": null,
+-      "floor": "4th Floor (Penultimate)",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-11-02 15:47:16",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Bedrooms count not specified",
+-        "Bathrooms count not specified",
+-        "Direct Owner phone number not written (Karima 01508181814)"
+-      ],
+-      "descriptionAr": "شقة للبيع في كمبوند هايد بارك مرحلة بارك كورنر، ٢٠٧ م²، دور رابع قبل الأخير، بحري، فيو مفتوح لاندسكيب، متشطبة بالكامل بالتكييفات",
+-      "descriptionEn": "Apartment for Sale in Hyde Park (Park Corner), 207 m², 4th floor, north-facing landscape view, fully finished with ACs."
+-    },
+-    "ORO125": {
+-      "unifiedCode": "ORO125",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "Al Rehab",
+-      "subArea": "Al Rehab 2 - Group 131 Building 6 (مجموعة 131 عمارة 6)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 11300000,
+-      "priceNote": "11,300,000 EGP Negotiable (11 مليون 300 قابل للتفاوض)",
+-      "areaSqm": 170,
+-      "gardenSqm": 70,
+-      "bedrooms": 3,
+-      "bathrooms": 2,
+-      "floor": "Ground Floor with Garden",
+-      "finishing": "Fully Finished",
+-      "ownerName": "مالك الرحاب 2 (مجموعة 131 عمارة 6)",
+-      "ownerPhone": "01223876125",
+-      "hasDirectOwnerPhone": true,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-11-02 17:19:45",
+-      "availability": "Available",
+-      "missingFields": [],
+-      "descriptionAr": "شقة بالرحاب 2 للبيع من المالك مباشرة (01223876125)، مجموعة 131 عمارة 6، مساحة 170 م² + جاردن 70 م²، 3 غرف، 2 حمام، ريسبشن فيو جاردن",
+-      "descriptionEn": "Ground Floor Apartment with Garden for Sale in Al Rehab 2 (Group 131 Bldg 6), 170 m² + 70 m² garden, 3BR, 2BA, Direct Owner 01223876125."
+-    },
+-    "OBK814": {
+-      "unifiedCode": "OBK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Al Banafseg",
+-      "subArea": "Al Banafseg 11 (البنفسج ١١)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 25000,
+-      "priceNote": "25,000 EGP/mo Negotiable (25 قابل للتفاوض)",
+-      "areaSqm": 200,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 2,
+-      "floor": "2nd Floor (No Elevator)",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-11-04 16:40:28",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner phone number missing from post (Karima 01508181814)"
+-      ],
+-      "descriptionAr": "شقة للإيجار في البنفسج ١١ التجمع الخامس، ٢٠٠ م²، ألترا سوبر لوكس (ريسبشن رخام وغرف باركيه)، دور ثاني بدون أسانسير، ٣ غرف، ٢ حمام، تراس",
+-      "descriptionEn": "Apartment for Rent in Al Banafseg 11, 200 m², Ultra Super Lux (marble & parquet), 2nd floor, 3BR, 2BA, terrace."
+-    },
+-    "OAK814": {
+-      "unifiedCode": "OAK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "Al Andalus",
+-      "subArea": "Al Andalus 2 - In front of Mivida Gate 2 (الأندلس ٢ أمام ميفيدا بوابة ٢)",
+-      "propertyType": "Duplex",
+-      "priceEgp": 7200000,
+-      "priceNote": "7,200,000 EGP (7200)",
+-      "areaSqm": 279,
+-      "gardenSqm": 80,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "High Ground + Basement with Large Garden",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "Planning & Discussion",
+-      "postedDate": "2026-11-09 22:26:52",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner phone number missing from post (Karima 01508181814)",
+-        "Exact garden area (m²) not specified"
+-      ],
+-      "descriptionAr": "دوبلكس للبيع في الأندلس ٢ أمام ميفيدا بوابة ٢، ٢٧٩ م² متشطب، أرضي مرتفع + بيزمنت بحديقة كبيرة، ٣ غرف (١ ماستر بدريسنج)، ٣ حمام، ليفنج",
+-      "descriptionEn": "Duplex with Garden for Sale in Al Andalus 2 (in front of Mivida Gate 2), 279 m², finished, 3BR, 3BA, living, large garden."
+-    },
+-    "ORE440": {
+-      "unifiedCode": "ORE440",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Al Rehab",
+-      "subArea": "Al Rehab Group 126 Building 16 Apt 53 (مجموعة 126 عمارة 16 شقة 53)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 37000,
+-      "priceNote": "37,000 EGP/mo (annual) / 42,000 EGP/mo (short term)",
+-      "areaSqm": null,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 2,
+-      "floor": "5th Floor (Apt 53)",
+-      "finishing": "Furnished",
+-      "ownerName": "Direct Owner (via Eman Zaki)",
+-      "ownerPhone": "01067042440",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Eman Zaki (ايمان)",
+-      "sourcedByPhone": "01067042440",
+-      "sourceGroup": "Requests",
+-      "postedDate": "2026-09-29 19:21:14",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Area (m²) not specified",
+-        "Direct Owner personal phone number (posted by Eman Zaki 01067042440)"
+-      ],
+-      "descriptionAr": "شقة مفروشة للإيجار في الرحاب مجموعة ١٢٦ عمارة ١٦ شقة ٥٣، ٣ غرف نوم، ٢ حمام، متاحة الآن للأجانب مدة قصيرة أو سنة",
+-      "descriptionEn": "Furnished Apartment for Rent in Al Rehab (Group 126 Bldg 16 Apt 53), 3BR, 2BA, available now for expats."
+-    },
+-    "OHE188": {
+-      "unifiedCode": "OHE188",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Hyde Park",
+-      "subArea": "Hyde Park Centerville (سنترفيل)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 50000,
+-      "priceNote": "50,000 EGP/mo",
+-      "areaSqm": 165,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "Ground Floor",
+-      "finishing": "Furnished",
+-      "ownerName": "Ehab / Owner (via Heba Ahmad)",
+-      "ownerPhone": "01151089188",
+-      "hasDirectOwnerPhone": true,
+-      "sourcedByName": "Heba Ahmad / Ehab",
+-      "sourcedByPhone": "01032962712",
+-      "sourceGroup": "معاينات سييرا بلو",
+-      "postedDate": "2026-11-02 18:19:54",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Garden area (m²) not specified for ground floor unit",
+-        "Confirm whether Ehab (01151089188) is direct owner or co-broker"
+-      ],
+-      "descriptionAr": "شقة أرضي مفروشة للإيجار في هايد بارك سنترفيل، ١٦٥ م²، ٣ غرف نوم، ٣ حمام، دور أرضي، مفروشة بالكامل",
+-      "descriptionEn": "Furnished Ground Floor Apartment for Rent in Hyde Park Centerville, 165 m², 3BR, 3BA."
+-    },
+-    "OUK814": {
+-      "unifiedCode": "OUK814",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Uptown Cairo",
+-      "subArea": "Uptown Cairo - Levana (ليفانا)",
+-      "propertyType": "Twinhouse",
+-      "priceEgp": 160000,
+-      "priceNote": "160,000 - 180,000 EGP/mo",
+-      "areaSqm": 227,
+-      "gardenSqm": 143,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "Twinhouse Villa + Garden",
+-      "finishing": "Furnished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-10-05 16:45:12",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Direct Owner personal phone number (posted by Karima 01508181814)"
+-      ],
+-      "descriptionAr": "توين هاوس مفروش بالكامل للإيجار في أب تاون كايرو مرحلة ليفانا، مباني ٢٢٧ م² + جاردن ١٤٣ م²، ٣ غرف نوم + غرفة مربية، ٣ حمام",
+-      "descriptionEn": "Fully Furnished Twinhouse for Rent in Uptown Cairo (Levana), 227 m² BUA + 143 m² garden, 3BR + nanny room, 3BA."
+-    },
+-    "OMK814-2": {
+-      "unifiedCode": "OMK814-2",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "Madinaty",
+-      "subArea": "Madinaty B14 (مدينتي B14 أرضي بجاردن)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 2018000,
+-      "priceNote": "2,018,000 EGP Down (Paid 1,518,000 + Over 500,000 | استلام سنتين)",
+-      "areaSqm": 67,
+-      "gardenSqm": 35,
+-      "bedrooms": 2,
+-      "bathrooms": 1,
+-      "floor": "Ground Floor with 35 m² Garden",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-10-25 18:10:05",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Total contract price / remaining installments not specified",
+-        "Direct Owner phone number (posted by Karima 01508181814)"
+-      ],
+-      "descriptionAr": "شقة أرضي بجاردن للبيع في مدينتي B14، مساحة ٦٧ م² + جاردن ٣٥ م²، المدفوع ١,٥١٨,٠٠٠ + أوفر ٥٠٠,٠٠٠ (إجمالي مطلوب ٢,٠١٨,٠٠٠)، استلام سنتين",
+-      "descriptionEn": "Ground Floor Apartment with Garden in Madinaty B14, 67 m² + 35 m² garden, 2,018,000 EGP down (Paid 1.518M + Over 500K)."
+-    },
+-    "OMK814-3": {
+-      "unifiedCode": "OMK814-3",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "Madinaty",
+-      "subArea": "Madinaty B8 Group 89 (مدينتي B8 مجموعة 89)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 2277000,
+-      "priceNote": "2,277,000 EGP Down (Paid 1,777,000 + Over 500,000)",
+-      "areaSqm": 77,
+-      "gardenSqm": null,
+-      "bedrooms": 2,
+-      "bathrooms": 1,
+-      "floor": "2nd Floor",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-10-25 18:10:12",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Total remaining installments not specified",
+-        "Direct Owner phone number (posted by Karima 01508181814)"
+-      ],
+-      "descriptionAr": "شقة للبيع في مدينتي B8 مجموعة ٨٩، دور ثاني، ٧٧ م²، ٢ غرف نوم، المدفوع ١,٧٧٧,٠٠٠ + أوفر ٥٠٠,٠٠٠ (إجمالي مطلوب ٢,٢٧٧,٠٠٠)",
+-      "descriptionEn": "Apartment for Sale in Madinaty B8 (Group 89), 2nd floor, 77 m², 2BR, 2,277,000 EGP down (Paid 1.777M + Over 500K)."
+-    },
+-    "OGK814-2": {
+-      "unifiedCode": "OGK814-2",
+-      "legacyCode": null,
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Resale",
+-      "compound": "North Coast (Southmed)",
+-      "subArea": "Southmed TMG North Coast (ساوث ميد الساحل الشمالي)",
+-      "propertyType": "Penthouse",
+-      "priceEgp": 2500000,
+-      "priceNote": "2,500,000 EGP Paid (Zero Over / بدون أوفر)",
+-      "areaSqm": 118,
+-      "gardenSqm": null,
+-      "bedrooms": 2,
+-      "bathrooms": 2,
+-      "floor": "Lagoon View Chalet",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Karima)",
+-      "ownerPhone": "01508181814",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Karima (kmehesen hr)",
+-      "sourcedByPhone": "01508181814",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-10-25 18:10:20",
+-      "availability": "Available",
+-      "missingFields": [
+-        "Total contract price not specified",
+-        "Direct Owner phone number (posted by Karima 01508181814)"
+-      ],
+-      "descriptionAr": "شاليه للبيع في ساوث ميد الساحل الشمالي (طلعت مصطفى)، ١١٨ م²، ٢ غرف، ٢ حمام، فيو كريستال لاجون، المدفوع ٢,٥٠٠,٠٠٠ بدون أوفر",
+-      "descriptionEn": "Chalet for Sale in Southmed North Coast (TMG), 118 m², 2BR, 2BA, Crystal Lagoon view, 2.5M EGP paid (zero over)."
+-    },
+-    "OUA333": {
+-      "unifiedCode": "OUA333",
+-      "legacyCode": "UNIT-WA-008",
+-      "party": "Direct Owner (Sierra Community)",
+-      "dealType": "Rent",
+-      "compound": "Uptown Cairo",
+-      "subArea": "Uptown Cairo - Sector Fourteen (سيكتور فورتين)",
+-      "propertyType": "Apartment",
+-      "priceEgp": 70000,
+-      "priceNote": "70,000 EGP/mo",
+-      "areaSqm": 235,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "3rd Floor",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Direct Owner (via Ahmed Fawzy)",
+-      "ownerPhone": "01092048333",
+-      "hasDirectOwnerPhone": true,
+-      "sourcedByName": "Ahmed Fawzy (Sierra Estates)",
+-      "sourcedByPhone": "01092048333",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-11-07 14:22:10",
+-      "availability": "Available",
+-      "missingFields": [],
+-      "descriptionAr": "شقة للإيجار في أب تاون كايرو (Sector Fourteen)، دور ثالث، ٢٣٥ م²، ٣ غرف نوم + غرفة مربية، ٣ حمام، مطبخ وتكييفات",
+-      "descriptionEn": "Apartment for Rent in Uptown Cairo (Sector Fourteen), 3rd floor, 235 m², 3BR + nanny room, 3BA, kitchen & ACs."
+-    },
+-    "BVP497": {
+-      "unifiedCode": "BVP497",
+-      "legacyCode": "BR870",
+-      "party": "Broker",
+-      "dealType": "Rent",
+-      "compound": "Mivida",
+-      "subArea": "Mivida Emaar",
+-      "propertyType": "Duplex",
+-      "priceEgp": 180000,
+-      "priceNote": "180,000 EGP/mo (Fully Furnished Villa Duplex)",
+-      "areaSqm": 320,
+-      "gardenSqm": 100,
+-      "bedrooms": 4,
+-      "bathrooms": 3,
+-      "floor": "Ground + First with 2 Big Gardens",
+-      "finishing": "Furnished",
+-      "ownerName": "Peter Midhat (Broker)",
+-      "ownerPhone": "01103455497",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Peter Midhat (Vilino Broker)",
+-      "sourcedByPhone": "01103455497",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-09-13 13:15:00",
+-      "availability": "Not Confirmed",
+-      "missingFields": [
+-        "Broker unit (not direct owner) — routed to Brokers_Inventory"
+-      ],
+-      "descriptionAr": "دوبلكس مفروش بالكامل للإيجار في ميفيدا، ٣٢٠ م²، ٤ غرف، ٣ حمام، ٢ حديقة كبيرة (كود البروكر BR870)",
+-      "descriptionEn": "Fully Furnished Villa Duplex for Rent in Mivida, 320 m², 4BR, 3BA, two big gardens (Broker Peter Midhat 01103455497)."
+-    },
+-    "BWA768": {
+-      "unifiedCode": "BWA768",
+-      "legacyCode": null,
+-      "party": "Broker",
+-      "dealType": "Resale",
+-      "compound": "The Waterway",
+-      "subArea": "Waterway 1 New Cairo",
+-      "propertyType": "Apartment",
+-      "priceEgp": 15000000,
+-      "priceNote": "15,000,000 EGP",
+-      "areaSqm": 167,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 2,
+-      "floor": "Typical Floor",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Ahmed Villette (Broker)",
+-      "ownerPhone": "01147811768",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Ahmed Villette Broker",
+-      "sourcedByPhone": "01147811768",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-09-17 15:20:00",
+-      "availability": "Not Confirmed",
+-      "missingFields": [
+-        "Broker unit (not direct owner) — routed to Brokers_Inventory"
+-      ],
+-      "descriptionAr": "شقة للبيع في واتر واي ١ التجمع الخامس، ١٦٧ م²، ٣ غرف، ٢ حمام، متشطبة بالكامل",
+-      "descriptionEn": "Apartment for Sale in Waterway 1, 167 m², 3BR, 2BA, Fully Finished (Broker Ahmed 01147811768)."
+-    },
+-    "BSA768": {
+-      "unifiedCode": "BSA768",
+-      "legacyCode": null,
+-      "party": "Broker",
+-      "dealType": "Resale",
+-      "compound": "Villette",
+-      "subArea": "Sodic Villette Sky Condos",
+-      "propertyType": "Apartment",
+-      "priceEgp": 16000000,
+-      "priceNote": "16,000,000 EGP",
+-      "areaSqm": 162,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "Typical Floor (Landscape View)",
+-      "finishing": "Semi Finished",
+-      "ownerName": "Ahmed Villette (Broker)",
+-      "ownerPhone": "01147811768",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Ahmed Villette Broker",
+-      "sourcedByPhone": "01147811768",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-09-17 15:20:05",
+-      "availability": "Not Confirmed",
+-      "missingFields": [
+-        "Broker unit (not direct owner) — routed to Brokers_Inventory"
+-      ],
+-      "descriptionAr": "شقة للبيع في سوديك فيليت سكاي كوندوز، ١٦٢ م²، ٣ غرف، ٣ حمام، نصف تشطيب، فيو لاندسكيب",
+-      "descriptionEn": "Apartment for Sale in Sodic Villette Sky Condos, 162 m², 3BR, 3BA, Semi-Finished, Landscape View (Broker Ahmed 01147811768)."
+-    },
+-    "BLA768": {
+-      "unifiedCode": "BLA768",
+-      "legacyCode": null,
+-      "party": "Broker",
+-      "dealType": "Resale",
+-      "compound": "Lake View Residence",
+-      "subArea": "Lake View Residence Golden Square",
+-      "propertyType": "Apartment",
+-      "priceEgp": 25500000,
+-      "priceNote": "25,500,000 EGP",
+-      "areaSqm": 280,
+-      "gardenSqm": null,
+-      "bedrooms": 3,
+-      "bathrooms": 3,
+-      "floor": "Typical Floor",
+-      "finishing": "Fully Finished",
+-      "ownerName": "Ahmed Villette (Broker)",
+-      "ownerPhone": "01147811768",
+-      "hasDirectOwnerPhone": false,
+-      "sourcedByName": "Ahmed Villette Broker",
+-      "sourcedByPhone": "01147811768",
+-      "sourceGroup": "New Cairo Trusted Brokers 🤝 (Sierra Blue Realty)",
+-      "postedDate": "2026-09-17 15:20:10",
+-      "availability": "Not Confirmed",
+-      "missingFields": [
+-        "Broker unit (not direct owner) — routed to Brokers_Inventory"
+-      ],
+-      "descriptionAr": "شقة للبيع في ليك فيو ريزيدنس، ٢٨٠ م²، ٣ غرف، ٣ حمام، متشطبة بالكامل",
+-      "descriptionEn": "Apartment for Sale in Lake View Residence, 280 m², 3BR, 3BA, Fully Finished (Broker Ahmed 01147811768)."
+-    }
+-  }
+-}
+\ No newline at end of file
+
+########################################################################
+commit 5a99c6ab185143cf4040723a80bcc10ed63cba4c
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 21:02:59 2026 +0200
+
+    fix(deploy): env-sync step actually passes the Supabase backend values (#51)
+    
+    The Re-sync step ran the sync with only VERCEL_TOKEN; the script silently skips unset keys, so NEXT_PUBLIC_SUPABASE_URL was never pushed to the Vercel projects and production booted without it. Step now receives the Supabase values (same secrets/vars chain as every other workflow) and fails loudly when they are absent; the script logs loud skip warnings for CRITICAL_KEYS.
+
+diff --git a/.github/workflows/deploy-vercel.yml b/.github/workflows/deploy-vercel.yml
+index 6d1c5c55e..d3273e5ee 100644
+--- a/.github/workflows/deploy-vercel.yml
++++ b/.github/workflows/deploy-vercel.yml
+@@ -198,10 +198,29 @@ jobs:
+           done
+ 
+       - name: Re-sync environment variables to the ${{ matrix.role }} project
++        # The sync script reads its values from process.env (see
++        # CLIENT_ENV_VARS / ADMIN_ENV_VARS) and silently skips any var that
++        # is unset ('if (!value) continue;'). This step MUST therefore be
++        # given the Supabase backend values — until 2026-11-12 it ran with
++        # nothing but VERCEL_TOKEN, so NEXT_PUBLIC_SUPABASE_URL was never
++        # re-synced and production ran without it (/api/health degraded,
++        # /api/inventory empty).
++        env:
++          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
++          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
++          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
++          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
++          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+         run: |
+           set -euo pipefail
+           VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_TOKEN }}"
+           [ -z "$VERCEL_TOKEN_VALUE" ] && VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_AUTH_TOKEN }}"
++          # Fail loudly if the canonical backend values are absent — a sync
++          # that silently skips Supabase is how production lost them.
++          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
++            echo "::error::Supabase backend env values are missing — refusing to run a sync that would silently skip them."
++            exit 1
++          fi
+           # 429 Rate limited-aware: the script itself backs off with sleeps.
+           VERCEL_TOKEN="$VERCEL_TOKEN_VALUE" node scripts/sync-vercel-env.js --role ${{ matrix.role }} || {
+             echo "::warning::Env sync for ${{ matrix.role }} failed — deployment stands, re-run scripts/sync-vercel-env.js manually."
+diff --git a/scripts/sync-vercel-env.js b/scripts/sync-vercel-env.js
+index 623ecba45..421c22645 100644
+--- a/scripts/sync-vercel-env.js
++++ b/scripts/sync-vercel-env.js
+@@ -246,8 +246,23 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+   }
+ 
+   // 2. Sync each var
++  // Backend values the site cannot boot without. When one of these is
++  // absent from the environment, say so LOUDLY: the silent `continue`
++  // below is how production lost NEXT_PUBLIC_SUPABASE_URL on 2026-11-12
++  // (the CI step ran the sync without passing any Supabase values, every
++  // key was skipped, and the deploy shipped without them).
++  const CRITICAL_KEYS = [
++    'NEXT_PUBLIC_SUPABASE_URL',
++    'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
++  ];
++
+   for (const [key, value] of Object.entries(envVars)) {
+-    if (!value) continue;
++    if (!value) {
++      if (CRITICAL_KEYS.includes(key)) {
++        console.warn(`   ❌ ${key} -> NOT SET in this environment; SKIPPED (production will boot without it — pass the value to this step/script!)`);
++      }
++      continue;
++    }
+ 
+     const existing = existingMap.get(key);
+     const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
+
+########################################################################
+commit 232c67ab1ae70d1a94436c270ca72bf07ddf66b3
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 21:33:29 2026 +0200
+
+    feat(deploy): env_sync_only dispatch mode + env-sync runs even when deploy fails (#52)
+    
+    With the Vercel free-tier daily deploy quota exhausted, the failed deploy aborted the job before env-sync could run, stranding the projects without NEXT_PUBLIC_SUPABASE_URL. Re-sync now always runs; a new env_sync_only dispatch mode syncs env vars without deploying.
+
+diff --git a/.github/workflows/deploy-vercel.yml b/.github/workflows/deploy-vercel.yml
+index d3273e5ee..460ab245f 100644
+--- a/.github/workflows/deploy-vercel.yml
++++ b/.github/workflows/deploy-vercel.yml
+@@ -37,6 +37,11 @@ on:
+         required: false
+         default: false
+         type: boolean
++      env_sync_only:
++        description: 'Only re-sync environment variables (no deploy — does not consume the Vercel deploy quota)'
++        required: false
++        default: false
++        type: boolean
+ permissions:
+   contents: read
+   actions: read
+@@ -69,6 +74,7 @@ jobs:
+           CI_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+           CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+           DEPLOY_SHA: ${{ github.sha }}
++          ENV_SYNC_ONLY: ${{ inputs.env_sync_only || 'false' }}
+           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_REPO: ${{ github.repository }}
+         run: |
+@@ -93,6 +99,15 @@ jobs:
+             exit 0
+           fi
+ 
++          if [ "$ENV_SYNC_ONLY" = "true" ]; then
++            # Env-var re-sync only: no artifact leaves the repo, so the
++            # production CI gate does not apply (the values pushed are the
++            # repository's own secrets/vars, not built code). Audited here.
++            echo "::notice::env_sync_only dispatch — skipping deploy, re-syncing environment variables only."
++            echo "proceed=true" >> "$GITHUB_OUTPUT"
++            exit 0
++          fi
++
+           if [ "$TARGET_ENV" = "preview" ]; then
+             echo "CI production gate bypassed for preview environment — preview deploys never require the production CI gate (by design)."
+             echo "proceed=true" >> "$GITHUB_OUTPUT"
+@@ -167,6 +182,10 @@ jobs:
+         run: pnpm install --frozen-lockfile --prefer-offline
+ 
+       - name: Deploy ${{ matrix.role }} project (${{ matrix.domain }})
++        # env_sync_only dispatches skip the deploy entirely — env-var PATCHes
++        # are not deployments and do not consume the Vercel deploy quota
++        # (which is what blocks deploys on the free tier at >100/day).
++        if: ${{ inputs.env_sync_only != true }}
+         env:
+           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
+           VERCEL_PROJECT_ID: ${{ matrix.projectId }}
+@@ -198,6 +217,12 @@ jobs:
+           done
+ 
+       - name: Re-sync environment variables to the ${{ matrix.role }} project
++        # ALWAYS run — even when the deploy step failed (e.g. the free-tier
++        # daily deploy quota, api-deployments-free-per-day). The env vars
++        # must reach the project regardless; a failed deploy would otherwise
++        # strand the project without its backend config, which is exactly
++        # how production lost NEXT_PUBLIC_SUPABASE_URL on 2026-11-12.
++        if: ${{ always() }}
+         # The sync script reads its values from process.env (see
+         # CLIENT_ENV_VARS / ADMIN_ENV_VARS) and silently skips any var that
+         # is unset ('if (!value) continue;'). This step MUST therefore be
+
+########################################################################
+commit 5ca2ddabe2caa8ccc3fc42e99c66cfc8242e91f0
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 22:03:18 2026 +0200
+
+    fix(sync): env vars actually usable by production — pagination, target repair, runtime SUPABASE_URL (#53)
+    
+    Second half of the 2026-11-12 outage: the sync's unpaginated fetch truncated the 100+ var list, the 'already exists' branch skipped updates, and PATCH cannot change targets — so production stayed degraded while the sync logged success. Fetch now paginates, critical keys with missing 'production' target are deleted + recreated, a runtime SUPABASE_URL fallback is pushed, and failures propagate via exit code.
+
+diff --git a/scripts/sync-vercel-env.js b/scripts/sync-vercel-env.js
+index 421c22645..025417160 100644
+--- a/scripts/sync-vercel-env.js
++++ b/scripts/sync-vercel-env.js
+@@ -28,6 +28,12 @@ const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || process.env.VERC
+ export const CLIENT_ENV_VARS = {
+   // Supabase is the canonical public backend configuration.
+   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
++  // Runtime fallback (no NEXT_PUBLIC_ prefix → read at RUNTIME, not
++  // inlined at build). The app resolves the URL via
++  // NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL || POSTGRES_URL
++  // (packages/db/lib/supabase.ts) — if a build ever inlines an empty
++  // NEXT_PUBLIC_* value, this runtime var keeps the server working.
++  SUPABASE_URL: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+@@ -227,18 +233,31 @@ function vercelRequest(method, endpoint, body = null) {
+ 
+ export async function syncVarsToProject(projectName, projectId, envVars) {
+   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
+-  
+-  // 1. Fetch all existing project env vars
++
++  // 1. Fetch all existing project env vars — PAGINATED. This project set
++  //    has 100+ variables and /v9 returns 100 per page by default; the old
++  //    unpaginated fetch silently truncated the tail, so later POSTs hit
++  //    "already exists" for vars the map had never seen (and the sync then
++  //    skipped updating them — see the loop below).
+   let existingMap = new Map();
+   for (let attempt = 1; attempt <= 5; attempt++) {
+     try {
+-      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env`);
+-      if (res && res.envs) {
+-        for (const e of res.envs) {
+-          existingMap.set(e.key, e);
++      let page = 1;
++      let fetched = 0;
++      existingMap = new Map();
++      // eslint-disable-next-line no-constant-condition
++      while (true) {
++        const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
++        if (!res || res.error || !Array.isArray(res.envs)) {
++          throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
+         }
+-        break;
++        for (const e of res.envs) existingMap.set(e.key, e);
++        fetched += res.envs.length;
++        if (res.envs.length < 100) break;
++        page += 1;
+       }
++      console.log(`   📋 Existing project env vars fetched: ${existingMap.size}`);
++      break;
+     } catch (err) {
+       console.warn(`   ⏳ [${attempt}/5] Fetching existing envs failed: ${err.message}, retrying...`);
+       await sleep(attempt * 2000);
+@@ -253,6 +272,7 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+   // key was skipped, and the deploy shipped without them).
+   const CRITICAL_KEYS = [
+     'NEXT_PUBLIC_SUPABASE_URL',
++    'SUPABASE_URL',
+     'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+   ];
+ 
+@@ -267,6 +287,38 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+     const existing = existingMap.get(key);
+     const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
+ 
++    // TARGET REPAIR — a var whose target environments exclude 'production'
++    // is invisible to production deployments no matter how many times its
++    // value is PATCHed (Vercel PATCH cannot change targets). This is the
++    // second half of the 2026-11-12 outage: the sync reported success
++    // while production stayed degraded. Delete + recreate with both
++    // targets for critical keys; diagnose loudly for the rest.
++    const existingTargets = Array.isArray(existing?.target) ? existing.target : [];
++    if (existing && !existingTargets.includes('production')) {
++      if (CRITICAL_KEYS.includes(key)) {
++        console.warn(`   🔧 ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — MISSING 'production'. Recreating with ['production','preview'].`);
++        const del = await vercelRequest('DELETE', `/v9/projects/${projectId}/env/${existing.id}`);
++        if (del && del.error) {
++          console.warn(`   ⚠️ ${key} -> target repair failed (delete: status ${del.status}):`, del.data?.error?.message || '');
++          continue;
++        }
++        const post = await vercelRequest('POST', `/v10/projects/${projectId}/env`, {
++          key,
++          value: String(value),
++          type: varType,
++          target: ['production', 'preview'],
++        });
++        if (post && !post.error) {
++          console.log(`   ✅ ${key} -> Recreated with targets ['production','preview'].`);
++          await sleep(150);
++          continue;
++        }
++        console.warn(`   ⚠️ ${key} -> target repair recreate failed (status ${post?.status}):`, post?.data?.error?.message || '');
++        continue;
++      }
++      console.warn(`   ⚠️ ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — missing 'production' but not critical; value synced anyway, fix targets in the dashboard if needed.`);
++    }
++
+     for (let attempt = 1; attempt <= 5; attempt++) {
+       try {
+         let res;
+@@ -293,8 +345,10 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+             continue;
+           }
+           if (res.status === 400 && String(res.data?.error?.message || '').includes('already exists')) {
+-            // Already exists, resolve by updating
+-            console.log(`   ℹ️ ${key} -> Already exists, updating target/value.`);
++            // Exists but was NOT in our fetched map — the paginated map
++            // should make this rare. Log it honestly: the value was NOT
++            // updated by this branch (PATCH by key path would be needed).
++            console.warn(`   ⚠️ ${key} -> 'already exists' but absent from the fetched map — NOT updated. Re-run the sync or update via dashboard.`);
+             break;
+           }
+           console.warn(`   ⚠️ ${key} -> Failed (Status: ${res.status}):`, res.data?.error?.message || res.raw || '');
+@@ -337,6 +391,7 @@ async function main() {
+     console.log('\n🎉 [Success] All environment variables successfully synced to Vercel!');
+   } catch (e) {
+     console.error('❌ Sync failed:', e.message);
++    process.exitCode = 1;
+   }
+ }
+ 
+
+########################################################################
+commit 25297b7a1b5400cb63ded3c818d220017cc5b861
+Author: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date:   Thu Nov 12 22:36:56 2026 +0200
+
+    fix(sync): duplicate-aware env repair + post-sync verification (#54)
+    
+    Env keys carry duplicate entries (stale [development]-only copies beside production copies); the single-entry map hid them, two concurrent syncs raced, and the 20:22 deployment was still degraded. v3 keeps every copy per key, repairs targets PATCH-first, repairs 'already exists' by key-refetch, and verifies post-sync that every CRITICAL_KEY has a production-target copy — failing loudly otherwise.
+
+diff --git a/scripts/sync-vercel-env.js b/scripts/sync-vercel-env.js
+index 025417160..27a708327 100644
+--- a/scripts/sync-vercel-env.js
++++ b/scripts/sync-vercel-env.js
+@@ -234,35 +234,50 @@ function vercelRequest(method, endpoint, body = null) {
+ export async function syncVarsToProject(projectName, projectId, envVars) {
+   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
+ 
+-  // 1. Fetch all existing project env vars — PAGINATED. This project set
+-  //    has 100+ variables and /v9 returns 100 per page by default; the old
+-  //    unpaginated fetch silently truncated the tail, so later POSTs hit
+-  //    "already exists" for vars the map had never seen (and the sync then
+-  //    skipped updating them — see the loop below).
+-  let existingMap = new Map();
++  // 1. Fetch all existing project env vars — PAGINATED and DUPLICATE-AWARE.
++  //    /v9 returns 100/page (this project set is larger), and a key can
++  //    legitimately have SEVERAL entries (one per target environment —
++  //    the 2026-11-12 outage left stale [development]-only copies next to
++  //    production copies). Keying a Map by name alone hides duplicates;
++  //    keep every copy.
++  const fetchAll = async () => {
++    let page = 1;
++    const all = [];
++    // eslint-disable-next-line no-constant-condition
++    while (true) {
++      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
++      if (!res || res.error || !Array.isArray(res.envs)) {
++        throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
++      }
++      all.push(...res.envs);
++      if (res.envs.length < 100) break;
++      page += 1;
++    }
++    return all;
++  };
++
++  let allExisting = [];
+   for (let attempt = 1; attempt <= 5; attempt++) {
+     try {
+-      let page = 1;
+-      let fetched = 0;
+-      existingMap = new Map();
+-      // eslint-disable-next-line no-constant-condition
+-      while (true) {
+-        const res = await vercelRequest('GET', `/v9/projects/${projectId}/env?per_page=100&page=${page}`);
+-        if (!res || res.error || !Array.isArray(res.envs)) {
+-          throw new Error(res?.data?.error?.message || `unexpected response (status ${res?.status})`);
+-        }
+-        for (const e of res.envs) existingMap.set(e.key, e);
+-        fetched += res.envs.length;
+-        if (res.envs.length < 100) break;
+-        page += 1;
+-      }
+-      console.log(`   📋 Existing project env vars fetched: ${existingMap.size}`);
++      allExisting = await fetchAll();
+       break;
+     } catch (err) {
+       console.warn(`   ⏳ [${attempt}/5] Fetching existing envs failed: ${err.message}, retrying...`);
+       await sleep(attempt * 2000);
+     }
+   }
++  // key -> array of entries, plus a convenience single-entry lookup that
++  // prefers the copy whose targets include production.
++  const entriesByKey = new Map();
++  for (const e of allExisting) {
++    if (!entriesByKey.has(e.key)) entriesByKey.set(e.key, []);
++    entriesByKey.get(e.key).push(e);
++  }
++  const pickExisting = (key) => {
++    const copies = entriesByKey.get(key) || [];
++    return copies.find((c) => (c.target || []).includes('production')) || copies[0];
++  };
++  console.log(`   📋 Existing project env vars fetched: ${allExisting.length} entries, ${entriesByKey.size} unique keys, ${allExisting.length - entriesByKey.size} duplicate-key extra copies`);
+ 
+   // 2. Sync each var
+   // Backend values the site cannot boot without. When one of these is
+@@ -276,6 +291,20 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+     'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+   ];
+ 
++  const reportCriticalState = () => {
++    console.log('   🔍 CRITICAL KEY STATE (post-sync):');
++    for (const key of CRITICAL_KEYS) {
++      const copies = entriesByKey.get(key) || [];
++      if (copies.length === 0) {
++        console.log(`      • ${key}: ABSENT from project`);
++      } else {
++        for (const c of copies) {
++          console.log(`      • ${key}: targets [${(c.target || []).join(',') || 'none'}] updated ${c.updatedAt || 'unknown'}`);
++        }
++      }
++    }
++  };
++
+   for (const [key, value] of Object.entries(envVars)) {
+     if (!value) {
+       if (CRITICAL_KEYS.includes(key)) {
+@@ -284,19 +313,33 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+       continue;
+     }
+ 
+-    const existing = existingMap.get(key);
++    const copies = entriesByKey.get(key) || [];
++    const existing = pickExisting(key);
+     const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
+ 
+-    // TARGET REPAIR — a var whose target environments exclude 'production'
+-    // is invisible to production deployments no matter how many times its
+-    // value is PATCHed (Vercel PATCH cannot change targets). This is the
+-    // second half of the 2026-11-12 outage: the sync reported success
+-    // while production stayed degraded. Delete + recreate with both
+-    // targets for critical keys; diagnose loudly for the rest.
++    // TARGET REPAIR — an entry whose targets exclude 'production' is
++    // invisible to production deployments no matter how many times its
++    // value is PATCHed (Vercel PATCH cannot change targets). When NO copy
++    // of the key targets production: PATCH the entry to also cover
++    // production (PATCH on /v9 supports target changes when the entry is
++    // unique for that key); if that fails, fall back to DELETE + POST.
++    // When a production copy already exists, PATCH its value in place.
+     const existingTargets = Array.isArray(existing?.target) ? existing.target : [];
+-    if (existing && !existingTargets.includes('production')) {
++    const hasProdCopy = copies.some((c) => (c.target || []).includes('production'));
++    if (existing && !existingTargets.includes('production') && !hasProdCopy) {
+       if (CRITICAL_KEYS.includes(key)) {
+-        console.warn(`   🔧 ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — MISSING 'production'. Recreating with ['production','preview'].`);
++        console.warn(`   🔧 ${key} -> all copies target [${existingTargets.join(', ') || 'none'}] — MISSING 'production'. PATCHing targets to ['production','preview'].`);
++        const patch = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${existing.id}`, {
++          value: String(value),
++          target: ['production', 'preview'],
++          type: varType,
++        });
++        if (patch && !patch.error) {
++          console.log(`   ✅ ${key} -> targets repaired to ['production','preview'] via PATCH.`);
++          await sleep(150);
++          continue;
++        }
++        console.warn(`   🔧 ${key} -> PATCH target repair failed (status ${patch?.status}): ${patch?.data?.error?.message || ''} — falling back to DELETE + POST.`);
+         const del = await vercelRequest('DELETE', `/v9/projects/${projectId}/env/${existing.id}`);
+         if (del && del.error) {
+           console.warn(`   ⚠️ ${key} -> target repair failed (delete: status ${del.status}):`, del.data?.error?.message || '');
+@@ -316,14 +359,16 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+         console.warn(`   ⚠️ ${key} -> target repair recreate failed (status ${post?.status}):`, post?.data?.error?.message || '');
+         continue;
+       }
+-      console.warn(`   ⚠️ ${key} -> exists with targets [${existingTargets.join(', ') || 'none'}] — missing 'production' but not critical; value synced anyway, fix targets in the dashboard if needed.`);
++      if (copies.length > 0) {
++        console.warn(`   ⚠️ ${key} -> all copies target [${copies.map((c) => (c.target || []).join(',')).join(' / ') || 'none'}] — missing 'production'; not critical, dashboard fix if needed.`);
++      }
+     }
+ 
+     for (let attempt = 1; attempt <= 5; attempt++) {
+       try {
+         let res;
+         if (existing) {
+-          // Update existing env var
++          // Update the existing entry (production-target copy preferred)
+           res = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${existing.id}`, {
+             value: String(value),
+             target: ['production', 'preview'],
+@@ -345,10 +390,22 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+             continue;
+           }
+           if (res.status === 400 && String(res.data?.error?.message || '').includes('already exists')) {
+-            // Exists but was NOT in our fetched map — the paginated map
+-            // should make this rare. Log it honestly: the value was NOT
+-            // updated by this branch (PATCH by key path would be needed).
+-            console.warn(`   ⚠️ ${key} -> 'already exists' but absent from the fetched map — NOT updated. Re-run the sync or update via dashboard.`);
++            // Exists but was NOT in our fetched map — log honestly and
++            // try to repair by key: Vercel supports PATCH by env id only,
++            // so re-fetch this key's entries and PATCH the production copy.
++            const refetch = await vercelRequest('GET', `/v9/projects/${projectId}/env?key=${encodeURIComponent(key)}`);
++            const prodCopy = (refetch?.envs || []).find((c) => (c.target || []).includes('production'));
++            if (prodCopy?.id) {
++              const fix = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${prodCopy.id}`, {
++                value: String(value),
++                target: ['production', 'preview'],
++              });
++              if (fix && !fix.error) {
++                console.log(`   ✅ ${key} -> repaired via key-refetch PATCH (production copy).`);
++                break;
++              }
++            }
++            console.warn(`   ⚠️ ${key} -> 'already exists' and repair PATCH failed (status ${fix?.status ?? 'n/a'}) — NOT updated. Fix via dashboard.`);
+             break;
+           }
+           console.warn(`   ⚠️ ${key} -> Failed (Status: ${res.status}):`, res.data?.error?.message || res.raw || '');
+@@ -368,6 +425,56 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
+       }
+     }
+   }
++
++  // 3. VERIFY — never trust the writes alone. Re-fetch and assert every
++  //    critical key has at least one copy whose targets include
++  //    'production'. This is the check that would have caught the entire
++  //    2026-11-12 outage (values "synced" to entries that production
++  //    deployments could not see).
++  let verified = false;
++  for (let attempt = 1; attempt <= 3 && !verified; attempt++) {
++    try {
++      const after = await fetchAll();
++      const afterByKey = new Map();
++      for (const e of after) {
++        if (!afterByKey.has(e.key)) afterByKey.set(e.key, []);
++        afterByKey.get(e.key).push(e);
++      }
++      reportCriticalState();
++      let allOk = true;
++      for (const key of CRITICAL_KEYS) {
++        const copies = afterByKey.get(key) || [];
++        const prodCopy = copies.find((c) => (c.target || []).includes('production'));
++        if (!prodCopy) {
++          allOk = false;
++          console.error(`   ❌ VERIFICATION FAILED: ${key} has NO production-target copy after sync (copies: ${copies.map((c) => `[${(c.target || []).join(',')}]`).join(' ') || 'none'})`);
++        } else {
++          console.log(`   ✔️ ${key}: production-target copy present (id ${prodCopy.id}, targets [${(prodCopy.target || []).join(',')}]).`);
++        }
++      }
++      // Show the latest deployments so the operator can correlate env
++      // updates with what production is actually serving.
++      try {
++        const deps = await vercelRequest('GET', `/v6/deployments?projectId=${projectId}&limit=3&state=READY`);
++        if (Array.isArray(deps?.deployments)) {
++          console.log('   🛰️ Latest READY deployments (env changes apply to NEW deployments only):');
++          for (const d of deps.deployments) {
++            console.log(`      • ${d.url} (created ${d.created ? new Date(d.created).toISOString().slice(0, 19) : 'unknown'}, target ${(d.target && d.target[0]) || 'unknown'})`);
++          }
++        }
++      } catch { /* diagnostics only */ }
++      verified = true;
++      if (!allOk) {
++        throw new Error(`CRITICAL KEY VERIFICATION FAILED for ${projectName} — see log above`);
++      }
++    } catch (err) {
++      console.warn(`   ⏳ verification pass [${attempt}/3] failed: ${err.message}`);
++      await sleep(attempt * 2000);
++    }
++  }
++  if (!verified) {
++    throw new Error(`Could not verify critical keys for ${projectName}`);
++  }
+ }
+ 
+ async function main() {
+
