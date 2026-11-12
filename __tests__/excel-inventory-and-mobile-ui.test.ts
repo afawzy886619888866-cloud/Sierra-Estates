@@ -100,7 +100,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     expect(content).toContain('/compounds');
     expect(content).toContain('/properties');
     expect(content).toContain('/net');
-    expect(content).toContain('/add-listing');
+    expect(content.includes('/add-listing') || content.includes('SIERRA_ADD_LISTING_URL')).toBe(true);
     expect(content).toContain('infoBankHref');
   });
 

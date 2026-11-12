@@ -69,6 +69,8 @@ jobs:
           CI_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
           CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           DEPLOY_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           TARGET_ENV="$TARGET_ENV"
           EMERGENCY_OVERRIDE="${{ inputs.emergency_override || 'false' }}"
@@ -117,9 +119,6 @@ jobs:
             echo "::error::CI gate failed: ci.yml for '$DEPLOY_SHA' is '$STATUS/$RESULT/$HEAD_SHA'. Production deploy BLOCKED. Use emergency_override only for audited emergencies."
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
 
   deploy:
     name: Vercel deploy · ${{ matrix.role }}

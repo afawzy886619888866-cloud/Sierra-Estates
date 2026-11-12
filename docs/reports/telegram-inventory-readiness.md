@@ -1,10 +1,6 @@
 # Telegram and inventory-sheet readiness report
 
-<<<<<<< HEAD
-**Audit date:** 2026-11-07  
-=======
 **Audit date:** 2026-11-07
->>>>>>> feat/telegram-intake-readiness-pr
 **Scope:** Repository-local Excel snapshots and the tracked Telegram/OpenClaw
 listing-intake code. No listing rows, phone numbers, or contact names are
 included in this report.
