@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The original audit (Task 1–4) found **one production-breaking bug** and **three functional gaps**; all four were fixed. The three follow-ups from that audit (viewings migration, Apps Script secret rotation, lead-timers cron) were then completed. Landing on `main` surfaced two **pre-existing** breakages that had been hiding behind a broken lint gate — a `turbo.json` parse error introduced by a Vercel bot commit and a pure-mode CSS-modules violation in the new CartographicMap stylesheet — both root-caused and fixed. Applying migration 043 then exposed a four-deep chain of pipeline breakages (PRs #48–#52) that had silently kept Supabase env vars off the Vercel projects, causing a **production outage of both sites**; the last mile (PRs #53–#54) repaired the env-sync itself and production recovered (Part 5). Final state: **CI fully green, both production sites verified healthy** (client 21:00 UTC, admin 21:34 UTC, 2026-11-12).
+The original audit (Task 1–4) found **one production-breaking bug** and **three functional gaps**; all four were fixed. The three follow-ups from that audit (viewings migration, Apps Script secret rotation, lead-timers cron) were then completed. Landing on `main` surfaced two **pre-existing** breakages that had been hiding behind a broken lint gate — a `turbo.json` parse error introduced by a Vercel bot commit and a pure-mode CSS-modules violation in the new CartographicMap stylesheet — both root-caused and fixed. Applying migration 043 then exposed a four-deep chain of pipeline breakages (PRs #48–#52) that had silently kept Supabase env vars off the Vercel projects, causing a **production outage of both sites**; the last mile (PRs #53–#54) repaired the env-sync itself and production recovered (Part 5); the #53 pagination regression was then closed by #55 (Part 6). Final state: **CI fully green, both production sites verified healthy** (client 21:00 UTC, admin 21:34 UTC, 2026-11-12).
 
 | # | Finding | Severity | Status |
 |---|---|---|---|
@@ -127,7 +127,7 @@ The live runtime instance still serves the pre-recovery build, so `/api/health` 
 3. ~~Rotate the sheet secret when ready~~ — mechanism landed in #45 (`SIERRA_SECRET_KEY` everywhere); still optional to actually rotate.
 4. ~~Role chat ids~~ — still open (Telegram CEO/Team-Leader/Sales-Advisor chat ids), unchanged.
 
-Files: `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#54, incl. the Part-5 extension).
+Files: `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#54 + the #55 pagination fix, incl. both extensions).
 
 ---
 
@@ -156,4 +156,16 @@ Recovery timeline (2026-11-12, UTC): env-sync repaired → 20:45 repair PATCHes 
 3. Optional hygiene: delete the stale `[development]`-only duplicate env entries in the Vercel dashboards (both projects) — the sync now diagnoses them loudly but only repairs CRITICAL keys.
 4. Still open from before: Telegram role chat ids (CEO/Team-Leader/Sales-Advisor) for the follow-up router.
 
-Files: `download/sierra-estates-audit-report.md`, `download/sierra-estates-backend-completions.patch`, `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#54).
+---
+
+## Part 6 — Post-script: the pagination regression and its repair (2026-11-12, ~23:00 UTC)
+
+Recovery was not quite done. After #54, every deploy left behind a trail of **cancelled runs stuck in env-sync** (43315256665, 43316005478, 43317790861…). Root cause: **PR #53's own pagination logic was wrong.** The Vercel env-list endpoint has no `page` query parameter — it is cursor-based (`pagination.next`, a timestamp; confirmed against Vercel's OpenAPI `Pagination` schema and the endpoint's documented query params). The `while(true) { ...page=N }` loop incremented a parameter the API ignores, so page 1 refetched forever and the deploy job hung until a newer run superseded it. Two intermediary fixes landed in the meantime: `9a71149ed` (repo owner) reverted to a single unpaginated GET — correct for the hang, but it silently truncates once a project outgrows the default page size, re-opening the duplicate-blindness that contributed to the original outage.
+
+**PR #55 (`ea56f0b5f`)** closed the loop, CI-green and squash-merged: single GET first (matching Vercel's own CLI, `get-env-records.ts`, which does not paginate), then follow `pagination.next` **only while the API returns one** — capped at 10 pages, with id-dedup so a replaying cursor terminates immediately instead of hanging the deploy. The proven `already exists` → key-refetch PATCH repair path (#54) is untouched and remains the second line of defense; it is what actually recovered production when the list endpoint was rate-limited to zero entries.
+
+Same evening, the repo owner also shipped **Easy Listing Studio** public + admin pages (`aab8f9e98`, live at `/easy-listing` and `/admin/easy_listing`) and synced `H:\Sierra Estates\patches` into the repo (`4dda7dbc5` — which accidentally overwrote the canonical report with the oldest phase-1 draft and added Windows `(n)` duplicates; restored by `88c8a44db`, and `5c95d4251`'s MD040 fence-tag fix re-applied inside #55).
+
+Both sites remain **healthy** throughout: client + admin `/api/health` green, 26,184 active properties, `/easy-listing` HTTP 200.
+
+Files: `download/sierra-estates-audit-report.md`, `download/sierra-estates-backend-completions.patch`, `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#55).
