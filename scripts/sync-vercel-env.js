@@ -246,8 +246,23 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
   }
 
   // 2. Sync each var
+  // Backend values the site cannot boot without. When one of these is
+  // absent from the environment, say so LOUDLY: the silent `continue`
+  // below is how production lost NEXT_PUBLIC_SUPABASE_URL on 2026-11-12
+  // (the CI step ran the sync without passing any Supabase values, every
+  // key was skipped, and the deploy shipped without them).
+  const CRITICAL_KEYS = [
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+  ];
+
   for (const [key, value] of Object.entries(envVars)) {
-    if (!value) continue;
+    if (!value) {
+      if (CRITICAL_KEYS.includes(key)) {
+        console.warn(`   ❌ ${key} -> NOT SET in this environment; SKIPPED (production will boot without it — pass the value to this step/script!)`);
+      }
+      continue;
+    }
 
     const existing = existingMap.get(key);
     const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
