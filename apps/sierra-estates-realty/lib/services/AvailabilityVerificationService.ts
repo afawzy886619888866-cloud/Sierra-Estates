@@ -414,7 +414,7 @@ export class AvailabilityVerificationService {
 
     if (genAI) {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-3.5-flash' });
         const prompt = `
 Analyze this real estate owner/broker reply regarding unit "${matchedUnit.unitCode}" in "${matchedUnit.compound}":
 Reply text: "${replyText}"
