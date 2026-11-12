@@ -111,7 +111,7 @@ export class WhatsAppConversationalService {
       } catch (err: any) {
         logger.warn(`[ConversationalService] Primary generation fallback: ${err?.message}`);
         try {
-          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: dynamicSystemPrompt });
+          const fallbackModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.5-flash", systemInstruction: dynamicSystemPrompt });
           const fallbackRes = await fallbackModel.generateContent(message);
           replyText = fallbackRes.response.text();
         } catch {

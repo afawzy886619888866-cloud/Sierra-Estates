@@ -257,7 +257,7 @@ export async function POST(req: NextRequest) {
     if (API_KEY) {
       try {
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-3.5-flash' });
 
         const prompt = `You are the Sierra Estates AI Scribe (Easy Listing Extractor).
 Analyze the following raw real estate text (Arabic, English, or mixed) and extract structured listing data.
