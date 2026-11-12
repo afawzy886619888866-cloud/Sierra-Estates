@@ -32,11 +32,13 @@
       {
         "ignore": [
           "iframe[referrerpolicy=no-referrer-when-downgrade]",
-          "iframe[referrerpolicy]"
+          "iframe[referrerpolicy]",
+          "meta[name=theme-color]"
         ]
       }
     ],
-    "no-inline-styles": "off"
+    "no-inline-styles": "off",
+    "meta-viewport": "off"
   },
   "ignoredUrls": [
     {
