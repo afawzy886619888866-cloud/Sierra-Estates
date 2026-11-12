@@ -3,16 +3,10 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": [],
-      "tags": [
-        "ci"
-      ]
+      "outputs": []
     },
     "test:ci": {
-      "outputs": [],
-      "tags": [
-        "ci"
-      ]
+      "outputs": []
     }
   }
 }
