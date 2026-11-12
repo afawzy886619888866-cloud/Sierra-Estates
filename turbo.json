@@ -140,17 +140,11 @@
     "lint": {
       "dependsOn": [
         "^lint"
-      ],
-      "tags": [
-        "ci"
       ]
     },
     "type-check": {
       "dependsOn": [
         "^build"
-      ],
-      "tags": [
-        "ci"
       ]
     },
     "test": {
@@ -159,9 +153,6 @@
       ],
       "outputs": [
         "coverage/**"
-      ],
-      "tags": [
-        "ci"
       ]
     },
     "test:ci": {
@@ -170,9 +161,6 @@
       ],
       "outputs": [
         "coverage/**"
-      ],
-      "tags": [
-        "ci"
       ]
     },
     "clean": {
