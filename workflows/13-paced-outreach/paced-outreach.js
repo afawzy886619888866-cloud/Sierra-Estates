@@ -55,6 +55,7 @@ loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient } = require('../lib/gateway-client');
 const { normalizePhone } = require('../lib/phone-utils');
 const { loadOptOutSet } = require('../lib/inbox');
+const { loadAllClaimedPhones, claimOutreachPhone, releaseOutreachClaim } = require('../lib/outreach-dedupe');
 const { resolveCanonicalCompound } = require('../lib/compound-canonical');
 
 const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
@@ -442,7 +443,7 @@ function typingDelay() {
 }
 
 /** One pass for one worker: claim up to budget, send paced. */
-async function runWorkerPass(worker, candidates, lines) {
+async function runWorkerPass(worker, candidates, lines, globalClaimed = new Set()) {
   if (!candidates.length || !lines.length) return 0;
   const { slot, day } = slotBudgetLeft(worker);
   let budget = Math.min(slot, day);
@@ -458,23 +459,43 @@ async function runWorkerPass(worker, candidates, lines) {
   for (const entry of candidates) {
     if (budget <= 0) break;
     if (optOuts.has(entry.phone)) continue;
-    if (contacted.has(entry.phone)) continue;
+    if (contacted.has(entry.phone) || globalClaimed.has(entry.phone)) continue;
 
-    if (sent > 0) {
-      // Human typing simulation — the anti-ban pacing doctrine (45–55 s).
-      await new Promise((r) => setTimeout(r, typingDelay()));
-    }
+    // Synchronous in-process lock across both workers
+    contacted.add(entry.phone);
+    globalClaimed.add(entry.phone);
 
     const sessionId = lines[lineIdx % lines.length];
     lineIdx++;
 
     if (DRY_RUN) {
+      if (sent > 0) await new Promise((r) => setTimeout(r, typingDelay()));
       log(`DRY-RUN [${worker}] would send to ${entry.phone} (${entry.compound}) via ${sessionId}`);
     } else {
+      // Atomic DB-level claim across all containers/hosts
+      const claimRes = await claimOutreachPhone(supabase(), {
+        phone: entry.phone,
+        source: `13-paced-outreach:${worker}`,
+        listingCode: entry.code,
+        sessionName: sessionId,
+      });
+      if (!claimRes.claimed) {
+        log(`skipped duplicate [${worker}] ${entry.phone} (${claimRes.reason})`);
+        continue;
+      }
+
+      if (sent > 0) {
+        // Human typing simulation — the anti-ban pacing doctrine (45–55 s).
+        await new Promise((r) => setTimeout(r, typingDelay()));
+      }
+
       try {
         await gateway.sendText(`${entry.phone}@c.us`, template(entry), { sessionId });
       } catch (e) {
         log(`send failed [${worker}] ${entry.phone} via ${sessionId}: ${e.message}`);
+        contacted.delete(entry.phone);
+        globalClaimed.delete(entry.phone);
+        await releaseOutreachClaim(supabase(), entry.phone);
         continue; // budget not consumed — the owner is retried next slot
       }
     }
@@ -507,10 +528,11 @@ async function pass(reason) {
   }
 
   const lines = assignLines(pool);
+  const globalClaimed = await loadAllClaimedPhones(supabase(), STATE_DIR);
   const { activeRenting, massiveOwners } = await loadCandidates();
   let total = 0;
-  total += await runWorkerPass('active-renting', activeRenting, lines['active-renting']);
-  total += await runWorkerPass('massive-owners', massiveOwners, lines['massive-owners']);
+  total += await runWorkerPass('active-renting', activeRenting, lines['active-renting'], globalClaimed);
+  total += await runWorkerPass('massive-owners', massiveOwners, lines['massive-owners'], globalClaimed);
 
   await pulseSystemStatus({
     status: 'active',

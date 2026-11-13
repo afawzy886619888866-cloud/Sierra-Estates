@@ -73,6 +73,7 @@ loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient } = require('../lib/gateway-client');
 const { normalizePhone, toWesternDigits, toLocalPhone } = require('../lib/phone-utils');
 const { loadOptOutSet } = require('../lib/inbox');
+const { loadAllClaimedPhones, readLocalLedgers, claimOutreachPhone, releaseOutreachClaim } = require('../lib/outreach-dedupe');
 
 const WRITE_URL = process.env.WF_SHEET_WRITE_URL;
 const WRITE_SECRET = process.env.WF_SHEET_WRITE_SECRET;
@@ -550,15 +551,12 @@ async function mergeSupabaseOwners({ candidates, contacted, phoneFirstIdx, summa
   if (!sb) return 0;
 
   try {
-    // 1. Fetch outreach log phones so historical recipients are never re-contacted
-    const { data: outreachLogs, error: logErr } = await sb.from('owner_outreach_log').select('phone').limit(10000);
-    if (!logErr && outreachLogs && outreachLogs.length) {
-      for (const row of outreachLogs) {
-        const p = normalizePhone(row.phone);
-        if (p && !contacted.has(p)) {
-          contacted.add(p);
-          summary.supabaseDeduped = (summary.supabaseDeduped || 0) + 1;
-        }
+    // 1. Fetch ALL historical outreach phones from Supabase (claims + log, paginated)
+    const allClaimed = await loadAllClaimedPhones(sb, null);
+    for (const p of allClaimed) {
+      if (p && !contacted.has(p)) {
+        contacted.add(p);
+        summary.supabaseDeduped = (summary.supabaseDeduped || 0) + 1;
       }
     }
 
@@ -737,6 +735,7 @@ async function main() {
   const SHEET_DEDUPE = !/^(0|false|no)$/i.test(process.env.WF_SHEET_DEDUPE || '');
 
   const contacted = loadLedgerPhones();
+  for (const p of readLocalLedgers(STATE_DIR)) contacted.add(p);
   const optedOut = loadOptOutSet(STATE_DIR);
   const invalidPhones = loadInvalidPhones();
   const daily = loadDaily();
@@ -1012,6 +1011,21 @@ async function main() {
             batchDone = true;
             break;
           }
+          // Synchronous in-process lock BEFORE any await so concurrent lanes never race
+          contacted.add(phone);
+          // Atomic DB-level claim across all containers/hosts
+          const claimRes = await claimOutreachPhone(getAuditClient(), {
+            phone,
+            source: `09-owner-outreach:${HOST_SIDE}`,
+            listingCode: cand.code,
+            sessionName: lane.name,
+          });
+          if (!claimRes.claimed) {
+            sendTickets--;
+            summary.skippedDbDuplicate = (summary.skippedDbDuplicate || 0) + 1;
+            console.log(`[outreach] skipped duplicate ${toLocalPhone(phone)} (${claimRes.reason})`);
+            continue;
+          }
           let sentThisRow = false;
           try {
             const sendOpts = { retries: 2 };
@@ -1089,6 +1103,11 @@ async function main() {
                 }
               }
             } else {
+              // Transient error: release claim ONLY if sendText did not succeed
+              if (!sentThisRow) {
+                contacted.delete(phone);
+                await releaseOutreachClaim(getAuditClient(), phone);
+              }
               // Transient error: rewind cursor so this owner is not skipped without receiving a message
               rewind(claimed);
             }
