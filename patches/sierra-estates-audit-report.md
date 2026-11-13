@@ -260,3 +260,18 @@ A final sweep found **17 open Dependabot alerts** (4 high: deepmerge-ts, follow-
 5. Each stakeholder opens the bot chat and sends `/staffsetup ceo` (or `team_leader` / `sales_advisor`) — done; verify with `/staffstatus` or the admin console.
 
 **Incident handled en route:** the repo owner pushed `61fb3f5a9` (whatsapp-bot Baileys listener) with a new `apps/whatsapp-bot/package.json` but **without regenerating `pnpm-lock.yaml`**, which broke every frozen-lockfile install (CI, the Supabase migration lane, Vercel builds) with `ERR_PNPM_OUTDATED_LOCKFILE`. Fixed mechanically in `bc18736ec` (lockfile regenerated for the new importer, no semantic changes); the migration apply then completed successfully. The admin Vercel deploy of this commit was quota-blocked (`api-deployments-free-per-day`, 100+ deploys that day — retried 5×); admin stays healthy on its 04:40Z build and picks everything up on the next deploy after the window resets.
+
+### Part 8 addendum — self-heal deploy + security close-out (2026-11-13, 05:15–05:35 UTC)
+
+**Admin deploy self-heal (commit `22214b9f3`).** The admin project kept failing on the free-tier quota (04:54 UTC run: 5× `api-deployments-free-per-day`) while client deployed fine, leaving admin one build behind. New scheduled workflow `deploy-admin-retry.yml` runs daily at 05:12 UTC: it compares admin's latest production deployment commit against main HEAD (Vercel API), and when behind dispatches `deploy-vercel.yml` with `target_env=production` and **no** emergency override — so the existing CI gate still requires a green `ci.yml` for the exact SHA. Once admin is caught up, the workflow disables itself. Nothing deploys un-gated; nobody has to remember to re-run anything.
+
+**Security close-out (commit `4a5902fa9`).** The Dependabot check had been failing on *every* commit with `security_update_not_found`: the `deepmerge` advisory (GHSA-gcqx-w48m-w2h4, low) has **no patched release** — `first_patched: None`. Meanwhile the new whatsapp-bot (Baileys) import had dragged in 8 patchable alerts, including one **high** (`music-metadata` GHSA-v6c2-xwv6-8xf7). Resolution:
+
+| Action | Result |
+|---|---|
+| Security-floor overrides: `music-metadata`→12.5.0, `file-type`→22.3.0, `uuid`→11.1.1 | vulnerable versions gone from `pnpm-lock.yaml`; frozen-lockfile install + 18/18 telegram tests verified |
+| `deepmerge` alerts 108 + 110 dismissed as `tolerable_risk` | documented: no fixed release exists upstream; floor override `>=2.1.1` already in place; re-open if a patch appears |
+| Open Dependabot alerts | **12 → 0** (8 auto-resolved by the lockfile push, 2 dismissed, 2 duplicates collapsed) |
+| Dependabot check on `4a5902fa9` | **success** (first green check since the alerts opened) |
+
+**State at close of session 5:** main @ `4a5902fa9` all checks green (CI, CodeQL, Dependabot, Supabase Preview); client healthy (boot 05:23Z) on the PR #62 build; admin healthy (boot 05:34Z) on the prior build with the quota-window self-heal armed; live inventory `supabase/5000/complete=true` on both. The only remaining human action is unchanged: **regenerate `TELEGRAM_BOT_TOKEN` via BotFather** (runbook above).
