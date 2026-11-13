@@ -201,7 +201,8 @@ jobs:
           #   AI & LLMs:             GOOGLE_AI_API_KEY, GEMINI_API_KEY, DEEPSEEK_API_KEY
           #   Property Finder & AWS: PROPERTY_FINDER_API_KEY, AWS_ACCESS_KEY_ID
           #   Security:              SESSION_SECRET, SBR_SECRET_KEY, CRON_SECRET, ADMIN_API_KEY
-          #   Communications:        TELEGRAM_BOT_TOKEN, WHATSAPP_API_TOKEN, SENDGRID_API_KEY
+          #   Communications:        TELEGRAM_BOT_TOKEN, WHATSAPP_API_TOKEN, SENDGRID_API_KEY,
+          #                         TELEGRAM_*_CHAT_ID role lanes (migration 044), TELEGRAM_STAFF_USER_IDS
           ARGS=""
           if [ "$TARGET_ENV" = "production" ]; then ARGS="--prod"; fi
           attempt=1

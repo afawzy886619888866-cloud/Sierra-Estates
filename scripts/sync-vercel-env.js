@@ -92,6 +92,16 @@ export const CLIENT_ENV_VARS = {
   NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME,
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
   TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
+  // 3-way dispatch role lanes (migration 044): env overrides win over the
+  // self-registered public.telegram_role_chats rows; TELEGRAM_STAFF_USER_IDS
+  // gates /staffsetup self-registration. All three are optional — unset
+  // roles resolve from the database or honestly skip.
+  TELEGRAM_CEO_CHAT_ID: process.env.TELEGRAM_CEO_CHAT_ID,
+  TELEGRAM_TEAM_LEADER_CHAT_ID: process.env.TELEGRAM_TEAM_LEADER_CHAT_ID,
+  TELEGRAM_SALES_ADVISOR_CHAT_ID: process.env.TELEGRAM_SALES_ADVISOR_CHAT_ID,
+  TELEGRAM_SALES_REP_CHAT_ID: process.env.TELEGRAM_SALES_REP_CHAT_ID,
+  TELEGRAM_ADMIN_CHAT_ID: process.env.TELEGRAM_ADMIN_CHAT_ID,
+  TELEGRAM_STAFF_USER_IDS: process.env.TELEGRAM_STAFF_USER_IDS,
 
   WHATSAPP_API_TOKEN: process.env.WHATSAPP_API_TOKEN,
   WHATSAPP_META_TOKEN: process.env.WHATSAPP_META_TOKEN || process.env.WHATSAPP_API_TOKEN,

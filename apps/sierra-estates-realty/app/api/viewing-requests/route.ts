@@ -219,15 +219,16 @@ export async function POST(request: NextRequest) {
     // attendees (plus the visitor), but a link in the visitor's response is
     // not a dispatch — staff never saw it. The repo has no email provider
     // wired (§21: never fabricate a delivery channel), so the operational
-    // dispatch rides the existing Telegram lane: each stakeholder ROLE chat
-    // (when its env chat id is configured) receives the invite link with the
-    // real slot. Unconfigured roles are honestly reported as skipped in the
-    // response, and a failure here can never break the visitor's 201.
-    const dispatchRoles: Array<{ role: string; chatEnv: string; email: string }> = [
-      { role: 'CEO (Ahmed Fawzy)', chatEnv: 'TELEGRAM_CEO_CHAT_ID', email: 'a.fawzy8866@gmail.com' },
-      { role: 'Team Leader', chatEnv: 'TELEGRAM_TEAM_LEADER_CHAT_ID', email: 'teamleader@sierra-estates.net' },
-      { role: 'Sales Advisor', chatEnv: 'TELEGRAM_SALES_ADVISOR_CHAT_ID', email: 'advisory@sierra-estates.net' },
-    ];
+    // dispatch rides the existing Telegram lane. Role chat ids resolve
+    // env-first (TELEGRAM_*_CHAT_ID, the ops escape hatch) then from
+    // public.telegram_role_chats (migration 044 — each stakeholder
+    // self-registers their chat via the bot's /staffsetup command; see
+    // lib/server/telegram-role-chats). Unconfigured roles are honestly
+    // reported as skipped in the response, and a failure here can never
+    // break the visitor's 201.
+    const { resolveRoleChats, DISPATCH_ROLES } = await import('@/lib/server/telegram-role-chats');
+    const roleChats = await resolveRoleChats();
+    const chatIdByRole = new Map(roleChats.map((r) => [r.role, r]));
     const calendarInviteForStaff =
       `📅 Property Viewing — ${data.propertyCode}\n` +
       `Client: ${data.visitorName} (${phone})\n` +
@@ -247,19 +248,19 @@ export async function POST(request: NextRequest) {
       `&dates=${calDate}T100000Z/${calDate}T110000Z` +
       `&details=${encodeURIComponent(`Viewing requested by ${data.visitorName} · ${phone}. Unit ${data.propertyCode}. Eligible for 25% Website Commission Discount. 60-Minute Golden Hour Follow-Up Tracker Active.`)}` +
       `&add=${encodeURIComponent(attendees)}`;
-    for (const role of dispatchRoles) {
-      const chatId = process.env[role.chatEnv]?.trim();
-      if (!chatId) {
-        dispatchResults.push({ role: role.role, delivered: false });
+    for (const role of DISPATCH_ROLES) {
+      const resolved = chatIdByRole.get(role.role);
+      if (!resolved?.chatId) {
+        dispatchResults.push({ role: role.label, delivered: false });
         continue;
       }
       try {
         const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
-        await sendTelegramMessage(`${calendarInviteForStaff}${staffCalendarLink}`, chatId);
-        dispatchResults.push({ role: role.role, delivered: true });
+        await sendTelegramMessage(`${calendarInviteForStaff}${staffCalendarLink}`, resolved.chatId);
+        dispatchResults.push({ role: role.label, delivered: true });
       } catch (dispatchErr) {
-        logger.warn(`[viewing-requests] calendar dispatch to ${role.role} failed (non-fatal):`, dispatchErr);
-        dispatchResults.push({ role: role.role, delivered: false });
+        logger.warn(`[viewing-requests] calendar dispatch to ${role.label} failed (non-fatal):`, dispatchErr);
+        dispatchResults.push({ role: role.label, delivered: false });
       }
     }
 
