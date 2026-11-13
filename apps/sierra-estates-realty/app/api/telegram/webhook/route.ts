@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { countRecords, getSupabaseAdmin, insertRecord, listRecords } from '@sierra-estates/db';
+import { countRecords, getSupabaseAdmin, insertRecord, listRecords, upsertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
 import {
@@ -177,12 +177,87 @@ async function handleTelegramWebhook(req: NextRequest) {
       isMockMode = true;
     }
 
+    // ── Staff role chat self-registration (migration 044) ────────────────
+    // /staffsetup <role> — a staff operator binds THIS chat to their ROLE
+    //   (ceo | team_leader | sales_advisor). Gate: the sender's Telegram
+    //   USER id must be listed in TELEGRAM_STAFF_USER_IDS (comma-separated).
+    //   When that gate is unset the command explains itself instead of
+    //   accepting registrations from anyone (fail-closed, § never fabricate
+    //   authority). The 3-way viewing dispatch + inquiries sales lane then
+    //   resolve this chat automatically — no env edit, no redeploy.
+    // /staffstatus — shows which roles are registered (same gate).
+    if (text.startsWith('/staffsetup') || text.startsWith('/staffstatus')) {
+      const staffIds = (process.env.TELEGRAM_STAFF_USER_IDS ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const senderId = message.from?.id;
+      if (staffIds.length === 0) {
+        await sendMessage(
+          `🔒 <b>/staffsetup is locked.</b>\n\n` +
+          `Set <code>TELEGRAM_STAFF_USER_IDS</code> (comma-separated Telegram user ids) to authorize staff operators, then run:\n` +
+          `<code>/staffsetup ceo|team_leader|sales_advisor</code>`
+        );
+        return NextResponse.json({ ok: true });
+      }
+      if (!senderId || !staffIds.includes(String(senderId))) {
+        await sendMessage(`⛔ Not authorized. Ask an administrator to add your Telegram user id to <code>TELEGRAM_STAFF_USER_IDS</code>.`);
+        return NextResponse.json({ ok: true });
+      }
+
+      const { ROLE_KEYS, DISPATCH_ROLES, resolveRoleChats, sendRoleTestMessage } =
+        await import('@/lib/server/telegram-role-chats');
+
+      if (text.startsWith('/staffstatus')) {
+        try {
+          const resolved = await resolveRoleChats();
+          const lines = resolved.map((r) => {
+            const label = DISPATCH_ROLES.find((d) => d.role === r.role)?.label ?? r.role;
+            const from = r.source === 'env' ? 'env override' : r.source === 'database' ? 'registered' : 'NOT configured';
+            return `• <b>${label}</b>: ${from}`;
+          });
+          await sendMessage(`<b>3-way dispatch lanes</b>\n${lines.join('\n')}`);
+        } catch (err: any) {
+          await sendMessage(`⚠️ Could not read role registrations: ${err?.message}`);
+        }
+        return NextResponse.json({ ok: true });
+      }
+
+      const requested = text.replace('/staffsetup', '').trim().toLowerCase();
+      if (!(ROLE_KEYS as readonly string[]).includes(requested)) {
+        await sendMessage(
+          `Usage: <code>/staffsetup ceo|team_leader|sales_advisor</code>\n` +
+          `(got ${requested ? `<code>${requested}</code>` : 'nothing'})`
+        );
+        return NextResponse.json({ ok: true });
+      }
+      const label = DISPATCH_ROLES.find((d) => d.role === requested)?.label ?? requested;
+      try {
+        await upsertRecord('telegram_role_chats', {
+          role: requested,
+          chatId: String(chatId),
+          displayName: message.from?.username ?? message.from?.first_name ?? null,
+          registeredBy: senderId,
+          verified: true, // the registration echo below IS the verification send
+        }, 'role');
+        const test = await sendRoleTestMessage(String(chatId), label);
+        await sendMessage(
+          test.ok
+            ? `✅ <b>${label}</b> dispatch lane registered to this chat. Viewing dispatches and lead alerts for your role now arrive here.`
+            : `⚠️ Registered <b>${label}</b>, but the confirmation send failed: ${test.error ?? 'unknown error'} — verify the bot can message this chat.`
+        );
+      } catch (err: any) {
+        await sendMessage(`⚠️ Registration failed: ${err?.message}`);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     if (text === '/start') {
       await sendMessage(`
 <b>Welcome to the Sierra Estates Bot</b>
 
 Your Chat ID is: <code>${chatId}</code>
-Please add this to your <code>.env.local</code> as <code>TELEGRAM_CHAT_ID</code> to enable operational notifications.
+Staff can self-register their dispatch lane with <code>/staffsetup ceo|team_leader|sales_advisor</code>.
 
 Commands:
 /stats - View executive performance

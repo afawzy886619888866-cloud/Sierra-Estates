@@ -192,7 +192,13 @@ export async function POST(request: Request) {
 
     try {
       const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
-      const salesChatId = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+      const { resolveRoleChat } = await import('@/lib/server/telegram-role-chats');
+      // Sales lane: explicit sales-rep/admin env vars keep precedence (ops
+      // escape hatch), then the self-registered Sales Advisor role chat
+      // (public.telegram_role_chats, migration 044). Unset → honest skip —
+      // sendTelegramMessage already no-ops on a missing chat id.
+      const salesEnv = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+      const salesChatId = salesEnv || (await resolveRoleChat('sales_advisor')).chatId || undefined;
       await sendTelegramMessage(
         `🎯 <b>New Website Lead (${rest.mode.toUpperCase()}) — 25% Discount Applied</b>\n` +
         `👤 Client: <b>${rest.name}</b> (${rest.phone})\n` +
