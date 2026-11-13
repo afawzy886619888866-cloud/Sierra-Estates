@@ -1,15 +1,17 @@
 name: Deploy admin retry (quota-window self-heal)
 
-# WHY THIS EXISTS (2026-11-13): the admin Vercel project (free tier) hit
-# "api-deployments-free-per-day" (>100 deploys that day) while the client
-# project deployed fine, so admin sierra-estates.net stayed one build behind
-# main. The quota window resets within 24h; rather than requiring a human to
-# notice and re-run the deploy, this workflow retries the PRODUCTION deploy
-# daily and stands down once it succeeds.
+# WHY THIS EXISTS (2026-11-13): the Vercel free tier caps deploys at ~100/day
+# per team ("api-deployments-free-per-day"). On 2026-11-13 the day's push
+# activity exhausted the cap: admin first (04:48 UTC), then client too
+# (06:57 UTC), so both projects ended the day with builds queued behind the
+# quota while main moved ahead. The quota window resets within 24h; rather
+# than requiring a human to notice and re-run the deploy, this workflow
+# retries the PRODUCTION deploy daily until BOTH projects catch up.
 #
-# HOW IT STOPS: the retry gate (first job) checks whether admin is already
-# serving the same commit as main's HEAD. When it matches — i.e. a retry
-# succeeded — the schedule disables itself for good (gh api PATCH state).
+# HOW IT STOPS: the retry gate (first job) compares main HEAD with the latest
+# production deployment commit of BOTH the admin and client projects. When
+# both match — i.e. the retries succeeded — the schedule disables itself for
+# good (gh api PATCH state).
 #
 # SAFETY: production deploys stay behind the deploy-vercel.yml CI gate —
 # this workflow only calls workflow_dispatch on it with target_env:
@@ -18,7 +20,9 @@ name: Deploy admin retry (quota-window self-heal)
 
 on:
   schedule:
-    # 05:12 UTC daily — just after the free-tier daily quota window resets.
+    # 05:12 UTC daily — just after the free-tier daily quota window resets
+    # (observed reset time for the 2026-11-13 exhaustion). 17 minutes past
+    # the hour avoids the top-of-hour GitHub cron congestion.
     - cron: "12 5 * * *"
   workflow_dispatch: {}
 
@@ -32,14 +36,14 @@ concurrency:
 
 jobs:
   gate:
-    name: Is admin still behind?
+    name: Are admin and client both current?
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       proceed: ${{ steps.check.outputs.proceed }}
       head: ${{ steps.check.outputs.head }}
     steps:
-      - name: Compare main HEAD with the live admin build
+      - name: Compare main HEAD with both live builds
         id: check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,18 +53,34 @@ jobs:
           echo "head=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "main HEAD: $HEAD_SHA"
 
-          # What commit is the live admin site serving? The deployed app does
-          # not expose a version route, so use Vercel's API for the admin
-          # project's latest production deployment meta.
+          # What commit is each live site serving? The deployed apps do not
+          # expose a version route, so use Vercel's API for each project's
+          # latest production deployment meta.
           VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_TOKEN }}"
           [ -z "$VERCEL_TOKEN_VALUE" ] && VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_AUTH_TOKEN }}"
-          DEPLOYED=$(curl -sS "https://api.vercel.com/v6/deployments?projectId=prj_inhTu8kppYhQv2NZZV3GTUdU8uBi&limit=1&target=production" \
-            -H "Authorization: Bearer $VERCEL_TOKEN_VALUE" \
-            | jq -r '.deployments[0].meta.githubCommitSha // .deployments[0].meta.gitlabCommitSha // empty')
-          echo "admin latest production deployment commit: ${DEPLOYED:-unknown}"
 
-          if [ -n "$DEPLOYED" ] && [ "$DEPLOYED" = "$HEAD_SHA" ]; then
-            echo "admin is already serving main HEAD — standing down."
+          check_project() {
+            local role="$1" project_id="$2"
+            local deployed
+            deployed=$(curl -sS "https://api.vercel.com/v6/deployments?projectId=${project_id}&limit=1&target=production" \
+              -H "Authorization: Bearer $VERCEL_TOKEN_VALUE" \
+              | jq -r '.deployments[0].meta.githubCommitSha // .deployments[0].meta.gitlabCommitSha // empty')
+            echo "${role} latest production deployment commit: ${deployed:-unknown}"
+            if [ -n "$deployed" ] && [ "$deployed" = "$HEAD_SHA" ]; then
+              return 0  # current
+            else
+              return 1  # behind (or meta unknown)
+            fi
+          }
+
+          ADMIN_CURRENT=false
+          CLIENT_CURRENT=false
+          if check_project admin "prj_inhTu8kppYhQv2NZZV3GTUdU8uBi"; then ADMIN_CURRENT=true; fi
+          if check_project client "prj_ieVcIcoeTtHndspXMzlE0cwLl89c"; then CLIENT_CURRENT=true; fi
+          echo "admin current: $ADMIN_CURRENT | client current: $CLIENT_CURRENT"
+
+          if [ "$ADMIN_CURRENT" = "true" ] && [ "$CLIENT_CURRENT" = "true" ]; then
+            echo "both projects are already serving main HEAD — standing down."
             # Self-disable: no more scheduled retries needed.
             gh api -X PATCH "repos/${{ github.repository }}/actions/workflows/deploy-admin-retry.yml" \
               -f state=disabled 2>/dev/null \
@@ -69,7 +89,7 @@ jobs:
           else
             # Unknown deployment meta also lands here — retrying is harmless:
             # the deploy stays behind the CI gate and self-disables on success.
-            echo "admin is behind main (or meta unknown) — dispatching a gated production deploy retry."
+            echo "at least one project is behind main (or meta unknown) — dispatching a gated production deploy retry."
             echo "proceed=true" >> "$GITHUB_OUTPUT"
           fi
 
