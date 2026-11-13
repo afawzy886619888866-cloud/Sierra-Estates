@@ -1,0 +1,94 @@
+name: Deploy admin retry (quota-window self-heal)
+
+# WHY THIS EXISTS (2026-11-13): the admin Vercel project (free tier) hit
+# "api-deployments-free-per-day" (>100 deploys that day) while the client
+# project deployed fine, so admin sierra-estates.net stayed one build behind
+# main. The quota window resets within 24h; rather than requiring a human to
+# notice and re-run the deploy, this workflow retries the PRODUCTION deploy
+# daily and stands down once it succeeds.
+#
+# HOW IT STOPS: the retry gate (first job) checks whether admin is already
+# serving the same commit as main's HEAD. When it matches — i.e. a retry
+# succeeded — the schedule disables itself for good (gh api PATCH state).
+#
+# SAFETY: production deploys stay behind the deploy-vercel.yml CI gate —
+# this workflow only calls workflow_dispatch on it with target_env:
+# production and NO emergency_override, so nothing deploys without a green
+# ci.yml run for the exact SHA (same rule as any manual dispatch).
+
+on:
+  schedule:
+    # 05:12 UTC daily — just after the free-tier daily quota window resets.
+    - cron: "12 5 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: write  # to read workflow runs + disable this schedule when done
+
+concurrency:
+  group: deploy-admin-retry
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Is admin still behind?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+      head: ${{ steps.check.outputs.head }}
+    steps:
+      - name: Compare main HEAD with the live admin build
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(gh api "repos/${{ github.repository }}/branches/main" --jq '.commit.sha')
+          echo "head=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "main HEAD: $HEAD_SHA"
+
+          # What commit is the live admin site serving? The deployed app does
+          # not expose a version route, so use Vercel's API for the admin
+          # project's latest production deployment meta.
+          VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_TOKEN }}"
+          [ -z "$VERCEL_TOKEN_VALUE" ] && VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_AUTH_TOKEN }}"
+          DEPLOYED=$(curl -sS "https://api.vercel.com/v6/deployments?projectId=prj_inhTu8kppYhQv2NZZV3GTUdU8uBi&limit=1&target=production" \
+            -H "Authorization: Bearer $VERCEL_TOKEN_VALUE" \
+            | jq -r '.deployments[0].meta.githubCommitSha // .deployments[0].meta.gitlabCommitSha // empty')
+          echo "admin latest production deployment commit: ${DEPLOYED:-unknown}"
+
+          if [ -n "$DEPLOYED" ] && [ "$DEPLOYED" = "$HEAD_SHA" ]; then
+            echo "admin is already serving main HEAD — standing down."
+            # Self-disable: no more scheduled retries needed.
+            gh api -X PATCH "repos/${{ github.repository }}/actions/workflows/deploy-admin-retry.yml" \
+              -f state=disabled 2>/dev/null \
+              || gh workflow disable "Deploy admin retry (quota-window self-heal)" -R "${{ github.repository }}" || true
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          else
+            # Unknown deployment meta also lands here — retrying is harmless:
+            # the deploy stays behind the CI gate and self-disables on success.
+            echo "admin is behind main (or meta unknown) — dispatching a gated production deploy retry."
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  retry:
+    name: Dispatch gated production deploy
+    needs: [gate]
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger deploy-vercel (production, CI-gated)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run deploy-vercel.yml \
+            -R "${{ github.repository }}" \
+            --ref main \
+            -f target_env=production \
+            -f emergency_override=false \
+            -f env_sync_only=false
+          echo "deploy-vercel dispatched (target_env=production). Its CI gate still requires a green ci.yml for the exact SHA."
