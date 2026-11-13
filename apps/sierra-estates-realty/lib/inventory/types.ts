@@ -83,6 +83,14 @@ export interface InventoryResponse {
    */
   source: 'supabase' | 'domain' | 'live' | 'snapshot' | 'excel-hybrid' | 'none';
   count: number;
+  /**
+   * PARTIAL HONESTY (2026-11-13): false when the payload was produced under
+   * degraded conditions — a pagination page failed after retry (partial
+   * dataset) or the payload is a stale-served previous good read. Consumers
+   * can surface "inventory may be incomplete" instead of silently showing
+   * fewer pins than reality. Absent means complete (older producers).
+   */
+  complete?: boolean;
   segments?: {
     total: number;
     owners_rent: number;
