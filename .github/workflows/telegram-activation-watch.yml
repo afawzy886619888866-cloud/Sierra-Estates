@@ -1,0 +1,141 @@
+name: Telegram activation watch
+
+# WHY THIS EXISTS (2026-11-13): the Telegram lane is fully wired (migration
+# 044 role chats, /staffsetup, 3-way dispatch, env-sync) but the bot token
+# was revoked at BotFather — every send honestly skips until the operator
+# installs a fresh token. The remaining steps after token installation
+# (carry the token to Vercel, register the webhook, verify, smoke-test the
+# send) were a 5-step manual runbook. This watcher completes them
+# automatically the moment the TELEGRAM_BOT_TOKEN secret turns valid.
+#
+# HOW IT RUNS:
+#   • hourly: getMe with the GitHub secret. 401 Unauthorized = still
+#     revoked → log an honest one-line skip and exit 0 (a green, quiet
+#     no-op; an alert would be wrong — the revoked state is known and
+#     owned by the operator runbook).
+#   • valid token → ACTIVATE:
+#       1. setWebhook on the Phase 6 route (client domain, secret_token =
+#          TELEGRAM_WEBHOOK_SECRET — the route fails closed without it)
+#       2. getWebhookInfo verification (url + pending_update_count)
+#       3. sendMessage smoke test to TELEGRAM_CHAT_ID (delivery proof)
+#       4. dispatch deploy-vercel.yml env_sync_only=true — PATCHes env
+#          values to both Vercel projects WITHOUT deploying (env PATCHes do
+#          not consume the free-tier deploy quota; the new token reaches
+#          both apps on their next natural build/reboot)
+#       5. self-disable this schedule (nothing left to watch)
+#
+# FAILURE HONESTY: a failed activation step fails the run loudly (red) —
+# the operator sees exactly which step; the schedule stays armed and
+# retries next hour. It never reports activation without verification.
+#
+# SECURITY: the token is used only for api.telegram.org calls from this
+# runner and is never printed (curl -s + jq field extraction; no set -x).
+
+on:
+  schedule:
+    # :47 past the hour — off the top-of-hour GitHub cron congestion and
+    # clear of the 05:12 UTC deploy self-heal window.
+    - cron: "47 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: write  # dispatch deploy-vercel env_sync + self-disable when activated
+
+concurrency:
+  group: telegram-activation-watch
+  # Contract (actions-and-workflows.test.ts): scheduled workflows never
+  # cancel an in-progress sibling run.
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: Probe TELEGRAM_BOT_TOKEN and activate the lane when valid
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe token / activate lane
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CLIENT_URL: https://sierra-estates.net
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::notice::TELEGRAM_BOT_TOKEN secret is not set — nothing to activate yet. Standing by."
+            exit 0
+          fi
+
+          # ── 1. Probe the token (values never echoed) ──────────────────
+          probe_code=$(curl -s -o /tmp/getme.json -w '%{http_code}' \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe")
+          if [ "$probe_code" != "200" ]; then
+            # 401 Unauthorized = the known revoked state. Quiet green no-op.
+            echo "::notice::Bot token still not accepted by Telegram (HTTP $probe_code) — lane stays honestly skipped. Operator runbook: BotFather → API Token → Revoke → update the TELEGRAM_BOT_TOKEN secret."
+            exit 0
+          fi
+          bot_username=$(jq -r '.result.username // "unknown"' /tmp/getme.json)
+          echo "Token VALID for @${bot_username} — activating the Telegram lane."
+
+          # ── 2. Register the webhook on the Phase 6 route ──────────────
+          if [ -z "$TELEGRAM_WEBHOOK_SECRET" ]; then
+            echo "::error::TELEGRAM_WEBHOOK_SECRET is not set — the webhook route fails closed without it. Set the secret, then this watcher retries within the hour."
+            exit 1
+          fi
+          webhook_url="${CLIENT_URL}/api/telegram/webhook"
+          setwh=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+            --data-urlencode "url=${webhook_url}" \
+            --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET}" \
+            --data-urlencode "drop_pending_updates=false" \
+            --data-urlencode "allowed_updates=[\"message\",\"edited_message\"]")
+          echo "$setwh" | jq -e '.ok == true' >/dev/null || {
+            echo "::error::setWebhook failed: $(echo "$setwh" | jq -r '.description // "unknown"')"
+            exit 1
+          }
+          echo "Webhook registered → ${webhook_url}"
+
+          # ── 3. Verify registration ─────────────────────────────────────
+          info=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo")
+          echo "$info" | jq -e --arg url "$webhook_url" '.result.url == $url' >/dev/null || {
+            echo "::error::Webhook verification failed — registered url does not match (getWebhookInfo: $(echo "$info" | jq -r '.result.url // "none"'))."
+            exit 1
+          }
+          pending=$(echo "$info" | jq -r '.result.pending_update_count // 0')
+          echo "Webhook verified (pending updates: ${pending})."
+
+          # ── 4. Delivery smoke test ─────────────────────────────────────
+          if [ -n "$TELEGRAM_CHAT_ID" ]; then
+            send=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text=✅ Sierra Estates bot activated. Webhook: ${webhook_url}. Staff: send /staffsetup <role> to register your chat.")
+            echo "$send" | jq -e '.ok == true' >/dev/null || {
+              echo "::error::Smoke sendMessage failed: $(echo "$send" | jq -r '.description // "unknown"')"
+              exit 1
+            }
+            echo "Smoke message delivered to TELEGRAM_CHAT_ID."
+          else
+            echo "::notice::TELEGRAM_CHAT_ID not set — skipping the delivery smoke test (webhook registration is still verified above)."
+          fi
+
+          # ── 5. Carry the token to both Vercel projects ────────────────
+          # env_sync_only dispatch: PATCHes env values (no build, no deploy
+          # quota). The gate in deploy-vercel.yml authorizes env-sync-only
+          # dispatches without the production CI gate by design (no
+          # artifact leaves the repo).
+          if gh workflow run deploy-vercel.yml -R "$GH_REPO" --ref main \
+              -f target_env=production -f emergency_override=false -f env_sync_only=true; then
+            echo "deploy-vercel env_sync_only dispatched — TELEGRAM_BOT_TOKEN reaches both Vercel projects without consuming deploy quota."
+          else
+            echo "::error::Could not dispatch deploy-vercel env_sync_only — token is NOT yet on Vercel. Fix and let the watcher retry."
+            exit 1
+          fi
+
+          # ── 6. Stand down ──────────────────────────────────────────────
+          echo "Telegram lane ACTIVATED (token valid, webhook verified, env sync dispatched). Disabling this watcher."
+          gh api -X PATCH "repos/${GH_REPO}/actions/workflows/telegram-activation-watch.yml" \
+            -f state=disabled 2>/dev/null \
+            || gh workflow disable "Telegram activation watch" -R "$GH_REPO" || true
