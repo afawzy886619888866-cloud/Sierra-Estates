@@ -28,6 +28,7 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { InventoryQueryService } from "@/lib/services/inventory-query";
+import type { PropertyStatus } from "@/lib/services/inventory-query";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { hasPendingPhoto } from "@/lib/inventory/normalize";
@@ -365,10 +366,12 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
       // FALLBACK FIX (2026-11-13): this query was DEAD CODE since its birth —
       // it filtered status:'available' while every Supabase listings row
       // carries status:'active' (the value the primary path filters on), so
-      // it always returned []. Both values are accepted now: 'active' rows
-      // are the live reality; 'available' kept for any legacy rows.
-      status: ["available", "active"],
-      publishStatus: "PUBLISHABLE",
+      // it always returned []. Both values are passed through the raw `in`
+      // filter: 'active' is the live storage status; 'available' is kept for
+      // any legacy domain-shaped rows. PropertyStatus (the domain type) has
+      // no 'active' member, hence the widening cast at this boundary.
+      status: ['available', 'active'] as unknown as PropertyStatus[],
+      publishStatus: 'PUBLISHABLE',
       limit: 300,
     });
     if (!rows.length) return null;
