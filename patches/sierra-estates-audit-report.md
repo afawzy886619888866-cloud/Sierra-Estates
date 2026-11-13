@@ -231,3 +231,32 @@ A final sweep found **17 open Dependabot alerts** (4 high: deepmerge-ts, follow-
 **Remaining 2 alerts (not actionable):** deepmerge [low], CVE-2026-93753 (prototype poisoning in `mergeObject`) — the vulnerable range covers every published 4.2.0–4.3.1 release and no patched version exists yet. deepmerge is a dev-tooling transitive here (no application imports it). Revisit when upstream publishes a fix.
 
 **Final repo state:** `main @ 8d2008345`, 0 open PRs, CI green on every merge commit, deploys queued (02:49/03:03 UTC runs — lockfile-only changes; both sites already serve the #57 resilience fix and were verified healthy at 4,963 units).
+
+---
+
+## Part 8 — Telegram 3-way dispatch, closed end-to-end (2026-11-13, 04:00–04:50 UTC)
+
+**The gap.** The 3-way viewing dispatch (CEO / Team Leader / Sales Advisor) read `TELEGRAM_*_CHAT_ID` env vars — but a Telegram chat id only becomes knowable AFTER each stakeholder messages the bot once, and the only capture path was "operator reads the `/start` reply, pastes the id into GitHub secrets, redeploys". That never happened; the dispatch has honestly skipped all three roles since it shipped (2026-11-12). This was the last open operator item.
+
+**The fix (PR #62, merge `05455b65e`, CI fully green):**
+
+| Piece | What |
+|---|---|
+| Migration 044 | `public.telegram_role_chats` — one row per staff ROLE (chat id, registrant user id, verified, last_tested_at); staff-only read, service-role writes, Realtime-streamed (037 conventions). **Applied to production** (ledger `20261113044000`, `1 applied · 0 failed`). |
+| `/staffsetup <role>` | a staff operator self-registers THEIR chat in one message; gated fail-closed by `TELEGRAM_STAFF_USER_IDS`; the confirmation send doubles as verification. `/staffstatus` lists all lanes. |
+| Resolver | `lib/server/telegram-role-chats` — per role: env override (ops escape hatch) → DB row → honest skip. Never throws; missing table / DB outage degrade to env-only, so the visitor-facing 201 of `/api/viewing-requests` is untouchable. |
+| Dispatch routes | `/api/viewing-requests` 3-way + `/api/inquiries` sales lane resolve through it; response shape unchanged. |
+| Admin API | `GET/POST /api/admin/telegram-role-chats` — lane status (env/database/none) + verify test-send with `verified`/`last_tested_at` stamping. |
+| Tests | 18 new (resolver order + degradation, fail-closed gates, authorized registration, honest failure reporting) + adjacent suites 122/122 green. |
+
+**Verified live** (client deployment `04:39Z`): health ✅, inventory `supabase/4,996/complete:true` ✅, webhook rejects missing/wrong secret (401) ✅, admin route 401s unauthenticated ✅, probe with the correct secret processes (200 `{ok:true}`) ✅. Final production-smoke: **15/15 PASS**.
+
+**The one thing code cannot fix — the bot token is dead.** Diagnostics (values never printed): the GitHub `TELEGRAM_BOT_TOKEN` secret is **Unauthorized** (revoked/regenerated at BotFather), the Vercel **client project has NO token at all**, and the Vercel admin project's token is malformed (**Not Found** at Telegram). Until a fresh token is installed, no Telegram feature can send — the new flow included. *Operator steps, 5 minutes:*
+
+1. BotFather → `/mybots` → select the bot → **API Token** → *Revoke current token* (or create a new bot) — copy the new token.
+2. Update the `TELEGRAM_BOT_TOKEN` secret (GitHub repo settings) — the deploy pipeline's env-sync pushes it to both Vercel projects on the next deploy.
+3. Also set `TELEGRAM_STAFF_USER_IDS` (comma-separated Telegram user ids of the CEO/TL/SA operators).
+4. Push any commit (or re-run deploy-vercel) after the admin quota window resets (~24h from 04:48 UTC).
+5. Each stakeholder opens the bot chat and sends `/staffsetup ceo` (or `team_leader` / `sales_advisor`) — done; verify with `/staffstatus` or the admin console.
+
+**Incident handled en route:** the repo owner pushed `61fb3f5a9` (whatsapp-bot Baileys listener) with a new `apps/whatsapp-bot/package.json` but **without regenerating `pnpm-lock.yaml`**, which broke every frozen-lockfile install (CI, the Supabase migration lane, Vercel builds) with `ERR_PNPM_OUTDATED_LOCKFILE`. Fixed mechanically in `bc18736ec` (lockfile regenerated for the new importer, no semantic changes); the migration apply then completed successfully. The admin Vercel deploy of this commit was quota-blocked (`api-deployments-free-per-day`, 100+ deploys that day — retried 5×); admin stays healthy on its 04:40Z build and picks everything up on the next deploy after the window resets.

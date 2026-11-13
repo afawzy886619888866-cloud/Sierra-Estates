@@ -4294,3 +4294,2100 @@ index ccf5e1732..3a1af0f2d 100644
      dependencies:
        ansi-styles: 6.2.3
 
+
+========================================================================
+EXTENSION 5 — Telegram 3-way dispatch enablement (2026-11-13, PR #62 + follow-ups)
+========================================================================
+
+PR #62 (merge 05455b65e): database-first role chat ids — migration 044
+public.telegram_role_chats, /staffsetup + /staffstatus bot commands
+(fail-closed behind TELEGRAM_STAFF_USER_IDS), resolver env-override ->
+DB -> honest-skip wired into /api/viewing-requests and /api/inquiries,
+admin API GET/POST /api/admin/telegram-role-chats, env-sync additions,
+18 new tests. Migration 044 applied to production. Live-verified: webhook
+fail-closed 401s, correct-secret probe 200, admin guard 401, smoke 15/15.
+
+bc18736ec: lockfile regeneration for apps/whatsapp-bot (follow-up to the
+owner's 61fb3f5a9, which added the package without a lockfile update and
+broke every frozen-lockfile install).
+
+OPERATOR BLOCKER: TELEGRAM_BOT_TOKEN is revoked (GitHub secret Unauthorized,
+Vercel client empty, Vercel admin malformed). Regenerate via BotFather,
+update the GitHub secret, set TELEGRAM_STAFF_USER_IDS, then each
+stakeholder runs /staffsetup <role> in the bot chat.
+
+From 05455b65efdc778a6870680ef66eaae1517956f6 Mon Sep 17 00:00:00 2001
+From: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date: Fri, 13 Nov 2026 06:20:58 +0200
+Subject: [PATCH] =?UTF-8?q?feat(telegram):=20role=20chat=20ids=20=E2=80=94?=
+ =?UTF-8?q?=20DB-first=203-way=20dispatch=20enablement=20(migration=20044)?=
+ =?UTF-8?q?=20(#62)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The 3-way viewing dispatch (CEO / Team Leader / Sales Advisor) read
+TELEGRAM_*_CHAT_ID env vars that could only be discovered AFTER each
+stakeholder messaged the bot once — the capture path was 'operator reads
+the /start reply, pastes the id into GitHub secrets, redeploys', which
+never happened. The dispatch has therefore honestly skipped all three
+roles since it shipped (2026-11-12).
+
+This closes the loop end-to-end, database-first:
+
+  · migration 044: public.telegram_role_chats — one row per staff ROLE
+    (chat id, display name, registrant user id, verified, last_tested_at),
+    staff-only read, service-role writes, Realtime-streamed (037 pattern).
+  · /staffsetup <role> (bot): a staff operator self-registers THEIR chat
+    in one message — gated fail-closed by TELEGRAM_STAFF_USER_IDS; the
+    confirmation send doubles as verification. /staffstatus lists lanes.
+  · lib/server/telegram-role-chats: resolution per role — env override
+    (ops escape hatch) → telegram_role_chats → honest skip. Never throws:
+    missing table / DB outage degrade to env-only, so the visitor-facing
+    201 of /api/viewing-requests stays untouchable.
+  · /api/viewing-requests + /api/inquiries sales lane now resolve through
+    it (response shape unchanged: same role labels, same delivered flags).
+  · /api/admin/telegram-role-chats: GET lane status (source: env|database|
+    none) + POST verify test-send with verified/last_tested_at stamping.
+  · env-sync: TELEGRAM_{CEO,TEAM_LEADER,SALES_ADVISOR,SALES_REP,ADMIN}_
+    CHAT_ID + TELEGRAM_STAFF_USER_IDS (all optional; unset roles skip
+    honestly, as today).
+
+Tests: 18 new (resolver order/degradation, staffsetup fail-closed gates,
+authorized registration, honest failure reporting) + adjacent suites
+122/122 green. Env-only deployments behave exactly as before.
+
+Co-authored-by: Z User <z@container>
+---
+ .github/workflows/deploy-vercel.yml           |   3 +-
+ .../__tests__/telegram-role-chats.test.ts     | 158 +++++++++++++++++
+ .../__tests__/telegram-staffsetup.test.ts     | 161 +++++++++++++++++
+ .../api/admin/telegram-role-chats/route.ts    | 105 +++++++++++
+ .../app/api/inquiries/route.ts                |   8 +-
+ .../app/api/telegram/webhook/route.ts         |  79 ++++++++-
+ .../app/api/viewing-requests/route.ts         |  35 ++--
+ .../lib/server/telegram-role-chats.ts         | 165 ++++++++++++++++++
+ .../20261113_044_telegram_role_chat_ids.sql   |  89 ++++++++++
+ scripts/sync-vercel-env.js                    |  10 ++
+ .../20261113_044_telegram_role_chat_ids.sql   |  89 ++++++++++
+ 11 files changed, 881 insertions(+), 21 deletions(-)
+ create mode 100644 apps/sierra-estates-realty/__tests__/telegram-role-chats.test.ts
+ create mode 100644 apps/sierra-estates-realty/__tests__/telegram-staffsetup.test.ts
+ create mode 100644 apps/sierra-estates-realty/app/api/admin/telegram-role-chats/route.ts
+ create mode 100644 apps/sierra-estates-realty/lib/server/telegram-role-chats.ts
+ create mode 100644 apps/sierra-estates-realty/supabase/migrations/20261113_044_telegram_role_chat_ids.sql
+ create mode 100644 supabase/migrations/20261113_044_telegram_role_chat_ids.sql
+
+diff --git a/.github/workflows/deploy-vercel.yml b/.github/workflows/deploy-vercel.yml
+index 460ab245f..a3b4b8073 100644
+--- a/.github/workflows/deploy-vercel.yml
++++ b/.github/workflows/deploy-vercel.yml
+@@ -201,7 +201,8 @@ jobs:
+           #   AI & LLMs:             GOOGLE_AI_API_KEY, GEMINI_API_KEY, DEEPSEEK_API_KEY
+           #   Property Finder & AWS: PROPERTY_FINDER_API_KEY, AWS_ACCESS_KEY_ID
+           #   Security:              SESSION_SECRET, SBR_SECRET_KEY, CRON_SECRET, ADMIN_API_KEY
+-          #   Communications:        TELEGRAM_BOT_TOKEN, WHATSAPP_API_TOKEN, SENDGRID_API_KEY
++          #   Communications:        TELEGRAM_BOT_TOKEN, WHATSAPP_API_TOKEN, SENDGRID_API_KEY,
++          #                         TELEGRAM_*_CHAT_ID role lanes (migration 044), TELEGRAM_STAFF_USER_IDS
+           ARGS=""
+           if [ "$TARGET_ENV" = "production" ]; then ARGS="--prod"; fi
+           attempt=1
+diff --git a/apps/sierra-estates-realty/__tests__/telegram-role-chats.test.ts b/apps/sierra-estates-realty/__tests__/telegram-role-chats.test.ts
+new file mode 100644
+index 000000000..31a44293f
+--- /dev/null
++++ b/apps/sierra-estates-realty/__tests__/telegram-role-chats.test.ts
+@@ -0,0 +1,158 @@
++/**
++ * lib/server/telegram-role-chats — role chat resolution for the 3-way
++ * viewing dispatch and the inquiries sales lane (migration 044).
++ *
++ * Contract under test:
++ *  - resolution order per role: env override → database row → honest miss;
++ *  - env overrides are trimmed and empty strings count as unset;
++ *  - database failures (missing table, no credentials) degrade to env-only,
++ *    NEVER throw — the dispatch can never break the visitor's 201;
++ *  - sendRoleTestMessage: no token → honest failure with zero network calls;
++ *    Telegram API error surfaces its description.
++ */
++const listMock = jest.fn();
++const adminMock = jest.fn();
++
++jest.mock('@sierra-estates/db', () => ({
++  listRecords: (...args: unknown[]) => listMock(...args),
++  getSupabaseAdmin: (...args: unknown[]) => adminMock(...args),
++}));
++
++import {
++  envChatIdFor,
++  resolveRoleChats,
++  resolveRoleChat,
++  sendRoleTestMessage,
++} from '../lib/server/telegram-role-chats';
++
++const fetchMock = jest.fn();
++
++beforeEach(() => {
++  jest.resetModules();
++  listMock.mockReset();
++  adminMock.mockReset();
++  adminMock.mockImplementation(() => ({})); // DB configured by default
++  fetchMock.mockReset();
++  global.fetch = fetchMock as unknown as typeof fetch;
++  delete process.env.TELEGRAM_CEO_CHAT_ID;
++  delete process.env.TELEGRAM_TEAM_LEADER_CHAT_ID;
++  delete process.env.TELEGRAM_SALES_ADVISOR_CHAT_ID;
++  delete process.env.TELEGRAM_BOT_TOKEN;
++});
++
++describe('envChatIdFor', () => {
++  it('returns a trimmed env value', () => {
++    process.env.TELEGRAM_CEO_CHAT_ID = '  12345  ';
++    expect(envChatIdFor('ceo')).toBe('12345');
++  });
++
++  it('treats empty/whitespace env as unset', () => {
++    process.env.TELEGRAM_CEO_CHAT_ID = '   ';
++    expect(envChatIdFor('ceo')).toBeNull();
++  });
++});
++
++describe('resolveRoleChats — order and sources', () => {
++  it('resolves env overrides first, then database rows, then misses', async () => {
++    process.env.TELEGRAM_CEO_CHAT_ID = '111';
++    listMock.mockResolvedValue([
++      { role: 'ceo', chatId: '999' },      // env must WIN over this
++      { role: 'team_leader', chatId: '222' }, // db-sourced
++      // sales_advisor: nowhere → miss
++    ]);
++
++    const result = await resolveRoleChats();
++
++    expect(result).toEqual([
++      { role: 'ceo', chatId: '111', source: 'env' },
++      { role: 'team_leader', chatId: '222', source: 'database' },
++      { role: 'sales_advisor', chatId: null, source: 'none' },
++    ]);
++  });
++
++  it('ignores unknown roles and blank chat ids from the table', async () => {
++    listMock.mockResolvedValue([
++      { role: 'intruder', chatId: '666' },
++      { role: 'ceo', chatId: '   ' },
++    ]);
++    const result = await resolveRoleChats();
++    expect(result.find((r) => r.role === 'ceo')?.chatId).toBeNull();
++  });
++
++  it('degrades to env-only when the DB is unconfigured (never throws)', async () => {
++    adminMock.mockImplementation(() => {
++      throw new Error('getSupabaseAdmin: SUPABASE_SERVICE_ROLE_KEY missing');
++    });
++    process.env.TELEGRAM_SALES_ADVISOR_CHAT_ID = '333';
++
++    const result = await resolveRoleChats();
++
++    expect(listMock).not.toHaveBeenCalled();
++    expect(result.find((r) => r.role === 'sales_advisor')).toEqual({
++      role: 'sales_advisor',
++      chatId: '333',
++      source: 'env',
++    });
++    expect(result.find((r) => r.role === 'ceo')?.source).toBe('none');
++  });
++
++  it('degrades to env-only when the table read fails (migration not applied)', async () => {
++    listMock.mockRejectedValue(new Error('PGRST205: telegram_role_chats not found'));
++    process.env.TELEGRAM_TEAM_LEADER_CHAT_ID = '222';
++
++    const result = await resolveRoleChats();
++
++    expect(result.find((r) => r.role === 'team_leader')?.source).toBe('env');
++    expect(result.find((r) => r.role === 'ceo')?.source).toBe('none');
++  });
++});
++
++describe('resolveRoleChat — single role (inquiries sales lane)', () => {
++  it('resolves one role from the database with a filtered query', async () => {
++    listMock.mockResolvedValue([{ role: 'sales_advisor', chatId: '444' }]);
++    const result = await resolveRoleChat('sales_advisor');
++    expect(result).toEqual({ role: 'sales_advisor', chatId: '444', source: 'database' });
++    expect(listMock).toHaveBeenCalledWith(
++      'telegram_role_chats',
++      expect.objectContaining({
++        where: [{ column: 'role', value: 'sales_advisor' }],
++        limit: 1,
++      }),
++    );
++  });
++
++  it('misses honestly when nowhere is configured', async () => {
++    listMock.mockResolvedValue([]);
++    expect(await resolveRoleChat('ceo')).toEqual({ role: 'ceo', chatId: null, source: 'none' });
++  });
++});
++
++describe('sendRoleTestMessage', () => {
++  it('fails honestly with zero network calls when no bot token', async () => {
++    const result = await sendRoleTestMessage('123', 'CEO');
++    expect(result.ok).toBe(false);
++    expect(result.error).toContain('TELEGRAM_BOT_TOKEN');
++    expect(fetchMock).not.toHaveBeenCalled();
++  });
++
++  it('surfaces the Telegram API error description on failure', async () => {
++    process.env.TELEGRAM_BOT_TOKEN = 'tok';
++    fetchMock.mockResolvedValue({
++      ok: false,
++      status: 400,
++      json: async () => ({ description: 'Bad Request: chat not found' }),
++    } as unknown as Response);
++    const result = await sendRoleTestMessage('123', 'CEO');
++    expect(result).toEqual({ ok: false, error: 'Bad Request: chat not found' });
++  });
++
++  it('succeeds when Telegram accepts the message', async () => {
++    process.env.TELEGRAM_BOT_TOKEN = 'tok';
++    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) } as unknown as Response);
++    const result = await sendRoleTestMessage('123', 'Team Leader');
++    expect(result.ok).toBe(true);
++    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
++    expect(body.chat_id).toBe('123');
++    expect(body.text).toContain('Team Leader');
++  });
++});
+diff --git a/apps/sierra-estates-realty/__tests__/telegram-staffsetup.test.ts b/apps/sierra-estates-realty/__tests__/telegram-staffsetup.test.ts
+new file mode 100644
+index 000000000..a34926cf4
+--- /dev/null
++++ b/apps/sierra-estates-realty/__tests__/telegram-staffsetup.test.ts
+@@ -0,0 +1,161 @@
++/**
++ * /staffsetup + /staffstatus in the Telegram webhook — staff role chat
++ * self-registration (migration 044).
++ *
++ * Contract under test:
++ *  - when TELEGRAM_STAFF_USER_IDS is UNSET the command is locked for
++ *    everyone (fail-closed) and registers nothing;
++ *  - a sender NOT on the staff list is refused and registers nothing;
++ *  - an authorized sender with a valid role registers THIS chat via
++ *    upsertRecord on telegram_role_chats (role key) and gets the
++ *    confirmation that doubles as verification;
++ *  - a bad role gets usage help and registers nothing;
++ *  - a failed registration send is reported honestly, row still kept.
++ */
++const insertMock = jest.fn();
++const listMock = jest.fn();
++const countMock = jest.fn();
++const upsertMock = jest.fn();
++const adminMock = jest.fn();
++
++jest.mock('@sierra-estates/db', () => ({
++  insertRecord: (...args: unknown[]) => insertMock(...args),
++  listRecords: (...args: unknown[]) => listMock(...args),
++  countRecords: (...args: unknown[]) => countMock(...args),
++  upsertRecord: (...args: unknown[]) => upsertMock(...args),
++  getSupabaseAdmin: (...args: unknown[]) => adminMock(...args),
++}));
++
++import { POST } from '@/app/api/telegram/webhook/route';
++
++const fetchMock = jest.fn();
++
++beforeEach(() => {
++  jest.resetModules();
++  insertMock.mockReset();
++  listMock.mockReset();
++  countMock.mockReset();
++  upsertMock.mockReset();
++  adminMock.mockImplementation(() => ({})); // DB configured
++  fetchMock.mockReset();
++  fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) } as unknown as Response);
++  global.fetch = fetchMock as unknown as typeof fetch;
++  process.env.TELEGRAM_BOT_TOKEN = 'test-token';
++  process.env.TELEGRAM_WEBHOOK_SECRET = 'whsec';
++  delete process.env.TELEGRAM_STAFF_USER_IDS;
++  delete process.env.TELEGRAM_CEO_CHAT_ID;
++  delete process.env.TELEGRAM_TEAM_LEADER_CHAT_ID;
++  delete process.env.TELEGRAM_SALES_ADVISOR_CHAT_ID;
++});
++
++afterEach(() => {
++  delete process.env.TELEGRAM_STAFF_USER_IDS;
++});
++
++/** Sends a Telegram update through the webhook with the right secret. */
++function makeUpdate(text: string, fromId: number, chatId = -100200) {
++  return new Request('http://localhost:3000/api/telegram/webhook', {
++    method: 'POST',
++    headers: {
++      'Content-Type': 'application/json',
++      'X-Telegram-Bot-Api-Secret-Token': 'whsec',
++    },
++    body: JSON.stringify({
++      update_id: Math.floor(Math.random() * 1e9),
++      message: { text, chat: { id: chatId }, from: { id: fromId, username: 'tester' } },
++    }),
++  });
++}
++
++/** The bot's reply to `chatId`, if any send happened. */
++async function botReply(chatId = -100200): Promise<string> {
++  const calls = fetchMock.mock.calls.filter(
++    (c) => String(c[0]).includes('/sendMessage') &&
++      JSON.parse((c[1] as RequestInit).body as string).chat_id === chatId
++  );
++  return calls.length ? JSON.parse((calls.at(-1)![1] as RequestInit).body as string).text : '';
++}
++
++describe('/staffsetup — fail-closed gates', () => {
++  it('locks the command for everyone when TELEGRAM_STAFF_USER_IDS is unset', async () => {
++    const res = await POST(makeUpdate('/staffsetup ceo', 42) as never);
++    expect(res.status).toBe(200);
++    expect(await botReply()).toContain('locked');
++    expect(upsertMock).not.toHaveBeenCalled();
++  });
++
++  it('refuses a sender who is not on the staff list', async () => {
++    process.env.TELEGRAM_STAFF_USER_IDS = '111, 222';
++    const res = await POST(makeUpdate('/staffsetup ceo', 42) as never);
++    expect(res.status).toBe(200);
++    expect(await botReply()).toContain('Not authorized');
++    expect(upsertMock).not.toHaveBeenCalled();
++  });
++});
++
++describe('/staffsetup — authorized registration', () => {
++  it('registers this chat for the role and confirms', async () => {
++    process.env.TELEGRAM_STAFF_USER_IDS = '111';
++    upsertMock.mockResolvedValue({ role: 'ceo', chatId: '-100200' });
++
++    const res = await POST(makeUpdate('/staffsetup ceo', 111) as never);
++    expect(res.status).toBe(200);
++
++    expect(upsertMock).toHaveBeenCalledWith(
++      'telegram_role_chats',
++      expect.objectContaining({ role: 'ceo', chatId: '-100200', verified: true }),
++      'role',
++    );
++    const reply = await botReply();
++    expect(reply).toContain('CEO');
++    expect(reply).toContain('registered');
++  });
++
++  it('gives usage help for an unknown role and registers nothing', async () => {
++    process.env.TELEGRAM_STAFF_USER_IDS = '111';
++    const res = await POST(makeUpdate('/staffsetup president', 111) as never);
++    expect(res.status).toBe(200);
++    expect(await botReply()).toContain('Usage');
++    expect(upsertMock).not.toHaveBeenCalled();
++  });
++
++  it('reports a failed confirmation send honestly (row still registered)', async () => {
++    process.env.TELEGRAM_STAFF_USER_IDS = '111';
++    upsertMock.mockResolvedValue({ role: 'team_leader', chatId: '-100200' });
++    // Call order: 1) the verification send itself → fails;
++    //             2) the bot's in-chat reply → succeeds.
++    fetchMock
++      .mockResolvedValueOnce({
++        ok: false,
++        status: 400,
++        json: async () => ({ description: 'Bad Request: chat not found' }),
++      } as unknown as Response)
++      .mockResolvedValue({ ok: true, json: async () => ({ ok: true }) } as unknown as Response);
++
++    const res = await POST(makeUpdate('/staffsetup team_leader', 111) as never);
++    expect(res.status).toBe(200);
++    expect(upsertMock).toHaveBeenCalled();
++    expect(await botReply()).toContain('failed');
++  });
++});
++
++describe('/staffstatus', () => {
++  it('lists lane status for authorized staff', async () => {
++    process.env.TELEGRAM_STAFF_USER_IDS = '111';
++    listMock.mockResolvedValue([
++      { role: 'ceo', chatId: '-100200' },
++    ]);
++    const res = await POST(makeUpdate('/staffstatus', 111) as never);
++    expect(res.status).toBe(200);
++    const reply = await botReply();
++    expect(reply).toContain('dispatch lanes');
++    expect(reply).toContain('registered');
++    expect(reply).toContain('NOT configured');
++  });
++
++  it('refuses unauthorized callers', async () => {
++    process.env.TELEGRAM_STAFF_USER_IDS = '111';
++    await POST(makeUpdate('/staffstatus', 999) as never);
++    expect(await botReply()).toContain('Not authorized');
++  });
++});
+diff --git a/apps/sierra-estates-realty/app/api/admin/telegram-role-chats/route.ts b/apps/sierra-estates-realty/app/api/admin/telegram-role-chats/route.ts
+new file mode 100644
+index 000000000..b045a9a17
+--- /dev/null
++++ b/apps/sierra-estates-realty/app/api/admin/telegram-role-chats/route.ts
+@@ -0,0 +1,105 @@
++/**
++ * GET  /api/admin/telegram-role-chats — staff dispatch-lane status for the
++ * admin console: every 3-way dispatch role (CEO / Team Leader / Sales
++ * Advisor) with its resolved chat id and WHERE it resolved from (env
++ * override, self-registered database row, or not configured).
++ *
++ * POST /api/admin/telegram-role-chats — { role } sends the verification
++ * message to that role's registered chat (the same sendRoleTestMessage the
++ * /staffsetup flow uses) and stamps last_tested_at + verified on success.
++ * Never sends to an env-only lane's id? It does — verification of the live
++ * chat id is useful in both modes; the row is only stamped when a database
++ * registration exists.
++ *
++ * Table: public.telegram_role_chats (migration 044). Staff-only via
++ * verifyAdminRequest; service-role writes bypass RLS by design.
++ */
++import { NextRequest, NextResponse } from 'next/server';
++import { updateRecord, listRecords } from '@sierra-estates/db';
++import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
++import { logger } from '@/lib/logger';
++import {
++  DISPATCH_ROLES,
++  resolveRoleChats,
++  sendRoleTestMessage,
++  type RoleKey,
++} from '@/lib/server/telegram-role-chats';
++
++export const runtime = 'nodejs';
++export const dynamic = 'force-dynamic';
++
++export async function GET(req: NextRequest) {
++  const auth = await verifyAdminRequest(req);
++  if (!auth.authenticated) return unauthorizedResponse();
++
++  const [resolved, rows] = await Promise.all([
++    resolveRoleChats(),
++    listRecords<{ role: RoleKey; chatId: string; displayName: string | null; verified: boolean; lastTestedAt: string | null; updatedAt: string }>(
++      'telegram_role_chats',
++      { select: 'role,chat_id,display_name,verified,last_tested_at,updated_at', limit: 10 },
++    ).catch(() => []),
++  ]);
++  const rowByRole = new Map(rows.map((r) => [r.role, r]));
++
++  const lanes = DISPATCH_ROLES.map((d) => {
++    const r = resolved.find((x) => x.role === d.role)!;
++    const row = rowByRole.get(d.role);
++    return {
++      role: d.role,
++      label: d.label,
++      email: d.email,
++      chatId: r.chatId,
++      source: r.source,
++      displayName: row?.displayName ?? null,
++      verified: row?.verified ?? false,
++      lastTestedAt: row?.lastTestedAt ?? null,
++      updatedAt: row?.updatedAt ?? null,
++    };
++  });
++
++  return NextResponse.json({ lanes });
++}
++
++export async function POST(req: NextRequest) {
++  const auth = await verifyAdminRequest(req);
++  if (!auth.authenticated) return unauthorizedResponse();
++
++  let role: string;
++  try {
++    const body = (await req.json()) as { role?: string };
++    role = String(body.role ?? '').toLowerCase();
++  } catch {
++    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
++  }
++  if (!(DISPATCH_ROLES.some((d) => d.role === role))) {
++    return NextResponse.json(
++      { error: `role must be one of: ${DISPATCH_ROLES.map((d) => d.role).join(', ')}` },
++      { status: 400 },
++    );
++  }
++
++  const resolved = (await resolveRoleChats()).find((x) => x.role === role)!;
++  if (!resolved.chatId) {
++    return NextResponse.json(
++      { error: `Role ${role} has no chat id (neither env nor /staffsetup registration). Have the operator run /staffsetup in their bot chat.` },
++      { status: 409 },
++    );
++  }
++
++  const label = DISPATCH_ROLES.find((d) => d.role === role)!.label;
++  const test = await sendRoleTestMessage(resolved.chatId, label);
++  if (!test.ok) {
++    logger.warn(`[admin/telegram-role-chats] verify send to ${role} failed: ${test.error}`);
++    return NextResponse.json({ role, sent: false, error: test.error }, { status: 502 });
++  }
++
++  // Stamp the database row when one exists (database-sourced lanes).
++  if (resolved.source === 'database') {
++    try {
++      await updateRecord('telegram_role_chats', role, { verified: true, lastTestedAt: new Date().toISOString() }, 'role');
++    } catch (err) {
++      logger.warn(`[admin/telegram-role-chats] could not stamp ${role}: ${err instanceof Error ? err.message : err}`);
++    }
++  }
++  return NextResponse.json({ role, sent: true, chatId: resolved.chatId, source: resolved.source });
++}
+diff --git a/apps/sierra-estates-realty/app/api/inquiries/route.ts b/apps/sierra-estates-realty/app/api/inquiries/route.ts
+index d1bf46318..ac5a395b8 100644
+--- a/apps/sierra-estates-realty/app/api/inquiries/route.ts
++++ b/apps/sierra-estates-realty/app/api/inquiries/route.ts
+@@ -192,7 +192,13 @@ export async function POST(request: Request) {
+ 
+     try {
+       const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
+-      const salesChatId = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
++      const { resolveRoleChat } = await import('@/lib/server/telegram-role-chats');
++      // Sales lane: explicit sales-rep/admin env vars keep precedence (ops
++      // escape hatch), then the self-registered Sales Advisor role chat
++      // (public.telegram_role_chats, migration 044). Unset → honest skip —
++      // sendTelegramMessage already no-ops on a missing chat id.
++      const salesEnv = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
++      const salesChatId = salesEnv || (await resolveRoleChat('sales_advisor')).chatId || undefined;
+       await sendTelegramMessage(
+         `🎯 <b>New Website Lead (${rest.mode.toUpperCase()}) — 25% Discount Applied</b>\n` +
+         `👤 Client: <b>${rest.name}</b> (${rest.phone})\n` +
+diff --git a/apps/sierra-estates-realty/app/api/telegram/webhook/route.ts b/apps/sierra-estates-realty/app/api/telegram/webhook/route.ts
+index 28b4fc481..650f29f6a 100644
+--- a/apps/sierra-estates-realty/app/api/telegram/webhook/route.ts
++++ b/apps/sierra-estates-realty/app/api/telegram/webhook/route.ts
+@@ -1,5 +1,5 @@
+ import { NextRequest, NextResponse } from 'next/server';
+-import { countRecords, getSupabaseAdmin, insertRecord, listRecords } from '@sierra-estates/db';
++import { countRecords, getSupabaseAdmin, insertRecord, listRecords, upsertRecord } from '@sierra-estates/db';
+ import { logger } from '@/lib/logger';
+ import { verifySharedSecret } from '@/lib/server/webhook-auth';
+ import {
+@@ -177,12 +177,87 @@ async function handleTelegramWebhook(req: NextRequest) {
+       isMockMode = true;
+     }
+ 
++    // ── Staff role chat self-registration (migration 044) ────────────────
++    // /staffsetup <role> — a staff operator binds THIS chat to their ROLE
++    //   (ceo | team_leader | sales_advisor). Gate: the sender's Telegram
++    //   USER id must be listed in TELEGRAM_STAFF_USER_IDS (comma-separated).
++    //   When that gate is unset the command explains itself instead of
++    //   accepting registrations from anyone (fail-closed, § never fabricate
++    //   authority). The 3-way viewing dispatch + inquiries sales lane then
++    //   resolve this chat automatically — no env edit, no redeploy.
++    // /staffstatus — shows which roles are registered (same gate).
++    if (text.startsWith('/staffsetup') || text.startsWith('/staffstatus')) {
++      const staffIds = (process.env.TELEGRAM_STAFF_USER_IDS ?? '')
++        .split(',')
++        .map((s) => s.trim())
++        .filter(Boolean);
++      const senderId = message.from?.id;
++      if (staffIds.length === 0) {
++        await sendMessage(
++          `🔒 <b>/staffsetup is locked.</b>\n\n` +
++          `Set <code>TELEGRAM_STAFF_USER_IDS</code> (comma-separated Telegram user ids) to authorize staff operators, then run:\n` +
++          `<code>/staffsetup ceo|team_leader|sales_advisor</code>`
++        );
++        return NextResponse.json({ ok: true });
++      }
++      if (!senderId || !staffIds.includes(String(senderId))) {
++        await sendMessage(`⛔ Not authorized. Ask an administrator to add your Telegram user id to <code>TELEGRAM_STAFF_USER_IDS</code>.`);
++        return NextResponse.json({ ok: true });
++      }
++
++      const { ROLE_KEYS, DISPATCH_ROLES, resolveRoleChats, sendRoleTestMessage } =
++        await import('@/lib/server/telegram-role-chats');
++
++      if (text.startsWith('/staffstatus')) {
++        try {
++          const resolved = await resolveRoleChats();
++          const lines = resolved.map((r) => {
++            const label = DISPATCH_ROLES.find((d) => d.role === r.role)?.label ?? r.role;
++            const from = r.source === 'env' ? 'env override' : r.source === 'database' ? 'registered' : 'NOT configured';
++            return `• <b>${label}</b>: ${from}`;
++          });
++          await sendMessage(`<b>3-way dispatch lanes</b>\n${lines.join('\n')}`);
++        } catch (err: any) {
++          await sendMessage(`⚠️ Could not read role registrations: ${err?.message}`);
++        }
++        return NextResponse.json({ ok: true });
++      }
++
++      const requested = text.replace('/staffsetup', '').trim().toLowerCase();
++      if (!(ROLE_KEYS as readonly string[]).includes(requested)) {
++        await sendMessage(
++          `Usage: <code>/staffsetup ceo|team_leader|sales_advisor</code>\n` +
++          `(got ${requested ? `<code>${requested}</code>` : 'nothing'})`
++        );
++        return NextResponse.json({ ok: true });
++      }
++      const label = DISPATCH_ROLES.find((d) => d.role === requested)?.label ?? requested;
++      try {
++        await upsertRecord('telegram_role_chats', {
++          role: requested,
++          chatId: String(chatId),
++          displayName: message.from?.username ?? message.from?.first_name ?? null,
++          registeredBy: senderId,
++          verified: true, // the registration echo below IS the verification send
++        }, 'role');
++        const test = await sendRoleTestMessage(String(chatId), label);
++        await sendMessage(
++          test.ok
++            ? `✅ <b>${label}</b> dispatch lane registered to this chat. Viewing dispatches and lead alerts for your role now arrive here.`
++            : `⚠️ Registered <b>${label}</b>, but the confirmation send failed: ${test.error ?? 'unknown error'} — verify the bot can message this chat.`
++        );
++      } catch (err: any) {
++        await sendMessage(`⚠️ Registration failed: ${err?.message}`);
++      }
++      return NextResponse.json({ ok: true });
++    }
++
+     if (text === '/start') {
+       await sendMessage(`
+ <b>Welcome to the Sierra Estates Bot</b>
+ 
+ Your Chat ID is: <code>${chatId}</code>
+-Please add this to your <code>.env.local</code> as <code>TELEGRAM_CHAT_ID</code> to enable operational notifications.
++Staff can self-register their dispatch lane with <code>/staffsetup ceo|team_leader|sales_advisor</code>.
+ 
+ Commands:
+ /stats - View executive performance
+diff --git a/apps/sierra-estates-realty/app/api/viewing-requests/route.ts b/apps/sierra-estates-realty/app/api/viewing-requests/route.ts
+index b0a30e348..725b00e6a 100644
+--- a/apps/sierra-estates-realty/app/api/viewing-requests/route.ts
++++ b/apps/sierra-estates-realty/app/api/viewing-requests/route.ts
+@@ -219,15 +219,16 @@ export async function POST(request: NextRequest) {
+     // attendees (plus the visitor), but a link in the visitor's response is
+     // not a dispatch — staff never saw it. The repo has no email provider
+     // wired (§21: never fabricate a delivery channel), so the operational
+-    // dispatch rides the existing Telegram lane: each stakeholder ROLE chat
+-    // (when its env chat id is configured) receives the invite link with the
+-    // real slot. Unconfigured roles are honestly reported as skipped in the
+-    // response, and a failure here can never break the visitor's 201.
+-    const dispatchRoles: Array<{ role: string; chatEnv: string; email: string }> = [
+-      { role: 'CEO (Ahmed Fawzy)', chatEnv: 'TELEGRAM_CEO_CHAT_ID', email: 'a.fawzy8866@gmail.com' },
+-      { role: 'Team Leader', chatEnv: 'TELEGRAM_TEAM_LEADER_CHAT_ID', email: 'teamleader@sierra-estates.net' },
+-      { role: 'Sales Advisor', chatEnv: 'TELEGRAM_SALES_ADVISOR_CHAT_ID', email: 'advisory@sierra-estates.net' },
+-    ];
++    // dispatch rides the existing Telegram lane. Role chat ids resolve
++    // env-first (TELEGRAM_*_CHAT_ID, the ops escape hatch) then from
++    // public.telegram_role_chats (migration 044 — each stakeholder
++    // self-registers their chat via the bot's /staffsetup command; see
++    // lib/server/telegram-role-chats). Unconfigured roles are honestly
++    // reported as skipped in the response, and a failure here can never
++    // break the visitor's 201.
++    const { resolveRoleChats, DISPATCH_ROLES } = await import('@/lib/server/telegram-role-chats');
++    const roleChats = await resolveRoleChats();
++    const chatIdByRole = new Map(roleChats.map((r) => [r.role, r]));
+     const calendarInviteForStaff =
+       `📅 Property Viewing — ${data.propertyCode}\n` +
+       `Client: ${data.visitorName} (${phone})\n` +
+@@ -247,19 +248,19 @@ export async function POST(request: NextRequest) {
+       `&dates=${calDate}T100000Z/${calDate}T110000Z` +
+       `&details=${encodeURIComponent(`Viewing requested by ${data.visitorName} · ${phone}. Unit ${data.propertyCode}. Eligible for 25% Website Commission Discount. 60-Minute Golden Hour Follow-Up Tracker Active.`)}` +
+       `&add=${encodeURIComponent(attendees)}`;
+-    for (const role of dispatchRoles) {
+-      const chatId = process.env[role.chatEnv]?.trim();
+-      if (!chatId) {
+-        dispatchResults.push({ role: role.role, delivered: false });
++    for (const role of DISPATCH_ROLES) {
++      const resolved = chatIdByRole.get(role.role);
++      if (!resolved?.chatId) {
++        dispatchResults.push({ role: role.label, delivered: false });
+         continue;
+       }
+       try {
+         const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
+-        await sendTelegramMessage(`${calendarInviteForStaff}${staffCalendarLink}`, chatId);
+-        dispatchResults.push({ role: role.role, delivered: true });
++        await sendTelegramMessage(`${calendarInviteForStaff}${staffCalendarLink}`, resolved.chatId);
++        dispatchResults.push({ role: role.label, delivered: true });
+       } catch (dispatchErr) {
+-        logger.warn(`[viewing-requests] calendar dispatch to ${role.role} failed (non-fatal):`, dispatchErr);
+-        dispatchResults.push({ role: role.role, delivered: false });
++        logger.warn(`[viewing-requests] calendar dispatch to ${role.label} failed (non-fatal):`, dispatchErr);
++        dispatchResults.push({ role: role.label, delivered: false });
+       }
+     }
+ 
+diff --git a/apps/sierra-estates-realty/lib/server/telegram-role-chats.ts b/apps/sierra-estates-realty/lib/server/telegram-role-chats.ts
+new file mode 100644
+index 000000000..199705db4
+--- /dev/null
++++ b/apps/sierra-estates-realty/lib/server/telegram-role-chats.ts
+@@ -0,0 +1,165 @@
++/**
++ * lib/server/telegram-role-chats — database-first resolution of the staff
++ * ROLE chat ids used by the 3-way viewing dispatch (CEO / Team Leader /
++ * Sales Advisor) and the sales lane of /api/inquiries.
++ *
++ * WHY (2026-11-13): the dispatch routes read TELEGRAM_*_CHAT_ID env vars,
++ * but a Telegram chat id only becomes knowable AFTER the stakeholder's
++ * operator has messaged the bot once — an env-first design meant the ids
++ * could never be captured without a manual secrets edit + redeploy, so the
++ * dispatch has honestly skipped all three roles since it shipped.
++ * Migration 044 adds public.telegram_role_chats (self-registered via the
++ * bot's /staffsetup command, staff-auditable in the admin console).
++ *
++ * RESOLUTION ORDER (per role):
++ *   1. explicit env override — TELEGRAM_CEO_CHAT_ID etc., the ops escape
++ *      hatch (existing deployments keep working unchanged);
++ *   2. public.telegram_role_chats — the durable, self-registered source;
++ *   3. nothing — the caller reports an honest skip, exactly as before.
++ *
++ * This module NEVER throws on read: a missing table (migration not yet
++ * applied) or a Supabase outage degrades to "role unconfigured", keeping
++ * the visitor-facing 201 of /api/viewing-requests untouchable (§ dispatch
++ * can never break the request).
++ */
++import { listRecords, getSupabaseAdmin } from '@sierra-estates/db';
++
++export const ROLE_KEYS = ['ceo', 'team_leader', 'sales_advisor'] as const;
++export type RoleKey = (typeof ROLE_KEYS)[number];
++
++export interface RoleChatSource {
++  role: RoleKey;
++  chatId: string;
++  /** Where the id came from — surfaced in dispatch results for auditability. */
++  source: 'env' | 'database';
++}
++
++export interface RoleChatMiss {
++  role: RoleKey;
++  chatId: null;
++  source: 'none';
++}
++
++export type RoleChatResolution = RoleChatSource | RoleChatMiss;
++
++/** Dispatch roster — mirrors the roster in /api/viewing-requests. */
++export const DISPATCH_ROLES: ReadonlyArray<{
++  role: RoleKey;
++  label: string;
++  envVar: string;
++  email: string;
++}> = [
++  { role: 'ceo', label: 'CEO (Ahmed Fawzy)', envVar: 'TELEGRAM_CEO_CHAT_ID', email: 'a.fawzy8866@gmail.com' },
++  { role: 'team_leader', label: 'Team Leader', envVar: 'TELEGRAM_TEAM_LEADER_CHAT_ID', email: 'teamleader@sierra-estates.net' },
++  { role: 'sales_advisor', label: 'Sales Advisor', envVar: 'TELEGRAM_SALES_ADVISOR_CHAT_ID', email: 'advisory@sierra-estates.net' },
++];
++
++const ENV_FOR_ROLE: Record<RoleKey, string> = {
++  ceo: 'TELEGRAM_CEO_CHAT_ID',
++  team_leader: 'TELEGRAM_TEAM_LEADER_CHAT_ID',
++  sales_advisor: 'TELEGRAM_SALES_ADVISOR_CHAT_ID',
++};
++
++/** Env override first (ops escape hatch), trimmed; empty string counts as unset. */
++export function envChatIdFor(role: RoleKey): string | null {
++  const value = process.env[ENV_FOR_ROLE[role]]?.trim();
++  return value ? value : null;
++}
++
++/**
++ * Reads public.telegram_role_chats once per call (max 3 rows) and returns a
++ * role → chat id map. Returns an empty map on any failure — the resolver
++ * contract degrades to env-only, never throws.
++ */
++async function dbChatIdsByRole(): Promise<Partial<Record<RoleKey, string>>> {
++  try {
++    getSupabaseAdmin(); // throws when unconfigured — same honest check the webhook uses
++    const rows = await listRecords<{ role: RoleKey; chatId: string }>('telegram_role_chats', {
++      select: 'role,chat_id',
++      limit: ROLE_KEYS.length,
++    });
++    const map: Partial<Record<RoleKey, string>> = {};
++    for (const row of rows) {
++      if ((ROLE_KEYS as readonly string[]).includes(row.role)) {
++        const chatId = row.chatId?.trim();
++        if (chatId) map[row.role] = chatId;
++      }
++    }
++    return map;
++  } catch {
++    return {}; // table missing, DB down, or credentials absent — env-only mode
++  }
++}
++
++/**
++ * Resolve every dispatch role at once (one DB read for all three).
++ * Order per role: env override → database → miss.
++ */
++export async function resolveRoleChats(): Promise<RoleChatResolution[]> {
++  const fromDb = await dbChatIdsByRole();
++  return ROLE_KEYS.map((role) => {
++    const envId = envChatIdFor(role);
++    if (envId) return { role, chatId: envId, source: 'env' as const };
++    const dbId = fromDb[role];
++    if (dbId) return { role, chatId: dbId, source: 'database' as const };
++    return { role, chatId: null, source: 'none' as const };
++  });
++}
++
++/**
++ * Resolve a single role (the /api/inquiries sales lane).
++ * Same order and degradation contract as resolveRoleChats.
++ */
++export async function resolveRoleChat(role: RoleKey): Promise<RoleChatResolution> {
++  const envId = envChatIdFor(role);
++  if (envId) return { role, chatId: envId, source: 'env' };
++  try {
++    getSupabaseAdmin();
++    const rows = await listRecords<{ role: RoleKey; chatId: string }>('telegram_role_chats', {
++      select: 'role,chat_id',
++      where: [{ column: 'role', value: role }],
++      limit: 1,
++    });
++    const chatId = rows[0]?.chatId?.trim();
++    if (chatId) return { role, chatId, source: 'database' };
++  } catch {
++    /* env-only mode */
++  }
++  return { role, chatId: null, source: 'none' };
++}
++
++/**
++ * One-round-trip test send used by the admin console ("verify" button) and
++ * by /staffsetup's confirmation echo. Uses the same sendMessage wire format
++ * as the telegram-controller. Returns an honest ok/failed result — callers
++ * decide what to do with failures (the console shows them; the webhook
++ * reports them to the operator in-chat).
++ */
++export async function sendRoleTestMessage(
++  chatId: string,
++  roleLabel: string
++): Promise<{ ok: boolean; error?: string }> {
++  const token = process.env.TELEGRAM_BOT_TOKEN;
++  if (!token) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not configured' };
++  try {
++    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
++      method: 'POST',
++      headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({
++        chat_id: chatId,
++        text:
++          `✅ <b>Sierra Estates — ${roleLabel} dispatch lane verified</b>\n` +
++          `This chat will now receive 3-way viewing dispatches (unit, client, slot, calendar invite).\n` +
++          `<i>Registered ${new Date().toISOString()}</i>`,
++        parse_mode: 'HTML',
++      }),
++    });
++    if (!res.ok) {
++      const body = (await res.json().catch(() => ({}))) as { description?: string };
++      return { ok: false, error: body.description || `Telegram API HTTP ${res.status}` };
++    }
++    return { ok: true };
++  } catch (err) {
++    return { ok: false, error: err instanceof Error ? err.message : String(err) };
++  }
++}
+diff --git a/apps/sierra-estates-realty/supabase/migrations/20261113_044_telegram_role_chat_ids.sql b/apps/sierra-estates-realty/supabase/migrations/20261113_044_telegram_role_chat_ids.sql
+new file mode 100644
+index 000000000..9939a0c5b
+--- /dev/null
++++ b/apps/sierra-estates-realty/supabase/migrations/20261113_044_telegram_role_chat_ids.sql
+@@ -0,0 +1,89 @@
++-- ============================================================================
++-- Migration 044 — TELEGRAM ROLE CHAT IDS (3-way dispatch enablement)
++-- ============================================================================
++-- The 3-way stakeholder dispatch in /api/viewing-requests reads
++-- TELEGRAM_CEO_CHAT_ID / TELEGRAM_TEAM_LEADER_CHAT_ID /
++-- TELEGRAM_SALES_ADVISOR_CHAT_ID from the environment. Those ids can only be
++-- discovered AFTER each stakeholder has messaged the bot once (Telegram
++-- chat ids are not knowable in advance), and the only capture path before
++-- this migration was "operator reads the /start reply in the bot chat and
++-- pastes the id into GitHub secrets + a redeploy". That never happened, so
++-- the dispatch has been honestly skipping all three roles since 2026-11-12.
++--
++-- This migration adds a durable, database-first source of truth:
++--
++--   public.telegram_role_chats   one row per staff ROLE, holding the chat id
++--                                the role's operator registered themselves
++--                                via the bot (/staffsetup <role>), plus an
++--                                optional display name and a verification
++--                                state.
++--
++-- Resolution order at dispatch time (lib/server/telegram-role-chats.ts):
++--   1. explicit env override  (TELEGRAM_*_CHAT_ID — ops escape hatch)
++--   2. this table             (self-registered, DB is source of truth)
++--   3. honest skip            (same contract the route already reports)
++--
++-- Security posture (mirrors webhook_logs, migration 037):
++--   · writes happen through the service-role client (webhook route, admin
++--     API) which bypasses RLS — no public write path by design;
++--   · staff-only read via public.is_staff();
++--   · self-registration is restricted by the webhook handler to the
++--     configured staff Telegram user ids (TELEGRAM_STAFF_USER_IDS); the
++--     table itself stays service-role-writable only.
++-- ============================================================================
++
++CREATE TABLE IF NOT EXISTS public.telegram_role_chats (
++  id             TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
++  role           TEXT NOT NULL UNIQUE
++                 CHECK (role IN ('ceo', 'team_leader', 'sales_advisor')),
++  chat_id        TEXT NOT NULL CHECK (length(btrim(chat_id)) > 0),
++  display_name   TEXT,
++  registered_by  BIGINT,                     -- Telegram user id of the
++                                             -- operator who ran /staffsetup
++  verified       BOOLEAN NOT NULL DEFAULT false,
++  last_tested_at TIMESTAMPTZ,
++  created_at     TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
++  updated_at     TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
++);
++
++COMMENT ON TABLE public.telegram_role_chats IS
++  'Self-registered Telegram chat ids per staff ROLE for the 3-way viewing dispatch (CEO / Team Leader / Sales Advisor). Written by /staffsetup through the telegram webhook (service-role) and by /api/admin/telegram-role-chats; staff-only read. Env vars TELEGRAM_*_CHAT_ID override per dispatch.';
++
++COMMENT ON COLUMN public.telegram_role_chats.role IS
++  'Staff role key: ceo | team_leader | sales_advisor (mirrors the dispatch roster in /api/viewing-requests).';
++COMMENT ON COLUMN public.telegram_role_chats.chat_id IS
++  'Telegram chat id (or @channel) the role registered via /staffsetup.';
++COMMENT ON COLUMN public.telegram_role_chats.registered_by IS
++  'Telegram user id that ran /staffsetup (audit trail; restricted to TELEGRAM_STAFF_USER_IDS by the webhook handler).';
++COMMENT ON COLUMN public.telegram_role_chats.verified IS
++  'True once a test send (admin console or /staffsetup echo) reached the chat.';
++
++-- Keep the automatic timestamp honest (repo-wide handle_updated_at, schema.sql §11).
++DROP TRIGGER IF EXISTS trg_telegram_role_chats_updated ON public.telegram_role_chats;
++CREATE TRIGGER trg_telegram_role_chats_updated
++  BEFORE UPDATE ON public.telegram_role_chats
++  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
++
++ALTER TABLE public.telegram_role_chats ENABLE ROW LEVEL SECURITY;
++
++DO $$
++BEGIN
++  DROP POLICY IF EXISTS "telegram_role_chats_staff_read" ON public.telegram_role_chats;
++  CREATE POLICY "telegram_role_chats_staff_read" ON public.telegram_role_chats
++    FOR SELECT TO authenticated USING (public.is_staff());
++END $$;
++
++-- Inserts/updates happen through the service-role client only.
++
++GRANT SELECT ON public.telegram_role_chats TO authenticated;
++GRANT ALL ON public.telegram_role_chats TO service_role;
++
++DO $$
++BEGIN
++  BEGIN
++    ALTER PUBLICATION supabase_realtime ADD TABLE public.telegram_role_chats;
++  EXCEPTION
++    WHEN duplicate_object THEN NULL;  -- already streamed
++    WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
++  END;
++END $$;
+diff --git a/scripts/sync-vercel-env.js b/scripts/sync-vercel-env.js
+index 8ce5fe660..fa4523ac7 100644
+--- a/scripts/sync-vercel-env.js
++++ b/scripts/sync-vercel-env.js
+@@ -92,6 +92,16 @@ export const CLIENT_ENV_VARS = {
+   NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME,
+   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
+   TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
++  // 3-way dispatch role lanes (migration 044): env overrides win over the
++  // self-registered public.telegram_role_chats rows; TELEGRAM_STAFF_USER_IDS
++  // gates /staffsetup self-registration. All three are optional — unset
++  // roles resolve from the database or honestly skip.
++  TELEGRAM_CEO_CHAT_ID: process.env.TELEGRAM_CEO_CHAT_ID,
++  TELEGRAM_TEAM_LEADER_CHAT_ID: process.env.TELEGRAM_TEAM_LEADER_CHAT_ID,
++  TELEGRAM_SALES_ADVISOR_CHAT_ID: process.env.TELEGRAM_SALES_ADVISOR_CHAT_ID,
++  TELEGRAM_SALES_REP_CHAT_ID: process.env.TELEGRAM_SALES_REP_CHAT_ID,
++  TELEGRAM_ADMIN_CHAT_ID: process.env.TELEGRAM_ADMIN_CHAT_ID,
++  TELEGRAM_STAFF_USER_IDS: process.env.TELEGRAM_STAFF_USER_IDS,
+ 
+   WHATSAPP_API_TOKEN: process.env.WHATSAPP_API_TOKEN,
+   WHATSAPP_META_TOKEN: process.env.WHATSAPP_META_TOKEN || process.env.WHATSAPP_API_TOKEN,
+diff --git a/supabase/migrations/20261113_044_telegram_role_chat_ids.sql b/supabase/migrations/20261113_044_telegram_role_chat_ids.sql
+new file mode 100644
+index 000000000..9939a0c5b
+--- /dev/null
++++ b/supabase/migrations/20261113_044_telegram_role_chat_ids.sql
+@@ -0,0 +1,89 @@
++-- ============================================================================
++-- Migration 044 — TELEGRAM ROLE CHAT IDS (3-way dispatch enablement)
++-- ============================================================================
++-- The 3-way stakeholder dispatch in /api/viewing-requests reads
++-- TELEGRAM_CEO_CHAT_ID / TELEGRAM_TEAM_LEADER_CHAT_ID /
++-- TELEGRAM_SALES_ADVISOR_CHAT_ID from the environment. Those ids can only be
++-- discovered AFTER each stakeholder has messaged the bot once (Telegram
++-- chat ids are not knowable in advance), and the only capture path before
++-- this migration was "operator reads the /start reply in the bot chat and
++-- pastes the id into GitHub secrets + a redeploy". That never happened, so
++-- the dispatch has been honestly skipping all three roles since 2026-11-12.
++--
++-- This migration adds a durable, database-first source of truth:
++--
++--   public.telegram_role_chats   one row per staff ROLE, holding the chat id
++--                                the role's operator registered themselves
++--                                via the bot (/staffsetup <role>), plus an
++--                                optional display name and a verification
++--                                state.
++--
++-- Resolution order at dispatch time (lib/server/telegram-role-chats.ts):
++--   1. explicit env override  (TELEGRAM_*_CHAT_ID — ops escape hatch)
++--   2. this table             (self-registered, DB is source of truth)
++--   3. honest skip            (same contract the route already reports)
++--
++-- Security posture (mirrors webhook_logs, migration 037):
++--   · writes happen through the service-role client (webhook route, admin
++--     API) which bypasses RLS — no public write path by design;
++--   · staff-only read via public.is_staff();
++--   · self-registration is restricted by the webhook handler to the
++--     configured staff Telegram user ids (TELEGRAM_STAFF_USER_IDS); the
++--     table itself stays service-role-writable only.
++-- ============================================================================
++
++CREATE TABLE IF NOT EXISTS public.telegram_role_chats (
++  id             TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
++  role           TEXT NOT NULL UNIQUE
++                 CHECK (role IN ('ceo', 'team_leader', 'sales_advisor')),
++  chat_id        TEXT NOT NULL CHECK (length(btrim(chat_id)) > 0),
++  display_name   TEXT,
++  registered_by  BIGINT,                     -- Telegram user id of the
++                                             -- operator who ran /staffsetup
++  verified       BOOLEAN NOT NULL DEFAULT false,
++  last_tested_at TIMESTAMPTZ,
++  created_at     TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
++  updated_at     TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
++);
++
++COMMENT ON TABLE public.telegram_role_chats IS
++  'Self-registered Telegram chat ids per staff ROLE for the 3-way viewing dispatch (CEO / Team Leader / Sales Advisor). Written by /staffsetup through the telegram webhook (service-role) and by /api/admin/telegram-role-chats; staff-only read. Env vars TELEGRAM_*_CHAT_ID override per dispatch.';
++
++COMMENT ON COLUMN public.telegram_role_chats.role IS
++  'Staff role key: ceo | team_leader | sales_advisor (mirrors the dispatch roster in /api/viewing-requests).';
++COMMENT ON COLUMN public.telegram_role_chats.chat_id IS
++  'Telegram chat id (or @channel) the role registered via /staffsetup.';
++COMMENT ON COLUMN public.telegram_role_chats.registered_by IS
++  'Telegram user id that ran /staffsetup (audit trail; restricted to TELEGRAM_STAFF_USER_IDS by the webhook handler).';
++COMMENT ON COLUMN public.telegram_role_chats.verified IS
++  'True once a test send (admin console or /staffsetup echo) reached the chat.';
++
++-- Keep the automatic timestamp honest (repo-wide handle_updated_at, schema.sql §11).
++DROP TRIGGER IF EXISTS trg_telegram_role_chats_updated ON public.telegram_role_chats;
++CREATE TRIGGER trg_telegram_role_chats_updated
++  BEFORE UPDATE ON public.telegram_role_chats
++  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
++
++ALTER TABLE public.telegram_role_chats ENABLE ROW LEVEL SECURITY;
++
++DO $$
++BEGIN
++  DROP POLICY IF EXISTS "telegram_role_chats_staff_read" ON public.telegram_role_chats;
++  CREATE POLICY "telegram_role_chats_staff_read" ON public.telegram_role_chats
++    FOR SELECT TO authenticated USING (public.is_staff());
++END $$;
++
++-- Inserts/updates happen through the service-role client only.
++
++GRANT SELECT ON public.telegram_role_chats TO authenticated;
++GRANT ALL ON public.telegram_role_chats TO service_role;
++
++DO $$
++BEGIN
++  BEGIN
++    ALTER PUBLICATION supabase_realtime ADD TABLE public.telegram_role_chats;
++  EXCEPTION
++    WHEN duplicate_object THEN NULL;  -- already streamed
++    WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
++  END;
++END $$;
+
+From bc18736ec3fcea287d1c90c7876b3198197836f9 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Fri, 13 Nov 2026 04:27:38 +0000
+Subject: [PATCH] chore(deps): regenerate pnpm-lock.yaml for apps/whatsapp-bot
+ (61fb3f5a9 follow-up)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+61fb3f5a9 added apps/whatsapp-bot/package.json (Baileys listener) without
+regenerating the lockfile, so every frozen-lockfile install — CI, the
+Supabase migration apply lane, Vercel builds — fails with
+ERR_PNPM_OUTDATED_LOCKFILE. This adds the new importer's resolved
+dependencies; no semantic changes to any other workspace package.
+---
+ pnpm-lock.yaml | 460 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 460 insertions(+)
+
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 3a1af0f2d..8d794e8c2 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -635,6 +635,34 @@ importers:
+         specifier: ^8.70.0
+         version: 8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
+ 
++  apps/whatsapp-bot:
++    dependencies:
++      '@whiskeysockets/baileys':
++        specifier: ^6.7.0
++        version: 6.17.16(eslint@10.12.0(jiti@2.7.0))(qrcode-terminal@0.12.0)(typescript@5.9.3)
++      axios:
++        specifier: ^1.7.9
++        version: 1.20.0
++      dotenv:
++        specifier: ^16.4.7
++        version: 16.6.1
++      pino:
++        specifier: ^9.6.0
++        version: 9.14.0
++      qrcode-terminal:
++        specifier: ^0.12.0
++        version: 0.12.0
++    devDependencies:
++      '@types/node':
++        specifier: ^20.17.10
++        version: 20.19.43
++      tsx:
++        specifier: ^4.19.2
++        version: 4.23.15
++      typescript:
++        specifier: 5.9.3
++        version: 5.9.3
++
+   lib/integrations/aws:
+     dependencies:
+       '@aws-sdk/client-ec2':
+@@ -1011,6 +1039,9 @@ importers:
+ 
+ packages:
+ 
++  '@adiwajshing/keyed-db@0.2.4':
++    resolution: {integrity: sha512-yprSnAtj80/VKuDqRcFFLDYltoNV8tChNwFfIgcf6PGD4sjzWIBgs08pRuTqGH5mk5wgL6PBRSsMCZqtZwzFEw==}
++
+   '@ai-sdk/gateway@4.0.102':
+     resolution: {integrity: sha512-kAVldt8D2AVSs7BjBZTRWHcFF71lPH8ouS6/QVlFCnKcUsShjXMdRwW6es5BfxyGewHbXfSirSc8j6efKSkIdA==}
+     engines: {node: '>=22'}
+@@ -1291,6 +1322,10 @@ packages:
+   '@cacheable/memory@2.2.0':
+     resolution: {integrity: sha512-CTLKqLItRCEixEAewD3/j9DB3/o96gpTPD4eJ1v+DGOlxZRZncRQkGYqqnAGCscYd6RNeXfGeiuCphsPtqyIfQ==}
+ 
++  '@cacheable/node-cache@1.7.6':
++    resolution: {integrity: sha512-6Omk2SgNnjtxB5f/E6bTIWIt5xhdpx39fGNRQgU9lojvRxU68v+qY+SXXLsp3ZGukqoPjsK21wZ6XABFr/Ge3A==}
++    engines: {node: '>=18'}
++
+   '@cacheable/utils@2.5.0':
+     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+ 
+@@ -1640,6 +1675,9 @@ packages:
+     cpu: [x64]
+     os: [win32]
+ 
++  '@eshaz/web-worker@1.2.2':
++    resolution: {integrity: sha512-WxXiHFmD9u/owrzempiDlBB1ZYqiLnm9s6aPc8AlFQalq2tKmqdmMr9GXOupDgzXtqnBipj8Un0gkIm7Sjf8mw==}
++
+   '@eslint-community/eslint-utils@4.10.1':
+     resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
+     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+@@ -1803,6 +1841,12 @@ packages:
+       gsap: ^3.12.5
+       react: '>=17'
+ 
++  '@hapi/boom@9.1.4':
++    resolution: {integrity: sha512-Ls1oH8jaN1vNsqcaHVYJrKmgMcKsC1wcp8bujvXrHaAqD2iDYq3HoOwsxwo09Cuda5R5nC0o0IxlrlTuvPuzSw==}
++
++  '@hapi/hoek@9.3.0':
++    resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
++
+   '@hello-pangea/dnd@18.0.1':
+     resolution: {integrity: sha512-xojVWG8s/TGrKT1fC8K2tIWeejJYTAeJuj36zM//yEm/ZrnZUSFGS15BpO+jGZT1ybWvyXmeDJwPYb4dhWlbZQ==}
+     peerDependencies:
+@@ -4000,6 +4044,17 @@ packages:
+     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
+     engines: {node: '>=12'}
+ 
++  '@thi.ng/bitstream@2.4.55':
++    resolution: {integrity: sha512-9Oj7k8SrPZ/T+ke7nivbNnoTm+fnICzz8jbgN/+JdpeohfplVW64rSiTqgbhzq8BakFa3yxeFjxeFlFZ+2gFYg==}
++    engines: {node: '>=18'}
++
++  '@thi.ng/errors@2.6.17':
++    resolution: {integrity: sha512-momw7wo3EXes1wa6Smckr+l4BaJi/h+E67R3furYOBjQpciie1OgoTa43PXPb1POsuWxynkEF8OCnQgreE8twg==}
++    engines: {node: '>=18'}
++
++  '@tokenizer/token@0.3.0':
++    resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
++
+   '@turbo/darwin-64@2.11.5':
+     resolution: {integrity: sha512-KdY4y7BBjIisl+jAkb3FFaRjClGqHyaeHCcVcCT8LBzFFwUu6thgfxyRZAx0uL4KoxLmH+iOan8UhVf/aDDcaA==}
+     cpu: [x64]
+@@ -4154,6 +4209,9 @@ packages:
+   '@types/ms@2.1.0':
+     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
+ 
++  '@types/node@20.19.43':
++    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
++
+   '@types/node@26.6.3':
+     resolution: {integrity: sha512-dsqMQQoeTLqu9wynDD00q573mNzso3IdQOAfHRJqLCcmCFPoGo9A1bDpUcv/9tnKpErQWv9uKeGfl37EIS02Yg==}
+ 
+@@ -4528,6 +4586,46 @@ packages:
+   '@vitest/spy@5.0.3':
+     resolution: {integrity: sha512-XhFysQTB8AZ+P4gMi+Lpo99vg2AZi0qKpaB9yXQl37+CaMEAPO3iH/wGVnSyL5MPERiLezpqTVtrR6UZH5GCXg==}
+ 
++  '@wasm-audio-decoders/common@9.0.7':
++    resolution: {integrity: sha512-WRaUuWSKV7pkttBygml/a6dIEpatq2nnZGFIoPTc5yPLkxL6Wk4YaslPM98OPQvWacvNZ+Py9xROGDtrFBDzag==}
++
++  '@wasm-audio-decoders/flac@0.2.11':
++    resolution: {integrity: sha512-bbSGuDDxY89CrS7FYc2cBBfvtgk3EY9As8dVe8PFIgX7ECd/wefdi8UbGlvcdQZczRwE500KBt4cqf/+mMVsfw==}
++
++  '@wasm-audio-decoders/ogg-vorbis@0.1.20':
++    resolution: {integrity: sha512-zaQPasU5usRjUDXtXOHYED5tfkR4QMXd+EH3Nrz1+4+M5pCsdD+s9YxJqb0oqnTyRu/KUujOmu5Z/m/NT47vwg==}
++
++  '@wasm-audio-decoders/opus-ml@0.0.3':
++    resolution: {integrity: sha512-SEeTmk0eb3q5etJA/NHCRWW6BivTx9tqvNTmG0kg2ynuATEQRUZnwQE6Ibvl1BBvqIGHqI57+qyJMWmJBwb5XQ==}
++
++  '@whiskeysockets/baileys@6.17.16':
++    resolution: {integrity: sha512-cZoUaKpO4fsDUNiCtyZfbjkW0Bjl/IudzHLCvpqfqtq5TACQzNynYsYdKPJz1I8Cu/SSEvmewk0RorIs0zDWyw==}
++    deprecated: |-
++      This version is affected by a zero-day vulnerability that allows spoofing of messages, please update to
++        the latest versions (6.7.22^ or 7.0.0-rc12^)! For more information, check out the public advisory at
++        https://github.com/WhiskeySockets/Baileys/security/advisories/GHSA-qvv5-jq5g-4cgg
++    peerDependencies:
++      jimp: ^0.16.1
++      link-preview-js: ^3.0.0
++      qrcode-terminal: ^0.12.0
++      sharp: ^0.32.6
++    peerDependenciesMeta:
++      jimp:
++        optional: true
++      link-preview-js:
++        optional: true
++      qrcode-terminal:
++        optional: true
++      sharp:
++        optional: true
++
++  '@whiskeysockets/eslint-config@https://codeload.github.com/whiskeysockets/eslint-config/tar.gz/299e8389baf62f9aa3034de18ff0d62cc0a5e838':
++    resolution: {tarball: https://codeload.github.com/whiskeysockets/eslint-config/tar.gz/299e8389baf62f9aa3034de18ff0d62cc0a5e838}
++    version: 1.0.0
++    peerDependencies:
++      eslint: ^9.31.0
++      typescript: 5.9.3
++
+   '@workflow/astro@5.0.8':
+     resolution: {integrity: sha512-3/Ff5bART2IHnpgQK7Zk0zvexiMtukHeecUYMd/LWN7T6Nfi/Fuf6N1KVM5oUGyVwJW3ennId8KXrvDo/3VwzA==}
+ 
+@@ -4791,6 +4889,9 @@ packages:
+     resolution: {integrity: sha512-V+SsTpDqkrWTimiotsyl33ePSjA5/KrithwupuvJ6ztsqPvGv6ge4OredFhPffVXiLN/QUWvE0XcqJaYgt6fOg==}
+     engines: {node: '>= 14'}
+ 
++  async-lock@1.5.0:
++    resolution: {integrity: sha512-JgULma1mWaHlyJ67lvicyel5Cq+k55bXafE0gyvJBdHkH0vdE/IGGDF1glNyRInisNS6pZL2oho96S6Hw68kfQ==}
++
+   async-retry@1.3.3:
+     resolution: {integrity: sha512-wfr/jstw9xNi/0teMHrRW7dsz3Lt5ARhYNZ2ewpadnhaIp5mbALhOAP+EAdsC7t4Z6wqsDVv9+W6gm1Dk9mEyw==}
+ 
+@@ -4807,6 +4908,17 @@ packages:
+     resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
+     engines: {node: '>=8.0.0'}
+ 
++  audio-buffer@5.0.0:
++    resolution: {integrity: sha512-gsDyj1wwUp8u7NBB+eW6yhLb9ICf+0eBmDX8NGaAS00w8/fLqFdxUlL5Ge/U8kB64DlQhdonxYC59dXy1J7H/w==}
++
++  audio-decode@2.2.3:
++    resolution: {integrity: sha512-Z0lHvMayR/Pad9+O9ddzaBJE0DrhZkQlStrC1RwcAHF3AhQAsdwKHeLGK8fYKyp2DDU6xHxzGb4CLMui12yVrg==}
++    deprecated: Renamed to @audio/decode — same API; this name remains a thin alias. npm i @audio/decode
++
++  audio-type@2.8.0:
++    resolution: {integrity: sha512-11GuSvJedvhjc7/6JaCHVndKcapelof4jicOTcM6Sn6j+YyZBnd4+7YnQBEJgwAzJ5Ts4yIv8Vfdt8P7/XaNeQ==}
++    engines: {node: '>=14'}
++
+   available-typed-arrays@1.0.7:
+     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
+     engines: {node: '>= 0.4'}
+@@ -4935,6 +5047,10 @@ packages:
+       magicast:
+         optional: true
+ 
++  cache-manager@5.7.6:
++    resolution: {integrity: sha512-wBxnBHjDxF1RXpHCBD6HGvKER003Ts7IIm0CHpggliHzN1RZditb7rXoduE1rplc2DEFYKxhLKgFuchXMJje9w==}
++    engines: {node: '>= 18'}
++
+   cacheable@2.5.0:
+     resolution: {integrity: sha512-60cyAOytib/OzBw1JNSoSV/boK1AtHryDIjvVBk7XbN4ugfkM3+Sry7fEjNgPMGgOjuaZPAp8ruZ0Cxafwyq9g==}
+ 
+@@ -5121,6 +5237,9 @@ packages:
+     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
+     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
+ 
++  codec-parser@2.5.0:
++    resolution: {integrity: sha512-Ru9t80fV8B0ZiixQl8xhMTLru+dzuis/KQld32/x5T/+3LwZb0/YvQdSKytX9JqCnRdiupvAvyYJINKrXieziQ==}
++
+   codemirror@6.0.2:
+     resolution: {integrity: sha512-VhydHotNW5w1UGK0Qj96BwSk/Zqbp9WbnyK2W/eVMv4QyF41INRGpjUhFJY7/uDNuudSc33a/PKr4iDqRduvHw==}
+ 
+@@ -5164,6 +5283,10 @@ packages:
+     resolution: {integrity: sha512-e+H0ZXHSWYrENhQzw1LPuP4oF5MzVKmDU6d3hxlvaPEYLLg62MxtQNPRx4SYSuYJSBUgnQIG4HIN2tEtNv7Dog==}
+     engines: {node: '>=18'}
+ 
++  content-type@1.0.5:
++    resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
++    engines: {node: '>= 0.6'}
++
+   content-type@2.1.0:
+     resolution: {integrity: sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag==}
+     engines: {node: '>=18'}
+@@ -5216,6 +5339,9 @@ packages:
+   csstype@3.2.3:
+     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+ 
++  curve25519-js@0.0.4:
++    resolution: {integrity: sha512-axn2UMEnkhyDUPWOwVKBMVIzSQy2ejH2xRGy1wq81dqRwApXfIzfbE3hIX0ZRFBIihf/KDqK158DLwESu4AK1w==}
++
+   d3-array@3.2.4:
+     resolution: {integrity: sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==}
+     engines: {node: '>=12'}
+@@ -5702,6 +5828,11 @@ packages:
+     peerDependencies:
+       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
+ 
++  eslint-plugin-simple-import-sort@12.1.1:
++    resolution: {integrity: sha512-6nuzu4xwQtE3332Uz0to+TxDQYRLTKRESSc2hefVT48Zc8JthmN23Gx9lnYhu0FtkRSL1oxny3kJ2aveVhmOVA==}
++    peerDependencies:
++      eslint: '>=5.0.0'
++
+   eslint-plugin-unused-imports@4.4.1:
+     resolution: {integrity: sha512-oZGYUz1X3sRMGUB+0cZyK2VcvRX5lm/vB56PgNNcU+7ficUCKm66oZWKUubXWnOuPjQ8PvmXtCViXBMONPe7tQ==}
+     peerDependencies:
+@@ -5807,6 +5938,10 @@ packages:
+   eventemitter3@5.0.4:
+     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
+ 
++  events@3.3.0:
++    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
++    engines: {node: '>=0.8.x'}
++
+   eventsource-parser@3.1.1:
+     resolution: {integrity: sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==}
+     engines: {node: '>=18.0.0'}
+@@ -5930,6 +6065,10 @@ packages:
+     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
+     engines: {node: '>=16.0.0'}
+ 
++  file-type@16.5.4:
++    resolution: {integrity: sha512-/yFHK0aGjFEgDJjEKP0pWCplsPFPhwyfwevf/pVxiN0tmE4L9LmwWxWukdJSHdoCli4VgQLehjJtwQBnqmsKcw==}
++    engines: {node: '>=10'}
++
+   filelist@1.0.6:
+     resolution: {integrity: sha512-5giy2PkLYY1cP39p17Ech+2xlpTRL9HLspOfEgm0L6CwBXBTgsK5ou0JtzYuepxkaQ/tvhCFIJ5uXo0OrM2DxA==}
+ 
+@@ -6890,6 +7029,13 @@ packages:
+   lexical@0.35.0:
+     resolution: {integrity: sha512-3VuV8xXhh5xJA6tzvfDvE0YBCMkIZUmxtRilJQDDdCgJCc+eut6qAv2qbN+pbqvarqcQqPN1UF+8YvsjmyOZpw==}
+ 
++  libphonenumber-js@1.13.16:
++    resolution: {integrity: sha512-tIOCM9yx2Go6d5/ZANe0K+G4AZek1Ymx81HxQpf19Sri4zMP95eQbKdnUGHAvFQ4nx0PeLhFqvAfisTADXj3tQ==}
++
++  libsignal@https://codeload.github.com/WhiskeySockets/libsignal-node/tar.gz/bcea72df9ec34d9d9140ab30619cf479c7c144c7:
++    resolution: {tarball: https://codeload.github.com/WhiskeySockets/libsignal-node/tar.gz/bcea72df9ec34d9d9140ab30619cf479c7c144c7}
++    version: 6.0.0
++
+   lie@3.3.0:
+     resolution: {integrity: sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==}
+ 
+@@ -7058,6 +7204,9 @@ packages:
+   lodash.camelcase@4.3.0:
+     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
+ 
++  lodash.clonedeep@4.5.0:
++    resolution: {integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==}
++
+   lodash.debounce@4.0.8:
+     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
+ 
+@@ -7111,6 +7260,9 @@ packages:
+   lowlight@1.20.0:
+     resolution: {integrity: sha512-8Ktj+prEb1RoCPkEOrPMYUN/nCggB7qAWe3a7OpMjWQkh3l2RD5wKRQ+o8Q8YuI9RG/xs95waaI/E6ym/7NsTw==}
+ 
++  lru-cache@10.4.3:
++    resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
++
+   lru-cache@11.5.3:
+     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
+     engines: {node: 20 || >=22}
+@@ -7416,6 +7568,9 @@ packages:
+   motion-utils@14.7.0:
+     resolution: {integrity: sha512-woO0/Nb7ys75f94fjvQi/6leiHGvZUYkeHUPEZ3vxsV+9OpEVhkxp01x8MlRwX0zt31EqgXsKDAoBoJLC148Tw==}
+ 
++  mpg123-decoder@1.0.3:
++    resolution: {integrity: sha512-+fjxnWigodWJm3+4pndi+KUg9TBojgn31DPk85zEsim7C6s0X5Ztc/hQYdytXkwuGXH+aB0/aEkG40Emukv6oQ==}
++
+   mri@1.2.0:
+     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
+     engines: {node: '>=4'}
+@@ -7423,6 +7578,10 @@ packages:
+   ms@2.1.3:
+     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+ 
++  music-metadata@7.14.0:
++    resolution: {integrity: sha512-xrm3w7SV0Wk+OythZcSbaI8mcr/KHd0knJieu8bVpaPfMv/Agz5EooCAPz3OR5hbYMiUG6dgAPKZKnMzV+3amA==}
++    engines: {node: '>=10'}
++
+   nanoid@3.3.19:
+     resolution: {integrity: sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug==}
+     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+@@ -7539,6 +7698,10 @@ packages:
+     resolution: {integrity: sha512-kQK9LGGFiHtrWiNhZtA7Qbw17AQz+dmsEKODRIVTXA9+e5MS/2gZEBhYJt13GrAz5/IOZKddH/0Z3TP/Zgo+yw==}
+     engines: {node: '>=18'}
+ 
++  node-wav@0.0.2:
++    resolution: {integrity: sha512-M6Rm/bbG6De/gKGxOpeOobx/dnGuP0dz40adqx38boqHhlWssBJZgLCPBNtb9NkrmnKYiV04xELq+R6PFOnoLA==}
++    engines: {node: '>=4.4.0'}
++
+   normalize-path@3.0.0:
+     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
+     engines: {node: '>=0.10.0'}
+@@ -7602,6 +7765,9 @@ packages:
+     resolution: {integrity: sha512-XrsrhT5sybtKI6wakr2SPOlGZWWYbUXZ7a0jT8/QOeAPau+1X/bSegNe5YR75oJmEZQbKningirmGOEJCIk61Q==}
+     engines: {node: '>=12.20.0'}
+ 
++  ogg-opus-decoder@1.7.5:
++    resolution: {integrity: sha512-08WfRbuBBew1H63PqQ3zj2B/J0Eh9ISfNOTi+Dk6vuXmkBGSx8BiPJGOJ470EYeKezTa7/GhOAwHe3XlXwOZMw==}
++
+   ohash@2.0.12:
+     resolution: {integrity: sha512-65S/5gk9YSsaRjcyf7Nfa6h/d3E8/1gslpXfI4W7Dxn/oap8IKRuNT5VXkLQ1YFKIEg4apRY4Pj6aiwFzrDdmw==}
+ 
+@@ -7647,6 +7813,9 @@ packages:
+     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
+     engines: {node: '>= 0.8.0'}
+ 
++  opus-decoder@0.7.12:
++    resolution: {integrity: sha512-6zpHFDi/MhYvMwyYiuJPqJ2lcRkfm7wHblSvT3lUtx/kLvHkunoe/rhTn1dLKxqVGLeQj3gQi7CnR0N2p3RuOg==}
++
+   ora@8.2.0:
+     resolution: {integrity: sha512-weP+BZ8MVNnlCm8c0Qdc1WSWq4Qn7I+9CJGm7Qali6g44e/PUzbjNqJX5NJ9ljlNMosfJvg1fKEGILklK9cwnw==}
+     engines: {node: '>=18'}
+@@ -7757,6 +7926,10 @@ packages:
+   pathe@2.0.3:
+     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+ 
++  peek-readable@4.1.0:
++    resolution: {integrity: sha512-ZI3LnwUv5nOGbQzD9c2iDG6toheuXSZP5esSHBjopsXH4dg19soufvpUGA3uohi5anFtGb2lhAVdHzH6R/Evvg==}
++    engines: {node: '>=8'}
++
+   perfect-debounce@1.0.0:
+     resolution: {integrity: sha512-xCy9V055GLEqoFaHoC1SoLIaLmWctgCUaBaWxDZ7/Zx4CTyX7cJQLJOok/orfjZAh9kEYpjJa4d0KcJmCbctZA==}
+ 
+@@ -7808,6 +7981,9 @@ packages:
+     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
+     engines: {node: '>=12'}
+ 
++  pino-abstract-transport@2.0.0:
++    resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
++
+   pino-abstract-transport@3.0.0:
+     resolution: {integrity: sha512-wlfUczU+n7Hy/Ha5j9a/gZNy7We5+cXp8YL+X+PG8S0KXxw7n/JXA3c46Y0zQznIJ83URJiwy7Lh56WLokNuxg==}
+ 
+@@ -7822,6 +7998,10 @@ packages:
+     resolution: {integrity: sha512-bk1ZMTwG/Vymx+zPoa28MhNzucFvXJWp3csrSuxuHPSMeUettaCoQ5Jvg07mtC4JGNpcfTwz41oVCnNgBK9+vA==}
+     hasBin: true
+ 
++  pino@9.14.0:
++    resolution: {integrity: sha512-8OEwKp5juEvb/MjpIc4hjqfgCNysrS94RIOMXYvpYCdm/jglrKEiAYmiumbmGhCvs+IcInsphYDFwqrjr7398w==}
++    hasBin: true
++
+   pirates@4.0.7:
+     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
+     engines: {node: '>= 6'}
+@@ -7915,6 +8095,14 @@ packages:
+   process-warning@5.1.1:
+     resolution: {integrity: sha512-oCkNVj4OKnKEcocVBcDfiIugN1/cE6rgfT3nCtzeqZPA8+rIxMaQ0xXzIkGP8Gj2qUaP1UR7uhJ1VD8lUCpzCg==}
+ 
++  process@0.11.10:
++    resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
++    engines: {node: '>= 0.6.0'}
++
++  promise-coalesce@1.5.0:
++    resolution: {integrity: sha512-cTJ30U+ur1LD7pMPyQxiKIwxjtAjLsyU7ivRhVWZrX9BNIXtf78pc37vSMc8Vikx7DVzEKNk2SEJ5KWUpSG2ig==}
++    engines: {node: '>=16'}
++
+   promise-worker-transferable@1.0.4:
+     resolution: {integrity: sha512-bN+0ehEnrXfxV2ZQvU2PetO0n4gqBD4ulq3MI1WOPLgr7/Mg9yRQkX5+0v1vagr74ZTsl7XtzlaYDo2EuCeYJw==}
+ 
+@@ -7972,6 +8160,13 @@ packages:
+     resolution: {integrity: sha512-+Owyggi9IxT1ePKGafcI87ubSmxol6smwJ+RAHDQlx9+9cPwFWDiKFFCPuWhr9ignlGpZ9vDQLw67N4dcTVFEA==}
+     engines: {node: '>=20'}
+ 
++  qoa-format@1.0.1:
++    resolution: {integrity: sha512-dMB0Z6XQjdpz/Cw4Rf6RiBpQvUSPCfYlQMWvmuWlWkAT7nDQD29cVZ1SwDUB6DYJSitHENwbt90lqfI+7bvMcw==}
++
++  qrcode-terminal@0.12.0:
++    resolution: {integrity: sha512-EXtzRZmC+YGmGlDFbXKxQiMZNwCLEO6BANKXG4iCtSIM0yqc/pappSx3RIKr4r0uh5JsBckOXeKrB3Iz7mdQpQ==}
++    hasBin: true
++
+   qrcode@1.5.4:
+     resolution: {integrity: sha512-1ca71Zgiu6ORjHqFBDpnSMTR2ReToX4l1Au1VFLyVeBTFavzQnv5JxMFr3ukHVKpSrSA2MCk0lNJSykjUfz7Zg==}
+     engines: {node: '>=10.13.0'}
+@@ -8164,10 +8359,22 @@ packages:
+     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
+     engines: {node: '>= 6'}
+ 
++  readable-stream@4.8.0:
++    resolution: {integrity: sha512-2jhTTU3Eilp/2DMT71gbcoqC35eQHasMJH0RHkYxwlxIv3+FR6Y5xAFZIwEGLxKkjZYEFlsiMNIdwUqjK2lLHQ==}
++    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
++
++  readable-web-to-node-stream@3.0.4:
++    resolution: {integrity: sha512-9nX56alTf5bwXQ3ZDipHJhusu9NTQJ/CVPtb/XHAJCXihZeitfJvIRS4GqQ/mfIoOE3IelHMrpayVrosdHBuLw==}
++    engines: {node: '>=8'}
++
+   readdirp@4.1.2:
+     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
+     engines: {node: '>= 14.18.0'}
+ 
++  real-require@0.2.0:
++    resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
++    engines: {node: '>= 12.13.0'}
++
+   real-require@1.0.0:
+     resolution: {integrity: sha512-P4nbQYQfePJxRSmY+v/KINxVucm4NF3p3s7pJveMTtom52FR4YGltUQLB8idDXwDDWW+eYrWDFbuzUnjoWHF7g==}
+ 
+@@ -8447,6 +8654,9 @@ packages:
+     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
+     engines: {node: '>=14'}
+ 
++  simple-yenc@1.0.4:
++    resolution: {integrity: sha512-5gvxpSd79e9a3V4QDYUqnqxeD4HGlhCakVpb6gMnDD7lexJggSBJRBO5h52y/iJrdXRilX9UCuDaIJhSWm5OWw==}
++
+   slash@3.0.0:
+     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
+     engines: {node: '>=8'}
+@@ -8630,6 +8840,10 @@ packages:
+   strnum@2.5.1:
+     resolution: {integrity: sha512-UM4nTLWzQiDBseVxUGxN0wJzIk0UU89Qi7pKXz9qISo+lhviJikTuikBsK/oFRlpvYHvSdz0TVoLyQ+sEpYwxA==}
+ 
++  strtok3@6.3.0:
++    resolution: {integrity: sha512-fZtbhtvI9I48xDSywd/somNqgUHl2L2cstmXCCif0itOf96jeW18MBSyrLuNicYQVkvpOxkZtkzujiTJ9LW5Jw==}
++    engines: {node: '>=10'}
++
+   stubs@3.0.0:
+     resolution: {integrity: sha512-PdHt7hHUJKxvTCgbKX9C1V/ftOcjJQgz8BZwNfV5c4B6dcGqlpelTbJ999jBGZ2jYiPAwcX5dP6oBwVlBlUbxw==}
+ 
+@@ -8723,6 +8937,9 @@ packages:
+   text-segmentation@1.0.3:
+     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
+ 
++  thread-stream@3.2.0:
++    resolution: {integrity: sha512-zLBvqpwr4Esa0kRjcrzGU6zL25lePWaCLMx0RQFrmteozIfeNdaMLpG5U7PeHzvlFkAWaRKA9/KVW4F60iB+qw==}
++
+   thread-stream@4.2.0:
+     resolution: {integrity: sha512-e2zZ96wSChazBsbENf/Pcm/4swHt2cEKQ92rhUjkL9GCKiTDJIaTBenjE/m9DXi0QBmTMDkFDdOomUy20A1tDQ==}
+     engines: {node: '>=20'}
+@@ -8766,6 +8983,10 @@ packages:
+     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
+     engines: {node: '>=0.6'}
+ 
++  token-types@4.2.1:
++    resolution: {integrity: sha512-6udB24Q737UD/SDsKAHI9FCRP7Bqc9D/MQUV02ORQg5iskjtLJlZJNdN4kKtcdtwCeWIwIHDGaUsTsCCAa8sFQ==}
++    engines: {node: '>=10'}
++
+   trim-lines@3.0.1:
+     resolution: {integrity: sha512-kRj8B+YHZCc9kQYdWfJB2/oUl9rA99qbowYYBtr4ui4mZyAQ2JpvVBd/6U2YloATfqBhBTSMhTpgBHtU0Mf3Rg==}
+ 
+@@ -8933,6 +9154,9 @@ packages:
+       unplugin:
+         optional: true
+ 
++  undici-types@6.21.0:
++    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
++
+   undici-types@8.9.0:
+     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
+ 
+@@ -9035,6 +9259,11 @@ packages:
+   utrie@1.0.2:
+     resolution: {integrity: sha512-1MLa5ouZiOmQzUbjbu9VmjLzn1QLXBhwpUa7kdLUQK+KQ5KA9I1vk5U4YHe/X2Ch7PYnJfWuWT+VbuxbGwljhw==}
+ 
++  uuid@10.0.0:
++    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
++    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
++    hasBin: true
++
+   uuid@11.1.1:
+     resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
+     hasBin: true
+@@ -9417,6 +9646,8 @@ packages:
+ 
+ snapshots:
+ 
++  '@adiwajshing/keyed-db@0.2.4': {}
++
+   '@ai-sdk/gateway@4.0.102(zod@4.6.7)':
+     dependencies:
+       '@ai-sdk/provider': 4.0.21
+@@ -9821,6 +10052,12 @@ snapshots:
+       hookified: 1.15.1
+       keyv: 5.6.0
+ 
++  '@cacheable/node-cache@1.7.6':
++    dependencies:
++      cacheable: 2.5.0
++      hookified: 1.15.1
++      keyv: 5.6.0
++
+   '@cacheable/utils@2.5.0':
+     dependencies:
+       hashery: 1.5.1
+@@ -10285,6 +10522,8 @@ snapshots:
+   '@esbuild/win32-x64@0.28.2':
+     optional: true
+ 
++  '@eshaz/web-worker@1.2.2': {}
++
+   '@eslint-community/eslint-utils@4.10.1(eslint@10.12.0(jiti@2.7.0))':
+     dependencies:
+       eslint: 10.12.0(jiti@2.7.0)
+@@ -10505,6 +10744,12 @@ snapshots:
+       gsap: 3.15.0
+       react: 19.3.0
+ 
++  '@hapi/boom@9.1.4':
++    dependencies:
++      '@hapi/hoek': 9.3.0
++
++  '@hapi/hoek@9.3.0': {}
++
+   '@hello-pangea/dnd@18.0.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+     dependencies:
+       '@babel/runtime': 7.29.10
+@@ -12839,6 +13084,14 @@ snapshots:
+ 
+   '@tanstack/table-core@8.21.3': {}
+ 
++  '@thi.ng/bitstream@2.4.55':
++    dependencies:
++      '@thi.ng/errors': 2.6.17
++
++  '@thi.ng/errors@2.6.17': {}
++
++  '@tokenizer/token@0.3.0': {}
++
+   '@turbo/darwin-64@2.11.5':
+     optional: true
+ 
+@@ -13001,6 +13254,10 @@ snapshots:
+ 
+   '@types/ms@2.1.0': {}
+ 
++  '@types/node@20.19.43':
++    dependencies:
++      undici-types: 6.21.0
++
+   '@types/node@26.6.3':
+     dependencies:
+       undici-types: 8.9.0
+@@ -13380,6 +13637,63 @@ snapshots:
+ 
+   '@vitest/spy@5.0.3': {}
+ 
++  '@wasm-audio-decoders/common@9.0.7':
++    dependencies:
++      '@eshaz/web-worker': 1.2.2
++      simple-yenc: 1.0.4
++
++  '@wasm-audio-decoders/flac@0.2.11':
++    dependencies:
++      '@wasm-audio-decoders/common': 9.0.7
++      codec-parser: 2.5.0
++
++  '@wasm-audio-decoders/ogg-vorbis@0.1.20':
++    dependencies:
++      '@wasm-audio-decoders/common': 9.0.7
++      codec-parser: 2.5.0
++
++  '@wasm-audio-decoders/opus-ml@0.0.3':
++    dependencies:
++      '@wasm-audio-decoders/common': 9.0.7
++
++  '@whiskeysockets/baileys@6.17.16(eslint@10.12.0(jiti@2.7.0))(qrcode-terminal@0.12.0)(typescript@5.9.3)':
++    dependencies:
++      '@adiwajshing/keyed-db': 0.2.4
++      '@cacheable/node-cache': 1.7.6
++      '@hapi/boom': 9.1.4
++      '@whiskeysockets/eslint-config': https://codeload.github.com/whiskeysockets/eslint-config/tar.gz/299e8389baf62f9aa3034de18ff0d62cc0a5e838(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
++      async-lock: 1.5.0
++      audio-decode: 2.2.3
++      axios: 1.20.0
++      cache-manager: 5.7.6
++      libphonenumber-js: 1.13.16
++      libsignal: https://codeload.github.com/WhiskeySockets/libsignal-node/tar.gz/bcea72df9ec34d9d9140ab30619cf479c7c144c7
++      lodash: 4.18.1
++      music-metadata: 7.14.0
++      pino: 9.14.0
++      protobufjs: 7.6.6
++      uuid: 10.0.0
++      ws: 8.22.0
++    optionalDependencies:
++      qrcode-terminal: 0.12.0
++    transitivePeerDependencies:
++      - bufferutil
++      - debug
++      - eslint
++      - supports-color
++      - typescript
++      - utf-8-validate
++
++  '@whiskeysockets/eslint-config@https://codeload.github.com/whiskeysockets/eslint-config/tar.gz/299e8389baf62f9aa3034de18ff0d62cc0a5e838(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)':
++    dependencies:
++      '@typescript-eslint/eslint-plugin': 8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
++      '@typescript-eslint/parser': 8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3)
++      eslint: 10.12.0(jiti@2.7.0)
++      eslint-plugin-simple-import-sort: 12.1.1(eslint@10.12.0(jiti@2.7.0))
++      typescript: 5.9.3
++    transitivePeerDependencies:
++      - supports-color
++
+   '@workflow/astro@5.0.8(@opentelemetry/api@1.9.1)(@swc/helpers@0.5.23)(ws@8.22.0)':
+     dependencies:
+       '@swc/core': 1.15.3(@swc/helpers@0.5.23)
+@@ -13875,6 +14189,8 @@ snapshots:
+ 
+   async-listen@3.0.0: {}
+ 
++  async-lock@1.5.0: {}
++
+   async-retry@1.3.3:
+     dependencies:
+       retry: 0.13.1
+@@ -13887,6 +14203,21 @@ snapshots:
+ 
+   atomic-sleep@1.0.0: {}
+ 
++  audio-buffer@5.0.0: {}
++
++  audio-decode@2.2.3:
++    dependencies:
++      '@wasm-audio-decoders/flac': 0.2.11
++      '@wasm-audio-decoders/ogg-vorbis': 0.1.20
++      audio-buffer: 5.0.0
++      audio-type: 2.8.0
++      mpg123-decoder: 1.0.3
++      node-wav: 0.0.2
++      ogg-opus-decoder: 1.7.5
++      qoa-format: 1.0.1
++
++  audio-type@2.8.0: {}
++
+   available-typed-arrays@1.0.7:
+     dependencies:
+       possible-typed-array-names: 1.1.0
+@@ -14061,6 +14392,13 @@ snapshots:
+       pkg-types: 2.4.0
+       rc9: 2.1.2
+ 
++  cache-manager@5.7.6:
++    dependencies:
++      eventemitter3: 5.0.4
++      lodash.clonedeep: 4.5.0
++      lru-cache: 10.4.3
++      promise-coalesce: 1.5.0
++
+   cacheable@2.5.0:
+     dependencies:
+       '@cacheable/memory': 2.2.0
+@@ -14245,6 +14583,8 @@ snapshots:
+ 
+   co@4.6.0: {}
+ 
++  codec-parser@2.5.0: {}
++
+   codemirror@6.0.2:
+     dependencies:
+       '@codemirror/autocomplete': 6.20.4
+@@ -14283,6 +14623,8 @@ snapshots:
+ 
+   content-disposition@2.0.1: {}
+ 
++  content-type@1.0.5: {}
++
+   content-type@2.1.0: {}
+ 
+   convert-source-map@2.0.0: {}
+@@ -14328,6 +14670,8 @@ snapshots:
+ 
+   csstype@3.2.3: {}
+ 
++  curve25519-js@0.0.4: {}
++
+   d3-array@3.2.4:
+     dependencies:
+       internmap: 2.0.3
+@@ -15059,6 +15403,10 @@ snapshots:
+       string.prototype.matchall: 4.1.0
+       string.prototype.repeat: 1.0.0
+ 
++  eslint-plugin-simple-import-sort@12.1.1(eslint@10.12.0(jiti@2.7.0)):
++    dependencies:
++      eslint: 10.12.0(jiti@2.7.0)
++
+   eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.12.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.12.0(jiti@2.7.0)):
+     dependencies:
+       eslint: 10.12.0(jiti@2.7.0)
+@@ -15217,6 +15565,8 @@ snapshots:
+ 
+   eventemitter3@5.0.4: {}
+ 
++  events@3.3.0: {}
++
+   eventsource-parser@3.1.1: {}
+ 
+   execa@5.1.1:
+@@ -15380,6 +15730,12 @@ snapshots:
+     dependencies:
+       flat-cache: 4.0.1
+ 
++  file-type@16.5.4:
++    dependencies:
++      readable-web-to-node-stream: 3.0.4
++      strtok3: 6.3.0
++      token-types: 4.2.1
++
+   filelist@1.0.6:
+     dependencies:
+       minimatch: 11.0.8
+@@ -16588,6 +16944,13 @@ snapshots:
+ 
+   lexical@0.35.0: {}
+ 
++  libphonenumber-js@1.13.16: {}
++
++  libsignal@https://codeload.github.com/WhiskeySockets/libsignal-node/tar.gz/bcea72df9ec34d9d9140ab30619cf479c7c144c7:
++    dependencies:
++      curve25519-js: 0.0.4
++      protobufjs: 7.6.6
++
+   lie@3.3.0:
+     dependencies:
+       immediate: 3.0.6
+@@ -16710,6 +17073,8 @@ snapshots:
+ 
+   lodash.camelcase@4.3.0: {}
+ 
++  lodash.clonedeep@4.5.0: {}
++
+   lodash.debounce@4.0.8: {}
+ 
+   lodash.includes@4.3.0: {}
+@@ -16752,6 +17117,8 @@ snapshots:
+       fault: 1.0.4
+       highlight.js: 10.7.3
+ 
++  lru-cache@10.4.3: {}
++
+   lru-cache@11.5.3: {}
+ 
+   lru-cache@5.1.1:
+@@ -17287,10 +17654,26 @@ snapshots:
+ 
+   motion-utils@14.7.0: {}
+ 
++  mpg123-decoder@1.0.3:
++    dependencies:
++      '@wasm-audio-decoders/common': 9.0.7
++
+   mri@1.2.0: {}
+ 
+   ms@2.1.3: {}
+ 
++  music-metadata@7.14.0:
++    dependencies:
++      '@tokenizer/token': 0.3.0
++      content-type: 1.0.5
++      debug: 4.4.3(supports-color@8.1.1)
++      file-type: 16.5.4
++      media-typer: 1.1.1
++      strtok3: 6.3.0
++      token-types: 4.2.1
++    transitivePeerDependencies:
++      - supports-color
++
+   nanoid@3.3.19: {}
+ 
+   nanoid@3.3.20: {}
+@@ -17404,6 +17787,8 @@ snapshots:
+ 
+   node-releases@2.0.57: {}
+ 
++  node-wav@0.0.2: {}
++
+   normalize-path@3.0.0: {}
+ 
+   nostics@1.3.0: {}
+@@ -17468,6 +17853,13 @@ snapshots:
+ 
+   obug@2.2.1: {}
+ 
++  ogg-opus-decoder@1.7.5:
++    dependencies:
++      '@wasm-audio-decoders/common': 9.0.7
++      '@wasm-audio-decoders/opus-ml': 0.0.3
++      codec-parser: 2.5.0
++      opus-decoder: 0.7.12
++
+   ohash@2.0.12: {}
+ 
+   oidc-token-hash@5.2.0: {}
+@@ -17521,6 +17913,10 @@ snapshots:
+       type-check: 0.4.0
+       word-wrap: 1.2.5
+ 
++  opus-decoder@0.7.12:
++    dependencies:
++      '@wasm-audio-decoders/common': 9.0.7
++
+   ora@8.2.0:
+     dependencies:
+       chalk: 5.6.2
+@@ -17636,6 +18032,8 @@ snapshots:
+ 
+   pathe@2.0.3: {}
+ 
++  peek-readable@4.1.0: {}
++
+   perfect-debounce@1.0.0: {}
+ 
+   performance-now@2.1.0:
+@@ -17682,6 +18080,10 @@ snapshots:
+ 
+   picomatch@4.0.7: {}
+ 
++  pino-abstract-transport@2.0.0:
++    dependencies:
++      split2: 4.2.0
++
+   pino-abstract-transport@3.0.0:
+     dependencies:
+       split2: 4.2.0
+@@ -17718,6 +18120,20 @@ snapshots:
+       sonic-boom: 4.2.1
+       thread-stream: 4.2.0
+ 
++  pino@9.14.0:
++    dependencies:
++      '@pinojs/redact': 0.4.0
++      atomic-sleep: 1.0.0
++      on-exit-leak-free: 2.1.2
++      pino-abstract-transport: 2.0.0
++      pino-std-serializers: 7.1.0
++      process-warning: 5.1.1
++      quick-format-unescaped: 4.0.4
++      real-require: 0.2.0
++      safe-stable-stringify: 2.5.0
++      sonic-boom: 4.2.1
++      thread-stream: 3.2.0
++
+   pirates@4.0.7: {}
+ 
+   pkg-dir@4.2.0:
+@@ -17795,6 +18211,10 @@ snapshots:
+ 
+   process-warning@5.1.1: {}
+ 
++  process@0.11.10: {}
++
++  promise-coalesce@1.5.0: {}
++
+   promise-worker-transferable@1.0.4:
+     dependencies:
+       is-promise: 2.2.2
+@@ -17886,6 +18306,12 @@ snapshots:
+     dependencies:
+       hookified: 2.2.0
+ 
++  qoa-format@1.0.1:
++    dependencies:
++      '@thi.ng/bitstream': 2.4.55
++
++  qrcode-terminal@0.12.0: {}
++
+   qrcode@1.5.4:
+     dependencies:
+       dijkstrajs: 1.0.3
+@@ -18084,8 +18510,22 @@ snapshots:
+       string_decoder: 1.3.0
+       util-deprecate: 1.0.2
+ 
++  readable-stream@4.8.0:
++    dependencies:
++      abort-controller: 3.0.0
++      buffer: 6.0.3
++      events: 3.3.0
++      process: 0.11.10
++      string_decoder: 1.3.0
++
++  readable-web-to-node-stream@3.0.4:
++    dependencies:
++      readable-stream: 4.8.0
++
+   readdirp@4.1.2: {}
+ 
++  real-require@0.2.0: {}
++
+   real-require@1.0.0: {}
+ 
+   recharts-scale@0.4.5:
+@@ -18451,6 +18891,8 @@ snapshots:
+ 
+   signal-exit@4.1.0: {}
+ 
++  simple-yenc@1.0.4: {}
++
+   slash@3.0.0: {}
+ 
+   socket.io-adapter@2.5.8:
+@@ -18662,6 +19104,11 @@ snapshots:
+     dependencies:
+       anynum: 1.0.1
+ 
++  strtok3@6.3.0:
++    dependencies:
++      '@tokenizer/token': 0.3.0
++      peek-readable: 4.1.0
++
+   stubs@3.0.0: {}
+ 
+   style-mod@4.1.4: {}
+@@ -18747,6 +19194,10 @@ snapshots:
+     dependencies:
+       utrie: 1.0.2
+ 
++  thread-stream@3.2.0:
++    dependencies:
++      real-require: 0.2.0
++
+   thread-stream@4.2.0:
+     dependencies:
+       real-require: 1.0.0
+@@ -18786,6 +19237,11 @@ snapshots:
+ 
+   toidentifier@1.0.1: {}
+ 
++  token-types@4.2.1:
++    dependencies:
++      '@tokenizer/token': 0.3.0
++      ieee754: 1.2.1
++
+   trim-lines@3.0.1: {}
+ 
+   troika-three-text@0.52.5(three@0.186.1):
+@@ -18972,6 +19428,8 @@ snapshots:
+       magic-string: 1.4.2
+       rolldown: 1.2.12
+ 
++  undici-types@6.21.0: {}
++
+   undici-types@8.9.0: {}
+ 
+   undici@8.12.3: {}
+@@ -19099,6 +19557,8 @@ snapshots:
+     dependencies:
+       base64-arraybuffer: 1.0.2
+ 
++  uuid@10.0.0: {}
++
+   uuid@11.1.1: {}
+ 
+   uuid@14.0.2: {}
+
