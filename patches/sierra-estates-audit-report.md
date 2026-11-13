@@ -199,10 +199,10 @@ Four coordinated changes:
 
 `complete?: boolean` added to `InventoryResponse` (absent = complete, back-compat). Tests: `__tests__/inventory-resilience.test.ts` pins all four behaviors (4/4); the publish-gate suite's pinned fallback expectation updated to the live status set with module-state isolation via `bustInventoryCache()`; all 10 inventory-related suites — 107 tests — pass. CI on the merge commit: Realty app (Type-check + Lint + Test + Build) ✅, CI gate ✅, Supabase Preview ✅, CodeQL ✅.
 
-**Verification after deploy:** `/api/inventory` → `source:"supabase"`, ~3,965 units, `complete:true` on both client and admin.
+**Verification after deploy:** client redeployed with #57 and verified live — `/api/inventory` → `source:"supabase"`, 3,965 units, `complete:true`, three consecutive probes stable (7.8s cold, then 0.3–0.4s cached). The **admin project's deploy was quota-blocked again** (`api-deployments-free-per-day`, exhausted by the day's churn — the same limit that hit the 23:36 run); admin keeps serving its healthy 00:14 instance (inventory verified at 3,965 units there as well) and picks the resilience fix up on its next successful deploy after the quota window resets.
 
 ### Operator notes
 
-1. The deploy pipeline's free-tier quota (`api-deployments-free-per-day`) still bites on heavy days — the 23:36 run exhausted it for admin (client had just enough). The 00:04+ runs after the UTC-midnight reset deployed cleanly. If a deploy fails with `Resource is limited - try again in 24 hours`, wait for the quota window or use the dashboard.
+1. The deploy pipeline's free-tier quota (`api-deployments-free-per-day`) still bites on heavy days — it exhausted the admin project's budget at 23:36 and again at 01:02 UTC (the client project had budget both times, so the public site always got through). If a deploy fails with `Resource is limited - try again in 24 hours`, wait for the quota window or redeploy from the Vercel dashboard.
 2. Hygiene: the client Vercel project carries a **stale empty `SUPABASE_ACCESS_TOKEN` entry (production target, len 0)** next to a preview-only JWT copy. It is read only by ops scripts (Management API), never by the app — safe, but worth deleting in the dashboard to keep env audits clean.
 3. Still open from before: Telegram role chat ids (CEO / Team Leader / Sales Advisor) for the 3-way dispatch.
