@@ -57,6 +57,36 @@ export const GAZETTEER = [
 
 const PHONE_REGEX = /(?:\+?20[\s\-.]?)?0?1[0125](?:[\s\-.]?\d){8}/g;
 
+// 2026-11-13: shared rent/sale lexicon — the previous rent check missed
+// للتأجير / شهري / سنوي / monthly / lease, so rent ads with those phrasings
+// fell through to 'Sale' and then got sale-scale prices (the exact
+// "suspicious-sale" quarantine class from the 2026-10-20 data debt).
+export const RENT_SIGNALS = [
+  'للايجار', 'للإيجار', 'للتأجير', 'ايجار', 'إيجار', 'تأجير',
+  'شهري', 'سنوي', 'ب الشهر', 'rent', 'monthly', 'yearly', 'lease',
+];
+export const SALE_SIGNALS = [
+  'للبيع', 'بيع', 'تنازل', 'كاش', 'installment', 'sale', 'resale',
+];
+
+// Classify deal type from raw text. Returns 'Rent' | 'Sale' | null.
+// null = no keyword evidence → the caller must NOT guess a default (§21
+// no-fabrication: an unknown fact surfaces as null, never a silent default
+// that staff later has to fact-check).
+export function classifyDealType(text) {
+  const lower = String(text || '').toLowerCase();
+  const rentHit = RENT_SIGNALS.findIndex((k) => lower.includes(k));
+  const saleHit = SALE_SIGNALS.findIndex((k) => lower.includes(k));
+  if (rentHit === -1 && saleHit === -1) return null;
+  if (rentHit === -1) return 'Sale';
+  if (saleHit === -1) return 'Rent';
+  // Both present: earliest keyword in the text wins (the phrasing the
+  // sender led with, e.g. "شقة للبيع..." beats a trailing "بدون ايجار مقدم").
+  const rentIdx = lower.indexOf(RENT_SIGNALS[rentHit]);
+  const saleIdx = lower.indexOf(SALE_SIGNALS[saleHit]);
+  return rentIdx <= saleIdx ? 'Rent' : 'Sale';
+}
+
 export function normalizePhone(raw) {
   if (!raw) return '';
   const digits = String(raw).replace(/\D/g, '');
@@ -141,6 +171,7 @@ export function extractUnitDetails(msg, groupName = 'WhatsApp Group') {
   }
 
   let price = 0;
+  const dealType = classifyDealType(text);
   const priceMatch = text.match(/(?:مطلوب|سعر|السعر|اجمالي|إجمالي|بـ|ب|price|total|rent|الايجار|الإيجار)\s*[:=]?\s*(\d+(?:[.,]\d+)?)\s*(مليون|الف|ألف|k|m|egp|جنيه)?/i)
     || text.match(/(\d+(?:[.,]\d+)?)\s*(مليون|الف|ألف|k|m|egp|جنيه)/i)
     || text.match(/(\d+)\s*k\b/i);
@@ -149,7 +180,13 @@ export function extractUnitDetails(msg, groupName = 'WhatsApp Group') {
     const unit = (priceMatch[2] || '').toLowerCase();
     if (unit.includes('مليون') || unit === 'm') num *= 1_000_000;
     else if (unit.includes('الف') || unit.includes('ألف') || unit === 'k' || priceMatch[0].toLowerCase().includes('k')) num *= 1_000;
-    else if (num > 0 && num < 100) num *= 1_000_000;
+    else if (num > 0 && num < 100) {
+      // Bare small number ("مطلوب 45"): scale by the classified deal type,
+      // never by a guess. 45 on a rent ad = 45k/mo; 45 on a sale ad = 45M.
+      // Unknown deal type = unknown scale → keep 0 and let the publish gate
+      // quarantine it rather than storing a 1000x-wrong price (§21).
+      num = dealType === 'Rent' ? num * 1_000 : dealType === 'Sale' ? num * 1_000_000 : 0;
+    }
     price = Math.round(num);
   }
 
@@ -171,8 +208,10 @@ export function extractUnitDetails(msg, groupName = 'WhatsApp Group') {
   const photoMatches2 = [...text.matchAll(/([\w-]+\.(?:jpg|jpeg|png|webp))\s*\((?:file attached|ملف مرفق)\)/gi)].map((m) => m[1].trim());
   const attachedPhotos = Array.from(new Set([...photoMatches1, ...photoMatches2])).filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f));
 
-  const isRent = lower.includes('ايجار') || lower.includes('إيجار') || lower.includes('للايجار') || lower.includes('للإيجار') || lower.includes('rent');
-  const dealType = isRent ? 'Rent' : 'Sale';
+  // classifyDealType: null = no rent/sale evidence in the text. Store null
+  // (honest unknown — the DB column is nullable) instead of the old silent
+  // 'Sale' default that mis-tagged rent ads lacking the 4 keyword spellings.
+  const dealTypeValue = dealType || null;
 
   let propType = 'Apartment';
   if (text.includes('فيلا مستقلة') || text.includes('فيلا ستاند الون') || text.includes('ستاند الون') || text.includes('فيلا')) propType = 'Standalone Villa';
@@ -194,7 +233,7 @@ export function extractUnitDetails(msg, groupName = 'WhatsApp Group') {
     bedrooms,
     bathrooms,
     propertyType: propType,
-    dealType,
+    dealType: dealTypeValue,
     ownerPhone: phone,
     ownerName: msg.sender,
     rawText: text,
@@ -407,7 +446,10 @@ export async function processChatFile(chatFilePath, options = {}, sb = null) {
         bathrooms: u.bathrooms || 2,
         area_sqm: u.areaSqm || 0,
         property_type: u.propertyType,
-        deal_type: (u.dealType || 'sale').toLowerCase(),
+        // §21 no-fabrication: null deal_type (no rent/sale evidence in the
+        // source text) stays null — never the old '(u.dealType || "sale")'
+        // silent default that mis-tagged rent ads as sale.
+        deal_type: u.dealType ? u.dealType.toLowerCase() : null,
         owner_name: u.ownerName || null,
         owner_phone: u.ownerPhone || null,
         description: copy.descriptionEn || u.rawText || `${u.propertyType} in ${u.compound}`,
