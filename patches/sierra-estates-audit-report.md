@@ -168,4 +168,41 @@ Same evening, the repo owner also shipped **Easy Listing Studio** public + admin
 
 Both sites remain **healthy** throughout: client + admin `/api/health` green, 26,184 active properties, `/easy-listing` HTTP 200.
 
-Files: `download/sierra-estates-audit-report.md`, `download/sierra-estates-backend-completions.patch`, `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#55).
+Files: `download/sierra-estates-audit-report.md`, `download/sierra-estates-backend-completions.patch`, `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `download/sierra-estates-production-recovery.patch` (PRs #48–#57).
+
+---
+
+## Part 7 — The inventory regression: diagnosis and the resilience fix (2026-11-13, 00:00–01:00 UTC)
+
+With both sites healthy after #55, one defect remained from the outage window: **`GET /api/inventory` intermittently served `source:"none", count:0` on otherwise healthy deployments** — the public map rendered empty while `/api/health` reported the database healthy with 26,184 active properties. Direct probes caught it failing at 23:57, healthy at 00:19, failing again at 00:25 — flapping at request level, not a stable config or code state.
+
+### Differential diagnosis (what it was NOT)
+
+| Hypothesis | Evidence against |
+|---|---|
+| Code regression | `git diff` of the inventory route, `packages/db`, and the health route between the 21:00-healthy head (`232c67ab1a`) and the failing head: **empty** — byte-identical code served 3,850 units at 21:00 and `none` at 23:57 |
+| Column grant / RLS change | Read-only probe workflow (branch `diagnose/inventory-anon`): the exact 34-column wide select returns HTTP 200 in ~2s; each column alone returns 200; the compounds read returns 200 |
+| Env / key mismatch | The Vercel project's full env dump (cursor-paginated, 110 entries): `NEXT_PUBLIC_SUPABASE_URL` + publishable/anon keys present on production+preview, values matching the GitHub secrets the successful control probe used |
+| Schema/policy drift in the window | No Deploy Supabase run after 18:20 UTC (success); no DB-touching workflow in the window |
+| The serving instance missing env | The instance booted 23:44:51 served `none` at 23:57 and `supabase/3,965` an hour later with no redeploy — same instance, same env |
+
+**What it WAS:** the route reads listings as **4–5 sequential 1000-row PostgREST pages**; a single transient page error (fetch failure, timeout, 5xx blip) threw, the catch swallowed it into a warn log, and the `fetchDomain` fallback — the tier that should have caught it — was **dead code since its birth**: it filtered `status:'available'` while every live Supabase row carries `status:'active'`, so it always returned `[]`. Result: honest-empty `source:'none'` for a full 60s cache cycle per blip.
+
+### PR #57 (`1ee326543`, squash-merged, CI fully green)
+
+Four coordinated changes:
+
+1. **Per-page retry** — one retry after 250ms backoff per page, with the query rebuilt per attempt (supabase-js builders are single-use). A single blip no longer zeroes the map.
+2. **Partial-data honesty** — a later page failing after retry serves the verified rows already in hand with `complete:false` instead of dropping everything. Page 0 failing falls through to (3).
+3. **Stale-serve** — the last fully successful payload is kept up to 10 minutes and served (`complete:false`, `generatedAt` untouched so consumers see its age) when a fresh read fails outright. `bustInventoryCache()` drops it too — an admin bust is a "data changed NOW" signal.
+4. **Fallback liveness** — `fetchDomain` accepts both `active` (live reality) and `available` (legacy) statuses, so the second tier can actually return rows.
+
+`complete?: boolean` added to `InventoryResponse` (absent = complete, back-compat). Tests: `__tests__/inventory-resilience.test.ts` pins all four behaviors (4/4); the publish-gate suite's pinned fallback expectation updated to the live status set with module-state isolation via `bustInventoryCache()`; all 10 inventory-related suites — 107 tests — pass. CI on the merge commit: Realty app (Type-check + Lint + Test + Build) ✅, CI gate ✅, Supabase Preview ✅, CodeQL ✅.
+
+**Verification after deploy:** `/api/inventory` → `source:"supabase"`, ~3,965 units, `complete:true` on both client and admin.
+
+### Operator notes
+
+1. The deploy pipeline's free-tier quota (`api-deployments-free-per-day`) still bites on heavy days — the 23:36 run exhausted it for admin (client had just enough). The 00:04+ runs after the UTC-midnight reset deployed cleanly. If a deploy fails with `Resource is limited - try again in 24 hours`, wait for the quota window or use the dashboard.
+2. Hygiene: the client Vercel project carries a **stale empty `SUPABASE_ACCESS_TOKEN` entry (production target, len 0)** next to a preview-only JWT copy. It is read only by ops scripts (Management API), never by the app — safe, but worth deleting in the dashboard to keep env audits clean.
+3. Still open from before: Telegram role chat ids (CEO / Team Leader / Sales Advisor) for the 3-way dispatch.

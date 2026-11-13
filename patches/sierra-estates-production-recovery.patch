@@ -2650,3 +2650,562 @@ index 7a8fbf712..8ce5fe660 100644
 +
 +main();
 
+========================================================================
+EXTENSION 3 — inventory resilience repair (2026-11-13, ~01:00 UTC, PR #57)
+========================================================================
+
+After the pipeline repairs, healthy production deployments still
+served source:'none' / 0 units intermittently on GET /api/inventory
+(public map blank for full 60s cache cycles; production-smoke run
+43335523470 pinned 5 failed checks). Root cause: the anon listings read
+is 4-5 sequential 1000-row PostgREST pages; ONE transient page error
+aborted the entire fetch, the catch swallowed it, and the domain
+fallback was status-mismatched dead code (filtered status:'available'
+while every live row carries status:'active'). Read-only probes from
+branch diagnose/inventory-anon proved the query, all 34 columns, and
+the Vercel-held env values healthy — the failures were transient
+request-level errors on individual pages.
+
+PR #57 (squash-merged as 1ee326543, CI fully green, all 107
+inventory-related tests passing) makes the read resilient and honest:
+per-page retry (one 250ms-backoff retry, query rebuilt per attempt),
+partial-data honesty (complete:false when a later page fails after
+retry), stale-serve of the last good payload (10 min window,
+complete:false), and a live domain fallback (status in
+['available','active']). bustInventoryCache() now also drops the
+stale-serve payload. complete?: boolean added to InventoryResponse.
+
+From 1ee3265432a7bb281d65bbed6c2d657afd16216d Mon Sep 17 00:00:00 2001
+From: afawzy886619888866-cloud <a.fawzy886619888866@gmail.com>
+Date: Fri, 13 Nov 2026 02:49:59 +0200
+Subject: [PATCH] =?UTF-8?q?fix(inventory):=20survive=20transient=20page=20?=
+ =?UTF-8?q?errors=20=E2=80=94=20retry,=20partial-data=20honesty,=20stale-s?=
+ =?UTF-8?q?erve=20(#57)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+* fix(inventory): survive transient page errors — retry, partial-data honesty, stale-serve
+
+2026-11-12 23:45–00:30 UTC: healthy production deployments intermittently
+served source:'none' / 0 units on the public inventory map (client 3965
+units expected; smoke run 43335523470 pinned 5 failed checks). The anon
+listings read is 4-5 sequential 1000-row PostgREST pages; ONE transient
+page error aborted the entire fetch, the catch swallowed it, and the
+domain fallback was status-mismatched dead code (filtered
+status:'available' while every live row carries status:'active') — so the
+map rendered an honest-but-empty state for full cache cycles.
+
+Diagnosis (branch diagnose/inventory-anon): the exact wide query + all 34
+columns + compounds return 200 from a cold client in ~2s; Vercel-held env
+values match the GitHub secrets; no schema/policy change in the window —
+the failures were transient request-level errors on individual pages.
+
+Fix, four parts:
+1. Per-page retry: each page gets one retry after a 250ms backoff, with
+   the query rebuilt per attempt (supabase-js builders are single-use).
+   A single blip no longer zeroes the whole map.
+2. Partial-data honesty: a later page failing after retry serves the
+   verified rows already fetched with complete:false instead of dropping
+   everything; page 0 failing falls through to (3).
+3. Stale-serve: the last fully successful payload is kept up to 10
+   minutes and served (complete:false, generatedAt untouched) when a
+   fresh read fails outright — a map showing verified units from seconds
+   ago beats an empty map.
+4. Fallback liveness: fetchDomain now accepts both 'active' (the live
+   reality) and 'available' (legacy) statuses, so the second tier can
+   actually return rows.
+
+complete?: boolean added to InventoryResponse (absent = complete, for
+back-compat with older producers).
+
+Tests: __tests__/inventory-resilience.test.ts pins all four behaviors
+with a stubbed @sierra-estates/db (4/4 green locally; adjacent inventory
+suites 33/33 green).
+
+* fix(inventory): type the fallback status widening at the domain boundary
+
+* fix(inventory): clear stale-serve on cache-bust; isolate module state in publish-gate tests
+
+bustInventoryCache() now also drops lastGoodListings — an admin bust is a
+'this data changed NOW' signal, and holding the old payload as the
+stale-serve fallback would re-serve exactly the rows the bust intends to
+refresh.
+
+The publish-gate suite's beforeEach now calls it: without module-state
+isolation, a prior test's success bled into the next (stale-served
+'supabase' rows masking the domain-tier fallback the suite pins), and the
+domain-tier expectation is updated to the live status set
+['available','active'] that makes the fallback actually return rows.
+
+---------
+
+Co-authored-by: Z User <z@container>
+---
+ .../api/inventory-publish-gate.test.ts        |  13 +-
+ .../__tests__/inventory-resilience.test.ts    | 190 ++++++++++++++++++
+ .../app/api/inventory/route.ts                | 136 ++++++++++---
+ .../lib/inventory/types.ts                    |   8 +
+ 4 files changed, 313 insertions(+), 34 deletions(-)
+ create mode 100644 apps/sierra-estates-realty/__tests__/inventory-resilience.test.ts
+
+diff --git a/apps/sierra-estates-realty/__tests__/api/inventory-publish-gate.test.ts b/apps/sierra-estates-realty/__tests__/api/inventory-publish-gate.test.ts
+index 7d8305ecd..2b01c1411 100644
+--- a/apps/sierra-estates-realty/__tests__/api/inventory-publish-gate.test.ts
++++ b/apps/sierra-estates-realty/__tests__/api/inventory-publish-gate.test.ts
+@@ -51,7 +51,7 @@ jest.mock('@/lib/server/rate-limit', () => ({
+   publicEndpointLimiter: {},
+ }));
+ 
+-import { GET } from '@/app/api/inventory/route';
++import { GET, bustInventoryCache } from '@/app/api/inventory/route';
+ import { queryUnitToMapUnit } from '@/lib/inventory/domain-map';
+ 
+ describe('queryUnitToMapUnit — honest location labels (§21)', () => {
+@@ -125,6 +125,11 @@ const PUBLISHABLE_ROW = {
+ describe('GET /api/inventory — publish gate (Phase D)', () => {
+   beforeEach(() => {
+     jest.clearAllMocks();
++    // Module state isolation (2026-11-13): the route keeps a 60s cache and a
++    // stale-serve last-good payload; without busting, a prior test's success
++    // bleeds into the next test (e.g. stale-served 'supabase' rows masking
++    // the domain-tier fallback this suite pins).
++    bustInventoryCache();
+     listRecordsMock.mockResolvedValue([]);
+   });
+ 
+@@ -195,7 +200,11 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
+     const [table, options] = listRecordsMock.mock.calls[0] as [string, Record<string, unknown>];
+     expect(table).toBe('listings');
+     expect(options.where).toEqual([
+-      { column: 'status', op: 'in', value: ['available'] },
++      // FALLBACK FIX (2026-11-13): 'active' is the live storage status of
++      // every Supabase listings row (what the primary tier filters on);
++      // 'available' is kept for legacy domain-shaped rows. The old
++      // available-only filter made this whole fallback tier dead code.
++      { column: 'status', op: 'in', value: ['available', 'active'] },
+       // PUBLISH GATE (Phase D): public caller passes publishStatus so only
+       // verified rows leave the database.
+       { column: 'publish_status', op: 'in', value: ['PUBLISHABLE'] },
+diff --git a/apps/sierra-estates-realty/__tests__/inventory-resilience.test.ts b/apps/sierra-estates-realty/__tests__/inventory-resilience.test.ts
+new file mode 100644
+index 000000000..9acf6f8d7
+--- /dev/null
++++ b/apps/sierra-estates-realty/__tests__/inventory-resilience.test.ts
+@@ -0,0 +1,190 @@
++/**
++ * Regression tests for the 2026-11-12/13 inventory regression:
++ * a transient PostgREST page error inside the 4-5 page sequential read
++ * aborted the whole fetch, the (status-mismatched, dead) domain fallback
++ * returned nothing, and the public map served source:'none' / 0 units for
++ * minutes at a time on otherwise healthy deployments.
++ *
++ * The fix (same route file): per-page single retry, partial-data honesty
++ * (complete:false), stale-serve of the last good read, and a live domain
++ * fallback status filter.
++ *
++ * These tests pin the FIX by exercising the route module with a stubbed
++ * @sierra-estates/db getSupabase client.
++ */
++
++// ── module under test, with its supabase dependency stubbed ────────────────
++type PageResult = { data?: unknown[]; error?: { message: string } | null };
++
++/** Builds a fake supabase client whose listings reads follow `pages`:
++ *  pages[i] = { data } for a good page, or { error } to fail it. An array
++ *  means per-attempt results: [attempt1, attempt2] — the retry path. */
++function fakeSupabase(pages: Array<PageResult | PageResult[]>) {
++  const calls: Array<{ from: number; attempt: number }> = [];
++  const client = {
++    from(table: string) {
++      if (table === 'compounds') {
++        return {
++          select() {
++            return Promise.resolve({ data: [], error: null });
++          },
++        };
++      }
++      // listings
++      return {
++        select() {
++          const builder: Record<string, unknown> = {};
++          let rangeFrom = 0;
++          builder.eq = () => builder;
++          builder.ilike = () => builder;
++          builder.order = () => builder;
++          builder.range = (from: number) => {
++            rangeFrom = from;
++            return builder;
++          };
++          builder.then = (
++            resolve: (v: PageResult) => void,
++            _reject: (e: unknown) => void,
++          ) => {
++            const attempt = calls.filter((c) => c.from === rangeFrom).length + 1;
++            calls.push({ from: rangeFrom, attempt });
++            const spec = pages[rangeFrom / 1000];
++            const result =
++              spec === undefined
++                ? { data: [] } // beyond provided pages = short read
++                : Array.isArray(spec)
++                  ? spec[Math.min(attempt - 1, spec.length - 1)]
++                  : spec;
++            setTimeout(() => resolve(result), 1);
++          };
++          return builder;
++        },
++      };
++    },
++  };
++  return { client, calls };
++}
++
++jest.mock('@sierra-estates/db', () => {
++  let current: unknown = null;
++  return {
++    __setClient(c: unknown) {
++      current = c;
++    },
++    getSupabase: () => current,
++    getSupabaseAdmin: () => current,
++    getRecord: jest.fn(),
++    insertRecord: jest.fn(),
++    listRecords: jest.fn(),
++  };
++});
++
++/** Unit rows with UNIQUE codes per page (start offsets the id range) — the
++ *  GET handler dedupes by code, so every page must carry distinct rows. */
++function unitRow(id: string): Record<string, unknown> {
++  return {
++    id,
++    code: `CODE-${id}`,
++    title: `Unit ${id}`,
++    status: 'active',
++    publish_status: 'PUBLISHABLE',
++    updated_at: '2026-11-13T00:00:00Z',
++  };
++}
++
++const rows = (n: number, start = 0) =>
++  Array.from({ length: n }, (_, i) => unitRow(`u${start + i}`));
++
++describe('GET /api/inventory resilience (2026-11-13 regression)', () => {
++  let route: typeof import('../app/api/inventory/route');
++  let db: { __setClient(c: unknown): void };
++
++  beforeAll(async () => {
++    route = await import('../app/api/inventory/route');
++    db = (await import('@sierra-estates/db')) as unknown as {
++      __setClient(c: unknown): void;
++    };
++  });
++
++  beforeEach(() => {
++    // isolate per-test module state (the 60s in-memory cache)
++    route.bustInventoryCache();
++  });
++
++  const get = () => route.GET(new Request('http://localhost/api/inventory'));
++
++  it('serves full inventory when all pages succeed (baseline)', async () => {
++    const { client } = fakeSupabase([
++      { data: rows(1000) },
++      { data: rows(1000, 1000) },
++      { data: rows(5, 2000) },
++    ]);
++    db.__setClient(client);
++    const body = await (await get()).json();
++    expect(body.source).toBe('supabase');
++    expect(body.count).toBe(2005);
++    expect(body.complete).toBe(true);
++  });
++
++  it('retries a transient single-page error and still serves FULL inventory', async () => {
++    // page 0 ok; page 1 fails once then succeeds; page 2 short-reads
++    const { client, calls } = fakeSupabase([
++      { data: rows(1000) },
++      [{ error: { message: 'TypeError: fetch failed' } }, { data: rows(1000, 1000) }],
++      { data: rows(3, 2000) },
++    ]);
++    db.__setClient(client);
++    const body = await (await get()).json();
++    expect(body.source).toBe('supabase');
++    expect(body.count).toBe(2003);
++    expect(body.complete).toBe(true);
++    // page 1 was fetched exactly twice (the retry happened)
++    expect(calls.filter((c) => c.from === 1000)).toHaveLength(2);
++  });
++
++  it('serves PARTIAL data (complete:false) when a later page fails twice', async () => {
++    const { client } = fakeSupabase([
++      { data: rows(1000) },
++      [
++        { error: { message: 'TypeError: fetch failed' } },
++        { error: { message: 'TypeError: fetch failed' } },
++      ],
++    ]);
++    db.__setClient(client);
++    const body = await (await get()).json();
++    expect(body.source).toBe('supabase');
++    expect(body.count).toBe(1000);
++    expect(body.complete).toBe(false);
++  });
++
++  it('stale-serves the last good read (complete:false) when a fresh read fails at page 0', async () => {
++    // 1st request: full success → records the last-good payload
++    const good = fakeSupabase([{ data: rows(1000) }, { data: rows(10, 1000) }]);
++    db.__setClient(good.client);
++    const first = await (await get()).json();
++    expect(first.source).toBe('supabase');
++    expect(first.count).toBe(1010);
++    expect(first.complete).toBe(true);
++
++    // advance perceived time past the 60s cache TTL (Date.now spy — real
++    // timers stay live so the retry backoff sleep can actually elapse)
++    const realNow = Date.now();
++    const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(realNow + 61_000);
++    try {
++      // 2nd request: every page-0 attempt fails after retry
++      const bad = fakeSupabase([
++        [
++          { error: { message: 'TypeError: fetch failed' } },
++          { error: { message: 'TypeError: fetch failed' } },
++        ],
++      ]);
++      db.__setClient(bad.client);
++      const second = await (await get()).json();
++      expect(second.source).toBe('supabase'); // not 'none'
++      expect(second.count).toBe(1010); // the stale-but-verified rows
++      expect(second.complete).toBe(false); // clearly marked degraded
++    } finally {
++      dateSpy.mockRestore();
++    }
++  });
++});
+diff --git a/apps/sierra-estates-realty/app/api/inventory/route.ts b/apps/sierra-estates-realty/app/api/inventory/route.ts
+index 7f530eb8f..24ecac4c0 100644
+--- a/apps/sierra-estates-realty/app/api/inventory/route.ts
++++ b/apps/sierra-estates-realty/app/api/inventory/route.ts
+@@ -28,6 +28,7 @@
+ import { NextResponse } from "next/server";
+ import { logger } from "@/lib/logger";
+ import { InventoryQueryService } from "@/lib/services/inventory-query";
++import type { PropertyStatus } from "@/lib/services/inventory-query";
+ import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
+ import { resolveLocation } from "@/lib/inventory/gazetteer";
+ import { hasPendingPhoto } from "@/lib/inventory/normalize";
+@@ -68,8 +69,23 @@ function deriveSegment(
+ let cachedSupabaseListings: { data: InventoryResponse; expiresAt: number } | null = null;
+ const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+ 
++// STALE-SERVE (2026-11-13): the last fully successful payload is kept beyond its
++// TTL so a transient PostgREST failure serves the previous good inventory
++// (clearly flagged complete:false) instead of an empty public map. Evidence:
++// 2026-11-12 23:45–00:30 UTC, healthy deployments intermittently served
++// source:'none' for 5+ minutes because ONE page error of the 5-page read
++// aborted the whole fetch and the fallback query is status-mismatched dead
++// code (see fetchDomain). A ~10-minute stale window is far more honest than
++// an empty map: the units shown all existed seconds ago.
++let lastGoodListings: { data: InventoryResponse; fetchedAt: number } | null = null;
++const STALE_SERVE_MS = 10 * 60 * 1000; // 10 minutes
++
+ export function bustInventoryCache(): void {
+   cachedSupabaseListings = null;
++  // Cache-bust is an admin "this data changed NOW" signal — holding the old
++  // payload as the stale-serve fallback would re-serve exactly the rows the
++  // bust intends to refresh, so it drops together with the live cache.
++  lastGoodListings = null;
+ }
+ 
+ /** Canonical Supabase listings, mapped to the public-safe map shape.
+@@ -100,44 +116,70 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
+     const HARD_CAP = compoundQuery ? 2000 : 5000;
+     const allListings: unknown[] = [];
+     let compoundsData: Array<{ name: string | null; lat: number | null; lng: number | null; zone?: string | null }> | null = null;
++    // RESILIENCE (2026-11-13): each page gets ONE quick retry (250ms backoff).
++    // A transient PostgREST error on any of the 4-5 sequential pages used to
++    // abort the entire fetch and render an empty public map for a full cache
++    // cycle; one retry absorbs the vast majority of blips at negligible cost.
++    // If a page STILL fails after retry: page 0 failing means we know nothing —
++    // fall through to stale/cache. A later page failing means we already hold
++    // verified rows — serve them as PARTIAL data (complete:false) rather than
++    // dropping the whole inventory.
++    let partial = false;
++    const fetchPage = async (from: number): Promise<unknown[]> => {
++      let lastErr: Error | null = null;
++      for (let attempt = 0; attempt < 2; attempt++) {
++        // Rebuilt per attempt: supabase-js query builders are effectively
++        // single-use (awaiting resolves them), so the retry needs a fresh one.
++        let query = supabase
++          .from("listings")
++          // Least-columns select (2026-11-01 PII hardening): the anon role only
++          // holds column-level SELECT on public-safe listings columns — owner/
++          // broker contact and raw payloads are not grantable, so never select('*').
++          .select(
++            "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, img, tag, ai_score, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
++          )
++          .eq("status", "active")
++          // PUBLISH GATE (Phase D): only verified rows may reach the public map.
++          .eq("publish_status", "PUBLISHABLE");
++
++        if (compoundQuery) {
++          query = query.ilike("compound", `%${compoundQuery}%`);
++        }
++        const pageRes = await query
++          .order("updated_at", { ascending: false })
++          .range(from, from + PAGE - 1);
++        if (!pageRes.error) {
++          return (pageRes.data ?? []) as unknown[];
++        }
++        lastErr = new Error(pageRes.error.message);
++        if (attempt === 0) await new Promise((r) => setTimeout(r, 250));
++      }
++      throw lastErr ?? new Error("inventory page read failed");
++    };
+     for (let from = 0; from < HARD_CAP; from += PAGE) {
+-      let query = supabase
+-        .from("listings")
+-        // Least-columns select (2026-11-01 PII hardening): the anon role only
+-        // holds column-level SELECT on public-safe listings columns — owner/
+-        // broker contact and raw payloads are not grantable, so never select('*').
+-        .select(
+-          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, img, tag, ai_score, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
+-        )
+-        .eq("status", "active")
+-        // PUBLISH GATE (Phase D): only verified rows may reach the public map.
+-        .eq("publish_status", "PUBLISHABLE");
+-
+-      if (compoundQuery) {
+-        query = query.ilike("compound", `%${compoundQuery}%`);
++      let data: unknown[];
++      try {
++        data = await fetchPage(from);
++      } catch (err) {
++        if (from === 0) throw err; // nothing in hand — outer catch handles cache/stale
++        logger.warn(
++          `[inventory] page ${from / PAGE} failed after retry, serving partial (${allListings.length} rows): ${(err as Error).message}`,
++        );
++        partial = true;
++        break;
+       }
+-
+-      const [pageRes, compoundsPageRes] = await Promise.all([
+-        query
+-          .order("updated_at", { ascending: false })
+-          .range(from, from + PAGE - 1),
+-        from === 0
+-          ? supabase
+-              .from("compounds")
+-              .select("name, lat, lng, zone, price_m, rent, ai_score")
+-          : Promise.resolve(null),
+-      ]);
+-      if (pageRes.error) throw new Error(pageRes.error.message);
+       if (from === 0) {
+-        if (compoundsPageRes && "error" in compoundsPageRes && (compoundsPageRes as { error: unknown }).error) {
++        const compoundsPageRes = await supabase
++          .from("compounds")
++          .select("name, lat, lng, zone, price_m, rent, ai_score");
++        if (compoundsPageRes.error) {
+           // non-fatal: compound geo is an enrichment, pins fall back to gazetteer
+           logger.warn("[inventory] compounds read failed — gazetteer fallback for pins");
+           compoundsData = [];
+         } else {
+-          compoundsData = ((compoundsPageRes as { data?: unknown }).data ?? []) as typeof compoundsData;
++          compoundsData = compoundsPageRes.data as typeof compoundsData;
+         }
+       }
+-      const data = (pageRes.data ?? []) as unknown[];
+       allListings.push(...data);
+       if (data.length < PAGE) break;
+     }
+@@ -283,13 +325,17 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
+         generatedAt: new Date().toISOString(),
+         source: "supabase",
+         count: units.length,
++        // PARTIAL HONESTY: complete is false when a later page failed after
++        // retry — consumers get the verified rows we do hold, clearly marked.
++        complete: !partial,
+         units,
+       };
+-      if (isAll) {
++      if (isAll && !partial) {
+         cachedSupabaseListings = {
+           data: res,
+           expiresAt: Date.now() + CACHE_TTL_MS,
+         };
++        lastGoodListings = { data: res, fetchedAt: Date.now() };
+       }
+       return res;
+     }
+@@ -298,6 +344,21 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
+     logger.warn(
+       `[inventory] Supabase listings read failed, falling back: ${(err as Error).message}`,
+     );
++    // STALE-SERVE: a fresh full read failed, but a recent successful one may
++    // exist. Serving it (complete:false, generatedAt untouched so consumers
++    // can see the age) beats an empty public map — every unit in it was
++    // verified and publishable seconds ago. Falls through to return null only
++    // when there is no recent good read either.
++    if (!compoundQuery && lastGoodListings && Date.now() - lastGoodListings.fetchedAt < STALE_SERVE_MS) {
++      const stale = {
++        ...lastGoodListings.data,
++        complete: false,
++      };
++      logger.warn(
++        `[inventory] serving stale-but-verified inventory from ${new Date(lastGoodListings.fetchedAt).toISOString()} (${stale.count} units)`,
++      );
++      return stale;
++    }
+     return null;
+   }
+ }
+@@ -306,8 +367,15 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
+ async function fetchDomain(): Promise<InventoryResponse | null> {
+   try {
+     const rows = await InventoryQueryService.query({
+-      status: "available",
+-      publishStatus: "PUBLISHABLE",
++      // FALLBACK FIX (2026-11-13): this query was DEAD CODE since its birth —
++      // it filtered status:'available' while every Supabase listings row
++      // carries status:'active' (the value the primary path filters on), so
++      // it always returned []. Both values are passed through the raw `in`
++      // filter: 'active' is the live storage status; 'available' is kept for
++      // any legacy domain-shaped rows. PropertyStatus (the domain type) has
++      // no 'active' member, hence the widening cast at this boundary.
++      status: ['available', 'active'] as unknown as PropertyStatus[],
++      publishStatus: 'PUBLISHABLE',
+       limit: 300,
+     });
+     if (!rows.length) return null;
+@@ -464,6 +532,10 @@ export async function GET(request: Request) {
+     generatedAt: sourceResponse?.generatedAt || new Date().toISOString(),
+     source: sourceResponse?.source || "none",
+     count: filteredUnits.length,
++    // absent/false honesty: a 'none' source is by definition not a complete
++    // read; otherwise inherit the producer's flag (undefined → true for
++    // legacy producers that predate the field).
++    complete: sourceResponse ? sourceResponse.complete !== false : false,
+     segments: sourceResponse?.segments ?? segmentCounts,
+     compoundCounts,
+     compoundSheetCounts,
+diff --git a/apps/sierra-estates-realty/lib/inventory/types.ts b/apps/sierra-estates-realty/lib/inventory/types.ts
+index 1607919b3..47bf7a4f6 100644
+--- a/apps/sierra-estates-realty/lib/inventory/types.ts
++++ b/apps/sierra-estates-realty/lib/inventory/types.ts
+@@ -83,6 +83,14 @@ export interface InventoryResponse {
+    */
+   source: 'supabase' | 'domain' | 'live' | 'snapshot' | 'excel-hybrid' | 'none';
+   count: number;
++  /**
++   * PARTIAL HONESTY (2026-11-13): false when the payload was produced under
++   * degraded conditions — a pagination page failed after retry (partial
++   * dataset) or the payload is a stale-served previous good read. Consumers
++   * can surface "inventory may be incomplete" instead of silently showing
++   * fewer pins than reality. Absent means complete (older producers).
++   */
++  complete?: boolean;
+   segments?: {
+     total: number;
+     owners_rent: number;
+
