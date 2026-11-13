@@ -73,4 +73,52 @@ First-time Use
       'IMG-20250512-WA0043.jpg'
     ]);
   });
+
+  // 2026-11-13 regression contract (WA-* rent/sale mis-tagging at source):
+  // the old lexicon knew only 4 rent spellings, so rent ads phrased with
+  // للتأجير / شهري / monthly fell through to the silent 'Sale' default and
+  // then received sale-scale prices — the exact "suspicious-sale" class
+  // quarantined on 2026-10-20 (735 rows) / 2026-10-21 (82 'resale' rows).
+  it('classifies rent ads that use للتأجير / شهري / monthly / lease as Rent', () => {
+    const msg = (text: string) => ({ timestamp: '11/13/26, 9:00:00 AM', sender: 'Owner Test', text });
+
+    // للتأجير (taa-marbuta spelling the old lexicon missed)
+    const u1 = extractUnitDetails(msg('شقة للتأجير في كمبوند ميفيدا 180 متر مطلوب 35 شهري للتواصل 01001234567'), 'Owners');
+    expect(u1?.dealType).toBe('Rent');
+    expect(u1?.price).toBe(35000);
+
+    // monthly (English phrasing the old lexicon missed)
+    const u2 = extractUnitDetails(msg('Furnished Apartment monthly rent in Eastown Sodic 150 sqm price 40k contact 01122334455'), 'Owners');
+    expect(u2?.dealType).toBe('Rent');
+
+    // lease
+    const u3 = extractUnitDetails(msg('Villa for lease in Villette 400 sqm asking 120k yearly 01012345678'), 'Owners');
+    expect(u3?.dealType).toBe('Rent');
+  });
+
+  it('returns null dealType (never a guessed default) when the text has no rent/sale evidence', () => {
+    const msg = (text: string) => ({ timestamp: '11/13/26, 9:00:00 AM', sender: 'Owner Test', text });
+    // Real-estate signal words exist (property+compound+phone) but no
+    // rent/sale keyword: §21 no-fabrication — unknown stays null.
+    const u = extractUnitDetails(msg('شقة في كمبوند زيقzigzag بالتحوية 200 متر للتسليم الفوري 01001234567'), 'Owners');
+    expect(u).not.toBeNull();
+    expect(u?.dealType).toBeNull();
+    // Bare-number price without a deal type must NOT be scaled (old code
+    // multiplied any <100 number by 1,000,000 → rent "35" became 35M sale).
+    expect(u?.price).toBe(0);
+  });
+
+  it('scales bare-number prices by the classified deal type (rent k, sale M)', () => {
+    const msg = (text: string) => ({ timestamp: '11/13/26, 9:00:00 AM', sender: 'Owner Test', text });
+
+    // Rent ad, bare number 35 → 35,000 EGP/mo (old code: 35,000,000!)
+    const rent = extractUnitDetails(msg('شقة للايجار كمبوند ميفيدا 180م مطلوب 35 للتواصل 01001234567'), 'Owners');
+    expect(rent?.dealType).toBe('Rent');
+    expect(rent?.price).toBe(35000);
+
+    // Sale ad, bare number 45 → 45,000,000 EGP (unchanged behavior)
+    const sale = extractUnitDetails(msg('فيلا للبيع في كمبوند ميفيدا مساحة 350 متر مطلوب 45 كاش 01001234567'), 'Owners');
+    expect(sale?.dealType).toBe('Sale');
+    expect(sale?.price).toBe(45000000);
+  });
 });

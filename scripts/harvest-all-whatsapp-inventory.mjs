@@ -93,9 +93,15 @@ function classifyChannel(text, sender, groupName) {
 
 function parseDealType(text) {
   const t = text.toLowerCase();
-  const isRent = t.includes('للايجار') || t.includes('إيجار') || t.includes('ايجار') ||
+  // 2026-11-13: rent lexicon extended (للإيجار/للتأجير/تأجير/monthly/yearly —
+  // previously only one of the three إيجار hamza spellings matched, so rent
+  // ads fell to the old 'Rent'-default/no-evidence guess and sale ads with
+  // no keyword silently became 'Rent').
+  const isRent = t.includes('للايجار') || t.includes('للإيجار') || t.includes('للتأجير') ||
+                 t.includes('إيجار') || t.includes('ايجار') || t.includes('تأجير') ||
                  t.includes('مفروش') || t.includes('شهري') || t.includes('سنوي') ||
-                 t.includes('قانون جديد') || t.includes('rent') || t.includes('lease');
+                 t.includes('قانون جديد') || t.includes('monthly') || t.includes('yearly') ||
+                 t.includes('rent') || t.includes('lease');
   const isSale = t.includes('للبيع') || t.includes('بيع') || t.includes('كاش') ||
                  t.includes('اقساط') || t.includes('أقساط') || t.includes('over') ||
                  t.includes('sale') || t.includes('resale') || t.includes('تنازل');
@@ -103,7 +109,7 @@ function parseDealType(text) {
   if (isSale && !isRent) return 'Sale';
   if (isRent && isSale) {
     // Determine whichever keyword appears earlier
-    const rentIdx = Math.min(...['للايجار', 'إيجار', 'ايجار', 'rent'].map(k => {
+    const rentIdx = Math.min(...['للايجار', 'للإيجار', 'إيجار', 'ايجار', 'rent'].map(k => {
       const i = t.indexOf(k); return i === -1 ? 999999 : i;
     }));
     const saleIdx = Math.min(...['للبيع', 'بيع', 'sale'].map(k => {
@@ -111,7 +117,11 @@ function parseDealType(text) {
     }));
     return rentIdx < saleIdx ? 'Rent' : 'Sale';
   }
-  return 'Rent'; // default for secondary inventory
+  // §21 no-fabrication: no rent/sale evidence in the text → null (unknown),
+  // never a silent guess. Callers skip price-scaling on null and the DB
+  // column is nullable; the old 'Rent' default here is what let rent-scale
+  // prices land on sale rows (and vice versa) in the 2026-10-20 data debt.
+  return null;
 }
 
 function parsePrice(text, dealType) {
@@ -157,13 +167,16 @@ function parsePrice(text, dealType) {
   if (bareMatch) {
     const val = parseFloat(bareMatch[1]);
     if (val > 0 && val < 200) {
+      // Scale ONLY on a classified deal type. dealType null (no rent/sale
+      // evidence) = unknown scale → 0, not a 1000x-guessed price (§21).
       if (dealType === 'Rent') {
         const egp = val * 1000;
         return { egp, usd: Math.round(egp / 48.5) };
-      } else {
+      } else if (dealType === 'Sale') {
         const egp = val * 1_000_000;
         return { egp, usd: Math.round(egp / 48.5) };
       }
+      return { egp: 0, usd: 0 };
     }
   }
 
@@ -371,7 +384,7 @@ async function main() {
       phone: phones[0],
       allPhones: phones,
       channel: channel, // 'Owner' or 'Broker'
-      dealType: dealType, // 'Rent' or 'Sale'
+      dealType: dealType, // 'Rent' | 'Sale' | null (no evidence → §21 unknown)
       compound: resolvedLoc.label,
       zone: resolvedLoc.zone,
       lat: resolvedLoc.lat,
@@ -448,7 +461,9 @@ async function main() {
   for (const r of baseMasterRows) {
     const phone = cleanPhone(r.mobile);
     const compound = r.compound || 'New Cairo';
-    const deal = r.deal_type || 'Rent';
+    // Base master rows carry an explicit deal_type; only fall back to a
+    // re-parse of their own text (never a hard-coded 'Rent').
+    const deal = r.deal_type || parseDealType(String(r.notes || '')) || 'Unknown';
     const price = parseFloat(r.price_egp) || 0;
     const priceBucket = price > 0 ? Math.round(price / 5000) * 5000 : 'no_price';
     const dedupKey = phone
@@ -491,7 +506,7 @@ async function main() {
   for (const wa of harvestedUnits) {
     const phone = wa.phone;
     const compound = wa.compound;
-    const deal = wa.dealType;
+    const deal = wa.dealType || 'Unknown';
     const price = wa.priceEgp;
     const priceBucket = price > 0 ? Math.round(price / 5000) * 5000 : 'no_price';
     const dedupKey = `${phone}__${compound.toLowerCase()}__${deal.toLowerCase()}__${priceBucket}`;
@@ -685,7 +700,9 @@ async function main() {
       lng: loc.lng,
       approxCoords: loc.approx,
       type: r.property_type || 'Apartment',
-      dealType: (r.deal_type || 'Rent').toLowerCase(),
+      // Map outputs keep a lowercase dealType; unknown stays 'unknown' —
+      // downstream map/filter code already guards on === 'rent'.
+      dealType: (r.deal_type || 'unknown').toLowerCase(),
       bedrooms: parseInt(r.bedrooms, 10) || 0,
       bathrooms: 1,
       area_sqm: parseFloat(r.space_m2) || 0,
