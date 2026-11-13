@@ -218,3 +218,16 @@ The four remaining operator items were all executed and verified in a final pass
 2. ~~Hygiene: stale empty `SUPABASE_ACCESS_TOKEN` entries~~ **DONE** — all four deleted (client 2 + admin 2), verified 0 remain.
 3. The 1,078 quarantined rows sit in `REVIEW_REQUIRED` awaiting human re-verification — they re-enter the public map only after a reviewer corrects the price (or the deal type for the rent-scale rows) and flips them back to `PUBLISHABLE`. If WhatsApp-ingested `WA-*` rows recur with rent-scale sale prices, the ingest path that tags them deserves a look.
 4. Still open from before: Telegram role chat ids (CEO / Team Leader / Sales Advisor) for the 3-way dispatch.
+
+### Part 7 second post-script — Dependabot close-out (2026-11-13, 02:05–03:05 UTC)
+
+A final sweep found **17 open Dependabot alerts** (4 high: deepmerge-ts, follow-redirects, js-yaml ×3; 8 medium; 5 low) accumulated from the 11-12/13 ingest-era commits. All actionable ones were cleared in four PRs:
+
+- **PR #58** (`66a492e60`) — @hono/node-server 2.1.5 → 2.1.8 (Dependabot, CI green).
+- **PR #59** (`b874f00a9`) — hono 4.13.13 → 4.13.18 (Dependabot, CI green) — clears the 5 hono alerts.
+- **PR #60** (`5da9f9dc3`) — security-floor `pnpm.overrides` for 7 transitive packages with no Dependabot PR (js-yaml ≥4.3.2, deepmerge-ts ≥8.0.0, deepmerge ≥2.1.1, fast-xml-parser ≥5.12.0, glob ≥10.4.15, minimatch ≥11.0.1, prismjs ≥1.30.0), extending the repo's existing overrides mechanism; lockfile re-resolved, resolved versions verified, CI fully green (Type-check + Lint + Test + Build + dependency-review). **17 → 4 alerts.**
+- **PR #61** (`8d2008345`) — advisory floors moved after #60 landed (follow-redirects fix now 1.16.2+ → resolves 1.16.3; glob fix 14.0.2+ → resolves 14.0.6); CI green. **4 → 2 alerts.**
+
+**Remaining 2 alerts (not actionable):** deepmerge [low], CVE-2026-93753 (prototype poisoning in `mergeObject`) — the vulnerable range covers every published 4.2.0–4.3.1 release and no patched version exists yet. deepmerge is a dev-tooling transitive here (no application imports it). Revisit when upstream publishes a fix.
+
+**Final repo state:** `main @ 8d2008345`, 0 open PRs, CI green on every merge commit, deploys queued (02:49/03:03 UTC runs — lockfile-only changes; both sites already serve the #57 resilience fix and were verified healthy at 4,963 units).
