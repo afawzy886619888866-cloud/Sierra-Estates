@@ -68,6 +68,17 @@ function deriveSegment(
 let cachedSupabaseListings: { data: InventoryResponse; expiresAt: number } | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
+// STALE-SERVE (2026-11-13): the last fully successful payload is kept beyond its
+// TTL so a transient PostgREST failure serves the previous good inventory
+// (clearly flagged complete:false) instead of an empty public map. Evidence:
+// 2026-11-12 23:45–00:30 UTC, healthy deployments intermittently served
+// source:'none' for 5+ minutes because ONE page error of the 5-page read
+// aborted the whole fetch and the fallback query is status-mismatched dead
+// code (see fetchDomain). A ~10-minute stale window is far more honest than
+// an empty map: the units shown all existed seconds ago.
+let lastGoodListings: { data: InventoryResponse; fetchedAt: number } | null = null;
+const STALE_SERVE_MS = 10 * 60 * 1000; // 10 minutes
+
 export function bustInventoryCache(): void {
   cachedSupabaseListings = null;
 }
@@ -100,44 +111,70 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
     const HARD_CAP = compoundQuery ? 2000 : 5000;
     const allListings: unknown[] = [];
     let compoundsData: Array<{ name: string | null; lat: number | null; lng: number | null; zone?: string | null }> | null = null;
-    for (let from = 0; from < HARD_CAP; from += PAGE) {
-      let query = supabase
-        .from("listings")
-        // Least-columns select (2026-11-01 PII hardening): the anon role only
-        // holds column-level SELECT on public-safe listings columns — owner/
-        // broker contact and raw payloads are not grantable, so never select('*').
-        .select(
-          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, img, tag, ai_score, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
-        )
-        .eq("status", "active")
-        // PUBLISH GATE (Phase D): only verified rows may reach the public map.
-        .eq("publish_status", "PUBLISHABLE");
+    // RESILIENCE (2026-11-13): each page gets ONE quick retry (250ms backoff).
+    // A transient PostgREST error on any of the 4-5 sequential pages used to
+    // abort the entire fetch and render an empty public map for a full cache
+    // cycle; one retry absorbs the vast majority of blips at negligible cost.
+    // If a page STILL fails after retry: page 0 failing means we know nothing —
+    // fall through to stale/cache. A later page failing means we already hold
+    // verified rows — serve them as PARTIAL data (complete:false) rather than
+    // dropping the whole inventory.
+    let partial = false;
+    const fetchPage = async (from: number): Promise<unknown[]> => {
+      let lastErr: Error | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        // Rebuilt per attempt: supabase-js query builders are effectively
+        // single-use (awaiting resolves them), so the retry needs a fresh one.
+        let query = supabase
+          .from("listings")
+          // Least-columns select (2026-11-01 PII hardening): the anon role only
+          // holds column-level SELECT on public-safe listings columns — owner/
+          // broker contact and raw payloads are not grantable, so never select('*').
+          .select(
+            "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, img, tag, ai_score, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
+          )
+          .eq("status", "active")
+          // PUBLISH GATE (Phase D): only verified rows may reach the public map.
+          .eq("publish_status", "PUBLISHABLE");
 
-      if (compoundQuery) {
-        query = query.ilike("compound", `%${compoundQuery}%`);
-      }
-
-      const [pageRes, compoundsPageRes] = await Promise.all([
-        query
+        if (compoundQuery) {
+          query = query.ilike("compound", `%${compoundQuery}%`);
+        }
+        const pageRes = await query
           .order("updated_at", { ascending: false })
-          .range(from, from + PAGE - 1),
-        from === 0
-          ? supabase
-              .from("compounds")
-              .select("name, lat, lng, zone, price_m, rent, ai_score")
-          : Promise.resolve(null),
-      ]);
-      if (pageRes.error) throw new Error(pageRes.error.message);
+          .range(from, from + PAGE - 1);
+        if (!pageRes.error) {
+          return (pageRes.data ?? []) as unknown[];
+        }
+        lastErr = new Error(pageRes.error.message);
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 250));
+      }
+      throw lastErr ?? new Error("inventory page read failed");
+    };
+    for (let from = 0; from < HARD_CAP; from += PAGE) {
+      let data: unknown[];
+      try {
+        data = await fetchPage(from);
+      } catch (err) {
+        if (from === 0) throw err; // nothing in hand — outer catch handles cache/stale
+        logger.warn(
+          `[inventory] page ${from / PAGE} failed after retry, serving partial (${allListings.length} rows): ${(err as Error).message}`,
+        );
+        partial = true;
+        break;
+      }
       if (from === 0) {
-        if (compoundsPageRes && "error" in compoundsPageRes && (compoundsPageRes as { error: unknown }).error) {
+        const compoundsPageRes = await supabase
+          .from("compounds")
+          .select("name, lat, lng, zone, price_m, rent, ai_score");
+        if (compoundsPageRes.error) {
           // non-fatal: compound geo is an enrichment, pins fall back to gazetteer
           logger.warn("[inventory] compounds read failed — gazetteer fallback for pins");
           compoundsData = [];
         } else {
-          compoundsData = ((compoundsPageRes as { data?: unknown }).data ?? []) as typeof compoundsData;
+          compoundsData = compoundsPageRes.data as typeof compoundsData;
         }
       }
-      const data = (pageRes.data ?? []) as unknown[];
       allListings.push(...data);
       if (data.length < PAGE) break;
     }
@@ -283,13 +320,17 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
         generatedAt: new Date().toISOString(),
         source: "supabase",
         count: units.length,
+        // PARTIAL HONESTY: complete is false when a later page failed after
+        // retry — consumers get the verified rows we do hold, clearly marked.
+        complete: !partial,
         units,
       };
-      if (isAll) {
+      if (isAll && !partial) {
         cachedSupabaseListings = {
           data: res,
           expiresAt: Date.now() + CACHE_TTL_MS,
         };
+        lastGoodListings = { data: res, fetchedAt: Date.now() };
       }
       return res;
     }
@@ -298,6 +339,21 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
     logger.warn(
       `[inventory] Supabase listings read failed, falling back: ${(err as Error).message}`,
     );
+    // STALE-SERVE: a fresh full read failed, but a recent successful one may
+    // exist. Serving it (complete:false, generatedAt untouched so consumers
+    // can see the age) beats an empty public map — every unit in it was
+    // verified and publishable seconds ago. Falls through to return null only
+    // when there is no recent good read either.
+    if (!compoundQuery && lastGoodListings && Date.now() - lastGoodListings.fetchedAt < STALE_SERVE_MS) {
+      const stale = {
+        ...lastGoodListings.data,
+        complete: false,
+      };
+      logger.warn(
+        `[inventory] serving stale-but-verified inventory from ${new Date(lastGoodListings.fetchedAt).toISOString()} (${stale.count} units)`,
+      );
+      return stale;
+    }
     return null;
   }
 }
@@ -306,7 +362,12 @@ async function fetchSupabaseListings(compoundQuery?: string): Promise<InventoryR
 async function fetchDomain(): Promise<InventoryResponse | null> {
   try {
     const rows = await InventoryQueryService.query({
-      status: "available",
+      // FALLBACK FIX (2026-11-13): this query was DEAD CODE since its birth —
+      // it filtered status:'available' while every Supabase listings row
+      // carries status:'active' (the value the primary path filters on), so
+      // it always returned []. Both values are accepted now: 'active' rows
+      // are the live reality; 'available' kept for any legacy rows.
+      status: ["available", "active"],
       publishStatus: "PUBLISHABLE",
       limit: 300,
     });
@@ -464,6 +525,10 @@ export async function GET(request: Request) {
     generatedAt: sourceResponse?.generatedAt || new Date().toISOString(),
     source: sourceResponse?.source || "none",
     count: filteredUnits.length,
+    // absent/false honesty: a 'none' source is by definition not a complete
+    // read; otherwise inherit the producer's flag (undefined → true for
+    // legacy producers that predate the field).
+    complete: sourceResponse ? sourceResponse.complete !== false : false,
     segments: sourceResponse?.segments ?? segmentCounts,
     compoundCounts,
     compoundSheetCounts,
