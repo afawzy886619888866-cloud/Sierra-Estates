@@ -102,6 +102,33 @@ const DATA: any = {
       main: 'Alfresco Evening Lounges & Outdoor Culinary Suites in Villette',
       mainAr: 'جلسات مسائية خارجية مع مطابخ حدائق وأفران بيتزا فاخرة في فيليت',
       img: '/hero/hero-15.webp'
+    },
+    {
+      id: 9,
+      pre: 'CONTEMPORARY POOLSIDE RESIDENCES',
+      preAr: 'مساكن عصرية بإطلالة المسابح',
+      main: 'Sunset Living with Infinity Pools and Open Terraces',
+      mainAr: 'حياة عند الغروب مع مسابح إنفينيتي وتراسات مفتوحة',
+      img: '/hero/hero-card-1.webp',
+      objectPosition: 'center 62%'
+    },
+    {
+      id: 10,
+      pre: 'WATERFRONT LUXURY LIVING',
+      preAr: 'سكن فاخر على الواجهة البحرية',
+      main: 'Beachfront Villas Framed by Palms and Golden Horizons',
+      mainAr: 'فلل على البحر محاطة بالنخيل وأفق ذهبي',
+      img: '/hero/hero-card-2.webp',
+      objectPosition: 'center 68%'
+    },
+    {
+      id: 11,
+      pre: 'SIGNATURE ARCHITECTURE',
+      preAr: 'عمارة استثنائية',
+      main: 'Designed Spaces Built Around Light, Water and Privacy',
+      mainAr: 'مساحات مصممة حول الضوء والماء والخصوصية',
+      img: '/hero/hero-card-3.webp',
+      objectPosition: 'center 60%'
     }
   ],
   listings: defaultListings,

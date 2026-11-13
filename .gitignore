@@ -35,6 +35,11 @@ apps/sierra-estates-realty/__tests__/**/*.js
 **/.env.local
 **/.env.*.local
 **/.secrets.env
+*Secrets*.txt
+*secrets*.txt
+*.crdownload
+patches/New folder/
+patches/* (1).*
 apps/agents/**/.env
 apps/agents/**/.env.*
 *.pem

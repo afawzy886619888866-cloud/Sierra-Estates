@@ -161,6 +161,21 @@ export default function HomeHero() {
         >
           {/* Glowing Laser Tag */}
           <div className="laser-badge" style={captionStyle}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/sierra-dark.webp"
+              alt="Sierra Estates Shield"
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                objectFit: 'contain',
+                marginRight: isAr ? 0 : 6,
+                marginLeft: isAr ? 6 : 0,
+                border: '1px solid rgba(234, 179, 8, 0.45)',
+                boxShadow: '0 0 8px rgba(234, 179, 8, 0.25)',
+              }}
+            />
             <span className="laser-badge-dot" />
             <span className="laser-badge-text">
               {isAr
