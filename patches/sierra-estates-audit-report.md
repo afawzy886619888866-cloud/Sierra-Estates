@@ -285,3 +285,29 @@ A final sweep found **17 open Dependabot alerts** (4 high: deepmerge-ts, follow-
 **Outcome.** On the final run (`43384826899`): client deployed cleanly (new build live, boot 07:24Z); admin's CLI attempts were quota-rejected 5×, **yet the new admin build went live anyway** — verified directly: `/api/admin/telegram-role-chats` on admin.sierra-estates.net now returns `401` (route exists, auth required) instead of the old build's `404`, boot 07:35Z. Both sites are healthy on current builds (`supabase/5000/complete=true`). The self-heal schedule stays armed as a safety net and will retire itself once both projects' deployment commits match main HEAD.
 
 **Remaining human action (unchanged):** regenerate `TELEGRAM_BOT_TOKEN` via BotFather (runbook in Part 8).
+
+### Part 8 addendum 3 — WA mis-tagging fixed at source + 3,151-row re-triage (2026-11-13, 07:43–08:50 UTC)
+
+**Source fix (PR #64, merged `d9509f822`).** The 2026-10-20/21 quarantine (1,078 rows) was treating symptoms; this session root-caused the WA ingestion mis-tagging and fixed it where it originates, in both parsers:
+
+1. **Rent lexicon** — `scripts/import-whatsapp-chat.mjs` recognized only ايجار/إيجار/للايجار/للإيجار/rent, so rent ads phrased للتأجير / شهري / سنوي / monthly / lease silently became `Sale`. Both parsers now share a full EN/AR lexicon (earliest keyword wins when both appear).
+2. **Price scale** — the old bare-number rule multiplied any number <100 by 1,000,000; a rent ad's "مطلوب 35" became a 35M 'sale' price. Scaling now keys off the classified deal type; an unclassified ad keeps price 0.
+3. **No-evidence default** — `harvest-all-whatsapp-inventory.mjs` guessed `'Rent'` when no keyword matched and scaled prices by that guess (1000× cascade). Per the §21 no-fabrication doctrine, unknown deal type is now `null` (the DB column is nullable) and routes to the existing `unknownOrUnassigned` segment.
+
+Three new contract tests pin the behavior (missed spellings → Rent; no evidence → null + price 0; sale 45 → 45M / rent 35 → 35k). Full root suite: 105 files, 1,053 passed. The PR also mirrored migration `20261113_045_owner_outreach_claims.sql` into the app copy (the owner's `afe81e036` missed it, which was failing the migration-mirror parity test on main).
+
+**Re-triage (production, applied 08:15 UTC).** `scripts/ops/supabase/retriage-review-required.mjs` (kept permanently, PR #65 `f99290e28`) re-parses every REVIEW_REQUIRED row's stored source text through the fixed classifier and appends one additive `status_history` note per row with its bucket and evidence — never touching price, deal_type, or publish_status. Results across **3,151 rows**:
+
+| Bucket | Rows | Operator meaning |
+|---|---|---|
+| lexicon_repairable | 45 | stored sale/resale, text clearly says Rent — spot-check then fix deal_type |
+| scale_repairable | 52 | stored price contradicts the text's own price magnitude — spot-check then fix price |
+| already_consistent | 455 | text agrees with stored values — fastest re-publish candidates |
+| still_stub | 1,042 | price 999/5M/0, no text evidence — genuine review |
+| no_text | 1,557 | no raw message preserved — pure human review |
+
+The 97 lexicon/scale-repairable rows are the mechanical-repair queue; every note carries the exact evidence (text-derived deal_type and price) so a reviewer can decide in seconds.
+
+**Deploy state.** Client is current (`f99290e28` live, inventory supabase/5,000). Admin hit the free-tier daily deploy quota again (5× `api-deployments-free-per-day`); its env-sync succeeded and the site is healthy on the previous build — the drift since is scripts/workflows/migrations only, with **zero admin runtime changes**, and migration 045 is applied via the Supabase deploy lane (success). The both-projects self-heal workflow retries at 05:12 UTC tomorrow and stands down once both projects serve main's HEAD.
+
+**Remaining human actions:** (1) `TELEGRAM_BOT_TOKEN` regeneration (unchanged runbook in Part 8); (2) spot-check the 97 repairable rows and the 455 consistent rows for re-publish; (3) review still_stub/no_text at will — they stay off the public map until approved.
