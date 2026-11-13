@@ -275,3 +275,13 @@ A final sweep found **17 open Dependabot alerts** (4 high: deepmerge-ts, follow-
 | Dependabot check on `4a5902fa9` | **success** (first green check since the alerts opened) |
 
 **State at close of session 5:** main @ `4a5902fa9` all checks green (CI, CodeQL, Dependabot, Supabase Preview); client healthy (boot 05:23Z) on the PR #62 build; admin healthy (boot 05:34Z) on the prior build with the quota-window self-heal armed; live inventory `supabase/5000/complete=true` on both. The only remaining human action is unchanged: **regenerate `TELEGRAM_BOT_TOKEN` via BotFather** (runbook above).
+
+### Part 8 addendum 2 — CI recovery + both-projects quota self-heal (2026-11-13, 06:40–07:40 UTC)
+
+**CI failure triage.** The 05:49 CI failure on `28c9b18` (hero WebP commit) had two layers: a transient npm registry blip (`ETARGET @ai-sdk/provider-utils@5.0.81` in the "Install Cline CLI" step — the version exists and installs fine; a rerun cleared it) and, underneath it, a genuine contract failure: the hero regression test still pinned **8 slides / IDs 1–8** while the commit deliberately appended three WebP hero cards (ids 9–11, full EN/AR content). The 11-slide contract fix was verified locally against the full root suite (**104 files, 1,047 tests passed**) and landed on main as `3e88441`. The Dependabot uuid bump (PR #63) was merged as `c102d27`; all security-floor overrides survived the merge (`uuid` 14.0.3/11.1.1, `music-metadata` 12.5.0, `file-type` 22.3.0). Open alerts, PRs, and issues: **0**.
+
+**Both projects hit the deploy quota.** The day's activity exhausted the Vercel free-tier `api-deployments-free-per-day` cap team-wide: admin first (04:48 UTC), then **client too** (5× quota rejections on run 43382141155, 06:57–07:05 UTC). The self-heal workflow was extended (`b7209a3`) so its daily gate now compares main HEAD against the **latest production deployment commit of BOTH admin and client** and stands down only when both are current.
+
+**Outcome.** On the final run (`43384826899`): client deployed cleanly (new build live, boot 07:24Z); admin's CLI attempts were quota-rejected 5×, **yet the new admin build went live anyway** — verified directly: `/api/admin/telegram-role-chats` on admin.sierra-estates.net now returns `401` (route exists, auth required) instead of the old build's `404`, boot 07:35Z. Both sites are healthy on current builds (`supabase/5000/complete=true`). The self-heal schedule stays armed as a safety net and will retire itself once both projects' deployment commits match main HEAD.
+
+**Remaining human action (unchanged):** regenerate `TELEGRAM_BOT_TOKEN` via BotFather (runbook in Part 8).
