@@ -82,6 +82,10 @@ const STALE_SERVE_MS = 10 * 60 * 1000; // 10 minutes
 
 export function bustInventoryCache(): void {
   cachedSupabaseListings = null;
+  // Cache-bust is an admin "this data changed NOW" signal — holding the old
+  // payload as the stale-serve fallback would re-serve exactly the rows the
+  // bust intends to refresh, so it drops together with the live cache.
+  lastGoodListings = null;
 }
 
 /** Canonical Supabase listings, mapped to the public-safe map shape.

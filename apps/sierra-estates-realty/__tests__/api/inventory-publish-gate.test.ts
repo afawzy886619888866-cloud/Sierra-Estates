@@ -51,7 +51,7 @@ jest.mock('@/lib/server/rate-limit', () => ({
   publicEndpointLimiter: {},
 }));
 
-import { GET } from '@/app/api/inventory/route';
+import { GET, bustInventoryCache } from '@/app/api/inventory/route';
 import { queryUnitToMapUnit } from '@/lib/inventory/domain-map';
 
 describe('queryUnitToMapUnit — honest location labels (§21)', () => {
@@ -125,6 +125,11 @@ const PUBLISHABLE_ROW = {
 describe('GET /api/inventory — publish gate (Phase D)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Module state isolation (2026-11-13): the route keeps a 60s cache and a
+    // stale-serve last-good payload; without busting, a prior test's success
+    // bleeds into the next test (e.g. stale-served 'supabase' rows masking
+    // the domain-tier fallback this suite pins).
+    bustInventoryCache();
     listRecordsMock.mockResolvedValue([]);
   });
 
@@ -195,7 +200,11 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
     const [table, options] = listRecordsMock.mock.calls[0] as [string, Record<string, unknown>];
     expect(table).toBe('listings');
     expect(options.where).toEqual([
-      { column: 'status', op: 'in', value: ['available'] },
+      // FALLBACK FIX (2026-11-13): 'active' is the live storage status of
+      // every Supabase listings row (what the primary tier filters on);
+      // 'available' is kept for legacy domain-shaped rows. The old
+      // available-only filter made this whole fallback tier dead code.
+      { column: 'status', op: 'in', value: ['available', 'active'] },
       // PUBLISH GATE (Phase D): public caller passes publishStatus so only
       // verified rows leave the database.
       { column: 'publish_status', op: 'in', value: ['PUBLISHABLE'] },
