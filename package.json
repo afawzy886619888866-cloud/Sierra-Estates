@@ -48,6 +48,7 @@
     "automation:cycle": "tsx --conditions react-server scripts/openclaw-task-runner.ts orchestrate:cycle",
     "whatsapp:bot:install": "npm --prefix apps/agents/whatsapp-bot ci --ignore-scripts",
     "whatsapp:bot": "npm --prefix apps/agents/whatsapp-bot start",
+    "whatsapp:bot:multiline": "npm --prefix apps/whatsapp-bot start",
     "openwa:8lines:install": "npm --prefix apps/agents/whatsapp-multi-session install",
     "openwa:8lines": "npm --prefix apps/agents/whatsapp-multi-session start",
     "rag:station": "npm --prefix apps/agents/whatsapp-multi-session start",

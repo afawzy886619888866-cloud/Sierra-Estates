@@ -105,6 +105,35 @@ services:
       timeout: 10s
       retries: 3
 
+  # ─────────────────────────────────────────────────────────────────────────
+  #  WhatsApp Bot — 4-Line Parallel Group Harvester (Baileys)
+  #  Listens concurrently on line_1, line_2, line_3, line_4 and forwards
+  #  incoming broker group messages to n8n with x-n8n-webhook-secret auth.
+  # ─────────────────────────────────────────────────────────────────────────
+  whatsapp-bot:
+    build:
+      context: ../apps/whatsapp-bot
+      dockerfile: Dockerfile
+    container_name: sierra-whatsapp-bot
+    restart: unless-stopped
+    environment:
+      - N8N_W1_WEBHOOK_URL=${N8N_W1_WEBHOOK_URL:-http://n8n:5678/webhook/whatsapp-incoming}
+      - N8N_WEBHOOK_SECRET=${N8N_WEBHOOK_SECRET:-a7f29b4e18d63c5092e1f4a7c8b3d0e5}
+      - WHATSAPP_LINES=${WHATSAPP_LINES:-line_1,line_2,line_3,line_4}
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+      - NODE_ENV=production
+    volumes:
+      - ./whatsapp-sessions:/app/sessions
+    networks:
+      - sierra-net
+    depends_on:
+      - n8n
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"process.exit(0)\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
 networks:
   sierra-net:
     driver: bridge

@@ -1,28 +1,27 @@
 @echo off
 cd /d "%~dp0"
-title Sierra Estates - Git Compare, Commit & Push to GitHub
+title Sierra Estates - Git Push to GitHub
 echo ==============================================================================
-echo       SIERRA ESTATES — COMPARE & PUSH OUTREACH UPDATES TO GITHUB
+echo       SIERRA ESTATES — SYNC & PUSH ALL UPDATES TO GITHUB
 echo ==============================================================================
 echo.
 
-echo [1/5] Fetching and syncing latest remote state...
+echo [1/5] Syncing latest remote state...
 git pull --rebase origin main
 echo.
 
-echo [2/5] Comparing local modifications with GitHub repo...
-echo ------------------------------------------------------------------------------
-git diff apps/agents/whatsapp-multi-session/worker.js start-sierra.bat
-echo ------------------------------------------------------------------------------
+echo [2/5] Staging all verified files and new 4-line WhatsApp bot...
+git add -A
 echo.
 
-echo [3/5] Staging verified changes (visible UI, 3-line sync, runner foreground)...
-git add apps/agents/whatsapp-multi-session/worker.js start-sierra.bat git-push-all.bat
+echo [3/5] Inspecting staged changes...
+echo ------------------------------------------------------------------------------
 git status --short
+echo ------------------------------------------------------------------------------
 echo.
 
 echo [4/5] Committing changes...
-git commit -m "feat(outreach): configure visible UI and 3-line sync for WhatsApp owner outreach"
+git commit -m "feat(whatsapp-bot): add 4-line concurrent Baileys listener with n8n webhook relay"
 echo.
 
 echo [5/5] Pushing to GitHub (origin/main)...
@@ -31,13 +30,12 @@ echo.
 
 if %ERRORLEVEL% EQU 0 (
   echo ==============================================================================
-  echo  SUCCESS: All outreach updates verified and pushed to GitHub!
+  echo  SUCCESS: All updates pushed to GitHub successfully!
   echo  Repo: https://github.com/afawzy886619888866-cloud/Sierra-Estates
   echo ==============================================================================
 ) else (
   echo ==============================================================================
-  echo  NOTE: If nothing was committed, your local branch is already 
-  echo        completely up-to-date with GitHub. Check the output above.
+  echo  NOTE: If nothing was committed, your branch is already up-to-date.
   echo ==============================================================================
 )
 echo.

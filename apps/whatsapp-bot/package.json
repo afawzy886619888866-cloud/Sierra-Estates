@@ -1,0 +1,27 @@
+{
+  "name": "sierra-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "Sierra Estates 4-Line WhatsApp Multi-Listener & n8n Broker Harvester",
+  "main": "src/multiLineListener.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/multiLineListener.ts",
+    "dev": "tsx watch src/multiLineListener.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

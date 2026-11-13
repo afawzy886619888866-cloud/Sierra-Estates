@@ -51,6 +51,8 @@ id_ed25519*
 /openwa/
 **/openwa-data/
 **/whatsapp-auth/
+**/sessions/
+**/whatsapp-sessions/
 **/n8n-data/
 **/wa_sessions/
 **/.wwebjs_auth/
