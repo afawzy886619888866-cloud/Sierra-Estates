@@ -122,59 +122,35 @@ export default function Home() {
 
       {/* ── Main Content ── */}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 space-y-6">
-        {/* Hyouz Luxury Banner */}
-        <div className="hyouz-card rounded-2xl p-6 relative overflow-hidden border-[#c8961a]/30">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-[#c8961a]/15 via-transparent to-transparent -mr-20 -mt-20 pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1.5 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#c8961a]/20 text-[#e9c176] border border-[#c8961a]/40 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Hyouz Luxury Engine · الربط الشامل
-                </span>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/30">
-                  Supabase + Sheets + GIS Map
-                </span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-wide">
-                استوديو إدراج ومزامنة العقارات الفوري 🏡
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                حدد صفة الرقم (مالك، وسيط، إيجنت، أو موظف بالشركة) والصق وصف الوحدة. بضغطة واحدة، الذكاء الاصطناعي يستخرج البيانات ويزامن مع قاعدة البيانات وشيت المتابعة وخريطة التجمع ومخزون سييرا فوراً.
-              </p>
-            </div>
+        {/* ── Studio Tabs ── */}
+        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+            <TabsList className="bg-surface-container border border-[#222a3d] p-1.5 rounded-xl grid grid-cols-2 gap-1.5 w-full sm:w-auto">
+              <TabsTrigger
+                value="new"
+                className="gap-2 text-xs font-bold py-2.5 px-5 rounded-lg data-[state=active]:bg-primary-container data-[state=active]:text-on-primary-container data-[state=active]:shadow-[0_0_12px_rgba(0,229,255,0.3)] text-on-surface-variant hover:text-white cursor-pointer transition-all"
+              >
+                <PlusCircle className="h-4 w-4" /> وحدة جديدة ومزامنة شاملة
+              </TabsTrigger>
+              <TabsTrigger
+                value="saved"
+                className="gap-2 text-xs font-bold py-2.5 px-5 rounded-lg data-[state=active]:bg-primary-container data-[state=active]:text-on-primary-container data-[state=active]:shadow-[0_0_12px_rgba(0,229,255,0.3)] text-on-surface-variant hover:text-white cursor-pointer transition-all"
+              >
+                <ClipboardList className="h-4 w-4" /> سجل الأونرز ومحادثات البوت
+                <Badge variant="secondary" className="ms-1 px-1.5 py-0.5 text-[10px] bg-surface-container-lowest text-primary-container border border-primary-container/30">
+                  {savedCount}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#070b12]/90 border border-slate-800 text-xs">
-                <Bot className="h-4 w-4 text-emerald-400 shrink-0" />
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-400">سجل ردود البوت:</div>
-                  <div className="font-bold text-white text-xs">{savedCount} وحدات معتمدة</div>
-                </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto px-3.5 py-2 rounded-xl bg-surface-container border border-[#222a3d] text-xs">
+              <Bot className="h-4 w-4 text-primary-container shrink-0" />
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400">سجل البوت: </span>
+                <span className="font-bold text-white text-xs">{savedCount} وحدات معتمدة</span>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ── Studio Tabs ── */}
-        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="mb-4 w-full sm:w-auto bg-[#0d1524] border border-[#c8961a]/20 p-1.5 rounded-2xl grid grid-cols-2 gap-1.5">
-            <TabsTrigger
-              value="new"
-              className="gap-2 text-xs font-bold py-2.5 px-4 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#c8961a] data-[state=active]:to-[#e9c176] data-[state=active]:text-[#070b12] cursor-pointer"
-            >
-              <PlusCircle className="h-4 w-4" /> وحدة جديدة ومزامنة شاملة
-            </TabsTrigger>
-            <TabsTrigger
-              value="saved"
-              className="gap-2 text-xs font-bold py-2.5 px-4 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#c8961a] data-[state=active]:to-[#e9c176] data-[state=active]:text-[#070b12] cursor-pointer"
-            >
-              <ClipboardList className="h-4 w-4" /> سجل الأونرز ومحادثات البوت
-              <Badge variant="secondary" className="ms-1 px-1.5 py-0.5 text-[10px] bg-[#070b12] text-[#e9c176] border border-[#c8961a]/30">
-                {savedCount}
-              </Badge>
-            </TabsTrigger>
-          </TabsList>
 
           <TabsContent value="new" className="mt-0">
             <ViewTransition enter="slide-up" exit="fade-out" default="none">

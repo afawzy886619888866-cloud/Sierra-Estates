@@ -1,0 +1,485 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_dashboard" name="shell-type">
+<title>Sierra Estates - Executive Admin Command Overview</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary-container": "#ffc681",
+            "primary": "#c3f5ff",
+            "on-tertiary-fixed": "#2a1700",
+            "secondary": "#aec6ff",
+            "surface-dim": "#0f1321",
+            "surface-container-highest": "#303444",
+            "on-secondary-fixed-variant": "#004396",
+            "outline-variant": "#222a3d",
+            "secondary-container": "#4f8eff",
+            "surface-container-high": "#1f2538",
+            "inverse-primary": "#006875",
+            "on-secondary": "#002e6a",
+            "surface": "#0f1321",
+            "on-tertiary-fixed-variant": "#653e00",
+            "error-container": "#93000a",
+            "surface-container": "#171b2a",
+            "on-primary": "#00363d",
+            "surface-container-lowest": "#090e1c",
+            "secondary-fixed-dim": "#aec6ff",
+            "surface-variant": "#282e44",
+            "on-primary-container": "#002a30",
+            "on-surface": "#dfe1f6",
+            "on-surface-variant": "#94a3b8",
+            "on-primary-fixed-variant": "#004f58",
+            "on-error": "#690005",
+            "outline": "#475569",
+            "on-primary-fixed": "#001f24",
+            "on-error-container": "#ffdad6",
+            "surface-bright": "#22283c",
+            "tertiary": "#ffe9d3",
+            "surface-container-low": "#111625",
+            "surface-tint": "#00daf3",
+            "tertiary-fixed-dim": "#ffb95f",
+            "primary-fixed-dim": "#00daf3",
+            "on-secondary-fixed": "#001a42",
+            "inverse-on-surface": "#2c303f",
+            "tertiary-fixed": "#ffddb8",
+            "secondary-fixed": "#d8e2ff",
+            "inverse-surface": "#dfe1f6",
+            "on-secondary-container": "#00275e",
+            "on-background": "#dfe1f6",
+            "on-tertiary-container": "#7e4e00",
+            "error": "#ffb4ab",
+            "background": "#090e1c",
+            "primary-container": "#00e5ff",
+            "on-tertiary": "#472a00",
+            "primary-fixed": "#9cf0ff"
+          },
+          fontFamily: {
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "telemetry-metric": ["Space Grotesk"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Space Grotesk"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-lg": ["Space Grotesk"],
+            "label-md": ["Space Grotesk"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-surface-container-lowest">
+<!-- Left Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-[#222a3d] z-50 flex flex-col justify-between">
+<div class="flex flex-col">
+<!-- Brand Header -->
+<div class="h-20 px-5 flex items-center gap-3 border-b border-[#222a3d]/80 bg-surface-container-low/40">
+<img alt="Sierra Estates Brand Logo" class="h-10 w-10 object-contain rounded-lg shadow-sm border border-primary-container/20" src="https://lh3.googleusercontent.com/aida/AEtjO1WoFQxEHS4fCLlushQjNFECd6iRDan_1CvT6cUnbMVsQqA5oUvkCq4eKm0F99WFRjRQBq-EeWRvEVQWX-TM352CYnBHdbi8nlETFCEGx8nKgcCpTEDv85OjN9PBrgMWLDVyhhw7-yqvTObWECoKZfH15llg8fGmRHD25PDaZgysL94N7rqwczJwS7WCkBIcpXIOzb7Ot0cgClErfFHwt6HEW7wRxXkbyTISIWQr9LYS">
+<div class="flex flex-col">
+<span class="font-headline-sm text-[16px] font-bold tracking-tight text-white flex items-center gap-1.5">
+            SIERRA ESTATES
+          </span>
+<span class="font-label-sm text-[10px] tracking-widest text-primary-container/90 uppercase font-semibold">Executive Terminal</span>
+</div>
+</div>
+<!-- Quick Context Pill -->
+<div class="px-4 pt-4 pb-2">
+<div class="bg-surface-container-low px-3 py-2 rounded-lg border border-[#222a3d] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+<span class="font-label-sm text-[11px] text-on-surface-variant uppercase font-medium">Global Network</span>
+</div>
+<span class="font-label-sm text-[11px] text-primary font-bold">12 HUBS</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-1 px-3 mt-3">
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+<span class="font-title-md text-[13px] tracking-wide">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">apartment</span>
+<span class="font-title-md text-[13px] tracking-wide">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">add_circle</span>
+<span class="font-title-md text-[13px] tracking-wide">Add Listing</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">group</span>
+<span class="font-title-md text-[13px] tracking-wide">Clients &amp; Leads</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">account_balance</span>
+<span class="font-title-md text-[13px] tracking-wide">Financials</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">monitoring</span>
+<span class="font-title-md text-[13px] tracking-wide">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-all text-sm group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">settings</span>
+<span class="font-title-md text-[13px] tracking-wide">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Bottom Sidebar Status -->
+<div class="p-4 border-t border-[#222a3d] bg-surface-container-low/50 flex flex-col gap-3">
+<div class="bg-surface-container p-3 rounded-lg border border-[#222a3d]/80 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant font-medium">Escrow Security</span>
+<span class="text-emerald-400 font-label-sm font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ACTIVE
+          </span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[86%] shadow-[0_0_8px_#00e5ff]"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-slate-500 font-label-sm text-[11px] px-1">
+<span class="">SIERRA OS v4.9</span>
+<span class="text-primary-container font-mono">LATENCY 4ms</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="pl-64">
+<!-- Top Executive Header Bar -->
+<header class="fixed top-0 left-64 right-0 h-20 bg-surface-container-lowest/90 backdrop-blur-xl border-b border-[#222a3d] z-40 flex items-center justify-between px-8">
+<!-- Search Palette -->
+<div class="flex items-center gap-3 w-[420px]">
+<div class="flex items-center gap-2.5 bg-surface-container-low px-3.5 py-2 rounded-lg border border-[#222a3d] w-full focus-within:border-primary-container/60 transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+<input class="bg-transparent text-sm text-on-surface placeholder:text-slate-500 focus:outline-none w-full" placeholder="Search estates, leads, contracts, escrow ID..." type="text">
+<kbd class="font-label-sm text-[11px] bg-surface-container-high px-2 py-0.5 rounded text-slate-400 border border-slate-700">⌘K</kbd>
+</div>
+</div>
+<!-- Right Header Actions -->
+<div class="flex items-center gap-4">
+<!-- Live Status Badge -->
+<div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-label-sm text-xs">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+<span class="font-semibold tracking-wide uppercase">LIVE PORTFOLIO</span>
+</div>
+<!-- Quick Action Buttons -->
+<button class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-container-high hover:bg-surface-variant border border-[#222a3d] text-on-surface text-xs font-semibold tracking-wide transition-all shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-slate-400">file_download</span>
+<span class="">Export Report</span>
+</button>
+<button class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-container text-on-primary-container hover:brightness-110 font-semibold text-xs tracking-wide transition-all shadow-[0_0_16px_rgba(0,229,255,0.3)]">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span class="">Add Listing</span>
+</button>
+<!-- Divider -->
+<div class="h-6 w-px bg-[#222a3d]"></div>
+<!-- Language Selector -->
+<div class="flex items-center bg-surface-container-low border border-[#222a3d] rounded-lg p-0.5">
+<button class="font-label-sm text-[11px] px-2 py-1 rounded bg-surface-container-high text-primary font-bold">EN</button>
+<button class="font-label-sm text-[11px] px-2 py-1 rounded text-slate-400 hover:text-white transition-colors">FR</button>
+<button class="font-label-sm text-[11px] px-2 py-1 rounded text-slate-400 hover:text-white transition-colors">AR</button>
+</div>
+<!-- Notification Bell -->
+<button class="relative p-2 rounded-lg hover:bg-surface-container-high border border-transparent hover:border-[#222a3d] text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-surface-container-lowest"></span>
+</button>
+<!-- Profile -->
+<div class="flex items-center gap-3 pl-2 border-l border-[#222a3d]">
+<div class="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-[1.5px] shadow-sm">
+<div class="w-full h-full rounded-full bg-surface-container flex items-center justify-center font-bold text-white text-xs">
+              JV
+            </div>
+</div>
+<div class="hidden xl:flex flex-col">
+<span class="text-xs font-semibold text-white leading-none">Commander J. Vance</span>
+<span class="text-[11px] text-slate-400 pt-0.5">Portfolio Principal</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Dashboard Viewport -->
+<main class="relative w-full pt-20 bg-background min-h-screen"><div class="flex flex-col w-full" dir="rtl">
+<!-- Minimalist Ambient Glow -->
+<div class="relative w-full max-w-5xl mx-auto px-6 py-10 md:px-12 flex flex-col gap-10">
+<div class="absolute -top-16 right-1/4 w-96 h-96 bg-primary-container/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-1/2 left-10 w-80 h-80 bg-secondary-container/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- Top Guidance & Instruction Banner -->
+<section class="bg-surface-container-low rounded-xl p-8 shadow-xl relative overflow-hidden"><div class="absolute top-0 right-0 w-1.5 h-full bg-primary-container"></div><div class="flex flex-col md:flex-row md:items-center justify-between gap-6"><div class="flex flex-col gap-3 max-w-2xl"><div class="flex items-center gap-2"><span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container-high text-primary-container"><span class="material-symbols-outlined text-[18px]">auto_awesome</span></span><span class="font-label-sm text-label-sm text-primary uppercase tracking-wide">بوابة إضافة العقارات المباشرة</span><span class="text-xs text-outline">•</span><span class="font-mono text-xs text-emerald-400">sierra-estates.net/add-listing</span></div><h1 class="font-headline-lg text-headline-lg text-white font-bold tracking-tight">إضافة عقار عبر الذكاء الاصطناعي</h1><p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">الصق نص الإعلان أو رسالة الواتساب ليستخرج النظام المواصفات والسعر والكمبوند تلقائياً وفورياً، ثم راجع الحقول وشارك وحدتك في شبكة سييرا إستيتس الحصرية.</p><div class="flex flex-wrap items-center gap-4 pt-1"><div class="flex items-center gap-2 text-xs font-semibold text-primary"><span class="material-symbols-outlined text-[16px] text-primary-container">radar</span><span class="">عرض فوري على الخريطة والرادار</span></div><div class="flex items-center gap-2 text-xs font-semibold text-primary"><span class="material-symbols-outlined text-[16px] text-primary-container">group</span><span class="">مطابقة فورية مع مشترين جاهزين</span></div><div class="flex items-center gap-2 text-xs font-semibold text-primary"><span class="material-symbols-outlined text-[16px] text-primary-container">verified</span><span class="">بدون أي رسوم مسبقة</span></div></div></div><div class="bg-surface-container rounded-lg p-4 min-w-[260px] shadow-sm border border-[#222a3d]"><span class="font-label-sm text-label-sm text-on-surface-variant block mb-3">مسار الإنجاز الذكي</span><div class="flex items-center justify-between text-on-surface gap-2"><div class="flex items-center gap-1.5 font-label-md text-label-md text-primary-container"><span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">١</span><span class="">لصق الإعلان</span></div><span class="text-outline text-xs">←</span><div class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface"><span class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-xs">٢</span><span class="">مراجعة البيانات</span></div><span class="text-outline text-xs">←</span><div class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant"><span class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold text-xs">٣</span><span class="">الصور والناشر</span></div></div></div></div></section>
+<!-- Main Workspace Container -->
+<div class="flex flex-col gap-8"><!-- Step 1: AI Prompt / Text Input -->
+<div class="bg-surface-container rounded-xl p-8 shadow-md flex flex-col gap-5 border border-[#222a3d]/60">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex items-center gap-2.5">
+      <span class="w-7 h-7 rounded-full bg-primary-container/20 text-primary-container border border-primary-container/30 flex items-center justify-center font-bold text-sm">١</span>
+      <label class="font-title-md text-title-md text-white font-semibold flex items-center gap-2" for="property-raw-text">
+        <span class="material-symbols-outlined text-primary text-[20px]">description</span>
+        لصق تفاصيل أو إعلان وحدتك هنا
+      </label>
+    </div>
+    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high text-primary-container font-label-sm text-label-sm self-start sm:self-auto">
+      <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+      جاهز للاستخراج والتحليل الذكي
+    </div>
+  </div>
+  <div class="relative w-full">
+    <textarea id="property-raw-text" rows="6" class="w-full bg-surface-container-lowest text-on-surface placeholder:text-outline p-5 rounded-lg focus:outline-none font-body-md text-body-md leading-relaxed resize-none transition-all shadow-inner border border-[#222a3d] focus-within:border-primary-container/60" placeholder="الصق نص الإعلان، رسائل الواتساب، أو مسودة تفاصيل العقار بالعربية أو الإنجليزية (مثال: للبيع فيلا تاون هاوس في ميفيدا التجمع الخامس، مساحة 280م، 4 غرف، تشطيب كامل، السعر 18,500,000 ج.م كاش...)"></textarea>
+    <div class="absolute bottom-4 left-4 flex items-center gap-2 pointer-events-none">
+      <span class="font-label-sm text-label-sm text-outline">يدعم العربية والإنجليزية تلقائياً</span>
+    </div>
+  </div>
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="font-label-sm text-label-sm text-on-surface-variant ml-2">الحقول المستهدفة:</span>
+      <span class="px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm border border-[#222a3d]">نوع الإعلان</span>
+      <span class="px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm border border-[#222a3d]">الكمبوند والموقع</span>
+      <span class="px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm border border-[#222a3d]">نوع العقار والمساحة</span>
+      <span class="px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm border border-[#222a3d]">السعر والتشطيب</span>
+    </div>
+    <button type="button" class="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary-container text-on-primary-container hover:brightness-110 font-bold text-sm transition-all shadow-[0_0_16px_rgba(0,229,255,0.3)] shrink-0">
+      <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+      <span class="">✨ استخراج وتعبئة البيانات تلقائياً</span>
+    </button>
+  </div>
+</div>
+
+<!-- Step 2: Property Verification & Fields -->
+<div class="bg-surface-container rounded-xl p-8 shadow-md flex flex-col gap-6 border border-[#222a3d]/60">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#222a3d]">
+    <div class="flex items-center gap-2.5">
+      <span class="w-7 h-7 rounded-full bg-primary-container/20 text-primary-container border border-primary-container/30 flex items-center justify-center font-bold text-sm">٢</span>
+      <span class="font-title-md text-title-md text-white font-semibold flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+        مراجعة وتأكيد بيانات العقار
+      </span>
+    </div>
+    <span class="font-label-sm text-label-sm text-emerald-400 flex items-center gap-1.5">
+      <span class="material-symbols-outlined text-[16px]">check_circle</span>
+      تم استخراج وتحديث الحقول بنجاح
+    </span>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Listing Type Toggle (Sale / Rent) -->
+    <div class="flex flex-col gap-2">
+      <label class="font-label-md text-label-md text-on-surface-variant">نوع الإعلان</label>
+      <div class="grid grid-cols-2 gap-2 bg-surface-container-lowest p-1.5 rounded-lg border border-[#222a3d]">
+        <button type="button" class="py-2.5 px-4 rounded-lg bg-primary-container text-on-primary-container font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">sell</span>
+          <span class="">للبيع</span>
+        </button>
+        <button type="button" class="py-2.5 px-4 rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all">
+          <span class="material-symbols-outlined text-[18px]">key</span>
+          <span class="">للإيجار</span>
+        </button>
+      </div>
+    </div>
+    <!-- Compound Selector -->
+    <div class="flex flex-col gap-2">
+      <label class="font-label-md text-label-md text-on-surface-variant" for="property-compound">الكمبوند / المشروع</label>
+      <div class="relative">
+        <select id="property-compound" class="w-full bg-surface-container-lowest text-on-surface font-body-md text-body-md py-3.5 px-4 rounded-lg appearance-none focus:outline-none cursor-pointer shadow-inner pr-4 pl-10 border border-[#222a3d] focus-within:border-primary-container/60">
+          <option value="mivida" selected="">ميفيدا (Mivida - إعمار)</option>
+          <option value="villette">سوديك فيليت (Villette SODIC)</option>
+          <option value="katameya_dunes">قطامية ديونز (Katameya Dunes)</option>
+          <option value="palm_hills">بالم هيلز (Palm Hills)</option>
+          <option value="mountain_view">ماونتن فيو (Mountain View)</option>
+          <option value="lake_view">ليك فيو (Lake View)</option>
+        </select>
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline flex items-center">
+          <span class="material-symbols-outlined text-[20px]">expand_more</span>
+        </div>
+      </div>
+    </div>
+    <!-- Property Type Selector -->
+    <div class="flex flex-col gap-2">
+      <label class="font-label-md text-label-md text-on-surface-variant" for="property-type">نوع العقار</label>
+      <div class="relative">
+        <select id="property-type" class="w-full bg-surface-container-lowest text-on-surface font-body-md text-body-md py-3.5 px-4 rounded-lg appearance-none focus:outline-none cursor-pointer shadow-inner pr-4 pl-10 border border-[#222a3d] focus-within:border-primary-container/60">
+          <option value="apartment">شقة</option>
+          <option value="standalone_villa">فيلا مستقلة</option>
+          <option value="townhouse" selected="">تاون هاوس</option>
+          <option value="twinhouse">توين هاوس</option>
+          <option value="penthouse">بنتهاوس</option>
+          <option value="duplex">دوبلكس</option>
+        </select>
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline flex items-center">
+          <span class="material-symbols-outlined text-[20px]">expand_more</span>
+        </div>
+      </div>
+    </div>
+    <!-- Finishing Status Selector -->
+    <div class="flex flex-col gap-2">
+      <label class="font-label-md text-label-md text-on-surface-variant" for="finishing-status">حالة التشطيب</label>
+      <div class="relative">
+        <select id="finishing-status" class="w-full bg-surface-container-lowest text-on-surface font-body-md text-body-md py-3.5 px-4 rounded-lg appearance-none focus:outline-none cursor-pointer shadow-inner pr-4 pl-10 border border-[#222a3d] focus-within:border-primary-container/60">
+          <option value="fully_finished" selected="">تشطيب كامل (فاخر)</option>
+          <option value="semi_finished">نصف تشطيب</option>
+          <option value="core_shell">على الطوب (بدون تشطيب)</option>
+          <option value="furnished">مفروش بالكامل</option>
+        </select>
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline flex items-center">
+          <span class="material-symbols-outlined text-[20px]">expand_more</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Publisher Details & Media Images -->
+<div class="bg-surface-container rounded-xl p-8 shadow-md flex flex-col gap-6 border border-[#222a3d]/60">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#222a3d]">
+    <div class="flex items-center gap-2.5">
+      <span class="w-7 h-7 rounded-full bg-primary-container/20 text-primary-container border border-primary-container/30 flex items-center justify-center font-bold text-sm">٣</span>
+      <span class="font-title-md text-title-md text-white font-semibold flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[20px]">badge</span>
+        بيانات المعلن والصور
+      </span>
+    </div>
+    <span class="font-label-sm text-label-sm text-on-surface-variant">توجيه فوري إلى سجلات النظام المشفرة</span>
+  </div>
+
+  <!-- Role Selector (Owner vs Broker Sheets) -->
+  <div class="flex flex-col gap-3">
+    <label class="font-label-md text-label-md text-on-surface-variant">حدد صفتك القانونية بالنسبة للعقار</label>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="cursor-pointer flex items-center gap-3.5 p-4 rounded-xl bg-surface-container-lowest border-2 border-primary-container/80 transition-all hover:bg-surface-container-high">
+        <input type="radio" name="user_role" value="owner" checked="" class="accent-primary-container w-4 h-4">
+        <div class="flex flex-col">
+          <span class="font-title-md text-sm font-bold text-white flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-primary-container text-[18px]">person</span>
+            أنا المالك مباشرة
+          </span>
+          <span class="font-label-sm text-xs text-primary-container font-mono">(يُحفظ في شيت الملاك)</span>
+        </div>
+      </label>
+      <label class="cursor-pointer flex items-center gap-3.5 p-4 rounded-xl bg-surface-container-lowest border border-[#222a3d] transition-all hover:bg-surface-container-high hover:border-slate-700">
+        <input type="radio" name="user_role" value="broker" class="accent-primary-container w-4 h-4">
+        <div class="flex flex-col">
+          <span class="font-title-md text-sm font-semibold text-on-surface flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-slate-400 text-[18px]">real_estate_agent</span>
+            أنا وسيط عقاري / بروكر
+          </span>
+          <span class="font-label-sm text-xs text-on-surface-variant font-mono">(يُحفظ في شيت الوسطاء)</span>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Publisher Full Name and Phone -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="flex flex-col gap-2">
+      <label class="font-label-md text-label-md text-on-surface-variant" for="publisher-name">الاسم بالكامل</label>
+      <input type="text" id="publisher-name" value="عبدالله بن خالد آل مقرن" class="w-full bg-surface-container-lowest text-on-surface font-body-md text-body-md py-3.5 px-4 rounded-lg focus:outline-none shadow-inner border border-[#222a3d] focus-within:border-primary-container/60" placeholder="اكتب اسمك الثلاثي">
+    </div>
+    <div class="flex flex-col gap-2">
+      <label class="font-label-md text-label-md text-on-surface-variant" for="phone-number">رقم الموبايل / واتساب (مع مفتاح الدولة)</label>
+      <div class="flex items-center gap-2" dir="ltr">
+        <div class="bg-surface-container-lowest text-on-surface font-label-md text-label-md px-3.5 py-3.5 rounded-lg flex items-center gap-1.5 select-none shadow-inner shrink-0 border border-[#222a3d]">
+          <span class="material-symbols-outlined text-[18px] text-primary">flag</span>
+          <span class="">+966</span>
+        </div>
+        <input id="phone-number" type="tel" value="50 842 1920" placeholder="50 000 0000" class="w-full bg-surface-container-lowest text-on-surface font-telemetry-metric text-body-lg placeholder:text-outline p-3.5 rounded-lg focus:outline-none shadow-inner border border-[#222a3d] focus-within:border-primary-container/60">
+      </div>
+    </div>
+  </div>
+
+  <!-- Media Uploader Area (up to 10 images) -->
+  <div class="flex flex-col gap-4 pt-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[20px]">photo_library</span>
+        <span class="font-title-md text-title-md text-white">صور العقار المرفقة</span>
+      </div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">JPG, PNG, WebP حتى 10 صور (50MB)</span>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-8 flex flex-col items-center justify-center text-center gap-3 transition-colors cursor-pointer group border border-dashed border-[#222a3d] hover:border-primary-container/60">
+      <input type="file" id="media-upload" multiple="" accept="image/*" class="hidden">
+      <button type="button" onclick="document.getElementById('media-upload').click()" class="flex items-center gap-2 px-6 py-3.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright text-white font-title-md text-title-md transition-all shadow-md group-hover:scale-[1.02]">
+        <span class="material-symbols-outlined text-primary-container text-[22px]">add_photo_alternate</span>
+        <span class="">اسحب وأفلت صور العقار أو اضغط للاختيار (حتى 10 صور)</span>
+      </button>
+      <p class="font-body-sm text-body-sm text-outline">
+        يدعم السحب والإفلات المباشر من جهازك أو الجوال بدقة فائقة
+      </p>
+    </div>
+    <!-- Selected Images Strip -->
+    <div class="flex flex-col gap-3 pt-2">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">الصور المرفوعة (٣ مرفقات جاهزة)</span>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="relative group bg-surface-container-low rounded-lg overflow-hidden shadow-sm aspect-video border border-[#222a3d]">
+          <img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A luxurious modern penthouse living room interior at dusk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2Xknf73PhqIvEZ1OZT321lvcK6_M0oJTL_qT91puS8DRHpx1sea-LS-f63_i9jZ4qeveiBlAo91mrm0tnoIaWOpmmPmdTm21CbcTQgcbrK1z1RoQZB9YZrrxNSrMe7_hWoCtdpJYH0qjVP_pJvOwsjiN7X-sXv14MyQ0p5CGO4Q2FCW5XoH-Q39QXG2Ie0uMvc-m4S6fm7h3NMB6NwmUMXPwyr66z4prCisAaeHI">
+          <div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+          <div class="absolute bottom-2 right-2.5 flex items-center gap-1.5 font-label-sm text-label-sm text-white">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+            <span class="">الواجهة الرئيسية</span>
+          </div>
+          <button type="button" class="absolute top-2 left-2 w-7 h-7 rounded-full bg-surface-container-lowest/80 hover:bg-error text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all" aria-label="حذف الصورة">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+        <div class="relative group bg-surface-container-low rounded-lg overflow-hidden shadow-sm aspect-video border border-[#222a3d]">
+          <img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Serene modern minimalist bedroom" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4rOy1fK5wFaL2xtWnBUtcXOZFzZqX9N_BQpkh7HmKoPH7JRLBHBL170oALAhqU6fKNWG0dcYr901_p8uz0uX_Im9ABMPjlM4bxPT8t0GfjP5ETDDNUjLIN02oPuZGp8OQntd-tWzyqwzEHheNL5zbDTIvk5FE3E3mEetBUSdUcAKQnFoBUMpvSLQRtZM7AMoik8Dog2Xeyw3xbijoLuDSLF9-QWb1k2oABe5WCJ0">
+          <div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+          <div class="absolute bottom-2 right-2.5 flex items-center gap-1.5 font-label-sm text-label-sm text-white">
+            <span class="">الجناح الرئيسي</span>
+          </div>
+          <button type="button" class="absolute top-2 left-2 w-7 h-7 rounded-full bg-surface-container-lowest/80 hover:bg-error text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all" aria-label="حذف الصورة">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+        <div class="relative group bg-surface-container-low rounded-lg overflow-hidden shadow-sm aspect-video border border-[#222a3d]">
+          <img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Private infinity swimming pool" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNzBItc4T7aC6xyQC7pFQrSyXRR9m2egScbxDyFDxQBFz2xG9WMvWd8E13jDNQnsyq3vhoHqstGwDe_jSi5ho60PSJk9qNCylfBNNPs4thtZLUt-G2C87sFHWuReObRqBRls0nOMFk8lMdW7FVXtx1mOisWROOOZI0MsdVMsVG4XFLSxlLf72z59FVJwkOu_SwW_4-GIKi7u3xWuT1qmYdqxnZAjl3ke9H6Wpgc-E">
+          <div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+          <div class="absolute bottom-2 right-2.5 flex items-center gap-1.5 font-label-sm text-label-sm text-white">
+            <span class="">المسبح والإطلالة</span>
+          </div>
+          <button type="button" class="absolute top-2 left-2 w-7 h-7 rounded-full bg-surface-container-lowest/80 hover:bg-error text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all" aria-label="حذف الصورة">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Action Buttons -->
+<div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pt-4 pb-12">
+  <button type="button" class="w-full sm:w-auto px-8 py-3.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-white font-title-md text-title-md transition-all text-center shadow-sm border border-[#222a3d]">
+    حفظ كمسودة
+  </button>
+  <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2.5 px-10 py-4 rounded-lg bg-primary-container hover:brightness-110 text-on-primary-container font-headline-sm text-headline-sm font-bold transition-all shadow-[0_0_24px_rgba(0,229,255,0.25)] hover:shadow-[0_0_32px_rgba(0,229,255,0.45)]">
+    <span class="material-symbols-outlined text-[22px]">publish</span>
+    <span class="">تأكيد ونشر في محفظة العميل</span>
+  </button>
+</div></div>
+</div>
+</div></main>
+</div>
+
+
+</body></html>

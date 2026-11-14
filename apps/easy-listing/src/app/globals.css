@@ -34,6 +34,23 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* ── Stitch Obsidian Cyber-HUD Tokens ── */
+  --color-surface-container-lowest: #090e1c;
+  --color-surface-container-low: #111625;
+  --color-surface-container: #171b2a;
+  --color-surface-container-high: #1f2538;
+  --color-surface-container-highest: #303444;
+  --color-surface-bright: #22283c;
+  --color-surface-variant: #282e44;
+  --color-primary-container: #00e5ff;
+  --color-on-primary-container: #002a30;
+  --color-on-surface: #dfe1f6;
+  --color-on-surface-variant: #94a3b8;
+  --color-outline: #475569;
+  --color-outline-variant: #222a3d;
+  --color-tertiary-container: #ffc681;
+  --color-on-tertiary-container: #7e4e00;
 }
 
 :root {
@@ -134,6 +151,59 @@
   background: rgba(30, 44, 69, 0.85);
   border-color: #e9c176;
   color: #e9c176;
+}
+
+/* ── Stitch Obsidian Cyber-HUD Design System ── */
+.stitch-card {
+  background: #171b2a;
+  border: 1px solid #222a3d;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(0, 229, 255, 0.08) inset;
+}
+
+.stitch-card-low {
+  background: #111625;
+  border: 1px solid #222a3d;
+}
+
+.stitch-cyan-btn {
+  background: #00e5ff;
+  color: #002a30;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stitch-cyan-btn:hover {
+  background: #33ebff;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.55);
+  transform: translateY(-1px);
+}
+.stitch-cyan-btn:active {
+  transform: translateY(0);
+}
+
+.stitch-ghost-btn {
+  background: #1f2538;
+  border: 1px solid #222a3d;
+  color: #dfe1f6;
+  transition: all 0.2s ease;
+}
+.stitch-ghost-btn:hover {
+  background: #282e44;
+  border-color: #00e5ff;
+  color: #c3f5ff;
+}
+
+.stitch-input {
+  background: #090e1c;
+  border: 1px solid #222a3d;
+  color: #dfe1f6;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.stitch-input:focus,
+.stitch-input:focus-within {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+  outline: none;
 }
 
 /* ── Custom scrollbars ── */
