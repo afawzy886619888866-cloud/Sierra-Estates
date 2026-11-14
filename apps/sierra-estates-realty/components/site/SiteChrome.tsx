@@ -72,10 +72,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           </div>
 
           <div className="nav-right">
-            <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="add-listing-btn" title={t('addListingNote')}>
+            <Link href="/easy-listing" className="add-listing-btn" title={t('addListingNote')}>
               <span className="al-text">{t('addListing')}</span>
               <span className="al-note">{t('addListingNote')}</span>
-            </a>
+            </Link>
             <Link href="/request" className="req-now-btn" title={t('reqNote')}>
               <span className="req-text">{t('reqNow')}</span>
               <span className="req-note">{t('reqNote')}</span>
@@ -219,10 +219,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <Map className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navCpds')}</span>
               </Link>
-              <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/easy-listing" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <PlusCircle className="i" style={{ width: 18, height: 18, color: '#10b981' }} />
                 <span>{t('addListing')}</span>
-              </a>
+              </Link>
               <Link href={infoBankHref} className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
@@ -368,10 +368,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           <Building2 className="i" style={active === 'cpds' ? { color: '#e9c176' } : undefined} />
           <span>{t('navCpds')}</span>
         </Link>
-        <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="bn-item" title={t('addListing')}>
+        <Link href="/easy-listing" className="bn-item" title={t('addListing')}>
           <PlusCircle className="i" style={{ color: '#10b981' }} />
           <span>{t('addListing')}</span>
-        </a>
+        </Link>
         <Link href="/request" className={`bn-item${active === 'contact' ? ' active' : ''}`} title={t('reqNow')} style={{ position: 'relative' }}>
           <span
             style={{

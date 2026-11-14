@@ -4,17 +4,17 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Sierra Estates — Easy Listing | إيزي ليستينج",
+  title: "Sierra Estates — Luxury Easy Listing & Intake | إيزي ليستينج",
   description:
-    "أداة الليستينج السريعة لفريق Sierra Estates: الصق وصف الوحدة، واستخرج البيانات، وولّد محتوى واتساب وفيسبوك وبروبيرتي فايندر، واحفظ في Google Sheets مع رابط الخرائط.",
-  keywords: ["Sierra Estates", "Easy Listing", "real estate", "Egypt", "New Cairo", "عقارات"],
+    "بوابة إضافة وتوثيق العقارات الفاخرة لفريق وبوتات Sierra Estates: استخراج ذكي للبيانات، تصنيف المالك والوسيط والموظف، ومزامنة فورية شاملة مع قاعدة بيانات Supabase وشيت جوجل والخريطة والمخزون.",
+  keywords: ["Sierra Estates", "Easy Listing", "Hyouz", "Luxury Real Estate", "New Cairo", "عقارات التجمع الخامس"],
   icons: {
     icon: "/favicon.svg",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e5c46",
+  themeColor: "#070b12",
 };
 
 export default function RootLayout({
@@ -23,18 +23,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <html lang="ar" dir="rtl" className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="antialiased bg-background text-foreground min-h-screen">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
           <Toaster position="top-center" richColors closeButton />
         </ThemeProvider>

@@ -1,7 +1,20 @@
 'use client'
 
 import { useCallback, useEffect, useState, startTransition, ViewTransition } from 'react'
-import { BookOpenCheck, ClipboardList, Moon, PlusCircle, Settings2, Sun } from 'lucide-react'
+import {
+  BookOpenCheck,
+  ClipboardList,
+  Moon,
+  PlusCircle,
+  Settings2,
+  Sun,
+  Sparkles,
+  ShieldCheck,
+  Database,
+  Table2,
+  MapPin,
+  Bot,
+} from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { Button } from '@/components/ui/button'
@@ -14,7 +27,7 @@ import { SavedListings } from '@/components/easy-listing/saved-listings'
 import { SettingsDialog } from '@/components/easy-listing/settings-dialog'
 import { SetupDialog } from '@/components/easy-listing/setup-dialog'
 
-import type { AppSettings } from '@/lib/types'
+import type { AppSettings, SavedProperty } from '@/lib/types'
 import {
   DEFAULT_SETTINGS,
   loadSavedProperties,
@@ -29,12 +42,10 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const [editingProperty, setEditingProperty] = useState<SavedProperty | null>(null)
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
-    // Settings + recent saves live in the browser's localStorage — the tool
-    // has no server-side state, which keeps it deployable on any free host.
-    // (Read after mount + async setState to avoid hydration mismatches.)
     const stored = loadSettings()
     const count = loadSavedProperties().length
     const id = window.setTimeout(() => {
@@ -60,68 +71,106 @@ export default function Home() {
     })
   }, [])
 
+  const handleLoadProperty = useCallback((property: SavedProperty) => {
+    setEditingProperty(property)
+    startTransition(() => {
+      setTab('new')
+    })
+  }, [])
+
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-md">
+    <div className="flex min-h-screen flex-col bg-[#070b12] text-foreground">
+      {/* ── High-End Hyouz Luxury Header ── */}
+      <header className="sticky top-0 z-40 border-b border-[#c8961a]/20 bg-[#070b12]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <BrandHeader />
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="gap-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl"
               onClick={() => setSetupOpen(true)}
             >
-              <BookOpenCheck className="h-4 w-4" /> دليل الربط
+              <BookOpenCheck className="h-4 w-4 text-[#e9c176]" /> دليل الربط
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs"
+              className="gap-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl"
               onClick={() => setSettingsOpen(true)}
             >
-              <Settings2 className="h-4 w-4" /> الإعدادات
+              <Settings2 className="h-4 w-4 text-[#e9c176]" /> الإعدادات
               {settings.appsScriptUrl ? (
-                <Badge className="ml-1 h-2 w-2 rounded-full bg-primary p-0" aria-label="مربوط" />
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" aria-label="مربوط" />
               ) : (
-                <Badge className="ml-1 h-2 w-2 rounded-full bg-[--gold] p-0" aria-label="غير مربوط" />
+                <span className="h-2 w-2 rounded-full bg-[#c8961a]" aria-label="غير مربوط" />
               )}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 text-slate-300 hover:text-white rounded-xl"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              aria-label="تبديل الوضع الليلي"
+              aria-label="تبديل الوضع"
             >
-              <Sun className="hidden h-4 w-4 dark:block" />
+              <Sun className="hidden h-4 w-4 dark:block text-[#e9c176]" />
               <Moon className="block h-4 w-4 dark:hidden" />
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Main */}
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-        <div className="mb-6 rounded-2xl border bg-gradient-to-l from-accent/70 via-background to-background p-5 dot-grid">
-          <h1 className="text-xl font-extrabold sm:text-2xl">
-            اعمل ليستينج كامل في دقيقة واحدة 🏡
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            الصق وصف الوحدة → الذكاء الاصطناعي يستخرج البيانات ويعمل الكود والمحتوى ولينك الخريطة →
-            احفظ في Google Sheets. بسيطة ومجانية.
-          </p>
+      {/* ── Main Content ── */}
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 space-y-6">
+        {/* Hyouz Luxury Banner */}
+        <div className="hyouz-card rounded-2xl p-6 relative overflow-hidden border-[#c8961a]/30">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-[#c8961a]/15 via-transparent to-transparent -mr-20 -mt-20 pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#c8961a]/20 text-[#e9c176] border border-[#c8961a]/40 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Hyouz Luxury Engine · الربط الشامل
+                </span>
+                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                  Supabase + Sheets + GIS Map
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-wide">
+                استوديو إدراج ومزامنة العقارات الفوري 🏡
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                حدد صفة الرقم (مالك، وسيط، إيجنت، أو موظف بالشركة) والصق وصف الوحدة. بضغطة واحدة، الذكاء الاصطناعي يستخرج البيانات ويزامن مع قاعدة البيانات وشيت المتابعة وخريطة التجمع ومخزون سييرا فوراً.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#070b12]/90 border border-slate-800 text-xs">
+                <Bot className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-400">سجل ردود البوت:</div>
+                  <div className="font-bold text-white text-xs">{savedCount} وحدات معتمدة</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Tabs value={tab} onValueChange={handleTabChange}>
-          <TabsList className="mb-4 w-full sm:w-auto">
-            <TabsTrigger value="new" className="gap-1.5">
-              <PlusCircle className="h-4 w-4" /> وحدة جديدة
+        {/* ── Studio Tabs ── */}
+        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="mb-4 w-full sm:w-auto bg-[#0d1524] border border-[#c8961a]/20 p-1.5 rounded-2xl grid grid-cols-2 gap-1.5">
+            <TabsTrigger
+              value="new"
+              className="gap-2 text-xs font-bold py-2.5 px-4 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#c8961a] data-[state=active]:to-[#e9c176] data-[state=active]:text-[#070b12] cursor-pointer"
+            >
+              <PlusCircle className="h-4 w-4" /> وحدة جديدة ومزامنة شاملة
             </TabsTrigger>
-            <TabsTrigger value="saved" className="gap-1.5">
-              <ClipboardList className="h-4 w-4" /> الوحدات المحفوظة
-              <Badge variant="secondary" className="ms-1 px-1.5 text-[10px]">
+            <TabsTrigger
+              value="saved"
+              className="gap-2 text-xs font-bold py-2.5 px-4 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#c8961a] data-[state=active]:to-[#e9c176] data-[state=active]:text-[#070b12] cursor-pointer"
+            >
+              <ClipboardList className="h-4 w-4" /> سجل الأونرز ومحادثات البوت
+              <Badge variant="secondary" className="ms-1 px-1.5 py-0.5 text-[10px] bg-[#070b12] text-[#e9c176] border border-[#c8961a]/30">
                 {savedCount}
               </Badge>
             </TabsTrigger>
@@ -135,6 +184,8 @@ export default function Home() {
                   onOpenSettings={() => setSettingsOpen(true)}
                   onOpenSetup={() => setSetupOpen(true)}
                   onSaved={handleSaved}
+                  initialProperty={editingProperty}
+                  onClearInitialProperty={() => setEditingProperty(null)}
                 />
               </div>
             </ViewTransition>
@@ -147,6 +198,7 @@ export default function Home() {
                   refreshKey={refreshKey}
                   onCountChange={setSavedCount}
                   sheetLink={settings.sheetLink}
+                  onLoadProperty={handleLoadProperty}
                 />
               </div>
             </ViewTransition>
@@ -154,17 +206,27 @@ export default function Home() {
         </Tabs>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t bg-muted/40">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground">
-          <span>Sierra Estates © 2026 — Easy Listing v1.0</span>
-          <span className="flex items-center gap-1">
-            مدعوم بالذكاء الاصطناعي ✦ البيانات بتتحفظ في شيتكم الخاص
-          </span>
+      {/* ── Footer ── */}
+      <footer className="border-t border-[#c8961a]/20 bg-[#070b12]/80 mt-12">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#e9c176]" />
+            <span>Sierra Estates © 2026 — Hyouz Easy Listing Engine</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-[11px] text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Supabase Postgres متصل
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-[11px] text-slate-400">
+              تشفير البيانات وفق معايير الأمان العقاري
+            </span>
+          </div>
         </div>
       </footer>
 
-      {/* Dialogs */}
+      {/* ── Dialogs ── */}
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}

@@ -72,6 +72,8 @@ export default function EasyListingStudio({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
+  const [submitterType, setSubmitterType] = useState<"owner" | "broker" | "employee" | "bot">("owner");
+  const [employeeName, setEmployeeName] = useState("");
 
   // Structured Editable Form — starts EMPTY: no fabricated demo listing.
   // Every field the parser cannot find in the text stays null until the
@@ -173,8 +175,12 @@ export default function EasyListingStudio({
         gardenArea: formData.gardenArea ?? 0,
         price: formData.price,
         finishing: formData.finishing || "",
-        ownerName: formData.ownerName || "",
+        ownerName: submitterType === "owner" ? (formData.ownerName || "المالك المباشر") : formData.ownerName || "",
+        agentName: submitterType === "employee" ? (employeeName || "موظف سييرا") : undefined,
+        brokerName: submitterType === "broker" ? (formData.ownerName || "وسيط معتمد") : undefined,
+        submitterType,
         mobile: formData.mobile || "",
+        ownerPhone: formData.mobile || "",
         comment: formData.aiSummary || "",
         tags: formData.tags || [],
         photos: imageUrls,
@@ -239,8 +245,16 @@ export default function EasyListingStudio({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 text-xs font-mono rounded-full bg-[#C8961A]/10 text-[#F5D78E] border border-[#C8961A]/30">
-            Vercel AI SDK • Active
+          <a
+            href="https://sierra-easy-listing.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-[#C8961A] to-[#E9C176] text-slate-950 flex items-center gap-1.5 shadow-md shadow-[#C8961A]/20 hover:scale-102 transition-all cursor-pointer"
+          >
+            <span>{isAr ? "فتح استوديو سييرا الكامل ↗" : "Launch Full Studio ↗"}</span>
+          </a>
+          <span className="hidden sm:inline-block px-3 py-1.5 text-xs font-mono rounded-xl bg-[#C8961A]/10 text-[#F5D78E] border border-[#C8961A]/30">
+            Hyouz Multi-Sync • Active
           </span>
         </div>
       </div>
@@ -623,21 +637,93 @@ export default function EasyListingStudio({
                 </select>
               </div>
 
-              {/* Owner Contact */}
-              <div>
-                <label className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
-                  <Phone className="w-3 h-3 text-[#E9C176]" />
-                  {isAr ? "هاتف المالك / الوسيط" : "Contact Mobile"}
+              {/* Contact Mobile & Role Definition */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-[#E9C176]" />
+                    {isAr ? "رقم الموبايل / واتساب" : "Contact Mobile"}
+                  </span>
+                  <span className="text-[10px] text-[#E9C176]">
+                    {isAr ? "حدد صفة الرقم:" : "Role:"}
+                  </span>
                 </label>
                 <input
                   type="text"
+                  dir="ltr"
+                  placeholder="01012345678"
                   value={formData.mobile ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, mobile: e.target.value || null })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-[#C8961A]"
                   required
                 />
+
+                {/* Submitter Role Buttons */}
+                <div className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setSubmitterType("owner")}
+                    className={`py-1 rounded font-bold transition-all cursor-pointer ${
+                      submitterType === "owner"
+                        ? "bg-[#C8961A] text-slate-950 shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    👑 {isAr ? "مالك" : "Owner"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitterType("broker")}
+                    className={`py-1 rounded font-bold transition-all cursor-pointer ${
+                      submitterType === "broker"
+                        ? "bg-[#C8961A] text-slate-950 shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    💼 {isAr ? "وسيط" : "Broker"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitterType("employee")}
+                    className={`py-1 rounded font-bold transition-all cursor-pointer ${
+                      submitterType === "employee"
+                        ? "bg-[#C8961A] text-slate-950 shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    🏢 {isAr ? "موظف" : "Employee"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitterType("bot")}
+                    className={`py-1 rounded font-bold transition-all cursor-pointer ${
+                      submitterType === "bot"
+                        ? "bg-emerald-500 text-slate-950 shadow-sm font-black"
+                        : "text-emerald-400 hover:text-white"
+                    }`}
+                  >
+                    🤖 {isAr ? "بوت" : "Bot"}
+                  </button>
+                </div>
+
+                {/* If employee: show input for his name */}
+                {submitterType === "employee" && (
+                  <div className="p-2.5 rounded-lg bg-[#C8961A]/10 border border-[#C8961A]/30 space-y-1">
+                    <label className="text-[10.5px] font-bold text-[#E9C176] block">
+                      {isAr ? "اسم الموظف المسئول أو الكود الداخلي *" : "Employee Name or Internal Code *"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isAr ? "مثال: أحمد سعيد - SE-104" : "e.g. Ahmed Saeed - SE-104"}
+                      value={employeeName}
+                      onChange={(e) => setEmployeeName(e.target.value)}
+                      className="w-full p-2 rounded bg-slate-950 border border-[#C8961A]/40 text-white text-xs focus:outline-none focus:border-[#E9C176]"
+                      required
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

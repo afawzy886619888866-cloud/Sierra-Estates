@@ -1,5 +1,27 @@
-import type { PropertyFields } from './types'
+import type { PropertyFields, AdvertiserRole } from './types'
 import { CITY_KEYS, COMPOUND_PREFIXES, UNIT_TYPES } from './listing'
+
+export function extractMobilePhone(text: string): string {
+  if (!text) return ''
+  const norm = normalizeDigits(text)
+  const m = norm.match(/(?:(?:\+?20)|0)?(1[0125]\d{8})\b/)
+  if (m) return '0' + m[1]
+  return ''
+}
+
+export function detectRoleFromText(text: string): { role: AdvertiserRole; clue: string | null } {
+  const t = text.toLowerCase()
+  if (/أنا المالك|من المالك|المالك المباشر|مالك الوحدة|انا المالك|للتواصل مع المالك|direct owner|\bowner\b/i.test(t)) {
+    return { role: 'OWNER', clue: 'تم الكشف تلقائياً عن صفة المالك من نص الإعلان' }
+  }
+  if (/وسيط|بروكر|عمولة|مكتب عقاري|\bbroker\b/i.test(t)) {
+    return { role: 'BROKER', clue: 'تم الكشف تلقائياً عن صفة الوسيط / بروكر من نص الإعلان' }
+  }
+  if (/ايجنت|\bagent\b|مستشار عقاري/i.test(t)) {
+    return { role: 'AGENT', clue: 'تم الكشف تلقائياً عن صفة الإيجنت من نص الإعلان' }
+  }
+  return { role: 'OWNER', clue: null }
+}
 
 /** Convert Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) to Latin digits. */
 function normalizeDigits(s: string): string {

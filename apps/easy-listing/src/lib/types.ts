@@ -1,3 +1,5 @@
+export type AdvertiserRole = 'OWNER' | 'BROKER' | 'AGENT' | 'EMPLOYEE'
+
 export interface PropertyFields {
   compound: string
   city: string
@@ -25,11 +27,15 @@ export interface AppSettings {
   companyPhone: string
   /** Shared secret required by the team's Apps Script doPost (CONFIG.OUTREACH_SECRET) */
   secret: string
+  supabaseUrl?: string
+  supabaseAnonKey?: string
 }
 
 export interface SavedProperty {
   id: string
   code: string
+  bmmCode?: string
+  internalCode?: string
   compound: string
   city: string
   unitType: string
@@ -40,6 +46,10 @@ export interface SavedProperty {
   price: number | null
   currency: string
   furnished: boolean
+  // Role & Contact identity
+  role: AdvertiserRole
+  contactName?: string
+  employeeName?: string
   ownerPhone: string
   description: string
   language: string
@@ -49,7 +59,12 @@ export interface SavedProperty {
   pfContent: string
   mapLink: string
   imageUrls: string
+  // Multi-sync statuses
   sheetSynced: boolean
   sheetError: string | null
+  supabaseSynced?: boolean
+  mapSynced?: boolean
+  source?: 'bot' | 'owner-outreach' | 'manual' | 'whatsapp'
+  status?: 'active' | 'pending_review' | 'bot_intake' | 'owner_reply_yes'
   createdAt: string
 }

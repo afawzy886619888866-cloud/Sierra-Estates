@@ -1,30 +1,29 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   BadgeCheck,
   BedDouble,
   Building2,
-  Coins,
+  CheckCircle2,
   ExternalLink,
-  FileText,
-  Home,
-  Image as ImageIcon,
-  Landmark,
-  Loader2,
+  Layers,
   MapPin,
   MessageCircle,
-  MousePointerClick,
   Phone,
   RefreshCw,
-  Save,
   Send,
   Sparkles,
-  SquareDashed,
+  UserCheck,
+  User,
+  Briefcase,
+  ShieldCheck,
+  Database,
   Table2,
-  PartyPopper,
-  AlertTriangle,
-  Facebook,
+  Share2,
+  Copy,
+  AlertCircle,
+  ArrowRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -35,26 +34,26 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 import { CopyButton } from './copy-button'
 import { ImageUploader, type UploadedImage } from './image-uploader'
 
-import type { AppSettings, GeneratedContent, PropertyFields } from '@/lib/types'
+import type { AdvertiserRole, AppSettings, GeneratedContent, PropertyFields, SavedProperty } from '@/lib/types'
 import { UNIT_TYPES, buildMapEmbedUrl, buildMapLink, formatPrice, generatePropertyCode } from '@/lib/listing'
 import { addSavedProperty, DEFAULT_SECRET, savedCodes } from '@/lib/local-store'
 import { exportToSheet, type SheetPayload } from '@/lib/sheets'
+import { detectRoleFromText, extractMobilePhone } from '@/lib/extract'
 
-interface SaveResult {
-  synced: boolean
-  configured: boolean
-  sheetLink: string
-  error: string | null
+interface MultiSyncResult {
+  ok: boolean
+  supabaseSynced: boolean
+  sheetSynced: boolean
+  mapSynced: boolean
   code: string
-  imageCount: number
+  error: string | null
+  supabaseTable?: string
+  sheetLink?: string
 }
 
 interface NewListingProps {
@@ -62,25 +61,101 @@ interface NewListingProps {
   onOpenSettings: () => void
   onOpenSetup: () => void
   onSaved: () => void
+  initialProperty?: SavedProperty | null
+  onClearInitialProperty?: () => void
 }
 
-const EXAMPLE_DESCRIPTION =
-  'شقة مفروشة للبيع في ميفيدا القاهرة الجديدة، 3 غرف نوم و3 حمامات، مساحة 220 متر، الدور الثالث، فيو لاندسكيب، استلام فوري، السعر 10 مليون و500 ألف.'
+const REAL_PRESETS = [
+  {
+    name: 'ميفيدا (10.5M)',
+    role: 'OWNER' as AdvertiserRole,
+    phone: '01092048333',
+    contactName: 'عمرو مرسي (المالك)',
+    text: 'شقة مفروشة للبيع في ميفيدا إعمار التجمع الخامس، 3 غرف نوم و3 حمامات، مساحة 220 متر، الدور الثالث، فيو لاندسكيب، استلام فوري، السعر 10 مليون و500 ألف.',
+  },
+  {
+    name: 'فيفث سكوير بجاردن (8.8M)',
+    role: 'OWNER' as AdvertiserRole,
+    phone: '01092048333',
+    contactName: 'د. ليلى فريد (المالك)',
+    text: 'شقة ارضي بجاردن 70م خاصة في فيفث سكوير المراسم، 3 غرف و 2 حمام، مساحة 165 متر، نصف تشطيب، السعر 8.8 مليون كاش.',
+  },
+  {
+    name: 'إيست تاون (7.2M)',
+    role: 'BROKER' as AdvertiserRole,
+    phone: '01092048333',
+    contactName: 'كريم الشناوي (بروكر)',
+    text: 'شقة للبيع في ايست تاون سوديك التجمع الخامس، مساحة 140 متر، 2 غرف نوم و 2 حمام، تشطيب الترا سوبر لوكس، السعر 7.2 مليون.',
+  },
+  {
+    name: 'مدينتي B14 (8.34M)',
+    role: 'EMPLOYEE' as AdvertiserRole,
+    employeeName: 'أحمد سعيد - كود SE-104',
+    phone: '01092048333',
+    contactName: '',
+    text: 'للبيع شقة ممتازة في مدينتي B14 طلعت مصطفى، مساحة 133 متر دور متكرر فيو بارك، 3 نوم و 2 حمام وتراس، السعر 8,340,000 ج شامل الوديعة.',
+  },
+]
 
-export function NewListing({ settings, onOpenSettings, onOpenSetup, onSaved }: NewListingProps) {
-  const [description, setDescription] = useState('')
+export function NewListing({
+  settings,
+  onOpenSettings,
+  onOpenSetup,
+  onSaved,
+  initialProperty,
+  onClearInitialProperty,
+}: NewListingProps) {
+  // ── Contact & Role Identity ──
+  const [role, setRole] = useState<AdvertiserRole>('OWNER')
   const [ownerPhone, setOwnerPhone] = useState('')
+  const [employeeName, setEmployeeName] = useState('')
+  const [contactName, setContactName] = useState('')
+
+  // ── Property Text & Intake ──
+  const [description, setDescription] = useState('')
   const [images, setImages] = useState<UploadedImage[]>([])
 
+  // ── Processing Phases ──
   const [phase, setPhase] = useState<'idle' | 'extracting' | 'generating'>('idle')
-  const [regenerating, setRegenerating] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // ── Extracted Specs & Output ──
   const [fields, setFields] = useState<PropertyFields | null>(null)
-  const [extractSource, setExtractSource] = useState<'ai' | 'fallback'>('ai')
   const [code, setCode] = useState('')
   const [content, setContent] = useState<GeneratedContent | null>(null)
-  const [saved, setSaved] = useState<SaveResult | null>(null)
+  const [syncResult, setSyncResult] = useState<MultiSyncResult | null>(null)
+
+  // Pre-populate if loaded from Saved/Resume tab
+  useEffect(() => {
+    if (initialProperty) {
+      setRole(initialProperty.role || 'OWNER')
+      setOwnerPhone(initialProperty.ownerPhone || '')
+      setEmployeeName(initialProperty.employeeName || '')
+      setContactName(initialProperty.contactName || '')
+      setDescription(initialProperty.description || '')
+      setCode(initialProperty.code || '')
+      setFields({
+        compound: initialProperty.compound,
+        city: initialProperty.city,
+        unitType: initialProperty.unitType,
+        bedrooms: initialProperty.bedrooms,
+        bathrooms: initialProperty.bathrooms,
+        area: initialProperty.area,
+        floor: initialProperty.floor || '',
+        price: initialProperty.price,
+        currency: initialProperty.currency,
+        furnished: initialProperty.furnished,
+        highlights: initialProperty.highlights ? JSON.parse(initialProperty.highlights) : [],
+        language: (initialProperty.language as 'ar' | 'en') || 'ar',
+      })
+      setContent({
+        whatsapp: initialProperty.whatsappContent || '',
+        facebook: initialProperty.facebookContent || '',
+        propertyFinder: initialProperty.pfContent || '',
+      })
+      toast.info(`تم تحميل وحدة ${initialProperty.compound} في الاستوديو بنجاح`)
+    }
+  }, [initialProperty])
 
   const mapLink = useMemo(
     () => (fields ? buildMapLink(fields.compound, fields.city) : ''),
@@ -93,48 +168,63 @@ export function NewListing({ settings, onOpenSettings, onOpenSetup, onSaved }: N
 
   function setField<K extends keyof PropertyFields>(key: K, value: PropertyFields[K]) {
     setFields((prev) => (prev ? { ...prev, [key]: value } : prev))
-    setSaved(null)
+    setSyncResult(null)
   }
 
-  async function callGenerate(f: PropertyFields, showLoader: 'full' | 'regen') {
-    if (showLoader === 'full') setPhase('generating')
-    else setRegenerating(true)
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: f,
-          description,
-          companyPhone: settings.companyPhone,
-          existingCodes: savedCodes(),
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.ok) throw new Error(data.error || 'تعذر توليد المحتوى')
-      setCode(String(data.code))
-      setContent(data.content as GeneratedContent)
-      setFields(data.fields as PropertyFields)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر توليد المحتوى')
-    } finally {
-      setPhase('idle')
-      setRegenerating(false)
+  // Handle phone changes with auto-formatting
+  function handlePhoneChange(val: string) {
+    setOwnerPhone(val)
+    setSyncResult(null)
+  }
+
+  // Text paste auto-extraction of phone and role
+  function handleDescriptionChange(val: string) {
+    setDescription(val)
+    setSyncResult(null)
+
+    // Auto-detect phone if not yet entered
+    if (!ownerPhone.trim()) {
+      const extractedPhone = extractMobilePhone(val)
+      if (extractedPhone) {
+        setOwnerPhone(extractedPhone)
+      }
+    }
+    // Auto-detect role hint if user hasn't explicitly chosen
+    const roleHint = detectRoleFromText(val)
+    if (roleHint && role === 'OWNER') {
+      setRole(roleHint)
     }
   }
 
-  async function handleExtract() {
+  function applyPreset(p: typeof REAL_PRESETS[0]) {
+    setRole(p.role)
+    setOwnerPhone(p.phone)
+    if (p.employeeName) setEmployeeName(p.employeeName)
+    if (p.contactName) setContactName(p.contactName)
+    setDescription(p.text)
+    setSyncResult(null)
+    toast.success(`تم اختيار نموذج ${p.name}`)
+  }
+
+  // ── AI Extraction + Generation ──
+  async function handleExtractAndGenerate() {
     const desc = description.trim()
-    if (desc.length < 15) {
-      toast.warning('اكتب وصف الوحدة أولًا (١٥ حرف على الأقل)')
+    if (desc.length < 10) {
+      toast.warning('اكتب أو الصق وصف الوحدة أولاً (١٠ أحرف على الأقل)')
       return
     }
     if (!/^[+\d][\d\s-]{7,17}$/.test(ownerPhone.trim())) {
-      toast.warning('اكتب رقم هاتف المالك صح (مثال: 01012345678)')
+      toast.warning('يرجى كتابة رقم الموبايل صحيحاً (مثال: 01092048333)')
       return
     }
-    setSaved(null)
+    if (role === 'EMPLOYEE' && !employeeName.trim()) {
+      toast.warning('بما أنك موظف، يرجى كتابة اسمك أو كودك في خانة الموظف')
+      return
+    }
+
+    setSyncResult(null)
     setPhase('extracting')
+
     let extracted: PropertyFields | null = null
     try {
       const res = await fetch('/api/extract', {
@@ -145,86 +235,107 @@ export function NewListing({ settings, onOpenSettings, onOpenSetup, onSaved }: N
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'تعذر استخراج البيانات')
       extracted = data.fields as PropertyFields
-      setExtractSource(data.source === 'fallback' ? 'fallback' : 'ai')
       setFields(extracted)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'تعذر استخراج البيانات')
       setPhase('idle')
       return
     }
-    await callGenerate(extracted, 'full')
-    if (extracted && !extracted.compound) {
-      toast.info('لم نجد اسم الكومباوند في الوصف — اكتبه يدويًا في تفاصيل الوحدة')
+
+    // Phase 2: Generation
+    setPhase('generating')
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: extracted,
+          description: desc,
+          companyPhone: settings.companyPhone || ownerPhone,
+          existingCodes: savedCodes(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) throw new Error(data.error || 'تعذر توليد المحتوى والكود')
+      setCode(String(data.code))
+      setContent(data.content as GeneratedContent)
+      setFields(data.fields as PropertyFields)
+      toast.success('تم استخراج المواصفات وتوليد الكود بنجاح ✦')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'تعذر توليد المحتوى')
+    } finally {
+      setPhase('idle')
     }
   }
 
-  async function handleSave() {
-    if (!fields || !content) return
+  // ── 1-Click Universal Multi-Sync ──
+  async function handleUniversalSync() {
+    if (!fields || !content) {
+      toast.warning('اضغط على "استخراج المواصفات وتوليد الكود" أولاً')
+      return
+    }
     if (!fields.compound.trim()) {
-      toast.warning('اسم الكومباوند مطلوب قبل الحفظ')
+      toast.warning('اسم الكومباوند مطلوب قبل الحفظ والمزامنة')
       return
     }
-    const phoneDigits = ownerPhone.replace(/\D/g, '')
-    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
-      toast.warning('اكتب رقم هاتف المالك صح (مثال: 01012345678)')
+    const cleanPhone = ownerPhone.replace(/\D/g, '')
+    if (cleanPhone.length < 8) {
+      toast.warning('رقم الموبايل مطلوب وصحيح')
       return
     }
-    setSaving(true)
-    try {
-      const configured = Boolean(settings.appsScriptUrl)
-      let synced = false
-      let sheetError: string | null = null
-      let driveUrls: string[] = []
+    if (role === 'EMPLOYEE' && !employeeName.trim()) {
+      toast.warning('يرجى كتابة اسم الموظف المسئول')
+      return
+    }
 
-      // Final unique code (checked against codes saved on this device)
+    setSaving(true)
+    setSyncResult(null)
+
+    try {
+      // 1. Ensure unique code
       let finalCode = code
       const used = savedCodes()
       if (!finalCode || used.includes(finalCode)) {
         finalCode = generatePropertyCode(fields, used)
-      }
-      // If the code changed after the content was generated, patch the content strings
-      let finalContent: GeneratedContent = content
-      if (code && finalCode !== code) {
-        finalContent = {
-          whatsapp: content.whatsapp.split(code).join(finalCode),
-          facebook: content.facebook.split(code).join(finalCode),
-          propertyFinder: content.propertyFinder.split(code).join(finalCode),
-        }
-        setContent(finalContent)
         setCode(finalCode)
       }
 
-      const payload: SheetPayload = {
-        // The merged Sierra engine requires the shared secret and routes
-        // easy-listing saves to the "Listings" tab (Mode C in doPost).
-        mode: 'easy_listing',
-        secret: settings.secret || DEFAULT_SECRET,
-        code: finalCode,
-        compound: fields.compound,
-        bedrooms: fields.bedrooms,
-        bathrooms: fields.bathrooms,
-        area: fields.area,
-        price: fields.price,
-        currency: fields.currency,
-        furnished: fields.furnished,
-        ownerPhone: ownerPhone.trim(),
-        whatsappContent: finalContent.whatsapp,
-        facebookContent: finalContent.facebook,
-        pfContent: finalContent.propertyFinder,
-        mapLink,
-        images: images.map((i) => ({ name: i.name, mime: i.mime, data: i.base64 })),
-        createdAt: new Date().toISOString(),
-      }
-      if (configured) {
-        const result = await exportToSheet(settings.appsScriptUrl, payload)
-        synced = result.ok
-        sheetError = result.error ?? null
-        driveUrls = result.urls ?? []
-      }
+      const internalCode = `NC-${(fields.compound || 'COM').slice(0, 3).toUpperCase()}-APT-${fields.area || 0}M`
 
+      // 2. Call unified server sync route (/api/save)
+      // This synchronizes Supabase DB + Google Sheets Webhook in parallel
+      const saveRes = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role,
+          phone: ownerPhone.trim(),
+          employeeName: employeeName.trim(),
+          contactName: contactName.trim(),
+          fields,
+          code: finalCode,
+          internalCode,
+          bmmCode: `BMM-${finalCode}`,
+          content,
+          mapLink,
+          images: images.map((i) => ({ name: i.name, mime: i.mime, data: i.base64 })),
+          appsScriptUrl: settings.appsScriptUrl,
+          secret: settings.secret || DEFAULT_SECRET,
+        }),
+      })
+
+      const saveJson = await saveRes.json()
+
+      const supabaseSynced = Boolean(saveJson.supabase?.ok)
+      const sheetSynced = Boolean(saveJson.sheet?.ok)
+      const mapSynced = Boolean(mapLink)
+
+      // 3. Save to local browser ledger mirror
       addSavedProperty({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         code: finalCode,
+        bmmCode: `BMM-${finalCode}`,
+        internalCode,
         compound: fields.compound,
         city: fields.city,
         unitType: fields.unitType,
@@ -235,639 +346,654 @@ export function NewListing({ settings, onOpenSettings, onOpenSetup, onSaved }: N
         price: fields.price,
         currency: fields.currency,
         furnished: fields.furnished,
+        role,
+        contactName: contactName.trim() || undefined,
+        employeeName: employeeName.trim() || undefined,
         ownerPhone: ownerPhone.trim(),
         description: description.slice(0, 6000),
         language: fields.language,
         highlights: JSON.stringify(fields.highlights ?? []),
-        whatsappContent: finalContent.whatsapp,
-        facebookContent: finalContent.facebook,
-        pfContent: finalContent.propertyFinder,
+        whatsappContent: content.whatsapp,
+        facebookContent: content.facebook,
+        pfContent: content.propertyFinder,
         mapLink,
-        imageUrls: JSON.stringify(driveUrls),
-        sheetSynced: synced,
-        sheetError,
+        imageUrls: JSON.stringify(saveJson.sheet?.urls || []),
+        sheetSynced,
+        sheetError: saveJson.sheet?.error || null,
+        supabaseSynced,
+        mapSynced,
+        source: role === 'OWNER' ? 'owner-outreach' : 'manual',
+        status: 'active',
         createdAt: new Date().toISOString(),
       })
 
-      setSaved({
-        synced,
-        configured,
-        sheetLink: settings.sheetLink || '',
-        error: sheetError,
+      setSyncResult({
+        ok: true,
+        supabaseSynced,
+        sheetSynced,
+        mapSynced,
         code: finalCode,
-        imageCount: driveUrls.length,
+        error: null,
+        supabaseTable: saveJson.supabase?.table,
+        sheetLink: settings.sheetLink,
       })
 
-      if (configured && synced) {
-        toast.success('تم حفظ الوحدة ومزامنتها مع Google Sheets ✅')
-      } else if (configured && !synced) {
-        toast.error('تم الحفظ محليًا، لكن مزامنة الشيت فشلت — راجع لينك الـ Apps Script')
-      } else {
-        toast.success('تم حفظ الوحدة (محليًا) ✅ — اربط Google Sheets للمزامنة')
-      }
       onSaved()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر الحفظ')
+      toast.success(`تم حفظ ومزامنة الوحدة بنجاح بنقرة واحدة! (${finalCode})`)
+    } catch (err: any) {
+      toast.error(err?.message || 'تعذر استكمال المزامنة الشاملة')
+      setSyncResult({
+        ok: false,
+        supabaseSynced: false,
+        sheetSynced: false,
+        mapSynced: false,
+        code,
+        error: err?.message || 'خطأ غير متوقع أثناء المزامنة',
+      })
     } finally {
       setSaving(false)
     }
   }
 
-  function resetAll() {
-    setDescription('')
-    setOwnerPhone('')
-    setImages([])
-    setFields(null)
-    setCode('')
-    setContent(null)
-    setSaved(null)
-    setPhase('idle')
-  }
-
-  const busy = phase !== 'idle' || regenerating || saving
-  const step = !fields ? 1 : !content ? 2 : 3
-
   return (
-    <div className="space-y-5">
-      {/* Steps indicator */}
-      <ol className="flex flex-wrap items-center gap-2 text-xs font-medium">
-        {[
-          { n: 1, label: 'الوصف والصور', icon: FileText },
-          { n: 2, label: 'راجع التفاصيل', icon: BadgeCheck },
-          { n: 3, label: 'المحتوى والحفظ', icon: Send },
-        ].map(({ n, label, icon: Icon }) => (
-          <li
-            key={n}
-            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 ${
-              step === n
-                ? 'border-primary bg-primary text-primary-foreground'
-                : step > n
-                  ? 'border-primary/40 bg-accent text-accent-foreground'
-                  : 'border-border text-muted-foreground'
-            }`}
-          >
-            {step > n ? <BadgeCheck className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
-            {label}
-          </li>
-        ))}
-      </ol>
-
-      {/* Sheet not configured warning */}
-      {!settings.appsScriptUrl && (
-        <Alert className="border-[--gold]/50 bg-accent/60">
-          <AlertTriangle className="h-4 w-4 text-[--gold]" />
-          <AlertTitle className="text-sm font-bold">Google Sheets غير مرتبط بعد</AlertTitle>
-          <AlertDescription className="text-xs leading-relaxed">
-            الحفظ هيتم محليًا في الأول. عشان كل وحدة تتحفظ كصف في شيت جوجل (مجاني ١٠٠٪) اضغط{' '}
-            <button className="font-bold underline underline-offset-2" onClick={onOpenSetup}>
-              دليل الربط
-            </button>{' '}
-            واتبع ٤ خطوات، أو افتح{' '}
-            <button className="font-bold underline underline-offset-2" onClick={onOpenSettings}>
-              الإعدادات
-            </button>{' '}
-            لو عندك اللينك جاهز.
-          </AlertDescription>
-        </Alert>
+    <div className="space-y-6">
+      {/* Loaded from Resume Banner */}
+      {initialProperty && (
+        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-[#002b4b]/40 border border-[#e9c176]/30 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-md bg-[#c8961a]/20 text-[#e9c176]">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span>
+              تم تحميل بيانات الوحدة من <b>سجل الأونرز ومحادثات البوت</b>:{' '}
+              <span className="text-[#e9c176] font-mono">{initialProperty.compound} ({initialProperty.code})</span>
+            </span>
+          </div>
+          {onClearInitialProperty && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearInitialProperty}
+              className="text-xs h-7 border-slate-700 text-slate-300 hover:text-white"
+            >
+              بدء وحدة جديدة
+            </Button>
+          )}
+        </div>
       )}
 
-      {/* Step 1: input */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-              ١
+      {/* ── STEP 1: Contact & Role Definition ── */}
+      <div className="hyouz-card rounded-2xl p-5 sm:p-6 space-y-5">
+        <div className="flex items-center justify-between border-b border-[#c8961a]/20 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#c8961a]/15 text-[#e9c176] font-bold text-xs border border-[#c8961a]/30">
+              1
             </span>
-            بيانات الوحدة
-          </CardTitle>
-          <CardDescription>
-            الصق وصف الوحدة زي ما المالك أو الكوليجر بعتة (عربي أو English) وارفع الصور واكتب تليفون المالك.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="description">وصف الوحدة</Label>
-            <Textarea
-              id="description"
-              dir="auto"
-              rows={6}
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value)
-                setSaved(null)
-              }}
-              placeholder={EXAMPLE_DESCRIPTION}
-              className="text-sm leading-relaxed"
-            />
-            <button
-              type="button"
-              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-primary"
-              onClick={() => setDescription(EXAMPLE_DESCRIPTION)}
-            >
-              جرّب مثال جاهز
-            </button>
+            <div>
+              <h2 className="text-base font-bold text-white tracking-wide">
+                بيانات جهة الاتصال والصفة (Contact & Role)
+              </h2>
+              <p className="text-xs text-slate-400">
+                حدد صفة صاحب الرقم: مالك، بروكر، إيجنت، أو موظف بالشركة
+              </p>
+            </div>
           </div>
+          <span className="text-[11px] font-mono text-[#e9c176] bg-[#c8961a]/10 px-2 py-0.5 rounded-md border border-[#c8961a]/25">
+            Sierra Unified ID
+          </span>
+        </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="ownerPhone" className="flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5" /> هاتف المالك
-              </Label>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          {/* Mobile Phone Input */}
+          <div className="md:col-span-6 space-y-1.5">
+            <Label htmlFor="owner-phone" className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-[#e9c176]" />
+              رقم الموبايل / واتساب <span className="text-red-400">*</span>
+            </Label>
+            <div className="relative">
               <Input
-                id="ownerPhone"
+                id="owner-phone"
+                type="tel"
                 dir="ltr"
-                inputMode="tel"
-                className="text-start"
                 placeholder="01012345678"
                 value={ownerPhone}
-                onChange={(e) => {
-                  setOwnerPhone(e.target.value)
-                  setSaved(null)
-                }}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                className="bg-[#070b12]/70 border-[#c8961a]/30 focus:border-[#e9c176] text-white font-mono text-base pl-9 placeholder:text-slate-600 rounded-xl"
+              />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+            </div>
+            <p className="text-[11px] text-slate-400">
+              أدخل رقم الهاتف للتواصل المباشر مع الوحدة عبر الواتساب والمزامنة
+            </p>
+          </div>
+
+          {/* Role Selector Pill Buttons */}
+          <div className="md:col-span-6 space-y-1.5">
+            <Label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+              <UserCheck className="h-3.5 w-3.5 text-[#e9c176]" />
+              صفة المعلن (Who is this?) <span className="text-red-400">*</span>
+            </Label>
+            <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-[#070b12]/80 border border-[#c8961a]/20">
+              <button
+                type="button"
+                onClick={() => setRole('OWNER')}
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  role === 'OWNER'
+                    ? 'bg-gradient-to-r from-[#c8961a] to-[#e9c176] text-[#070b12] shadow-md shadow-[#c8961a]/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                👑 مالك
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('BROKER')}
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  role === 'BROKER'
+                    ? 'bg-gradient-to-r from-[#c8961a] to-[#e9c176] text-[#070b12] shadow-md shadow-[#c8961a]/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                💼 وسيط
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('AGENT')}
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  role === 'AGENT'
+                    ? 'bg-gradient-to-r from-[#c8961a] to-[#e9c176] text-[#070b12] shadow-md shadow-[#c8961a]/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                🏷️ إيجنت
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('EMPLOYEE')}
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  role === 'EMPLOYEE'
+                    ? 'bg-gradient-to-r from-[#c8961a] to-[#e9c176] text-[#070b12] shadow-md shadow-[#c8961a]/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                🏢 موظف
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Name Input: Employee Name vs Contact Name */}
+        <div className="pt-1">
+          {role === 'EMPLOYEE' ? (
+            <div className="p-3.5 rounded-xl bg-[#c8961a]/10 border border-[#c8961a]/40 space-y-1.5 animate-fadeIn">
+              <Label htmlFor="employee-name" className="text-xs font-bold text-[#e9c176] flex items-center gap-1.5">
+                <Briefcase className="h-4 w-4" />
+                اسم الموظف المسئول أو الكود الداخلي <span className="text-red-400">*</span>
+              </Label>
+              <Input
+                id="employee-name"
+                type="text"
+                placeholder="اكتب اسمك وكود الموظف (مثال: أحمد خالد - كود SE-104)"
+                value={employeeName}
+                onChange={(e) => setEmployeeName(e.target.value)}
+                className="bg-[#070b12]/90 border-[#c8961a]/50 focus:border-[#e9c176] text-white placeholder:text-slate-500 rounded-lg text-sm"
+              />
+              <p className="text-[11px] text-slate-300">
+                سيتم قيد الوحدة باسمك مباشرة في قاعدة بيانات سوبابيز وشيت المتابعة الداخلي
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="contact-name" className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-slate-400" />
+                اسم المالك أو الوسيط (اختياري)
+              </Label>
+              <Input
+                id="contact-name"
+                type="text"
+                placeholder={role === 'OWNER' ? 'مثال: أ. عمرو مرسي' : 'مثال: كريم الشناوي (شركة ريماكس)'}
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                className="bg-[#070b12]/70 border-slate-700 focus:border-[#e9c176] text-white placeholder:text-slate-600 rounded-xl text-sm"
               />
             </div>
-            <div className="space-y-2 sm:col-span-1">
-              <Label className="flex items-center gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5" /> صور الوحدة
-              </Label>
-              <ImageUploader images={images} onChange={setImages} max={10} />
+          )}
+        </div>
+      </div>
+
+      {/* ── STEP 2: Raw Property Text & AI Extraction ── */}
+      <div className="hyouz-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#c8961a]/20 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#c8961a]/15 text-[#e9c176] font-bold text-xs border border-[#c8961a]/30">
+              2
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-white tracking-wide">
+                وصف الوحدة والمواصفات (Property Text & Specs)
+              </h2>
+              <p className="text-xs text-slate-400">
+                الصق رسالة الواتساب أو الوصف وسيتكفل الذكاء الاصطناعي باستخراج كل التفاصيل
+              </p>
             </div>
           </div>
 
+          <div className="hidden sm:flex items-center gap-1.5">
+            <span className="text-[11px] text-slate-400">نماذج حية:</span>
+            {REAL_PRESETS.map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => applyPreset(p)}
+                className="text-[10.5px] px-2 py-0.5 rounded bg-[#070b12] border border-[#c8961a]/25 text-[#e9c176] hover:bg-[#c8961a]/20 transition-all cursor-pointer"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Text Area */}
+        <div className="space-y-1.5">
+          <Textarea
+            rows={4}
+            value={description}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
+            placeholder="مثال: شقة مفروشة للبيع في ميفيدا إعمار التجمع الخامس، 3 غرف نوم و3 حمامات، مساحة 220 متر، الدور الثالث فيو لاندسكيب، استلام فوري، السعر 10.5 مليون..."
+            className="bg-[#070b12]/80 border-[#c8961a]/30 focus:border-[#e9c176] text-white placeholder:text-slate-600 rounded-xl text-sm leading-relaxed"
+          />
+        </div>
+
+        {/* Action Button: Extract & Generate */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <Button
-            size="lg"
-            className="w-full text-base font-bold"
-            onClick={handleExtract}
-            disabled={busy}
+            type="button"
+            onClick={handleExtractAndGenerate}
+            disabled={phase !== 'idle' || !description.trim()}
+            className="hyouz-gold-btn rounded-xl px-5 py-2.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
           >
             {phase === 'extracting' ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" /> جاري استخراج البيانات…
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                جاري استخراج المواصفات...
               </>
             ) : phase === 'generating' ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" /> جاري توليد المحتوى…
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                جاري توليد الكود والمحتوى التسويقي...
               </>
             ) : (
               <>
-                <Sparkles className="h-5 w-5" /> استخرج البيانات وولّد المحتوى
+                <Sparkles className="h-4 w-4" />
+                استخراج المواصفات وتوليد الكود التسويقي
               </>
             )}
           </Button>
-        </CardContent>
-      </Card>
 
-      {/* Step 2: editable details */}
-      {fields && (
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                ٢
+          {code && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">كود الوحدة:</span>
+              <span className="font-mono text-sm font-bold text-[#e9c176] bg-[#070b12] px-2.5 py-1 rounded-lg border border-[#c8961a]/30">
+                {code}
               </span>
-              تفاصيل الوحدة
-              {extractSource === 'ai' ? (
-                <Badge variant="secondary" className="gap-1 font-medium">
-                  <Sparkles className="h-3 w-3" /> مستخرجة بالذكاء الاصطناعي
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="gap-1 font-medium">
-                  <MousePointerClick className="h-3 w-3" /> استخراج تقريبي — راجعها كويس
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>عدّل أي حاجة ناقصة أو غلط، وبعدين حدّث المحتوى لو محتاج.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              <div className="col-span-2 space-y-1.5 sm:col-span-2">
-                <Label htmlFor="f-compound" className="flex items-center gap-1.5 text-xs">
-                  <Building2 className="h-3.5 w-3.5" /> الكومباوند / الكوميونيتي
-                </Label>
+            </div>
+          )}
+        </div>
+
+        {/* ── Extracted Specs Grid (Editable) ── */}
+        {fields && (
+          <div className="mt-4 p-4 rounded-xl bg-[#070b12]/60 border border-[#c8961a]/20 space-y-4 animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="text-xs font-bold text-[#e9c176] flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                المواصفات المستخرجة (يمكنك تعديل أي قيمة مباشرة):
+              </span>
+              <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 text-[10px]">
+                تم الفحص بالذكاء الاصطناعي
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* Compound */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">الكومباوند</Label>
                 <Input
-                  id="f-compound"
-                  dir="auto"
                   value={fields.compound}
                   onChange={(e) => setField('compound', e.target.value)}
-                  placeholder="Mivida"
+                  className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="f-city" className="flex items-center gap-1.5 text-xs">
-                  <MapPin className="h-3.5 w-3.5" /> المدينة / المنطقة
-                </Label>
+
+              {/* City */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">المدينة / المنطقة</Label>
                 <Input
-                  id="f-city"
-                  dir="auto"
                   value={fields.city}
                   onChange={(e) => setField('city', e.target.value)}
-                  placeholder="New Cairo"
+                  className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5 text-xs">
-                  <Home className="h-3.5 w-3.5" /> نوع الوحدة
-                </Label>
+
+              {/* Unit Type */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">نوع الوحدة</Label>
                 <Select value={fields.unitType} onValueChange={(v) => setField('unitType', v)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#0d1524] border-[#c8961a]/30 text-white">
                     {UNIT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.ar}
+                      <SelectItem key={t.value} value={t.value} className="text-xs">
+                        {t.ar} ({t.en})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="f-bed" className="flex items-center gap-1.5 text-xs">
-                  <BedDouble className="h-3.5 w-3.5" /> غرف النوم
-                </Label>
+              {/* Area */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">المساحة (م²)</Label>
                 <Input
-                  id="f-bed"
                   type="number"
-                  min={0}
-                  max={30}
-                  dir="ltr"
-                  className="text-start"
-                  value={fields.bedrooms || ''}
-                  onChange={(e) => setField('bedrooms', Number(e.target.value) || 0)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="f-bath" className="text-xs">
-                  الحمامات
-                </Label>
-                <Input
-                  id="f-bath"
-                  type="number"
-                  min={0}
-                  max={30}
-                  dir="ltr"
-                  className="text-start"
-                  value={fields.bathrooms || ''}
-                  onChange={(e) => setField('bathrooms', Number(e.target.value) || 0)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="f-area" className="text-xs">
-                  المساحة (م²)
-                </Label>
-                <Input
-                  id="f-area"
-                  type="number"
-                  min={0}
-                  dir="ltr"
-                  className="text-start"
                   value={fields.area ?? ''}
                   onChange={(e) => setField('area', e.target.value ? Number(e.target.value) : null)}
-                  placeholder="220"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="f-floor" className="text-xs">
-                  الدور
-                </Label>
-                <Input
-                  id="f-floor"
-                  dir="auto"
-                  value={fields.floor}
-                  onChange={(e) => setField('floor', e.target.value)}
-                  placeholder="3 / G"
+                  className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="f-price" className="flex items-center gap-1.5 text-xs">
-                  <Coins className="h-3.5 w-3.5" /> السعر
-                </Label>
+              {/* Bedrooms */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">غرف النوم</Label>
                 <Input
-                  id="f-price"
                   type="number"
-                  min={0}
-                  dir="ltr"
-                  className="text-start"
-                  value={fields.price ?? ''}
-                  onChange={(e) => setField('price', e.target.value ? Number(e.target.value) : null)}
-                  placeholder="10500000"
+                  value={fields.bedrooms}
+                  onChange={(e) => setField('bedrooms', Number(e.target.value))}
+                  className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">العملة</Label>
-                <Select
-                  value={fields.currency}
-                  onValueChange={(v) => setField('currency', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['EGP', 'USD', 'EUR', 'SAR', 'AED'].map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+              {/* Bathrooms */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">الحمامات</Label>
+                <Input
+                  type="number"
+                  value={fields.bathrooms}
+                  onChange={(e) => setField('bathrooms', Number(e.target.value))}
+                  className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg"
+                />
               </div>
-              <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 px-3 py-2">
-                <Label htmlFor="f-furnished" className="text-xs font-medium">
-                  مفروشة؟
-                </Label>
+
+              {/* Floor */}
+              <div className="space-y-1">
+                <Label className="text-[10.5px] text-slate-400">الدور</Label>
+                <Input
+                  value={fields.floor}
+                  onChange={(e) => setField('floor', e.target.value)}
+                  placeholder="3 / أرضي"
+                  className="bg-[#0d1524] border-slate-700 text-white text-xs h-8 rounded-lg"
+                />
+              </div>
+
+              {/* Price */}
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-[10.5px] text-slate-400">السعر الإجمالي (ج.م)</Label>
+                <Input
+                  type="number"
+                  value={fields.price ?? ''}
+                  onChange={(e) => setField('price', e.target.value ? Number(e.target.value) : null)}
+                  className="bg-[#0d1524] border-[#c8961a]/40 text-[#e9c176] font-bold font-mono text-xs h-8 rounded-lg"
+                />
+              </div>
+
+              {/* Furnished */}
+              <div className="flex items-center gap-2 pt-5">
                 <Switch
-                  id="f-furnished"
                   checked={fields.furnished}
                   onCheckedChange={(v) => setField('furnished', v)}
                 />
+                <span className="text-xs text-slate-300">
+                  {fields.furnished ? 'مفروشة بالكامل' : 'غير مفروشة'}
+                </span>
               </div>
-              <div className="col-span-2 space-y-1.5 sm:col-span-2 lg:col-span-2">
-                <Label htmlFor="f-highlights" className="text-xs">
-                  مميزات إضافية (افصل بينها بفاصلة)
+
+              {/* Map Link */}
+              <div className="space-y-1 sm:col-span-3">
+                <Label className="text-[10.5px] text-slate-400 flex items-center gap-1">
+                  <MapPin className="h-3 w-3 text-[#e9c176]" />
+                  رابط الخريطة GIS
                 </Label>
-                <Input
-                  id="f-highlights"
-                  dir="auto"
-                  value={fields.highlights.join('، ')}
-                  onChange={(e) =>
-                    setField(
-                      'highlights',
-                      e.target.value.split(/[،,]/).map((s) => s.trim()).filter(Boolean)
-                    )
-                  }
-                  placeholder="فيو لاندسكيب، استلام فوري، جاردن"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => void callGenerate(fields, 'regen')}
-                disabled={busy}
-              >
-                {regenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> جاري التحديث…
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4" /> أعد توليد المحتوى بعد التعديل
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                السعر الحالي: {formatPrice(fields.price, fields.currency)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: content + map + save */}
-      {content && fields && (
-        <>
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  ٣
-                </span>
-                المحتوى الجاهز للنشر
-                <Badge variant="outline" className="gap-1.5">
-                  <Landmark className="h-3 w-3" /> كود الوحدة
-                </Badge>
-              </CardTitle>
-              <CardDescription>انسخ المحتوى وابعتة للعملاء أو انشرة — كله جاهز.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/50 p-3">
-                <code className="ltr-embed rounded-lg bg-primary px-4 py-2 font-mono text-lg font-extrabold tracking-wider text-primary-foreground">
-                  {code}
-                </code>
-                <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-                  البادئة من الكومباوند + عدد الغرف مع حالة الفرش (F مفروش / U غير مفروش) + السعر
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    readOnly
+                    value={mapLink}
+                    className="bg-[#0d1524] border-slate-700 text-slate-400 text-xs h-8 rounded-lg font-mono text-[11px]"
+                  />
+                  {mapLink && (
+                    <a
+                      href={mapLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-[#070b12] border border-[#c8961a]/30 text-[#e9c176] hover:bg-[#c8961a]/20"
+                      title="فتح على Google Maps"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
                 </div>
-                <CopyButton text={code} label="انسخ الكود" variant="outline" />
               </div>
+            </div>
+          </div>
+        )}
+      </div>
 
-              <Tabs defaultValue="whatsapp">
-                <TabsList className="w-full sm:w-auto">
-                  <TabsTrigger value="whatsapp" className="gap-1.5">
-                    <MessageCircle className="h-4 w-4" /> واتساب
-                  </TabsTrigger>
-                  <TabsTrigger value="facebook" className="gap-1.5">
-                    <Facebook className="h-4 w-4" /> فيسبوك
-                  </TabsTrigger>
-                  <TabsTrigger value="pf" className="gap-1.5">
-                    <Table2 className="h-4 w-4" /> بروبيرتي فايندر
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="whatsapp" className="space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">رسالة واتساب جاهزة للإرسال للعملاء</p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5"
-                        onClick={() =>
-                          window.open(
-                            `https://wa.me/?text=${encodeURIComponent(content.whatsapp)}`,
-                            '_blank'
-                          )
-                        }
-                      >
-                        <Send className="h-4 w-4" /> ابعتها واتساب
-                      </Button>
-                      <CopyButton text={content.whatsapp} label="نسخ الرسالة" />
-                    </div>
-                  </div>
-                  <pre className="content-pre max-h-96 overflow-y-auto rounded-xl border bg-[#e8f5ee] p-4 text-sm dark:bg-[#12241d]">
-                    {content.whatsapp}
-                  </pre>
-                </TabsContent>
-
-                <TabsContent value="facebook" className="space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">بوست فيسبوك جاهز — ارفق الصور مع البوست</p>
-                    <CopyButton text={content.facebook} label="نسخ البوست" />
-                  </div>
-                  <pre className="content-pre max-h-96 overflow-y-auto rounded-xl border bg-muted/60 p-4 text-sm">
-                    {content.facebook}
-                  </pre>
-                </TabsContent>
-
-                <TabsContent value="pf" className="space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">
-                      بيانات البروبيرتي فايندر بالإنجليزي (Listing بالتفصيل)
-                    </p>
-                    <CopyButton text={content.propertyFinder} label="نسخ الليستينج" />
-                  </div>
-                  <pre className="content-pre ltr-embed max-h-96 overflow-y-auto rounded-xl border bg-muted/60 p-4 text-sm">
-                    {content.propertyFinder}
-                  </pre>
-                </TabsContent>
-              </Tabs>
-
-              {images.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                      <ImageIcon className="h-3.5 w-3.5" /> صور الوحدة ({images.length}) — هتترفع
-                      تلقائيًا على Google Drive مع الحفظ، وروابطها هتتحفظ في الشيت
-                    </p>
-                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                      {images.map((img) => (
-                        <div
-                          key={img.id}
-                          className="aspect-square overflow-hidden rounded-md border bg-muted"
-                          title={img.name}
-                        >
-                          <img
-                            src={img.dataUrl}
-                            alt={img.name}
-                            className="h-full w-full object-cover transition-transform hover:scale-105"
-                            loading="lazy"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Map */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MapPin className="h-5 w-5 text-primary" /> موقع الوحدة على الخريطة
-              </CardTitle>
-              <CardDescription>
-                محدد تلقائيًا من اسم الكومباوند والمدينة — لو الاسم مش دقيق عدّله فوق وهتتحدث الخريطة.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="overflow-hidden rounded-xl border">
-                <iframe
-                  key={mapEmbedUrl}
-                  src={mapEmbedUrl}
-                  title={`خريطة ${fields.compound}`}
-                  className="h-64 w-full sm:h-72"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => window.open(mapLink, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4" /> افتح في Google Maps
-                </Button>
-                <CopyButton text={mapLink} label="انسخ لينك الموقع" variant="outline" />
-                <span className="ltr-embed max-w-full truncate text-xs text-muted-foreground sm:max-w-md">
-                  {mapLink}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Save */}
-          <Card>
-            <CardContent className="space-y-3 pt-6">
-              {saved ? (
-                <Alert
-                  className={
-                    saved.configured && saved.synced
-                      ? 'border-primary/40 bg-[#e8f5ee] dark:bg-[#12241d]'
-                      : 'border-[--gold]/50 bg-accent/50'
-                  }
-                >
-                  {saved.configured && saved.synced ? (
-                    <PartyPopper className="h-4 w-4 text-primary" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 text-[--gold]" />
-                  )}
-                  <AlertTitle className="text-sm font-bold">
-                    {saved.configured && saved.synced
-                      ? 'تم الحفظ في Google Sheets ✅'
-                      : saved.configured
-                        ? 'اتحفظ محليًا — مزامنة الشيت فشلت'
-                        : 'تم الحفظ محليًا ✅'}
-                  </AlertTitle>
-                  <AlertDescription className="space-y-1 text-xs">
-                    <p>
-                      كود الوحدة <code className="font-mono font-bold">{saved.code}</code> اتضاف
-                      لقائمة الوحدات المحفوظة.
-                    </p>
-                    {saved.synced && saved.imageCount > 0 && (
-                      <p>
-                        ☁️ {saved.imageCount} صورة اترفعت على Google Drive وروابطها اتكتبت في الشيت.
-                      </p>
-                    )}
-                    {saved.configured && saved.synced && saved.sheetLink && (
-                      <a
-                        href={saved.sheetLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-bold underline underline-offset-2"
-                      >
-                        افتح صف الوحدة في Google Sheets ↗
-                      </a>
-                    )}
-                    {saved.error && <p className="text-destructive">سبب الفشل: {saved.error}</p>}
-                    {!saved.configured && (
-                      <p>لما تربط الشيت من الإعدادات، الوحدات الجديدة هتتحفظ فيه تلقائيًا.</p>
-                    )}
-                  </AlertDescription>
-                </Alert>
-              ) : null}
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  size="lg"
-                  className="flex-1 gap-2 text-base font-bold"
-                  onClick={handleSave}
-                  disabled={busy || Boolean(saved)}
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" /> جاري الحفظ…
-                    </>
-                  ) : saved ? (
-                    <>
-                      <BadgeCheck className="h-5 w-5" /> تم حفظ الوحدة
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-5 w-5" /> احفظ الوحدة{' '}
-                      {settings.appsScriptUrl ? 'في Google Sheets' : 'في القائمة'}
-                    </>
-                  )}
-                </Button>
-                <Button size="lg" variant="outline" className="gap-2" onClick={resetAll} disabled={busy}>
-                  <SquareDashed className="h-5 w-5" /> وحدة جديدة
-                </Button>
-              </div>
-              <p className="text-center text-xs text-muted-foreground">
-                الحفظ بيضيف صف جديد في الشيت بكل البيانات: الكود، التفاصيل، المحتوى، لينك الخريطة،
-                وروابط الصور.
+      {/* ── STEP 3: 1-Click Universal Multi-Sync ── */}
+      <div className="hyouz-card rounded-2xl p-5 sm:p-6 space-y-5 border-[#c8961a]/35 shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#c8961a]/20 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#c8961a] text-[#070b12] font-black text-xs shadow-md shadow-[#c8961a]/30">
+              3
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-white tracking-wide">
+                الربط الشامل بنقرة واحدة (1-Click Universal Multi-Sync)
+              </h2>
+              <p className="text-xs text-slate-400">
+                زر واحد يربط ويزامن الوحدة مع كل الأنظمة فوراً: قاعدة البيانات + شيت جوجل + الخريطة + المخزون
               </p>
-            </CardContent>
-          </Card>
-        </>
-      )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-[#c8961a]/40 text-[#e9c176] bg-[#c8961a]/10 text-xs px-2.5 py-1">
+              4 قنوات متصلة تلقائياً
+            </Badge>
+          </div>
+        </div>
+
+        {/* The 4-Channel Indicators */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="p-3 rounded-xl bg-[#070b12]/80 border border-[#c8961a]/20 flex items-center gap-2.5">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Database className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-xs font-bold text-white">قاعدة Supabase</div>
+              <div className="text-[10px] text-slate-400">
+                {role === 'BROKER' ? 'map_sheet_entries' : 'public.listings'}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[#070b12]/80 border border-[#c8961a]/20 flex items-center gap-2.5">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Table2 className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-xs font-bold text-white">شيت جوجل المباشر</div>
+              <div className="text-[10px] text-slate-400">Google Sheets Webhook</div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[#070b12]/80 border border-[#c8961a]/20 flex items-center gap-2.5">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <MapPin className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-xs font-bold text-white">خريطة التجمع GIS</div>
+              <div className="text-[10px] text-slate-400">Google Maps Geolocation</div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[#070b12]/80 border border-[#c8961a]/20 flex items-center gap-2.5">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Layers className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-xs font-bold text-white">سجل المخزون العام</div>
+              <div className="text-[10px] text-slate-400">Sierra Master Inventory</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Master Universal Sync Button */}
+        <div className="pt-2">
+          <Button
+            type="button"
+            onClick={handleUniversalSync}
+            disabled={saving || !fields || !content}
+            className="w-full hyouz-gold-btn text-base font-extrabold py-6 rounded-xl flex items-center justify-center gap-3 cursor-pointer"
+          >
+            {saving ? (
+              <>
+                <RefreshCw className="h-5 w-5 animate-spin" />
+                جاري المزامنة الشاملة مع سوبابيز وجوجل شيت والخريطة...
+              </>
+            ) : (
+              <>
+                <BadgeCheck className="h-5 w-5" />
+                حفظ ونشر ومزامنة شاملة لكل القنوات بنقرة واحدة
+                <ArrowRight className="h-4 w-4 rotate-180" />
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Confirmation Status Banner */}
+        {syncResult && (
+          <div
+            className={`p-4 rounded-xl border animate-fadeIn ${
+              syncResult.ok
+                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                : 'bg-red-950/40 border-red-500/40 text-red-200'
+            }`}
+          >
+            {syncResult.ok ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-emerald-300">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                  تمت المزامنة بنجاح وحفظ الوحدة بكود ({syncResult.code})!
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="text-emerald-400">✓</span> سوبابيز:{' '}
+                    <span className="font-mono text-emerald-300">{syncResult.supabaseTable || 'listings'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="text-emerald-400">✓</span> جوجل شيت: <span className="text-emerald-300">تم الإدراج</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="text-emerald-400">✓</span> خريطة GIS: <span className="text-emerald-300">تم الربط</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="text-emerald-400">✓</span> سجل الأونرز: <span className="text-emerald-300">تم التوثيق</span>
+                  </div>
+                </div>
+                {syncResult.sheetLink && (
+                  <div className="pt-1">
+                    <a
+                      href={syncResult.sheetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[#e9c176] hover:underline flex items-center gap-1"
+                    >
+                      <Table2 className="h-3.5 w-3.5" />
+                      فتح شيت المتابعة الرئيسي على Google Sheets
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-red-300">
+                <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                <span>فشلت المزامنة: {syncResult.error}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Ready-to-Copy Marketing Tabs ── */}
+        {content && (
+          <div className="pt-2 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-[#e9c176]" />
+                المحتوى التسويقي الجاهز للنشر المباشر:
+              </span>
+            </div>
+
+            <Tabs defaultValue="whatsapp" className="w-full">
+              <TabsList className="bg-[#070b12] border border-[#c8961a]/20 p-1 w-full sm:w-auto">
+                <TabsTrigger value="whatsapp" className="text-xs gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+                  صيغة واتساب للعملاء
+                </TabsTrigger>
+                <TabsTrigger value="facebook" className="text-xs gap-1.5">
+                  <Share2 className="h-3.5 w-3.5 text-blue-400" />
+                  بوست فيسبوك
+                </TabsTrigger>
+                <TabsTrigger value="propertyFinder" className="text-xs gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-[#e9c176]" />
+                  Property Finder (English)
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="whatsapp" className="mt-2">
+                <div className="relative p-4 rounded-xl bg-[#070b12] border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">
+                  <div className="absolute top-3 left-3">
+                    <CopyButton text={content.whatsapp} label="نسخ نص الواتساب" />
+                  </div>
+                  {content.whatsapp}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="facebook" className="mt-2">
+                <div className="relative p-4 rounded-xl bg-[#070b12] border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">
+                  <div className="absolute top-3 left-3">
+                    <CopyButton text={content.facebook} label="نسخ بوست الفيسبوك" />
+                  </div>
+                  {content.facebook}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="propertyFinder" className="mt-2">
+                <div className="relative p-4 rounded-xl bg-[#070b12] border border-slate-800 text-xs text-slate-200 leading-relaxed font-mono whitespace-pre-wrap ltr-embed">
+                  <div className="absolute top-3 right-3">
+                    <CopyButton text={content.propertyFinder} label="Copy PF Text" />
+                  </div>
+                  {content.propertyFinder}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Optional Image Uploader */}
+        <div className="pt-2 border-t border-slate-800/80">
+          <ImageUploader images={images} onChange={setImages} />
+        </div>
+      </div>
     </div>
   )
 }
