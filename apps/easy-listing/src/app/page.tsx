@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, startTransition, ViewTransition } from 'react'
 import { BookOpenCheck, ClipboardList, Moon, PlusCircle, Settings2, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -52,6 +52,12 @@ export default function Home() {
   const handleSavedSettings = useCallback((s: AppSettings) => {
     setSettings(s)
     saveSettings(s)
+  }, [])
+
+  const handleTabChange = useCallback((v: string) => {
+    startTransition(() => {
+      setTab(v as 'new' | 'saved')
+    })
   }, [])
 
   return (
@@ -108,7 +114,7 @@ export default function Home() {
           </p>
         </div>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as 'new' | 'saved')}>
+        <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList className="mb-4 w-full sm:w-auto">
             <TabsTrigger value="new" className="gap-1.5">
               <PlusCircle className="h-4 w-4" /> وحدة جديدة
@@ -122,20 +128,28 @@ export default function Home() {
           </TabsList>
 
           <TabsContent value="new" className="mt-0">
-            <NewListing
-              settings={settings}
-              onOpenSettings={() => setSettingsOpen(true)}
-              onOpenSetup={() => setSetupOpen(true)}
-              onSaved={handleSaved}
-            />
+            <ViewTransition enter="slide-up" exit="fade-out" default="none">
+              <div>
+                <NewListing
+                  settings={settings}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                  onOpenSetup={() => setSetupOpen(true)}
+                  onSaved={handleSaved}
+                />
+              </div>
+            </ViewTransition>
           </TabsContent>
 
           <TabsContent value="saved" className="mt-0">
-            <SavedListings
-              refreshKey={refreshKey}
-              onCountChange={setSavedCount}
-              sheetLink={settings.sheetLink}
-            />
+            <ViewTransition enter="slide-up" exit="fade-out" default="none">
+              <div>
+                <SavedListings
+                  refreshKey={refreshKey}
+                  onCountChange={setSavedCount}
+                  sheetLink={settings.sheetLink}
+                />
+              </div>
+            </ViewTransition>
           </TabsContent>
         </Tabs>
       </main>
