@@ -1306,10 +1306,10 @@ export default function HomePage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 6 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #C9A84C 0%, #DFAD3A 100%)', color: '#061122', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 900, boxShadow: '0 0 12px rgba(201, 168, 76, 0.5)' }}>
                   <Sparkles style={{ width: 12, height: 12 }} />
-                  <span>25% OFF VIP PASS</span>
+                  <span>{isAr ? 'خصم 25% بلاك فرايداي حتى 25 نوفمبر 2026' : '25% OFF · BLACK FRIDAY TILL 25 NOV 2026'}</span>
                 </span>
                 <Link href="/request" style={{ fontSize: 12, color: '#00F0FF', fontWeight: 700, textDecoration: 'underline' }}>
-                  {isAr ? 'فتح استمارة التخصيص الكاملة ←' : 'Open Full VIP Portal →'}
+                  {isAr ? 'فتح استمارة خصم 25% الكاملة ←' : 'Open Full 25% OFF Request Portal →'}
                 </Link>
               </div>
               <h3>{t('inqTit')}</h3>
@@ -1463,11 +1463,11 @@ export default function HomePage() {
             </div>
             <div className="ct-act">
               <Link href="/request" className="btn btn-pri" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Sparkles className="i" style={{ color: '#061122' }} /> <span>{isAr ? 'اطلب وحدتك (خصم 25%)' : 'Request Property (25% OFF)'}</span>
+                <Sparkles className="i" style={{ color: '#061122' }} /> <span>{isAr ? 'اطلب وحدتك (خصم 25% حتى 25 نوفمبر)' : 'Request Property (25% OFF till 25 Nov)'}</span>
               </Link>
-              <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" className="btn btn-white" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+              <Link href="/easy-listing" className="btn btn-white" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                 <Plus className="i" /> <span>{t('ctaBtn1')}</span>
-              </a>
+              </Link>
               <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" className="btn btn-out" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Phone className="i" /> <span>+2 01092048333</span>
               </a>

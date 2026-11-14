@@ -1057,3 +1057,337 @@
 .btnCancelModal:hover {
   color: var(--ink);
 }
+
+/* ── Stitch 3-Step Cyber-HUD & Bot Intake Resume Additions ── */
+.tabsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tabPills {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--silk);
+}
+
+.tabBtn:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.tabBtnActive {
+  background: linear-gradient(135deg, #c8961a 0%, #a4760d 100%);
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(200, 150, 26, 0.3);
+}
+
+.tabCount {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(15, 27, 40, 0.12);
+  color: inherit;
+}
+
+.tabBtnActive .tabCount {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.syncStrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.syncPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.syncDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+}
+
+.stepBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(200, 150, 26, 0.14);
+  border: 1px solid rgba(200, 150, 26, 0.35);
+  color: var(--gold);
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.roleSelectorGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .roleSelectorGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.roleCardBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: start;
+  transition: all 0.2s var(--silk);
+}
+
+.roleCardBtn:hover {
+  border-color: var(--gold);
+  background: var(--surface-2);
+}
+
+.roleCardBtnActive {
+  background: rgba(200, 150, 26, 0.1);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-glow);
+}
+
+.roleCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.roleCardSub {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.employeeHighlightBox {
+  background: rgba(200, 150, 26, 0.08);
+  border: 1px solid rgba(200, 150, 26, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Bot Intake Cards Grid */
+.intakeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .intakeGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.intakeCard {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  transition: border-color 0.2s var(--silk), box-shadow 0.2s var(--silk);
+}
+
+.intakeCard:hover {
+  border-color: var(--gold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.intakeTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.intakeCode {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.botBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--emerald-bg);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--emerald);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.intakeSpecs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.intakeSpecBox {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.intakeSpecLabel {
+  font-size: 10.5px;
+  color: var(--muted);
+  display: block;
+}
+
+.intakeSpecVal {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.intakeRaw {
+  font-size: 12.5px;
+  color: var(--ink-secondary);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  line-height: 1.5;
+}
+
+.intakeFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.resumeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #c8961a 0%, #a4760d 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--silk);
+}
+
+.resumeBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200, 150, 26, 0.35);
+}
+
+.bfPromoStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #0a1622 0%, #122336 100%);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  color: #ffffff;
+  flex-wrap: wrap;
+}
+
+.bfPromoTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #c8961a 0%, #e9c176 100%);
+  color: #061122;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.bfPromoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(233, 193, 118, 0.4);
+  color: #e9c176;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s var(--silk);
+}
+
+.bfPromoLink:hover {
+  background: rgba(233, 193, 118, 0.2);
+  color: #ffffff;
+}
+

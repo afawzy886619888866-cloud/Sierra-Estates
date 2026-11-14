@@ -101,10 +101,10 @@ const SALE_PRESETS = [
 export default function InquiryForm({
   initialService = 'Resale',
   initialCompound = '',
-  promoTitle = 'BLACK FRIDAY OFFER · خصم 25% بمناسبة البلاك فرايداي على أي خدمة عقارية',
-  promoSubtitle = 'سجل رغبتك الآن واحصل فوراً على كود خصم VIP ذهبي بنسبة 25% على كافة الخدمات والاستشارات العقارية وعمولات المعاينة والتعاقد.',
+  promoTitle = 'BLACK FRIDAY OFFER TILL 25TH NOV 2026 · خصم 25% على رسوم الخدمة من سييرا إستيتس حتى 25 نوفمبر 2026',
+  promoSubtitle = 'سجل طلبك العقاري الآن واحصل فوراً على كود خصم البلاك فرايداي الذهبي بنسبة 25% على رسوم الخدمة والوساطة العقارية (ساري حتى 25 نوفمبر 2026) مع ترشيحات فورية موثقة.',
   discountPercent = 25,
-  campaignKey = 'BLACK_FRIDAY_25_OFF',
+  campaignKey = 'BLACK_FRIDAY_25_OFF_TILL_25_NOV_2026',
   onSuccess,
   className,
   style,
@@ -166,7 +166,7 @@ export default function InquiryForm({
 
   const generatePassCode = () => {
     const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `SE-25OFF-${rand}`;
+    return `SE-BF25-${rand}`;
   };
 
   const handleCopyPass = () => {
@@ -224,6 +224,16 @@ export default function InquiryForm({
           type: unitType,
           budget: `${budget.toLocaleString()} EGP`,
           notes: structuredNotes,
+          campaign: campaignKey,
+          discountPercent,
+          voucherCode: passCode,
+          dealType: isRent ? 'rent' : 'resale',
+          compounds: selectedCompounds,
+          unitType,
+          bedrooms: Number.parseInt(bedrooms, 10) || 3,
+          finishing,
+          budgetMax: budget,
+          targetDate: targetDate || undefined,
         }),
       });
 
@@ -333,7 +343,7 @@ export default function InquiryForm({
             }}
           >
             <Flame style={{ width: 15, height: 15, color: '#061122' }} />
-            <span>25% OFF VIP PASS</span>
+            <span>25% OFF · BLACK FRIDAY TILL 25 NOV 2026</span>
           </div>
           <span
             style={{
@@ -347,7 +357,7 @@ export default function InquiryForm({
             }}
           >
             <Sparkles style={{ width: 14, height: 14 }} />
-            {isAr ? 'عرض حصري ومحدود لفترة محدودة' : 'Exclusive Limited Time Promotion'}
+            {isAr ? 'عرض البلاك فرايداي من سييرا إستيتس ساري حتى 25 نوفمبر 2026' : 'Sierra Estates Black Friday Offer Valid Till 25th November 2026'}
           </span>
         </div>
 

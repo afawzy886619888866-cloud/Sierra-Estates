@@ -1,21 +1,18 @@
-import type { Metadata } from 'next';
+import '../../site-styles/index.css';
+import '../../site-styles/site-refinements.css';
 import SiteShell from '@/components/site/SiteShell';
-import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import AddListingForm from '@/components/client/AddListingForm';
 
-export const metadata: Metadata = {
-  title: 'Easy Listing Studio · Sierra Estates',
+export const metadata = {
+  title: 'Add Property Listing — Sierra Estates | 3-Step Stitch Multi-Sync & Bot Resume',
   description:
-    'Instant luxury listing creator and AI copy generator — publish your property directly to Sierra Estates inventory.',
+    'Submit your property for sale or rent in New Cairo. Auto-extract WhatsApp listings, define Owner/Broker/Agent/Employee role, resume Bot intakes, and sync to Supabase, Google Sheets, and the GIS Map in 1 click.',
 };
 
-export default function EasyListingPublicPage() {
+export default function EasyListingPage() {
   return (
     <SiteShell active={null}>
-      <div style={{ paddingTop: 88, paddingBottom: 64 }} className="min-h-screen bg-[#070b12] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <EasyListingStudio />
-        </div>
-      </div>
+      <AddListingForm />
     </SiteShell>
   );
 }

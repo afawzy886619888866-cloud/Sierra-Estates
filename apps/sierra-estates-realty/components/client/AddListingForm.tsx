@@ -1,1685 +1,1806 @@
-"use client";
+'use client';
 
-/**
- * AddListingForm — Clean, High-Velocity Unified Intake Terminal.
- *
- * Merges the simplicity of the foundational intake form with the modern Stitch
- * AI terminal workflow:
- * 1. Monolithic Paste Canvas: Paste raw WhatsApp copy/broker notes with 1-click samples
- *    (Resale & Rent) and instant spec extraction via /api/listings/easy-parse.
- * 2. Clean Revision Grid: Review and fine-tune Compound, Price, Area, Bedrooms,
- *    Finishing, and Sierra Code.
- * 3. 3-Contact Routing: Dedicated inputs for Submitter Identity (Bots/Staff/Roles),
- *    Owner Mobile Number, and Broker Mobile Number.
- * 4. Architectural Media: Simple image drag & drop with cover showcase previews.
- * 5. Full Ecosystem Synchronization: Writes to Supabase public.listings, geocode
- *    coordinates, busts GIS map cache, and mirrors to canonical Google Sheet tabs.
- */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import {
   Sparkles,
-  Building,
+  Building2,
   MapPin,
-  CircleDollarSign,
-  Maximize2,
-  BedDouble,
-  Bath,
-  Layers,
-  ShieldCheck,
-  UploadCloud,
-  X,
-  Send,
-  RotateCcw,
-  ExternalLink,
-  MessageCircle,
+  Upload,
   CheckCircle2,
-  User,
-  PhoneCall,
+  ShieldCheck,
+  Wand2,
+  FileText,
+  X,
+  Phone,
+  UserCheck,
   Briefcase,
+  Moon,
+  Sun,
+  Globe,
+  ExternalLink,
+  AlertTriangle,
+  GitMerge,
+  CopyPlus,
+  RefreshCw,
   Bot,
-  Languages,
-} from "lucide-react";
-import s from "./AddListingForm.module.css";
+  Database,
+  Table2,
+  ArrowRight,
+  Copy,
+  Check,
+  Users,
+} from 'lucide-react';
+import { useSite } from '@/lib/site/SiteContext';
+import styles from './AddListingForm.module.css';
 
-const WA_CONCIERGE = "201092048333";
+interface PhotoPreview {
+  id: string;
+  dataUrl: string;
+  name: string;
+}
 
-const CPDS = [
-  "Mountain View iCity",
-  "Mountain View Hyde Park",
-  "Villette Sodic",
-  "Mivida",
-  "Madinaty",
-  "Hyde Park",
-  "Eastown",
-  "Palm Hills New Cairo",
-  "El Shorouk",
-  "Al Rehab",
-  "Katameya Heights",
-  "Katameya Dunes",
-  "Fifth Square",
-  "Lake View Estates",
-  "Taj City",
-  "Bloomfields",
-  "Sarai",
-  "Zed East",
-  "The Waterway",
-  "SODIC East",
-  "Uptown Cairo",
-  "La Vista City",
+interface ConflictDiffPayload {
+  code: string;
+  message: string;
+  existing: Record<string, any>;
+  incoming: Record<string, any>;
+}
+
+interface OwnerBotIntakeItem {
+  id: string;
+  code: string;
+  compound: string;
+  zone: string;
+  propertyType: string;
+  mode: 'sale' | 'rent';
+  area: number;
+  gardenArea: number;
+  beds: number;
+  baths: number;
+  price: number;
+  finishing: string;
+  role: 'OWNER' | 'BROKER' | 'AGENT' | 'EMPLOYEE' | 'BOT';
+  contactName: string;
+  ownerPhone: string;
+  brokerPhone?: string;
+  employeeName?: string;
+  rawText: string;
+  status: 'owner_reply_yes' | 'bot_intake' | 'synced';
+  createdAt: string;
+  mapLink: string;
+}
+
+type SubmitterRole = 'owner' | 'broker' | 'agent' | 'employee';
+
+const COMPOUND_LIST = [
+  'Mivida',
+  'Hyde Park',
+  'Mountain View iCity',
+  'Eastown',
+  'Villette',
+  'Palm Hills New Cairo',
+  'Madinaty',
+  'Al Rehab',
+  'ZED East',
+  'Taj City',
+  'Sarai',
+  'Azad',
+  'Fifth Square',
+  'Lake View Residence',
+  'Katameya Dunes',
+  'Katameya Heights',
+  'Stone Residence',
+  'Galleria Moon Valley',
+  'Creek Town',
+  'The Brooks',
+  'swanlake Residences',
+  'Other / Custom',
 ];
 
 const PROPERTY_TYPES = [
-  "Apartment",
-  "Villa",
-  "Townhouse",
-  "Twin House",
-  "Penthouse",
-  "Duplex",
-  "Studio",
-  "Chalet",
+  { value: 'Apartment', en: 'Apartment', ar: 'شقة (Apartment)' },
+  { value: 'Standalone Villa', en: 'Standalone Villa', ar: 'فيلا مستقلة (Standalone)' },
+  { value: 'Townhouse', en: 'Townhouse', ar: 'تاون هاوس (Townhouse)' },
+  { value: 'Twin House', en: 'Twin House', ar: 'توين هاوس (Twin House)' },
+  { value: 'Duplex', en: 'Duplex / iVilla', ar: 'دوبلكس / آي فيلا (Duplex)' },
+  { value: 'Penthouse', en: 'Penthouse', ar: 'بنتهاوس (Penthouse)' },
+  { value: 'Studio', en: 'Studio', ar: 'ستوديو (Studio)' },
+  { value: 'Chalet', en: 'Chalet', ar: 'شاليه (Chalet)' },
+  { value: 'Administrative Office', en: 'Office / Commercial', ar: 'مكتب إداري / تجاري' },
 ];
-
-const PROPERTY_TYPES_AR: Record<string, string> = {
-  Apartment: "شقة",
-  Villa: "فيلا",
-  Townhouse: "تاون هاوس",
-  "Twin House": "توين هاوس",
-  Penthouse: "بنتهاوس",
-  Duplex: "دوبلكس",
-  Studio: "استوديو",
-  Chalet: "شاليه",
-};
 
 const FINISHING_OPTIONS = [
-  "Fully finished",
-  "Semi-finished",
-  "Core & shell",
-  "Furnished",
+  { value: 'Fully Finished', en: 'Fully Finished (Super Lux)', ar: 'تشطيب كامل (سوبر لوكس)' },
+  { value: 'Semi-Finished', en: 'Semi-Finished', ar: 'نصف تشطيب' },
+  { value: 'Core & Shell', en: 'Core & Shell', ar: 'طوب أحمر / بدون تشطيب' },
+  { value: 'Furnished', en: 'Furnished', ar: 'مفروش بالكامل' },
 ];
 
-const FINISHING_AR: Record<string, string> = {
-  "Fully finished": "تشطيب كامل",
-  "Semi-finished": "نصف تشطيب",
-  "Core & shell": "على الطوب",
-  Furnished: "مفروش",
-};
-
-const SUBMITTER_PRESETS = [
+const SAMPLE_LISTINGS = [
   {
-    id: "agent:closer-bot",
-    type: "bot",
-    name: "Sierra AI Closer Bot (Stage-9 Closer)",
-    labelAr: "🤖 بوت المفاوض والإغلاق الذكي (Closer Bot)",
-    labelEn: "🤖 Sierra AI Closer Bot",
+    labelEn: 'Owner Villa (Mivida)',
+    labelAr: 'فيلا مالك (ميفيدا)',
+    role: 'owner' as SubmitterRole,
+    text: `للبيع فيلا مستقلة في كمبوند ميفيدا إعمار التجمع الخامس
+مساحة المباني 390 متر - مساحة الأرض 520 متر - جاردن 260 متر
+4 غرف نوم ماستر + غرفة ناني + 5 حمام
+تشطيب كامل سوبر لوكس بالتكييفات والمطبخ
+موقع مميز جداً على لاندسكيب مفتوح
+السعر المطلوب: 42,000,000 جنيه كاش
+للتواصل مالك أصلي: 01092048333`,
   },
   {
-    id: "agent:openclaw",
-    type: "bot",
-    name: "OpenClaw Intake Agent (Telegram & Web Harvester)",
-    labelAr: "🦅 وكيل أوبن كلو لجلب العقارات (OpenClaw)",
-    labelEn: "🦅 OpenClaw Intake Agent",
+    labelEn: 'Employee Apt (Hyde Park)',
+    labelAr: 'شقة موظف (هايد بارك)',
+    role: 'employee' as SubmitterRole,
+    text: `شقة للبيع في هايد بارك التجمع الخامس Hyde Park
+مساحة 195 متر - الدور الثاني بحري صريح
+3 غرف نوم + 3 حمام + ريسبشن 3 قطع
+نصف تشطيب استلام فوري خالصة الأقساط
+السعر: 9,800,000 جنيه
+رقم المالك: 01012345678 - موظف سييرا: Ahmed Saeed SE-104`,
   },
   {
-    id: "agent:fawzy",
-    type: "employee",
-    name: "Ahmed Fawzy (Managing Partner)",
-    labelAr: "👔 أحمد فوزي (الشريك الإداري)",
-    labelEn: "👔 Ahmed Fawzy (Managing Partner)",
-  },
-  {
-    id: "employee:advisor",
-    type: "employee",
-    name: "Sierra Advisory Staff / Employee",
-    labelAr: "💼 فريق استشارات سييرا / موظف بالشركة",
-    labelEn: "💼 Sierra Advisory Staff / Employee",
-  },
-  {
-    id: "role:owner",
-    type: "owner",
-    name: "Direct Owner",
-    labelAr: "🏠 المالك الأصلي للوحدة مباشرة (Direct Owner)",
-    labelEn: "🏠 Direct Property Owner",
-  },
-  {
-    id: "role:broker",
-    type: "broker",
-    name: "Authorized Broker",
-    labelAr: "🤝 وسيط عقاري / بروكر معتمد (Broker Desk)",
-    labelEn: "🤝 Authorized Broker Desk",
-  },
-  {
-    id: "role:agent",
-    type: "employee",
-    name: "Real Estate Agent",
-    labelAr: "👤 وكيل عقاري معتمد (Agent Desk)",
-    labelEn: "👤 Authorized Real Estate Agent",
-  },
-  {
-    id: "custom",
-    type: "employee",
-    name: "Other Submitter / Manual Entry",
-    labelAr: "✍️ جهة أخرى / إدخال يدوي مخصص",
-    labelEn: "✍️ Other Submitter / Custom",
+    labelEn: 'Broker Rental (Eastown)',
+    labelAr: 'إيجار بروكر (إيستاون)',
+    role: 'broker' as SubmitterRole,
+    text: `شقة للإيجار المفروش في كمبوند إيستاون سوديك التجمع الخامس
+مساحة 165 متر - 3 غرف نوم - 2 حمام
+فرش مودرن أول سكن قريبة من الكلوب هاوس
+الإيجار الشهري: 95,000 جنيه
+للتواصل بروكر: 01122334455`,
   },
 ];
 
-const T = {
-  en: {
-    badge: "✨ Instant AI Intake · Master Inventory",
-    titleLead: "List your unit with ",
-    titleEm: "Sierra Estates",
-    subtitle:
-      "Paste your raw listing copy, broker notes, or WhatsApp message. Sierra AI instantly extracts the specifications, pins the unit on the GIS map, and syncs to the Master Google Sheet.",
-    sampleResale: "🏢 Sample Resale (Villette Villa)",
-    sampleRent: "🔑 Sample Rent (Mivida Flat)",
-    clear: "Clear",
-    pastePlaceholder:
-      "Paste property description, WhatsApp message, broker notes, compound, area, beds, price... e.g. Standalone villa for sale in Villette Sodic New Cairo, BUA 380m, 5 beds, 6 baths, private pool, price 45M cash, contact owner Dr. Adman 01012345678, broker Eng. Tarek 01098765432",
-    chars: "chars",
-    extractBtn: "✨ Extract & Auto-Fill Specs",
-    extracting: "Analyzing text & extracting specs…",
-    specsTitle: "Property Specifications",
-    specsSub: "Review and adjust specifications before publishing",
-    compound: "Compound",
-    compoundPh: "e.g. Villette Sodic",
-    dealMode: "Listing Mode",
-    sale: "Resale (Sale)",
-    rent: "Rental (Rent)",
-    priceSale: "Asking Price (EGP)",
-    priceRent: "Monthly Rent (EGP)",
-    footprint: "Footprint (m²)",
-    areaPh: "Built-up Area (m²)",
-    gardenPh: "Garden Area (m² optional)",
-    layout: "Layout & Rooms",
-    beds: "Bedrooms",
-    baths: "Bathrooms",
-    propType: "Property Type",
-    finishing: "Finishing Status",
-    sierraCode: "Sierra Algorithmic Code",
-    codePh: "e.g. VIL-S-5B-380M",
-    codeSub: "Minted algorithmic identifier for fast GIS and Sheet tracking",
-    notes: "Additional Notes & Highlights",
-    notesPh: "Floor, view, delivery status, payment schedule, viewing hours…",
-    contactsTitle: "Contacts & Submitter Identity",
-    contactsSub:
-      "3 distinct slots for Submitter identity, Owner mobile, and Broker mobile.",
-    submitterLabel: "Submitted By (Identity & Channel)",
-    ownerPhoneLabel: "Owner Mobile Number",
-    ownerPhonePh: "010XXXXXXXX",
-    ownerNameLabel: "Owner Name",
-    ownerNamePh: "e.g. Dr. Ayman",
-    brokerPhoneLabel: "Broker Mobile Number",
-    brokerPhonePh: "010XXXXXXXX",
-    brokerNameLabel: "Broker Name / Agency",
-    brokerNamePh: "e.g. Eng. Tarek",
-    mediaTitle: "Property Photos",
-    mediaSub: "Upload high-res photos (JPG, PNG, WebP · Max 10 photos)",
-    dropzoneText: "Drag & drop photos here, or click to browse",
-    dropzoneSub: "Supported formats: JPG, PNG, WebP up to 15MB each",
-    coverPhoto: "⭐ Cover Showcase",
-    removePhoto: "Remove photo",
-    submit: "Submit listing",
-    submitting: "Publishing to Map, Supabase & Google Sheet…",
-    reset: "Reset Form",
-    complianceNote:
-      "256-Bit Encrypted · Synced with Supabase Postgres, GIS Map & Master Google Sheet",
-    needCompound: "Please specify the compound or location name.",
-    needArea: "Please enter a valid unit area in m².",
-    needPrice: "Please specify the asking price or rent.",
-    needPhone:
-      "Please provide at least one valid mobile number (Owner or Broker).",
-    doneTitle: "🎉 Listing Published Successfully!",
-    doneDesc:
-      "Your property has been validated, pinned to the interactive GIS map, saved in Supabase inventory, and recorded in the canonical Google Sheet.",
-    refCode: "Reference Code",
-    targetTab: "Target Sheet Tab",
-    viewMap: "📍 View on Interactive Map",
-    viewAdmin: "📊 View in Admin Inventory",
-    chatWa: "💬 Share via WhatsApp Concierge",
-    addAnother: "➕ Add Another Listing",
-  },
-  ar: {
-    badge: "✨ محطة إدراج العقارات الذكية · شيت المخزون الرئيسي",
-    titleLead: "أضف وحدتك مع ",
-    titleEm: "سييرا إستيتس",
-    subtitle:
-      "الصق تفاصيل العقار أو رسائل الواتساب أو مذكرات الوسطاء مباشرة. يستخرج الذكاء الاصطناعي المواصفات تلقائياً، ويعرض الوحدة على الخريطة التفاعلية، ويوجهها مباشرة إلى شيت المخزون الرئيسي.",
-    sampleResale: "🏢 نموذج بيع (فيلا سوديك فيليت)",
-    sampleRent: "🔑 نموذج إيجار (شقة ميفيدا)",
-    clear: "مسح",
-    pastePlaceholder:
-      "الصق تفاصيل العقار هنا، رسائل الواتساب، مواصفات الوحدة، الكمبوند، المساحة، السعر... مثال: فيلا مستقلة للبيع في كمبوند سوديك فيليت بالتجمع الخامس، مساحة المباني 380م، 5 غرف نوم، 6 حمامات، مسبح خاص، مطلوب 45 مليون كاش، للتواصل مع المالك د. أيمن 01012345678، الوسيط م. طارق 01098765432",
-    chars: "حرف",
-    extractBtn: "✨ استخراج وتعبئة المواصفات تلقائياً",
-    extracting: "جارٍ تحليل النص واستخراج المواصفات…",
-    specsTitle: "مواصفات العقار المؤكدة",
-    specsSub: "راجع المواصفات المستخرجة أو عدّلها خلال ثوانٍ معدودة",
-    compound: "الكمبوند",
-    compoundPh: "مثال: سوديك فيليت Villette",
-    dealMode: "نوع الإعلان",
-    sale: "بيع (Resale)",
-    rent: "إيجار (Rent)",
-    priceSale: "السعر المطلوب (ج.م)",
-    priceRent: "الإيجار الشهري (ج.م)",
-    footprint: "المساحة (م²)",
-    areaPh: "مساحة المباني م²",
-    gardenPh: "مساحة الحديقة م² (اختياري)",
-    layout: "التقسيم وحالة التشطيب",
-    beds: "غرف النوم",
-    baths: "الحمامات",
-    propType: "نوع العقار",
-    finishing: "حالة التشطيب",
-    sierraCode: "كود سييرا التعريفي",
-    codePh: "مثال: VIL-S-5B-380M",
-    codeSub: "رمز تعريفي خوارزمي لتتبع الوحدة على الخريطة والشيت",
-    notes: "ملاحظات وتفاصيل إضافية",
-    notesPh: "الدور، الفيو، موعد التسليم، خطة السداد، مواعيد المعاينة…",
-    contactsTitle: "بيانات الاتصال ومقدم العقار (3 جهات)",
-    contactsSub:
-      "تحديد دقيق لهوية مقدم الطلب (بوت أو موظف)، ورقم المالك، ورقم الوسيط.",
-    submitterLabel: "مقدم الطلب (الهوية والجهة)",
-    ownerPhoneLabel: "رقم موبايل / واتساب المالك",
-    ownerPhonePh: "010XXXXXXXX",
-    ownerNameLabel: "اسم المالك",
-    ownerNamePh: "مثال: د. أيمن",
-    brokerPhoneLabel: "رقم موبايل / واتساب الوسيط (البروكر)",
-    brokerPhonePh: "010XXXXXXXX",
-    brokerNameLabel: "اسم الوسيط / الشركة",
-    brokerNamePh: "مثال: م. طارق",
-    mediaTitle: "صور ومخططات العقار",
-    mediaSub: "ارفع صور عالية الجودة (JPG, PNG, WebP · حتى 10 صور)",
-    dropzoneText: "اسحب وأفلت صور العقار هنا، أو اضغط للاختيار",
-    dropzoneSub: "يدعم صيغ JPG, PNG, WebP بحجم يصل إلى 15 ميجابايت لكل صورة",
-    coverPhoto: "⭐ الواجهة الرئيسية",
-    removePhoto: "حذف الصورة",
-    submit: "Submit listing (أرسل العقار)",
-    submitting: "جارٍ الحفظ والنشر على الخريطة وقاعدة البيانات والشيت…",
-    reset: "إعادة ضبط النموذج",
-    complianceNote:
-      "بيانات مشفرة 256-Bit ومربوطة بقاعدة بيانات Supabase والخريطة وشيت الإكسل",
-    needCompound: "من فضلك حدد اسم الكمبوند أو المنطقة.",
-    needArea: "من فضلك أدخل مساحة الوحدة بالمتر المربع.",
-    needPrice: "من فضلك حدد السعر المطلوب.",
-    needPhone: "يرجى إدخال رقم هاتف صحيح واحد على الأقل (المالك أو الوسيط).",
-    doneTitle: "🎉 تم نشر العقار بنجاح!",
-    doneDesc:
-      "تم حفظ العقار بنجاح في قاعدة البيانات، وربطه بالخريطة التفاعلية، وتوجيهه إلى شيت المخزون الرئيسي.",
-    refCode: "كود الوحدة",
-    targetTab: "الشيت المستهدف",
-    viewMap: "📍 عرض على الخريطة التفاعلية",
-    viewAdmin: "📊 عرض في لوحة إدارة العقارات",
-    chatWa: "💬 مشاركة عبر واتساب سييرا",
-    addAnother: "➕ إضافة عقار آخر",
-  },
-} as const;
+export interface AddListingFormProps {
+  defaultLang?: 'en' | 'ar';
+}
 
-type Lang = "en" | "ar";
-type Purpose = "sale" | "rent";
+export default function AddListingForm({ defaultLang }: AddListingFormProps = {}) {
+  const { lang, toggleLang, theme, toggleTheme } = useSite();
+  const isAr = (defaultLang ?? lang) === 'ar';
 
-const digits = (v: string) => String(v || "").replace(/[^\d]/g, "");
+  // Active portal tab: 'studio' (3-Step Stitch Intake) | 'intakes' (Owners & Bot Intake Resume)
+  const [activeTab, setActiveTab] = useState<'studio' | 'intakes'>('studio');
 
-export default function AddListingForm({
-  defaultLang = "ar",
-}: { defaultLang?: Lang } = {}) {
-  const [lang, setLang] = useState<Lang>(defaultLang);
-
-  // Core intake inputs
-  const [rawText, setRawText] = useState("");
-  const [parsing, setParsing] = useState(false);
+  // Form State
+  const [rawText, setRawText] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
   const [parseFeedback, setParseFeedback] = useState<string | null>(null);
 
-  // Specifications
-  const [compound, setCompound] = useState("");
-  const [purpose, setPurpose] = useState<Purpose>("sale");
-  const [price, setPrice] = useState("");
-  const [area, setArea] = useState("");
-  const [gardenArea, setGardenArea] = useState("");
-  const [propertyType, setPropertyType] = useState("Apartment");
-  const [beds, setBeds] = useState(3);
-  const [baths, setBaths] = useState(2);
-  const [finishing, setFinishing] = useState("Fully finished");
-  const [sierraCode, setSierraCode] = useState("");
-  const [notes, setNotes] = useState("");
+  const [mode, setMode] = useState<'sale' | 'rent'>('sale');
+  const [compound, setCompound] = useState('Mivida');
+  const [customCompound, setCustomCompound] = useState('');
+  const [propertyType, setPropertyType] = useState('Apartment');
+  const [finishing, setFinishing] = useState('Fully Finished');
 
-  // 3 Contact Entities
-  const [submitterPreset, setSubmitterPreset] = useState("agent:closer-bot");
-  const [customAgentName, setCustomAgentName] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerPhone, setOwnerPhone] = useState("");
-  const [brokerName, setBrokerName] = useState("");
-  const [brokerPhone, setBrokerPhone] = useState("");
+  const [area, setArea] = useState<string>('185');
+  const [gardenArea, setGardenArea] = useState<string>('0');
+  const [beds, setBeds] = useState<number>(3);
+  const [baths, setBaths] = useState<number>(3);
+  const [price, setPrice] = useState<string>('12500000');
+  const [code, setCode] = useState<string>('');
 
-  // Media
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
+  // Role & Contact Entities (Owner / Broker / Agent / Employee)
+  const [submitterRole, setSubmitterRole] = useState<SubmitterRole>('owner');
+  const [primaryMobile, setPrimaryMobile] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [employeeName, setEmployeeName] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
+  const [brokerPhone, setBrokerPhone] = useState('');
+  const [comment, setComment] = useState('');
 
-  // Submission States
-  const [sending, setSending] = useState(false);
-  const [err, setErr] = useState("");
-  const [badField, setBadField] = useState<string | null>(null);
-  const [done, setDone] = useState<{
-    ref: string;
-    waHref: string;
-    targetTab?: string;
-  } | null>(null);
-
-  // Dirty write prevention & draft management (VS Code pattern)
-  const [draftRestored, setDraftRestored] = useState<string | null>(null);
-  const [conflictData, setConflictData] = useState<{
-    code: string;
-    existing: any;
-    incoming: any;
-  } | null>(null);
-
-  // Refs for focusing
-  const compoundRef = useRef<HTMLInputElement>(null);
-  const areaRef = useRef<HTMLInputElement>(null);
-  const priceRef = useRef<HTMLInputElement>(null);
-  const ownerPhoneRef = useRef<HTMLInputElement>(null);
-  const brokerPhoneRef = useRef<HTMLInputElement>(null);
+  // Photos
+  const [photos, setPhotos] = useState<PhotoPreview[]>([]);
+  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const storedLang = window.localStorage.getItem("hzp-lang");
-    if (storedLang === "ar" || storedLang === "en") setLang(storedLang);
+  // Submission & Persistence State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+  const [conflictData, setConflictData] = useState<ConflictDiffPayload | null>(null);
+  const [copiedAd, setCopiedAd] = useState(false);
 
-    // Auto-restore draft if present and inputs are empty
+  const [submittedResult, setSubmittedResult] = useState<{
+    code: string;
+    id: string;
+    sheetUrl?: string;
+    targetTab?: string;
+    isMerged?: boolean;
+    role?: string;
+    employeeName?: string;
+    adCopy?: string;
+  } | null>(null);
+
+  // Owners & Bot Intakes Resume State
+  const [intakeItems, setIntakeItems] = useState<OwnerBotIntakeItem[]>([]);
+  const [intakesLoading, setIntakesLoading] = useState(false);
+  const [intakeFilter, setIntakeFilter] = useState<'ALL' | 'BOT' | 'OWNER' | 'EMPLOYEE' | 'BROKER'>('ALL');
+
+  const DRAFT_STORAGE_KEY = 'sierra_easy_listing_draft_v2';
+
+  // Fetch Owners & Bot Intakes
+  const fetchIntakes = useCallback(async () => {
+    setIntakesLoading(true);
     try {
-      const saved = window.localStorage.getItem("sierra_add_listing_draft_v2");
-      if (saved) {
-        const p = JSON.parse(saved);
-        if (p && (p.rawText || p.compound || p.price)) {
-          if (p.rawText) setRawText(p.rawText);
-          if (p.compound) setCompound(p.compound);
-          if (p.purpose) setPurpose(p.purpose);
-          if (p.price) setPrice(p.price);
-          if (p.area) setArea(p.area);
-          if (p.gardenArea) setGardenArea(p.gardenArea);
-          if (p.propertyType) setPropertyType(p.propertyType);
-          if (p.beds !== undefined) setBeds(p.beds);
-          if (p.baths !== undefined) setBaths(p.baths);
-          if (p.finishing) setFinishing(p.finishing);
-          if (p.sierraCode) setSierraCode(p.sierraCode);
-          if (p.notes) setNotes(p.notes);
-          if (p.submitterPreset) setSubmitterPreset(p.submitterPreset);
-          if (p.customAgentName) setCustomAgentName(p.customAgentName);
-          if (p.ownerName) setOwnerName(p.ownerName);
-          if (p.ownerPhone) setOwnerPhone(p.ownerPhone);
-          if (p.brokerName) setBrokerName(p.brokerName);
-          if (p.brokerPhone) setBrokerPhone(p.brokerPhone);
-          if (Array.isArray(p.photos)) setPhotos(p.photos);
-          setDraftRestored(new Date(p.savedAt || Date.now()).toLocaleTimeString());
-        }
-      }
-    } catch (_) {}
-  }, []);
-
-  // Autosave draft debounced (VS Code hot-exit pattern)
-  useEffect(() => {
-    if (!rawText && !compound && !price && !area && !ownerPhone) return;
-    const timer = setTimeout(() => {
-      try {
-        window.localStorage.setItem(
-          "sierra_add_listing_draft_v2",
-          JSON.stringify({
-            rawText,
-            compound,
-            purpose,
-            price,
-            area,
-            gardenArea,
-            propertyType,
-            beds,
-            baths,
-            finishing,
-            sierraCode,
-            notes,
-            submitterPreset,
-            customAgentName,
-            ownerName,
-            ownerPhone,
-            brokerName,
-            brokerPhone,
-            photos,
-            savedAt: Date.now(),
-          })
-        );
-      } catch (_) {}
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [
-    rawText,
-    compound,
-    purpose,
-    price,
-    area,
-    gardenArea,
-    propertyType,
-    beds,
-    baths,
-    finishing,
-    sierraCode,
-    notes,
-    submitterPreset,
-    customAgentName,
-    ownerName,
-    ownerPhone,
-    brokerName,
-    brokerPhone,
-    photos,
-  ]);
-
-  function discardDraft() {
-    try {
-      window.localStorage.removeItem("sierra_add_listing_draft_v2");
-    } catch (_) {}
-    setDraftRestored(null);
-    handleClear();
-  }
-
-  const t = T[lang];
-  const isAr = lang === "ar";
-
-  function toggleLang() {
-    const next: Lang = isAr ? "en" : "ar";
-    setLang(next);
-    window.localStorage.setItem("hzp-lang", next);
-  }
-
-  // Auto-generate Sierra Code helper
-  useEffect(() => {
-    if (!compound && !area) return;
-    const cpdAcronym =
-      (compound || "UNIT")
-        .split(/\s+/)
-        .map((w) => w[0]?.toUpperCase() || "")
-        .join("")
-        .slice(0, 3) || "SE";
-    const modeChar = purpose === "rent" ? "R" : "S";
-    const bedsStr = beds > 0 ? `${beds}B` : "ST";
-    const areaStr = area ? `${digits(area)}M` : "0M";
-    const auto = `${cpdAcronym}-${modeChar}-${bedsStr}-${areaStr}`;
-    setSierraCode((prev) =>
-      prev && prev.length > 3 && !prev.startsWith(cpdAcronym) ? prev : auto,
-    );
-  }, [compound, purpose, beds, area]);
-
-  function loadSample(type: "resale" | "rent") {
-    setErr("");
-    setBadField(null);
-    if (type === "resale") {
-      const sampleText = isAr
-        ? "فيلا مستقلة فاخرة للبيع في كمبوند سوديك فيليت Villette التجمع الخامس. مساحة المباني 380م²، مساحة الأرض 450م²، 5 غرف نوم ماستر، 6 حمامات، مسبح خاص وحديقة واسعة. تشطيب ألترا سوبر لوكس بالتكييفات. السعر المطلوب 45 مليون جنيه كاش. كود الوحدة VIL-S-5B-380M. للتواصل مع المالك د. أيمن 01012345678، الوسيط م. طارق 01098765432."
-        : "Luxury standalone villa for sale in Villette Sodic, New Cairo Golden Square. BUA 380 sqm, Land 450 sqm, 5 master bedrooms, 6 bathrooms, private pool, landscaped garden. Ultra super lux finishing. Asking price: 45,000,000 EGP cash. Unit code: VIL-S-5B-380M. Contact owner Dr. Ayman 01012345678, broker Eng. Tarek 01098765432.";
-      setRawText(sampleText);
-      setCompound("Villette Sodic");
-      setPurpose("sale");
-      setPropertyType("Villa");
-      setBeds(5);
-      setBaths(6);
-      setArea("380");
-      setGardenArea("450");
-      setPrice("45,000,000");
-      setFinishing("Fully finished");
-      setSierraCode("VIL-S-5B-380M");
-      setOwnerName(isAr ? "د. أيمن" : "Dr. Ayman");
-      setOwnerPhone("01012345678");
-      setBrokerName(isAr ? "م. طارق" : "Eng. Tarek");
-      setBrokerPhone("01098765432");
-      setNotes(
-        isAr
-          ? "فيلا مستقلة فاخرة بموقع مميز وحمام سباحة خاص"
-          : "Prime location villa with private pool",
-      );
-      setParseFeedback(
-        isAr
-          ? "✨ تم تحميل نموذج البيع بنجاح"
-          : "✨ Loaded Resale Sample successfully",
-      );
-    } else {
-      const sampleText = isAr
-        ? "شقة راقية للإيجار في كمبوند ميفيدا إعمار Mivida التجمع الخامس. مساحة 200م²، 3 غرف نوم، 2 حمام، ريسبشن واسع وتراس فيو بحيرات. تشطيب كامل ألترا لوكس بالمطبخ والتكييفات. الإيجار الشهري المطلوب 65,000 جنيه. كود MIV-R-3B-200M. للتواصل مع المالك 01011122233."
-        : "Exclusive apartment for rent in Mivida Emaar, New Cairo. 200 sqm, 3 bedrooms, 2 bathrooms, open terrace overlooking green lake views. Fully finished with ACs and kitchen. Monthly rent: 65,000 EGP. Code: MIV-R-3B-200M. Contact owner 01011122233.";
-      setRawText(sampleText);
-      setCompound("Mivida");
-      setPurpose("rent");
-      setPropertyType("Apartment");
-      setBeds(3);
-      setBaths(2);
-      setArea("200");
-      setGardenArea("");
-      setPrice("65,000");
-      setFinishing("Fully finished");
-      setSierraCode("MIV-R-3B-200M");
-      setOwnerName(isAr ? "المالك مباشرة" : "Direct Owner");
-      setOwnerPhone("01011122233");
-      setBrokerName("");
-      setBrokerPhone("");
-      setNotes(
-        isAr
-          ? "تشطيب كامل مع أجهزة التكييف والمطبخ"
-          : "Fully finished with fitted kitchen and ACs",
-      );
-      setParseFeedback(
-        isAr
-          ? "✨ تم تحميل نموذج الإيجار بنجاح"
-          : "✨ Loaded Rent Sample successfully",
-      );
-    }
-  }
-
-  function handleClear() {
-    setRawText("");
-    setCompound("");
-    setPurpose("sale");
-    setPrice("");
-    setArea("");
-    setGardenArea("");
-    setPropertyType("Apartment");
-    setBeds(3);
-    setBaths(2);
-    setFinishing("Fully finished");
-    setSierraCode("");
-    setNotes("");
-    setSubmitterPreset("agent:closer-bot");
-    setCustomAgentName("");
-    setOwnerName("");
-    setOwnerPhone("");
-    setBrokerName("");
-    setBrokerPhone("");
-    setPhotos([]);
-    setParseFeedback(null);
-    setErr("");
-    setBadField(null);
-    setConflictData(null);
-    setDraftRestored(null);
-    try {
-      window.localStorage.removeItem("sierra_add_listing_draft_v2");
-    } catch (_) {}
-  }
-
-  async function handleAutoParse() {
-    const trimmed = rawText.trim();
-    if (!trimmed || trimmed.length < 5) {
-      setErr(
-        isAr
-          ? "برجاء كتابة أو لصق نص الإعلان أولاً"
-          : "Please paste or write listing text first",
-      );
-      return;
-    }
-    setErr("");
-    setBadField(null);
-    setParsing(true);
-    setParseFeedback(null);
-
-    try {
-      const res = await fetch("/api/listings/easy-parse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText: trimmed, source: "manual" }),
-      });
-      const json = await res.json().catch(() => null);
-
-      if (json?.success && json?.data) {
-        const d = json.data;
-        if (d.compound) setCompound(d.compound);
-        if (d.mode) setPurpose(d.mode === "rent" ? "rent" : "sale");
-        if (d.propertyType) {
-          const match =
-            PROPERTY_TYPES.find(
-              (item) => item.toLowerCase() === d.propertyType.toLowerCase(),
-            ) || d.propertyType;
-          setPropertyType(match);
-        }
-        if (d.beds !== null && d.beds !== undefined) setBeds(Number(d.beds));
-        if (d.baths !== null && d.baths !== undefined)
-          setBaths(Number(d.baths));
-        if (d.area !== null && d.area !== undefined) setArea(String(d.area));
-        if (d.gardenArea !== null && d.gardenArea !== undefined)
-          setGardenArea(String(d.gardenArea));
-        if (d.price !== null && d.price !== undefined) {
-          setPrice(Number(d.price).toLocaleString("en-US"));
-        }
-        if (d.finishing) {
-          const finLower = d.finishing.toLowerCase();
-          if (
-            finLower.includes("core") ||
-            finLower.includes("shell") ||
-            finLower.includes("طوب")
-          )
-            setFinishing("Core & shell");
-          else if (
-            finLower.includes("semi") ||
-            finLower.includes("نصف") ||
-            finLower.includes("نص")
-          )
-            setFinishing("Semi-finished");
-          else if (finLower.includes("furnish") || finLower.includes("مفروش"))
-            setFinishing("Furnished");
-          else setFinishing("Fully finished");
-        }
-        if (d.sierraCode) setSierraCode(d.sierraCode);
-        if (d.ownerName && !ownerName) setOwnerName(d.ownerName);
-        if (d.mobile) {
-          if (!ownerPhone) setOwnerPhone(d.mobile);
-          else if (!brokerPhone && d.mobile !== ownerPhone)
-            setBrokerPhone(d.mobile);
-        }
-        if (d.aiSummary) setNotes(d.aiSummary);
-
-        const summary = [];
-        if (d.compound) summary.push(d.compound);
-        if (d.price)
-          summary.push(`${Number(d.price).toLocaleString("en-US")} EGP`);
-        if (d.area) summary.push(`${d.area} m²`);
-        if (d.sierraCode) summary.push(d.sierraCode);
-
-        setParseFeedback(
-          isAr
-            ? `✨ تم استخراج البيانات بنجاح: ${summary.join(" · ")}`
-            : `✨ Extracted: ${summary.join(" · ")}`,
-        );
-      } else {
-        setErr(
-          isAr
-            ? "لم نتمكن من استخراج تفاصيل كافية من النص"
-            : "Could not extract sufficient details from text",
-        );
+      const res = await fetch('/api/listings/owner-intakes');
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.items)) {
+        setIntakeItems(data.items);
       }
     } catch {
-      setErr(
-        isAr
-          ? "فشل تحليل النص، تحقق من الاتصال"
-          : "Failed to parse text, check connection",
-      );
+      // Non-fatal
     } finally {
-      setParsing(false);
+      setIntakesLoading(false);
     }
-  }
+  }, []);
 
-  // File Upload Handlers
-  const processFiles = (files: FileList | File[]) => {
-    const list = Array.from(files).slice(0, 10);
-    list.forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const res = e.target?.result as string;
-        if (res) {
-          setPhotos((prev) =>
-            prev.length < 10 && !prev.includes(res) ? [...prev, res] : prev,
-          );
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
+  useEffect(() => {
+    fetchIntakes();
+  }, [fetchIntakes]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processFiles(e.target.files);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files) processFiles(e.dataTransfer.files);
-  };
-
-  const removePhoto = (idx: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  // Submit Listing with Conflict & Dirty-Write handling
-  async function handleSubmit(conflictAction?: "merge" | "new_code" | "overwrite") {
-    const cpdVal = compound.trim();
-    const areaClean = digits(area);
-    const priceClean = digits(price);
-    const ownerPhoneClean = digits(ownerPhone);
-    const brokerPhoneClean = digits(brokerPhone);
-
-    if (cpdVal.length < 2) {
-      setErr(t.needCompound);
-      setBadField("compound");
-      compoundRef.current?.focus();
-      return;
+  // Auto-generate code if empty or auto-generated
+  useEffect(() => {
+    if (!code || code.startsWith('SE-')) {
+      const prefix = (compound === 'Other / Custom' ? customCompound : compound)
+        .replace(/[^A-Za-z]/g, '')
+        .slice(0, 2)
+        .toUpperCase() || 'SE';
+      const typeChar = propertyType.slice(0, 1).toUpperCase();
+      const mChar = mode === 'rent' ? 'R' : 'S';
+      const randomDigits = Math.floor(100 + Math.random() * 900);
+      setCode(`SE-${prefix}-${mChar}${typeChar}${beds}-${randomDigits}`);
     }
-    if (!areaClean || Number(areaClean) < 15) {
-      setErr(t.needArea);
-      setBadField("area");
-      areaRef.current?.focus();
-      return;
-    }
-    if (!priceClean || Number(priceClean) <= 0) {
-      setErr(t.needPrice);
-      setBadField("price");
-      priceRef.current?.focus();
-      return;
-    }
-    if (ownerPhoneClean.length < 8 && brokerPhoneClean.length < 8) {
-      setErr(t.needPhone);
-      setBadField("ownerPhone");
-      ownerPhoneRef.current?.focus();
-      return;
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compound, customCompound, propertyType, mode, beds]);
 
-    setErr("");
-    setBadField(null);
-    setSending(true);
-
+  // Restore saved draft on mount
+  useEffect(() => {
     try {
-      const selectedPreset = SUBMITTER_PRESETS.find(
-        (p) => p.id === submitterPreset,
-      );
-      const submitterType = (selectedPreset?.type || "owner") as
-        | "owner"
-        | "broker"
-        | "employee"
-        | "bot";
-      const effectiveAgentName =
-        (submitterPreset === "custom" || submitterPreset === "role:agent") && customAgentName.trim()
-          ? customAgentName.trim()
-          : selectedPreset?.name || "Sierra Advisory Staff";
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.rawText) setRawText(parsed.rawText);
+        if (parsed.mode) setMode(parsed.mode);
+        if (parsed.compound) setCompound(parsed.compound);
+        if (parsed.customCompound) setCustomCompound(parsed.customCompound);
+        if (parsed.propertyType) setPropertyType(parsed.propertyType);
+        if (parsed.finishing) setFinishing(parsed.finishing);
+        if (parsed.area) setArea(parsed.area);
+        if (parsed.gardenArea) setGardenArea(parsed.gardenArea);
+        if (typeof parsed.beds === 'number') setBeds(parsed.beds);
+        if (typeof parsed.baths === 'number') setBaths(parsed.baths);
+        if (parsed.price) setPrice(parsed.price);
+        if (parsed.code) setCode(parsed.code);
+        if (parsed.submitterRole) setSubmitterRole(parsed.submitterRole);
+        if (parsed.primaryMobile) setPrimaryMobile(parsed.primaryMobile);
+        if (parsed.contactName) setContactName(parsed.contactName);
+        if (parsed.employeeName) setEmployeeName(parsed.employeeName);
+        if (parsed.ownerPhone) setOwnerPhone(parsed.ownerPhone);
+        if (parsed.brokerPhone) setBrokerPhone(parsed.brokerPhone);
+        if (parsed.comment) setComment(parsed.comment);
+        if (
+          parsed.rawText ||
+          parsed.primaryMobile ||
+          parsed.ownerPhone ||
+          parsed.brokerPhone ||
+          parsed.employeeName
+        ) {
+          setHasRestoredDraft(true);
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
 
-      const res = await fetch("/api/listings/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: sierraCode.trim() || undefined,
-          compound: cpdVal,
-          propertyType,
-          mode: purpose,
-          beds,
-          baths,
-          area: Number(areaClean),
-          gardenArea: gardenArea ? Number(digits(gardenArea)) : 0,
-          price: Number(priceClean),
-          finishing,
-          ownerName:
-            ownerName.trim() ||
-            (brokerPhoneClean ? "Direct Owner" : "صاحب الإعلان"),
-          ownerType: submitterType === "broker" ? "Broker" : "Owner",
-          ownerPhone: ownerPhoneClean || undefined,
-          brokerPhone: brokerPhoneClean || undefined,
-          brokerName: brokerName.trim() || undefined,
-          agentName: effectiveAgentName,
-          submitterType,
-          mobile: ownerPhoneClean || brokerPhoneClean || "",
-          rawText: rawText.trim(),
-          comment: notes.trim(),
-          photos,
-          images: photos,
-          conflictAction,
-        }),
-      });
+  // Save draft to localStorage automatically
+  useEffect(() => {
+    try {
+      const payload = {
+        rawText,
+        mode,
+        compound,
+        customCompound,
+        propertyType,
+        finishing,
+        area,
+        gardenArea,
+        beds,
+        baths,
+        price,
+        code,
+        submitterRole,
+        primaryMobile,
+        contactName,
+        employeeName,
+        ownerPhone,
+        brokerPhone,
+        comment,
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [
+    rawText,
+    mode,
+    compound,
+    customCompound,
+    propertyType,
+    finishing,
+    area,
+    gardenArea,
+    beds,
+    baths,
+    price,
+    code,
+    submitterRole,
+    primaryMobile,
+    contactName,
+    employeeName,
+    ownerPhone,
+    brokerPhone,
+    comment,
+  ]);
 
-      const result = await res.json().catch(() => null);
-
-      // Handle 409 Conflict: VS Code Dirty-Write Prevention
-      if (res.status === 409 && result?.conflict) {
-        setConflictData({
-          code: result.code,
-          existing: result.existing,
-          incoming: result.incoming,
-        });
-        setSending(false);
+  // AI Smart Extract Handler
+  const handleSmartParse = useCallback(
+    async (textToParse?: string, roleOverride?: SubmitterRole) => {
+      const source = (textToParse ?? rawText).trim();
+      if (source.length < 5) {
+        setErrorMsg(
+          isAr
+            ? 'يرجى لصق نص الإعلان أولاً ليتم استخراج البيانات تلقائياً.'
+            : 'Please paste the listing text first to auto-extract fields.',
+        );
         return;
       }
 
-      if (!res.ok || !result?.success) {
-        throw new Error(result?.error || "Failed to submit listing");
+      setIsParsing(true);
+      setErrorMsg(null);
+      setParseFeedback(null);
+      if (roleOverride) setSubmitterRole(roleOverride);
+
+      try {
+        const res = await fetch('/api/listings/easy-parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rawText: source }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.parsed) {
+          throw new Error(data.error || 'Failed to parse text');
+        }
+
+        const p = data.parsed;
+        if (p.mode) setMode(p.mode);
+        if (p.compound) {
+          const matched = COMPOUND_LIST.find(
+            (c) => c.toLowerCase() === String(p.compound).toLowerCase(),
+          );
+          if (matched) {
+            setCompound(matched);
+          } else {
+            setCompound('Other / Custom');
+            setCustomCompound(p.compound);
+          }
+        }
+        if (p.propertyType) setPropertyType(p.propertyType);
+        if (p.finishing) setFinishing(p.finishing);
+        if (p.area > 0) setArea(String(p.area));
+        if (p.gardenArea >= 0) setGardenArea(String(p.gardenArea));
+        if (typeof p.beds === 'number') setBeds(p.beds);
+        if (typeof p.baths === 'number') setBaths(p.baths);
+        if (p.price > 0) setPrice(String(p.price));
+        if (p.suggestedCode) setCode(p.suggestedCode);
+
+        // Extract phones & role hints
+        const extractedPhone = p.ownerPhone || p.brokerPhone || '';
+        if (extractedPhone) {
+          setPrimaryMobile(extractedPhone);
+        }
+        if (p.ownerPhone) setOwnerPhone(p.ownerPhone);
+        if (p.brokerPhone) setBrokerPhone(p.brokerPhone);
+        if (p.agentName) {
+          setEmployeeName(p.agentName);
+          if (!roleOverride) setSubmitterRole('employee');
+        } else if (!roleOverride) {
+          if (source.includes('بروكر') || source.includes('وسيط') || source.toLowerCase().includes('broker')) {
+            setSubmitterRole('broker');
+          } else if (source.includes('موظف') || source.toLowerCase().includes('employee')) {
+            setSubmitterRole('employee');
+          } else {
+            setSubmitterRole('owner');
+          }
+        }
+        if (p.notes) setComment(p.notes);
+
+        setParseFeedback(
+          isAr
+            ? `تم استخراج البيانات بنجاح بنسبة ثقة ${p.confidence || 92}% — راجع الحقول بالأسفل ثم اضغط مزامنة ونشر.`
+            : `Smart Extraction complete (${p.confidence || 92}% confidence) — review fields below & publish.`,
+        );
+      } catch {
+        setErrorMsg(
+          isAr
+            ? 'تعذر التحليل التلقائي، يمكنك تعبئة الحقول يدوياً.'
+            : 'Auto-parse encountered an issue; you can fill the fields manually.',
+        );
+      } finally {
+        setIsParsing(false);
+      }
+    },
+    [rawText, isAr],
+  );
+
+  // Resume an Owner / Bot Intake item into the 3-step studio
+  const handleResumeIntake = (item: OwnerBotIntakeItem) => {
+    setRawText(item.rawText);
+    setMode(item.mode);
+    const matched = COMPOUND_LIST.find(
+      (c) => c.toLowerCase() === item.compound.toLowerCase(),
+    );
+    if (matched) {
+      setCompound(matched);
+    } else {
+      setCompound('Other / Custom');
+      setCustomCompound(item.compound);
+    }
+    setPropertyType(item.propertyType);
+    setFinishing(item.finishing || 'Fully Finished');
+    setArea(String(item.area || 180));
+    setGardenArea(String(item.gardenArea || 0));
+    setBeds(item.beds || 3);
+    setBaths(item.baths || 2);
+    setPrice(String(item.price || 0));
+    setCode(item.code);
+    setPrimaryMobile(item.ownerPhone || item.brokerPhone || '');
+    setOwnerPhone(item.ownerPhone || '');
+    setBrokerPhone(item.brokerPhone || '');
+    setContactName(item.contactName || '');
+    if (item.employeeName) setEmployeeName(item.employeeName);
+    setSubmitterRole(
+      item.role === 'EMPLOYEE'
+        ? 'employee'
+        : item.role === 'BROKER'
+          ? 'broker'
+          : item.role === 'AGENT'
+            ? 'agent'
+            : 'owner',
+    );
+    setComment(item.rawText);
+    setParseFeedback(
+      isAr
+        ? `🤖 تم تحميل بيانات وحدة الأونر/البوت (${item.code}) — جاهزة للمراجعة والنشر الفوري!`
+        : `🤖 Loaded Owner/Bot intake (${item.code}) — ready for immediate verification & multi-sync!`,
+    );
+    setActiveTab('studio');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Photo Upload Handlers
+  const processFiles = useCallback((files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    Array.from(files)
+      .slice(0, 10)
+      .forEach((file) => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = String(ev.target?.result || '');
+          if (!dataUrl) return;
+          setPhotos((prev) => {
+            if (prev.length >= 10) return prev;
+            return [
+              ...prev,
+              {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                dataUrl,
+                name: file.name,
+              },
+            ];
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+  }, []);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    processFiles(e.dataTransfer.files);
+  };
+
+  const removePhoto = (id: string) => {
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const resetForm = () => {
+    setRawText('');
+    setParseFeedback(null);
+    setErrorMsg(null);
+    setArea('185');
+    setGardenArea('0');
+    setPrice('12500000');
+    setPrimaryMobile('');
+    setContactName('');
+    setOwnerPhone('');
+    setBrokerPhone('');
+    setEmployeeName('');
+    setComment('');
+    setPhotos([]);
+    setHasRestoredDraft(false);
+    setConflictData(null);
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+  };
+
+  // Submit Handler (supports conflict resolution action)
+  const executeSubmission = async (
+    conflictAction?: 'check_only' | 'merge' | 'new_code' | 'overwrite',
+  ) => {
+    setErrorMsg(null);
+
+    const finalCompound =
+      compound === 'Other / Custom' ? customCompound.trim() : compound.trim();
+    if (!finalCompound) {
+      setErrorMsg(isAr ? 'يرجى تحديد اسم الكمبوند أو المنطقة.' : 'Please select or enter a compound name.');
+      return;
+    }
+
+    const numericPrice = Number(String(price).replace(/,/g, ''));
+    if (!numericPrice || numericPrice <= 0) {
+      setErrorMsg(isAr ? 'يرجى إدخال سعر صحيح للوحدة.' : 'Please enter a valid price.');
+      return;
+    }
+
+    const effectiveMobile = (primaryMobile || ownerPhone || brokerPhone).trim();
+    if (!effectiveMobile) {
+      setErrorMsg(
+        isAr
+          ? 'يرجى إدخال رقم الموبايل / الواتساب لتعريف المُعلن (مالك / بروكر / وكيل / موظف).'
+          : 'Please enter a Mobile / WhatsApp number for the publisher (Owner / Broker / Agent / Employee).',
+      );
+      return;
+    }
+
+    if (submitterRole === 'employee' && !employeeName.trim()) {
+      setErrorMsg(
+        isAr
+          ? 'يرجى كتابة اسم الموظف أو كود الموظف لإتمام تسجيل الوحدة باسمه.'
+          : 'Please enter the Employee Name / Code to attribute this listing.',
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const isBroker = submitterRole === 'broker';
+      const resolvedOwnerPhone =
+        ownerPhone.trim() || (!isBroker ? effectiveMobile : '');
+      const resolvedBrokerPhone =
+        brokerPhone.trim() || (isBroker ? effectiveMobile : '');
+      const resolvedStaffName =
+        submitterRole === 'employee' || submitterRole === 'agent'
+          ? employeeName.trim() || contactName.trim() || 'Sierra Staff'
+          : '';
+
+      const res = await fetch('/api/listings/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          compound: finalCompound,
+          propertyType,
+          mode,
+          beds: Number(beds) || 0,
+          baths: Number(baths) || 0,
+          area: Number(area) || 0,
+          gardenArea: Number(gardenArea) || 0,
+          price: numericPrice,
+          finishing,
+          ownerName:
+            contactName.trim() ||
+            (isBroker
+              ? 'Broker Submission'
+              : submitterRole === 'employee'
+                ? `Owner (via ${resolvedStaffName})`
+                : 'Direct Owner'),
+          ownerType:
+            submitterRole === 'broker'
+              ? 'Broker'
+              : submitterRole === 'employee'
+                ? 'Employee'
+                : submitterRole === 'agent'
+                  ? 'Agent'
+                  : 'Owner',
+          mobile: effectiveMobile,
+          ownerPhone: resolvedOwnerPhone,
+          brokerPhone: resolvedBrokerPhone,
+          brokerName: isBroker ? contactName.trim() || 'Authorized Broker' : '',
+          agentName: resolvedStaffName,
+          employeeName: resolvedStaffName,
+          submitterType: submitterRole,
+          rawText,
+          comment: comment || rawText,
+          photos: photos.map((p) => p.dataUrl),
+          conflictAction: conflictAction || 'check_only',
+        }),
+      });
+
+      const data = await res.json();
+
+      // Handle 409 Conflict Detection
+      if (res.status === 409 && data.conflict) {
+        setConflictData({
+          code: data.code,
+          message: data.message,
+          existing: data.existing,
+          incoming: data.incoming,
+        });
+        setIsSubmitting(false);
+        return;
       }
 
-      // Clear collision modal and saved draft on success
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Submission failed');
+      }
+
       setConflictData(null);
+      setHasRestoredDraft(false);
       try {
-        window.localStorage.removeItem("sierra_add_listing_draft_v2");
-      } catch (_) {}
-      setDraftRestored(null);
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch {
+        // Ignore
+      }
 
-      const mintedRef: string =
-        result?.code ||
-        result?.listing?.code ||
-        sierraCode ||
-        `SE-SUB-${Date.now().toString(36).toUpperCase().slice(-6)}`;
-      const targetTab: string =
-        result?.targetTab ||
-        (purpose === "rent" ? "owners rent" : "owners resale");
+      const generatedAd = isAr
+        ? `🏛️ *Sierra Estates — وحدة مميزة (${mode === 'rent' ? 'للإيجار' : 'للبيع'})*\n📍 الكمبوند: ${finalCompound}\n🏠 النوع: ${propertyType} (${finishing})\n📐 المساحة: ${area} م² | 🛏️ ${beds} غرف | 🛁 ${baths} حمام\n💰 السعر: ${numericPrice.toLocaleString('en-US')} ج.م\n🔖 كود الوحدة: ${data.code || code}\n📲 للتواصل عبر سييرا إستيتس: +201092048333`
+        : `🏛️ *Sierra Estates — Featured ${propertyType} (${mode === 'rent' ? 'For Rent' : 'For Sale'})*\n📍 Compound: ${finalCompound}\n📐 Area: ${area} m² | 🛏️ ${beds} Beds | 🛁 ${baths} Baths\n✨ Finishing: ${finishing}\n💰 Price: EGP ${numericPrice.toLocaleString('en-US')}\n🔖 Code: ${data.code || code}\n📲 Contact Sierra Estates: +201092048333`;
 
-      const summaryText = isAr
-        ? `عقار جديد معروض على سييرا إستيتس: ${cpdVal} · ${purpose === "rent" ? "إيجار" : "بيع"} · ${propertyType} · ${areaClean} م² · السعر ${Number(priceClean).toLocaleString("en-US")} ج.م · كود ${mintedRef}`
-        : `New Listing on Sierra Estates: ${cpdVal} · ${purpose === "rent" ? "Rent" : "Resale"} · ${propertyType} · ${areaClean} sqm · EGP ${Number(priceClean).toLocaleString("en-US")} · Code ${mintedRef}`;
-
-      setDone({
-        ref: mintedRef,
-        waHref: `https://wa.me/${WA_CONCIERGE}?text=${encodeURIComponent(summaryText)}`,
-        targetTab,
+      setSubmittedResult({
+        code: data.code || code,
+        id: data.id || data.code || code,
+        sheetUrl: data.sheetSync?.inventoryUrl,
+        targetTab: data.targetTab,
+        isMerged: data.isMerged,
+        role: submitterRole.toUpperCase(),
+        employeeName: resolvedStaffName || undefined,
+        adCopy: generatedAd,
       });
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Submission failed";
-      setErr(msg);
-    } finally {
-      setSending(false);
-    }
-  }
 
-  function handleReset() {
-    handleClear();
-    setDone(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+      fetchIntakes();
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : isAr
+            ? 'حدث خطأ أثناء إرسال الوحدة. يرجى المحاولة مرة أخرى.'
+            : 'An error occurred while submitting the listing. Please try again.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeSubmission('check_only');
+  };
+
+  const formattedPricePreview = (() => {
+    const n = Number(String(price).replace(/,/g, ''));
+    if (!n || isNaN(n)) return 'EGP 0';
+    return `EGP ${n.toLocaleString('en-US')}`;
+  })();
+
+  const filteredIntakes = intakeItems.filter((item) => {
+    if (intakeFilter === 'ALL') return true;
+    if (intakeFilter === 'BOT') return item.role === 'BOT' || item.status === 'owner_reply_yes';
+    return item.role === intakeFilter;
+  });
+
+  const activeCompoundName = compound === 'Other / Custom' ? customCompound || 'New Cairo' : compound;
 
   return (
-    <div className={s.page} dir={isAr ? "rtl" : "ltr"} lang={lang}>
-      <div className={s.wrap}>
-        {/* Top Header: Simple, Clean, Non-Duplicated */}
-        <header className={s.header}>
-          <div className={s.headerTop}>
-            <div className={s.badge}>
-              <span className={s.pulseDot} />
-              <span>{t.badge}</span>
+    <div className={styles.page} data-theme={theme} dir={isAr ? 'rtl' : 'ltr'}>
+      <div className={styles.wrap}>
+        {/* Black Friday 25% OFF Service Cross-Link Banner */}
+        <div className={styles.bfPromoStrip}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span className={styles.bfPromoTag}>
+              <Sparkles style={{ width: 12, height: 12 }} />
+              <span>BLACK FRIDAY 25% OFF</span>
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>
+              {isAr
+                ? 'تبحث عن شراء أو إيجار وحدة؟ احصل على خصم 25% على رسوم الخدمة حتى 25 نوفمبر 2026!'
+                : 'Looking to Buy or Rent? Claim 25% OFF Service Fees valid till 25th November 2026!'}
+            </span>
+          </div>
+          <Link href="/request" className={styles.bfPromoLink}>
+            <span>{isAr ? 'اطلب وحدتك بخصم 25% ←' : 'Add Property Request (25% OFF) →'}</span>
+          </Link>
+        </div>
+
+        {/* Header */}
+        <header className={styles.header}>
+          <div className={styles.headerTop}>
+            <div className={styles.badge}>
+              <span className={styles.pulseDot} />
+              <span>
+                {isAr
+                  ? 'بوابة الإدراج الذكي والمزامنة الموحدة · Stitch Studio'
+                  : 'Sierra Stitch Easy Listing & Universal Multi-Sync'}
+              </span>
             </div>
-            <div className={s.headerControls}>
+
+            <div className={styles.headerControls}>
               <button
                 type="button"
-                className={s.langBtn}
+                className={styles.langBtn}
                 onClick={toggleLang}
-                title={isAr ? "Switch to English" : "التبديل إلى العربية"}
               >
-                <Languages style={{ width: 14, height: 14 }} />
-                <span>{isAr ? "English" : "عربي"}</span>
+                <Globe style={{ width: 14, height: 14 }} />
+                <span>{isAr ? 'English' : 'العربية'}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.langBtn}
+                onClick={toggleTheme}
+                aria-label="Toggle Theme"
+              >
+                {theme === 'dark' ? (
+                  <Sun style={{ width: 14, height: 14 }} />
+                ) : (
+                  <Moon style={{ width: 14, height: 14 }} />
+                )}
               </button>
             </div>
           </div>
 
-          <h1 className={s.title}>
-            {t.titleLead}
-            <em>{t.titleEm}</em>
+          <h1 className={styles.title}>
+            {isAr ? (
+              <>
+                أضف وحدتك العقارية <em>في 3 خطوات</em> مع مزامنة شاملة
+              </>
+            ) : (
+              <>
+                List & Sync Property in <em>3 Simple Steps</em>
+              </>
+            )}
           </h1>
-          <p className={s.subtitle}>{t.subtitle}</p>
+          <p className={styles.subtitle}>
+            {isAr
+              ? 'مربوطة مباشرة مع قاعدة بيانات Supabase، شيت الإنفنتوري أونلاين، الخريطة التفاعلية GIS، ولوحة تحكم الإدارة وبوت متابعة الملاك.'
+              : 'Directly wired to Supabase Inventory, Online Google Sheets, Interactive GIS Map, Admin Command Deck, and the WhatsApp Owners Bot Resume workflow.'}
+          </p>
         </header>
 
-        {/* Draft Auto-Restore Notification (VS Code hot-exit pattern) */}
-        {draftRestored && (
-          <div className={s.draftBanner}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Sparkles style={{ width: 15, height: 15 }} />
-              <span>
-                {isAr
-                  ? `✨ تم استرجاع مسودة غير محفوظة تلقائياً (الساعة ${draftRestored})`
-                  : `✨ Restored unsaved intake draft from ${draftRestored}`}
-              </span>
-            </div>
+        {/* Tabs Switcher & Live Sync Channels Pill Strip */}
+        <div className={styles.tabsBar}>
+          <div className={styles.tabPills} role="tablist">
             <button
               type="button"
-              className={s.discardBtn}
-              onClick={discardDraft}
+              role="tab"
+              aria-selected={activeTab === 'studio'}
+              className={`${styles.tabBtn} ${activeTab === 'studio' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('studio')}
             >
-              {isAr ? "مسح المسودة والبدء من جديد" : "Discard Draft"}
+              <Wand2 style={{ width: 15, height: 15 }} />
+              <span>{isAr ? 'إضافة وحدة جديدة (3 خطوات)' : 'New Listing Studio (3 Steps)'}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'intakes'}
+              className={`${styles.tabBtn} ${activeTab === 'intakes' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('intakes')}
+            >
+              <Bot style={{ width: 15, height: 15 }} />
+              <span>
+                {isAr ? 'ردود الأونرز والبوت (نعم متاح)' : 'Owners & Bot Intake Resume'}
+              </span>
+              <span className={styles.tabCount}>{intakeItems.length}</span>
+            </button>
+          </div>
+
+          <div className={styles.syncStrip}>
+            <span className={styles.syncPill}>
+              <span className={styles.syncDot} />
+              <Database style={{ width: 12, height: 12 }} />
+              <span>Supabase DB</span>
+            </span>
+            <span className={styles.syncPill}>
+              <span className={styles.syncDot} />
+              <Table2 style={{ width: 12, height: 12 }} />
+              <span>Online Sheet</span>
+            </span>
+            <span className={styles.syncPill}>
+              <span className={styles.syncDot} />
+              <MapPin style={{ width: 12, height: 12 }} />
+              <span>GIS Map Pin</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Restored Draft Notice */}
+        {hasRestoredDraft && activeTab === 'studio' && (
+          <div className={styles.draftBanner}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <RefreshCw style={{ width: 15, height: 15 }} />
+              <span>
+                {isAr
+                  ? 'تم استعادة مسودة غير محفوظة من جلستك السابقة.'
+                  : 'Unsaved draft restored from your previous session.'}
+              </span>
+            </div>
+            <button type="button" className={styles.discardBtn} onClick={resetForm}>
+              {isAr ? 'مسح المسودة' : 'Discard Draft'}
             </button>
           </div>
         )}
 
-        {/* Unified Intake Card */}
-        <div className={s.formCard}>
-          {/* 1. Monolithic Paste Canvas */}
-          <div>
-            <div className={s.sectHeader}>
-              <div className={s.sectTitle}>
-                <Sparkles className={s.sectIcon} />
-                <span>
-                  {isAr
-                    ? "محطة لصق نصوص العقار والواتساب"
-                    : "Listing Intake Terminal"}
-                </span>
-              </div>
-              <div className={s.samplePills}>
-                <button
-                  type="button"
-                  className={s.samplePill}
-                  onClick={() => loadSample("resale")}
-                >
-                  {t.sampleResale}
-                </button>
-                <button
-                  type="button"
-                  className={s.samplePill}
-                  onClick={() => loadSample("rent")}
-                >
-                  {t.sampleRent}
-                </button>
-                {rawText && (
-                  <button
-                    type="button"
-                    className={s.samplePill}
-                    onClick={handleClear}
-                  >
-                    <RotateCcw style={{ width: 12, height: 12 }} />
-                    <span>{t.clear}</span>
-                  </button>
-                )}
-              </div>
-            </div>
+        {/* TAB 1: 3-STEP STITCH LISTING STUDIO */}
+        {activeTab === 'studio' ? (
+          <form className={styles.formCard} onSubmit={handleSubmit}>
+            {/* STEP 1: Smart Paste Box */}
+            <section>
+              <div className={styles.sectHeader}>
+                <div className={styles.sectTitle}>
+                  <span className={styles.stepBadge}>STEP 01</span>
+                  <Wand2 className={styles.sectIcon} />
+                  <span>
+                    {isAr
+                      ? 'لصق رسالة الواتساب أو تفاصيل الوحدة (استخراج ذكي AI)'
+                      : 'Paste WhatsApp Message or Property Details (AI Auto-Fill)'}
+                  </span>
+                </div>
 
-            <div className={s.pasteWrapper}>
-              <textarea
-                className={s.pasteArea}
-                value={rawText}
-                onChange={(e) => setRawText(e.target.value)}
-                placeholder={t.pastePlaceholder}
-                rows={5}
-              />
-              <div className={s.pasteFooter}>
-                <span className={s.charCount}>
-                  {rawText.length} {t.chars}
+                <div className={styles.samplePills}>
+                  {SAMPLE_LISTINGS.map((s, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={styles.samplePill}
+                      onClick={() => {
+                        setRawText(s.text);
+                        handleSmartParse(s.text, s.role);
+                      }}
+                    >
+                      <FileText style={{ width: 12, height: 12 }} />
+                      <span>{isAr ? s.labelAr : s.labelEn}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.pasteWrapper}>
+                <textarea
+                  className={styles.pasteArea}
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                  placeholder={
+                    isAr
+                      ? 'الصق نص رسالة الواتساب من المالك أو البروكر أو الموظف هنا... (مثال: للبيع فيلا في ميفيدا 390م 4 غرف بسعر 42 مليون تليفون 010...)'
+                      : 'Paste the raw WhatsApp message from Owner, Broker, Agent, or Employee here... (e.g. Apartment in Mivida 195m 3 beds 14.5M EGP 010...)'
+                  }
+                />
+              </div>
+
+              <div className={styles.pasteFooter}>
+                <span className={styles.charCount}>
+                  {rawText.length} {isAr ? 'حرف' : 'chars'}
                 </span>
+
                 <button
                   type="button"
-                  className={s.parseBtn}
-                  onClick={handleAutoParse}
-                  disabled={parsing || !rawText.trim()}
+                  className={styles.parseBtn}
+                  onClick={() => handleSmartParse()}
+                  disabled={isParsing}
                 >
                   <Sparkles style={{ width: 15, height: 15 }} />
-                  <span>{parsing ? t.extracting : t.extractBtn}</span>
+                  <span>
+                    {isParsing
+                      ? isAr
+                        ? 'جاري التحليل الذكي...'
+                        : 'Extracting Specs...'
+                      : isAr
+                        ? '✨ استخراج البيانات وتعبئة الحقول تلقائياً'
+                        : '✨ Extract & Auto-Fill Specs'}
+                  </span>
+                </button>
+              </div>
+
+              {parseFeedback && (
+                <div className={styles.parseFeedback}>
+                  <CheckCircle2 style={{ width: 16, height: 16, color: '#10b981', flexShrink: 0 }} />
+                  <span>{parseFeedback}</span>
+                </div>
+              )}
+            </section>
+
+            {/* STEP 2: Structured Property Specs & GIS Map Link */}
+            <section>
+              <div className={styles.sectHeader}>
+                <div className={styles.sectTitle}>
+                  <span className={styles.stepBadge}>STEP 02</span>
+                  <Building2 className={styles.sectIcon} />
+                  <span>
+                    {isAr
+                      ? 'مواصفات الوحدة العقارية وموقع الخريطة'
+                      : 'Property Specifications & GIS Map Pin'}
+                  </span>
+                </div>
+
+                <a
+                  href={`/compounds?q=${encodeURIComponent(activeCompoundName)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.samplePill}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <MapPin style={{ width: 12, height: 12, color: '#c8961a' }} />
+                  <span>
+                    {isAr
+                      ? `معاينة ${activeCompoundName} على الخريطة`
+                      : `Preview ${activeCompoundName} on GIS Map`}
+                  </span>
+                  <ExternalLink style={{ width: 11, height: 11 }} />
+                </a>
+              </div>
+
+              <div className={styles.grid}>
+                {/* Sale / Rent Toggle */}
+                <div className={`${styles.field} ${styles.col4}`}>
+                  <label className={styles.label}>
+                    {isAr ? 'نوع العرض' : 'Deal Mode'}
+                  </label>
+                  <div className={styles.segToggle}>
+                    <button
+                      type="button"
+                      className={`${styles.segBtn} ${mode === 'sale' ? styles.segBtnActive : ''}`}
+                      onClick={() => setMode('sale')}
+                    >
+                      {isAr ? 'للبيع (Resale)' : 'For Sale'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.segBtn} ${mode === 'rent' ? styles.segBtnActive : ''}`}
+                      onClick={() => setMode('rent')}
+                    >
+                      {isAr ? 'للإيجار (Rent)' : 'For Rent'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Compound Selector */}
+                <div className={`${styles.field} ${styles.col4}`}>
+                  <label className={styles.label}>
+                    {isAr ? 'الكمبوند / المنطقة' : 'Compound / Location'}
+                  </label>
+                  <select
+                    className={styles.select}
+                    value={compound}
+                    onChange={(e) => setCompound(e.target.value)}
+                  >
+                    {COMPOUND_LIST.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Property Type */}
+                <div className={`${styles.field} ${styles.col4}`}>
+                  <label className={styles.label}>
+                    {isAr ? 'نوع الوحدة' : 'Property Type'}
+                  </label>
+                  <select
+                    className={styles.select}
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                  >
+                    {PROPERTY_TYPES.map((pt) => (
+                      <option key={pt.value} value={pt.value}>
+                        {isAr ? pt.ar : pt.en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Custom Compound Input if "Other / Custom" */}
+                {compound === 'Other / Custom' && (
+                  <div className={`${styles.field} ${styles.col12}`}>
+                    <label className={styles.label}>
+                      {isAr ? 'اكتب اسم الكمبوند أو المنطقة' : 'Enter Custom Compound / Area Name'}
+                    </label>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      value={customCompound}
+                      onChange={(e) => setCustomCompound(e.target.value)}
+                      placeholder={isAr ? 'مثال: كمبوند اللوتس الجديدة' : 'e.g. New Lotus Compound'}
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Area (m²) */}
+                <div className={`${styles.field} ${styles.col4}`}>
+                  <label className={styles.label}>
+                    <span>{isAr ? 'مساحة المباني (م²)' : 'Built-up Area (m²)'}</span>
+                    <span className={styles.labelSub}>BUA</span>
+                  </label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    min={20}
+                    required
+                  />
+                </div>
+
+                {/* Garden Area (m²) */}
+                <div className={`${styles.field} ${styles.col4}`}>
+                  <label className={styles.label}>
+                    <span>{isAr ? 'مساحة الحديقة / الرووف (م²)' : 'Garden / Roof (m²)'}</span>
+                    <span className={styles.labelSub}>{isAr ? 'اختياري' : 'Optional'}</span>
+                  </label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={gardenArea}
+                    onChange={(e) => setGardenArea(e.target.value)}
+                    min={0}
+                  />
+                </div>
+
+                {/* Finishing */}
+                <div className={`${styles.field} ${styles.col4}`}>
+                  <label className={styles.label}>
+                    {isAr ? 'حالة التشطيب' : 'Finishing'}
+                  </label>
+                  <select
+                    className={styles.select}
+                    value={finishing}
+                    onChange={(e) => setFinishing(e.target.value)}
+                  >
+                    {FINISHING_OPTIONS.map((f) => (
+                      <option key={f.value} value={f.value}>
+                        {isAr ? f.ar : f.en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Bedrooms Chips */}
+                <div className={`${styles.field} ${styles.col6}`}>
+                  <label className={styles.label}>
+                    {isAr ? 'عدد غرف النوم' : 'Bedrooms'}
+                  </label>
+                  <div className={styles.chipsRow}>
+                    {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={`${styles.chipBtn} ${beds === n ? styles.chipBtnActive : ''}`}
+                        onClick={() => setBeds(n)}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bathrooms Chips */}
+                <div className={`${styles.field} ${styles.col6}`}>
+                  <label className={styles.label}>
+                    {isAr ? 'عدد الحمامات' : 'Bathrooms'}
+                  </label>
+                  <div className={styles.chipsRow}>
+                    {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={`${styles.chipBtn} ${baths === n ? styles.chipBtnActive : ''}`}
+                        onClick={() => setBaths(n)}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price (EGP) */}
+                <div className={`${styles.field} ${styles.col6}`}>
+                  <label className={styles.label}>
+                    <span>
+                      {mode === 'rent'
+                        ? isAr
+                          ? 'قيمة الإيجار الشهري (ج.م)'
+                          : 'Monthly Rent (EGP)'
+                        : isAr
+                          ? 'السعر الإجمالي المطلوب (ج.م)'
+                          : 'Total Asking Price (EGP)'}
+                    </span>
+                    <span className={styles.labelSub} style={{ color: 'var(--gold)', fontWeight: 700 }}>
+                      {formattedPricePreview}
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    min={1000}
+                    required
+                  />
+                </div>
+
+                {/* Sierra Unit Code */}
+                <div className={`${styles.field} ${styles.col6}`}>
+                  <label className={styles.label}>
+                    <span>{isAr ? 'كود الوحدة الموحد' : 'Sierra Unit Code'}</span>
+                    <span className={styles.labelSub}>{isAr ? 'تلقائي / قابل للتعديل' : 'Auto / Editable'}</span>
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    style={{ fontFamily: 'monospace', fontWeight: 700 }}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* STEP 3: Role Selector (Owner / Broker / Agent / Employee) + Mobile + Photos */}
+            <section>
+              <div className={styles.contactsBox}>
+                <div className={styles.contactsHeader}>
+                  <div className={styles.contactsTitle}>
+                    <span className={styles.stepBadge}>STEP 03</span>
+                    <Users style={{ width: 16, height: 16, color: 'var(--gold)' }} />
+                    <span>
+                      {isAr
+                        ? 'تحديد صفة صاحب الرقم (مالك / بروكر / وكيل / موظف) وبيانات التواصل'
+                        : 'Define Submitter Role (Owner / Broker / Agent / Employee) & Mobile'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>
+                    {isAr
+                      ? 'يوجه الوحدة تلقائياً إلى الشيت المخصص (Owners أو Brokers)'
+                      : 'Auto-routes listing to the matching Google Sheet & Supabase table'}
+                  </span>
+                </div>
+
+                {/* 4-Role Selector Cards */}
+                <div className={styles.roleSelectorGrid} role="radiogroup" aria-label="Submitter Role">
+                  <button
+                    type="button"
+                    className={`${styles.roleCardBtn} ${submitterRole === 'owner' ? styles.roleCardBtnActive : ''}`}
+                    onClick={() => setSubmitterRole('owner')}
+                  >
+                    <div className={styles.roleCardTop}>
+                      <span>{isAr ? '👑 مالك أصلي' : '👑 Direct Owner'}</span>
+                      {submitterRole === 'owner' && <CheckCircle2 style={{ width: 14, height: 14, color: 'var(--gold)' }} />}
+                    </div>
+                    <span className={styles.roleCardSub}>
+                      {isAr ? 'يُدرج في شيت الملاك + الإنفتوري' : 'Syncs to Owners Sheet & Main Inventory'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.roleCardBtn} ${submitterRole === 'broker' ? styles.roleCardBtnActive : ''}`}
+                    onClick={() => setSubmitterRole('broker')}
+                  >
+                    <div className={styles.roleCardTop}>
+                      <span>{isAr ? '💼 وسيط / بروكر' : '💼 Broker'}</span>
+                      {submitterRole === 'broker' && <CheckCircle2 style={{ width: 14, height: 14, color: 'var(--gold)' }} />}
+                    </div>
+                    <span className={styles.roleCardSub}>
+                      {isAr ? 'يُدرج في شيت الوسطاء + الخريطة' : 'Syncs to Brokers Sheet & Map Sheet'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.roleCardBtn} ${submitterRole === 'agent' ? styles.roleCardBtnActive : ''}`}
+                    onClick={() => setSubmitterRole('agent')}
+                  >
+                    <div className={styles.roleCardTop}>
+                      <span>{isAr ? '🏷️ وكيل عقاري' : '🏷️ Agent'}</span>
+                      {submitterRole === 'agent' && <CheckCircle2 style={{ width: 14, height: 14, color: 'var(--gold)' }} />}
+                    </div>
+                    <span className={styles.roleCardSub}>
+                      {isAr ? 'وكيل معتمد مع حفظ اسم الوكيل' : 'Authorized Agent with name attribution'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.roleCardBtn} ${submitterRole === 'employee' ? styles.roleCardBtnActive : ''}`}
+                    onClick={() => setSubmitterRole('employee')}
+                  >
+                    <div className={styles.roleCardTop}>
+                      <span>{isAr ? '🏢 موظف بالشركة' : '🏢 Sierra Employee'}</span>
+                      {submitterRole === 'employee' && <CheckCircle2 style={{ width: 14, height: 14, color: 'var(--gold)' }} />}
+                    </div>
+                    <span className={styles.roleCardSub}>
+                      {isAr ? 'يتيح كتابة اسم الموظف ورقم المالك' : 'Write Employee Name + Owner mobile'}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Employee / Agent Name Highlight Box when Employee or Agent is selected */}
+                {(submitterRole === 'employee' || submitterRole === 'agent') && (
+                  <div className={styles.employeeHighlightBox}>
+                    <div className={styles.contactColHeader}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--gold)', fontWeight: 700 }}>
+                        <UserCheck style={{ width: 15, height: 15 }} />
+                        {submitterRole === 'employee'
+                          ? isAr
+                            ? 'اسم موظف سييرا إستيتس / الكود (مطلوب للموظف)'
+                            : 'Sierra Employee Name & Code (Required for Employee)'
+                          : isAr
+                            ? 'اسم الوكيل العقاري (Agent Name)'
+                            : 'Real Estate Agent Name'}
+                      </span>
+                      <span className={styles.contactTag}>
+                        {submitterRole === 'employee'
+                          ? isAr
+                            ? 'موظف الشركة'
+                            : 'EMPLOYEE ATTRIBUTION'
+                          : 'AGENT'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      value={employeeName}
+                      onChange={(e) => setEmployeeName(e.target.value)}
+                      placeholder={
+                        isAr
+                          ? 'اكتب اسم الموظف بالكامل هنا (مثال: أحمد سعيد - SE-104)'
+                          : 'Enter Employee Full Name / Code (e.g. Ahmed Saeed - SE-104)'
+                      }
+                      required={submitterRole === 'employee'}
+                    />
+                  </div>
+                )}
+
+                {/* Primary Mobile & Contact Details Grid */}
+                <div className={styles.contactsGrid}>
+                  {/* Column 1: Primary Mobile Number (defined by selected role) */}
+                  <div className={styles.contactCol}>
+                    <div className={styles.contactColHeader}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <Phone style={{ width: 13, height: 13, color: 'var(--gold)' }} />
+                        {submitterRole === 'broker'
+                          ? isAr
+                            ? 'رقم موبايل البروكر / الوسيط'
+                            : 'Broker Mobile / WhatsApp'
+                          : isAr
+                            ? 'رقم موبايل المالك المباشر'
+                            : 'Direct Owner Mobile / WhatsApp'}
+                      </span>
+                      <span className={styles.contactTag}>
+                        {submitterRole.toUpperCase()}
+                      </span>
+                    </div>
+                    <input
+                      type="tel"
+                      dir="ltr"
+                      className={styles.input}
+                      value={primaryMobile}
+                      onChange={(e) => {
+                        setPrimaryMobile(e.target.value);
+                        if (submitterRole === 'broker') {
+                          setBrokerPhone(e.target.value);
+                        } else {
+                          setOwnerPhone(e.target.value);
+                        }
+                      }}
+                      placeholder="010XXXXXXXX"
+                      required
+                    />
+                    <span className={styles.contactHelper}>
+                      {isAr
+                        ? 'الرقم الأساسي المرتبط بالوحدة للتحقق والمزامنة.'
+                        : 'Primary mobile number linked to this property.'}
+                    </span>
+                  </div>
+
+                  {/* Column 2: Contact Name (Owner or Broker Name) */}
+                  <div className={styles.contactCol}>
+                    <div className={styles.contactColHeader}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <Briefcase style={{ width: 13, height: 13, color: 'var(--gold)' }} />
+                        {submitterRole === 'broker'
+                          ? isAr
+                            ? 'اسم الوسيط / الشركة'
+                            : 'Broker / Agency Name'
+                          : isAr
+                            ? 'اسم المالك'
+                            : 'Property Owner Name'}
+                      </span>
+                      <span className={styles.contactTag}>
+                        {isAr ? 'الاسم' : 'NAME'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      placeholder={
+                        submitterRole === 'broker'
+                          ? isAr
+                            ? 'مثال: شركة النخبة العقارية'
+                            : 'e.g. Elite Brokerage'
+                          : isAr
+                            ? 'مثال: د. طارق منصور (اختياري)'
+                            : 'e.g. Dr. Tarek Mansour'
+                      }
+                    />
+                    <span className={styles.contactHelper}>
+                      {isAr
+                        ? 'يُحفظ في سجل الإدارة الداخلي وشيت جوجل.'
+                        : 'Saved in Admin CRM & Google Sheet.'}
+                    </span>
+                  </div>
+
+                  {/* Column 3: Employee / Secondary Phone or Notes */}
+                  <div className={styles.contactCol}>
+                    <div className={styles.contactColHeader}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <UserCheck style={{ width: 13, height: 13, color: 'var(--gold)' }} />
+                        {submitterRole === 'employee'
+                          ? isAr
+                            ? 'رقم إضافي / واتساب الموظف'
+                            : 'Employee / Secondary Phone'
+                          : isAr
+                            ? 'اسم الموظف المسئول (إن وجد)'
+                            : 'Assigned Employee (Optional)'}
+                      </span>
+                      <span className={styles.contactTag}>
+                        {isAr ? 'فريق سييرا' : 'SIERRA STAFF'}
+                      </span>
+                    </div>
+                    {submitterRole === 'employee' ? (
+                      <input
+                        type="tel"
+                        dir="ltr"
+                        className={styles.input}
+                        value={brokerPhone}
+                        onChange={(e) => setBrokerPhone(e.target.value)}
+                        placeholder="011XXXXXXXX (Optional)"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        className={styles.input}
+                        value={employeeName}
+                        onChange={(e) => setEmployeeName(e.target.value)}
+                        placeholder={isAr ? 'مثال: سارة محمود - SE-12' : 'e.g. Sara Mahmoud - SE-12'}
+                      />
+                    )}
+                    <span className={styles.contactHelper}>
+                      {isAr
+                        ? 'يربط الوحدة بموظف المبيعات في لوحة التحكم.'
+                        : 'Links unit to the sales advisor in Admin Deck.'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Photos & Additional Notes */}
+            <section>
+              <div className={styles.grid}>
+                <div className={`${styles.field} ${styles.col6}`}>
+                  <label className={styles.label}>
+                    <span>{isAr ? 'صور الوحدة العقارية (حتى 10 صور)' : 'Property Photos (Up to 10)'}</span>
+                    <span className={styles.labelSub}>{photos.length}/10</span>
+                  </label>
+                  <div
+                    className={`${styles.dropzone} ${dragActive ? styles.dropzoneActive : ''}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragActive(true);
+                    }}
+                    onDragLeave={() => setDragActive(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className={styles.dropzoneIcon} />
+                    <div className={styles.dropzoneText}>
+                      {isAr ? 'اسحب الصور هنا أو اضغط للاختيار' : 'Drag & drop photos or click to browse'}
+                    </div>
+                    <div className={styles.dropzoneSub}>
+                      {isAr ? 'يدعم JPG, PNG, WebP' : 'Supports JPG, PNG, WebP'}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display: 'none' }}
+                      onChange={(e) => processFiles(e.target.files)}
+                    />
+                  </div>
+
+                  {photos.length > 0 && (
+                    <div className={styles.mediaStrip}>
+                      {photos.map((p, idx) => (
+                        <div key={p.id} className={styles.mediaItem}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.dataUrl} alt={p.name} className={styles.mediaImg} />
+                          {idx === 0 && (
+                            <span className={styles.coverBadge}>
+                              {isAr ? 'الرئيسية' : 'COVER'}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className={styles.deletePhotoBtn}
+                            onClick={() => removePhoto(p.id)}
+                            aria-label="Remove photo"
+                          >
+                            <X style={{ width: 12, height: 12 }} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className={`${styles.field} ${styles.col6}`}>
+                  <label className={styles.label}>
+                    <span>{isAr ? 'ملاحظات إضافية / تفاصيل المعاينة' : 'Additional Notes & Viewing Instructions'}</span>
+                  </label>
+                  <textarea
+                    className={styles.pasteArea}
+                    style={{ minHeight: 110 }}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder={
+                      isAr
+                        ? 'أي تفاصيل إضافية عن الفيو، رقم المبنى، تسهيلات السداد، أو مواعيد المعاينة...'
+                        : 'Any extra details about view, phase, payment plan, or viewing availability...'
+                    }
+                  />
+                </div>
+              </div>
+            </section>
+
+            {errorMsg && (
+              <div className={styles.errorNotice} role="alert">
+                <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Submit Bar */}
+            <div className={styles.submitBar}>
+              <div className={styles.securityNote}>
+                <ShieldCheck className={styles.securityIcon} />
+                <span>
+                  {isAr
+                    ? 'مزامنة فورية بضغطة واحدة: Supabase + Google Sheet + GIS Map + Admin CRM'
+                    : '1-Click Multi-Sync: Supabase DB + Online Sheet + GIS Map + Admin CRM'}
+                </span>
+              </div>
+
+              <div className={styles.actionBtns}>
+                <button type="button" className={styles.resetBtn} onClick={resetForm}>
+                  {isAr ? 'مسح الحقول' : 'Clear'}
+                </button>
+                <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                  <Sparkles style={{ width: 16, height: 16 }} />
+                  <span>
+                    {isSubmitting
+                      ? isAr
+                        ? 'جاري النشر والمزامنة...'
+                        : 'Publishing & Syncing...'
+                      : isAr
+                        ? 'نشر ومزامنة الوحدة الآن'
+                        : 'Publish & Multi-Sync Now'}
+                  </span>
                 </button>
               </div>
             </div>
-
-            {parseFeedback && (
-              <div className={s.parseFeedback}>
-                <CheckCircle2
-                  style={{
-                    width: 16,
-                    height: 16,
-                    color: "#10b981",
-                    flexShrink: 0,
-                  }}
-                />
-                <span>{parseFeedback}</span>
-              </div>
-            )}
-          </div>
-
-          {/* 2. Structured Revision Grid */}
-          <div>
-            <div className={s.sectHeader}>
-              <div className={s.sectTitle}>
-                <Building className={s.sectIcon} />
-                <span>{t.specsTitle}</span>
-              </div>
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                {t.specsSub}
-              </span>
-            </div>
-
-            <div className={s.grid}>
-              {/* Compound / Location */}
-              <div className={`${s.field} ${s.col6}`}>
-                <label className={s.label} htmlFor="compound-input">
-                  <MapPin
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.compound}</span>
-                </label>
-                <input
-                  id="compound-input"
-                  ref={compoundRef}
-                  type="text"
-                  className={`${s.input} ${badField === "compound" ? s.bad : ""}`}
-                  value={compound}
-                  onChange={(e) => {
-                    setCompound(e.target.value);
-                    if (badField === "compound") setBadField(null);
-                  }}
-                  placeholder={t.compoundPh}
-                  list="cpds-list"
-                  autoComplete="off"
-                />
-                <datalist id="cpds-list">
-                  {CPDS.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
-
-              {/* Deal Mode (Sale vs Rent) */}
-              <div className={`${s.field} ${s.col6}`}>
-                <label className={s.label}>
-                  <CircleDollarSign
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.dealMode}</span>
-                </label>
-                <div className={s.segToggle}>
-                  <button
-                    type="button"
-                    className={`${s.segBtn} ${purpose === "sale" ? s.segBtnActive : ""}`}
-                    onClick={() => setPurpose("sale")}
-                  >
-                    {t.sale}
-                  </button>
-                  <button
-                    type="button"
-                    className={`${s.segBtn} ${purpose === "rent" ? s.segBtnActive : ""}`}
-                    onClick={() => setPurpose("rent")}
-                  >
-                    {t.rent}
-                  </button>
-                </div>
-              </div>
-
-              {/* Price */}
-              <div className={`${s.field} ${s.col6}`}>
-                <label className={s.label} htmlFor="price-input">
-                  <CircleDollarSign
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{purpose === "rent" ? t.priceRent : t.priceSale}</span>
-                  {price && (
-                    <span className={s.labelSub}>
-                      ~
-                      {(Number(digits(price)) / 49).toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })}{" "}
-                      USD
-                    </span>
-                  )}
-                </label>
-                <input
-                  id="price-input"
-                  ref={priceRef}
-                  type="text"
-                  className={`${s.input} ${badField === "price" ? s.bad : ""}`}
-                  value={price}
-                  onChange={(e) => {
-                    const raw = digits(e.target.value);
-                    setPrice(raw ? Number(raw).toLocaleString("en-US") : "");
-                    if (badField === "price") setBadField(null);
-                  }}
-                  placeholder={purpose === "rent" ? "65,000" : "14,000,000"}
-                />
-              </div>
-
-              {/* Footprint (Area & optional Garden) */}
-              <div className={`${s.field} ${s.col6}`}>
-                <label className={s.label}>
-                  <Maximize2
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.footprint}</span>
-                </label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    ref={areaRef}
-                    type="text"
-                    className={`${s.input} ${badField === "area" ? s.bad : ""}`}
-                    value={area}
-                    onChange={(e) => {
-                      setArea(digits(e.target.value));
-                      if (badField === "area") setBadField(null);
-                    }}
-                    placeholder={t.areaPh}
-                    style={{ flex: 1 }}
-                  />
-                  <input
-                    type="text"
-                    className={s.input}
-                    value={gardenArea}
-                    onChange={(e) => setGardenArea(digits(e.target.value))}
-                    placeholder={t.gardenPh}
-                    style={{ flex: 1 }}
-                  />
-                </div>
-              </div>
-
-              {/* Bedrooms */}
-              <div className={`${s.field} ${s.col6}`}>
-                <label className={s.label}>
-                  <BedDouble
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.beds}</span>
-                </label>
-                <div className={s.chipsRow}>
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={`${s.chipBtn} ${beds === n ? s.chipBtnActive : ""}`}
-                      onClick={() => setBeds(n)}
-                    >
-                      {n === 6 ? "6+" : n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bathrooms */}
-              <div className={`${s.field} ${s.col6}`}>
-                <label className={s.label}>
-                  <Bath
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.baths}</span>
-                </label>
-                <div className={s.chipsRow}>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={`${s.chipBtn} ${baths === n ? s.chipBtnActive : ""}`}
-                      onClick={() => setBaths(n)}
-                    >
-                      {n === 5 ? "5+" : n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Property Type */}
-              <div className={`${s.field} ${s.col4}`}>
-                <label className={s.label} htmlFor="ptype-select">
-                  <Building
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.propType}</span>
-                </label>
-                <select
-                  id="ptype-select"
-                  className={s.select}
-                  value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value)}
-                >
-                  {PROPERTY_TYPES.map((pt) => (
-                    <option key={pt} value={pt}>
-                      {isAr ? PROPERTY_TYPES_AR[pt] || pt : pt}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Finishing */}
-              <div className={`${s.field} ${s.col4}`}>
-                <label className={s.label} htmlFor="finishing-select">
-                  <Layers
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.finishing}</span>
-                </label>
-                <select
-                  id="finishing-select"
-                  className={s.select}
-                  value={finishing}
-                  onChange={(e) => setFinishing(e.target.value)}
-                >
-                  {FINISHING_OPTIONS.map((f) => (
-                    <option key={f} value={f}>
-                      {isAr ? FINISHING_AR[f] || f : f}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sierra Code */}
-              <div className={`${s.field} ${s.col4}`}>
-                <label className={s.label} htmlFor="code-input">
-                  <ShieldCheck
-                    style={{ width: 14, height: 14, color: "var(--gold)" }}
-                  />
-                  <span>{t.sierraCode}</span>
-                </label>
-                <input
-                  id="code-input"
-                  type="text"
-                  className={s.input}
-                  value={sierraCode}
-                  onChange={(e) => setSierraCode(e.target.value.toUpperCase())}
-                  placeholder={t.codePh}
-                  style={{
-                    fontFamily: "var(--font-jetbrains), monospace",
-                    letterSpacing: "0.04em",
-                  }}
-                />
-              </div>
-
-              {/* Additional Highlights */}
-              <div className={`${s.field} ${s.col12}`}>
-                <label className={s.label} htmlFor="notes-input">
-                  <span>{t.notes}</span>
-                </label>
-                <input
-                  id="notes-input"
-                  type="text"
-                  className={s.input}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t.notesPh}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 3. The 3 Contact Entities Box */}
-          <div className={s.contactsBox}>
-            <div className={s.contactsHeader}>
-              <div className={s.contactsTitle}>
-                <User style={{ width: 16, height: 16, color: "var(--gold)" }} />
-                <span>{t.contactsTitle}</span>
-              </div>
-              <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                {t.contactsSub}
-              </span>
-            </div>
-
-            <div className={s.contactsGrid}>
-              {/* Contact 1: Submitter Dropdown */}
-              <div className={s.contactCol}>
-                <div className={s.contactColHeader}>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 5 }}
-                  >
-                    <Bot
-                      style={{ width: 14, height: 14, color: "var(--gold)" }}
-                    />
-                    <span>{t.submitterLabel}</span>
+          </form>
+        ) : (
+          /* TAB 2: OWNERS & BOT INTAKE RESUME ("نعم متاح" WORKFLOW) */
+          <div className={styles.formCard}>
+            <div className={styles.sectHeader}>
+              <div>
+                <div className={styles.sectTitle}>
+                  <Bot className={styles.sectIcon} />
+                  <span>
+                    {isAr
+                      ? 'سجل ردود الملاك عبر البوت ("نعم متاح") والوحدات المستلمة للاستكمال'
+                      : 'Owners WhatsApp Bot Replies ("Yes Available") & Intake Resume Queue'}
                   </span>
-                  <span className={s.contactTag}>Slot #1</span>
                 </div>
-                <select
-                  className={s.select}
-                  value={submitterPreset}
-                  onChange={(e) => setSubmitterPreset(e.target.value)}
-                >
-                  {SUBMITTER_PRESETS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {isAr ? p.labelAr : p.labelEn}
-                    </option>
-                  ))}
-                </select>
-                {(submitterPreset === "custom" || submitterPreset === "role:agent") && (
-                  <input
-                    type="text"
-                    className={s.input}
-                    value={customAgentName}
-                    onChange={(e) => setCustomAgentName(e.target.value)}
-                    placeholder={
-                      isAr
-                        ? "اسم الوكيل / مقدم الطلب (Agent Name)"
-                        : "Agent / Submitter full name"
+                <p style={{ fontSize: 13, color: 'var(--ink-secondary)', marginTop: 4 }}>
+                  {isAr
+                    ? 'عندما يرد المالك بـ "نعم" على بوت الواتساب ويرسل التفاصيل، تظهر الوحدة هنا تلقائياً — اضغط "استكمال ونشر" لتحميلها في الاستوديو واعتمادها بضغطة واحدة.'
+                    : 'When an owner replies "Yes" to the WhatsApp outreach bot and sends unit details, the bot stages it here — click "Resume & Publish" to load it into the 3-step studio.'}
+                </p>
+              </div>
+
+              <div className={styles.samplePills}>
+                {(['ALL', 'BOT', 'OWNER', 'EMPLOYEE', 'BROKER'] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={styles.samplePill}
+                    style={
+                      intakeFilter === f
+                        ? {
+                            background: 'var(--navy)',
+                            color: '#ffffff',
+                            borderColor: 'var(--gold)',
+                          }
+                        : undefined
                     }
-                  />
-                )}
-                <div className={s.contactHelper}>
-                  {isAr
-                    ? "يحدد المحفظة والوكيل المباشر المنسوب له العقار"
-                    : "Assigns mandate channel and agent provenance"}
-                </div>
-              </div>
-
-              {/* Contact 2: Owner Mobile */}
-              <div className={s.contactCol}>
-                <div className={s.contactColHeader}>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 5 }}
+                    onClick={() => setIntakeFilter(f)}
                   >
-                    <PhoneCall
-                      style={{ width: 14, height: 14, color: "#10b981" }}
-                    />
-                    <span>{t.ownerPhoneLabel}</span>
-                  </span>
-                  <span className={s.contactTag}>Slot #2</span>
-                </div>
-                <input
-                  ref={ownerPhoneRef}
-                  type="tel"
-                  className={`${s.input} ${badField === "ownerPhone" ? s.bad : ""}`}
-                  value={ownerPhone}
-                  onChange={(e) => {
-                    setOwnerPhone(e.target.value);
-                    if (badField === "ownerPhone") setBadField(null);
-                  }}
-                  placeholder={t.ownerPhonePh}
-                  dir="ltr"
-                />
-                <input
-                  type="text"
-                  className={s.input}
-                  value={ownerName}
-                  onChange={(e) => setOwnerName(e.target.value)}
-                  placeholder={t.ownerNamePh}
-                />
-                <div className={s.contactHelper}>
-                  {isAr
-                    ? "رقم المالك للتحقق ومطابقة الملكية"
-                    : "Direct owner line for title verification"}
-                </div>
-              </div>
-
-              {/* Contact 3: Broker Mobile */}
-              <div className={s.contactCol}>
-                <div className={s.contactColHeader}>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 5 }}
-                  >
-                    <Briefcase
-                      style={{ width: 14, height: 14, color: "#00b4d8" }}
-                    />
-                    <span>{t.brokerPhoneLabel}</span>
-                  </span>
-                  <span className={s.contactTag}>Slot #3</span>
-                </div>
-                <input
-                  ref={brokerPhoneRef}
-                  type="tel"
-                  className={s.input}
-                  value={brokerPhone}
-                  onChange={(e) => setBrokerPhone(e.target.value)}
-                  placeholder={t.brokerPhonePh}
-                  dir="ltr"
-                />
-                <input
-                  type="text"
-                  className={s.input}
-                  value={brokerName}
-                  onChange={(e) => setBrokerName(e.target.value)}
-                  placeholder={t.brokerNamePh}
-                />
-                <div className={s.contactHelper}>
-                  {isAr
-                    ? "رقم الوسيط أو البروكر لحفظ العمولة"
-                    : "Introducing broker / agency desk line"}
-                </div>
+                    <span>
+                      {f === 'ALL'
+                        ? isAr
+                          ? 'الكل'
+                          : 'All'
+                        : f === 'BOT'
+                          ? isAr
+                            ? '🤖 رد بنعم (البوت)'
+                            : '🤖 Bot Reply Yes'
+                          : f === 'OWNER'
+                            ? isAr
+                              ? '👑 ملاك'
+                              : '👑 Owners'
+                            : f === 'EMPLOYEE'
+                              ? isAr
+                                ? '🏢 موظفين'
+                                : '🏢 Employees'
+                              : isAr
+                                ? '💼 وسطاء'
+                                : '💼 Brokers'}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* 4. Media Upload */}
-          <div>
-            <div className={s.sectHeader}>
-              <div className={s.sectTitle}>
-                <UploadCloud className={s.sectIcon} />
-                <span>{t.mediaTitle}</span>
+            {intakesLoading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+                {isAr ? 'جاري تحميل سجل الأونرز والبوت...' : 'Loading Owners & Bot Intake Queue...'}
               </div>
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                {t.mediaSub}
-              </span>
-            </div>
+            ) : (
+              <div className={styles.intakeGrid}>
+                {filteredIntakes.map((item) => (
+                  <div key={item.id} className={styles.intakeCard}>
+                    <div>
+                      <div className={styles.intakeTop}>
+                        <div>
+                          <span className={styles.intakeCode}>{item.code}</span>
+                          <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', marginTop: 2 }}>
+                            {item.propertyType} · {item.compound}
+                          </h3>
+                        </div>
+                        <span className={styles.botBadge}>
+                          {item.status === 'owner_reply_yes'
+                            ? isAr
+                              ? '🤖 رد بنعم عبر البوت'
+                              : '🤖 Bot Reply: YES'
+                            : item.role === 'EMPLOYEE'
+                              ? `🏢 ${item.employeeName || 'Employee'}`
+                              : `👑 ${item.role}`}
+                        </span>
+                      </div>
 
-            <div
-              className={`${s.dropzone} ${isDragging ? s.dropzoneActive : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/png,image/jpeg,image/webp"
-                style={{ display: "none" }}
-                onChange={handleFileChange}
-              />
-              <UploadCloud className={s.dropzoneIcon} />
-              <div className={s.dropzoneText}>{t.dropzoneText}</div>
-              <div className={s.dropzoneSub}>{t.dropzoneSub}</div>
-            </div>
+                      <div className={styles.intakeSpecs} style={{ marginTop: 12 }}>
+                        <div className={styles.intakeSpecBox}>
+                          <span className={styles.intakeSpecLabel}>{isAr ? 'المساحة' : 'Area'}</span>
+                          <span className={styles.intakeSpecVal}>{item.area} m²</span>
+                        </div>
+                        <div className={styles.intakeSpecBox}>
+                          <span className={styles.intakeSpecLabel}>{isAr ? 'الغرف / الحمام' : 'Beds / Baths'}</span>
+                          <span className={styles.intakeSpecVal}>
+                            {item.beds}B / {item.baths}B
+                          </span>
+                        </div>
+                        <div className={styles.intakeSpecBox}>
+                          <span className={styles.intakeSpecLabel}>{isAr ? 'السعر' : 'Price'}</span>
+                          <span className={styles.intakeSpecVal} style={{ color: 'var(--gold)' }}>
+                            EGP {Number(item.price).toLocaleString('en-US')}
+                          </span>
+                        </div>
+                      </div>
 
-            {photos.length > 0 && (
-              <div className={s.mediaStrip}>
-                {photos.map((src, idx) => (
-                  <div key={idx} className={s.mediaItem}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      alt={`Upload ${idx + 1}`}
-                      className={s.mediaImg}
-                    />
-                    {idx === 0 && (
-                      <span className={s.coverBadge}>{t.coverPhoto}</span>
-                    )}
-                    <button
-                      type="button"
-                      className={s.deletePhotoBtn}
-                      onClick={() => removePhoto(idx)}
-                      title={t.removePhoto}
-                    >
-                      <X style={{ width: 12, height: 12 }} />
-                    </button>
+                      <div className={styles.intakeRaw} style={{ marginTop: 10 }}>
+                        {item.rawText}
+                      </div>
+                    </div>
+
+                    <div className={styles.intakeFooter}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700 }}>
+                        <Phone style={{ width: 13, height: 13, color: 'var(--gold)' }} />
+                        <span dir="ltr">{item.ownerPhone}</span>
+                        <span style={{ color: 'var(--muted)', fontWeight: 400 }}>
+                          ({item.contactName})
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={styles.resumeBtn}
+                        onClick={() => handleResumeIntake(item)}
+                      >
+                        <Sparkles style={{ width: 13, height: 13 }} />
+                        <span>
+                          {isAr ? 'استكمال ونشر في الاستوديو' : 'Resume & Publish in Studio'}
+                        </span>
+                        <ArrowRight style={{ width: 13, height: 13 }} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        )}
+      </div>
 
-          {/* Error Notice */}
-          {err && (
-            <div className={s.errorNotice}>
-              <X style={{ width: 16, height: 16, flexShrink: 0 }} />
-              <span>{err}</span>
+      {/* Conflict Resolution Modal */}
+      {conflictData && (
+        <div className={styles.conflictOverlay} role="dialog" aria-modal="true">
+          <div className={styles.conflictCard}>
+            <div className={styles.conflictHeader}>
+              <div className={styles.conflictIconBox}>
+                <AlertTriangle style={{ width: 22, height: 22 }} />
+              </div>
+              <div>
+                <h3 className={styles.conflictTitle}>
+                  {isAr
+                    ? `تم اكتشاف كود مطابق (${conflictData.code})`
+                    : `Duplicate Listing Code Detected (${conflictData.code})`}
+                </h3>
+                <p className={styles.conflictSub}>{conflictData.message}</p>
+              </div>
             </div>
-          )}
 
-          {/* 5. Sticky Action Bar */}
-          <div className={s.submitBar}>
-            <div className={s.securityNote}>
-              <ShieldCheck className={s.securityIcon} />
-              <span>{t.complianceNote}</span>
-            </div>
-
-            <div className={s.actionBtns}>
+            <div className={styles.conflictActions}>
               <button
                 type="button"
-                className={s.resetBtn}
-                onClick={handleReset}
+                className={styles.btnMerge}
+                onClick={() => executeSubmission('merge')}
               >
-                <RotateCcw
-                  style={{
-                    width: 13,
-                    height: 13,
-                    display: "inline",
-                    marginInlineEnd: 4,
-                  }}
-                />
-                <span>{t.reset}</span>
+                <GitMerge style={{ width: 15, height: 15 }} />
+                <span>{isAr ? 'دمج وتحديث البيانات' : 'Merge & Update Existing'}</span>
               </button>
               <button
                 type="button"
-                className={s.submitBtn}
-                onClick={() => handleSubmit()}
-                disabled={sending}
+                className={styles.btnFork}
+                onClick={() => executeSubmission('new_code')}
               >
-                <Send style={{ width: 15, height: 15 }} />
-                <span>{sending ? t.submitting : t.submit}</span>
+                <CopyPlus style={{ width: 15, height: 15 }} />
+                <span>{isAr ? 'حفظ بكود فرعي جديد' : 'Save as New Variant Code'}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.btnCancelModal}
+                onClick={() => setConflictData(null)}
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Conflict Resolution & Merge Modal (VS Code Dirty-Write Prevention) */}
-        {conflictData && (
-          <div className={s.conflictOverlay}>
-            <div className={s.conflictCard}>
-              <div className={s.conflictHeader}>
-                <div className={s.conflictIconBox}>
-                  <ShieldCheck style={{ width: 24, height: 24 }} />
-                </div>
-                <div>
-                  <h3 className={s.conflictTitle}>
-                    {isAr
-                      ? `⚠️ كود الوحدة مسجل بالفعل: ${conflictData.code}`
-                      : `⚠️ Unit Code Already Exists: ${conflictData.code}`}
-                  </h3>
-                  <p className={s.conflictSub}>
-                    {isAr
-                      ? "اكتشف النظام وجود عقار مسجل مسبقاً بهذا الكود في السجل العقاري. لتفادي تضارب البيانات، اختر الإجراء المناسب:"
-                      : "A listing with this code is already registered in the database. Choose how to handle this collision:"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Side-by-side diff table */}
-              <table className={s.diffTable}>
-                <thead>
-                  <tr>
-                    <th>{isAr ? "المواصفة" : "Specification"}</th>
-                    <th>{isAr ? "المسجل حالياً في السجل" : "Existing in Registry"}</th>
-                    <th>{isAr ? "البيانات المدخلة الآن" : "Incoming Submission"}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className={conflictData.existing?.price !== conflictData.incoming?.price ? s.diffRowDiff : ""}>
-                    <td className={s.diffLabel}>{isAr ? "السعر المطلوب" : "Price"}</td>
-                    <td className={s.diffExisting}>
-                      {conflictData.existing?.price
-                        ? `${Number(conflictData.existing.price).toLocaleString("en-US")} EGP`
-                        : "—"}
-                    </td>
-                    <td className={s.diffIncoming}>
-                      {conflictData.incoming?.price
-                        ? `${Number(conflictData.incoming.price).toLocaleString("en-US")} EGP`
-                        : "—"}
-                    </td>
-                  </tr>
-                  <tr className={conflictData.existing?.compound !== conflictData.incoming?.compound ? s.diffRowDiff : ""}>
-                    <td className={s.diffLabel}>{isAr ? "الكمبوند / المنطقة" : "Compound"}</td>
-                    <td className={s.diffExisting}>{conflictData.existing?.compound || "—"}</td>
-                    <td className={s.diffIncoming}>{conflictData.incoming?.compound || "—"}</td>
-                  </tr>
-                  <tr className={conflictData.existing?.areaSqm !== conflictData.incoming?.areaSqm ? s.diffRowDiff : ""}>
-                    <td className={s.diffLabel}>{isAr ? "المساحة (م²)" : "Area (m²)"}</td>
-                    <td className={s.diffExisting}>{conflictData.existing?.areaSqm ? `${conflictData.existing.areaSqm} m²` : "—"}</td>
-                    <td className={s.diffIncoming}>{conflictData.incoming?.areaSqm ? `${conflictData.incoming.areaSqm} m²` : "—"}</td>
-                  </tr>
-                  <tr>
-                    <td className={s.diffLabel}>{isAr ? "الغرف والحمامات" : "Beds / Baths"}</td>
-                    <td className={s.diffExisting}>
-                      {conflictData.existing?.bedrooms ?? "—"}B · {conflictData.existing?.bathrooms ?? "—"}Ba
-                    </td>
-                    <td className={s.diffIncoming}>
-                      {conflictData.incoming?.bedrooms ?? "—"}B · {conflictData.incoming?.bathrooms ?? "—"}Ba
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={s.diffLabel}>{isAr ? "هاتف التواصل" : "Contact Phone"}</td>
-                    <td className={s.diffExisting}>
-                      {conflictData.existing?.ownerPhone || conflictData.existing?.brokerPhone || "—"}
-                    </td>
-                    <td className={s.diffIncoming}>
-                      {conflictData.incoming?.ownerPhone || conflictData.incoming?.brokerPhone || "—"}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={s.diffLabel}>{isAr ? "تاريخ آخر تحديث" : "Last Updated"}</td>
-                    <td className={s.diffExisting}>
-                      {conflictData.existing?.updatedAt
-                        ? new Date(conflictData.existing.updatedAt).toLocaleString()
-                        : "—"}
-                    </td>
-                    <td className={s.diffIncoming}>{isAr ? "الآن (مسودة)" : "Just now"}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div className={s.conflictActions}>
-                <button
-                  type="button"
-                  className={s.btnCancelModal}
-                  onClick={() => setConflictData(null)}
-                >
-                  {isAr ? "إلغاء والعودة للنموذج" : "Cancel & Review"}
-                </button>
-                <button
-                  type="button"
-                  className={s.btnFork}
-                  onClick={() => handleSubmit("new_code")}
-                  disabled={sending}
-                >
-                  {isAr ? "🔀 إنشاء نسخة برمز جديد (-V2)" : "🔀 Mint New Variant (V2)"}
-                </button>
-                <button
-                  type="button"
-                  className={s.btnMerge}
-                  onClick={() => handleSubmit("merge")}
-                  disabled={sending}
-                >
-                  {isAr ? "⚡ دمج وتحديث البيانات الحالية" : "⚡ Merge & Update Unit"}
-                </button>
-                <button
-                  type="button"
-                  className={s.btnOverwrite}
-                  onClick={() => handleSubmit("overwrite")}
-                  disabled={sending}
-                >
-                  {isAr ? "⚠️ استبدال شامل (Overwrite)" : "⚠️ Overwrite"}
-                </button>
-              </div>
+      {/* Success Modal */}
+      {submittedResult && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <div className={styles.modalIcon}>
+              <CheckCircle2 style={{ width: 30, height: 30 }} />
             </div>
-          </div>
-        )}
+            <h2 className={styles.modalTitle}>
+              {isAr ? 'تم نشر ومزامنة الوحدة بنجاح!' : 'Property Published & Multi-Synced!'}
+            </h2>
+            <p className={styles.modalText}>
+              {isAr
+                ? 'تم حفظ الوحدة في قاعدة بيانات Supabase، وتحديث شيت جوجل أونلاين، وربط الإحداثيات على خريطة GIS ولوحة تحكم الإدارة.'
+                : 'Your unit is now live in Supabase Master Inventory, synced to the Online Google Sheet, pinned on the GIS Map, and queued in the Admin Command Deck.'}
+            </p>
 
-        {/* Success Modal */}
-        {done && (
-          <div className={s.modalOverlay}>
-            <div className={s.modalContent}>
-              <div className={s.modalIcon}>
-                <CheckCircle2 style={{ width: 32, height: 32 }} />
-              </div>
-              <h2 className={s.modalTitle}>{t.doneTitle}</h2>
-              <p className={s.modalText}>{t.doneDesc}</p>
-
-              <div className={s.codeBadge}>
-                <span>{t.refCode}:</span>
-                <strong>{done.ref}</strong>
-              </div>
-
-              {done.targetTab && (
-                <div style={{ fontSize: 12.5, color: "var(--muted)" }}>
-                  <span>{t.targetTab}: </span>
-                  <strong style={{ color: "var(--ink)" }}>
-                    {done.targetTab}
-                  </strong>
-                </div>
+            <div className={styles.codeBadge}>
+              <span>{submittedResult.code}</span>
+              {submittedResult.targetTab && (
+                <span style={{ fontSize: 11, opacity: 0.8 }}>
+                  · {submittedResult.targetTab.toUpperCase()}
+                </span>
               )}
+            </div>
 
-              <div className={s.modalActions}>
-                <a
-                  href={done.waHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={s.modalBtnPrimary}
-                >
-                  <MessageCircle style={{ width: 16, height: 16 }} />
-                  <span>{t.chatWa}</span>
-                </a>
-
-                <div className={s.modalBtnRow}>
-                  <a href="/client" className={s.modalBtnSecondary}>
-                    <ExternalLink style={{ width: 13, height: 13 }} />
-                    <span>{t.viewMap}</span>
-                  </a>
-                  <a href="/admin/properties" className={s.modalBtnSecondary}>
-                    <ExternalLink style={{ width: 13, height: 13 }} />
-                    <span>{t.viewAdmin}</span>
-                  </a>
+            {submittedResult.adCopy && (
+              <div style={{ width: '100%', textAlign: 'start' }}>
+                <div className={styles.intakeRaw} style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>
+                  {submittedResult.adCopy}
                 </div>
-
                 <button
                   type="button"
-                  className={s.againBtn}
-                  onClick={handleReset}
+                  onClick={() => {
+                    navigator.clipboard.writeText(submittedResult.adCopy || '');
+                    setCopiedAd(true);
+                    setTimeout(() => setCopiedAd(false), 2000);
+                  }}
+                  className={styles.samplePill}
+                  style={{ marginTop: 8, width: '100%', justifyContent: 'center', padding: '8px 12px' }}
                 >
-                  {t.addAnother}
+                  {copiedAd ? (
+                    <>
+                      <Check style={{ width: 14, height: 14, color: '#10b981' }} />
+                      <span>{isAr ? 'تم نسخ النص التسويقي!' : 'Marketing Copy Copied!'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy style={{ width: 14, height: 14 }} />
+                      <span>{isAr ? 'نسخ الإعلان الجاهز للواتساب وفيسبوك' : 'Copy Ready WhatsApp/Facebook Ad'}</span>
+                    </>
+                  )}
                 </button>
               </div>
+            )}
+
+            <div className={styles.modalActions}>
+              <Link href={`/property/${submittedResult.id}`} className={styles.modalBtnPrimary}>
+                <span>{isAr ? 'معاينة صفحة الوحدة في الموقع' : 'View Live Property Page'}</span>
+                <ExternalLink style={{ width: 14, height: 14 }} />
+              </Link>
+
+              <div className={styles.modalBtnRow}>
+                <Link href="/compounds" className={styles.modalBtnSecondary}>
+                  <MapPin style={{ width: 14, height: 14 }} />
+                  <span>{isAr ? 'الخريطة التفاعلية' : 'Open GIS Map'}</span>
+                </Link>
+                <Link href="/properties" className={styles.modalBtnSecondary}>
+                  <Building2 style={{ width: 14, height: 14 }} />
+                  <span>{isAr ? 'الإنفنتوري' : 'All Inventory'}</span>
+                </Link>
+              </div>
+
+              <button
+                type="button"
+                className={styles.againBtn}
+                onClick={() => {
+                  setSubmittedResult(null);
+                  resetForm();
+                }}
+              >
+                {isAr ? '+ إضافة وحدة عقارية أخرى' : '+ Add Another Property'}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

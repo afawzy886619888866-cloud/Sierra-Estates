@@ -72,18 +72,32 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           </div>
 
           <div className="nav-right">
-            <Link href="/easy-listing" className="add-listing-btn" title={t('addListingNote')}>
+            <Link
+              href="/easy-listing"
+              className="add-listing-btn"
+              title={isAr ? 'أضف عقارك · ملاك ووسطاء ووكلاء وموظفين' : 'Add Listing · Owners, Brokers, Agents & Employees'}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <PlusCircle style={{ width: 15, height: 15, color: '#10b981', flexShrink: 0 }} />
               <span className="al-text">{t('addListing')}</span>
               <span className="al-note">{t('addListingNote')}</span>
             </Link>
-            <Link href="/request" className="req-now-btn" title={t('reqNote')}>
+            <Link
+              href="/request"
+              className="req-now-btn"
+              title={
+                isAr
+                  ? 'عرض البلاك فرايداي من سييرا إستيتس · خصم 25% على رسوم الخدمة حتى 25 نوفمبر 2026'
+                  : 'Sierra Estates Black Friday Offer · 25% OFF Service till 25th November 2026'
+              }
+            >
               <span className="req-text">{t('reqNow')}</span>
               <span className="req-note">{t('reqNote')}</span>
               <span
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '2px 7px',
+                  padding: '2px 8px',
                   borderRadius: 999,
                   background: 'linear-gradient(135deg, #c9a84c 0%, #dfad3a 100%)',
                   color: '#061122',
@@ -93,9 +107,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                   boxShadow: '0 0 14px rgba(201, 168, 76, 0.85)',
                   marginLeft: isAr ? 0 : 6,
                   marginRight: isAr ? 6 : 0,
+                  whiteSpace: 'nowrap',
                 }}
               >
-                25%
+                {isAr ? 'خصم 25% · 25 نوفمبر' : '25% OFF · TILL 25 NOV'}
               </span>
             </Link>
             
@@ -244,7 +259,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <span>{t('reqNow')}</span>
                 <span
                   style={{
-                    padding: '2px 7px',
+                    padding: '2px 8px',
                     borderRadius: 999,
                     background: 'linear-gradient(135deg, #c9a84c 0%, #dfad3a 100%)',
                     color: '#061122',
@@ -255,7 +270,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                     boxShadow: '0 0 10px rgba(201, 168, 76, 0.7)',
                   }}
                 >
-                  25%
+                  {isAr ? 'خصم 25% · 25 نوفمبر' : '25% OFF · 25 NOV'}
                 </span>
               </Link>
 

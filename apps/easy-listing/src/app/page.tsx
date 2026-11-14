@@ -84,7 +84,17 @@ export default function Home() {
       <header className="sticky top-0 z-40 border-b border-[#c8961a]/20 bg-[#070b12]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <BrandHeader />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href="https://sierra-estates.net/request"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#c8961a] to-[#e9c176] px-3 py-1.5 text-[11px] font-black text-[#061122] shadow-[0_0_14px_rgba(201,168,76,0.45)] hover:brightness-110 transition-all"
+              title="Sierra Estates Black Friday Offer · 25% OFF Service till 25th November 2026"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>أضف طلبك (خصم 25% حتى 25 نوفمبر)</span>
+            </a>
             <Button
               variant="ghost"
               size="sm"

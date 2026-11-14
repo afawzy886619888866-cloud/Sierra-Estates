@@ -32,7 +32,8 @@ export type ListingSubmissionWorkflowInput = {
   brokerPhone?: string;
   brokerName?: string;
   agentName?: string;
-  submitterType?: 'owner' | 'broker' | 'employee' | 'bot';
+  employeeName?: string;
+  submitterType?: 'owner' | 'broker' | 'agent' | 'employee' | 'bot';
   rawText?: string;
   comment?: string;
   photos?: string[];
@@ -171,7 +172,16 @@ async function persistListingStep(
   const effectiveOwnerPhone = data.ownerPhone || (!isBroker ? data.mobile : '') || null;
   const effectiveBrokerPhone = data.brokerPhone || (isBroker ? data.mobile : '') || null;
   const primaryPhone = effectiveOwnerPhone || effectiveBrokerPhone || data.mobile || '201092048333';
-  const agentDisplay = data.agentName || (isBroker ? 'Authorized Broker' : 'Sierra Advisory Desk');
+  const effectiveStaffName = (data.employeeName || data.agentName || '').trim();
+  const agentDisplay = effectiveStaffName || (isBroker ? 'Authorized Broker' : 'Sierra Advisory Desk');
+  const roleLabel =
+    data.submitterType === 'employee'
+      ? 'Employee'
+      : data.submitterType === 'agent'
+        ? 'Agent'
+        : isBroker
+          ? 'Broker'
+          : 'Owner';
 
   const listingDocument = {
     code: listingCode,
@@ -211,10 +221,10 @@ async function persistListingStep(
     mode: data.mode,
     finishing: data.finishing,
     finishingType: data.finishing,
-    ownerType: isBroker ? 'Broker' : 'Owner',
-    advertiserType: isBroker ? 'Broker' : 'Direct Owner',
+    ownerType: roleLabel,
+    advertiserType: isBroker ? 'Broker' : data.submitterType === 'employee' ? `Sierra Employee (${agentDisplay})` : data.submitterType === 'agent' ? `Agent (${agentDisplay})` : 'Direct Owner',
     sourceChannel: data.submitterType || (isBroker ? 'broker' : 'owner'),
-    tag: isBroker ? 'Broker Direct Submission' : 'Owner Direct Submission',
+    tag: isBroker ? 'Broker Direct Submission' : data.submitterType === 'employee' ? 'Employee Verified Listing' : 'Owner Direct Submission',
     aiScore: 92,
     ago: 'Just now',
     img: (data.photos?.[0] || data.images?.[0]) || null,
