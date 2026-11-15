@@ -117,7 +117,10 @@ export async function matchInventoryForRequest(input: ClientRequestInput, limit 
   const answers = {
     budget: (input.budgetEgp ?? 0) / EGP_PER_USD,
     beds: input.bedrooms ?? 0,
-    type: (input.propertyType ?? 'Apartment') as Listing['type'],
+    // §21 no-fabrication: an unstated property type is NO preference — never
+    // an invented 'Apartment' default (match-scoring skips the 15-pt type
+    // bonus when answers.type is null/undefined).
+    type: (input.propertyType ?? null) as Listing['type'] | null,
     mode: (input.transactionType === 'Rent' ? 'rent' : 'sale') as ListingMode,
     preferredZone: input.compoundZone as Listing['zone'],
   };

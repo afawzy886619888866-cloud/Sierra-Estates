@@ -201,7 +201,9 @@ export async function POST(request: Request) {
         const answers = {
           budget: Math.round(budgetEgp / 50), // EGP → USD (listings mapper rate)
           beds: bedrooms ?? 0,
-          type: (unitType || type || 'apartment') as never,
+          // §21 no-fabrication: unstated type → no preference (bonus
+          // skipped), never an invented 'apartment' default.
+          type: (unitType || type || null) as never,
           mode: inquiryFields.mode,
           ...(inquiryFields.zone ? { preferredZone: inquiryFields.zone as never } : {}),
         };

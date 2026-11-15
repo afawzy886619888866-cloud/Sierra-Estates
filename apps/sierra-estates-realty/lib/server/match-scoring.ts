@@ -85,8 +85,10 @@ export function scoreMatch(listing: Listing, answers: MatchAnswers): ScoredMatch
     score += 4;
   }
 
-  // 3. Property type — 15 pts (soft preference).
-  if (listing.type === answers.type) {
+  // 3. Property type — 15 pts (soft preference). §21 no-fabrication:
+  // nullish answers.type means the client stated NO type preference —
+  // skip the bonus rather than assume a default.
+  if (answers.type && listing.type === answers.type) {
     score += 15;
     reasons.push(`${listing.type} matches preference`);
   }

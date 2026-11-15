@@ -269,7 +269,9 @@ export interface AuditLog {
 export interface MatchAnswers {
   budget: number;          // total USD
   beds: number;
-  type: PropertyType;
+  /** §21 no-fabrication: optional — an unstated type is no preference
+   *  (match-scoring skips the type bonus), never an invented default. */
+  type?: PropertyType | null;
   mode: ListingMode;
   preferredZone?: CompoundZone;
 }
