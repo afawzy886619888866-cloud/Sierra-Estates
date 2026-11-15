@@ -98,6 +98,7 @@ export interface RealListing {
   availability?: string;
   isDirectOwner?: boolean;
   verifiedFresh?: boolean;
+  updatedAt?: string;
 }
 
 type ViewMode = 'split' | 'grid' | 'map';
@@ -168,6 +169,7 @@ const RENT_PRICE_RANGES = [
 ];
 
 const SORT_OPTIONS = [
+  { value: 'recent', labelEn: 'Most Recent First', labelAr: 'الأحدث أولاً' },
   { value: 'ai', labelEn: 'AI Score: Top Pick ↓', labelAr: 'موصى به بالذكاء الاصطناعي ↓' },
   { value: 'price-asc', labelEn: 'Price: Low to High', labelAr: 'السعر: من الأقل للأعلى' },
   { value: 'price-desc', labelEn: 'Price: High to Low', labelAr: 'السعر: من الأعلى للأقل' },
@@ -248,6 +250,7 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     availability,
     isDirectOwner,
     verifiedFresh: isVerifiedFresh,
+    updatedAt: raw.updatedAt || raw.updated_at || raw.createdAt || raw.created_at || undefined,
   };
 }
 
@@ -332,7 +335,7 @@ export default function PropertiesPage() {
   const [selectedBeds, setSelectedBeds] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
-  const [sortBy, setSortBy] = useState('ai');
+  const [sortBy, setSortBy] = useState('recent');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
   const [centerCoords, setCenterCoords] = useState<[number, number]>([30.045, 31.59]);
@@ -503,6 +506,12 @@ export default function PropertiesPage() {
   const sortedListings = useMemo(() => {
     const list = filteredListings.slice();
     list.sort((a, b) => {
+      if (sortBy === 'recent') {
+        const tA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const tB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        if (tA && tB && tA !== tB) return tB - tA;
+        return 0;
+      }
       if (sortBy === 'ai') return b.ai - a.ai;
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
@@ -602,7 +611,7 @@ export default function PropertiesPage() {
     setSelectedPriceRange('all');
     setSelectedCondition('all');
     setRadiusKm(null);
-    setSortBy('ai');
+    setSortBy('recent');
     setActiveUnit(null);
   };
 
