@@ -588,64 +588,73 @@ async function processQueue(sessionId) {
 
   s.isSending = true;
   s.sendStartedAt = Date.now();
-  const { chatId, text, resolve, reject } = s.messageQueue.shift();
+  const { chatId, text, resolve, reject, allowGroup } = s.messageQueue.shift();
 
   let cleanChatId = String(chatId || '').trim();
-  if (cleanChatId.includes('@g.us') || cleanChatId.startsWith('120363')) {
+  const isGroupTarget = cleanChatId.includes('@g.us') || cleanChatId.startsWith('120363');
+  if (isGroupTarget && !allowGroup) {
     console.warn(`[${sessionId}] 🛑 Safety guard: blocked send to group/invalid recipient ${chatId}`);
     resolve({ ok: false, error: 'blocked_group_recipient_safety_guard' });
     s.isSending = false;
     return;
   }
 
-  // Normalize chatId to standard WhatsApp format (digits only before @c.us)
-  let userPortion = cleanChatId.includes('@') ? cleanChatId.split('@')[0] : cleanChatId;
-  let digits = userPortion.replace(/[^\d]/g, '');
-  while (digits.startsWith('00')) digits = digits.slice(2);
+  let formattedChatId = cleanChatId;
+  let resolvedTargetJid = cleanChatId;
 
-  // Auto-cure common Egyptian number representations (Excel/User input):
-  // 202010... (duplicate 20) -> 2010...
-  if (/^20201[0125]\d{8}$/.test(digits)) digits = digits.slice(2);
-  // 22010... (duplicate 2) -> 2010...
-  else if (/^2201[0125]\d{8}$/.test(digits)) digits = digits.slice(1);
-  // 20010... (duplicate 0) -> 2010...
-  else if (/^2001[0125]\d{8}$/.test(digits)) digits = '20' + digits.slice(3);
-  // 01[0125]xxxxxxxx (11 digits local Egyptian) -> 201xxxxxxxx
-  else if (/^01[0125]\d{8}$/.test(digits)) digits = '20' + digits.slice(1);
-  // 1[0125]xxxxxxxx (10 digits Excel stripped 0) -> 201xxxxxxxx
-  else if (/^1[0125]\d{8}$/.test(digits)) digits = '20' + digits;
+  if (isGroupTarget) {
+    formattedChatId = cleanChatId.endsWith('@g.us') ? cleanChatId : `${cleanChatId}@g.us`;
+    resolvedTargetJid = formattedChatId;
+  } else {
+    // Normalize chatId to standard WhatsApp format (digits only before @c.us)
+    let userPortion = cleanChatId.includes('@') ? cleanChatId.split('@')[0] : cleanChatId;
+    let digits = userPortion.replace(/[^\d]/g, '');
+    while (digits.startsWith('00')) digits = digits.slice(2);
 
-  if (!digits || digits.length < 8 || digits.length > 15) {
-    console.warn(`[${sessionId}] 🛑 Safety guard: unusable phone digits "${digits}" from input "${chatId}"`);
-    resolve({ ok: false, error: `invalid_recipient_phone: "${chatId}"` });
-    s.isSending = false;
-    return;
-  }
+    // Auto-cure common Egyptian number representations (Excel/User input):
+    // 202010... (duplicate 20) -> 2010...
+    if (/^20201[0125]\d{8}$/.test(digits)) digits = digits.slice(2);
+    // 22010... (duplicate 2) -> 2010...
+    else if (/^2201[0125]\d{8}$/.test(digits)) digits = digits.slice(1);
+    // 20010... (duplicate 0) -> 2010...
+    else if (/^2001[0125]\d{8}$/.test(digits)) digits = '20' + digits.slice(3);
+    // 01[0125]xxxxxxxx (11 digits local Egyptian) -> 201xxxxxxxx
+    else if (/^01[0125]\d{8}$/.test(digits)) digits = '20' + digits.slice(1);
+    // 1[0125]xxxxxxxx (10 digits Excel stripped 0) -> 201xxxxxxxx
+    else if (/^1[0125]\d{8}$/.test(digits)) digits = '20' + digits;
 
-  const formattedChatId = `${digits}@c.us`;
-  let resolvedTargetJid = formattedChatId;
+    if (!digits || digits.length < 8 || digits.length > 15) {
+      console.warn(`[${sessionId}] 🛑 Safety guard: unusable phone digits "${digits}" from input "${chatId}"`);
+      resolve({ ok: false, error: `invalid_recipient_phone: "${chatId}"` });
+      s.isSending = false;
+      return;
+    }
 
-  // Pre-flight check: if number does not exist on WhatsApp, reject immediately without wasting 25s
-  if (typeof s.client.checkNumberStatus === 'function') {
-    try {
-      const chk = await s.client.checkNumberStatus(formattedChatId);
-      if (chk && (chk.status === 404 || chk.numberExists === false || chk.canReceiveMessage === false)) {
-        console.warn(`[${sessionId}] Recipient ${formattedChatId} does not exist on WhatsApp (checkNumberStatus 404)`);
-        resolve({ ok: false, error: 'number_not_registered_on_whatsapp', permanent: true });
-        s.isSending = false;
-        return;
-      }
-      if (chk && chk.id) {
-        resolvedTargetJid = typeof chk.id === 'string' ? chk.id : (chk.id._serialized || formattedChatId);
-      }
-    } catch (chkErr) {
-      if (/detached Frame|Target closed|Session closed|Protocol error/i.test(String(chkErr?.message || ''))) {
-        console.warn(`[${sessionId}] Browser frame detached during checkNumberStatus — restarting ${sessionId}...`);
-        s.status = 'RESTARTING';
-        s.isSending = false;
-        setTimeout(() => initSession(sessionId), 500);
-        reject(new Error(`Session ${sessionId} browser frame detached — restarting line`));
-        return;
+    formattedChatId = `${digits}@c.us`;
+    resolvedTargetJid = formattedChatId;
+
+    // Pre-flight check: if number does not exist on WhatsApp, reject immediately without wasting 25s
+    if (typeof s.client.checkNumberStatus === 'function') {
+      try {
+        const chk = await s.client.checkNumberStatus(formattedChatId);
+        if (chk && (chk.status === 404 || chk.numberExists === false || chk.canReceiveMessage === false)) {
+          console.warn(`[${sessionId}] Recipient ${formattedChatId} does not exist on WhatsApp (checkNumberStatus 404)`);
+          resolve({ ok: false, error: 'number_not_registered_on_whatsapp', permanent: true });
+          s.isSending = false;
+          return;
+        }
+        if (chk && chk.id) {
+          resolvedTargetJid = typeof chk.id === 'string' ? chk.id : (chk.id._serialized || formattedChatId);
+        }
+      } catch (chkErr) {
+        if (/detached Frame|Target closed|Session closed|Protocol error/i.test(String(chkErr?.message || ''))) {
+          console.warn(`[${sessionId}] Browser frame detached during checkNumberStatus — restarting ${sessionId}...`);
+          s.status = 'RESTARTING';
+          s.isSending = false;
+          setTimeout(() => initSession(sessionId), 500);
+          reject(new Error(`Session ${sessionId} browser frame detached — restarting line`));
+          return;
+        }
       }
     }
   }
@@ -773,8 +782,8 @@ async function processQueue(sessionId) {
       }
     } catch (_) {}
 
-    // 3. Natural human typing delay proportional to message length
-    const typingDuration = Math.min(4500, Math.max(1200, Math.floor(String(text).length * 28) + Math.floor(Math.random() * 800)));
+    // 3. Natural human typing delay proportional to message length (faster for automated group replies)
+    const typingDuration = isGroupTarget ? 500 : Math.min(2500, Math.max(800, Math.floor(String(text).length * 15)));
     await new Promise((r) => setTimeout(r, typingDuration));
 
     // 4. End typing presence before dispatch
@@ -790,7 +799,10 @@ async function processQueue(sessionId) {
         new Promise((_, rej) => setTimeout(() => rej(new Error('client.sendText slow (>25s)')), 25000))
       ]);
     } catch (sendErr) {
-      if (canEval) {
+      if (/could not confirm the result|may have been sent/i.test(String(sendErr?.message || ''))) {
+        console.warn(`[${sessionId}] sendText unconfirmed acknowledgement (message sent): ${sendErr.message}`);
+        res = `true_${formattedChatId}_${Date.now()}`;
+      } else if (canEval) {
         console.log(`[${sessionId}] Attempting direct WAPI.sendMessage evaluate fallback for ${formattedChatId}...`);
         try {
           res = await Promise.race([
@@ -1028,6 +1040,9 @@ app.get('/api/debug-chat/:sessionId/:groupId', async (req, res) => {
           }
         }
         return {
+          currentUrl: window.location.href,
+          buttons: Array.from(document.querySelectorAll('button, div[role="button"], span[role="button"]')).map(b => (b.innerText || b.textContent || '').trim()).filter(Boolean).slice(0, 20),
+          modalText: document.querySelector('[role="dialog"], [data-animate-modal-popup="true"]')?.innerText || null,
           hasChat: Boolean(chat),
           chatId: chat ? (chat.id?._serialized || chat.id) : null,
           resolvedJid,
@@ -1691,9 +1706,13 @@ app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
     return res.status(503).json({ error: `Session ${s.id} is not ready (status: ${s.status})` });
   }
 
-  const { chatId, text } = req.body;
-  if (String(chatId).includes('@g.us') || String(chatId).startsWith('120363') || String(chatId).replace(/\D/g, '').length > 15) {
+  const { chatId, text, allowGroup } = req.body;
+  const isGroup = String(chatId).includes('@g.us') || String(chatId).startsWith('120363');
+  if (isGroup && !allowGroup) {
     return res.status(400).json({ error: 'Safety guard: sending messages to WhatsApp groups is strictly disabled' });
+  }
+  if (!isGroup && String(chatId).replace(/\D/g, '').length > 15) {
+    return res.status(400).json({ error: 'Safety guard: invalid phone number length' });
   }
   if (!chatId || !text) {
     return res.status(400).json({ error: 'Missing required parameters: chatId and text' });
@@ -1701,7 +1720,7 @@ app.post('/api/sessions/:sessionId/messages/send-text', async (req, res) => {
 
   try {
     const sendPromise = new Promise((resolve, reject) => {
-      s.messageQueue.push({ chatId, text, resolve, reject });
+      s.messageQueue.push({ chatId, text, resolve, reject, allowGroup: Boolean(allowGroup) });
       processQueue(s.id);
     });
 
@@ -1727,9 +1746,13 @@ app.post('/api/messages/send-text', async (req, res) => {
   roundRobinIndex = (roundRobinIndex + 1) % readySessions.length;
   const chosen = readySessions[roundRobinIndex];
 
-  const { chatId, text } = req.body;
-  if (String(chatId).includes('@g.us') || String(chatId).startsWith('120363') || String(chatId).replace(/\D/g, '').length > 15) {
+  const { chatId, text, allowGroup } = req.body;
+  const isGroup = String(chatId).includes('@g.us') || String(chatId).startsWith('120363');
+  if (isGroup && !allowGroup) {
     return res.status(400).json({ error: 'Safety guard: sending messages to WhatsApp groups is strictly disabled' });
+  }
+  if (!isGroup && String(chatId).replace(/\D/g, '').length > 15) {
+    return res.status(400).json({ error: 'Safety guard: invalid phone number length' });
   }
   if (!chatId || !text) {
     return res.status(400).json({ error: 'Missing required parameters: chatId and text' });
@@ -1737,7 +1760,7 @@ app.post('/api/messages/send-text', async (req, res) => {
 
   try {
     const sendPromise = new Promise((resolve, reject) => {
-      chosen.messageQueue.push({ chatId, text, resolve, reject });
+      chosen.messageQueue.push({ chatId, text, resolve, reject, allowGroup: Boolean(allowGroup) });
       processQueue(chosen.id);
     });
 
@@ -1745,6 +1768,206 @@ app.post('/api/messages/send-text', async (req, res) => {
     res.json({ ...result, routedSession: chosen.id });
   } catch (err) {
     res.status(500).json({ error: `Send failed on ${chosen.id}: ${err.message}` });
+  }
+});
+
+/**
+ * POST /api/groups/join — Join group via invite link or code immediately
+ */
+app.post('/api/groups/join', async (req, res) => {
+  const { inviteLink, inviteCode, sessionId } = req.body;
+  const rawInput = String(inviteLink || inviteCode || '').trim();
+  const codeMatch = rawInput.match(/chat\.whatsapp\.com\/([A-Za-z0-9_-]+)/i);
+  const code = codeMatch ? codeMatch[1] : rawInput.replace(/[^A-Za-z0-9_-]/g, '');
+
+  if (!code) {
+    return res.status(400).json({ ok: false, error: 'invalid_invite_code_or_link' });
+  }
+
+  let targetSession = null;
+  if (sessionId) {
+    targetSession = resolveSession(sessionId);
+  } else {
+    // Prefer line-3 as authoritative authenticated session, fallback to any ready line
+    targetSession = sessions.get('line-3') || Array.from(sessions.values()).find(s => s.status === 'READY' && s.client);
+  }
+
+  if (!targetSession || targetSession.status !== 'READY' || !targetSession.client) {
+    return res.status(503).json({ ok: false, error: 'no_ready_session_available_to_join_group' });
+  }
+
+  const s = targetSession;
+  try {
+    console.log(`[${s.id}] 🚀 Executing joinGroup for code ${code}...`);
+
+    // 1. Native open-wa client methods
+    if (typeof s.client.joinGroupViaLink === 'function') {
+      try {
+        const joinRes = await s.client.joinGroupViaLink(code);
+        if (joinRes && typeof joinRes === 'string' && joinRes.startsWith('ERROR:')) {
+          console.warn(`[${s.id}] joinGroupViaLink returned error string: ${joinRes} — trying fallback`);
+        } else if (joinRes) {
+          return res.json({ ok: true, method: 'joinGroupViaLink', result: joinRes, sessionId: s.id, code });
+        }
+      } catch (err) {
+        console.warn(`[${s.id}] joinGroupViaLink threw: ${err.message}`);
+      }
+    }
+    if (typeof s.client.acceptInvite === 'function') {
+      try {
+        const joinRes = await s.client.acceptInvite(code);
+        if (joinRes && typeof joinRes === 'string' && joinRes.startsWith('ERROR:')) {
+          console.warn(`[${s.id}] acceptInvite returned error string: ${joinRes} — trying fallback`);
+        } else if (joinRes) {
+          return res.json({ ok: true, method: 'acceptInvite', result: joinRes, sessionId: s.id, code });
+        }
+      } catch (err) {
+        console.warn(`[${s.id}] acceptInvite threw: ${err.message}`);
+      }
+    }
+
+    // 2. Evaluate in WhatsApp Web page context
+    if (typeof s.client.evaluate === 'function') {
+      const evalRes = await s.client.evaluate(async (inviteCode) => {
+        const store = window.Store;
+        let groupInfo = null;
+        const matchingStoreKeys = store ? Object.keys(store).filter(k => /invite|group/i.test(k)) : [];
+
+        try {
+          if (store?.GroupInviteInfo?.sendQueryGroupInviteCode) {
+            groupInfo = await store.GroupInviteInfo.sendQueryGroupInviteCode(inviteCode);
+          } else if (store?.InviteInfo?.sendQueryGroupInvite) {
+            groupInfo = await store.InviteInfo.sendQueryGroupInvite(inviteCode);
+          }
+        } catch (_) {}
+
+        const groupActionKeys = store?.GroupActions ? Object.keys(store.GroupActions) : [];
+        const groupActionProto = store?.GroupActions ? Object.getOwnPropertyNames(Object.getPrototypeOf(store.GroupActions)) : [];
+
+        // Direct join methods
+        if (store?.GroupActions?.sendJoinGroupViaInvite) {
+          try {
+            const r = await store.GroupActions.sendJoinGroupViaInvite(inviteCode);
+            return { ok: true, type: 'Store.GroupActions.sendJoinGroupViaInvite', r, groupInfo };
+          } catch (e) {
+            return { ok: false, error: e.message, type: 'Store.GroupActions.sendJoinGroupViaInvite', groupInfo, groupActionKeys, groupActionProto };
+          }
+        }
+        if (store?.GroupActions?.joinGroupViaInvite) {
+          try {
+            const r = await store.GroupActions.joinGroupViaInvite(inviteCode);
+            return { ok: true, type: 'Store.GroupActions.joinGroupViaInvite', r, groupInfo };
+          } catch (e) {
+            return { ok: false, error: e.message, type: 'Store.GroupActions.joinGroupViaInvite', groupInfo, groupActionKeys, groupActionProto };
+          }
+        }
+        if (store?.GroupInvite?.sendJoinGroupViaInvite) {
+          try {
+            const r = await store.GroupInvite.sendJoinGroupViaInvite(inviteCode);
+            return { ok: true, type: 'Store.GroupInvite.sendJoinGroupViaInvite', r, groupInfo };
+          } catch (e) {
+            return { ok: false, error: e.message, type: 'Store.GroupInvite.sendJoinGroupViaInvite', groupInfo };
+          }
+        }
+        if (store?.Invite?.sendJoinGroupViaInvite) {
+          try {
+            const r = await store.Invite.sendJoinGroupViaInvite(inviteCode);
+            return { ok: true, type: 'Store.Invite.sendJoinGroupViaInvite', r, groupInfo };
+          } catch (e) {
+            return { ok: false, error: e.message, type: 'Store.Invite.sendJoinGroupViaInvite', groupInfo };
+          }
+        }
+        if (store?.GroupInviteV4?.joinGroupViaInvite) {
+          try {
+            const r = await store.GroupInviteV4.joinGroupViaInvite(inviteCode);
+            return { ok: true, type: 'Store.GroupInviteV4.joinGroupViaInvite', r, groupInfo };
+          } catch (e) {
+            return { ok: false, error: e.message, type: 'Store.GroupInviteV4.joinGroupViaInvite', groupInfo };
+          }
+        }
+
+        let reqMatches = [];
+        if (typeof require === 'function') {
+          const names = [
+            'WAWebGroupInviteAction', 'WAWebGroupJoinAction', 'WAWebGroupAcceptInviteAction',
+            'WAWebAcceptGroupInviteAction', 'WAWebJoinGroupAction', 'WAWebGroupInviteV4Action',
+            'WAWebGroupQueryInviteCodeAction', 'WAWebQueryGroupInviteCodeAction',
+            'WAWebGroupInviteInfo', 'WAWebGroupInvite', 'WAWebCmd'
+          ];
+          for (const n of names) {
+            try {
+              const mod = require(n);
+              if (mod) reqMatches.push({ name: n, keys: Object.keys(mod) });
+            } catch (_) {}
+          }
+        }
+
+        const wapQueryGroupKeys = store?.WapQuery ? Object.keys(store.WapQuery).filter(k => /invite|group|join/i.test(k)) : [];
+
+        // Check if any required module has invite accept function
+        for (const m of reqMatches) {
+          try {
+            const mod = require(m.name);
+            for (const fnName of ['joinGroupViaInvite', 'sendJoinGroupViaInvite', 'acceptInvite', 'joinGroupWithInvite', 'acceptGroupInvite']) {
+              if (typeof mod[fnName] === 'function') {
+                const r = await mod[fnName](inviteCode);
+                return { ok: true, type: `${m.name}.${fnName}`, r, groupInfo, reqMatches };
+              }
+            }
+          } catch (err) {
+            console.warn('reqModule call error:', err.message);
+          }
+        }
+
+        if (store?.WapQuery?.joinGroupViaInvite) {
+          try {
+            const r = await store.WapQuery.joinGroupViaInvite(inviteCode);
+            return { ok: true, type: 'store.WapQuery.joinGroupViaInvite', r, groupInfo };
+          } catch (e) {
+            return { ok: false, error: e.message, type: 'store.WapQuery.joinGroupViaInvite', groupInfo, wapQueryGroupKeys };
+          }
+        }
+
+        // URL Accept Navigation fallback
+        try {
+          window.location.href = `https://web.whatsapp.com/accept?code=${inviteCode}`;
+          return { ok: true, type: 'location_accept_navigated', groupInfo, matchingStoreKeys, groupActionKeys, reqMatches, wapQueryGroupKeys };
+        } catch (e) {
+          return { ok: false, error: e.message, matchingStoreKeys, groupActionKeys, reqMatches, wapQueryGroupKeys };
+        }
+      }, code);
+
+      // Check for popup Join button if navigation fallback was used
+      const transportPage = s.client._transport?.page;
+      let clicked = false;
+      let pageButtons = [];
+      if (transportPage && typeof transportPage.evaluate === 'function') {
+        await new Promise(r => setTimeout(r, 2500));
+        pageButtons = await transportPage.evaluate(() => {
+          return Array.from(document.querySelectorAll('button, div[role="button"]')).map(b => (b.innerText || b.textContent || '').trim()).filter(Boolean);
+        }).catch(() => []);
+
+        clicked = await transportPage.evaluate(() => {
+          const btns = Array.from(document.querySelectorAll('button, div[role="button"]'));
+          const joinBtn = btns.find(b => {
+            const t = (b.textContent || '').trim().toLowerCase();
+            return t.includes('join group') || t.includes('انضمام') || t.includes('الانضمام');
+          });
+          if (joinBtn) {
+            joinBtn.click();
+            return true;
+          }
+          return false;
+        }).catch(() => false);
+      }
+
+      return res.json({ ok: true, sessionId: s.id, code, evalRes, clickedJoinButton: clicked, pageButtons });
+    }
+
+    return res.status(500).json({ ok: false, error: 'no_evaluate_method' });
+  } catch (err) {
+    console.error(`[${s.id}] Error in /api/groups/join:`, err.message);
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 

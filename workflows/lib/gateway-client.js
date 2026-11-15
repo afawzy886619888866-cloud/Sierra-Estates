@@ -262,11 +262,17 @@ class GatewayClient {
     return { ok: false, exists: false, error: 'check-number failed across pool' };
   }
 
-  async sendText(chatId, text, { sessionId = null, retries = 2, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  async sendText(chatId, text, { sessionId = null, retries = 2, timeoutMs = DEFAULT_TIMEOUT_MS, allowGroup = false } = {}) {
     if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
     if (!this.operatorKey) throw new Error('no operator/API key configured');
     const target = normalizeChatId(chatId);
-    if (target.endsWith('@g.us') || target.startsWith('120363') || !/^\d+@c\.us$/.test(target)) {
+    const isGroup = target.endsWith('@g.us') || target.startsWith('120363');
+    if (isGroup && !allowGroup) {
+      const err = new Error(`unusable chatId after normalization: "${target}"`);
+      err.permanent = true;
+      throw err;
+    }
+    if (!isGroup && !/^\d+@c\.us$/.test(target)) {
       const err = new Error(`unusable chatId after normalization: "${target}"`);
       err.permanent = true;
       throw err;
@@ -289,7 +295,7 @@ class GatewayClient {
             {
               method: 'POST',
               headers: { 'X-API-Key': this.operatorKey },
-              body: { chatId: target, text: String(text ?? '') },
+              body: { chatId: target, text: String(text ?? ''), allowGroup: Boolean(allowGroup) },
               timeoutMs,
             }
           );

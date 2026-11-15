@@ -662,20 +662,72 @@ async function handleInboundListingDrop(message) {
     }
   }
 
-  // 9. Send Automated WhatsApp Confirmation Reply ONLY for individual chats (NEVER groups)
-  const isGroupMsg = message.isGroup || String(message.chatId).includes('@g.us') || String(message.chatId).startsWith('120363');
+  // 9. Automated WhatsApp Notification & Reply Pipeline
+  const isGroupMsg = Boolean(message.isGroup || String(message.chatId).includes('@g.us') || String(message.chatId).startsWith('120363'));
+  const gateway = new GatewayClient();
+  let replySent = false;
+  let privateForwardSent = false;
+
+  // Extract contact phone number (sender phone or extracted from text)
+  const contactPhone = normalizeOwnerPhone(message.sender) || (message.sender ? String(message.sender).replace(/[^\d]/g, '') : '') || (message.chatId && !isGroupMsg ? String(message.chatId).replace(/[^\d]/g, '') : '') || 'غير متوفر';
+  const submitterName = message.pushName || message.senderName || message.sender || 'غير معروف';
+
+  // Private Contact Forwarding: Send owner/broker contact details strictly & privately to 01092048333
+  const userDirectJid = '201092048333@c.us';
+  const privateForwardMsg = `🔔 *إشعار وحدة جديدة واردة — Sierra Estates*\n\n` +
+    `• *كود الوحدة:* ${code}\n` +
+    `• *الكومباوند:* ${detectedCompound}\n` +
+    `• *النوع:* ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
+    `• *السعر:* ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
+    `• *المساحة:* ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
+    `• *المصدر:* ${isGroupMsg ? (message.groupName || message.chatId || 'جروب عقاري') : 'محادثة خاصة مباشرة'}\n` +
+    `• *اسم المرسل:* ${submitterName}\n` +
+    `• *رقم التواصل (المالك/البروكر):* ${contactPhone}\n` +
+    `• *واتساب مباشر:* https://wa.me/${contactPhone.replace(/[^\d]/g, '')}\n\n` +
+    `📝 *نص الرسالة الأصلي:*\n"${text.slice(0, 500)}"`;
+
+  try {
+    await gateway.sendText(userDirectJid, privateForwardMsg, { allowGroup: false, timeoutMs: 25000 });
+    privateForwardSent = true;
+  } catch (err) {
+    console.warn(`inbox: private contact forward to ${userDirectJid} failed: ${err.message}`);
+  }
+
   if (isGroupMsg) {
+    // Filtered Instant Reply for Public / Groups:
+    // Strictly restricted to unit details and code. ZERO CONTACT NUMBERS EXPOSED IN THE GROUP.
+    const groupFilteredMsg = `أهلاً بحضرتك، أنا ليلى من Sierra Estates 🌸\n\n` +
+      `✅ تم استلام مواصفات الوحدة بنجاح وإضافتها فوراً ضمن المخزون والخريطة للتنسيق المباشر مع عدد من العملاء المهتمين لدينا:\n\n` +
+      `• كود الوحدة: ${code}\n` +
+      `• الكومباوند: ${detectedCompound}\n` +
+      `• النوع: ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
+      `• السعر: ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
+      `• المساحة: ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
+      `• العنوان: ${copy.titleAr}\n` +
+      `• رابط المعاينة والخريطة: https://sierra-estates.net/property/${code}\n\n` +
+      `📌 للتنسيق ومعاينة الوحدة يُرجى التواصل معنا عبر الخاص أو بكود الوحدة.`;
+
+    try {
+      await gateway.sendText(message.chatId, groupFilteredMsg, { allowGroup: true, timeoutMs: 25000 });
+      replySent = true;
+    } catch (err) {
+      console.warn(`inbox: group reply to ${message.chatId} failed: ${err.message}`);
+    }
+
     return {
       routed: true,
-      intent: 'listing_ingested_silent',
+      intent: 'listing_ingested_group',
       code,
       compound: detectedCompound,
       dealType,
       price,
       dbSaved,
-      replySent: false,
+      replySent,
+      privateForwardSent,
     };
   }
+
+  // Individual Direct Message Reply
   const replyTarget = normalizeOwnerPhone(message.sender) || message.chatId;
   const confirmationMsg = `أهلاً بحضرتك يا فندم، أنا ليلى من Sierra Estates 🌸\n\n` +
     `✅ تم استلام مواصفات الوحدة بنجاح وإضافتها فوراً ضمن المخزون والخريطة للتنسيق المباشر مع عدد من العملاء المهتمين لدينا:\n\n` +
@@ -684,12 +736,11 @@ async function handleInboundListingDrop(message) {
     `• النوع: ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
     `• السعر: ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
     `• المساحة: ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
-    `• العنوان: ${copy.titleAr}\n\n` +
+    `• العنوان: ${copy.titleAr}\n` +
+    `• رابط المعاينة والخريطة: https://sierra-estates.net/property/${code}\n\n` +
     `تم إدراج الوحدة في المخزون وتحديث الخريطة التفاعلية، وسيتواصل مع حضرتك فريق العمل فور تنسيق موعد المعاينة 🤝`;
 
-  let replySent = false;
   try {
-    const gateway = new GatewayClient();
     await gateway.sendText(replyTarget, confirmationMsg, { timeoutMs: 8000 });
     replySent = true;
   } catch (err) {
@@ -721,6 +772,7 @@ async function handleInboundListingDrop(message) {
     price,
     dbSaved,
     replySent,
+    privateForwardSent,
   };
 }
 
