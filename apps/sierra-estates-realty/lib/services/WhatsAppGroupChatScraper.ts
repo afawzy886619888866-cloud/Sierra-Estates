@@ -25,6 +25,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { upsertRecord, listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
+import { resolveLocation } from '@/lib/inventory/gazetteer';
+import { syncWebsiteSubmissionToSheet } from '@/lib/services/GoogleSheetSyncService';
 
 const genAI = new GoogleGenerativeAI(
   process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || ''
@@ -478,6 +480,10 @@ export async function scrapeWhatsAppGroupChat(
 
   for (const listing of deduped) {
     try {
+      const geo = resolveLocation(listing.compound || groupName);
+      const listingCode = listing.sierraCode || `SE-BRK-${Date.now().toString().slice(-6)}`;
+
+      // 1. Dual-upsert: 'units' table for internal CRM
       await upsertRecord(
         'units',
         {
@@ -499,7 +505,7 @@ export async function scrapeWhatsAppGroupChat(
           sourceGroup: groupName,
           rawText: listing.rawText,
           dedupeKey: listing.dedupeKey,
-          sierraCode: listing.sierraCode,
+          sierraCode: listingCode,
           valuationScore: listing.valuationScore,
           urgencyScore: listing.urgencyScore,
           needsPhoto: true,
@@ -508,6 +514,70 @@ export async function scrapeWhatsAppGroupChat(
         },
         'dedupeKey'
       );
+
+      // 2. Authoritative 'listings' table: GIS Client Map + Admin Command Deck + Supabase DB
+      await upsertRecord(
+        'listings',
+        {
+          code: listingCode,
+          title: `${listing.unitType ? listing.unitType.toUpperCase() : 'UNIT'} · ${listing.compound || groupName}`,
+          description: listing.rawText,
+          deal_type: listing.priceType === 'rent' ? 'rent' : 'sale',
+          property_type: listing.unitType ? String(listing.unitType).charAt(0).toUpperCase() + String(listing.unitType).slice(1) : 'Apartment',
+          compound: listing.compound || groupName,
+          price: listing.price || 0,
+          area_sqm: listing.area || 0,
+          bedrooms: listing.bedrooms || 3,
+          bathrooms: listing.bathrooms || 2,
+          owner_phone: listing.ownerPhone || listing.senderPhone || null,
+          broker_phone: listing.senderPhone || listing.ownerPhone || null,
+          broker_name: listing.senderName || 'Broker Network',
+          owner_type: 'Broker',
+          submitter_type: 'broker',
+          status: 'active',
+          availability: 'Available',
+          source_channel: 'whatsapp_group_export',
+          source_group: groupName,
+          lat: geo.lat,
+          lng: geo.lng,
+          city: geo.zone || 'New Cairo',
+          images: [],
+          photo_count: 0,
+          publish_status: 'DRAFT',
+          raw_data: {
+            raw_text: listing.rawText,
+            sender: listing.senderName,
+            group: groupName,
+            scraped_at: new Date().toISOString(),
+          },
+        },
+        'code'
+      ).catch((err) => logger.warn('[Scraper→listings] Upsert failed:', err));
+
+      // 3. Mirror directly to Google CRM Sheet (brokers resale / brokers rent tab)
+      try {
+        await syncWebsiteSubmissionToSheet({
+          code: listingCode,
+          supabaseId: listingCode,
+          compound: listing.compound || groupName,
+          propertyType: listing.unitType || 'Apartment',
+          mode: listing.priceType === 'rent' ? 'rent' : 'sale',
+          beds: listing.bedrooms || 3,
+          baths: listing.bathrooms || 2,
+          area: listing.area || 0,
+          price: listing.price || 0,
+          finishing: listing.finishing || 'Finished',
+          ownerName: listing.senderName || 'Broker Submission',
+          ownerType: 'Broker',
+          mobile: listing.senderPhone || listing.ownerPhone || '01092048333',
+          comment: listing.rawText,
+          photos: [],
+          websiteUrl: `https://sierra-estates.net/property/${listingCode}`,
+        });
+      } catch {
+        // Non-fatal Sheet sync
+      }
+
       syncedToSupabase++;
     } catch (err) {
       logger.warn('[Scraper] Row upsert failed:', err);
