@@ -13,14 +13,14 @@ dbc install postgresql
 Connect with a standard PostgreSQL [connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING):
 
 ```text
-postgresql://[user[:password]@][host[:port]][/dbname][?param1=value1&...]
+postgresql://[user[:auth_token]@][host[:port]][/dbname][?param1=value1&...]
 ```
 
 Examples:
 
 - `postgresql://localhost:5432/mydb`
-- `postgresql://user:pass@localhost:5432/mydb`
-- `postgresql://user:pass@localhost/mydb?sslmode=require`
+- `postgresql://user:<auth_token>@localhost:5432/mydb`
+- `postgresql://user:<auth_token>@localhost/mydb?sslmode=require`
 
 ## Selecting a database
 

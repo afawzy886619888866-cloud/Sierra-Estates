@@ -223,17 +223,17 @@ CREATE POLICY "agents_public_read" ON agents
 CREATE POLICY "agents_admin_write" ON agents
   FOR ALL TO authenticated USING (is_admin()) WITH CHECK (is_admin());
 
--- ─── Inquiries: ANYONE can create, admin can read/update ───
+-- ─── Inquiries: Validated public create, admin can read/update ───
 CREATE POLICY "inquiries_public_create" ON inquiries
-  FOR INSERT TO anon, authenticated WITH CHECK (true);
+  FOR INSERT TO anon, authenticated WITH CHECK (length(name) >= 2 AND (phone IS NOT NULL OR email IS NOT NULL));
 CREATE POLICY "inquiries_admin_read" ON inquiries
   FOR SELECT TO authenticated USING (is_admin());
 CREATE POLICY "inquiries_admin_update" ON inquiries
   FOR UPDATE TO authenticated USING (is_admin()) WITH CHECK (is_admin());
 
--- ─── Career applications: ANYONE can create, admin can read/update ───
+-- ─── Career applications: Validated public create, admin can read/update ───
 CREATE POLICY "career_public_create" ON career_applications
-  FOR INSERT TO anon, authenticated WITH CHECK (true);
+  FOR INSERT TO anon, authenticated WITH CHECK (length(name) >= 2 AND (phone IS NOT NULL OR email IS NOT NULL));
 CREATE POLICY "career_admin_read" ON career_applications
   FOR SELECT TO authenticated USING (is_admin());
 CREATE POLICY "career_admin_update" ON career_applications

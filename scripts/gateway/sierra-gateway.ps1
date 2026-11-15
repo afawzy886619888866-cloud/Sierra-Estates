@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # SIERRA WHATSAPP PC GATEWAY — one script, six actions (2026-10-31)
 # ============================================================================
 # Turns THIS PC into the Sierra WhatsApp gateway (replaces the retired EC2 box).
@@ -23,7 +23,7 @@ param(
 )
 
 # ─────────────────────────── CONFIG (edit here only) ───────────────────────
-$ApiKey          = 'sierra_secret_key_2026'   # must match AUTHENTICATION_API_KEY in the docker run below
+$ApiKey          = if ($env:EVOLUTION_API_KEY) { $env:EVOLUTION_API_KEY } elseif ($env:AUTHENTICATION_API_KEY) { $env:AUTHENTICATION_API_KEY } else { 'sierra_gateway_token' }
 $GatewayPort     = 8080                       # Evolution API on localhost
 $WebhookPort     = 5000                       # sierra_webhook.py inbound server
 $Container       = 'evolution-api'
