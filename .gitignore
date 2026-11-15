@@ -303,3 +303,7 @@ ANTIGRAVITY-PROMPT-*.md
 Activate-WhatsAppGateway.ps1
 
 *.code-workspace
+
+# Process core dumps (never commit crash artifacts)
+core
+core.*
