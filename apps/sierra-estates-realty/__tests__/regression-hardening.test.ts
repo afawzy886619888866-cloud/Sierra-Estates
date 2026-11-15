@@ -85,7 +85,15 @@ describe('Regression & Configuration Hardening Suite', () => {
       expect(rootPkg.devDependencies.typescript).toBeDefined();
       // The build first syncs the real inventory snapshot into the bundle, then
       // hands off to turbo — the sync pre-step is part of the real-data funnel.
-      expect(rootPkg.scripts.build).toBe('node scripts/sync-inventory-snapshot.mjs && turbo run build');
+      // 2026-11-15: the script may carry an env prefix (cross-env
+      // NODE_OPTIONS=--max-old-space-size=... TURBO_UI=false) for heap safety
+      // on CI runners, so guard the structure, not the exact string.
+      const buildScript = rootPkg.scripts.build as string;
+      expect(buildScript).toContain('node scripts/sync-inventory-snapshot.mjs');
+      expect(buildScript).toContain('turbo run build');
+      expect(buildScript.indexOf('sync-inventory-snapshot.mjs')).toBeLessThan(
+        buildScript.indexOf('turbo run build')
+      );
     });
   });
 
