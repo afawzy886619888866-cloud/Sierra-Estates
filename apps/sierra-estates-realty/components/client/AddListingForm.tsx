@@ -833,11 +833,11 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
           <h1 className={styles.title}>
             {isAr ? (
               <>
-                أضف وحدتك العقارية <em>في 3 خطوات</em> مع مزامنة شاملة
+                أضف وحدتك مع <em>سييرا إستيتس</em> في 3 خطوات
               </>
             ) : (
               <>
-                List & Sync Property in <em>3 Simple Steps</em>
+                List your unit with <em>Sierra Estates</em> in 3 Simple Steps
               </>
             )}
           </h1>
@@ -1592,7 +1592,7 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
                         : 'Publishing & Syncing...'
                       : isAr
                         ? 'نشر ومزامنة الوحدة الآن'
-                        : 'Publish & Multi-Sync Now'}
+                        : 'Submit listing & Multi-Sync Now'}
                   </span>
                 </button>
               </div>

@@ -39,10 +39,10 @@ const metaMessage = (type: string, payload: Record<string, unknown> = {}) => ({
   ],
 });
 
-const post = (body: unknown) => {
+const post = async (body: unknown) => {
   process.env.SBR_SECRET_KEY = 'test-secret';
   try {
-    return POST(
+    return await POST(
       new NextRequest('http://localhost:3000/api/webhooks/whatsapp', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-sbr-secret-key': 'test-secret' },

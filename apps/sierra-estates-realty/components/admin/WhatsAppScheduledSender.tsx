@@ -269,7 +269,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
               <MessageSquare className="w-5 h-5" />
             </span>
             <h3 className="text-xl font-bold text-[var(--tx-s)] tracking-wide">
-              {isAr ? 'محطة إرسال الواتساب والجدولة الذكية' : 'WhatsApp Station · Sender & Smart Scheduler'}
+              {isAr ? 'مرسل رسائل واتساب المجدول' : 'WhatsApp Outreach & Date Scheduler'}
             </h3>
           </div>
           <p className="text-xs text-[var(--tx-m)] mt-1.5 leading-relaxed">
@@ -522,7 +522,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 <textarea
                   value={recipientInput}
                   onChange={(e) => setRecipientInput(e.target.value)}
-                  rows={3}
+                  rows={2}
                   placeholder={isAr ? "أدخل رقماً واحداً مثل 01092048333 أو الصق عدة أرقام...\n01032206443\n01061399688, أحمد" : "Enter a single phone number or paste multiple...\n01092048333\n01032206443\n01061399688, Ahmed"}
                   className="w-full bg-transparent border-0 text-[var(--tx-s)] font-mono text-xs focus:outline-none resize-none"
                   required
