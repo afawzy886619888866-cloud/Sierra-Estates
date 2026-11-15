@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Smartphone,
   UploadCloud,
@@ -78,6 +78,51 @@ export default function WhatsAppChatScanner({
 
   const [scanStats, setScanStats] = useState<ScanStats | null>(null);
   const [parsedUnits, setParsedUnits] = useState<ParsedUnit[]>([]);
+
+  // Live Gateway Harvester / Scraper Telemetry
+  const [harvesterStats, setHarvesterStats] = useState<{
+    online: boolean;
+    messagesProcessed: number;
+    unitsHarvested: number;
+    activeBrokersCount: number;
+    compoundsTrackedCount: number;
+    lastHarvestTime: string | null;
+  } | null>(null);
+  const [loadingHarvester, setLoadingHarvester] = useState(false);
+
+  const fetchHarvesterStats = useCallback(async () => {
+    setLoadingHarvester(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp/outbox?limit=1');
+      const json = await res.json();
+      const h = json.gateway?.harvester;
+      setHarvesterStats({
+        online: Boolean(json.gateway?.online),
+        messagesProcessed: h?.messagesProcessed ?? 0,
+        unitsHarvested: h?.unitsHarvested ?? 0,
+        activeBrokersCount: h?.activeBrokersCount ?? 0,
+        compoundsTrackedCount: h?.compoundsTrackedCount ?? 0,
+        lastHarvestTime: h?.lastHarvestTime ?? null,
+      });
+    } catch {
+      setHarvesterStats((prev) => prev ?? {
+        online: false,
+        messagesProcessed: 0,
+        unitsHarvested: 0,
+        activeBrokersCount: 0,
+        compoundsTrackedCount: 0,
+        lastHarvestTime: null,
+      });
+    } finally {
+      setLoadingHarvester(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHarvesterStats();
+    const timer = setInterval(fetchHarvesterStats, 20000);
+    return () => clearInterval(timer);
+  }, [fetchHarvesterStats]);
 
   // Pre-filtered owner groups from canonical registry
   const ownerGroups = WHATSAPP_GROUP_REGISTRY.filter((g) => g.type === 'owner');
@@ -172,6 +217,97 @@ export default function WhatsAppChatScanner({
 
   return (
     <div className="space-y-6">
+      {/* Live Gateway Scraper Telemetry Panel */}
+      <div className="station-bento p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-200 shadow-xs">
+              <Database className="w-5 h-5" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[var(--tx-s)]">
+                  {isAr ? 'مراقب السكرابر الحي (Live WhatsApp Scraper)' : 'Live WhatsApp Scraper & Harvester Telemetry'}
+                </h3>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    harvesterStats?.online
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}
+                >
+                  {harvesterStats?.online ? '● LIVE HARVESTER' : '○ CHECKING'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--tx-m)] mt-0.5">
+                {isAr
+                  ? 'رصد تلقائي مستمر لرسائل الجروبات العقارية واستخراج الوحدات للوحة والانفنتوري و Supabase.'
+                  : 'Continuous real-time scraping from connected WhatsApp groups into Supabase & Master Inventory.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={fetchHarvesterStats}
+            disabled={loadingHarvester}
+            className="station-scan-pill px-4 py-2 text-xs font-bold flex items-center gap-2 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingHarvester ? 'animate-spin' : ''}`} />
+            <span>{isAr ? 'فحص وتحديث السكرابر' : 'Check Scraper Status'}</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="station-kpi-pillar p-3.5">
+            <div className="text-[10px] font-mono uppercase text-[var(--tx-f)]">
+              {isAr ? 'الرسائل المفحوصة' : 'Messages Scraped'}
+            </div>
+            <div className="text-xl font-bold font-mono text-[var(--tx-s)] mt-1">
+              {harvesterStats?.messagesProcessed ?? 0}
+            </div>
+            <div className="station-bar-track mt-2">
+              <div className="station-bar-fill" style={{ width: `${Math.min(100, Math.max(12, ((harvesterStats?.messagesProcessed ?? 0) % 100) || 25))}%` }} />
+            </div>
+          </div>
+          <div className="station-kpi-pillar p-3.5">
+            <div className="text-[10px] font-mono uppercase text-[var(--tx-f)]">
+              {isAr ? 'وحدات مستخرجة' : 'Units Harvested'}
+            </div>
+            <div className="text-xl font-bold font-mono text-emerald-600 mt-1">
+              {harvesterStats?.unitsHarvested ?? 0}
+            </div>
+            <div className="text-[10px] text-emerald-700 font-semibold mt-1">
+              ✓ {isAr ? 'جاهزة وموثقة' : 'Verified & Synced'}
+            </div>
+          </div>
+          <div className="station-kpi-pillar p-3.5">
+            <div className="text-[10px] font-mono uppercase text-[var(--tx-f)]">
+              {isAr ? 'سماسرة/ملاك نشطون' : 'Active Senders'}
+            </div>
+            <div className="text-xl font-bold font-mono text-sky-600 mt-1">
+              {harvesterStats?.activeBrokersCount ?? 0}
+            </div>
+            <div className="text-[10px] text-[var(--tx-m)] mt-1">
+              {isAr ? 'مصادر مرصودة' : 'Unique channels'}
+            </div>
+          </div>
+          <div className="station-kpi-pillar p-3.5">
+            <div className="text-[10px] font-mono uppercase text-[var(--tx-f)]">
+              {isAr ? 'كمبوندات مرصودة' : 'Compounds Tracked'}
+            </div>
+            <div className="text-xl font-bold font-mono text-amber-600 mt-1">
+              {harvesterStats?.compoundsTrackedCount ?? 0}
+            </div>
+            <div className="text-[10px] text-[var(--tx-f)] font-mono mt-1 truncate">
+              {harvesterStats?.lastHarvestTime
+                ? new Date(harvesterStats.lastHarvestTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : (isAr ? 'بانتظار إشارة' : 'Awaiting signal')}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header Banner */}
       <div
         style={{

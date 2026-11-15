@@ -48,6 +48,13 @@ interface GatewayInfo {
   sessions?: GatewaySession[];
   activeSessions?: number;
   totalSessions?: number;
+  harvester?: {
+    messagesProcessed: number;
+    unitsHarvested: number;
+    activeBrokersCount: number;
+    compoundsTrackedCount: number;
+    lastHarvestTime?: string | null;
+  } | null;
   error?: string;
 }
 
@@ -183,6 +190,18 @@ async function fetchGatewayStatus(): Promise<GatewayInfo> {
           }
         }) || null;
 
+      let harvester = null;
+      try {
+        const hRes = await fetch(`${endpoint}/api/harvester/stats`, {
+          headers: key ? { 'X-API-Key': key } : {},
+          signal: AbortSignal.timeout(2000),
+          cache: 'no-store',
+        });
+        if (hRes.ok) {
+          harvester = await hRes.json().catch(() => null);
+        }
+      } catch (_) {}
+
       return {
         reachable: true,
         endpoint,
@@ -195,6 +214,7 @@ async function fetchGatewayStatus(): Promise<GatewayInfo> {
         sessions,
         activeSessions: readySessions.length,
         totalSessions: sessions.length,
+        harvester,
       };
     } catch (err: any) {
       lastError = err?.message || 'timeout';

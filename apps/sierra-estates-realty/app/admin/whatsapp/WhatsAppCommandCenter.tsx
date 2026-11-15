@@ -962,8 +962,8 @@ export default function WhatsAppCommandCenter() {
           <div className="iq-brand">
             <div className="iq-brand-logo">SE</div>
             <div>
-              <div className="iq-brand-name">SIERRA ESTATES</div>
-              <div className="iq-brand-sub">{t.brandSub}</div>
+              <div className="iq-brand-name">WHATSAPP STATION</div>
+              <div className="iq-brand-sub">SIERRA ESTATES · {t.brandSub}</div>
             </div>
           </div>
 

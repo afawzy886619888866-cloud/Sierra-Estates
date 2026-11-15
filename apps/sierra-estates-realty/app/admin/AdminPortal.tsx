@@ -2291,137 +2291,309 @@ function AdminApp() {
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
-    const [subTab, setSubTab] = useState<'outreach' | 'outbox' | 'scan' | 'qr'>('outreach');
+    const [subTab, setSubTab] = useState<'outreach' | 'scan' | 'outbox' | 'qr'>('outreach');
+    const [stationLoading, setStationLoading] = useState(false);
+    const [stationStats, setStationStats] = useState<{
+      online: boolean;
+      readyLines: number;
+      totalLines: number;
+      harvestedUnits: number;
+      messagesScraped: number;
+      queued: number;
+      sentToday: number;
+      lastChecked: string;
+    }>({
+      online: false,
+      readyLines: 0,
+      totalLines: 8,
+      harvestedUnits: 0,
+      messagesScraped: 0,
+      queued: 0,
+      sentToday: 0,
+      lastChecked: '--:--',
+    });
+
+    const refreshStation = async () => {
+      setStationLoading(true);
+      try {
+        const res = await fetch('/api/admin/whatsapp/outbox?limit=1');
+        const json = await res.json();
+        const sessions = Array.isArray(json.gateway?.sessions) ? json.gateway.sessions : [];
+        const readyLines = sessions.filter((s: any) => s.status === 'ready').length;
+        const counts = json.counts || {};
+        const h = json.gateway?.harvester || {};
+        setStationStats({
+          online: Boolean(json.gateway?.online),
+          readyLines,
+          totalLines: sessions.length || 8,
+          harvestedUnits: Number(h.unitsHarvested || 0),
+          messagesScraped: Number(h.messagesProcessed || 0),
+          queued: Number(counts.queued || 0),
+          sentToday: Number(counts.sent || 0),
+          lastChecked: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        });
+      } catch {
+        setStationStats((prev) => ({ ...prev, lastChecked: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }));
+      } finally {
+        setStationLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      refreshStation();
+    }, []);
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
-        {/* ITQANE-style WhatsApp Command Center — standalone console at /admin/whatsapp */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            padding: '14px 18px',
-            marginBottom: 20,
-            borderRadius: 12,
-            background: 'linear-gradient(135deg, rgba(240,192,64,0.14), rgba(37,211,102,0.08))',
-            border: '1px solid rgba(240,192,64,0.45)',
-            flexWrap: 'wrap',
-          }}
-        >
-          <span style={{ fontSize: 22 }}>💬</span>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#F0C040' }}>
-              {isArabic ? 'تطبيق إرسال الواتساب والجدولة — Sierra Estates' : 'WhatsApp Sender & Scheduling Workstation'}
+        {/* Bright Clay Diagnostic Bento Header — WhatsApp Station */}
+        <div className="station-bento p-5 mb-6 space-y-5">
+          {/* Top Diagnostic Bar: Brand + Central Check Station Pill + Quick Launch */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-[230px]">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0"
+                style={{
+                  background: 'linear-gradient(145deg, #fef3c7, #fde68a)',
+                  border: '2px solid rgba(217, 160, 22, 0.45)',
+                  boxShadow: '0 8px 18px -4px rgba(217, 160, 22, 0.25), inset 2px 2px 4px rgba(255,255,255,0.9)',
+                }}
+              >
+                🛰️
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-[var(--tx-s)] m-0">
+                    {isArabic ? 'محطة الواتساب — WhatsApp Station' : 'WhatsApp Station · Diagnostic & Control'}
+                  </h2>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      stationStats.online
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    }`}
+                  >
+                    {stationStats.online ? '● STATION ONLINE' : '○ CHECKING'}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--tx-m)] mt-0.5">
+                  {isArabic
+                    ? 'إرسال فوري وجدولة ذكية + سكرابر الجروبات الحي + مراقبة الخطوط الثمانية'
+                    : 'Analyse · Dispatch · Harvest — Sender, Live Scraper & 8-Line Anti-Ban Gateway'}
+                </p>
+              </div>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--tx-m)', marginTop: 3 }}>
-              {isArabic
-                ? 'إرسال فوري مع محاكاة بشرية ذكية لمنع الحظر، أو جدولة رسائل لأوقات وتواريخ محددة، ومراقبة حالة التسليم الحية.'
-                : 'Direct human-simulated instant dispatch with anti-ban stealth, custom future scheduling, and real-time delivery monitoring.'}
+
+            {/* Central Scan / Check Station Pill */}
+            <button
+              type="button"
+              onClick={refreshStation}
+              disabled={stationLoading}
+              className="station-scan-pill px-5 py-2.5 flex items-center gap-3 cursor-pointer"
+            >
+              <span className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                {stationLoading ? '↻' : '✓'}
+              </span>
+              <div className="text-start">
+                <div className="text-xs font-extrabold leading-tight">
+                  {isArabic ? 'فحص المحطة والسكرابر' : 'Check Station & Scraper'}
+                </div>
+                <div className="text-[10px] font-mono text-emerald-700/80">
+                  {isArabic ? `آخر فحص: ${stationStats.lastChecked}` : `Last check: ${stationStats.lastChecked}`}
+                </div>
+              </div>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                className="clay-btn-gold px-4 py-2 text-xs font-bold cursor-pointer"
+                onClick={() => window.open('/admin/whatsapp', '_blank')}
+              >
+                🛰️ {isArabic ? 'الكونسول الكامل' : 'Full 8-Line Console'} ↗
+              </button>
+              <button
+                className="clay-pill px-3.5 py-2 text-xs font-bold text-[var(--tx-m)] cursor-pointer"
+                onClick={() => window.open('/admin/apps', '_blank')}
+              >
+                🧩 {isArabic ? 'تطبيقات' : 'Apps'} ↗
+              </button>
             </div>
           </div>
-          <button
-            className="btn btn-gold"
-            onClick={() => window.open('/admin/whatsapp', '_blank')}
-          >
-            🛰️ {isArabic ? 'افتح مركز العمليات الشامل' : 'Open Full 8-Line Console'} ↗
-          </button>
-          <button
-            className="btn btn-ghost"
-            style={{ borderColor: 'rgba(148,163,184,.3)', color: 'var(--tx-m)' }}
-            onClick={() => window.open('/admin/apps', '_blank')}
-          >
-            🧩 {isArabic ? 'تطبيقات' : 'Apps Control'} ↗
-          </button>
+
+          {/* 4 Vertical Clay KPI Pillars (ITQANE Diagnostic Inspired) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="station-kpi-pillar p-4 flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-[var(--tx-f)]">
+                  {isArabic ? 'الخطوط النشطة' : 'Active Lines'}
+                </span>
+                <span className="text-base">📶</span>
+              </div>
+              <div className="text-2xl font-extrabold font-mono text-[var(--tx-s)]">
+                {stationStats.readyLines}
+                <span className="text-sm font-semibold text-[var(--tx-f)]">/{stationStats.totalLines}</span>
+              </div>
+              <div className="station-bar-track">
+                <div
+                  className="station-bar-fill"
+                  style={{ width: `${Math.round((stationStats.readyLines / Math.max(1, stationStats.totalLines)) * 100)}%` }}
+                />
+              </div>
+              <div className="text-[10.5px] font-bold text-emerald-600">
+                ✓ {stationStats.readyLines > 0 ? (isArabic ? 'الخطوط متصلة' : 'Lines OK') : (isArabic ? 'جاري الفحص' : 'Standby')}
+              </div>
+            </div>
+
+            <div className="station-kpi-pillar p-4 flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-[var(--tx-f)]">
+                  {isArabic ? 'السكرابر المستخرج' : 'Scraper Harvested'}
+                </span>
+                <span className="text-base">🔍</span>
+              </div>
+              <div className="text-2xl font-extrabold font-mono text-sky-600">
+                {stationStats.harvestedUnits}
+                <span className="text-xs font-semibold text-[var(--tx-f)] ms-1">
+                  ({stationStats.messagesScraped} msg)
+                </span>
+              </div>
+              <div className="station-bar-track">
+                <div
+                  className="station-bar-fill"
+                  style={{ width: `${Math.min(100, Math.max(15, stationStats.harvestedUnits * 15))}%` }}
+                />
+              </div>
+              <div className="text-[10.5px] font-bold text-sky-600">
+                ● {isArabic ? 'حاصد الجروبات نشط' : 'Harvester Active'}
+              </div>
+            </div>
+
+            <div className="station-kpi-pillar p-4 flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-[var(--tx-f)]">
+                  {isArabic ? 'طابور الجدولة' : 'Queued Messages'}
+                </span>
+                <span className="text-base">⏳</span>
+              </div>
+              <div className="text-2xl font-extrabold font-mono text-amber-600">{stationStats.queued}</div>
+              <div className="station-bar-track">
+                <div
+                  className="station-bar-fill"
+                  style={{ width: `${Math.min(100, Math.max(10, stationStats.queued * 10))}%` }}
+                />
+              </div>
+              <div className="text-[10.5px] font-bold text-amber-700">
+                ✓ {isArabic ? 'مجدول وآمن' : 'Anti-Ban Paced'}
+              </div>
+            </div>
+
+            <div className="station-kpi-pillar p-4 flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-[var(--tx-f)]">
+                  {isArabic ? 'تم إرساله' : 'Sent / Delivered'}
+                </span>
+                <span className="text-base">🚀</span>
+              </div>
+              <div className="text-2xl font-extrabold font-mono text-emerald-600">{stationStats.sentToday}</div>
+              <div className="station-bar-track">
+                <div
+                  className="station-bar-fill"
+                  style={{ width: `${Math.min(100, Math.max(20, stationStats.sentToday * 5))}%` }}
+                />
+              </div>
+              <div className="text-[10.5px] font-bold text-emerald-600">
+                ✓ {isArabic ? 'إرسال مستقر' : 'System OK'}
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Sub-Navigation Pills */}
         <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            marginBottom: 20,
-            borderBottom: '1px solid var(--bd-s)',
-            paddingBottom: 12,
-            flexWrap: 'wrap',
-          }}
+          className="clay-inset p-2 mb-5 flex flex-wrap gap-2"
+          style={{ borderRadius: 18 }}
         >
           <button
             onClick={() => setSubTab('outreach')}
             style={{
-              padding: '8px 18px',
-              borderRadius: 10,
+              padding: '9px 18px',
+              borderRadius: 12,
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
-              border: subTab === 'outreach' ? '1px solid #25D366' : '1px solid var(--bd)',
-              background: subTab === 'outreach' ? 'rgba(37, 211, 102, 0.18)' : 'var(--bg-e)',
-              color: subTab === 'outreach' ? '#25D366' : 'var(--tx-m)',
+              border: subTab === 'outreach' ? '1.5px solid #10b981' : '1px solid transparent',
+              background: subTab === 'outreach' ? 'linear-gradient(145deg, #ffffff, #ecfdf5)' : 'transparent',
+              color: subTab === 'outreach' ? '#047857' : 'var(--tx-m)',
+              boxShadow: subTab === 'outreach' ? '0 6px 14px -4px rgba(16,185,129,0.25)' : 'none',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
             }}
           >
             <span>✉️</span>
-            <span>{isArabic ? 'مرسل رسائل الواتساب والجدولة' : 'WhatsApp Sender & Scheduler'}</span>
+            <span>{isArabic ? 'المرسل والجدولة الذكية' : 'Sender & Scheduler'}</span>
+          </button>
+
+          <button
+            onClick={() => setSubTab('scan')}
+            style={{
+              padding: '9px 18px',
+              borderRadius: 12,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'scan' ? '1.5px solid #0ea5e9' : '1px solid transparent',
+              background: subTab === 'scan' ? 'linear-gradient(145deg, #ffffff, #f0f9ff)' : 'transparent',
+              color: subTab === 'scan' ? '#0369a1' : 'var(--tx-m)',
+              boxShadow: subTab === 'scan' ? '0 6px 14px -4px rgba(14,165,233,0.25)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>🔍</span>
+            <span>{isArabic ? 'السكرابر واستيراد الجروبات' : 'WhatsApp Scraper & Groups'}</span>
           </button>
 
           <button
             onClick={() => setSubTab('outbox')}
             style={{
-              padding: '8px 18px',
-              borderRadius: 10,
+              padding: '9px 18px',
+              borderRadius: 12,
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
-              border: subTab === 'outbox' ? '1px solid #D4AF37' : '1px solid var(--bd)',
-              background: subTab === 'outbox' ? 'rgba(212, 175, 55, 0.18)' : 'var(--bg-e)',
-              color: subTab === 'outbox' ? '#D4AF37' : 'var(--tx-m)',
+              border: subTab === 'outbox' ? '1.5px solid #d97706' : '1px solid transparent',
+              background: subTab === 'outbox' ? 'linear-gradient(145deg, #ffffff, #fffbeb)' : 'transparent',
+              color: subTab === 'outbox' ? '#b45309' : 'var(--tx-m)',
+              boxShadow: subTab === 'outbox' ? '0 6px 14px -4px rgba(217,119,6,0.22)' : 'none',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
             }}
           >
             <span>📤</span>
-            <span>{isArabic ? 'الصادر وطابور الرسائل الحية' : 'Outbox & Delivery Queue'}</span>
-          </button>
-
-          <button
-            onClick={() => setSubTab('scan')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: subTab === 'scan' ? '1px solid #60A5FA' : '1px solid var(--bd)',
-              background: subTab === 'scan' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'scan' ? '#60A5FA' : 'var(--tx-m)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>📥</span>
-            <span>{isArabic ? 'ماسح محادثات الموبايل ومزامنة العقارات' : 'Mobile Chat Scanner & Ingestion'}</span>
+            <span>{isArabic ? 'الخطوط وطابور الصادر' : 'Lines & Outbox Queue'}</span>
           </button>
 
           <button
             onClick={() => setSubTab('qr')}
             style={{
-              padding: '8px 18px',
-              borderRadius: 10,
+              padding: '9px 18px',
+              borderRadius: 12,
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
-              border: subTab === 'qr' ? '1px solid #C8961A' : '1px solid var(--bd)',
-              background: subTab === 'qr' ? 'rgba(0, 174, 255, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'qr' ? '#C8961A' : 'var(--tx-m)',
+              border: subTab === 'qr' ? '1.5px solid #6366f1' : '1px solid transparent',
+              background: subTab === 'qr' ? 'linear-gradient(145deg, #ffffff, #eef2ff)' : 'transparent',
+              color: subTab === 'qr' ? '#4338ca' : 'var(--tx-m)',
+              boxShadow: subTab === 'qr' ? '0 6px 14px -4px rgba(99,102,241,0.22)' : 'none',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
             }}
           >
             <span>📱</span>
-            <span>{isArabic ? 'ربط الموبايل المباشر (QR Portal)' : 'Legacy Mobile QR'}</span>
+            <span>{isArabic ? 'ربط الموبايل (QR Portal)' : 'QR Pairing Portal'}</span>
           </button>
         </div>
 
@@ -2717,7 +2889,7 @@ function AdminApp() {
                     // Stage 1 · Most Used Real Estate Operations
                     { id: 'inventory_command', label: isAr ? 'المخزون العقاري الموحد' : 'Inventory Command & OS', icon: '🏢' },
                     { id: 'easy_listing', label: isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio', icon: '🏷️' },
-                    { id: 'whatsapp_outreach', label: isAr ? 'مرسل الواتساب المجدول' : 'WhatsApp Sender & Outreach', icon: '💬' },
+                    { id: 'whatsapp_outreach', label: isAr ? 'محطة الواتساب' : 'WhatsApp Station', icon: '🛰️' },
                     // Stage 2 · Autonomous AI & Workflows
                     { id: 'agents', label: isAr ? 'أسطول الوكلاء الذكي' : 'Autonomous Agents Fleet', icon: '🤖' },
                     { id: 'workflows', label: isAr ? 'محرك الأتمتة وسير العمل' : 'Workflows & Orchestrator', icon: '⚡' },

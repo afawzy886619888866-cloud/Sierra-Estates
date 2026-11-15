@@ -67,29 +67,31 @@
 }
 
 [data-theme="light"] {
-  --bg: #F5F3EE;
-  --bg-s: #FCFAF6;
+  --bg: #F6F8FC;
+  --bg-s: #FFFFFF;
   --bg-e: #FFFFFF;
-  --bg-e2: #FAF8F4;
-  --surf: rgba(13, 32, 53, 0.045);
-  --surf2: rgba(13, 32, 53, 0.02);
-  --tx: #1A2B3D;
-  --tx-s: #050B14;
-  --tx-m: rgba(13, 32, 53, 0.75);
-  --tx-f: rgba(13, 32, 53, 0.42);
-  --bd: rgba(13, 32, 53, 0.08);
-  --bd-s: rgba(13, 32, 53, 0.16);
-  --clay-bg-card: linear-gradient(155deg, #ffffff 0%, #f4f0e7 70%, #ece6da 100%);
-  --clay-bg-card-elevated: linear-gradient(155deg, #ffffff 0%, #f8f5ee 70%, #efeae0 100%);
-  --clay-bg-pill: linear-gradient(155deg, #fbf9f4 0%, #ede7dc 100%);
-  --clay-card-shadow: 0 16px 36px -6px rgba(13, 32, 53, 0.14), 0 4px 14px -2px rgba(200, 150, 26, 0.06);
-  --clay-card-inset: inset 2.5px 2.5px 5px rgba(255, 255, 255, 0.98), inset -3px -3px 6px rgba(13, 32, 53, 0.09);
-  --clay-card-gold-shadow: 0 16px 38px -6px rgba(200, 150, 26, 0.22), 0 4px 14px rgba(13, 32, 53, 0.06);
-  --clay-card-gold-inset: inset 2.5px 2.5px 5px rgba(255, 255, 255, 1), inset -3px -3px 6px rgba(168, 122, 18, 0.18);
-  --clay-btn-shadow: 0 6px 18px -2px rgba(13, 32, 53, 0.16), inset 2px 2px 4px rgba(255, 255, 255, 0.98), inset -2px -2px 4px rgba(13, 32, 53, 0.12);
-  --clay-btn-active-shadow: inset 3px 3px 6px rgba(13, 32, 53, 0.2), inset -1px -1px 2px rgba(255, 255, 255, 0.9);
-  --clay-input-inset: inset 3px 3px 6px rgba(13, 32, 53, 0.11), inset -2px -2px 4px rgba(255, 255, 255, 0.95);
-  --clay-chip-inset: inset 2px 2px 3px rgba(255, 255, 255, 0.95), inset -1.5px -1.5px 3px rgba(13, 32, 53, 0.08);
+  --bg-e2: #F2F5FB;
+  --surf: rgba(15, 23, 42, 0.04);
+  --surf2: rgba(15, 23, 42, 0.02);
+  --tx: #0F172A;
+  --tx-s: #020617;
+  --tx-m: rgba(15, 23, 42, 0.72);
+  --tx-f: rgba(15, 23, 42, 0.45);
+  --bd: rgba(148, 163, 184, 0.28);
+  --bd-s: rgba(148, 163, 184, 0.42);
+  --clay-bg-card: linear-gradient(155deg, #ffffff 0%, #f8faff 65%, #eef3fb 100%);
+  --clay-bg-card-elevated: linear-gradient(155deg, #ffffff 0%, #fafcff 65%, #f0f5fc 100%);
+  --clay-bg-card-gold: linear-gradient(155deg, #fffdf7 0%, #fef7e6 65%, #f9edd0 100%);
+  --clay-bg-inset: linear-gradient(145deg, #edf2fa 0%, #f7f9fd 100%);
+  --clay-bg-pill: linear-gradient(155deg, #ffffff 0%, #eff4fc 100%);
+  --clay-card-shadow: 0 14px 32px -8px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(56, 189, 248, 0.08);
+  --clay-card-inset: inset 3px 3px 6px rgba(255, 255, 255, 0.98), inset -3px -3px 7px rgba(148, 163, 184, 0.16);
+  --clay-card-gold-shadow: 0 14px 34px -6px rgba(217, 160, 22, 0.18), 0 4px 14px rgba(14, 165, 233, 0.08);
+  --clay-card-gold-inset: inset 3px 3px 6px rgba(255, 255, 255, 1), inset -3px -3px 6px rgba(217, 160, 22, 0.14);
+  --clay-btn-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.1), inset 2px 2px 4px rgba(255, 255, 255, 0.98), inset -2px -2px 4px rgba(148, 163, 184, 0.18);
+  --clay-btn-active-shadow: inset 3px 3px 6px rgba(148, 163, 184, 0.25), inset -1px -1px 3px rgba(255, 255, 255, 0.95);
+  --clay-input-inset: inset 3px 3px 6px rgba(148, 163, 184, 0.18), inset -2px -2px 5px rgba(255, 255, 255, 0.98);
+  --clay-chip-inset: inset 2px 2px 4px rgba(255, 255, 255, 0.98), inset -2px -2px 4px rgba(148, 163, 184, 0.14);
 }
 
 [data-theme="light"] body {
@@ -609,20 +611,20 @@ table, th, td {
 
 .clay-card:hover {
   transform: translateY(-2.5px);
-  box-shadow: 0 22px 46px -6px rgba(0, 0, 0, 0.78), 0 0 20px rgba(200, 150, 26, 0.12), var(--clay-card-inset);
+  box-shadow: var(--clay-card-shadow), 0 0 22px rgba(200, 150, 26, 0.14), var(--clay-card-inset);
 }
 
 .clay-card-elevated {
   background: var(--clay-bg-card-elevated);
   border: 1px solid var(--bd-s);
   border-radius: var(--clay-rad-xl);
-  box-shadow: 0 24px 52px -8px rgba(0, 0, 0, 0.8), var(--clay-card-inset);
+  box-shadow: var(--clay-card-shadow), var(--clay-card-inset);
   transition: var(--clay-trans);
 }
 
 .clay-card-gold {
-  background: linear-gradient(155deg, #1b283d 0%, #121e2e 65%, #0d1624 100%);
-  border: 1px solid rgba(200, 150, 26, 0.4);
+  background: var(--clay-bg-card-gold, linear-gradient(155deg, #fffdf7 0%, #fef7e6 65%, #f9edd0 100%));
+  border: 1px solid rgba(217, 160, 22, 0.38);
   border-radius: var(--clay-rad-xl);
   box-shadow: var(--clay-card-gold-shadow), var(--clay-card-gold-inset);
   transition: var(--clay-trans);
@@ -630,8 +632,88 @@ table, th, td {
 
 .clay-card-gold:hover {
   transform: translateY(-2.5px);
-  border-color: rgba(200, 150, 26, 0.6);
-  box-shadow: 0 24px 52px -6px rgba(0, 0, 0, 0.85), 0 0 32px rgba(200, 150, 26, 0.28), var(--clay-card-gold-inset);
+  border-color: rgba(217, 160, 22, 0.62);
+  box-shadow: var(--clay-card-gold-shadow), 0 0 28px rgba(217, 160, 22, 0.22), var(--clay-card-gold-inset);
+}
+
+/* Diagnostic Bento & Station Clay Surfaces */
+.station-bento {
+  position: relative;
+  background: var(--clay-bg-card-elevated);
+  border-radius: 24px;
+  border: 1.5px solid rgba(217, 160, 22, 0.32);
+  box-shadow:
+    0 16px 36px -10px rgba(15, 23, 42, 0.08),
+    0 4px 16px -4px rgba(14, 165, 233, 0.1),
+    inset 3px 3px 7px rgba(255, 255, 255, 0.98),
+    inset -3px -3px 8px rgba(148, 163, 184, 0.16);
+}
+
+.station-bento::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.55) 0%, rgba(14, 165, 233, 0.45) 55%, rgba(16, 185, 129, 0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.station-kpi-pillar {
+  background: linear-gradient(165deg, #ffffff 0%, #f4f8ff 65%, #e8f0fc 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(14, 165, 233, 0.22);
+  box-shadow:
+    0 12px 24px -8px rgba(15, 23, 42, 0.08),
+    inset 3px 3px 6px rgba(255, 255, 255, 0.98),
+    inset -3px -3px 6px rgba(148, 163, 184, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.station-kpi-pillar:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 30px -8px rgba(14, 165, 233, 0.18),
+    inset 3px 3px 6px rgba(255, 255, 255, 1),
+    inset -3px -3px 6px rgba(148, 163, 184, 0.18);
+}
+
+.station-scan-pill {
+  background: linear-gradient(145deg, #ffffff 0%, #ecfdf5 55%, #d1fae5 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.42);
+  border-radius: 999px;
+  box-shadow:
+    0 10px 24px -6px rgba(16, 185, 129, 0.24),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.98),
+    inset -2px -2px 5px rgba(16, 185, 129, 0.18);
+  color: #065f46;
+  transition: all 0.2s ease;
+}
+
+.station-scan-pill:hover {
+  transform: translateY(-1.5px);
+  box-shadow:
+    0 14px 28px -6px rgba(16, 185, 129, 0.32),
+    inset 2px 2px 5px rgba(255, 255, 255, 1),
+    inset -2px -2px 5px rgba(16, 185, 129, 0.22);
+}
+
+.station-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  box-shadow: inset 1.5px 1.5px 3px rgba(148, 163, 184, 0.45), inset -1px -1px 2px rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}
+
+.station-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10b981 0%, #0ea5e9 65%, #f59e0b 100%);
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.35);
 }
 
 .clay-pill {
@@ -643,10 +725,10 @@ table, th, td {
 }
 
 .clay-inset {
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--clay-bg-inset, rgba(241, 245, 249, 0.85));
   border-radius: var(--clay-rad-lg);
   box-shadow: var(--clay-input-inset);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--bd);
 }
 
 .clay-btn-gold {
@@ -1864,8 +1946,8 @@ kbd {
 
 .clay-card:hover, .card:hover {
   border-color: rgba(200, 150, 26, 0.35) !important;
-  box-shadow: 0 22px 48px -8px rgba(0, 0, 0, 0.8),
-              0 0 22px rgba(200, 150, 26, 0.12),
+  box-shadow: var(--clay-card-shadow),
+              0 0 22px rgba(200, 150, 26, 0.14),
               var(--clay-card-inset) !important;
 }
 

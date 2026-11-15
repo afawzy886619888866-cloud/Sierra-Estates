@@ -261,50 +261,50 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
 
   return (
     <div className="space-y-6">
-      {/* Header Banner — Clay Gold */}
+      {/* Header Banner — Bright Clay Gold */}
       <div className="clay-card-gold p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-inner">
+            <span className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm">
               <MessageSquare className="w-5 h-5" />
             </span>
-            <h3 className="text-xl font-bold text-white tracking-wide">
-              {isAr ? 'تطبيق إرسال رسائل الواتساب والجدولة الذكية' : 'WhatsApp Sender & Smart Outreach Workstation'}
+            <h3 className="text-xl font-bold text-[var(--tx-s)] tracking-wide">
+              {isAr ? 'محطة إرسال الواتساب والجدولة الذكية' : 'WhatsApp Station · Sender & Smart Scheduler'}
             </h3>
           </div>
-          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          <p className="text-xs text-[var(--tx-m)] mt-1.5 leading-relaxed">
             {isAr
               ? 'إرسال فوري بتنكر بشري كامل (محاكاة الكتابة والقراءة لمنع الحظر) أو جدولة رسائل لأوقات وتواريخ محددة مع التوزيع التلقائي على الخطوط النشطة.'
               : 'Instant human-simulated direct send (typing presence & read receipts to prevent bans) or scheduled future outreach campaigns across active SIM lines.'}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             type="button"
             onClick={handleDrainQueue}
             disabled={isDraining}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 border border-amber-300 text-amber-800 hover:bg-amber-100 transition-all cursor-pointer shadow-sm"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isDraining ? 'animate-spin' : ''}`} />
             <span>{isAr ? 'إرسال الطابور فوراً' : 'Drain Queue Now'}</span>
           </button>
-          <div className="flex items-center gap-2 text-xs font-mono clay-stat-badge bg-emerald-950/80 border border-emerald-700 text-emerald-300">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center gap-2 text-xs font-mono clay-stat-badge bg-emerald-50 border border-emerald-200 text-emerald-700">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Anti-Ban Stealth Shield: Active</span>
           </div>
         </div>
       </div>
 
       {/* Mode Toggle Bar */}
-      <div className="flex items-center gap-3 p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 w-fit">
+      <div className="clay-inset flex items-center gap-2 p-1.5 rounded-2xl w-fit">
         <button
           type="button"
           onClick={() => setDispatchMode('instant')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             dispatchMode === 'instant'
-              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+              : 'text-[var(--tx-m)] hover:text-[var(--tx-s)]'
           }`}
         >
           <Zap className="w-3.5 h-3.5" />
@@ -316,8 +316,8 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
           onClick={() => setDispatchMode('scheduled')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             dispatchMode === 'scheduled'
-              ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md'
+              : 'text-[var(--tx-m)] hover:text-[var(--tx-s)]'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
@@ -330,27 +330,27 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
         <div
           className={`clay-card p-4 text-xs border ${
             statusMsg.type === 'success'
-              ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
-              : 'bg-red-950/60 border-red-500/40 text-red-300'
+              ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900'
+              : 'bg-red-50/90 border-red-300 text-red-900'
           }`}
         >
           <div className="flex items-center gap-2">
             {statusMsg.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             ) : (
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
             )}
             <span className="font-medium">{statusMsg.text}</span>
           </div>
 
           {Array.isArray(statusMsg.details) && statusMsg.details.length > 0 && (
-            <div className="mt-2.5 pt-2 border-t border-slate-800/80 space-y-1 font-mono text-[11px]">
+            <div className="mt-2.5 pt-2 border-t border-slate-200 space-y-1 font-mono text-[11px]">
               {statusMsg.details.map((res: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between">
                   <span>
                     {res.phone}: {res.ok ? '✓ Sent' : `✗ Failed (${res.error})`}
                   </span>
-                  {res.session && <span className="text-[#E9C176]">Line: {res.session}</span>}
+                  {res.session && <span className="text-amber-700 font-semibold">Line: {res.session}</span>}
                 </div>
               ))}
             </div>
@@ -364,42 +364,42 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
           <form onSubmit={handleSubmit} className="clay-card-elevated p-6 space-y-5">
             {/* Quick Templates */}
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-300 block mb-2 font-mono">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--tx-m)] block mb-2 font-mono">
                 {isAr ? 'قوالب سريعة جاهزة للرسائل' : 'Ready Message Templates'}
               </label>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => applyTemplate('black-friday')}
-                  className="clay-stat-badge bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-600/60 text-xs py-1.5 px-3 cursor-pointer shadow-sm"
+                  className="clay-stat-badge bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs py-1.5 px-3 cursor-pointer shadow-sm"
                 >
                   🏷️ Black Friday 25% Off
                 </button>
                 <button
                   type="button"
                   onClick={() => applyTemplate('owner-inquiry')}
-                  className="clay-stat-badge bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-600/60 text-xs py-1.5 px-3 cursor-pointer"
+                  className="clay-stat-badge bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs py-1.5 px-3 cursor-pointer"
                 >
                   🤝 سؤال مالك عن إتاحة وحدة
                 </button>
                 <button
                   type="button"
                   onClick={() => applyTemplate('new-listing')}
-                  className="clay-stat-badge bg-slate-900/90 hover:bg-[#211A0D] text-[#F5D78E] border border-slate-700 hover:border-[#C8961A]/50 text-xs py-1.5 px-3 cursor-pointer"
+                  className="clay-stat-badge bg-yellow-50 hover:bg-yellow-100 text-amber-900 border border-amber-200 text-xs py-1.5 px-3 cursor-pointer"
                 >
                   🏡 New Listing Alert
                 </button>
                 <button
                   type="button"
                   onClick={() => applyTemplate('viewing-reminder')}
-                  className="clay-stat-badge bg-slate-900/90 hover:bg-blue-950 text-blue-300 border border-slate-700 hover:border-blue-600/50 text-xs py-1.5 px-3 cursor-pointer"
+                  className="clay-stat-badge bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs py-1.5 px-3 cursor-pointer"
                 >
                   📅 Viewing Reminder
                 </button>
                 <button
                   type="button"
                   onClick={() => applyTemplate('market-briefing')}
-                  className="clay-stat-badge bg-slate-900/90 hover:bg-purple-950 text-purple-300 border border-slate-700 hover:border-purple-600/50 text-xs py-1.5 px-3 cursor-pointer"
+                  className="clay-stat-badge bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs py-1.5 px-3 cursor-pointer"
                 >
                   📊 Market Report
                 </button>
@@ -407,20 +407,20 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
             </div>
 
             {/* Line Selector */}
-            <div className="clay-card p-4 space-y-3 bg-slate-900/60 border border-slate-800">
+            <div className="clay-inset p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-emerald-300 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-emerald-400" />
+                <label className="text-xs font-semibold text-emerald-700 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-emerald-600" />
                   <span>{isAr ? 'اختيار خط الإرسال (WhatsApp SIM Line)' : 'Dispatch SIM Line'}</span>
                 </label>
-                <span className="text-[10px] text-emerald-400/80 font-mono">
+                <span className="text-[10px] text-emerald-700 font-mono font-semibold">
                   {dispatchMode === 'instant' ? 'Typing Jitter: 0.8s–3.0s' : 'Pool Scheduled'}
                 </span>
               </div>
               <select
                 value={selectedSession}
                 onChange={(e) => setSelectedSession(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-950 border border-emerald-600/40 text-white text-xs focus:outline-none focus:border-emerald-400 font-mono"
+                className="w-full p-2.5 rounded-xl bg-white border border-slate-200 text-[var(--tx-s)] text-xs focus:outline-none focus:border-emerald-500 font-mono shadow-xs"
               >
                 <option value="auto">🔄 Auto Round-Robin (All Ready SIM Lines)</option>
                 {gatewayLines.length > 0 ? (
@@ -438,7 +438,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                   </>
                 )}
               </select>
-              <p className="text-[10.5px] text-slate-400 leading-relaxed">
+              <p className="text-[10.5px] text-[var(--tx-m)] leading-relaxed">
                 {isAr
                   ? 'يقوم الخادم بمحاكاة فتح المحادثة، ووضع علامة القراءة (Seen)، وتشغيل مؤشر الكتابة (Typing...) بفواصل عشوائية بشرية تمنع حظر الحساب تماماً.'
                   : 'Gateway emulates conversation open, read receipts (Seen), and realistic human typing duration jitter to eliminate account restriction risks.'}
@@ -449,24 +449,24 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
             {dispatchMode === 'scheduled' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                  <label className="text-[11px] font-semibold text-[var(--tx-m)] block mb-1">
                     {isAr ? 'اسم الحملة' : 'Campaign Tag / Reference'}
                   </label>
                   <input
                     type="text"
                     value={campaignName}
                     onChange={(e) => setCampaignName(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-emerald-500 font-medium"
+                    className="w-full p-2.5 rounded-xl bg-white border border-slate-200 text-[var(--tx-s)] text-xs focus:outline-none focus:border-emerald-500 font-medium shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                  <label className="text-[11px] font-semibold text-[var(--tx-m)] block mb-1">
                     {isAr ? 'نوع الغرض' : 'Outreach Purpose'}
                   </label>
                   <select
                     value={purpose}
                     onChange={(e) => setPurpose(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-emerald-500"
+                    className="w-full p-2.5 rounded-xl bg-white border border-slate-200 text-[var(--tx-s)] text-xs focus:outline-none focus:border-emerald-500 shadow-xs"
                   >
                     <option value="campaign-broadcast">Campaign Broadcast</option>
                     <option value="property-recommendation">Property Recommendation</option>
@@ -481,11 +481,11 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
             {/* Recipients */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#E9C176]" />
+                <label className="text-[11px] font-semibold text-[var(--tx-m)] flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-amber-600" />
                   <span>{isAr ? 'أرقام المستلمين (رقم واحد أو عدة أرقام مفصولة بفاصلة أو سطر جديد)' : 'Recipients (Single or Bulk)'}</span>
                 </label>
-                <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                <span className="text-[10px] text-emerald-700 font-mono font-bold">
                   {parsedRecipients.length} {isAr ? 'رقم تم رصده' : 'recipient(s) ready'}
                 </span>
               </div>
@@ -495,7 +495,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 <button
                   type="button"
                   onClick={() => setRecipientInput('+201092048333')}
-                  className="clay-stat-badge bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 text-[10px] py-1 px-2.5 cursor-pointer"
+                  className="clay-stat-badge bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] py-1 px-2.5 cursor-pointer"
                 >
                   <span>📌</span>
                   <span>{isAr ? 'رقمي المباشر للتجربة (01092048333)' : 'My Direct Phone (01092048333)'}</span>
@@ -503,7 +503,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 <button
                   type="button"
                   onClick={() => setRecipientInput('+201092048333, +201032206443, +201061399688')}
-                  className="clay-stat-badge bg-blue-950/80 hover:bg-blue-900 border border-blue-700/60 text-blue-300 text-[10px] py-1 px-2.5 cursor-pointer"
+                  className="clay-stat-badge bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-[10px] py-1 px-2.5 cursor-pointer"
                 >
                   <span>👥</span>
                   <span>{isAr ? 'ملاك موثوقون (3 أرقام)' : 'Verified Owners (3)'}</span>
@@ -511,20 +511,20 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 <button
                   type="button"
                   onClick={() => setRecipientInput('')}
-                  className="clay-stat-badge bg-red-950/60 hover:bg-red-900/80 border border-red-700/50 text-red-300 text-[10px] py-1 px-2 cursor-pointer"
+                  className="clay-stat-badge bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[10px] py-1 px-2 cursor-pointer"
                 >
                   <span>🗑️</span>
                   <span>{isAr ? 'تفريغ' : 'Clear'}</span>
                 </button>
               </div>
 
-              <div className="clay-inset p-2">
+              <div className="clay-inset p-2.5 bg-white/80">
                 <textarea
                   value={recipientInput}
                   onChange={(e) => setRecipientInput(e.target.value)}
                   rows={3}
                   placeholder={isAr ? "أدخل رقماً واحداً مثل 01092048333 أو الصق عدة أرقام...\n01032206443\n01061399688, أحمد" : "Enter a single phone number or paste multiple...\n01092048333\n01032206443\n01061399688, Ahmed"}
-                  className="w-full bg-transparent border-0 text-white font-mono text-xs focus:outline-none resize-none"
+                  className="w-full bg-transparent border-0 text-[var(--tx-s)] font-mono text-xs focus:outline-none resize-none"
                   required
                 />
               </div>
@@ -533,18 +533,18 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
             {/* Message Body */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                <label className="text-[11px] font-semibold text-[var(--tx-m)] flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{isAr ? 'نص رسالة الواتساب' : 'WhatsApp Message Content'}</span>
                 </label>
                 <div className="flex items-center gap-1 text-[10px]">
-                  <span className="text-slate-400">{isAr ? 'إدراج متغير:' : 'Insert tags:'}</span>
+                  <span className="text-[var(--tx-m)]">{isAr ? 'إدراج متغير:' : 'Insert tags:'}</span>
                   {['{{name}}', '{{compound}}', '{{price}}'].map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => setMessageBody((prev) => `${prev} ${tag}`)}
-                      className="px-1.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-mono text-[10px] border border-slate-700 cursor-pointer"
+                      className="px-1.5 py-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-mono text-[10px] border border-emerald-200 cursor-pointer"
                     >
                       {tag}
                     </button>
@@ -552,40 +552,40 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 </div>
               </div>
 
-              <div className="clay-inset p-2">
+              <div className="clay-inset p-2.5 bg-white/80">
                 <textarea
                   value={messageBody}
                   onChange={(e) => setMessageBody(e.target.value)}
                   rows={4}
-                  className="w-full bg-transparent border-0 text-white text-xs focus:outline-none resize-none font-medium leading-relaxed"
+                  className="w-full bg-transparent border-0 text-[var(--tx-s)] text-xs focus:outline-none resize-none font-medium leading-relaxed"
                   required
                 />
               </div>
 
               {/* Realistic WhatsApp Chat Bubble Preview */}
-              <div className="mt-3 clay-inset p-3.5 space-y-2">
-                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+              <div className="mt-3 clay-inset p-3.5 space-y-2 bg-[#efeae2]/80">
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-300/60">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-[10.5px] font-bold text-emerald-400 font-mono">
+                    <span className="text-[10.5px] font-bold text-emerald-800 font-mono">
                       {isAr ? 'معاينة شات الواتساب الحقيقي (WhatsApp Live Balloon)' : 'Realistic WhatsApp Chat Bubble Preview'}
                     </span>
                   </div>
-                  <span className="text-[9.5px] text-slate-500 font-mono">End-to-end Encrypted</span>
+                  <span className="text-[9.5px] text-slate-600 font-mono">End-to-end Encrypted</span>
                 </div>
 
                 <div className="flex justify-end pt-1">
-                  <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[#005c4b] text-white p-3 shadow-lg border border-emerald-500/20 text-xs relative space-y-1">
-                    <div className="text-[10px] font-bold text-[#E9C176]">Sierra Estates Luxury Concierge</div>
-                    <div className="text-slate-100 whitespace-pre-line text-[11px] leading-relaxed">
+                  <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[#d9fdd3] text-[#111b21] p-3 shadow-sm border border-emerald-300/60 text-xs relative space-y-1">
+                    <div className="text-[10px] font-bold text-emerald-800">Sierra Estates Luxury Concierge</div>
+                    <div className="text-[#111b21] whitespace-pre-line text-[11px] leading-relaxed">
                       {messageBody
                         .replace(/\{\{name\}\}/g, isAr ? '[اسم العميل]' : '[Client Name]')
                         .replace(/\{\{compound\}\}/g, isAr ? '[الكومباوند]' : '[Compound]')
                         .replace(/\{\{price\}\}/g, isAr ? '[السعر]' : '[Price]')}
                     </div>
-                    <div className="flex items-center justify-end gap-1 text-[9px] text-emerald-200/70 font-mono pt-0.5">
+                    <div className="flex items-center justify-end gap-1 text-[9px] text-slate-500 font-mono pt-0.5">
                       <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span className="text-sky-300 font-bold">✓✓</span>
+                      <span className="text-sky-600 font-bold">✓✓</span>
                     </div>
                   </div>
                 </div>
@@ -594,19 +594,19 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
 
             {/* Schedule Section only in scheduled mode */}
             {dispatchMode === 'scheduled' && (
-              <div className="clay-card p-4 space-y-3 bg-amber-950/20 border border-amber-500/20">
+              <div className="clay-inset p-4 space-y-3 bg-amber-50/70 border border-amber-200">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-amber-300 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-amber-400" />
+                  <label className="text-xs font-semibold text-amber-800 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-amber-600" />
                     {isAr ? 'توقيت وتاريخ الجدولة' : 'Target Schedule Date & Time'}
                   </label>
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-slate-300 flex items-center gap-1.5 cursor-pointer font-medium">
+                    <label className="text-xs text-[var(--tx-m)] flex items-center gap-1.5 cursor-pointer font-medium">
                       <input
                         type="checkbox"
                         checked={isImmediate}
                         onChange={(e) => setIsImmediate(e.target.checked)}
-                        className="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0"
+                        className="rounded bg-white border-slate-300 text-amber-600 focus:ring-0"
                       />
                       <span>{isAr ? 'إرسال فوري الآن في الطابور' : 'Immediate Queue Dispatch'}</span>
                     </label>
@@ -615,14 +615,14 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
 
                 {!isImmediate && (
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                    <label className="text-[11px] font-semibold text-[var(--tx-m)] block mb-1">
                       {isAr ? 'اختر اليوم والساعة المستهدفة' : 'Select Target Date & Time'}
                     </label>
                     <input
                       type="datetime-local"
                       value={scheduleDate}
                       onChange={(e) => setScheduleDate(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-slate-900 border border-amber-600/40 text-white text-xs focus:outline-none focus:border-amber-400 font-mono"
+                      className="w-full p-2.5 rounded-xl bg-white border border-amber-300 text-[var(--tx-s)] text-xs focus:outline-none focus:border-amber-500 font-mono shadow-xs"
                       required={!isImmediate}
                     />
                   </div>
@@ -678,10 +678,10 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
         {/* Right Column: Live Scheduled Queue Monitor */}
         <div className="lg:col-span-5 space-y-4">
           <div className="clay-card p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <ListFilter className="w-4 h-4 text-emerald-400" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                <ListFilter className="w-4 h-4 text-emerald-600" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--tx-s)]">
                   {isAr ? 'طابور الرسائل وحالة الإرسال' : 'Message Queue & Outbox'}
                 </h4>
               </div>
@@ -689,7 +689,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 <button
                   type="button"
                   onClick={fetchQueue}
-                  className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 border border-slate-700 hover:bg-slate-700/80 transition-colors shadow-sm cursor-pointer"
+                  className="p-1.5 text-[var(--tx-m)] hover:text-[var(--tx-s)] rounded-lg bg-slate-100 border border-slate-200 hover:bg-slate-200/70 transition-colors shadow-xs cursor-pointer"
                   title="Refresh Queue"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isLoadingQueue ? 'animate-spin' : ''}`} />
@@ -706,8 +706,8 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                   onClick={() => setQueueFilter(f)}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-bold capitalize transition-colors cursor-pointer ${
                     queueFilter === f
-                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-emerald-50 border border-emerald-300 text-emerald-700'
+                      : 'bg-slate-100 border border-slate-200 text-[var(--tx-m)] hover:text-[var(--tx-s)]'
                   }`}
                 >
                   {f}
@@ -716,10 +716,10 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
             </div>
 
             {filteredJobs.length === 0 ? (
-              <div className="clay-inset p-8 text-center text-slate-400 text-xs">
+              <div className="clay-inset p-8 text-center text-[var(--tx-m)] text-xs">
                 {isLoadingQueue ? (
                   <div className="flex items-center justify-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
                     <span>Loading queue...</span>
                   </div>
                 ) : (
@@ -731,35 +731,34 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 {filteredJobs.map((job) => {
                   const isSent = ['sent', 'delivered', 'read'].includes(job.status);
                   const isFail = job.status === 'failed';
-                  const isQueued = ['pending', 'queued', 'sending', 'processing'].includes(job.status);
                   return (
                     <div
                       key={job.id}
-                      className="clay-inset p-3 rounded-xl text-xs space-y-2 hover:border-slate-700 transition-colors"
+                      className="clay-inset p-3 rounded-xl text-xs space-y-2 bg-white/80 hover:border-slate-300 transition-colors"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[#E9C176] font-semibold">{job.toPhone}</span>
+                        <span className="font-mono text-amber-700 font-semibold">{job.toPhone}</span>
                         <span
                           className={`clay-pill px-2 py-0.5 text-[10px] font-bold ${
                             isSent
-                              ? 'text-emerald-300 bg-emerald-950/60 border border-emerald-600/40'
+                              ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
                               : isFail
-                              ? 'text-red-300 bg-red-950/60 border border-red-600/40'
-                              : 'text-amber-300 bg-amber-950/60 border border-amber-600/40'
+                              ? 'text-red-700 bg-red-50 border border-red-200'
+                              : 'text-amber-700 bg-amber-50 border border-amber-200'
                           }`}
                         >
                           {job.status.toUpperCase()}
                         </span>
                       </div>
 
-                      <p className="text-slate-300 line-clamp-2 text-[11px] font-sans">{job.body}</p>
+                      <p className="text-[var(--tx-m)] line-clamp-2 text-[11px] font-sans">{job.body}</p>
 
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800/80">
+                      <div className="flex items-center justify-between text-[10px] text-[var(--tx-f)] pt-1 border-t border-slate-200">
                         <span className="flex items-center gap-1 font-mono">
-                          <Clock className="w-3 h-3 text-emerald-400" />
+                          <Clock className="w-3 h-3 text-emerald-600" />
                           {job.scheduledFor ? new Date(job.scheduledFor).toLocaleString() : 'Immediate'}
                         </span>
-                        <span className="text-slate-400 capitalize">{job.purpose}</span>
+                        <span className="text-[var(--tx-m)] capitalize">{job.purpose}</span>
                       </div>
                     </div>
                   );
