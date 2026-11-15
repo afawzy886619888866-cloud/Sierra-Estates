@@ -1,0 +1,275 @@
+{
+  "project": {
+    "id": "2455613122012383700",
+    "title": "New Cairo Real Estate Map",
+    "screen_count": 4,
+    "created_epoch": 1791101848,
+    "modified_epoch": 1791938192
+  },
+  "screens": {
+    "dark_en": {
+      "screen_id": "43b735229af74944aeaa47a270542e0d",
+      "type": "interactive_ui_controller",
+      "width": "1376",
+      "height": "768",
+      "title": null,
+      "prompt_full": "Ultra-high resolution 8K architectural masterplan and spatial cadastral GIS map of New Cairo City (Fifth Settlement), Egypt — DARK NOCTURNAL LUXURY EDITION (ENGLISH VERSION WITH 3D PROXIMITY ZOOM & INVENTORY OVERLAY).\n\nApply the annotation instructions from {{DATA:IMAGE:IMAGE_59}}:\n\"make another one in arabic and another 2 dark one arabic one english also when you come closer the name gets bigger when press on it it opens all units in this location or compound in the inventory most higher resolution and fit to page pc and mobile\"\n\nVisual & Cartographic Architecture:\n1. Dark Obsidian Nocturnal Styling (#060B12 / #020617):\n- Glowing warm gold highway expressways (#F59E0B) with multi-level cloverleaf interchanges for Cairo Ring Road, Suez-Cairo Desert Road, Ain Sokhna Road, Middle Ring Road, and North & South 90th Street axis.\n- Neon cyan and electric emerald polygon parcel outlines (#06B6D4 / #10B981) for all elite compounds: SODIC Villette, Mivida, Hyde Park, Palm Hills New Cairo, El Marasem Fifth Square, Cairo Festival City, El Rehab, Taj City, Mountain View iCity, Katameya Dunes, Katameya Heights, Madinaty, Mostakbal City, Sarai, and Sierra Residences.\n- Central Anchor: American University in Cairo (AUC) with glowing golden octagonal benchmark.\n\n2. Proximity Magnification & Interactive Unit Inventory Card:\n- Demonstrating the camera proximity interaction: the compound name \"SODIC VILLETTE\" is prominently enlarged with high-contrast glowing text and elevation highlight.\n- An interactive floating frosted glassmorphism unit spreadsheet/modal card positioned seamlessly over the sector:\n  * Header: \"SODIC VILLETTE — LIVE INVENTORY REGISTRY (18 UNITS)\"\n  * Spreadsheet rows: Unit codes (VLT-VL-014, VLT-TH-203, VLT-SK-108), Type (Villa, Townhouse, Sky Penthouse), BUA m², Plot m², Resale Price (EGP / USD), and Status badges (Available, Reserved).\n  * Direct CTAs: \"360° Inspection\", \"WhatsApp VIP Broker\".\n\n3. Top header pill: \"New Cairo City (Fifth Settlement) — Interactive 3D Spatial Masterplan\".\n- Ultra-high resolution 8K architectural competition graphics, flawless contrast, responsive desktop/mobile HUD layout.",
+      "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1XSazqs_89CpZ6VEFiCPnvkj6gBL-bSC1P4qJtmtKOVPFa1iFI1EJcw_y056k4bbNzcB8MfDdVm2MkU7ipCR9ysXevxt8oQlu3Pk1wq5PIK1bNxIeQaD_gPrAnydSmWH7NhbpgFlk1g341F2ZF3zJmEhdNUVf_usyRCLtdh6v_xwll_wxHAM3L3RQwNufw9-QcQHkhH_2VPRICRk_OUaX8tDkel_n7xB-FYPYLANQghkzFoZUijeCBzWIc",
+      "html_entry": null,
+      "design_system": null
+    },
+    "light_en": {
+      "screen_id": "2bae6e77439a49caa7757bf72fc3ddb7",
+      "type": "interactive_ui_controller",
+      "width": "1376",
+      "height": "768",
+      "title": null,
+      "prompt_full": "Ultra-high resolution 8K architectural masterplan and spatial cadastral GIS cartography map of New Cairo City (Fifth Settlement / التجمع الخامس), Egypt — MAXIMUM FIDELITY & EXPANDED REALM EDITION.\n\nDirectly evolve and enhance the visual masterplan from {{DATA:IMAGE:IMAGE_11}} in pristine Light Alexandria luxury editorial styling, making it expansive, wide-format, and populated with all the top prestigious luxury compounds in New Cairo with razor-sharp cadastral precision:\n\n1. Cartographic Layout & Arterial Networks:\n- Base: Pristine architectural alabaster ivory and warm cream canvas (#FAF9F6 / #F6F4EF) with micro-cadastral street grids, accurate parcel subdivisions, and subtle topographic relief lines.\n- Expressways & Corridors: Rich brushed camel gold and burnished bronze double-stroke highway corridors (#C9A24D / #B48A3C) with intricate multi-level flyovers and cloverleaf interchanges:\n  * Cairo Ring Road (الطريق الدائري) curving on the west/left.\n  * Suez-Cairo Desert Road (طريق السويس) along the north/top.\n  * Ain Sokhna Road (طريق السخنة) along the south/bottom.\n  * Middle Ring Road (الدائري الأوسطي) running north-south through the eastern corridor.\n  * Central North 90th & South 90th Street (شارع التسعين الشمالي والجنوبي) axis meeting at the golden central anchor.\n\n2. Comprehensive Registry of Top New Cairo Compounds & Districts (Clearly labeled cadastral polygons in Alexandria deep royal sapphire blue #1D4ED8 / #1E3A8A and architectural emerald-teal #0D9488 / #0F766E):\n- Golden Square (المربع الذهبي): SODIC Villette, Mivida (Emaar), Palm Hills New Cairo, El Marasem Fifth Square, Mountain View 1 & 2, Hyde Park, The Address East, Azzar.\n- North 90 & Ring Road Sector: Cairo Festival City (CFC), Lake View, Katameya Heights, El Choueifat, El Narges, Swan Lake Residences (Hassan Allam), El Rehab City, Taj City, Mountain View iCity.\n- South 90 & AUC Corridor: American University in Cairo (AUC) centered as the glowing golden octagonal compass anchor emblem, Katameya Dunes Golf Resort, Katameya Palms, Sierra Residences, Arabella.\n- Eastern Expansion Corridor: Madinaty (iconic crescent arcs), Mostakbal City (مستقبل سيتي), Sarai, Bloomfields, Al Burouj, La Mirada.\n\n3. Typography & Masterplan Presentation:\n- Crisp architectural typography in deep midnight navy (#0F172A) and brushed gold.\n- Elegant top header pill: \"New Cairo City (Fifth Settlement) & Eastern Extensions, Egypt — Master Registry\".\n- Clean floating frosted glassmorphism HUD card on the right: \"SIERRA ESTATES — REGISTRY BENCHMARK\" displaying inventory metrics, sqm index, and verified cadastral status.\n- Compass rose at bottom-left, metric bar scale, and Sierra Estates official emblem mark at bottom-right.\n- Ultimate competition-grade presentation, museum-quality print resolution, razor-sharp vector-like linework without blur.",
+      "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1UbnLYfdUPDC9aSFDEdmCK3FaRVezLo8arMCQm25lwzjBAyiefOMR9jj3Vh2IyPsICyXNNnnk_NKUHao-Ww7v_bWtGc7lU7nfLwDmaIDA5SPvnDKo3mVULjTWqXADneUxGShRRSdxkRKy0TdxzktqIOVYgz_9XkmBhRH5vdvwtAAyhT1ceBG8I8eIEO1SgS6mNoLYW0vtB9GODpSR_2PEaVLG6JDHdRLYyzOQ3yKRNy2Nq6_UH-hMg10w",
+      "html_entry": null,
+      "design_system": [
+        "assets/12421365376921688321",
+        null,
+        [
+          "Alexandria",
+          null,
+          null,
+          [
+            1,
+            7,
+            2,
+            "custom",
+            "#3366cc",
+            2,
+            null,
+            null,
+            null,
+            7,
+            3,
+            9,
+            [
+              [
+                "on_error",
+                "#ffffff"
+              ],
+              [
+                "error",
+                "#ba1a1a"
+              ],
+              [
+                "surface_container",
+                "#efedee"
+              ],
+              [
+                "tertiary_fixed",
+                "#f9e37a"
+              ],
+              [
+                "on_secondary",
+                "#ffffff"
+              ],
+              [
+                "on_surface_variant",
+                "#434653"
+              ],
+              [
+                "background",
+                "#faf9fa"
+              ],
+              [
+                "secondary_fixed_dim",
+                "#c2c7cc"
+              ],
+              [
+                "on_background",
+                "#1b1c1d"
+              ],
+              [
+                "secondary_container",
+                "#dfe3e8"
+              ],
+              [
+                "outline_variant",
+                "#c3c6d5"
+              ],
+              [
+                "inverse_primary",
+                "#b1c5ff"
+              ],
+              [
+                "on_tertiary_fixed_variant",
+                "#524600"
+              ],
+              [
+                "on_primary_fixed_variant",
+                "#00419d"
+              ],
+              [
+                "on_surface",
+                "#1b1c1d"
+              ],
+              [
+                "on_tertiary",
+                "#ffffff"
+              ],
+              [
+                "primary",
+                "#094cb2"
+              ],
+              [
+                "surface_container_highest",
+                "#e3e2e3"
+              ],
+              [
+                "on_error_container",
+                "#93000a"
+              ],
+              [
+                "on_primary_container",
+                "#e7ebff"
+              ],
+              [
+                "tertiary_fixed_dim",
+                "#dcc661"
+              ],
+              [
+                "surface",
+                "#faf9fa"
+              ],
+              [
+                "surface_container_high",
+                "#e9e8e9"
+              ],
+              [
+                "on_secondary_fixed",
+                "#171c20"
+              ],
+              [
+                "on_secondary_container",
+                "#606569"
+              ],
+              [
+                "surface_container_low",
+                "#f5f3f4"
+              ],
+              [
+                "on_primary_fixed",
+                "#001946"
+              ],
+              [
+                "error_container",
+                "#ffdad6"
+              ],
+              [
+                "surface_tint",
+                "#2259bf"
+              ],
+              [
+                "inverse_surface",
+                "#303031"
+              ],
+              [
+                "tertiary_container",
+                "#bfab49"
+              ],
+              [
+                "surface_bright",
+                "#faf9fa"
+              ],
+              [
+                "surface_container_lowest",
+                "#ffffff"
+              ],
+              [
+                "primary_fixed",
+                "#d9e2ff"
+              ],
+              [
+                "on_tertiary_fixed",
+                "#211b00"
+              ],
+              [
+                "on_primary",
+                "#ffffff"
+              ],
+              [
+                "primary_container",
+                "#3366cc"
+              ],
+              [
+                "on_secondary_fixed_variant",
+                "#42474b"
+              ],
+              [
+                "tertiary",
+                "#6d5e00"
+              ],
+              [
+                "surface_variant",
+                "#e3e2e3"
+              ],
+              [
+                "secondary",
+                "#5a5f63"
+              ],
+              [
+                "primary_fixed_dim",
+                "#b1c5ff"
+              ],
+              [
+                "on_tertiary_container",
+                "#4a3f00"
+              ],
+              [
+                "surface_dim",
+                "#dbdadb"
+              ],
+              [
+                "inverse_on_surface",
+                "#f2f0f1"
+              ],
+              [
+                "secondary_fixed",
+                "#dfe3e8"
+              ],
+              [
+                "outline",
+                "#737784"
+              ]
+            ],
+            "# Alexandria — High-End Editorial\n\n## North Star: \"The Digital Curator\"\nA scholarly, premium reading experience. Dense information made effortless through serif authority and generous whitespace.\n\n## Colors\n- **Primary (`#094cb2`):** Links, primary actions, focus states only.\n- **Surface tiers** create hierarchy—no explicit borders. Use background shifts between `surface-container-lowest` → `surface-dim`.\n- **Tertiary (`#6d5e00`):** Archival gold for highlights and badges.\n- **No-Line Rule:** Never use 1px borders. Define boundaries through background color shifts.\n- Use glassmorphism for floating menus (80% opacity + 20px backdrop-blur). Gradient CTAs from `primary` → `primary_container`.\n\n## Typography\n- **Headlines:** Noto Serif — large, authoritative, generous leading.\n- **Body:** Inter — modern clarity for dense text.\n- **Labels:** Public Sans — archival metadata feel.\n\n## Elevation\n- Depth through tonal layering, not shadows. Stack surface tokens for natural elevation.\n- Modals: extra-diffused shadows (24-40px blur, 4-6% opacity, tinted `on_surface`).\n- If borders needed: \"Ghost Border\" — `outline_variant` at 15% opacity.\n\n## Components\n- **Buttons:** Primary = gradient fill, Secondary = surface-high bg + primary text, Tertiary = text + hover underline.\n- **Cards:** No divider lines. Use spacing or alternating surface colors.\n- **Inputs:** White bg, ghost border, focus = primary border.\n\n## Rules\n- Use whitespace as structure. Serif for narrative text. One primary action per view.\n- Never use sharp corners — minimum `sm` roundness.",
+            6,
+            "#3366cc",
+            "#54595d",
+            "#fee77e",
+            "#202122"
+          ]
+        ],
+        1,
+        "assets/preset-alexandria"
+      ]
+    },
+    "dark_ar": {
+      "screen_id": "680696e3a6264cb7b8e7314f95995dfc",
+      "type": "interactive_ui_controller",
+      "width": "1376",
+      "height": "768",
+      "title": null,
+      "prompt_full": "Ultra-high resolution 8K architectural masterplan and spatial cadastral GIS map of New Cairo City (Fifth Settlement / التجمع الخامس), Egypt — DARK NOCTURNAL LUXURY EDITION (ARABIC VERSION).\n\nApply the annotation instructions from {{DATA:IMAGE:IMAGE_59}}:\n\"make another one in arabic and another 2 dark one arabic one english also when you come closer the name gets bigger when press on it it opens all units in this location or compound in the inventory most higher resolution and fit to page pc and mobile\"\n\nVisual & Cartographic Architecture:\n1. Full Arabic Typography & Labels across all sectors:\n- Central Anchor: الجامعة الأمريكية بالقاهرة (American University in Cairo - AUC) glowing in rich golden octagonal core.\n- Golden Square (المربع الذهبي): سوديك فيليت، ميفيدا (إعمار)، هايد بارك، بالم هيلز، فيفث سكوير المراسم، ماونتن فيو، سييرا ريزيدنس.\n- North Corridor: كايرو فيستيفال سيتي، مدينة الرحاب، تاج سيتي، ماونتن فيو آي سيتي، سوان ليك، قطامية هايتس.\n- South Corridor: قطامية ديونز، أرابيلا، قطامية بالمز.\n- East Corridor: مدينتي، مستقبل سيتي، سراي، لا ميرادا.\n- Highways & Expressways: الطريق الدائري، طريق السويس الصحراوي، طريق العين السخنة، الدائري الأوسطي، شارع التسعين الشمالي والجنوبي.\n\n2. Proximity & Interactive Focus:\n- Luminous glowing cyan/emerald parcel borders (#06B6D4 / #10B981) on deep obsidian nocturnal canvas (#060B12).\n- Magnified compound focal point for \"سوديك فيليت\" with interactive holographic ring indicating camera zoom proximity.\n- Floating dark frosted glassmorphism HUD card on the right: \"سجل الوحدات المتاحة — SIERRA ESTATES INVENTORY\" displaying live unit breakdown, sqm price, and direct unit inspection actions.\n\n3. Visual Caliber:\n- Luminous warm gold highway vectors (#F59E0B) with authentic multi-level interchanges.\n- Razor-sharp vector typography in Arabic (Cairo/Amiri calligraphy and modern architectural font).\n- Sierra Estates logo at bottom-right, navigation HUD at bottom-left. 8K competition presentation caliber.",
+      "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1VFcm0Sz2wDJfcnK9kiAWGl4Y_GQuDa7R5Jsro8BH7u55BRoLXpnrq0DDlMyPyUXdbeFyFDX4IEJLFJFI2WcKFoWS1ymyLhThDMDBrtQ9wo26zeJvYwp4sKMx8nzJN_qsBcVPVNo4UtZvaHrOZGKsRO_LGIgoGbW3uqZBpyekjUoLrW7quB5TugBxuVkGvXHDL-UoGHtTKGH4i1o90AXl0tZuo9lcoSLtRd7RKY50374Nm0ZeLze_T_whg",
+      "html_entry": null,
+      "design_system": null
+    },
+    "bilingual": {
+      "screen_id": "dba76cca7b6e4c859cac6b7f1069fee6",
+      "type": "interactive_ui_controller",
+      "width": "1376",
+      "height": "768",
+      "title": null,
+      "prompt_full": "Ultra-high resolution 8K architectural masterplan cartography map of New Cairo City (Fifth Settlement / التجمع الخامس), Egypt — BILINGUAL ARABIC & ENGLISH LIGHT ALEXANDRIA EDITORIAL EDITION.\n\nModify the reference Light Alexandria masterplan map ({{DATA:IMAGE:IMAGE_3}}) according to the user's annotation on {{DATA:IMAGE:IMAGE_59}}:\n\"make another one in arabic and another 2 dark one arabic one english also when you come closer the name gets bigger when press on it it opens all units in this location or compound in the inventory most higher resolution and fit to page pc and mobile\"\n\nVisual & Cartographic Architecture:\n1. Complete Arabic & English bilingual labeling for all compounds and major arterial corridors:\n- Golden Square (المربع الذهبي): سوديك فيليت (SODIC Villette), ميفيدا إعمار (Mivida), هايد بارك (Hyde Park), بالم هيلز القاهرة الجديدة (Palm Hills New Cairo), فيفث سكوير المراسم (El Marasem Fifth Square), ماونتن فيو (Mountain View), سييرا ريزيدنس (Sierra Residences).\n- North 90 & Ring Road Sector: كايرو فيستيفال سيتي (Cairo Festival City / CFC), ليك فيو (Lake View), مدينة الرحاب (El Rehab City), تاج سيتي (Taj City), ماونتن فيو آي سيتي (Mountain View iCity), سوان ليك (Swan Lake Residences), أب تاون كايرو (Uptown Cairo).\n- South 90 & Central Anchor: الجامعة الأمريكية بالقاهرة (American University in Cairo / AUC) centered in the glowing golden octagonal emblem with concentric orbital rings, قطامية ديونز (Katameya Dunes Golf), قطامية هايتس (Katameya Heights), أرابيلا (Arabella).\n- Eastern Expansion Corridor: مدينتي (Madinaty), مستقبل سيتي (Mostakbal City), سراي (Sarai).\n\n2. Road Network in Brushed Gold/Bronze:\n- الطريق الدائري (Cairo Ring Road), طريق السويس (Suez-Cairo Desert Road), طريق السخنة (Ain Sokhna Road), الدائري الأوسطي (Middle Ring Road), شارع التسعين الشمالي والجنوبي (North & South 90th Street).\n\n3. Proximity Magnification Callout & Interactive Inventory Preview:\n- In the central Golden Square area, show a subtle highlighted focus state where the compound label \"سوديك فيليت | SODIC VILLETTE\" is prominently magnified and glowing with golden focus aura.\n- Elegant floating frosted glassmorphism live inventory modal preview displaying available units in this compound (Unit Code, Type, BUA m², Plot m², Price in EGP & USD, Availability Status tags).\n\n4. Aesthetic:\n- Pristine light ivory/alabaster architectural background (#FAF9F6) with razor-sharp micro-cadastral street grids.\n- Royal sapphire blue and deep architectural teal compound fills (#1D4ED8 / #0F766E).\n- Top header pill in Arabic & English: \"مدينة القاهرة الجديدة والتوسعات الشرقية — New Cairo City Master Registry\".\n- Bottom-right: Sierra Estates logo. Bottom-left: Compass rose and scale. Ultra-crisp 8K print/screen resolution.",
+      "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1XiC0T7C7Bke6s3Gd-GM87jUjB6GUh45-ESmgsg55rkB5kaC7AhBiMK2NAttMEPkZxKgyblJn57kC4_lDAfeeuJWoiv2pCyvzvlGZJ3fVaycGEGHs3o2xif--SD6yZB1RkykJFOGQOCCZJvx955fXmDbdzZzk7OPKxSXHib7FI81bw-OOqvpWKji82lDeygwsARq3_T4YPOQjYlNvJS05Asg4Nm1APsCKiGG2QJVOuWF11IM56APvzgag",
+      "html_entry": null,
+      "design_system": null
+    }
+  }
+}

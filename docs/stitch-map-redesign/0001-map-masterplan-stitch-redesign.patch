@@ -1,0 +1,3137 @@
+From 6a57729db8bd7ff2b8200701c88b9431beba897b Mon Sep 17 00:00:00 2001
+From: Sierra Automation <agent@sierra-estates.local>
+Date: Mon, 2 Nov 2026 06:32:04 +0000
+Subject: [PATCH] =?UTF-8?q?feat(map):=20properties=20masterplan=20redesign?=
+ =?UTF-8?q?=20=E2=80=94=204=20Stitch=20variants=20(light/dark=20=C3=97=20e?=
+ =?UTF-8?q?n/ar/bilingual)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Replaces the /properties map experience with the approved Stitch masterplan
+design system (project 2455613122012383700, order v2). Presentation layer
+ONLY — the live-data layer (/api/inventory, publish gate, filters, search,
+listing selection) is untouched and verified end-to-end.
+
+Variant system (order § VARIANT SYSTEM): two independent pill toggles,
+persisted via the site's hzp-* localStorage pattern:
+- Theme: Light (Alexandria) / Dark (Nocturnal) + satellite
+- Language: EN / ع / AR|EN (bilingual pills read compounds-data nameAr|nameEn)
+
+Map engine (react-leaflet) KEPT and restyled (chrome="masterplan" prop is
+opt-in; admin InventoryCommandView + ListingNetMap radar keep classic chrome):
+- Compound label pills: glass, live count chips (n>0 only), sapphire/teal
+  tier accents, bilingual labels, zoom-driven proximity magnification
+  (11/13/16px tiers) + golden focus aura at z≥14 (owner's interaction)
+- Inventory Registry Modal: floating glass spreadsheet (UNIT CODE | TYPE |
+  BUA m² | PRICE | STATUS) fed by the FULL filtered live inventory; PLOT
+  column dropped (no real field), STATUS conditional on real values (§21);
+  row click → real detail page; 360° INSPECTION → real listing page (never
+  a fake viewer); WHATSAPP VIP BROKER → wa.me/201092048333 prefilled
+- Registry Benchmark HUD: live-computed Verified Units + EGP/m² price index
+  (omitted when not computable); hides while the modal occupies the slot
+- Cartographic chrome: gold compass, live coordinates HUD, REAL scale bar
+  (measured on the map), EPSG label, zoom stack, local logo mark
+- Basemap switch: CARTO → keyless Esri canvas (light base+reference labels /
+  dark canvas). CARTO anonymous tiles now serve intermittent "API KEY
+  REQUIRED" watermark error tiles (verified on production 2026-11-02);
+  classic chrome keeps CARTO unchanged
+- Filters restyled into the top-left glass overlay cluster (same state,
+  behavior identical); radius control relocated into the toolbar; view
+  switcher (Split/Grid/Map) on the map + map-first default per the order
+- Typography: Noto Serif + Public Sans added to the existing Google Fonts
+  import (Cairo already shipped); display=swap preserved
+
+Verification: tsc clean; 34/34 vitest (15 new masterplan contract tests incl.
+§21 zero-demo-value scan + no Stitch/Aida hotlinks); dev-server browser
+smoke with live data — 4 variant screenshots, registry modal with 118 real
+Eastown rows, focused pill + 118 unit pins at z15, toggles persisted,
+zero stitch/lh3/aida network requests, zero page errors. Full next build
+compiles cleanly; page-data collection OOMs in the 4GB sandbox identically
+on clean main (environment limit, not a regression — Vercel build unaffected).
+
+Known pre-existing (NOT introduced here): __tests__/map-filters-sync
+Transit-zone test fails on upstream main; CARTO watermark on classic-chrome
+consumers (admin/radar) unchanged.
+---
+ __tests__/masterplan-variants.test.ts         |  163 +++
+ .../app/(site)/properties/PropertiesPage.tsx  |  587 ++++++++-
+ .../app/(site)/properties/page.tsx            |    1 +
+ .../app/site-styles/masterplan.css            | 1107 +++++++++++++++++
+ .../app/tokens/typography.css                 |    9 +-
+ .../Maps/InventoryRegistryModal.tsx           |  277 +++++
+ .../components/Maps/LiveMap.tsx               |  616 ++++++++-
+ 7 files changed, 2709 insertions(+), 51 deletions(-)
+ create mode 100644 __tests__/masterplan-variants.test.ts
+ create mode 100644 apps/sierra-estates-realty/app/site-styles/masterplan.css
+ create mode 100644 apps/sierra-estates-realty/components/Maps/InventoryRegistryModal.tsx
+
+diff --git a/__tests__/masterplan-variants.test.ts b/__tests__/masterplan-variants.test.ts
+new file mode 100644
+index 00000000..a5198fb4
+--- /dev/null
++++ b/__tests__/masterplan-variants.test.ts
+@@ -0,0 +1,163 @@
++import { describe, it, expect } from 'vitest';
++import * as fs from 'fs';
++import * as path from 'path';
++import { NEW_CAIRO_COMPOUNDS } from '../apps/sierra-estates-realty/components/Maps/compounds-data';
++
++/**
++ * Masterplan 4-Variant Map Redesign (Stitch project 2455613122012383700)
++ * ----------------------------------------------------------------------------
++ * Contract tests for the /properties map experience redesign:
++ * theme (Light/Dark) × language (EN/AR/Bilingual) variant system, the
++ * Inventory Registry Modal, proximity magnification, persistence — and the
++ * §21 no-fabrication law (zero Stitch demo values in shipped code).
++ */
++describe('Masterplan Map Redesign — Variant System & Wiring', () => {
++  const ROOT_DIR = path.resolve(__dirname, '..');
++  const APP_DIR = path.join(ROOT_DIR, 'apps', 'sierra-estates-realty');
++  const PAGE_PATH = path.join(APP_DIR, 'app', '(site)', 'properties', 'PropertiesPage.tsx');
++  const LIVEMAP_PATH = path.join(APP_DIR, 'components', 'Maps', 'LiveMap.tsx');
++  const MODAL_PATH = path.join(APP_DIR, 'components', 'Maps', 'InventoryRegistryModal.tsx');
++  const CSS_PATH = path.join(APP_DIR, 'app', 'site-styles', 'masterplan.css');
++  const TYPOGRAPHY_PATH = path.join(APP_DIR, 'app', 'tokens', 'typography.css');
++
++  const read = (p: string) => fs.readFileSync(p, 'utf-8');
++  const pageSrc = read(PAGE_PATH);
++  const mapSrc = read(LIVEMAP_PATH);
++  const modalSrc = read(MODAL_PATH);
++  const cssSrc = read(CSS_PATH);
++
++  describe('Variant matrix — 4 Stitch screens as one page, two toggles', () => {
++    it('should ship the masterplan chrome + bilingual lang extension on LiveMap', () => {
++      expect(mapSrc).toContain("export type MapLang = 'en' | 'ar' | 'bi'");
++      expect(mapSrc).toContain("export type MapChrome = 'classic' | 'masterplan'");
++      expect(mapSrc).toContain('chrome = ');
++      // The page (not the engine) selects the masterplan chrome
++      expect(pageSrc).toContain('chrome="masterplan"');
++    });
++
++    it('should render BOTH toggles in the page chrome (theme × language)', () => {
++      // Theme toggle: Light / Dark pills driven by mapTheme state
++      expect(pageSrc).toContain("const [mapTheme, setMapTheme] = useState<'light' | 'dark'>");
++      expect(pageSrc).toContain("setMapTheme('light')");
++      expect(pageSrc).toContain("setMapTheme('dark')");
++      // Language toggle: EN / ع / AR|EN pills driven by mapLang state
++      expect(pageSrc).toContain('const [mapLang, setMapLang] = useState<MapLang>');
++      expect(pageSrc).toContain("setMapLang('en')");
++      expect(pageSrc).toContain("setMapLang('ar')");
++      expect(pageSrc).toContain("setMapLang('bi')");
++      expect(pageSrc).toContain('AR|EN');
++    });
++
++    it('should persist both toggles via the site preference pattern', () => {
++      expect(pageSrc).toContain("'hzp-map-theme'");
++      expect(pageSrc).toContain("'hzp-map-lang'");
++      expect(pageSrc).toContain("localStorage.setItem('hzp-map-theme', mapTheme)");
++      expect(pageSrc).toContain("localStorage.setItem('hzp-map-lang', mapLang)");
++    });
++
++    it('should scope both theme token sets in masterplan.css', () => {
++      expect(cssSrc).toContain("[data-map-theme='light']");
++      expect(cssSrc).toContain("[data-map-theme='dark']");
++      // Alexandria light primary + nocturnal void, from the Stitch renders
++      expect(cssSrc).toContain('--mp-glass: rgba(255, 255, 255, 0.85)');
++      expect(cssSrc).toContain('--mp-glass: rgba(16, 24, 40, 0.85)');
++      expect(cssSrc).toContain('--mp-gold: #ffd700');
++    });
++
++    it('should default to the map-first wide layout (order v2)', () => {
++      expect(pageSrc).toContain("useState<ViewMode>('map')");
++    });
++  });
++
++  describe('Proximity magnification & registry modal (owner interactions)', () => {
++    it('should implement zoom-driven label scaling tiers (11 / 13 / 16 px)', () => {
++      expect(mapSrc).toContain('zoom >= 14 ? 16 : zoom >= 12 ? 13 : 11');
++      expect(mapSrc).toContain('se-mp-focus');
++      expect(mapSrc).toContain('focusedCompoundCode');
++    });
++
++    it('should ship the Inventory Registry Modal wired to the full live feed', () => {
++      expect(fs.existsSync(MODAL_PATH)).toBe(true);
++      expect(pageSrc).toContain('registryUnits={registryUnits}');
++      expect(mapSrc).toContain('registryUnits');
++      expect(mapSrc).toContain('InventoryRegistryModal');
++    });
++
++    it('should render real columns only — PLOT dropped, STATUS conditional', () => {
++      expect(modalSrc).toContain('UNIT CODE');
++      expect(modalSrc).toContain('BUA m²');
++      expect(modalSrc).not.toContain('PLOT m²');
++      expect(modalSrc).toContain('showStatusColumn');
++    });
++
++    it('should use the real WhatsApp number and real detail-page links', () => {
++      expect(modalSrc).toContain('wa.me/201092048333');
++      expect(modalSrc).toContain('/property/');
++    });
++  });
++
++  describe('Bilingual labels from compounds-data (§21 real source)', () => {
++    it('should render the Stitch `العربية | LATIN` bilingual pill pattern', () => {
++      expect(mapSrc).toContain('shortEn.toUpperCase()');
++      expect(mapSrc).toContain('`${ar} | ${shortEn.toUpperCase()}`');
++    });
++
++    it('should keep every compound carrying BOTH nameEn and nameAr', () => {
++      for (const c of NEW_CAIRO_COMPOUNDS) {
++        expect(c.nameEn.trim().length).toBeGreaterThan(0);
++        expect(c.nameAr.trim().length).toBeGreaterThan(0);
++      }
++    });
++  });
++
++  describe('§21 NO-FABRICATION — zero Stitch demo values in shipped code', () => {
++    it('should contain none of the renders\' placeholder numbers or unit codes', () => {
++      const forbidden = [
++        'VLT-VL-014',
++        'VLT-TH-203',
++        'VLT-SK-108',
++        '18 UNITS',
++        '32.3M',
++        '19.8M',
++        '24.2M',
++        '11,017',
++        '85,000',
++        '17.78',
++      ];
++      const shippedSources = [pageSrc, mapSrc, modalSrc, cssSrc];
++      for (const src of shippedSources) {
++        for (const needle of forbidden) {
++          expect(src.includes(needle)).toBe(false);
++        }
++      }
++    });
++
++    it('should never hotlink ephemeral Stitch/Aida CDN assets', () => {
++      const shippedSources = [pageSrc, mapSrc, modalSrc, cssSrc];
++      for (const src of shippedSources) {
++        expect(src.includes('stitch.withgoogle.com')).toBe(false);
++        expect(src.includes('lh3.googleusercontent.com')).toBe(false);
++        expect(src.includes('aida/')).toBe(false);
++      }
++    });
++
++    it('should compute HUD metrics live and omit non-computable rows', () => {
++      expect(pageSrc).toContain('priceIndex: number | null = null');
++      expect(pageSrc).toContain('benchmark.priceIndex != null');
++      expect(pageSrc).toContain('benchmark.verifiedUnits > 0');
++    });
++  });
++
++  describe('Typography — Alexandria faces extend the site import', () => {
++    it('should add Noto Serif + Public Sans to the existing Google Fonts import', () => {
++      const typo = read(TYPOGRAPHY_PATH);
++      expect(typo).toContain('family=Noto+Serif');
++      expect(typo).toContain('family=Public+Sans');
++      expect(typo).toContain('display=swap');
++      expect(typo).toContain('--font-headline');
++      expect(typo).toContain('--font-label');
++      // Cairo (Arabic geometric sans) must stay shipped for AR labels
++      expect(typo).toContain('family=Cairo');
++    });
++  });
++});
+diff --git a/apps/sierra-estates-realty/app/(site)/properties/PropertiesPage.tsx b/apps/sierra-estates-realty/app/(site)/properties/PropertiesPage.tsx
+index ad11c044..7fcac7d5 100644
+--- a/apps/sierra-estates-realty/app/(site)/properties/PropertiesPage.tsx
++++ b/apps/sierra-estates-realty/app/(site)/properties/PropertiesPage.tsx
+@@ -27,6 +27,8 @@ import {
+   ShieldCheck,
+   Sparkles,
+   Paintbrush,
++  SlidersHorizontal,
++  Globe,
+ } from 'lucide-react';
+ import SiteShell from '@/components/site/SiteShell';
+ import { useSite } from '@/lib/site/SiteContext';
+@@ -34,7 +36,8 @@ import { useReveal } from '@/lib/site/useReveal';
+ // Phase 4/B3: the 6.5 MB snapshot.json no longer ships in the client bundle —
+ // real units arrive from /api/inventory below (loading state is honest).
+ import type { CompoundLocation } from '@/components/Maps/compounds-data';
+-import type { MapUnitPin } from '@/components/Maps/LiveMap';
++import type { MapUnitPin, MapLang } from '@/components/Maps/LiveMap';
++import type { RegistryUnit } from '@/components/Maps/InventoryRegistryModal';
+ import { useListingsRealtime } from '@/hooks/useListingsRealtime';
+ import { getCuratedListingImage } from '@/lib/site/luxury-images';
+ import { unitMatchesCondition, CONDITION_OPTIONS } from '@/lib/site/smart-search';
+@@ -321,10 +324,50 @@ export default function PropertiesPage() {
+   const [selectedCondition, setSelectedCondition] = useState('all');
+   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
+   const [sortBy, setSortBy] = useState('ai');
+-  const [viewMode, setViewMode] = useState<ViewMode>('split');
++  // Map-first per the Stitch masterplan order (wide map-first layout, NOT
++  // v1's split panel) — split/grid remain one click away and ?view= still
++  // overrides on mount.
++  const [viewMode, setViewMode] = useState<ViewMode>('map');
+   const [radiusKm, setRadiusKm] = useState<number | null>(null);
+   const [centerCoords, setCenterCoords] = useState<[number, number]>([30.045, 31.59]);
+ 
++  // ── Masterplan variant system (Stitch v2): theme × language toggles ─────
++  // Two INDEPENDENT pills (order § VARIANT SYSTEM). Defaults follow the
++  // site's own theme/locale; both persist alongside the site's existing
++  // localStorage preference pattern (hzp-*).
++  const [mapTheme, setMapTheme] = useState<'light' | 'dark'>(theme === 'dark' ? 'dark' : 'light');
++  const [mapLang, setMapLang] = useState<MapLang>(isAr ? 'ar' : 'en');
++  const [mapSatellite, setMapSatellite] = useState(false);
++  const [registryOpen, setRegistryOpen] = useState(false);
++  const [mapFiltersOpen, setMapFiltersOpen] = useState(false);
++
++  // Restore persisted variant preferences (single read on mount).
++  useEffect(() => {
++    try {
++      const storedTheme = window.localStorage.getItem('hzp-map-theme');
++      if (storedTheme === 'light' || storedTheme === 'dark') setMapTheme(storedTheme);
++      const storedLang = window.localStorage.getItem('hzp-map-lang');
++      if (storedLang === 'en' || storedLang === 'ar' || storedLang === 'bi') setMapLang(storedLang);
++    } catch {
++      /* storage unavailable — defaults stand */
++    }
++  }, []);
++
++  useEffect(() => {
++    try {
++      window.localStorage.setItem('hzp-map-theme', mapTheme);
++    } catch {
++      /* ignore */
++    }
++  }, [mapTheme]);
++  useEffect(() => {
++    try {
++      window.localStorage.setItem('hzp-map-lang', mapLang);
++    } catch {
++      /* ignore */
++    }
++  }, [mapLang]);
++
+   // Pagination & Active Selection
+   const [currentPage, setCurrentPage] = useState(1);
+   const pageSize = 24;
+@@ -551,6 +594,43 @@ export default function PropertiesPage() {
+     }));
+   }, [paginatedListings, sortedListings]);
+ 
++  // ── Masterplan registry feed: the FULL (uncapped) filtered inventory ────
++  // feeding the Inventory Registry Modal, the pill tooltips and the
++  // Benchmark HUD. §21: every field below is the listing's own real data
++  // (price/labels/status come straight from sanitizeUnit over /api/inventory).
++  const registryUnits = useMemo<RegistryUnit[]>(
++    () =>
++      filteredListings.map((u) => ({
++        id: u.id,
++        code: u.code,
++        compound: u.compound,
++        type: u.type,
++        area: u.area,
++        price: u.price,
++        priceLabel: u.priceLabel,
++        mode: u.mode,
++        status: u.availability || '',
++        img: u.img,
++      })),
++    [filteredListings]
++  );
++
++  // Registry Benchmark HUD metrics — computed live from the inventory;
++  // any metric that is not computable is omitted entirely (§21).
++  const benchmark = useMemo(() => {
++    const verifiedUnits = allUnits.length;
++    let priceIndex: number | null = null;
++    let priced = 0;
++    let sumPerSqm = 0;
++    for (const u of allUnits) {
++      if (u.mode !== 'sale' || u.price <= 0 || u.area <= 0) continue;
++      sumPerSqm += u.price / u.area;
++      priced += 1;
++    }
++    if (priced > 0) priceIndex = Math.round(sumPerSqm / priced);
++    return { verifiedUnits, priceIndex };
++  }, [allUnits]);
++
+   // Handle focusing unit on map and scrolling card into view
+   const handleSelectUnit = useCallback((unit: RealListing | MapUnitPin) => {
+     const found = allUnits.find((u) => u.id === unit.id || u.code === unit.code);
+@@ -668,7 +748,10 @@ export default function PropertiesPage() {
+       {/* Main Filter & Content Section */}
+       <section className="block" style={{ paddingTop: 16, paddingBottom: 80 }} ref={listingsContainerRef}>
+         <div className="wrap">
+-          {/* ── REAL NORMAL FILTER TOOLBAR ── */}
++          {/* ── REAL NORMAL FILTER TOOLBAR (in-flow for split/grid views;
++               the map view replaces it with the top-left glass overlay
++               cluster on the map itself) ── */}
++          {viewMode !== 'map' && (
+           <div className="props-filter-box">
+             {/* Upper Row: Search, Mode, Type, Compound */}
+             <div className="props-filter-row-1">
+@@ -753,7 +836,7 @@ export default function PropertiesPage() {
+               </div>
+             </div>
+ 
+-            {/* Lower Row: Bedrooms, Price, Sort, View Mode, Reset */}
++            {/* Lower Row: Bedrooms, Radius, Price, Sort, View Mode, Reset */}
+             <div className="props-filter-row-2">
+               <div className="props-chip-group">
+                 <span className="props-chip-label">{isAr ? 'الغرف:' : 'Beds:'}</span>
+@@ -769,6 +852,34 @@ export default function PropertiesPage() {
+                 ))}
+               </div>
+ 
++              {/* Radius filter (moved out of the classic map panel into the
++                  toolbar — the masterplan map chrome no longer renders it) */}
++              <div className="props-chip-group">
++                <span className="props-chip-label">{isAr ? 'النطاق:' : 'Radius:'}</span>
++                {[null, 5, 10, 25].map((r) => {
++                  const active = r === radiusKm || (r === null && !radiusKm);
++                  return (
++                    <button
++                      key={r === null ? 'all' : `${r}km`}
++                      type="button"
++                      onClick={() => setRadiusKm(r)}
++                      className={`props-chip ${active ? 'active' : ''}`}
++                      title={
++                        r === null
++                          ? isAr
++                            ? 'كل المناطق'
++                            : 'All areas (no radius limit)'
++                          : isAr
++                          ? `ضمن ${r} كم من مركز الخريطة`
++                          : `Within ${r} km of the map center`
++                      }
++                    >
++                      {r === null ? (isAr ? 'الكل' : 'All') : `${r}km`}
++                    </button>
++                  );
++                })}
++              </div>
++
+               <div className="props-filter-row-2-right">
+                 {/* Condition (Finishing) Filter */}
+                 <select
+@@ -844,7 +955,7 @@ export default function PropertiesPage() {
+                   <button
+                     type="button"
+                     onClick={() => setViewMode('map')}
+-                    className={`props-view-btn ${viewMode === 'map' ? 'active' : ''}`}
++                    className="props-view-btn"
+                     title={isAr ? 'الخريطة فقط' : 'Map Only'}
+                   >
+                     <Map style={{ width: 14, height: 14 }} />
+@@ -909,14 +1020,20 @@ export default function PropertiesPage() {
+               </div>
+             )}
+           </div>
++          )}
+ 
+           {/* ── MAIN CONTENT AREA (MAP & LISTINGS) ── */}
+           {viewMode === 'map' ? (
+-            /* Full Map View */
+-            <div className="props-full-map-wrap">
++            /* Full Map View — Interactive Spatial Masterplan (Stitch redesign) */
++            <div className="props-full-map-wrap mp-full-map" data-map-theme={mapTheme}>
+               <LiveMap
+-                mode={theme === 'dark' ? 'dark' : 'light'}
++                mode={mapTheme}
++                lang={mapLang}
++                chrome="masterplan"
++                basemap={mapSatellite ? 'satellite' : 'theme'}
+                 units={mapPins}
++                registryUnits={registryUnits}
++                onRegistryStateChange={(c) => setRegistryOpen(!!c)}
+                 activeUnitId={activeUnit?.id || activeUnit?.code || null}
+                 flyToCoords={flyToCoords}
+                 onSelectUnit={handleSelectUnit}
+@@ -927,8 +1044,380 @@ export default function PropertiesPage() {
+                 onCenterChange={setCenterCoords}
+                 maxPins={250}
+                 height="100%"
++                showLegend={false}
++                showPinCounter={false}
+               />
+ 
++              {/* ── Header pill (decorative brand copy — the real H1 lives in
++                     the hero above for SEO continuity) ── */}
++              <div className="mp-glass mp-header-pill">
++                <span className="mp-header-text">
++                  {mapLang === 'ar' ? (
++                    <span className="mp-ar">
++                      مدينة القاهرة الجديدة (التجمع الخامس) — المخطط المكاني التفاعلي
++                    </span>
++                  ) : mapLang === 'bi' ? (
++                    <span className="mp-ar">
++                      مدينة القاهرة الجديدة | New Cairo City — Master Registry
++                    </span>
++                  ) : (
++                    'New Cairo City (Fifth Settlement) — Interactive Spatial Masterplan'
++                  )}
++                </span>
++              </div>
++
++              {/* ── Variant toggles: theme × language (top-right) ── */}
++              <div className="mp-toggle-cluster">
++                <div className="mp-glass mp-toggle-group" role="group" aria-label={isAr ? 'مظهر الخريطة' : 'Map theme'}>
++                  <button
++                    type="button"
++                    className="mp-toggle"
++                    data-active={mapTheme === 'light' && !mapSatellite}
++                    onClick={() => {
++                      setMapTheme('light');
++                      setMapSatellite(false);
++                    }}
++                  >
++                    {isAr ? 'فاتح' : 'Light'}
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-toggle"
++                    data-active={mapTheme === 'dark' && !mapSatellite}
++                    onClick={() => {
++                      setMapTheme('dark');
++                      setMapSatellite(false);
++                    }}
++                  >
++                    {isAr ? 'داكن' : 'Dark'}
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-toggle"
++                    data-active={mapSatellite}
++                    onClick={() => setMapSatellite((v) => !v)}
++                    title={isAr ? 'قمر صناعي' : 'Satellite'}
++                    aria-label={isAr ? 'قمر صناعي' : 'Satellite'}
++                    aria-pressed={mapSatellite}
++                  >
++                    <Globe size={12} />
++                  </button>
++                </div>
++                <div className="mp-glass mp-toggle-group" role="group" aria-label={isAr ? 'لغة الخريطة' : 'Map language'}>
++                  <button
++                    type="button"
++                    className="mp-toggle mp-toggle-lang"
++                    data-active={mapLang === 'en'}
++                    onClick={() => setMapLang('en')}
++                  >
++                    EN
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-toggle mp-toggle-lang"
++                    data-active={mapLang === 'ar'}
++                    onClick={() => setMapLang('ar')}
++                    aria-label="العربية"
++                  >
++                    <span className="mp-ar-glyph">ع</span>
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-toggle mp-toggle-lang"
++                    data-active={mapLang === 'bi'}
++                    onClick={() => setMapLang('bi')}
++                  >
++                    AR|EN
++                  </button>
++                </div>
++                {/* View switcher on the map itself (the in-flow toolbar is
++                    hidden in map view — Split/Grid must stay reachable).
++                    Inside this branch viewMode is 'map' by definition. */}
++                <div className="mp-glass mp-toggle-group" role="group" aria-label={isAr ? 'طريقة العرض' : 'View mode'}>
++                  <button
++                    type="button"
++                    className="mp-toggle"
++                    data-active={false}
++                    onClick={() => setViewMode('split')}
++                    title={isAr ? 'خريطة + قائمة' : 'Split view'}
++                  >
++                    <Columns size={11} />
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-toggle"
++                    data-active={false}
++                    onClick={() => setViewMode('grid')}
++                    title={isAr ? 'شبكة العقارات' : 'Grid view'}
++                  >
++                    <LayoutGrid size={11} />
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-toggle"
++                    data-active={true}
++                    onClick={() => setViewMode('map')}
++                    title={isAr ? 'الخريطة فقط' : 'Map view'}
++                  >
++                    <Map size={11} />
++                  </button>
++                </div>
++              </div>
++
++              {/* ── Filter + search cluster (top-left glass overlay; same state
++                     as the in-flow toolbar — behavior identical. Hidden once
++                     the registry modal opens to declutter.) ── */}
++              {!registryOpen && (
++              <div className="mp-filter-cluster">
++                <div className="mp-glass mp-filter-row">
++                  <div className="mp-search">
++                    <Search className="mp-search-icon" size={13} />
++                    <input
++                      type="text"
++                      value={searchQuery}
++                      onChange={(e) => setSearchQuery(e.target.value)}
++                      placeholder={
++                        isAr
++                          ? 'ابحث بكود الوحدة، الكمبوند، أو الحي...'
++                          : 'Search unit code, compound, or area...'
++                      }
++                      aria-label={isAr ? 'بحث' : 'Search listings'}
++                    />
++                    {searchQuery && (
++                      <button
++                        type="button"
++                        onClick={() => setSearchQuery('')}
++                        aria-label={isAr ? 'مسح البحث' : 'Clear search'}
++                        style={{
++                          border: 'none',
++                          background: 'transparent',
++                          color: 'var(--mp-text-secondary)',
++                          cursor: 'pointer',
++                          fontSize: 14,
++                          lineHeight: 1,
++                          padding: '0 2px',
++                        }}
++                      >
++                        ×
++                      </button>
++                    )}
++                  </div>
++                  <button
++                    type="button"
++                    className="mp-filter-pill"
++                    data-active={selectedMode === 'all'}
++                    onClick={() => setSelectedMode('all')}
++                  >
++                    {isAr ? 'الكل' : 'All'}
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-filter-pill"
++                    data-active={selectedMode === 'sale'}
++                    onClick={() => setSelectedMode('sale')}
++                  >
++                    {isAr ? 'شراء' : 'Buy'}
++                  </button>
++                  <button
++                    type="button"
++                    className="mp-filter-pill"
++                    data-active={selectedMode === 'rent'}
++                    data-tone="rent"
++                    onClick={() => setSelectedMode('rent')}
++                  >
++                    {isAr ? 'إيجار' : 'Rent'}
++                  </button>
++                  <select
++                    className="mp-select"
++                    value={selectedCompound}
++                    onChange={(e) => setSelectedCompound(e.target.value)}
++                    aria-label={isAr ? 'اختر الكمبوند' : 'Select compound'}
++                  >
++                    {MAJOR_COMPOUNDS.map((c) => (
++                      <option key={c} value={c}>
++                        {c}
++                      </option>
++                    ))}
++                  </select>
++                  <button
++                    type="button"
++                    className="mp-filter-pill"
++                    data-active={mapFiltersOpen}
++                    onClick={() => setMapFiltersOpen((v) => !v)}
++                    aria-expanded={mapFiltersOpen}
++                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
++                  >
++                    <SlidersHorizontal size={12} />
++                    {isAr ? 'الفلاتر' : 'Filters'}
++                    {hasActiveFilters && (
++                      <span
++                        style={{
++                          background: 'var(--mp-gold)',
++                          color: '#060b12',
++                          borderRadius: 999,
++                          fontSize: 9,
++                          fontWeight: 800,
++                          minWidth: 16,
++                          padding: '1px 5px',
++                          textAlign: 'center',
++                        }}
++                      >
++                        {
++                          [
++                            searchQuery.trim() !== '',
++                            selectedMode !== 'all',
++                            selectedType !== 'All Types',
++                            selectedCompound !== 'All Compounds',
++                            selectedBeds !== 'all',
++                            selectedPriceRange !== 'all',
++                            selectedCondition !== 'all',
++                            radiusKm !== null,
++                          ].filter(Boolean).length
++                        }
++                      </span>
++                    )}
++                  </button>
++                </div>
++
++                {mapFiltersOpen && (
++                  <div className="mp-glass mp-filters-panel">
++                    <div className="mp-filters-grid">
++                      <span className="mp-panel-label">{isAr ? 'النوع' : 'TYPE'}</span>
++                      <select
++                        className="mp-select"
++                        value={selectedType}
++                        onChange={(e) => setSelectedType(e.target.value)}
++                        aria-label={isAr ? 'نوع العقار' : 'Property type'}
++                      >
++                        {PROPERTY_TYPES.map((pt) => (
++                          <option key={pt} value={pt}>
++                            {pt}
++                          </option>
++                        ))}
++                      </select>
++                      <select
++                        className="mp-select"
++                        value={selectedCondition}
++                        onChange={(e) => setSelectedCondition(e.target.value)}
++                        aria-label={isAr ? 'حالة التشطيب' : 'Condition'}
++                      >
++                        <option value="all">{isAr ? 'أي حالة' : 'Any Condition'}</option>
++                        {CONDITION_OPTIONS.filter((o) => o.val).map((o) => (
++                          <option key={o.val} value={o.val}>
++                            {isAr ? o.ar : o.en}
++                          </option>
++                        ))}
++                      </select>
++                      <select
++                        className="mp-select"
++                        value={selectedPriceRange}
++                        onChange={(e) => setSelectedPriceRange(e.target.value)}
++                        aria-label={isAr ? 'نطاق السعر' : 'Price range'}
++                      >
++                        {(selectedMode === 'rent' ? RENT_PRICE_RANGES : SALE_PRICE_RANGES).map((r) => (
++                          <option key={r.value} value={r.value}>
++                            {isAr ? r.labelAr : r.labelEn}
++                          </option>
++                        ))}
++                      </select>
++                      <select
++                        className="mp-select"
++                        value={sortBy}
++                        onChange={(e) => setSortBy(e.target.value)}
++                        aria-label={isAr ? 'ترتيب حسب' : 'Sort by'}
++                      >
++                        {SORT_OPTIONS.map((s) => (
++                          <option key={s.value} value={s.value}>
++                            {isAr ? s.labelAr : s.labelEn}
++                          </option>
++                        ))}
++                      </select>
++                    </div>
++
++                    <div className="mp-filters-grid">
++                      <span className="mp-panel-label">{isAr ? 'الغرف' : 'BEDS'}</span>
++                      {BEDROOM_OPTIONS.map((b) => (
++                        <button
++                          key={b}
++                          type="button"
++                          className="mp-filter-pill"
++                          data-active={selectedBeds === b}
++                          onClick={() => setSelectedBeds(b)}
++                        >
++                          {b === 'all' ? (isAr ? 'الكل' : 'All') : b}
++                        </button>
++                      ))}
++                    </div>
++
++                    <div className="mp-filters-grid">
++                      <span className="mp-panel-label">{isAr ? 'النطاق' : 'RADIUS'}</span>
++                      {[null, 5, 10, 25].map((r) => {
++                        const active = r === radiusKm || (r === null && !radiusKm);
++                        return (
++                          <button
++                            key={r === null ? 'all' : `${r}km`}
++                            type="button"
++                            className="mp-filter-pill"
++                            data-active={active}
++                            onClick={() => setRadiusKm(r)}
++                          >
++                            {r === null ? (isAr ? 'الكل' : 'All') : `${r}km`}
++                          </button>
++                        );
++                      })}
++                    </div>
++
++                    {hasActiveFilters && (
++                      <button
++                        type="button"
++                        className="mp-filter-pill"
++                        onClick={resetFilters}
++                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
++                      >
++                        <RotateCcw size={11} />
++                        {isAr ? 'إعادة ضبط' : 'Reset filters'}
++                      </button>
++                    )}
++                  </div>
++                )}
++              </div>
++              )}
++
++              {/* ── Registry Benchmark HUD (right, vertically centered;
++                     hides while the inventory modal occupies the slot) ── */}
++              {!registryOpen && benchmark.verifiedUnits > 0 && (
++                <div
++                  className="mp-glass mp-benchmark-hud"
++                  dir={mapLang === 'ar' ? 'rtl' : undefined}
++                >
++                  <div className="mp-hud-eyebrow">
++                    {mapLang === 'ar'
++                      ? 'سييرا إستيتس — سجل الوحدات المتاحة'
++                      : mapLang === 'bi'
++                      ? 'سييرا إستيتس | SIERRA ESTATES — REGISTRY BENCHMARK'
++                      : 'SIERRA ESTATES — REGISTRY BENCHMARK'}
++                  </div>
++                  <div className="mp-hud-row">
++                    <span className="mp-hud-value">
++                      {benchmark.verifiedUnits.toLocaleString()}
++                    </span>
++                    <span className="mp-hud-label">
++                      {mapLang === 'ar' ? 'وحدة موثقة' : mapLang === 'bi' ? 'Verified Units · وحدات موثقة' : 'Verified Units'}
++                    </span>
++                  </div>
++                  {benchmark.priceIndex != null && (
++                    <div className="mp-hud-row">
++                      <span className="mp-hud-value">
++                        {benchmark.priceIndex.toLocaleString()}
++                      </span>
++                      <span className="mp-hud-label">
++                        {mapLang === 'ar' ? 'جنيه/م² — مؤشر السعر' : mapLang === 'bi' ? 'EGP/m² Price Index · مؤشر السعر' : 'EGP/m² Price Index'}
++                      </span>
++                    </div>
++                  )}
++                </div>
++              )}
++
+               {activeUnit && (
+                 <div className="props-map-drawer">
+                   <div style={{ display: 'flex', gap: 12, padding: 14, alignItems: 'center' }}>
+@@ -1178,12 +1667,86 @@ export default function PropertiesPage() {
+                 )}
+               </div>
+ 
+-              {/* Sticky Map Column */}
++              {/* Sticky Map Column — masterplan restyle (pills + registry
++                  modal + cartographic chrome), compact toggle cluster */}
+               <div className="props-sticky-map-wrap">
+-                <div className="props-sticky-map-inner">
++                <div
++                  className="props-sticky-map-inner"
++                  style={{ position: 'relative' }}
++                  data-map-theme={mapTheme}
++                >
++                  <div className="mp-toggle-cluster" style={{ top: 12, right: 12 }}>
++                    <div className="mp-glass mp-toggle-group" role="group" aria-label={isAr ? 'مظهر الخريطة' : 'Map theme'}>
++                      <button
++                        type="button"
++                        className="mp-toggle"
++                        data-active={mapTheme === 'light' && !mapSatellite}
++                        onClick={() => {
++                          setMapTheme('light');
++                          setMapSatellite(false);
++                        }}
++                      >
++                        {isAr ? 'فاتح' : 'Light'}
++                      </button>
++                      <button
++                        type="button"
++                        className="mp-toggle"
++                        data-active={mapTheme === 'dark' && !mapSatellite}
++                        onClick={() => {
++                          setMapTheme('dark');
++                          setMapSatellite(false);
++                        }}
++                      >
++                        {isAr ? 'داكن' : 'Dark'}
++                      </button>
++                      <button
++                        type="button"
++                        className="mp-toggle"
++                        data-active={mapSatellite}
++                        onClick={() => setMapSatellite((v) => !v)}
++                        title={isAr ? 'قمر صناعي' : 'Satellite'}
++                        aria-label={isAr ? 'قمر صناعي' : 'Satellite'}
++                        aria-pressed={mapSatellite}
++                      >
++                        <Globe size={12} />
++                      </button>
++                    </div>
++                    <div className="mp-glass mp-toggle-group" role="group" aria-label={isAr ? 'لغة الخريطة' : 'Map language'}>
++                      <button
++                        type="button"
++                        className="mp-toggle mp-toggle-lang"
++                        data-active={mapLang === 'en'}
++                        onClick={() => setMapLang('en')}
++                      >
++                        EN
++                      </button>
++                      <button
++                        type="button"
++                        className="mp-toggle mp-toggle-lang"
++                        data-active={mapLang === 'ar'}
++                        onClick={() => setMapLang('ar')}
++                        aria-label="العربية"
++                      >
++                        <span className="mp-ar-glyph">ع</span>
++                      </button>
++                      <button
++                        type="button"
++                        className="mp-toggle mp-toggle-lang"
++                        data-active={mapLang === 'bi'}
++                        onClick={() => setMapLang('bi')}
++                      >
++                        AR|EN
++                      </button>
++                    </div>
++                  </div>
+                   <LiveMap
+-                    mode={theme === 'dark' ? 'dark' : 'light'}
++                    mode={mapTheme}
++                    lang={mapLang}
++                    chrome="masterplan"
++                    basemap={mapSatellite ? 'satellite' : 'theme'}
+                     units={mapPins}
++                    registryUnits={registryUnits}
++                    onRegistryStateChange={(c) => setRegistryOpen(!!c)}
+                     activeUnitId={activeUnit?.id || activeUnit?.code || null}
+                     flyToCoords={flyToCoords}
+                     onSelectUnit={handleSelectUnit}
+@@ -1194,6 +1757,8 @@ export default function PropertiesPage() {
+                     onCenterChange={setCenterCoords}
+                     maxPins={250}
+                     height="100%"
++                    showLegend={false}
++                    showPinCounter={false}
+                   />
+                 </div>
+               </div>
+diff --git a/apps/sierra-estates-realty/app/(site)/properties/page.tsx b/apps/sierra-estates-realty/app/(site)/properties/page.tsx
+index 329a84f2..dab99836 100644
+--- a/apps/sierra-estates-realty/app/(site)/properties/page.tsx
++++ b/apps/sierra-estates-realty/app/(site)/properties/page.tsx
+@@ -1,5 +1,6 @@
+ import type { Metadata } from 'next';
+ import '../../site-styles/properties.css';
++import '../../site-styles/masterplan.css';
+ import PropertiesPage from './PropertiesPage';
+ 
+ export const metadata: Metadata = {
+diff --git a/apps/sierra-estates-realty/app/site-styles/masterplan.css b/apps/sierra-estates-realty/app/site-styles/masterplan.css
+new file mode 100644
+index 00000000..aa169005
+--- /dev/null
++++ b/apps/sierra-estates-realty/app/site-styles/masterplan.css
+@@ -0,0 +1,1107 @@
++/* ============================================================================
++   Sierra Estates · Interactive Spatial Masterplan (Stitch redesign v2)
++   ----------------------------------------------------------------------------
++   Scoped design system for the /properties map experience.
++   Two themes via [data-map-theme] on the map root:
++     light = "Alexandria — High-End Editorial" (Stitch, project 2455613122012383700)
++     dark  = "Nocturnal Masterplan" (same project, dark EN / dark AR renders)
++   Design laws (Alexandria): no 1px borders for hierarchy (surface tiers
++   instead; dark theme uses 1px hud hairlines as specified), soft diffuse
++   shadows ONLY on floating map elements, glassmorphism 85% + 20px blur,
++   one primary action per view, Noto Serif headline / Inter body /
++   Public Sans labels / Cairo Arabic.
++   ========================================================================== */
++
++/* ── Theme tokens ──────────────────────────────────────────────────────── */
++[data-map-theme='light'] {
++  --mp-glass: rgba(255, 255, 255, 0.85);
++  --mp-glass-strong: rgba(255, 255, 255, 0.92);
++  --mp-glass-blur: 20px;
++  --mp-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
++  --mp-shadow-lift: 0 12px 34px rgba(0, 0, 0, 0.14);
++  --mp-text: #1b1c1d;            /* M3 on-surface */
++  --mp-text-variant: #434653;    /* M3 on-surface-variant */
++  --mp-text-secondary: #6f7280;
++  --mp-outline-variant: #c3c6d5;
++  --mp-primary: #094cb2;         /* Alexandria primary */
++  --mp-sapphire: #1d4ed8;        /* top-tier compound accent */
++  --mp-sapphire-deep: #1e3a8a;
++  --mp-teal: #0d9488;            /* secondary compound accent */
++  --mp-teal-deep: #0f766e;
++  --mp-gold: #c9a24d;            /* brushed camel gold focus */
++  --mp-gold-deep: #b89b68;
++  --mp-pill-text: #0f172a;       /* deep midnight navy on map */
++  --mp-chip-bg: rgba(9, 76, 178, 0.1);
++  --mp-chip-text: #1e3a8a;
++  --mp-eyebrow: #6d5e00;         /* tertiary container ink */
++  --mp-badge-available: #0f766e;
++  --mp-badge-reserved: #b45309;
++  --mp-wash: linear-gradient(
++    160deg,
++    rgba(250, 249, 246, 0.28) 0%,
++    rgba(246, 244, 239, 0.1) 45%,
++    rgba(250, 249, 246, 0.3) 100%
++  );
++}
++
++[data-map-theme='dark'] {
++  --mp-glass: rgba(16, 24, 40, 0.85);
++  --mp-glass-strong: rgba(16, 24, 40, 0.92);
++  --mp-glass-blur: 20px;
++  --mp-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
++  --mp-shadow-lift: 0 16px 44px rgba(2, 6, 23, 0.7);
++  --mp-text: #ffffff;
++  --mp-text-variant: #c7d2e0;
++  --mp-text-secondary: #8a9bae;  /* nocturnal text-secondary */
++  --mp-outline-variant: #2a3b4c; /* hud hairline */
++  --mp-primary: #e7ebff;
++  --mp-sapphire: #06b6d4;        /* parcel-active neon cyan */
++  --mp-sapphire-deep: #22d3ee;
++  --mp-teal: #10b981;            /* parcel-alt electric emerald */
++  --mp-teal-deep: #34d399;
++  --mp-gold: #ffd700;            /* focal gold */
++  --mp-gold-deep: #f59e0b;
++  --mp-pill-text: #ffffff;
++  --mp-chip-bg: rgba(255, 255, 255, 0.14);
++  --mp-chip-text: #ffffff;
++  --mp-eyebrow: #f9e37a;
++  --mp-badge-available: #00c853;
++  --mp-badge-reserved: #ffab00;
++  --mp-wash: linear-gradient(
++    165deg,
++    rgba(6, 11, 18, 0.42) 0%,
++    rgba(6, 11, 18, 0.14) 45%,
++    rgba(2, 6, 23, 0.5) 100%
++  );
++}
++
++/* ── Shared glass primitives (map page only) ───────────────────────────── */
++.mp-glass {
++  background: var(--mp-glass);
++  -webkit-backdrop-filter: blur(var(--mp-glass-blur));
++  backdrop-filter: blur(var(--mp-glass-blur));
++  box-shadow: var(--mp-shadow);
++  border-radius: 14px;
++  color: var(--mp-text);
++}
++
++[data-map-theme='light'] .mp-glass {
++  border: none;
++}
++[data-map-theme='dark'] .mp-glass,
++.mp-glass.mp-glass-dark {
++  border: 1px solid var(--mp-outline-variant);
++}
++
++/* Map canvas warm/void wash (sits over tiles, never intercepts pointer) */
++.mp-map-wash {
++  position: absolute;
++  inset: 0;
++  background: var(--mp-wash);
++  pointer-events: none;
++  z-index: 380; /* above tile pane (200) / overlay panes (400+) start below 400 */
++  animation: se-map-fade 0.5s ease both;
++}
++
++/* ── Compound label pills (masterplan markers) ─────────────────────────── */
++.se-mp-wrap {
++  position: relative;
++}
++
++.se-mp-pill {
++  position: absolute;
++  left: 0;
++  top: 0;
++  display: inline-flex;
++  align-items: center;
++  gap: 7px;
++  padding: 5px 12px;
++  border-radius: 9999px;
++  white-space: nowrap;
++  cursor: pointer;
++  font-family: var(--font-label, 'Public Sans'), var(--font-jakarta, 'Plus Jakarta Sans'),
++    system-ui, sans-serif;
++  font-weight: 600;
++  letter-spacing: 0.02em;
++  color: var(--mp-pill-text);
++  background: var(--mp-glass);
++  -webkit-backdrop-filter: blur(12px);
++  backdrop-filter: blur(12px);
++  box-shadow: var(--mp-shadow);
++  transform: translate(-50%, -50%) scale(1);
++  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease,
++    background 0.2s ease;
++  animation: se-mp-pill-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
++}
++
++[data-map-theme='dark'] .se-mp-pill {
++  border: 1px solid var(--mp-outline-variant);
++}
++
++/* Tier accents: sapphire for top-tier compounds, teal for the rest */
++.se-mp-pill.se-mp-tier-top {
++  background: linear-gradient(
++    135deg,
++    rgba(29, 78, 216, 0.16),
++    rgba(30, 58, 138, 0.12)
++  ),
++  var(--mp-glass);
++}
++[data-map-theme='dark'] .se-mp-pill.se-mp-tier-top {
++  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(6, 182, 212, 0.06)),
++    var(--mp-glass);
++}
++.se-mp-pill.se-mp-tier-alt {
++  background: linear-gradient(135deg, rgba(13, 148, 136, 0.15), rgba(15, 118, 110, 0.1)),
++    var(--mp-glass);
++}
++[data-map-theme='dark'] .se-mp-pill.se-mp-tier-alt {
++  background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.05)),
++    var(--mp-glass);
++}
++
++.se-mp-label {
++  letter-spacing: 0.01em;
++  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
++}
++[data-map-theme='dark'] .se-mp-label {
++  text-shadow: 0 1px 3px rgba(2, 6, 23, 0.8);
++}
++
++.se-mp-count {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-size: 10px;
++  font-weight: 700;
++  padding: 1.5px 7px;
++  border-radius: 9999px;
++  background: var(--mp-chip-bg);
++  color: var(--mp-chip-text);
++  font-variant-numeric: tabular-nums;
++}
++
++/* Hover: pill lift 1.15× (restyle of the classic hover contract) */
++.se-mp-wrap:hover .se-mp-pill {
++  transform: translate(-50%, -50%) scale(1.15);
++  box-shadow: var(--mp-shadow-lift);
++  z-index: 950;
++}
++
++/* Dark hover: neon outline (parcel-active cyan / parcel-alt emerald) */
++[data-map-theme='dark'] .se-mp-wrap:hover .se-mp-pill.se-mp-tier-top {
++  border: 1.5px solid var(--mp-sapphire);
++  box-shadow: 0 0 22px rgba(6, 182, 212, 0.3), var(--mp-shadow-lift);
++}
++[data-map-theme='dark'] .se-mp-wrap:hover .se-mp-pill.se-mp-tier-alt {
++  border: 1.5px solid var(--mp-teal);
++  box-shadow: 0 0 22px rgba(16, 185, 129, 0.28), var(--mp-shadow-lift);
++}
++
++/* Proximity focus (z ≥ 14 nearest compound, or selected):
++   golden ring + radial aura — the SODIC VILLETTE treatment from the renders */
++.se-mp-pill.se-mp-focus {
++  font-weight: 800;
++  padding: 7px 15px;
++  border-radius: 9999px;
++  transform: translate(-50%, -50%) scale(1.08);
++  background: var(--mp-glass-strong);
++  box-shadow: 0 0 0 1.5px var(--mp-gold), 0 0 26px rgba(201, 162, 77, 0.45),
++    0 10px 30px rgba(0, 0, 0, 0.18);
++}
++[data-map-theme='dark'] .se-mp-pill.se-mp-focus {
++  border: 1.5px solid var(--mp-gold);
++  box-shadow: 0 0 30px rgba(255, 215, 0, 0.42), 0 0 0 1.5px rgba(255, 215, 0, 0.55),
++    var(--mp-shadow-lift);
++}
++.se-mp-pill.se-mp-focus::after {
++  content: '';
++  position: absolute;
++  inset: -14px;
++  border-radius: 9999px;
++  background: radial-gradient(
++    circle,
++    rgba(201, 162, 77, 0.22) 0%,
++    rgba(201, 162, 77, 0) 68%
++  );
++  pointer-events: none;
++  z-index: -1;
++}
++[data-map-theme='dark'] .se-mp-pill.se-mp-focus::after {
++  background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0) 70%);
++}
++
++[data-map-theme='light'] .se-mp-pill.se-mp-focus {
++  color: #0f172a;
++}
++
++/* Staggered ping halo (liveliness, from code.html behavior reference) */
++.se-mp-ping {
++  position: absolute;
++  left: 50%;
++  top: 50%;
++  width: 46px;
++  height: 46px;
++  margin: -23px 0 0 -23px;
++  border-radius: 50%;
++  pointer-events: none;
++  border: 1.5px solid var(--mp-gold);
++  opacity: 0;
++  animation: se-mp-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
++}
++@keyframes se-mp-ping {
++  0% { transform: scale(0.5); opacity: 0.55; }
++  75%, 100% { transform: scale(1.6); opacity: 0; }
++}
++
++/* ── Unit pins (street zoom) — masterplan restyle ───────────────────────── */
++.se-mp-unit {
++  position: absolute;
++  left: 0;
++  top: 0;
++  display: inline-flex;
++  align-items: center;
++  gap: 5px;
++  padding: 3.5px 9px;
++  border-radius: 11px;
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-size: 10.5px;
++  font-weight: 700;
++  white-space: nowrap;
++  cursor: pointer;
++  transform: translate(-50%, -50%) scale(1);
++  transition: transform 0.18s ease, box-shadow 0.18s ease;
++  animation: se-mp-unit-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
++}
++.se-mp-unit .se-mp-unit-dot {
++  width: 6px;
++  height: 6px;
++  border-radius: 50%;
++  flex: none;
++}
++.se-mp-wrap:hover .se-mp-unit {
++  transform: translate(-50%, -50%) scale(1.12);
++  z-index: 960;
++}
++.se-mp-unit.se-mp-unit-active {
++  z-index: 9999;
++  box-shadow: 0 0 0 1.5px var(--mp-gold), 0 0 24px rgba(201, 162, 77, 0.5);
++}
++
++/* Full-bleed masterplan map container (inside the page .wrap) —
++   immersive: no outer card chrome, taller canvas per the v2 order. */
++.mp-full-map {
++  border: none;
++  min-height: 620px;
++}
++
++@media (max-width: 900px) {
++  .mp-full-map {
++    min-height: 420px;
++  }
++}
++
++/* ── Header pill (top-center) ──────────────────────────────────────────── */
++.mp-header-pill {
++  position: absolute;
++  top: 18px;
++  left: 50%;
++  transform: translateX(-50%);
++  z-index: 1060;
++  display: inline-flex;
++  align-items: center;
++  gap: 10px;
++  padding: 9px 22px;
++  border-radius: 9999px;
++  max-width: min(92vw, 760px);
++}
++
++.mp-header-pill .mp-header-text {
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', system-ui, sans-serif;
++  font-size: 12px;
++  font-weight: 700;
++  letter-spacing: 0.1em;
++  text-transform: uppercase;
++  color: var(--mp-text);
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++}
++.mp-header-pill .mp-header-text .mp-ar {
++  font-family: 'Cairo', var(--font-label, 'Public Sans'), sans-serif;
++  letter-spacing: 0.02em;
++}
++
++/* ── Top-right control cluster (theme × language toggles) ──────────────── */
++.mp-toggle-cluster {
++  position: absolute;
++  top: 18px;
++  right: 18px;
++  z-index: 1060;
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  flex-wrap: wrap;
++  justify-content: flex-end;
++}
++
++.mp-toggle-group {
++  display: inline-flex;
++  align-items: center;
++  gap: 2px;
++  padding: 3px;
++  border-radius: 9999px;
++}
++
++.mp-toggle {
++  appearance: none;
++  border: none;
++  background: transparent;
++  color: var(--mp-text-secondary);
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', system-ui, sans-serif;
++  font-size: 11px;
++  font-weight: 700;
++  letter-spacing: 0.04em;
++  padding: 5px 12px;
++  border-radius: 9999px;
++  cursor: pointer;
++  transition: background 0.18s ease, color 0.18s ease;
++  white-space: nowrap;
++}
++.mp-toggle:hover {
++  color: var(--mp-text);
++  background: rgba(127, 137, 148, 0.14);
++}
++.mp-toggle[data-active='true'] {
++  background: var(--mp-sapphire);
++  color: #ffffff;
++}
++[data-map-theme='dark'] .mp-toggle[data-active='true'] {
++  background: var(--mp-gold);
++  color: #060b12;
++}
++.mp-toggle.mp-toggle-lang[data-active='true'] {
++  background: var(--mp-teal);
++  color: #ffffff;
++}
++[data-map-theme='dark'] .mp-toggle.mp-toggle-lang[data-active='true'] {
++  background: var(--mp-teal-deep);
++  color: #06281f;
++}
++.mp-toggle .mp-ar-glyph {
++  font-family: 'Cairo', sans-serif;
++  font-size: 12.5px;
++}
++
++/* ── Top-left filter cluster (glass overlay) ───────────────────────────── */
++.mp-filter-cluster {
++  position: absolute;
++  top: 18px;
++  left: 18px;
++  z-index: 1050;
++  display: flex;
++  flex-direction: column;
++  gap: 8px;
++  width: min(430px, calc(100vw - 36px));
++  animation: se-map-fade 0.4s ease both;
++}
++
++.mp-filter-row {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  flex-wrap: wrap;
++}
++
++.mp-search {
++  display: inline-flex;
++  align-items: center;
++  gap: 8px;
++  padding: 7px 12px;
++  border-radius: 9999px;
++  flex: 1 1 190px;
++  min-width: 170px;
++}
++.mp-search input {
++  appearance: none;
++  border: none;
++  background: transparent;
++  outline: none;
++  color: var(--mp-text);
++  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), 'Cairo', system-ui, sans-serif;
++  font-size: 12.5px;
++  width: 100%;
++  min-width: 0;
++}
++.mp-search input::placeholder {
++  color: var(--mp-text-secondary);
++}
++.mp-search .mp-search-icon {
++  color: var(--mp-text-secondary);
++  flex: none;
++}
++
++.mp-filter-pill {
++  appearance: none;
++  border: none;
++  background: rgba(127, 137, 148, 0.12);
++  color: var(--mp-text-variant);
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', system-ui, sans-serif;
++  font-size: 11.5px;
++  font-weight: 700;
++  padding: 6px 14px;
++  border-radius: 9999px;
++  cursor: pointer;
++  transition: background 0.16s ease, color 0.16s ease;
++  white-space: nowrap;
++}
++.mp-filter-pill:hover {
++  background: rgba(127, 137, 148, 0.22);
++  color: var(--mp-text);
++}
++.mp-filter-pill[data-active='true'] {
++  background: var(--mp-sapphire);
++  color: #ffffff;
++}
++[data-map-theme='dark'] .mp-filter-pill[data-active='true'] {
++  background: var(--mp-gold);
++  color: #060b12;
++}
++.mp-filter-pill[data-active='true'][data-tone='rent'] {
++  background: var(--mp-teal);
++  color: #ffffff;
++}
++[data-map-theme='dark'] .mp-filter-pill[data-active='true'][data-tone='rent'] {
++  background: var(--mp-teal-deep);
++  color: #06281f;
++}
++
++.mp-select {
++  appearance: none;
++  border: none;
++  border-radius: 9999px;
++  background: rgba(127, 137, 148, 0.12);
++  color: var(--mp-text);
++  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), 'Cairo', system-ui, sans-serif;
++  font-size: 11.5px;
++  font-weight: 600;
++  padding: 6px 26px 6px 14px;
++  cursor: pointer;
++  max-width: 100%;
++  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23737784' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
++  background-repeat: no-repeat;
++  background-position: right 10px center;
++}
++.mp-select option {
++  color: #1b1c1d;
++  background: #ffffff;
++}
++
++.mp-filters-panel {
++  padding: 12px;
++  border-radius: 14px;
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++}
++.mp-filters-panel .mp-panel-label {
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 9px;
++  font-weight: 700;
++  letter-spacing: 0.16em;
++  text-transform: uppercase;
++  color: var(--mp-text-secondary);
++}
++.mp-filters-grid {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 8px;
++  align-items: center;
++}
++
++/* ── Registry Benchmark HUD (right, vertically centered) ───────────────── */
++.mp-benchmark-hud {
++  position: absolute;
++  top: 50%;
++  right: 18px;
++  transform: translateY(-50%);
++  z-index: 1040;
++  width: 218px;
++  padding: 14px 16px;
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++  animation: se-map-fade 0.4s ease both;
++}
++.mp-benchmark-hud .mp-hud-eyebrow {
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 8.5px;
++  font-weight: 700;
++  letter-spacing: 0.16em;
++  text-transform: uppercase;
++  color: var(--mp-text-secondary);
++  line-height: 1.5;
++}
++.mp-hud-row {
++  display: flex;
++  flex-direction: column;
++  gap: 2px;
++}
++.mp-hud-row .mp-hud-value {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-size: 17px;
++  font-weight: 700;
++  color: var(--mp-text);
++  font-variant-numeric: tabular-nums;
++  line-height: 1.2;
++}
++.mp-hud-row .mp-hud-label {
++  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), 'Cairo', sans-serif;
++  font-size: 10.5px;
++  color: var(--mp-text-secondary);
++}
++
++/* ── Bottom-left: compass + coordinates + projection label ─────────────── */
++.mp-southwest-chrome {
++  position: absolute;
++  left: 16px;
++  bottom: 16px;
++  z-index: 1040;
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++  pointer-events: none;
++  animation: se-map-fade 0.4s ease both;
++}
++.mp-compass {
++  width: 52px;
++  height: 52px;
++  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
++}
++.mp-coords {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-size: 10px;
++  color: var(--mp-text-secondary);
++  letter-spacing: 0.04em;
++  font-variant-numeric: tabular-nums;
++}
++.mp-proj-label {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-size: 8.5px;
++  color: var(--mp-text-secondary);
++  opacity: 0.75;
++  letter-spacing: 0.08em;
++}
++.mp-scalebar {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  pointer-events: none;
++}
++.mp-scalebar .mp-scalebar-line {
++  height: 2px;
++  background: var(--mp-text-secondary);
++  border-radius: 2px;
++  position: relative;
++}
++.mp-scalebar .mp-scalebar-line::before,
++.mp-scalebar .mp-scalebar-line::after {
++  content: '';
++  position: absolute;
++  top: -3px;
++  width: 2px;
++  height: 8px;
++  background: var(--mp-text-secondary);
++}
++.mp-scalebar .mp-scalebar-line::before { left: 0; }
++.mp-scalebar .mp-scalebar-line::after { right: 0; }
++.mp-scalebar .mp-scalebar-text {
++  font-family: var(--font-mono, 'JetBrains Mono'), monospace;
++  font-size: 9px;
++  color: var(--mp-text-secondary);
++}
++
++/* ── Bottom-right: zoom stack + logo ───────────────────────────────────── */
++.mp-northeast-chrome {
++  position: absolute;
++  right: 16px;
++  bottom: 40px; /* clears the required tile-attribution strip */
++  z-index: 1040;
++  display: flex;
++  align-items: flex-end;
++  gap: 10px;
++  animation: se-map-fade 0.4s ease both;
++}
++.mp-zoom-stack {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
++}
++.mp-zoom-btn {
++  appearance: none;
++  border: none;
++  width: 36px;
++  height: 36px;
++  border-radius: 9999px;
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  cursor: pointer;
++  color: var(--mp-text);
++  background: var(--mp-glass);
++  -webkit-backdrop-filter: blur(var(--mp-glass-blur));
++  backdrop-filter: blur(var(--mp-glass-blur));
++  box-shadow: var(--mp-shadow);
++  transition: transform 0.16s ease, box-shadow 0.16s ease;
++}
++[data-map-theme='dark'] .mp-zoom-btn {
++  border: 1px solid var(--mp-outline-variant);
++}
++.mp-zoom-btn:hover {
++  transform: scale(1.08);
++  box-shadow: var(--mp-shadow-lift);
++}
++.mp-logo-mark {
++  height: 34px;
++  width: auto;
++  border-radius: 6px;
++  box-shadow: var(--mp-shadow);
++}
++
++/* ── Inventory Registry Modal ──────────────────────────────────────────── */
++.mp-registry-backdrop {
++  position: absolute;
++  inset: 0;
++  z-index: 1080;
++  background: rgba(9, 18, 33, 0.12);
++}
++[data-map-theme='dark'] .mp-registry-backdrop {
++  background: rgba(2, 6, 23, 0.32);
++}
++
++.mp-registry-modal {
++  position: absolute;
++  top: 50%;
++  left: 65%;
++  transform: translateY(-50%);
++  z-index: 1090;
++  width: min(560px, 92vw);
++  max-height: 70vh;
++  display: flex;
++  flex-direction: column;
++  border-radius: 16px;
++  overflow: hidden;
++  animation: se-mp-modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
++}
++@keyframes se-mp-modal-in {
++  from { opacity: 0; transform: translateY(-50%) translateX(18px) scale(0.97); }
++  to { opacity: 1; transform: translateY(-50%) translateX(0) scale(1); }
++}
++
++.mp-registry-head {
++  padding: 16px 18px 12px;
++  display: flex;
++  flex-direction: column;
++  gap: 3px;
++  position: relative;
++}
++.mp-registry-eyebrow {
++  display: inline-flex;
++  align-items: center;
++  gap: 7px;
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 9.5px;
++  font-weight: 700;
++  letter-spacing: 0.14em;
++  text-transform: uppercase;
++  color: var(--mp-text-secondary);
++}
++.mp-live-dot {
++  width: 7px;
++  height: 7px;
++  border-radius: 50%;
++  background: var(--mp-badge-available);
++  box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.5);
++  animation: se-mp-pulse-dot 1.8s ease-out infinite;
++  flex: none;
++}
++@keyframes se-mp-pulse-dot {
++  0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.55); }
++  70% { box-shadow: 0 0 0 7px rgba(0, 200, 83, 0); }
++  100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
++}
++.mp-registry-title {
++  font-family: var(--font-headline, 'Noto Serif'), 'Cairo', Georgia, serif;
++  font-size: 19px;
++  font-weight: 700;
++  color: var(--mp-text);
++  line-height: 1.3;
++  padding-right: 34px;
++}
++.mp-registry-title .mp-ar-name {
++  font-family: 'Cairo', var(--font-headline, 'Noto Serif'), sans-serif;
++}
++.mp-registry-close {
++  position: absolute;
++  top: 12px;
++  right: 12px;
++  appearance: none;
++  border: none;
++  background: rgba(127, 137, 148, 0.14);
++  color: var(--mp-text);
++  width: 28px;
++  height: 28px;
++  border-radius: 9999px;
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  cursor: pointer;
++  transition: background 0.15s ease;
++}
++.mp-registry-close:hover {
++  background: rgba(127, 137, 148, 0.3);
++}
++
++.mp-registry-scroll {
++  overflow-y: auto;
++  flex: 1;
++  min-height: 0;
++  overscroll-behavior: contain;
++}
++
++.mp-registry-table {
++  width: 100%;
++  border-collapse: collapse;
++  font-size: 11.5px;
++}
++.mp-registry-table thead th {
++  position: sticky;
++  top: 0;
++  z-index: 2;
++  background: var(--mp-glass-strong);
++  -webkit-backdrop-filter: blur(var(--mp-glass-blur));
++  backdrop-filter: blur(var(--mp-glass-blur));
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 9px;
++  font-weight: 700;
++  letter-spacing: 0.13em;
++  text-transform: uppercase;
++  color: var(--mp-text-secondary);
++  text-align: left;
++  padding: 8px 10px;
++  white-space: nowrap;
++}
++.mp-registry-table tbody tr {
++  cursor: pointer;
++  transition: background 0.13s ease;
++}
++.mp-registry-table tbody tr:hover {
++  background: rgba(29, 78, 216, 0.07);
++}
++[data-map-theme='dark'] .mp-registry-table tbody tr:hover {
++  background: rgba(6, 182, 212, 0.08);
++}
++.mp-registry-table td {
++  padding: 8px 10px;
++  color: var(--mp-text);
++  border-top: 1px solid rgba(127, 137, 148, 0.14);
++  white-space: nowrap;
++  vertical-align: middle;
++}
++.mp-registry-table td.mp-cell-code {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-weight: 700;
++  font-size: 11px;
++}
++.mp-registry-table td.mp-cell-num {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-variant-numeric: tabular-nums;
++}
++.mp-registry-table td.mp-cell-price {
++  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
++  font-weight: 700;
++  font-size: 12px;
++  color: var(--mp-teal-deep);
++}
++[data-map-theme='dark'] .mp-registry-table td.mp-cell-price {
++  color: #34d399;
++}
++.mp-status-pill {
++  display: inline-block;
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 9px;
++  font-weight: 700;
++  letter-spacing: 0.06em;
++  text-transform: uppercase;
++  padding: 2px 9px;
++  border-radius: 9999px;
++}
++.mp-status-pill[data-status='available'] {
++  background: var(--mp-badge-available);
++  color: #ffffff;
++}
++[data-map-theme='light'] .mp-status-pill[data-status='available'] {
++  color: #ffffff;
++}
++.mp-status-pill[data-status='reserved'] {
++  background: var(--mp-badge-reserved);
++  color: #060b12;
++}
++.mp-status-pill[data-status='other'] {
++  background: rgba(127, 137, 148, 0.18);
++  color: var(--mp-text-variant);
++}
++
++.mp-registry-empty {
++  padding: 26px 18px;
++  text-align: center;
++  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), 'Cairo', sans-serif;
++  font-size: 12.5px;
++  color: var(--mp-text-secondary);
++  line-height: 1.6;
++}
++
++.mp-registry-foot {
++  padding: 12px 18px;
++  display: flex;
++  gap: 10px;
++  align-items: center;
++  background: var(--mp-glass-strong);
++  -webkit-backdrop-filter: blur(var(--mp-glass-blur));
++  backdrop-filter: blur(var(--mp-glass-blur));
++}
++[data-map-theme='dark'] .mp-registry-foot {
++  border-top: 1px solid var(--mp-outline-variant);
++}
++.mp-cta {
++  flex: 1;
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  gap: 7px;
++  padding: 10px 14px;
++  border-radius: 10px;
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 11px;
++  font-weight: 800;
++  letter-spacing: 0.08em;
++  text-transform: uppercase;
++  cursor: pointer;
++  text-decoration: none;
++  transition: transform 0.15s ease, filter 0.15s ease;
++  white-space: nowrap;
++}
++.mp-cta:hover {
++  transform: translateY(-1px);
++  filter: brightness(1.06);
++}
++.mp-cta-ghost {
++  border: 1.5px solid var(--mp-text-variant);
++  background: transparent;
++  color: var(--mp-text);
++}
++[data-map-theme='dark'] .mp-cta-ghost {
++  border-color: var(--mp-sapphire);
++  color: #ffffff;
++}
++.mp-cta-primary {
++  border: none;
++  background: #10b981;
++  color: #ffffff;
++}
++
++/* Keep the mandatory CARTO/OSM attribution legible but unobtrusive,
++   tinted per theme (it sits bottom-right under the zoom stack). */
++[data-map-theme] .leaflet-control-attribution {
++  background: var(--mp-glass);
++  color: var(--mp-text-secondary);
++  font-size: 9px;
++  padding: 2px 8px;
++  border-radius: 8px 0 0 0;
++  -webkit-backdrop-filter: blur(8px);
++  backdrop-filter: blur(8px);
++}
++[data-map-theme] .leaflet-control-attribution a {
++  color: var(--mp-text-secondary);
++}
++
++/* ── Marker tooltip card (masterplan) ──────────────────────────────────── */
++.se-mp-tooltip {
++  min-width: 180px;
++  font-family: var(--font-jakarta, 'Plus Jakarta Sans'), 'Cairo', sans-serif;
++  line-height: 1.45;
++}
++.se-mp-tooltip .se-mp-tip-eyebrow {
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 8.5px;
++  font-weight: 700;
++  letter-spacing: 0.14em;
++  text-transform: uppercase;
++  color: #64748b;
++  margin-bottom: 3px;
++}
++.se-mp-tooltip .se-mp-tip-name {
++  font-family: var(--font-headline, 'Noto Serif'), 'Cairo', Georgia, serif;
++  font-size: 14.5px;
++  font-weight: 700;
++  color: #0f172a;
++}
++.se-mp-tooltip .se-mp-tip-sub {
++  font-size: 10.5px;
++  color: #64748b;
++  margin-top: 1px;
++}
++.se-mp-tooltip .se-mp-tip-badge {
++  display: inline-block;
++  margin-top: 6px;
++  font-size: 9.5px;
++  font-weight: 700;
++  padding: 2px 8px;
++  border-radius: 9999px;
++  background: rgba(16, 185, 129, 0.14);
++  color: #0f766e;
++}
++.se-mp-tooltip .se-mp-tip-price {
++  display: block;
++  margin-top: 5px;
++  font-family: var(--font-mono, 'JetBrains Mono'), monospace;
++  font-size: 11px;
++  font-weight: 700;
++  color: #0f766e;
++}
++.se-mp-tooltip .se-mp-tip-inspect {
++  display: inline-flex;
++  align-items: center;
++  gap: 4px;
++  margin-top: 8px;
++  border: none;
++  background: transparent;
++  padding: 0;
++  font-family: var(--font-label, 'Public Sans'), 'Cairo', sans-serif;
++  font-size: 10.5px;
++  font-weight: 800;
++  letter-spacing: 0.06em;
++  text-transform: uppercase;
++  color: #094cb2;
++  cursor: pointer;
++}
++.se-mp-tooltip .se-mp-tip-inspect:hover {
++  text-decoration: underline;
++}
++
++/* ── Entrance keyframes ────────────────────────────────────────────────── */
++@keyframes se-mp-pill-in {
++  from { opacity: 0; transform: translate(-50%, -80%) scale(0.82); }
++  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
++}
++@keyframes se-mp-unit-in {
++  from { opacity: 0; transform: translate(-50%, -40%) scale(0.6); }
++  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
++}
++
++/* ── Responsive (owner: "fit to page pc and mobile") ───────────────────── */
++@media (max-width: 900px) {
++  .mp-header-pill {
++    top: 12px;
++    padding: 7px 14px;
++    max-width: calc(100vw - 190px);
++  }
++  .mp-header-pill .mp-header-text {
++    font-size: 10px;
++    letter-spacing: 0.06em;
++  }
++  .mp-toggle-cluster {
++    top: 12px;
++    right: 12px;
++    gap: 6px;
++  }
++  .mp-toggle {
++    padding: 4px 9px;
++    font-size: 10px;
++  }
++  .mp-filter-cluster {
++    top: 64px;
++    left: 12px;
++    right: 12px;
++    width: auto;
++  }
++  .mp-filter-row {
++    flex-wrap: nowrap;
++    overflow-x: auto;
++    scrollbar-width: none;
++    -ms-overflow-style: none;
++    padding-bottom: 2px;
++  }
++  .mp-filter-row::-webkit-scrollbar {
++    display: none;
++  }
++  .mp-search {
++    flex: 1 0 150px;
++  }
++  .mp-benchmark-hud {
++    display: none; /* mobile: declutter — counts live in the filter cluster */
++  }
++  .mp-southwest-chrome .mp-proj-label,
++  .mp-southwest-chrome .mp-scalebar {
++    display: none;
++  }
++  .mp-compass {
++    width: 40px;
++    height: 40px;
++  }
++
++  /* Inventory modal → full-width bottom sheet */
++  .mp-registry-modal {
++    top: auto;
++    bottom: 0;
++    left: 0;
++    right: 0;
++    width: 100%;
++    max-height: 62vh;
++    border-radius: 18px 18px 0 0;
++    transform: none;
++    animation: se-mp-sheet-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
++  }
++  @keyframes se-mp-sheet-in {
++    from { opacity: 0; transform: translateY(36px); }
++    to { opacity: 1; transform: translateY(0); }
++  }
++  .mp-registry-foot {
++    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
++  }
++}
++
++@media (max-width: 560px) {
++  .mp-northeast-chrome .mp-logo-mark {
++    display: none;
++  }
++  .mp-header-pill {
++    display: none; /* smallest screens: the H1 + sub above carry the title */
++  }
++  .mp-toggle-cluster {
++    flex-direction: column;
++    align-items: flex-end;
++  }
++}
++
++/* ── Reduced motion ────────────────────────────────────────────────────── */
++@media (prefers-reduced-motion: reduce) {
++  .se-mp-pill,
++  .se-mp-unit,
++  .mp-registry-modal,
++  .mp-map-wash,
++  .mp-benchmark-hud,
++  .mp-filter-cluster,
++  .mp-southwest-chrome,
++  .mp-northeast-chrome {
++    animation: none;
++  }
++  .se-mp-ping,
++  .mp-live-dot {
++    animation: none;
++  }
++  .se-mp-pill,
++  .se-mp-unit,
++  .se-mp-wrap:hover .se-mp-pill,
++  .se-mp-wrap:hover .se-mp-unit {
++    transition: none;
++  }
++}
+diff --git a/apps/sierra-estates-realty/app/tokens/typography.css b/apps/sierra-estates-realty/app/tokens/typography.css
+index 7cb25bd6..de35baba 100644
+--- a/apps/sierra-estates-realty/app/tokens/typography.css
++++ b/apps/sierra-estates-realty/app/tokens/typography.css
+@@ -1,10 +1,11 @@
+ /* ============================================================================
+    SIERRA ESTATES — TYPOGRAPHY TOKENS
+    Cormorant Garamond (display, editorial serif) · Inter (UI / body) ·
+-   Cairo (Arabic, RTL) · JetBrains Mono (data, prices, SBR codes).
++   Cairo (Arabic, RTL) · JetBrains Mono (data, prices, SBR codes) ·
++   Noto Serif + Public Sans (map masterplan: headline pills / label eyebrows).
+    ============================================================================ */
+ 
+-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
++@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+ 
+ :root {
+   /* ── Families ────────────────────────────────────────────────────────── */
+@@ -12,6 +13,10 @@
+   --font-ui:      'Inter', system-ui, sans-serif;          /* UI, body, labels */
+   --font-ar:      'Cairo', sans-serif;                     /* Arabic content */
+   --font-mono:    'JetBrains Mono', ui-monospace, monospace; /* data / codes */
++  /* Masterplan (Stitch "Alexandria" system): Noto Serif for map headline
++     names, Public Sans for uppercase eyebrows/labels. */
++  --font-headline: 'Noto Serif', 'Cormorant Garamond', Georgia, serif;
++  --font-label:    'Public Sans', 'Inter', system-ui, sans-serif;
+ 
+   /* ── Display scale (Cormorant Garamond) ──────────────────────────────── */
+   /* Display is set light/regular and large; luxury comes from air + serif.  */
+diff --git a/apps/sierra-estates-realty/components/Maps/InventoryRegistryModal.tsx b/apps/sierra-estates-realty/components/Maps/InventoryRegistryModal.tsx
+new file mode 100644
+index 00000000..44566f72
+--- /dev/null
++++ b/apps/sierra-estates-realty/components/Maps/InventoryRegistryModal.tsx
+@@ -0,0 +1,277 @@
++'use client';
++
++/**
++ * Sierra Estates · Inventory Registry Modal (Stitch masterplan redesign)
++ * ----------------------------------------------------------------------------
++ * Floating glass registry opened by clicking a compound pill on the
++ * /properties masterplan map. Lists that compound's REAL live units in a
++ * spreadsheet layout (UNIT CODE | TYPE | BUA m² | PRICE | STATUS).
++ *
++ * §21 NO-FABRICATION (project law):
++ * - Every row is a real listing passed down from /api/inventory data.
++ * - The plot-area column is dropped entirely (no real plot/land-area field
++ *   exists in the listing payload).
++ * - The STATUS column is dropped entirely when no row carries a real
++ *   availability/status value.
++ * - Empty cells stay empty ("?"/blank) — never invented values.
++ * - Prices render exactly as the site's real `priceLabel` (EGP only; USD
++ *   subtext omitted — no live FX package is wired).
++ * - The 360° INSPECTION CTA links to a real property detail page — it never
++ *   opens an empty fake viewer.
++ */
++
++import React, { useEffect, useMemo, useRef } from 'react';
++import Link from 'next/link';
++import { X, RotateCw, MessageCircle } from 'lucide-react';
++import type { CompoundLocation } from './compounds-data';
++
++export type RegistryLang = 'en' | 'ar' | 'bi';
++
++export interface RegistryUnit {
++  id: string;
++  code: string;
++  compound: string;
++  type: string;
++  /** Built-up area in m². 0 = unknown → renders an empty cell (§21). */
++  area: number;
++  /** Real numeric price (EGP). 0/undefined = unpriced. Powers the live
++   *  "From {min} EGP" tooltip line and the benchmark price index. */
++  price?: number;
++  /** Real formatted price label from the live inventory (EGP). */
++  priceLabel: string;
++  mode: 'sale' | 'rent';
++  /** Real availability/status field from the listing ('' when unknown). */
++  status?: string;
++  img?: string;
++}
++
++export interface InventoryRegistryModalProps {
++  compound: CompoundLocation | null;
++  units: RegistryUnit[];
++  lang?: RegistryLang;
++  onClose: () => void;
++  onSelectUnit?: (unit: RegistryUnit) => void;
++}
++
++function statusTone(value: string): 'available' | 'reserved' | 'other' {
++  const v = value.toLowerCase();
++  if (v === 'available' || v === 'active' || v === 'for sale' || v === 'for rent') return 'available';
++  if (v === 'reserved' || v === 'held') return 'reserved';
++  return 'other';
++}
++
++export default function InventoryRegistryModal({
++  compound,
++  units,
++  lang = 'en',
++  onClose,
++  onSelectUnit,
++}: InventoryRegistryModalProps) {
++  const isAr = lang === 'ar';
++  const isBi = lang === 'bi';
++  const rtl = isAr; // Bilingual keeps LTR chrome with Arabic-first labels
++  const panelRef = useRef<HTMLDivElement>(null);
++
++  // ESC to close + focus trap (keyboard accessibility contract).
++  useEffect(() => {
++    if (!compound) return;
++    const panel = panelRef.current;
++    const focusables = panel?.querySelectorAll<HTMLElement>(
++      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
++    );
++    (focusables?.[0] ?? panel)?.focus?.();
++
++    const onKey = (e: KeyboardEvent) => {
++      if (e.key === 'Escape') {
++        e.preventDefault();
++        onClose();
++        return;
++      }
++      if (e.key !== 'Tab' || !focusables || focusables.length === 0) return;
++      const first = focusables[0];
++      const last = focusables[focusables.length - 1];
++      if (e.shiftKey && document.activeElement === first) {
++        e.preventDefault();
++        last.focus();
++      } else if (!e.shiftKey && document.activeElement === last) {
++        e.preventDefault();
++        first.focus();
++      }
++    };
++    window.addEventListener('keydown', onKey);
++    return () => window.removeEventListener('keydown', onKey);
++  }, [compound, onClose]);
++
++  // Real column contract: STATUS column only when at least one row carries
++  // a real availability value (§21 — never render a fabricated status).
++  const showStatusColumn = useMemo(
++    () => units.some((u) => (u.status || '').trim() !== ''),
++    [units]
++  );
++
++  if (!compound) return null;
++
++  const shortNameEn = compound.nameEn || compound.code;
++  const registryWordAr = 'سجل الوحدات المتاحة';
++  const registryWordEn = 'LIVE INVENTORY REGISTRY';
++  const title =
++    isAr
++      ? `${compound.nameAr || shortNameEn} — ${registryWordAr}`
++      : isBi
++      ? `${compound.nameAr || shortNameEn} | ${shortNameEn.toUpperCase()} — ${registryWordEn}`
++      : `${shortNameEn.toUpperCase()} — ${registryWordEn}`;
++
++  const eyebrow =
++    isAr
++      ? `${units.length.toLocaleString()} وحدة — بيانات مباشرة`
++      : isBi
++      ? `${units.length.toLocaleString()} UNITS · وحدات — LIVE`
++      : `${units.length.toLocaleString()} UNITS — LIVE`;
++
++  const t = {
++    code: isAr ? 'كود الوحدة' : 'UNIT CODE',
++    type: isAr ? 'النوع' : 'TYPE',
++    bua: isAr ? 'مساحة البناء' : 'BUA m²',
++    price: isAr ? 'السعر' : 'PRICE',
++    status: isAr ? 'الحالة' : 'STATUS',
++    inspect: isAr ? 'معاينة ٣٦٠°' : '360° INSPECTION',
++    whatsapp: isAr ? 'وسيط في أي في آي' : 'WHATSAPP VIP BROKER',
++    empty: isAr
++      ? `لا توجد وحدات مطابقة لمرشحات البحث الحالية في ${compound.nameAr || compound.nameEn}.`
++      : `No units match the current filters in ${shortNameEn}.`,
++    available: isAr ? 'متاح' : 'AVAILABLE',
++    reserved: isAr ? 'محجوز' : 'RESERVED',
++  };
++
++  // 360° INSPECTION: links to the first unit WITH real media (img), else the
++  // first unit's detail page — never an empty fake viewer (§21).
++  const inspectUnit =
++    units.find((u) => u.img && u.img.trim() !== '') ?? units[0] ?? null;
++  const inspectHref = inspectUnit
++    ? `/property/${encodeURIComponent(inspectUnit.id || inspectUnit.code)}`
++    : null;
++
++  const waText = encodeURIComponent(
++    isAr
++      ? `مرحباً سييرا العقارية، أود الاستفسار عن الوحدات المتاحة في ${compound.nameAr || compound.nameEn} (${units.length} وحدة).`
++      : `Hello Sierra Estates, I would like to ask about the live inventory in ${shortNameEn} (${units.length} units).`
++  );
++
++  return (
++    <>
++      <div
++        className="mp-registry-backdrop"
++        onClick={onClose}
++        aria-hidden="true"
++      />
++      <div
++        ref={panelRef}
++        className="mp-glass mp-registry-modal"
++        role="dialog"
++        aria-modal="true"
++        aria-label={title}
++        dir={rtl ? 'rtl' : undefined}
++        tabIndex={-1}
++      >
++        <div className="mp-registry-head">
++          <div className="mp-registry-eyebrow">
++            <span className="mp-live-dot" aria-hidden="true" />
++            {eyebrow}
++          </div>
++          <div className="mp-registry-title">
++            {isAr || isBi ? (
++              <span className="mp-ar-name">{compound.nameAr || shortNameEn}</span>
++            ) : null}
++            {isBi ? ' | ' : ''}
++            {isAr ? ` — ${registryWordAr}` : `${shortNameEn.toUpperCase()} — ${registryWordEn}`}
++          </div>
++          <button
++            type="button"
++            className="mp-registry-close"
++            onClick={onClose}
++            aria-label={isAr ? 'إغلاق' : 'Close registry'}
++          >
++            <X size={14} />
++          </button>
++        </div>
++
++        <div className="mp-registry-scroll">
++          {units.length === 0 ? (
++            <div className="mp-registry-empty">{t.empty}</div>
++          ) : (
++            <table className="mp-registry-table">
++              <thead>
++                <tr>
++                  <th>{t.code}</th>
++                  <th>{t.type}</th>
++                  <th style={{ textAlign: rtl ? 'right' : 'left' }}>{t.bua}</th>
++                  <th>{t.price}</th>
++                  {showStatusColumn && <th>{t.status}</th>}
++                </tr>
++              </thead>
++              <tbody>
++                {units.map((u) => {
++                  const statusValue = (u.status || '').trim();
++                  return (
++                    <tr
++                      key={u.id}
++                      onClick={() => onSelectUnit?.(u)}
++                      title={isAr ? 'فتح تفاصيل الوحدة' : 'Open unit details'}
++                    >
++                      <td className="mp-cell-code">
++                        <Link
++                          href={`/property/${encodeURIComponent(u.id || u.code)}`}
++                          style={{ color: 'inherit', textDecoration: 'none' }}
++                        >
++                          {u.code}
++                        </Link>
++                      </td>
++                      <td>{u.type}</td>
++                      {/* §21: unknown area stays blank — never a stand-in number */}
++                      <td className="mp-cell-num">{u.area > 0 ? u.area.toLocaleString() : ''}</td>
++                      <td className="mp-cell-price">{u.priceLabel}</td>
++                      {showStatusColumn && (
++                        <td>
++                          {statusValue ? (
++                            <span
++                              className="mp-status-pill"
++                              data-status={statusTone(statusValue)}
++                            >
++                              {statusTone(statusValue) === 'available'
++                                ? t.available
++                                : statusTone(statusValue) === 'reserved'
++                                ? t.reserved
++                                : statusValue}
++                            </span>
++                          ) : null}
++                        </td>
++                      )}
++                    </tr>
++                  );
++                })}
++              </tbody>
++            </table>
++          )}
++        </div>
++
++        <div className="mp-registry-foot">
++          {inspectHref ? (
++            <Link href={inspectHref} className="mp-cta mp-cta-ghost">
++              <RotateCw size={13} />
++              {t.inspect}
++            </Link>
++          ) : null}
++          <a
++            className="mp-cta mp-cta-primary"
++            href={`https://wa.me/201092048333?text=${waText}`}
++            target="_blank"
++            rel="noopener noreferrer"
++          >
++            <MessageCircle size={13} />
++            {t.whatsapp}
++          </a>
++        </div>
++      </div>
++    </>
++  );
++}
+diff --git a/apps/sierra-estates-realty/components/Maps/LiveMap.tsx b/apps/sierra-estates-realty/components/Maps/LiveMap.tsx
+index 0848f9cc..bd28ab55 100644
+--- a/apps/sierra-estates-realty/components/Maps/LiveMap.tsx
++++ b/apps/sierra-estates-realty/components/Maps/LiveMap.tsx
+@@ -24,9 +24,49 @@ import {
+ import { CompoundLocation, NEW_CAIRO_COMPOUNDS } from './compounds-data';
+ import { compoundShortName } from '@/lib/site/smart-search';
+ import CompoundUnitsExcelDrawer from './CompoundUnitsExcelDrawer';
++import InventoryRegistryModal, { RegistryUnit } from './InventoryRegistryModal';
+ export type { CompoundLocation };
+ export { NEW_CAIRO_COMPOUNDS };
+ 
++/** Map label language: EN, AR, or the bilingual `العربية | LATIN` mode. */
++export type MapLang = 'en' | 'ar' | 'bi';
++
++/** Visual chrome generation: 'classic' = pre-masterplan look (admin, radar);
++ *  'masterplan' = the Stitch "New Cairo Real Estate Map" redesign (v2 order). */
++export type MapChrome = 'classic' | 'masterplan';
++
++/* ── Masterplan tier accents (Stitch renders) ───────────────────────────
++ * Top-tier compounds get the sapphire/cyan accent; the rest teal/emerald.
++ * Codes come from compounds-data.ts (single source of truth). */
++const MASTERPLAN_TOP_TIER = new Set([
++  'MIV', // Mivida (Emaar)
++  'VLT', // Villette (SODIC)
++  'HP', // Hyde Park
++  'PH', // Palm Hills New Cairo
++  'CFC', // Cairo Festival City
++  'EST', // Eastown (SODIC)
++  'KH', // Katameya Heights
++  'TAJ', // Taj City
++  'SAR', // Sarai
++  'ZED', // Zed East
++  'MVI', // Mountain View iCity
++  'MT', // Madinaty
++  'RH', // Al Rehab
++  'UTC', // Uptown Cairo
++]);
++
++/** Compound label per language mode — the bilingual pattern is the Stitch
++ *  render's `سوديك فيليت | SODIC VILLETTE` (Arabic first, pipe, Latin caps). */
++function compoundLabel(c: CompoundLocation, lang: MapLang): string {
++  if (lang === 'ar') return c.nameAr || c.code;
++  const shortEn = compoundShortName(c.nameEn) || c.nameEn || c.code;
++  if (lang === 'bi') {
++    const ar = c.nameAr || c.code;
++    return `${ar} | ${shortEn.toUpperCase()}`;
++  }
++  return shortEn;
++}
++
+ export interface MapZonePreset {
+   id: string;
+   nameEn: string;
+@@ -93,6 +133,31 @@ const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string; maxNative
+ 
+ const NEW_CAIRO_DEFAULT_CENTER: [number, number] = [30.025, 31.54];
+ 
++/* ── Masterplan basemaps (Esri canvas — no API key, no anonymous quota
++ * watermarks). CARTO's free anonymous basemaps now serve intermittent
++ * "API KEY REQUIRED" error tiles under production load (verified on the
++ * live site 2026-11-02), so the redesigned /properties map switches to the
++ * Esri canvas family — same provider the app already uses for satellite.
++ * Light = paper-gray base + reference labels (matches the Alexandria ivory
++ * renders); Dark = dark-gray canvas (the nocturnal void, labels come from
++ * our own compound pills + unit pins). Classic chrome keeps CARTO. */
++const ESRI_ATTRIB =
++  '&copy; Esri &mdash; Source: Esri, HERE, Garmin, &copy; OpenStreetMap contributors, and the GIS User Community';
++
++const MP_TILE_LAYERS: Record<'light' | 'dark', { base: string; reference?: string; attrib: string; maxNativeZoom?: number }> = {
++  light: {
++    base: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
++    reference: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
++    attrib: ESRI_ATTRIB,
++    maxNativeZoom: 16,
++  },
++  dark: {
++    base: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
++    attrib: ESRI_ATTRIB,
++    maxNativeZoom: 16,
++  },
++};
++
+ /* ── Brand constants (Sierra champagne gold on obsidian) ─────────────── */
+ const GOLD = '#C8961A';
+ const GOLD_LT = '#E9C176';
+@@ -280,6 +345,92 @@ function createCompoundIcon(
+   });
+ }
+ 
++/* ── Masterplan (Stitch redesign) marker icon builders ───────────────────────
++ *
++ * Compound label pills: glass pills with live count chips, tier accents,
++ * zoom-driven "proximity magnification" (the owner's explicit interaction:
++ * "when you come closer the name gets bigger") and the golden focal aura
++ * for the z≥14 focus compound. Theming flows from the map root's
++ * [data-map-theme] attribute via masterplan.css — no colors are hardcoded
++ * here so light/dark stay in sync with the token set.
++ *
++ * Zoom tiers (order v2 § PAGE STRUCTURE 3):
++ *   z < 12       → 11px, count chip only for top-tier (declutter)
++ *   12 ≤ z < 14  → 13px, all compounds labeled
++ *   z ≥ 14       → focused pill 16px bold + golden aura
++ */
++function createMasterplanPillIcon(opts: {
++  compound: CompoundLocation;
++  isSelected: boolean;
++  isFocused: boolean;
++  liveCount: number | null;
++  lang: MapLang;
++  zoom: number;
++  index: number;
++}) {
++  const { compound, isSelected, isFocused, liveCount, lang, zoom, index } = opts;
++  const tier = MASTERPLAN_TOP_TIER.has(compound.code) ? 'top' : 'alt';
++  const count = liveCount ?? compound.unitsCount;
++  // Count chip: real live count only; n>0 or nothing (§21 — no invented counts).
++  const showChip = zoom < 12 ? tier === 'top' && count > 0 : count > 0;
++  const fontSize = isFocused && zoom >= 14 ? 16 : zoom >= 12 ? 13 : 11;
++  const classes = [
++    'se-mp-pill',
++    tier === 'top' ? 'se-mp-tier-top' : 'se-mp-tier-alt',
++    isFocused || isSelected ? 'se-mp-focus' : '',
++  ]
++    .filter(Boolean)
++    .join(' ');
++
++  return L.divIcon({
++    className: 'se-mp-wrap',
++    html: `
++      <div class="${classes}" style="
++        animation-delay:${pinDelay(index, 26)}ms;
++        font-size:${fontSize}px;
++      ">
++        ${(isFocused || isSelected) && zoom >= 14 ? '<span class="se-mp-ping"></span>' : ''}
++        <span class="se-mp-label">${compoundLabel(compound, lang)}</span>
++        ${showChip ? `<span class="se-mp-count">${count}</span>` : ''}
++      </div>
++    `,
++    iconSize: [0, 0],
++    iconAnchor: [0, 0],
++    popupAnchor: [0, -16],
++  });
++}
++
++/** Street-zoom unit pins, masterplan restyle: theme flows from
++ *  [data-map-theme] tokens; semantic dots stay (sale = teal family, rent =
++ * sapphire family in light; classic emerald/sky in dark). */
++function createMasterplanUnitIcon(
++  unit: MapUnitPin,
++  isMarked: boolean,
++  isActive: boolean,
++  index: number
++) {
++  const shortPrice = unit.priceLabel.replace(' EGP', '').replace(' / mo', '/m').trim();
++  const isRent = unit.mode === 'rent';
++  const classes = ['se-mp-unit', isActive ? 'se-mp-unit-active' : '']
++    .filter(Boolean)
++    .join(' ');
++  return L.divIcon({
++    className: 'se-mp-wrap',
++    html: `
++      <div class="${classes}" style="
++        animation-delay:${pinDelay(index)}ms;
++        ${isMarked ? 'box-shadow:0 0 0 1.5px var(--mp-gold);' : ''}
++      ">
++        <span class="se-mp-unit-dot" style="background:${isRent ? 'var(--mp-sapphire)' : 'var(--mp-teal)'}"></span>
++        <span>${shortPrice}</span>
++      </div>
++    `,
++    iconSize: [0, 0],
++    iconAnchor: [0, 0],
++    popupAnchor: [0, -12],
++  });
++}
++
+ function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean = false, index = 0) {
+   const shortPrice = unit.priceLabel
+     .replace(' EGP', '')
+@@ -377,6 +528,132 @@ function ZoomWatcher({ onChange }: { onChange: (zoom: number) => void }) {
+   return null;
+ }
+ 
++/* ── Masterplan chrome children (need the live map instance) ───────────── */
++
++/** Reports viewport (center + zoom) on move/zoom end — powers the
++ *  coordinates HUD, the real scale bar and the proximity-focus computation. */
++function ViewportWatcher({
++  onChange,
++}: {
++  onChange: (center: [number, number], zoom: number) => void;
++}) {
++  const map = useMap();
++  useEffect(() => {
++    const report = () => {
++      const c = map.getCenter();
++      onChange([c.lat, c.lng], map.getZoom());
++    };
++    report();
++    map.on('moveend', report);
++    map.on('zoomend', report);
++    return () => {
++      map.off('moveend', report);
++      map.off('zoomend', report);
++    };
++  }, [map, onChange]);
++  return null;
++}
++
++/** Round glass zoom stack + recenter (bottom-right, masterplan chrome). */
++function MapZoomControls({ isAr }: { isAr: boolean }) {
++  const map = useMap();
++  return (
++    <div className="mp-zoom-stack">
++      <button
++        type="button"
++        className="mp-zoom-btn"
++        onClick={() => map.zoomIn()}
++        aria-label={isAr ? 'تكبير' : 'Zoom in'}
++        title={isAr ? 'تكبير' : 'Zoom in'}
++      >
++        <Plus size={15} />
++      </button>
++      <button
++        type="button"
++        className="mp-zoom-btn"
++        onClick={() => map.zoomOut()}
++        aria-label={isAr ? 'تصغير' : 'Zoom out'}
++        title={isAr ? 'تصغير' : 'Zoom out'}
++      >
++        <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>−</span>
++      </button>
++      <button
++        type="button"
++        className="mp-zoom-btn"
++        onClick={() => map.flyTo(NEW_CAIRO_DEFAULT_CENTER, 12, { duration: 0.75 })}
++        aria-label={isAr ? 'إعادة التمركز' : 'Reset viewport to New Cairo'}
++        title={isAr ? 'إعادة التمركز' : 'Reset viewport to New Cairo'}
++      >
++        <Crosshair size={14} />
++      </button>
++    </div>
++  );
++}
++
++/** REAL scale bar: pixel distance measured on the live map — never a
++ *  decorative/static number (§21 spirit on cartographic chrome). */
++function MapScaleBar() {
++  const map = useMap();
++  const [label, setLabel] = useState('');
++
++  useEffect(() => {
++    const measure = () => {
++      const targetPx = 92;
++      const center = map.getCenter();
++      const east = map.containerPointToLatLng([targetPx, map.getSize().y / 2]);
++      const meters = center.distanceTo(east);
++      if (!Number.isFinite(meters) || meters <= 0) {
++        setLabel('');
++        return;
++      }
++      // Snap to a round metric distance that fits ~the target width.
++      const nice = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
++      const pick = nice.reduce((prev, cur) =>
++        Math.abs(cur - meters) < Math.abs(prev - meters) ? cur : prev
++      );
++      setLabel(pick >= 1000 ? `${(pick / 1000).toLocaleString()} km` : `${pick.toLocaleString()} m`);
++    };
++    measure();
++    map.on('zoomend moveend resize', measure);
++    return () => {
++      map.off('zoomend moveend resize', measure);
++    };
++  }, [map]);
++
++  if (!label) return null;
++  return (
++    <div className="mp-scalebar">
++      <span className="mp-scalebar-line" />
++      <span className="mp-scalebar-text">{label}</span>
++    </div>
++  );
++}
++
++/** Static gold compass rose (cartographic chrome — brand copy, §21-exempt). */
++function CompassRose() {
++  const stroke = 'currentColor';
++  return (
++    <svg
++      className="mp-compass"
++      viewBox="0 0 64 64"
++      role="img"
++      aria-label="North"
++      style={{ color: 'var(--mp-gold)' }}
++    >
++      <circle cx="32" cy="32" r="27" fill="none" stroke={stroke} strokeWidth="1.4" opacity="0.9" />
++      <circle cx="32" cy="32" r="21.5" fill="none" stroke={stroke} strokeWidth="0.7" opacity="0.5" />
++      <path d="M32 7 L37 30 L32 26 L27 30 Z" fill={stroke} />
++      <path d="M32 57 L27 34 L32 38 L37 34 Z" fill="none" stroke={stroke} strokeWidth="1" opacity="0.7" />
++      <path d="M7 32 L30 27 L26 32 L30 37 Z" fill="none" stroke={stroke} strokeWidth="1" opacity="0.7" />
++      <path d="M57 32 L34 37 L38 32 L34 27 Z" fill="none" stroke={stroke} strokeWidth="1" opacity="0.7" />
++      <circle cx="32" cy="32" r="2.2" fill={stroke} />
++      <text x="32" y="5.4" textAnchor="middle" fontSize="7" fontWeight="700" fill={stroke} fontFamily="var(--font-label, 'Public Sans'), sans-serif">
++        N
++      </text>
++    </svg>
++  );
++}
++
+ /* ── Shared glass-panel primitives ──────────────────────────────────── */
+ 
+ const panelStyle: React.CSSProperties = {
+@@ -460,7 +737,14 @@ const MAP_MOTION_CSS = `
+ 
+ export interface LiveMapProps {
+   mode?: 'dark' | 'light';
+-  lang?: 'en' | 'ar';
++  /** Label language — 'bi' renders the bilingual `العربية | LATIN` pills. */
++  lang?: MapLang;
++  /** Visual chrome: 'classic' (default — admin, radar) or the Stitch
++   *  masterplan redesign used by /properties. Backwards compatible. */
++  chrome?: MapChrome;
++  /** Masterplan basemap: 'theme' (Esri canvas light/dark) or 'satellite'
++   *  (the app's existing keyless Esri World Imagery layer). */
++  basemap?: 'theme' | 'satellite';
+   selectedCode?: string | null;
+   onSelectCompound?: (c: CompoundLocation) => void;
+   units?: MapUnitPin[];
+@@ -480,20 +764,29 @@ export interface LiveMapProps {
+   unitZoomThreshold?: number;
+   /** Zoom level at which compound nodes fade out (street scale). */
+   compoundZoomCutoff?: number;
+-  /** Render the collapsible legend panel. */
++  /** Render the collapsible legend panel (classic chrome only). */
+   showLegend?: boolean;
+-  /** Render the "showing X of Y units" counter chip. */
++  /** Render the "showing X of Y units" counter chip (classic chrome only). */
+   showPinCounter?: boolean;
+   /** When non-empty, ONLY these compound codes render as labelled cluster
+    *  nodes — used by the radar to show just the filtered compound/area. */
+   visibleCompoundCodes?: string[] | null;
+-  /** Show interactive Excel units drawer when compound is selected */
++  /** Show interactive Excel units drawer when compound is selected
++   *  (classic chrome only — masterplan uses the Inventory Registry Modal). */
+   showExcelDrawer?: boolean;
++  /** Full (uncapped) filtered inventory feeding the masterplan registry
++   *  modal and the "From {min} EGP" tooltip line. §21: real rows only. */
++  registryUnits?: RegistryUnit[];
++  /** Masterplan: notify the shell when the registry modal opens/closes
++   *  (drives the Benchmark HUD hide/show slot). */
++  onRegistryStateChange?: (compound: CompoundLocation | null) => void;
+ }
+ 
+ export default function LiveMap({
+   mode = 'light',
+   lang = 'en',
++  chrome = 'classic',
++  basemap = 'theme',
+   selectedCode,
+   onSelectCompound,
+   units = [],
+@@ -515,15 +808,33 @@ export default function LiveMap({
+   showPinCounter = true,
+   visibleCompoundCodes = null,
+   showExcelDrawer = true,
++  registryUnits = [],
++  onRegistryStateChange,
+ }: LiveMapProps) {
++  const isMasterplan = chrome === 'masterplan';
+   const isAr = lang === 'ar';
+   const [tileStyle, setTileStyle] = useState<MapTileStyle>(mode === 'dark' ? 'dark' : 'light');
+   const [zoom, setZoom] = useState(12);
+   const [legendOpen, setLegendOpen] = useState(true);
+   const [controlsOpen, setControlsOpen] = useState(true);
+   const [activeExcelCompound, setActiveExcelCompound] = useState<CompoundLocation | null>(null);
++  const [mpCenter, setMpCenter] = useState<[number, number]>(NEW_CAIRO_DEFAULT_CENTER);
+   const liveCounts = useLiveUnitCounts();
+ 
++  // Masterplan: the theme toggle lives in the page chrome — keep the tile
++  // layer reactive to the `mode` prop (classic keeps its internal panel).
++  useEffect(() => {
++    if (isMasterplan) {
++      setTileStyle(mode === 'dark' ? 'dark' : 'light');
++    }
++  }, [isMasterplan, mode]);
++
++  // Masterplan: report registry-modal open state so the page can hide the
++  // Benchmark HUD while the registry occupies the same visual slot.
++  useEffect(() => {
++    if (isMasterplan) onRegistryStateChange?.(activeExcelCompound);
++  }, [isMasterplan, activeExcelCompound, onRegistryStateChange]);
++
+   // Sync external selectedCode changes to the active excel compound
+   useEffect(() => {
+     if (selectedCode) {
+@@ -578,6 +889,10 @@ export default function LiveMap({
+   }, [onCenterChange]);
+ 
+   const activeTile = TILE_LAYERS[tileStyle] || TILE_LAYERS.dark;
++  const mpTiles =
++    isMasterplan && basemap !== 'satellite'
++      ? MP_TILE_LAYERS[mode === 'dark' ? 'dark' : 'light']
++      : null;
+ 
+   // Fan out overlapping coordinates so all units stay visible and clickable
+   const displayUnits = useMemo(() => {
+@@ -594,10 +909,85 @@ export default function LiveMap({
+     [displayUnits, activeUnitId]
+   );
+ 
++  /* ── Masterplan derived state ─────────────────────────────────────────── */
++
++  const handleViewportChange = useCallback((center: [number, number], z: number) => {
++    setMpCenter(center);
++    setZoom(z);
++  }, []);
++
++  // Proximity focus (owner's explicit interaction): at z ≥ 14 the compound
++  // nearest the live map center gets the golden focal treatment. The
++  // selected compound is always focal regardless of zoom.
++  const focusedCompoundCode = useMemo(() => {
++    if (!isMasterplan) return null;
++    const visible =
++      visibleCompoundCodes && visibleCompoundCodes.length > 0
++        ? NEW_CAIRO_COMPOUNDS.filter((c) => visibleCompoundCodes.includes(c.code))
++        : NEW_CAIRO_COMPOUNDS;
++    if (zoom < 14) return null;
++    let best: CompoundLocation | null = null;
++    let bestDist = Infinity;
++    for (const c of visible) {
++      const d =
++        (c.lat - mpCenter[0]) * (c.lat - mpCenter[0]) +
++        (c.lng - mpCenter[1]) * (c.lng - mpCenter[1]);
++      if (d < bestDist) {
++        bestDist = d;
++        best = c;
++      }
++    }
++    return best?.code ?? null;
++  }, [isMasterplan, zoom, mpCenter, visibleCompoundCodes]);
++
++  // Real "From {min} EGP" per compound — minimum price across that
++  // compound's priced SALE listings in the live registry feed (§21: only
++  // rendered when at least one priced sale listing exists).
++  const minSalePriceByCompound = useMemo(() => {
++    const map: Record<string, number> = {};
++    for (const u of registryUnits) {
++      if (u.mode !== 'sale') continue;
++      const price = Number(u.price);
++      if (!Number.isFinite(price) || price <= 0) continue;
++      const key = normalizeCompoundKey(u.compound || '');
++      if (!key) continue;
++      if (map[key] == null || price < map[key]) map[key] = price;
++    }
++    return map;
++  }, [registryUnits]);
++
++  // Masterplan registry rows for the currently open compound — REAL rows
++  // only, matched the same way the classic drawer matches (En/Ar/code).
++  const registryRows = useMemo(() => {
++    if (!isMasterplan || !activeExcelCompound) return [];
++    const compEn = (activeExcelCompound.nameEn || '').toLowerCase().trim();
++    const compAr = (activeExcelCompound.nameAr || '').toLowerCase().trim();
++    const compCode = (activeExcelCompound.code || '').toLowerCase().trim();
++    const compKey = normalizeCompoundKey(activeExcelCompound.nameEn);
++    return registryUnits.filter((u) => {
++      const uComp = (u.compound || '').toLowerCase().trim();
++      const uKey = normalizeCompoundKey(u.compound || '');
++      return (
++        (compKey && uKey && (uKey === compKey || uKey.includes(compKey) || compKey.includes(uKey))) ||
++        (compEn && (uComp.includes(compEn) || compEn.includes(uComp))) ||
++        (compAr && uComp.includes(compAr)) ||
++        (compCode && uComp.toLowerCase().includes(compCode))
++      );
++    });
++  }, [isMasterplan, activeExcelCompound, registryUnits]);
++
+   return (
+-    <div className="se-map-root" style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
++    <div
++      className="se-map-root"
++      style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}
++      data-map-theme={isMasterplan ? mode : undefined}
++    >
+       <style dangerouslySetInnerHTML={{ __html: MAP_MOTION_CSS }} />
+-      {/* ── ORGANIZED CONTROL PANEL (top-left) ── */}
++      {/* Masterplan: warm-ivory / nocturnal-void wash over the tiles
++          (never intercepts pointer events; never repaints tiles). */}
++      {isMasterplan && <div className="mp-map-wash" aria-hidden="true" />}
++      {/* ── ORGANIZED CONTROL PANEL (top-left, classic chrome only) ── */}
++      {!isMasterplan && (
+       <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
+         <div style={{ ...panelStyle, padding: controlsOpen ? '10px 12px' : '8px 12px', width: 236 }}>
+           <button
+@@ -717,9 +1107,10 @@ export default function LiveMap({
+           )}
+         </div>
+       </div>
++      )}
+ 
+-      {/* ── PIN COUNTER (top-right) ── */}
+-      {showPinCounter && (
++      {/* ── PIN COUNTER (top-right, classic chrome only) ── */}
++      {showPinCounter && !isMasterplan && (
+         <div
+           style={{
+             ...panelStyle,
+@@ -769,8 +1160,8 @@ export default function LiveMap({
+         </div>
+       )}
+ 
+-      {/* ── LEGEND (bottom-left, collapsible) ── */}
+-      {showLegend && (
++      {/* ── LEGEND (bottom-left, collapsible — classic chrome only) ── */}
++      {showLegend && !isMasterplan && (
+         <div style={{ ...panelStyle, position: 'absolute', bottom: 18, left: 12, zIndex: 1000, padding: legendOpen ? '10px 12px' : '7px 12px', maxWidth: 230 }}>
+           <button
+             type="button"
+@@ -837,14 +1228,49 @@ export default function LiveMap({
+         style={{ height: '100%', width: '100%' }}
+       >
+         <MapController flyToCoords={flyToCoords || (activePlaced ? [activePlaced.renderLat, activePlaced.renderLng] : null)} flyToZoom={flyToZoom} />
+-        <ZoomWatcher onChange={handleZoomChange} />
+-        <TileLayer
+-          url={activeTile.url}
+-          attribution={activeTile.attrib}
+-          maxZoom={20}
+-          maxNativeZoom={activeTile.maxNativeZoom}
+-          detectRetina={true}
+-        />
++        {isMasterplan ? (
++          <ViewportWatcher onChange={handleViewportChange} />
++        ) : (
++          <ZoomWatcher onChange={handleZoomChange} />
++        )}
++        {isMasterplan ? (
++          basemap === 'satellite' ? (
++            <TileLayer
++              key="mp-sat"
++              url={TILE_LAYERS.satellite.url}
++              attribution={TILE_LAYERS.satellite.attrib}
++              maxZoom={20}
++              maxNativeZoom={TILE_LAYERS.satellite.maxNativeZoom}
++            />
++          ) : mpTiles ? (
++            <>
++              <TileLayer
++                key={`mp-base-${mode}`}
++                url={mpTiles.base}
++                attribution={mpTiles.attrib}
++                maxZoom={20}
++                maxNativeZoom={mpTiles.maxNativeZoom}
++              />
++              {mpTiles.reference && (
++                <TileLayer
++                  key={`mp-ref-${mode}`}
++                  url={mpTiles.reference}
++                  attribution=""
++                  maxZoom={20}
++                  maxNativeZoom={mpTiles.maxNativeZoom}
++                />
++              )}
++            </>
++          ) : null
++        ) : (
++          <TileLayer
++            url={activeTile.url}
++            attribution={activeTile.attrib}
++            maxZoom={20}
++            maxNativeZoom={activeTile.maxNativeZoom}
++            detectRetina={true}
++          />
++        )}
+ 
+         {/* Proximity Radius Circle */}
+         {radiusKm && radiusKm > 0 && (
+@@ -864,20 +1290,45 @@ export default function LiveMap({
+ 
+         {/* Compound Cluster Nodes — city & district scale (hidden at street zoom).
+             When visibleCompoundCodes is set (radar filter active), only the
+-            selected compounds/areas get labelled nodes — map stays uncluttered. */}
++            selected compounds/areas get labelled nodes — map stays uncluttered.
++            Masterplan chrome: Stitch label pills with proximity magnification. */}
+         {showCompounds &&
+           (visibleCompoundCodes && visibleCompoundCodes.length > 0
+             ? NEW_CAIRO_COMPOUNDS.filter((c) => visibleCompoundCodes.includes(c.code))
+             : NEW_CAIRO_COMPOUNDS
+           ).map((compound, idx) => {
+             const isSelected = selectedCode === compound.code;
++            const isFocused =
++              !!focusedCompoundCode && focusedCompoundCode === compound.code;
+             const liveCount = resolveCompoundCount(compound, liveCounts);
++            const minSale =
++              minSalePriceByCompound[normalizeCompoundKey(compound.nameEn)] ??
++              minSalePriceByCompound[compound.nameEn.toLowerCase()] ??
++              null;
+ 
+             return (
+               <Marker
+                 key={`compound-${compound.code}-${idx}`}
+                 position={[compound.lat, compound.lng]}
+-                icon={createCompoundIcon(compound, isSelected, liveCount, lang, idx)}
++                icon={
++                  isMasterplan
++                    ? createMasterplanPillIcon({
++                        compound,
++                        isSelected,
++                        isFocused,
++                        liveCount,
++                        lang,
++                        zoom,
++                        index: idx,
++                      })
++                    : createCompoundIcon(
++                        compound,
++                        isSelected,
++                        liveCount,
++                        lang === 'bi' ? 'en' : lang,
++                        idx
++                      )
++                }
+                 eventHandlers={{
+                   click: () => {
+                     setActiveExcelCompound(compound);
+@@ -887,14 +1338,54 @@ export default function LiveMap({
+                 }}
+               >
+                 <Tooltip direction="top" offset={[0, -18]} opacity={0.95}>
+-                  <div style={{ fontFamily: 'system-ui', fontSize: 11.5 }}>
+-                    <strong>{lang === 'ar' ? compound.nameAr : compound.nameEn}</strong>
+-                    {lang === 'en' && <> ({compound.nameAr})</>}
+-                    <div style={{ color: '#64748b', fontSize: 10 }}>
+-                      {compound.developer} · {liveCount ?? compound.unitsCount} {t.availableUnits}
+-                      {!compound.isGpsVerified && ' · ⏳'}
++                  {isMasterplan ? (
++                    <div className="se-mp-tooltip">
++                      <div className="se-mp-tip-eyebrow">
++                        {isAr ? 'مخطط القاهرة الجديدة' : 'NEW CAIRO MASTERPLAN'}
++                      </div>
++                      <div className="se-mp-tip-name">
++                        {lang === 'ar'
++                          ? compound.nameAr
++                          : lang === 'bi'
++                          ? `${compound.nameAr} | ${compound.nameEn}`
++                          : compound.nameEn}
++                      </div>
++                      <div className="se-mp-tip-sub">
++                        {compound.developer}
++                        {!compound.isGpsVerified ? ' · ⏳' : ''}
++                      </div>
++                      {liveCount != null && liveCount > 0 && (
++                        <span className="se-mp-tip-badge">
++                          {liveCount.toLocaleString()}{' '}
++                          {isAr ? 'وحدة متاحة' : 'Available Units'}
++                        </span>
++                      )}
++                      {/* §21: real minimum sale price only when ≥1 priced
++                          sale listing exists in the live registry feed. */}
++                      {minSale != null && minSale > 0 && (
++                        <span className="se-mp-tip-price">
++                          {isAr ? 'يبدأ من' : 'From'}{' '}
++                          {minSale.toLocaleString()} EGP
++                        </span>
++                      )}
++                      <button
++                        type="button"
++                        className="se-mp-tip-inspect"
++                        onClick={() => setActiveExcelCompound(compound)}
++                      >
++                        {isAr ? 'استعراض السجل ←' : 'INSPECT →'}
++                      </button>
+                     </div>
+-                  </div>
++                  ) : (
++                    <div style={{ fontFamily: 'system-ui', fontSize: 11.5 }}>
++                      <strong>{lang === 'ar' ? compound.nameAr : compound.nameEn}</strong>
++                      {lang === 'en' && <> ({compound.nameAr})</>}
++                      <div style={{ color: '#64748b', fontSize: 10 }}>
++                        {compound.developer} · {liveCount ?? compound.unitsCount} {t.availableUnits}
++                        {!compound.isGpsVerified && ' · ⏳'}
++                      </div>
++                    </div>
++                  )}
+                 </Tooltip>
+               </Marker>
+             );
+@@ -915,7 +1406,11 @@ export default function LiveMap({
+               <Marker
+                 key={`unit-${unit.id}`}
+                 position={[unit.renderLat, unit.renderLng]}
+-                icon={createUnitIcon(unit, isMarked, isActive, idx)}
++                icon={
++                  isMasterplan
++                    ? createMasterplanUnitIcon(unit, isMarked, isActive, idx)
++                    : createUnitIcon(unit, isMarked, isActive, idx)
++                }
+                 eventHandlers={{
+                   click: () => onSelectUnit?.(unit),
+                 }}
+@@ -1039,18 +1534,63 @@ export default function LiveMap({
+               </Marker>
+             );
+           })}
++
++        {/* ── Masterplan cartographic chrome (INSIDE MapContainer — the
++                zoom stack and scale bar need the live map instance via
++                useMap, so they must be descendants of the container) ── */}
++        {isMasterplan && (
++          <>
++            {/* Bottom-left: gold compass, live coordinates, real scale bar */}
++            <div className="mp-southwest-chrome">
++              <CompassRose />
++              <div className="mp-coords">
++                Lat {mpCenter[0].toFixed(4)}° N · Lon {mpCenter[1].toFixed(4)}° E
++              </div>
++              <MapScaleBar />
++              <div className="mp-proj-label">EPSG 32636 / WGS84</div>
++            </div>
++
++            {/* Bottom-right: zoom stack + recenter + local logo mark
++                (raised above the required tile attribution strip) */}
++            <div className="mp-northeast-chrome">
++              <MapZoomControls isAr={isAr} />
++              {/* eslint-disable-next-line @next/next/no-img-element */}
++              <img
++                className="mp-logo-mark"
++                src="/assets/logo-mark.png"
++                alt="Sierra Estates"
++                loading="lazy"
++              />
++            </div>
++          </>
++        )}
+       </MapContainer>
+ 
+-      {/* ── Compound Units Excel HUD Sheet Drawer ── */}
+-      {activeExcelCompound && showExcelDrawer && (
+-        <CompoundUnitsExcelDrawer
+-          compound={activeExcelCompound}
+-          units={units}
+-          lang={lang}
+-          onClose={() => setActiveExcelCompound(null)}
+-          onSelectUnit={onSelectUnit}
+-        />
+-      )}
++      {/* ── Compound units surface: Excel drawer (classic) or the Stitch
++             Inventory Registry Modal (masterplan) ── */}
++      {activeExcelCompound &&
++        (isMasterplan ? (
++          <InventoryRegistryModal
++            compound={activeExcelCompound}
++            units={registryRows}
++            lang={lang}
++            onClose={() => setActiveExcelCompound(null)}
++            onSelectUnit={(u) => {
++              const pin = units.find((p) => p.id === u.id || p.code === u.code);
++              if (pin) onSelectUnit?.(pin);
++            }}
++          />
++        ) : (
++          showExcelDrawer && (
++            <CompoundUnitsExcelDrawer
++              compound={activeExcelCompound}
++              units={units}
++              lang={lang === 'bi' ? 'en' : lang}
++              onClose={() => setActiveExcelCompound(null)}
++              onSelectUnit={onSelectUnit}
++            />
++          )
++        ))}
+     </div>
+   );
+ }
+-- 
+2.47.3
+
