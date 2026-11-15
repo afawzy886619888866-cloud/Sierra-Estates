@@ -36,6 +36,16 @@ const INBOX_OLD = `${INBOX_FILE}.old`;
 const OPTOUT_FILE = path.join(STATE_DIR, 'owner-outreach-optouts.jsonl');
 const MAX_BYTES = 2 * 1024 * 1024;
 
+// Anti-ban / Anti-spam stability controls:
+// 1. RECENT_GROUP_LISTINGS: Sliding 12h cache of recently ingested listing hashes.
+//    Suppresses repetitive public group replies if the same unit is forwarded multiple times.
+// 2. GROUP_LAST_REPLY_TS: Pacing cooldown per group (minimum 15s between public group messages).
+// 3. IN_FLIGHT_HASHES: Concurrent webhook deduplication mutex.
+const RECENT_GROUP_LISTINGS = new Map();
+const GROUP_LAST_REPLY_TS = new Map();
+const GROUP_COOLDOWN_MS = parseInt(process.env.WF_GROUP_COOLDOWN_MS || '15000', 10);
+const IN_FLIGHT_HASHES = new Set();
+
 let sheetsClientCache = null;
 
 function groupChatIds() {
@@ -596,107 +606,189 @@ async function handleInboundListingDrop(message) {
   const dupeCheckHash = crypto.createHash('sha256').update(hashKey).digest('hex').slice(0, 16);
   const code = `WA-${dupeCheckHash.slice(0, 8).toUpperCase()}`;
 
-  // 8. Generate Luxury AI Marketing Copy
-  const copy = await generateListingContent({
-    code,
-    compound: detectedCompound,
-    dealType,
-    propertyType,
-    price,
-    areaSqm,
-    bedrooms,
-    bathrooms,
-    description: text,
-  });
+  // Concurrency mutex lock: prevent duplicate parallel processing for rapid burst webhooks
+  if (IN_FLIGHT_HASHES.has(dupeCheckHash)) {
+    console.log(`inbox: listing ${dupeCheckHash} already in-flight — skipping parallel execution`);
+    return { routed: true, intent: 'duplicate_in_flight', code, dbSaved: true, replySent: false, privateForwardSent: false };
+  }
+  IN_FLIGHT_HASHES.add(dupeCheckHash);
 
-  const nowIso = new Date().toISOString();
-  let dbSaved = false;
-
-  if (sb) {
-    const listingPayload = {
-      code,
-      title: copy.titleEn,
-      description: copy.descriptionEn,
-      deal_type: dealType,
-      property_type: propertyType,
-      compound: detectedCompound,
-      price: price || 0,
-      area_sqm: areaSqm || 0,
-      bedrooms,
-      bathrooms,
-      owner_phone: phoneDigits || null,
-      source_channel: 'whatsapp_inbound_spy',
-      status: 'active',
-      availability: 'available',
-      publish_status: 'DRAFT',
-      dupe_check_hash: dupeCheckHash,
-      images: [],
-      photo_count: 0,
-      raw_data: {
-        raw_message: text,
-        title_ar: copy.titleAr,
-        description_ar: copy.descriptionAr,
-        model_used: copy.modelUsed,
-        chat_id: message.chatId,
-        sender: message.sender,
-        ingested_at: nowIso,
-      },
-      created_at: nowIso,
-      updated_at: nowIso,
-    };
-
-    try {
-      const insRes = await requestJson(`${sb.url}/rest/v1/listings`, {
-        method: 'POST',
-        headers: { ...sb.headers, Prefer: 'return=representation' },
-        body: listingPayload,
-        timeoutMs: 10000,
-      });
-      if (insRes.ok) {
-        dbSaved = true;
-      } else if (insRes.status === 409 || /duplicate|uq_listings_dupe_check_hash/i.test(JSON.stringify(insRes.data))) {
-        dbSaved = true; // Already exists
-      }
-    } catch (err) {
-      console.warn(`inbox: listing insert failed: ${err.message}`);
+  const now = Date.now();
+  const isRecentDuplicate = RECENT_GROUP_LISTINGS.has(dupeCheckHash) && (now - RECENT_GROUP_LISTINGS.get(dupeCheckHash) < 12 * 3600 * 1000);
+  RECENT_GROUP_LISTINGS.set(dupeCheckHash, now);
+  if (RECENT_GROUP_LISTINGS.size > 2000) {
+    for (const [k, v] of RECENT_GROUP_LISTINGS.entries()) {
+      if (now - v > 24 * 3600 * 1000) RECENT_GROUP_LISTINGS.delete(k);
     }
   }
 
-  // 9. Automated WhatsApp Notification & Reply Pipeline
-  const isGroupMsg = Boolean(message.isGroup || String(message.chatId).includes('@g.us') || String(message.chatId).startsWith('120363'));
-  const gateway = new GatewayClient();
-  let replySent = false;
-  let privateForwardSent = false;
-
-  // Extract contact phone number (sender phone or extracted from text)
-  const contactPhone = normalizeOwnerPhone(message.sender) || (message.sender ? String(message.sender).replace(/[^\d]/g, '') : '') || (message.chatId && !isGroupMsg ? String(message.chatId).replace(/[^\d]/g, '') : '') || 'غير متوفر';
-  const submitterName = message.pushName || message.senderName || message.sender || 'غير معروف';
-
-  // Private Contact Forwarding: Send owner/broker contact details strictly & privately to 01092048333
-  const userDirectJid = '201092048333@c.us';
-  const privateForwardMsg = `🔔 *إشعار وحدة جديدة واردة — Sierra Estates*\n\n` +
-    `• *كود الوحدة:* ${code}\n` +
-    `• *الكومباوند:* ${detectedCompound}\n` +
-    `• *النوع:* ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
-    `• *السعر:* ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
-    `• *المساحة:* ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
-    `• *المصدر:* ${isGroupMsg ? (message.groupName || message.chatId || 'جروب عقاري') : 'محادثة خاصة مباشرة'}\n` +
-    `• *اسم المرسل:* ${submitterName}\n` +
-    `• *رقم التواصل (المالك/البروكر):* ${contactPhone}\n` +
-    `• *واتساب مباشر:* https://wa.me/${contactPhone.replace(/[^\d]/g, '')}\n\n` +
-    `📝 *نص الرسالة الأصلي:*\n"${text.slice(0, 500)}"`;
-
   try {
-    await gateway.sendText(userDirectJid, privateForwardMsg, { allowGroup: false, timeoutMs: 25000 });
-    privateForwardSent = true;
-  } catch (err) {
-    console.warn(`inbox: private contact forward to ${userDirectJid} failed: ${err.message}`);
-  }
+    // 8. Generate Luxury AI Marketing Copy
+    const copy = await generateListingContent({
+      code,
+      compound: detectedCompound,
+      dealType,
+      propertyType,
+      price,
+      areaSqm,
+      bedrooms,
+      bathrooms,
+      description: text,
+    });
 
-  if (isGroupMsg) {
-    // Filtered Instant Reply for Public / Groups:
-    // Strictly restricted to unit details and code. ZERO CONTACT NUMBERS EXPOSED IN THE GROUP.
-    const groupFilteredMsg = `أهلاً بحضرتك، أنا ليلى من Sierra Estates 🌸\n\n` +
+    const nowIso = new Date().toISOString();
+    let dbSaved = false;
+    let insRes = null;
+
+    if (sb) {
+      const listingPayload = {
+        code,
+        title: copy.titleEn,
+        description: copy.descriptionEn,
+        deal_type: dealType,
+        property_type: propertyType,
+        compound: detectedCompound,
+        price: price || 0,
+        area_sqm: areaSqm || 0,
+        bedrooms,
+        bathrooms,
+        owner_phone: phoneDigits || null,
+        source_channel: 'whatsapp_inbound_spy',
+        status: 'active',
+        availability: 'available',
+        publish_status: 'DRAFT',
+        dupe_check_hash: dupeCheckHash,
+        images: [],
+        photo_count: 0,
+        raw_data: {
+          raw_message: text,
+          title_ar: copy.titleAr,
+          description_ar: copy.descriptionAr,
+          model_used: copy.modelUsed,
+          chat_id: message.chatId,
+          sender: message.sender,
+          ingested_at: nowIso,
+        },
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+
+      try {
+        insRes = await requestJson(`${sb.url}/rest/v1/listings`, {
+          method: 'POST',
+          headers: { ...sb.headers, Prefer: 'return=representation' },
+          body: listingPayload,
+          timeoutMs: 10000,
+        });
+        if (insRes.ok) {
+          dbSaved = true;
+        } else if (insRes.status === 409 || /duplicate|uq_listings_dupe_check_hash/i.test(JSON.stringify(insRes.data))) {
+          dbSaved = true; // Already exists
+        }
+      } catch (err) {
+        console.warn(`inbox: listing insert failed: ${err.message}`);
+      }
+    }
+
+    // 9. Automated WhatsApp Notification & Reply Pipeline
+    const isGroupMsg = Boolean(message.isGroup || String(message.chatId).includes('@g.us') || String(message.chatId).startsWith('120363'));
+    const isDuplicateListing = isRecentDuplicate || (!dbSaved && insRes?.status === 409);
+    const gateway = new GatewayClient();
+    let replySent = false;
+    let privateForwardSent = false;
+
+    // Extract contact phone number (sender phone or extracted from text)
+    const contactPhone = normalizeOwnerPhone(message.sender) || (message.sender ? String(message.sender).replace(/[^\d]/g, '') : '') || (message.chatId && !isGroupMsg ? String(message.chatId).replace(/[^\d]/g, '') : '') || 'غير متوفر';
+    const submitterName = message.pushName || message.senderName || message.sender || 'غير معروف';
+
+    // Private Contact Forwarding: Send owner/broker contact details strictly & privately to 01092048333
+    const userDirectJid = '201092048333@c.us';
+    let privateForwardMsg = `🔔 *إشعار وحدة جديدة واردة — Sierra Estates*\n\n` +
+      `• *كود الوحدة:* ${code}\n` +
+      `• *الكومباوند:* ${detectedCompound}\n` +
+      `• *النوع:* ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
+      `• *السعر:* ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
+      `• *المساحة:* ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
+      `• *المصدر:* ${isGroupMsg ? (message.groupName || message.chatId || 'جروب عقاري') : 'محادثة خاصة مباشرة'}\n` +
+      `• *اسم المرسل:* ${submitterName}\n` +
+      `• *رقم التواصل (المالك/البروكر):* ${contactPhone}\n` +
+      `• *واتساب مباشر:* https://wa.me/${contactPhone.replace(/[^\d]/g, '')}\n\n` +
+      `📝 *نص الرسالة الأصلي:*\n"${text.slice(0, 500)}"`;
+
+    if (isDuplicateListing) {
+      privateForwardMsg += `\n\n⚠️ *ملاحظة نظام (مكافحة السبام والحظر):* هذه الوحدة مكررة تم رصدها سابقاً خلال آخر 12 ساعة، وتم كتم الرد العام في الجروب لتجنب الحظر والسبام.`;
+    }
+
+    try {
+      await gateway.sendText(userDirectJid, privateForwardMsg, { allowGroup: false, timeoutMs: 25000 });
+      privateForwardSent = true;
+    } catch (err) {
+      console.warn(`inbox: private contact forward to ${userDirectJid} failed: ${err.message}`);
+    }
+
+    if (isGroupMsg) {
+      // If listing is duplicate, suppress the public group reply entirely to eliminate spam reports and avoid WhatsApp account restrictions
+      if (isDuplicateListing) {
+        console.log(`inbox: duplicate listing ${code} in group ${message.chatId} — suppressing public reply to prevent spam penalty`);
+        return {
+          routed: true,
+          intent: 'listing_ingested_group_duplicate_suppressed',
+          code,
+          compound: detectedCompound,
+          dealType,
+          price,
+          dbSaved,
+          replySent: false,
+          privateForwardSent,
+        };
+      }
+
+      // Per-Group Pacing Cooldown to avoid burst auto-replies detected as bot telemetry
+      const lastReplyTs = GROUP_LAST_REPLY_TS.get(message.chatId) || 0;
+      const elapsed = now - lastReplyTs;
+      if (elapsed < GROUP_COOLDOWN_MS) {
+        const waitMs = GROUP_COOLDOWN_MS - elapsed;
+        console.log(`inbox: pacing group reply for ${message.chatId} (waiting ${waitMs}ms)...`);
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
+
+      // Filtered Instant Reply for Public / Groups:
+      // Strictly restricted to unit details and code. ZERO CONTACT NUMBERS EXPOSED IN THE GROUP.
+      const groupFilteredMsg = `أهلاً بحضرتك، أنا ليلى من Sierra Estates 🌸\n\n` +
+        `✅ تم استلام مواصفات الوحدة بنجاح وإضافتها فوراً ضمن المخزون والخريطة للتنسيق المباشر مع عدد من العملاء المهتمين لدينا:\n\n` +
+        `• كود الوحدة: ${code}\n` +
+        `• الكومباوند: ${detectedCompound}\n` +
+        `• النوع: ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
+        `• السعر: ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
+        `• المساحة: ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
+        `• العنوان: ${copy.titleAr}\n` +
+        `• رابط المعاينة والخريطة: https://sierra-estates.net/property/${code}\n\n` +
+        `📌 للتنسيق ومعاينة الوحدة يُرجى التواصل معنا عبر الخاص أو بكود الوحدة.`;
+
+      try {
+        await gateway.sendText(message.chatId, groupFilteredMsg, { allowGroup: true, timeoutMs: 25000 });
+        replySent = true;
+        GROUP_LAST_REPLY_TS.set(message.chatId, Date.now());
+      } catch (err) {
+        console.warn(`inbox: group reply to ${message.chatId} failed: ${err.message}`);
+      }
+
+      return {
+        routed: true,
+        intent: 'listing_ingested_group',
+        code,
+        compound: detectedCompound,
+        dealType,
+        price,
+        dbSaved,
+        replySent,
+        privateForwardSent,
+      };
+    }
+
+    // Individual Direct Message Reply
+    const replyTarget = normalizeOwnerPhone(message.sender) || message.chatId;
+    const confirmationMsg = `أهلاً بحضرتك يا فندم، أنا ليلى من Sierra Estates 🌸\n\n` +
       `✅ تم استلام مواصفات الوحدة بنجاح وإضافتها فوراً ضمن المخزون والخريطة للتنسيق المباشر مع عدد من العملاء المهتمين لدينا:\n\n` +
       `• كود الوحدة: ${code}\n` +
       `• الكومباوند: ${detectedCompound}\n` +
@@ -705,18 +797,34 @@ async function handleInboundListingDrop(message) {
       `• المساحة: ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
       `• العنوان: ${copy.titleAr}\n` +
       `• رابط المعاينة والخريطة: https://sierra-estates.net/property/${code}\n\n` +
-      `📌 للتنسيق ومعاينة الوحدة يُرجى التواصل معنا عبر الخاص أو بكود الوحدة.`;
+      `تم إدراج الوحدة في المخزون وتحديث الخريطة التفاعلية، وسيتواصل مع حضرتك فريق العمل فور تنسيق موعد المعاينة 🤝`;
 
     try {
-      await gateway.sendText(message.chatId, groupFilteredMsg, { allowGroup: true, timeoutMs: 25000 });
+      await gateway.sendText(replyTarget, confirmationMsg, { timeoutMs: 8000 });
       replySent = true;
     } catch (err) {
-      console.warn(`inbox: group reply to ${message.chatId} failed: ${err.message}`);
+      // Gateway not immediately online — enqueue in Supabase whatsapp_queue so it sends as soon as ready
+      if (sb && replyTarget) {
+        await requestJson(`${sb.url}/rest/v1/whatsapp_queue`, {
+          method: 'POST',
+          headers: { ...sb.headers, Prefer: 'return=minimal' },
+          body: {
+            recipient_phone: replyTarget,
+            message_body: confirmationMsg,
+            purpose: 'owner-negotiation',
+            status: 'queued',
+            metadata: { kind: 'inbound-listing-confirmation', code },
+            created_at: nowIso,
+            updated_at: nowIso,
+          },
+          timeoutMs: 6000,
+        }).catch(() => ({ ok: false }));
+      }
     }
 
     return {
       routed: true,
-      intent: 'listing_ingested_group',
+      intent: 'listing_ingested',
       code,
       compound: detectedCompound,
       dealType,
@@ -725,55 +833,9 @@ async function handleInboundListingDrop(message) {
       replySent,
       privateForwardSent,
     };
+  } finally {
+    IN_FLIGHT_HASHES.delete(dupeCheckHash);
   }
-
-  // Individual Direct Message Reply
-  const replyTarget = normalizeOwnerPhone(message.sender) || message.chatId;
-  const confirmationMsg = `أهلاً بحضرتك يا فندم، أنا ليلى من Sierra Estates 🌸\n\n` +
-    `✅ تم استلام مواصفات الوحدة بنجاح وإضافتها فوراً ضمن المخزون والخريطة للتنسيق المباشر مع عدد من العملاء المهتمين لدينا:\n\n` +
-    `• كود الوحدة: ${code}\n` +
-    `• الكومباوند: ${detectedCompound}\n` +
-    `• النوع: ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
-    `• السعر: ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
-    `• المساحة: ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
-    `• العنوان: ${copy.titleAr}\n` +
-    `• رابط المعاينة والخريطة: https://sierra-estates.net/property/${code}\n\n` +
-    `تم إدراج الوحدة في المخزون وتحديث الخريطة التفاعلية، وسيتواصل مع حضرتك فريق العمل فور تنسيق موعد المعاينة 🤝`;
-
-  try {
-    await gateway.sendText(replyTarget, confirmationMsg, { timeoutMs: 8000 });
-    replySent = true;
-  } catch (err) {
-    // Gateway not immediately online — enqueue in Supabase whatsapp_queue so it sends as soon as ready
-    if (sb && replyTarget) {
-      await requestJson(`${sb.url}/rest/v1/whatsapp_queue`, {
-        method: 'POST',
-        headers: { ...sb.headers, Prefer: 'return=minimal' },
-        body: {
-          recipient_phone: replyTarget,
-          message_body: confirmationMsg,
-          purpose: 'owner-negotiation',
-          status: 'queued',
-          metadata: { kind: 'inbound-listing-confirmation', code },
-          created_at: nowIso,
-          updated_at: nowIso,
-        },
-        timeoutMs: 6000,
-      }).catch(() => ({ ok: false }));
-    }
-  }
-
-  return {
-    routed: true,
-    intent: 'listing_ingested',
-    code,
-    compound: detectedCompound,
-    dealType,
-    price,
-    dbSaved,
-    replySent,
-    privateForwardSent,
-  };
 }
 
 /** Handle one webhook delivery. Resolves {stored, sheet, directReply} — never throws. */
@@ -848,4 +910,7 @@ module.exports = {
   recordOptOut,
   preview,
   extractMessage,
+  RECENT_GROUP_LISTINGS,
+  GROUP_LAST_REPLY_TS,
+  IN_FLIGHT_HASHES,
 };

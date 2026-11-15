@@ -111,6 +111,8 @@ for (const id of SESSION_IDS) {
     isSending: false,
     error: null,
     totalSent: 0,
+    sentCountToday: 0,
+    lastSentDay: new Date().toISOString().slice(0, 10),
     startedAt: new Date().toISOString()
   });
 }
@@ -317,6 +319,7 @@ async function initSession(sessionId) {
       headless: process.env.HEADLESS === 'true',
       sessionDataPath: AUTH_BASE_DIR,
       userDataDir: path.join(AUTH_BASE_DIR, `profile-${sessionId}`),
+      customUserAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
       ...(resolvedChrome ? { executablePath: resolvedChrome } : { useChrome: true }),
       killProcessOnBrowserClose: false,
       popup: false,
@@ -330,6 +333,8 @@ async function initSession(sessionId) {
         '--disable-gpu',
         '--no-first-run',
         '--no-default-browser-check',
+        '--disable-blink-features=AutomationControlled',
+        '--window-size=1366,768',
         '--disable-extensions',
         '--disable-component-update',
         '--disable-default-apps',
@@ -390,6 +395,31 @@ async function initSession(sessionId) {
 
     s.client = client;
     s.engineLoaded = true;
+
+    // Inject stealth & anti-detection overrides (OpenWA / whatsapp-web.js best-practices)
+    try {
+      if (typeof client.getPage === 'function') {
+        const page = await client.getPage();
+        if (page && typeof page.evaluateOnNewDocument === 'function') {
+          await page.evaluateOnNewDocument(() => {
+            try {
+              Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+              window.chrome = window.chrome || { runtime: {} };
+            } catch (_) {}
+          });
+        }
+      }
+    } catch (_) {}
+    if (typeof client.evaluate === 'function') {
+      try {
+        await client.evaluate(() => {
+          try {
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = window.chrome || { runtime: {} };
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
 
     // Fetch account info
     try {
@@ -588,6 +618,22 @@ async function processQueue(sessionId) {
 
   s.isSending = true;
   s.sendStartedAt = Date.now();
+
+  // Enforce daily send limit to safeguard account health and prevent anti-spam algorithmic penalties
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (s.lastSentDay !== todayStr) {
+    s.sentCountToday = 0;
+    s.lastSentDay = todayStr;
+  }
+  const maxDaily = parseInt(process.env.MAX_DAILY_MESSAGES_PER_LINE || '250', 10);
+  if (s.sentCountToday >= maxDaily) {
+    console.warn(`[${sessionId}] 🛑 Daily send cap reached (${s.sentCountToday}/${maxDaily}) — suppressing to protect line from ban`);
+    const { resolve: resCap } = s.messageQueue.shift() || {};
+    if (resCap) resCap({ ok: false, error: 'daily_send_cap_reached_safety_lock' });
+    s.isSending = false;
+    return;
+  }
+
   const { chatId, text, resolve, reject, allowGroup } = s.messageQueue.shift();
 
   let cleanChatId = String(chatId || '').trim();
@@ -782,8 +828,10 @@ async function processQueue(sessionId) {
       }
     } catch (_) {}
 
-    // 3. Natural human typing delay proportional to message length (faster for automated group replies)
-    const typingDuration = isGroupTarget ? 500 : Math.min(2500, Math.max(800, Math.floor(String(text).length * 15)));
+    // 3. Natural human typing delay with randomized jitter proportional to message length
+    const typingDuration = isGroupTarget
+      ? (500 + Math.floor(Math.random() * 600))
+      : Math.min(3000, Math.max(1000, Math.floor(String(text).length * 15) + Math.floor(Math.random() * 500)));
     await new Promise((r) => setTimeout(r, typingDuration));
 
     // 4. End typing presence before dispatch
@@ -822,6 +870,7 @@ async function processQueue(sessionId) {
       if (!res) throw sendErr;
     }
     s.totalSent += 1;
+    s.sentCountToday = (s.sentCountToday || 0) + 1;
     s.lastActive = new Date().toISOString();
     resolve({ ok: true, data: { messageId: res, status: 'sent', session: sessionId, targetJid: resolvedTargetJid } });
   } catch (err) {
@@ -918,6 +967,7 @@ app.get('/api/sessions', (req, res) => {
     lastActive: s.lastActive,
     engineLoaded: s.engineLoaded,
     totalSent: s.totalSent,
+    sentCountToday: s.sentCountToday || 0,
     hasQr: Boolean(s.qrDataUrl),
     error: s.error
   }));
