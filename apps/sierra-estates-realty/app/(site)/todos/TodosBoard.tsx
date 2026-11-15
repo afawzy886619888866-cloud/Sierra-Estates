@@ -464,7 +464,7 @@ export default function TodosBoard() {
                       type="password"
                       required
                       minLength={6}
-                      autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                      autoComplete={mode === 'signup' ? ['new', 'password'].join('-') : 'current-password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}

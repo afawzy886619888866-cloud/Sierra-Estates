@@ -3,7 +3,7 @@
  * Sierra Estates — Real Data Fetcher & Sync Engine
  * 
  * Fetches real live property inventory directly from the Master Google Sheet
- * (ID: 1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk)
+ * configured via MASTER_SHEET_ID.
  * Normalizes all 65+ owner listings into canonical models and persists to local JSON cache + Firestore.
  * 
  * Usage: node scripts/fetch-real-data.mjs

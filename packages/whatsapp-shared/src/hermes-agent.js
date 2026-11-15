@@ -15,7 +15,7 @@ class HermesAgent {
     this.version = 'v2.5-valuation';
     this.ai = null;
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey && !apiKey.includes('placeholder')) {
       try {
         this.ai = new GoogleGenAI({ apiKey });

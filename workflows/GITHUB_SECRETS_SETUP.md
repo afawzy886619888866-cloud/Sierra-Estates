@@ -28,7 +28,7 @@ All API credentials are stored as **GitHub Secrets** (encrypted) instead of .env
 **Should look like:**
 
 ```json
-{"type":"service_account","project_id":"sierra-blu","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...","client_email":"sierra-estates-workflows@...","client_id":"...","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"..."}
+{"type":"service_account","project_id":"sierra-blu","private_key_id":"...","private_key":"<YOUR_SERVICE_ACCOUNT_PRIVATE_KEY_BLOCK>","client_email":"sierra-estates-workflows@...","client_id":"...","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"..."}
 ```
 
 ---

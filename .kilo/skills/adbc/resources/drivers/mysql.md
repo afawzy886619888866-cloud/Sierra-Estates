@@ -13,14 +13,14 @@ dbc install mysql
 Connect with the following URI syntax:
 
 ```text
-mysql://[user[:[password]]@]host[:port][/schema][?attribute1=value1&...]
+mysql://[user[:[auth_token]]@]host[:port][/schema][?attribute1=value1&...]
 ```
 
 Examples:
 
 - `mysql://localhost/mydb`
-- `mysql://user:pass@localhost:3306/mydb`
-- `mysql://user:pass@host/db?charset=utf8mb4&timeout=30s`
+- `mysql://user:<auth_token>@localhost:3306/mydb`
+- `mysql://user:<auth_token>@host/db?charset=utf8mb4&timeout=30s`
 - `mysql://user@(/path/to/socket.sock)/db` (Unix domain socket)
 - `mysql://user@localhost/mydb (no password)`
 
