@@ -480,11 +480,11 @@ function saveDaily(d) {
   fs.writeFileSync(DAILY, JSON.stringify(d));
 }
 
-const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_SALUTATION_}
+const TEMPLATE = `السلام عليكم ورحمة الله وبركاته يا فندم، بعد التحية،
 
-مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.
+أنا ليلى، أول بوت عقاري مصري خاص بالعقارات وتحديداً الريسيل والإيجارات في التجمع الخامس من فريق Sierra Estates 🏡✨
 
-بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع {_LOCATION_} لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.
+بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع {_LOCATION_} لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين حيث يتوفر لدينا عدد من العملاء المهتمين.
 
 إذا كانت الوحدة غير متاحة حالياً فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝
 (لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
@@ -519,15 +519,15 @@ function buildMessage(r) {
     }
   }
 
-  let inquiryBody = 'بنعتذر لو تواصلنا في وقت غير مناسب؛ كنا حابين نستفسر إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + ' لا تزال متاحة حالياً للتنسيق مع عميل مهتم.';
+  let inquiryBody = 'بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + ' لا تزال متاحة حالياً للتنسيق المباشر مع حضرتك، حيث يتوفر لدينا عدد من العملاء المهتمين.';
   if (missingPrompts.length > 0) {
     inquiryBody += '\n\nوفي حال إتاحتها نرجو التكرم بالتوضيح التالي:\n' + missingPrompts.join('\n');
   }
 
   return [
-    'السلام عليكم ورحمة الله وبركاته يا فندم،',
+    'السلام عليكم ورحمة الله وبركاته يا فندم، بعد التحية،',
+    'أنا ليلى، أول بوت عقاري مصري خاص بالعقارات وتحديداً الريسيل والإيجارات في التجمع الخامس من فريق Sierra Estates 🏡✨',
     '',
-    'مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.',
     inquiryBody,
     '',
     'إذا كانت الوحدة تم بيعها أو غير متاحة فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝',
@@ -919,7 +919,7 @@ async function main() {
 
   let batchDone = false;
   let abortBatch = false;
-  let sendTickets = 0; // synchronous reservation — the slot cap can never overshoot
+  let inFlightSends = 0; // active sends in progress; only completed sends count toward BATCH_CAP
   const slotStart = Date.now(); // graceful deadline clock (t0 of the send loop)
 
   // Mid-slot sheet re-sync: re-fetch the contact-date column every 5 minutes
@@ -1003,25 +1003,38 @@ async function main() {
           summary.bySession[lane.name] = (summary.bySession[lane.name] || 0) + 1;
           summary.byDirection[lane.direction]++;
         } else {
-          const ticket = sendTickets++;
-          if (ticket >= BATCH_CAP || daily.sent >= DAILY_CAP) {
-            // Cap boundary: rewind the claim so the candidate is NOT lost —
-            // the next slot re-claims this row.
+          if (summary.sent >= BATCH_CAP || daily.sent >= DAILY_CAP) {
             rewind(claimed);
             batchDone = true;
             break;
           }
+          if (summary.sent + inFlightSends >= BATCH_CAP) {
+            // Other lanes already have enough in-flight sends to hit BATCH_CAP.
+            // Rewind and wait for them to settle in case any fail.
+            rewind(claimed);
+            await sleep(500);
+            continue;
+          }
+          inFlightSends++;
           // Synchronous in-process lock BEFORE any await so concurrent lanes never race
           contacted.add(phone);
           // Atomic DB-level claim across all containers/hosts
-          const claimRes = await claimOutreachPhone(getAuditClient(), {
-            phone,
-            source: `09-owner-outreach:${HOST_SIDE}`,
-            listingCode: cand.code,
-            sessionName: lane.name,
-          });
+          let claimRes;
+          try {
+            claimRes = await claimOutreachPhone(getAuditClient(), {
+              phone,
+              source: `09-owner-outreach:${HOST_SIDE}`,
+              listingCode: cand.code,
+              sessionName: lane.name,
+            });
+          } catch (claimErr) {
+            inFlightSends--;
+            contacted.delete(phone);
+            rewind(claimed);
+            throw claimErr;
+          }
           if (!claimRes.claimed) {
-            sendTickets--;
+            inFlightSends--;
             summary.skippedDbDuplicate = (summary.skippedDbDuplicate || 0) + 1;
             console.log(`[outreach] skipped duplicate ${toLocalPhone(phone)} (${claimRes.reason})`);
             continue;
@@ -1116,6 +1129,8 @@ async function main() {
               abortBatch = true;
               break;
             }
+          } finally {
+            inFlightSends = Math.max(0, inFlightSends - 1);
           }
           if (!sentThisRow) continue;
         }

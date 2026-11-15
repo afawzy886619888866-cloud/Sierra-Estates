@@ -210,13 +210,14 @@ const SAMPLE_LISTINGS = [
 
 export interface AddListingFormProps {
   defaultLang?: 'en' | 'ar';
+  isAdmin?: boolean;
 }
 
-export default function AddListingForm({ defaultLang }: AddListingFormProps = {}) {
+export default function AddListingForm({ defaultLang, isAdmin = false }: AddListingFormProps = {}) {
   const { lang, toggleLang, theme, toggleTheme } = useSite();
   const isAr = (defaultLang ?? lang) === 'ar';
 
-  // Active portal tab: 'studio' (3-Step Stitch Intake) | 'intakes' (Owners & Bot Intake Resume)
+  // Active portal tab: 'studio' (3-Step Stitch Intake) | 'intakes' (Owners & Bot Intake Resume - Admin Only)
   const [activeTab, setActiveTab] = useState<'studio' | 'intakes'>('studio');
 
   // Form State
@@ -278,6 +279,7 @@ export default function AddListingForm({ defaultLang }: AddListingFormProps = {}
 
   // Fetch Owners & Bot Intakes
   const fetchIntakes = useCallback(async () => {
+    if (!isAdmin) return;
     setIntakesLoading(true);
     try {
       const res = await fetch('/api/listings/owner-intakes');
@@ -290,11 +292,13 @@ export default function AddListingForm({ defaultLang }: AddListingFormProps = {}
     } finally {
       setIntakesLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
-    fetchIntakes();
-  }, [fetchIntakes]);
+    if (isAdmin) {
+      fetchIntakes();
+    }
+  }, [fetchIntakes, isAdmin]);
 
   // Auto-generate code if empty or auto-generated
   useEffect(() => {
@@ -839,38 +843,50 @@ export default function AddListingForm({ defaultLang }: AddListingFormProps = {}
           </h1>
           <p className={styles.subtitle}>
             {isAr
-              ? 'مربوطة مباشرة مع قاعدة بيانات Supabase، شيت الإنفنتوري أونلاين، الخريطة التفاعلية GIS، ولوحة تحكم الإدارة وبوت متابعة الملاك.'
-              : 'Directly wired to Supabase Inventory, Online Google Sheets, Interactive GIS Map, Admin Command Deck, and the WhatsApp Owners Bot Resume workflow.'}
+              ? isAdmin
+                ? 'مربوطة مباشرة مع قاعدة بيانات Supabase، شيت الإنفنتوري أونلاين، الخريطة التفاعلية GIS، ولوحة تحكم الإدارة وبوت متابعة الملاك.'
+                : 'مربوطة مباشرة مع قاعدة بيانات Supabase، شيت الإنفنتوري أونلاين، والخريطة التفاعلية GIS لنشر وحدتك وتنسيقها مع المشترين والمستأجرين المهتمين.'
+              : isAdmin
+                ? 'Directly wired to Supabase Inventory, Online Google Sheets, Interactive GIS Map, Admin Command Deck, and the WhatsApp Owners Bot Resume workflow.'
+                : 'Directly wired to Supabase Inventory, Online Google Sheets, and Interactive GIS Map to connect your property with active buyers and tenants.'}
           </p>
         </header>
 
         {/* Tabs Switcher & Live Sync Channels Pill Strip */}
         <div className={styles.tabsBar}>
-          <div className={styles.tabPills} role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'studio'}
-              className={`${styles.tabBtn} ${activeTab === 'studio' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('studio')}
-            >
-              <Wand2 style={{ width: 15, height: 15 }} />
-              <span>{isAr ? 'إضافة وحدة جديدة (3 خطوات)' : 'New Listing Studio (3 Steps)'}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'intakes'}
-              className={`${styles.tabBtn} ${activeTab === 'intakes' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('intakes')}
-            >
-              <Bot style={{ width: 15, height: 15 }} />
-              <span>
-                {isAr ? 'ردود الأونرز والبوت (نعم متاح)' : 'Owners & Bot Intake Resume'}
+          {isAdmin ? (
+            <div className={styles.tabPills} role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'studio'}
+                className={`${styles.tabBtn} ${activeTab === 'studio' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('studio')}
+              >
+                <Wand2 style={{ width: 15, height: 15 }} />
+                <span>{isAr ? 'إضافة وحدة جديدة (3 خطوات)' : 'New Listing Studio (3 Steps)'}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'intakes'}
+                className={`${styles.tabBtn} ${activeTab === 'intakes' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('intakes')}
+              >
+                <Bot style={{ width: 15, height: 15 }} />
+                <span>
+                  {isAr ? 'ردود الأونرز والبوت (نعم متاح)' : 'Owners & Bot Intake Resume'}
+                </span>
+                <span className={styles.tabCount}>{intakeItems.length}</span>
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className={styles.stepBadge}>
+                {isAr ? 'استوديو الإدراج الذكي المباشر' : 'Direct Smart Listing Studio'}
               </span>
-              <span className={styles.tabCount}>{intakeItems.length}</span>
-            </button>
-          </div>
+            </div>
+          )}
 
           <div className={styles.syncStrip}>
             <span className={styles.syncPill}>
@@ -909,7 +925,7 @@ export default function AddListingForm({ defaultLang }: AddListingFormProps = {}
         )}
 
         {/* TAB 1: 3-STEP STITCH LISTING STUDIO */}
-        {activeTab === 'studio' ? (
+        {activeTab === 'studio' || !isAdmin ? (
           <form className={styles.formCard} onSubmit={handleSubmit}>
             {/* STEP 1: Smart Paste Box */}
             <section>

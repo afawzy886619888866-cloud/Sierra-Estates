@@ -43,6 +43,7 @@ import {
   AccessApprovalsView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import AddListingForm from '@/components/client/AddListingForm';
 import FollowupsQueue from './FollowupsQueue';
 import DealsKanban from './DealsKanban';
 import { PARTNER_NAV_IDS, isPartnerRole } from '@/lib/partner-access';
@@ -2574,7 +2575,7 @@ function AdminApp() {
       case 'notebookllm':return <NotebookLMStudio />;
       case 'easy_listing':return (
         <div className="fade-up" style={{paddingTop:4}}>
-          <EasyListingStudio />
+          <AddListingForm isAdmin={true} />
         </div>
       );
       case 'settings':return <SettingsPage T={T}/>;

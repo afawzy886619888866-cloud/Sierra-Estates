@@ -446,16 +446,16 @@ async function handleDirectOwnerReply(message) {
       console.warn(`inbox: lead upsert failed: ${err.message}`);
     }
 
-    // 3. Automated Photo-Harvest Follow-Up when owner confirms availability and unit lacks >=6 PF-grade photos
+    // 3. Automated Photo-Harvest Follow-Up when owner confirms availability
     const PF_AD_MIN_PHOTOS = 6;
     const imageList = Array.isArray(matchedListing?.images) ? matchedListing.images.filter((u) => /^https?:\/\//i.test(String(u || ''))) : [];
     if (intent === 'available' && matchedListing && imageList.length < PF_AD_MIN_PHOTOS) {
       const compoundLabel = matchedListing.compound ? ` في ${matchedListing.compound}` : '';
-      const neededCount = Math.max(1, PF_AD_MIN_PHOTOS - imageList.length);
       const photoPrompt =
-        `شكراً جزيلاً لتأكيد حضرتك إتاحة الوحدة${compoundLabel} 🌿\n\n` +
-        `لرفع الوحدة ضمن الإعلانات المميزة على Property Finder ومنصة Sierra Estates، يشترط توفر 6 صور واضحة على الأقل بجودة عالية (أبعاد لا تقل عن 800×600 بكسل — ريسبشن، غرف، مطبخ، حمام، والفيو). حالياً ينقص الوحدة ${neededCount} صور واضحة بالإضافة لتأكيد السعر النهائي.\n\n` +
-        `خالص التقدير — فريق سييرا العقارية 🤝\n(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
+        `أهلاً وسهلاً بحضرتك يا فندم 🌿 أنا ليلى من Sierra Estates 🌸\n\n` +
+        `شكراً جزيلاً لتأكيد حضرتك إتاحة الوحدة${compoundLabel}؛ معانا عدد من العملاء المهتمين حالياً بالتجمع الخامس.\n\n` +
+        `ممكن المعلومات الحديثة والصور الخاصة بالوحدة (المساحة، السعر النهائي، والتشطيب، وصور واضحة بدقة 800×600 بكسل على الأقل) للتنسيق الفوري وعرضها عليهم؟ 🤝\n\n` +
+        `خالص التقدير — فريق سييرا العقارية\n(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
       const qRes = await requestJson(`${sb.url}/rest/v1/whatsapp_queue`, {
         method: 'POST',
         headers: { ...sb.headers, Prefer: 'return=minimal' },
@@ -677,13 +677,15 @@ async function handleInboundListingDrop(message) {
     };
   }
   const replyTarget = normalizeOwnerPhone(message.sender) || message.chatId;
-  const confirmationMsg = `✅ تم استلام وفحص الوحدة بنجاح!\n\n` +
+  const confirmationMsg = `أهلاً بحضرتك يا فندم، أنا ليلى من Sierra Estates 🌸\n\n` +
+    `✅ تم استلام مواصفات الوحدة بنجاح وإضافتها فوراً ضمن المخزون والخريطة للتنسيق المباشر مع عدد من العملاء المهتمين لدينا:\n\n` +
     `• كود الوحدة: ${code}\n` +
     `• الكومباوند: ${detectedCompound}\n` +
     `• النوع: ${propertyType} (${dealType === 'rent' ? 'إيجار' : 'بيع'})\n` +
     `• السعر: ${price > 0 ? price.toLocaleString('en-US') + ' ج.م' : 'عند الطلب'}\n` +
-    `• العنوان الإعلاني: ${copy.titleAr}\n\n` +
-    `تم إدراج الوحدة ضمن المخزون، وتحديث خريطة العملاء ومراجعة إعلانات Property Finder.`;
+    `• المساحة: ${areaSqm ? areaSqm + ' م²' : 'غير محددة'}\n` +
+    `• العنوان: ${copy.titleAr}\n\n` +
+    `تم إدراج الوحدة في المخزون وتحديث الخريطة التفاعلية، وسيتواصل مع حضرتك فريق العمل فور تنسيق موعد المعاينة 🤝`;
 
   let replySent = false;
   try {

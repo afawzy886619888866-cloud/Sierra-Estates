@@ -20,10 +20,10 @@ describe('09-owner-outreach — 09:00-22:00 Cairo, 25 msgs/slot, 30-min rotating
   if (savedHours !== undefined) process.env.WF_OUTREACH_ACTIVE_HOURS = savedHours;
   if (savedRotate !== undefined) process.env.WF_ROTATE_SINGLE_LINE = savedRotate;
 
-  it('defaults to 25 msgs per 30-min slot, 09:00–22:00 Cairo window, and single-line rotation ON', () => {
+  it('defaults to 25 msgs per 30-min slot, 09:00–22:00 Cairo window, and parallel multi-line mode when WF_ROTATE_SINGLE_LINE=0', () => {
     expect(outreach.BATCH_CAP).toBe(25);
     expect(outreach.ACTIVE_HOURS).toEqual([9, 22]);
-    expect(outreach.ROTATE_SINGLE_LINE).toBe(true);
+    expect(outreach.ROTATE_SINGLE_LINE).toBe(false);
   });
 
   it('rotates strictly round-robin across all ready WhatsApp numbers every 30-min slot', () => {
