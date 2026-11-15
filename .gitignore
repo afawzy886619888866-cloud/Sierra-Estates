@@ -58,6 +58,8 @@ id_ed25519*
 **/whatsapp-auth/
 **/sessions/
 **/whatsapp-sessions/
+**/qr_*.png
+qr_*.png
 **/n8n-data/
 **/wa_sessions/
 **/.wwebjs_auth/
@@ -72,6 +74,8 @@ id_ed25519*
 # Legacy and Archive
 firebase/
 _unused_archive/
+quarantine/
+*.zip
 
 # Python & Virtual Environments
 venv/
