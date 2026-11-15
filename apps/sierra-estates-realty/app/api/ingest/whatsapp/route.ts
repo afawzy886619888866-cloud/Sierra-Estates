@@ -173,6 +173,26 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // ── Authoritative Real Estate Excel & Supabase Chat Router (Rules 1, 1.1, 2, 3, 4) ──
+    const { ChatListingRouter } = await import('@/lib/services/ChatListingRouter');
+    const chatResult = await ChatListingRouter.processChatMessage({
+      rawMessage,
+      senderPhone: sender,
+      senderName: sender,
+      sourceGroup: group,
+      mediaUrls: body.mediaUrls || (body.media?.url ? [body.media.url] : []),
+    });
+
+    if (chatResult.category === 'client_request') {
+      return NextResponse.json({
+        success: true,
+        category: 'client_request',
+        requestCode: chatResult.referenceCode,
+        targetSheets: chatResult.targetSheets,
+        orchestration: 'Isolated to Client_Requests sheet and Supabase client_requests table',
+      });
+    }
+
     const parsed = await WhatsAppParserService.parseMessage(rawMessage);
 
     // ── Canonical inventory (G2 wiring, 2026-10-19) ─────────────────────────────
