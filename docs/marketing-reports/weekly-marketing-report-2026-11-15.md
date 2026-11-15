@@ -48,48 +48,48 @@
    - **Lead Volume:** 8 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (8 HD photos)
 
-2. **L K 1** — LVR 2BR  
-   - **Compound:** New Cairo | **Rent:** 50,000 EGP/mo | **Type:** apartment (2 Beds, 130 m²)  
-   - **Lead Volume:** 7 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
-   - **Quality Score:** 100/100 (26 HD photos)
-
-3. **emerald-estates-e-9956916** — Hidden JEM LUXURY Apartment  
+2. **emerald-estates-e-9956916** — Hidden JEM LUXURY Apartment  
    - **Compound:** New Cairo | **Rent:** 40,000 EGP/mo | **Type:** apartment (3 Beds, 120 m²)  
    - **Lead Volume:** 7 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (12 HD photos)
 
-4. **emerald-estates-e-12089803** — Spacious 2-Bedroom Apartment in Mivida  
+3. **emerald-estates-e-12089803** — Spacious 2-Bedroom Apartment in Mivida  
    - **Compound:** New Cairo | **Rent:** 60,000 EGP/mo | **Type:** apartment (3 Beds, 208 m²)  
    - **Lead Volume:** 7 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (10 HD photos)
 
-5. **7DWHF7TG5YC61395454KQ07KQR** — Apartment for Rent in The Square – New Cairo  
-   - **Compound:** New Cairo | **Rent:** 23,000 EGP/mo | **Type:** apartment (3 Beds, 180 m²)  
+4. **L K 1** — LVR 2BR  
+   - **Compound:** New Cairo | **Rent:** 50,000 EGP/mo | **Type:** apartment (2 Beds, 130 m²)  
    - **Lead Volume:** 6 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
-   - **Quality Score:** 100/100 (8 HD photos)
+   - **Quality Score:** 100/100 (26 HD photos)
 
-6. **Ram2** — Elegant Fully Furnished Apartment  
-   - **Compound:** New Cairo | **Rent:** 60,000 EGP/mo | **Type:** apartment (3 Beds, 175 m²)  
-   - **Lead Volume:** 6 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
-   - **Quality Score:** 100/100 (8 HD photos)
-
-7. **6M0YYTH93HB6G4QV4M4DJ5PV2M** — High-End Deluxe 3BR  
+5. **6M0YYTH93HB6G4QV4M4DJ5PV2M** — High-End Deluxe 3BR  
    - **Compound:** New Cairo | **Rent:** 60,000 EGP/mo | **Type:** apartment (3 Beds, 180 m²)  
    - **Lead Volume:** 6 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (7 HD photos)
 
-8. **emerald-estates-e-10900244** — Luxury Twin House for Rent in Landmark 370m  
+6. **emerald-estates-e-10900244** — Luxury Twin House for Rent in Landmark 370m  
    - **Compound:** New Cairo | **Rent:** 60,000 EGP/mo | **Type:** apartment (4 Beds, 370 m²)  
    - **Lead Volume:** 5 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (9 HD photos)
 
-9. **01K62W93C23P0Z78RYZFJN4JNY** — Furnished Apartment for Rent in Madinaty  
+7. **01K62W93C23P0Z78RYZFJN4JNY** — Furnished Apartment for Rent in Madinaty  
    - **Compound:** New Cairo | **Rent:** 0 EGP/mo | **Type:** apartment (3 Beds, 124 m²)  
    - **Lead Volume:** 5 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (9 HD photos)
 
-10. **M v A** — Hottest Hyde park Mountain view Ap  
+8. **M v A** — Hottest Hyde park Mountain view Ap  
    - **Compound:** New Cairo | **Rent:** 60,000 EGP/mo | **Type:** apartment (3 Beds, 180 m²)  
+   - **Lead Volume:** 5 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
+   - **Quality Score:** 100/100 (8 HD photos)
+
+9. **7DWHF7TG5YC61395454KQ07KQR** — Apartment for Rent in The Square – New Cairo  
+   - **Compound:** New Cairo | **Rent:** 23,000 EGP/mo | **Type:** apartment (3 Beds, 180 m²)  
+   - **Lead Volume:** 5 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
+   - **Quality Score:** 100/100 (8 HD photos)
+
+10. **Ram2** — Elegant Fully Furnished Apartment  
+   - **Compound:** New Cairo | **Rent:** 60,000 EGP/mo | **Type:** apartment (3 Beds, 175 m²)  
    - **Lead Volume:** 5 verified client inquiries (whatsapp, whatsapp, whatsapp, whatsapp, whatsapp)  
    - **Quality Score:** 100/100 (8 HD photos)
 

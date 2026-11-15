@@ -1,13 +1,13 @@
 {
-  "evaluatedAt": "2026-11-15T17:12:22.501Z",
-  "totalEvaluated": 200,
+  "evaluatedAt": "2026-11-15T19:46:26.618Z",
+  "totalEvaluated": 100,
   "tierSummary": {
     "tier_1_featured": 1,
-    "tier_2_search_only": 93,
-    "tier_3_needs_enrichment": 106
+    "tier_2_search_only": 42,
+    "tier_3_needs_enrichment": 57
   },
   "publishableCount": 1,
-  "needsEnrichmentCount": 199,
+  "needsEnrichmentCount": 99,
   "evaluations": [
     {
       "id": "46d305f4-1605-4dc9-88d9-7b141507986f",
@@ -119,28 +119,6 @@
       ]
     },
     {
-      "id": "73d0807b-845c-400c-aa08-b46744416fff",
-      "code": "MAD-FR-2207",
-      "compound": "Madinaty",
-      "dealType": "rent",
-      "price": 25000,
-      "contentScore": 5,
-      "imageScore": 0,
-      "infoScore": 40,
-      "totalScore": 45,
-      "tier": "tier_3_needs_enrichment",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Description too short: 0 chars",
-        "Key specifications missing (bedrooms, bathrooms, area)",
-        "Zero valid photos attached"
-      ],
-      "recommendations": [
-        "Title length 20 chars (ideal: 30-60)"
-      ]
-    },
-    {
       "id": "dd6904b2-62e2-44d4-95c6-e83ee27e37c9",
       "code": "BRK-R-1974-39262",
       "compound": "New Cairo (General)",
@@ -184,11 +162,11 @@
       ]
     },
     {
-      "id": "d0b33e28-8cfa-4e88-a1be-e4a3e1cade16",
-      "code": "RH-3U-40K",
-      "compound": "rehab",
+      "id": "73d0807b-845c-400c-aa08-b46744416fff",
+      "code": "MAD-FR-2207",
+      "compound": "Madinaty",
       "dealType": "rent",
-      "price": 40000,
+      "price": 25000,
       "contentScore": 5,
       "imageScore": 0,
       "infoScore": 40,
@@ -202,7 +180,7 @@
         "Zero valid photos attached"
       ],
       "recommendations": [
-        "Title length 17 chars (ideal: 30-60)"
+        "Title length 20 chars (ideal: 30-60)"
       ]
     },
     {
@@ -225,6 +203,28 @@
       "recommendations": []
     },
     {
+      "id": "d0b33e28-8cfa-4e88-a1be-e4a3e1cade16",
+      "code": "RH-3U-40K",
+      "compound": "rehab",
+      "dealType": "rent",
+      "price": 40000,
+      "contentScore": 5,
+      "imageScore": 0,
+      "infoScore": 40,
+      "totalScore": 45,
+      "tier": "tier_3_needs_enrichment",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Description too short: 0 chars",
+        "Key specifications missing (bedrooms, bathrooms, area)",
+        "Zero valid photos attached"
+      ],
+      "recommendations": [
+        "Title length 17 chars (ideal: 30-60)"
+      ]
+    },
+    {
       "id": "a301569f-30cd-4157-8c72-117fee48c9aa",
       "code": "BRK-R-2062-3852A",
       "compound": "90 Avenue",
@@ -242,27 +242,6 @@
       ],
       "recommendations": [
         "Description length 451 chars (ideal: 750+)"
-      ]
-    },
-    {
-      "id": "56edacc0-ac99-435c-b54d-f70a138ca0f4",
-      "code": "BRK-R-2318-6C56F",
-      "compound": "Galleria Moon Valley",
-      "dealType": "rent",
-      "price": 65000,
-      "contentScore": 17,
-      "imageScore": 0,
-      "infoScore": 40,
-      "totalScore": 57,
-      "tier": "tier_2_search_only",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Zero valid photos attached"
-      ],
-      "recommendations": [
-        "Title length 67 chars (ideal: 30-60)",
-        "Description length 463 chars (ideal: 750+)"
       ]
     },
     {
@@ -744,28 +723,7 @@
         "Zero valid photos attached"
       ],
       "recommendations": [
-        "Description length 443 chars (ideal: 750+)"
-      ]
-    },
-    {
-      "id": "7df0f940-afe5-4b52-b558-7a0b682686fa",
-      "code": "BRK-R-2653-6BF07",
-      "compound": "New Cairo (General)",
-      "dealType": "rent",
-      "price": 95000,
-      "contentScore": 17,
-      "imageScore": 0,
-      "infoScore": 40,
-      "totalScore": 57,
-      "tier": "tier_2_search_only",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Zero valid photos attached"
-      ],
-      "recommendations": [
-        "Title length 66 chars (ideal: 30-60)",
-        "Description length 426 chars (ideal: 750+)"
+        "Description length 442 chars (ideal: 750+)"
       ]
     },
     {
@@ -831,48 +789,6 @@
       ],
       "recommendations": [
         "Title length 25 chars (ideal: 30-60)"
-      ]
-    },
-    {
-      "id": "ab330730-94b2-4fe1-ada5-8eb2f1b71e85",
-      "code": "BRK-R-3363-B1E51",
-      "compound": "Mivida",
-      "dealType": "rent",
-      "price": 140000,
-      "contentScore": 22,
-      "imageScore": 0,
-      "infoScore": 40,
-      "totalScore": 62,
-      "tier": "tier_2_search_only",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Zero valid photos attached"
-      ],
-      "recommendations": [
-        "Description length 453 chars (ideal: 750+)"
-      ]
-    },
-    {
-      "id": "4ec987a2-6d57-4b98-81f9-364aa512e333",
-      "code": "OHS056",
-      "compound": "New Cairo",
-      "dealType": "rent",
-      "price": 22000,
-      "contentScore": 5,
-      "imageScore": 0,
-      "infoScore": 40,
-      "totalScore": 45,
-      "tier": "tier_3_needs_enrichment",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Description too short: 0 chars",
-        "Key specifications missing (bedrooms, bathrooms, area)",
-        "Zero valid photos attached"
-      ],
-      "recommendations": [
-        "Title length 21 chars (ideal: 30-60)"
       ]
     },
     {
@@ -965,28 +881,6 @@
       ]
     },
     {
-      "id": "22ab3b22-9bb2-4b08-b10f-1f9c5fdc67de",
-      "code": "INV-9203F6E431BE-D2",
-      "compound": "Fifth Square",
-      "dealType": "sale",
-      "price": 55000,
-      "contentScore": 10,
-      "imageScore": 0,
-      "infoScore": 10,
-      "totalScore": 20,
-      "tier": "tier_3_needs_enrichment",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Description too short: 0 chars",
-        "Zero valid photos attached",
-        "Sale price is rent-level (55000 EGP)"
-      ],
-      "recommendations": [
-        "Title length 29 chars (ideal: 30-60)"
-      ]
-    },
-    {
       "id": "72eb0a68-6be3-40ae-bcf1-589a6b36d042",
       "code": "SE-A4E8850326C4-RENT",
       "compound": "Al Rehab",
@@ -1006,27 +900,6 @@
       ],
       "recommendations": [
         "Title length 28 chars (ideal: 30-60)"
-      ]
-    },
-    {
-      "id": "2f4306b2-bde1-4664-ae05-6b5976effbc5",
-      "code": "BRK-S-2485-035D4",
-      "compound": "New Cairo (General)",
-      "dealType": "sale",
-      "price": 5000000,
-      "contentScore": 22,
-      "imageScore": 0,
-      "infoScore": 20,
-      "totalScore": 42,
-      "tier": "tier_3_needs_enrichment",
-      "isPublishable": false,
-      "validPhotos": 0,
-      "violations": [
-        "Zero valid photos attached",
-        "Price is exactly 5,000,000 (banned 5M stub without 5m-confirmed note)"
-      ],
-      "recommendations": [
-        "Description length 444 chars (ideal: 750+)"
       ]
     },
     {
@@ -1071,6 +944,136 @@
       "recommendations": [
         "Title length 65 chars (ideal: 30-60)",
         "Description length 425 chars (ideal: 750+)"
+      ]
+    },
+    {
+      "id": "6873e5d6-c035-4356-8d68-e7eaa6d14585",
+      "code": "SE-A88D6AE906C1-RENT",
+      "compound": "Al Rehab",
+      "dealType": "rent",
+      "price": 16000,
+      "contentScore": 5,
+      "imageScore": 0,
+      "infoScore": 40,
+      "totalScore": 45,
+      "tier": "tier_3_needs_enrichment",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Description too short: 0 chars",
+        "Key specifications missing (bedrooms, bathrooms, area)",
+        "Zero valid photos attached"
+      ],
+      "recommendations": [
+        "Title length 28 chars (ideal: 30-60)"
+      ]
+    },
+    {
+      "id": "096fe3fd-778f-4ad0-badb-8ca7a4c70e1f",
+      "code": "BRK-R-1005-B3F96",
+      "compound": "Madinaty",
+      "dealType": "rent",
+      "price": 16000,
+      "contentScore": 22,
+      "imageScore": 0,
+      "infoScore": 40,
+      "totalScore": 62,
+      "tier": "tier_2_search_only",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Zero valid photos attached"
+      ],
+      "recommendations": [
+        "Description length 429 chars (ideal: 750+)"
+      ]
+    },
+    {
+      "id": "f4906e50-306e-42d4-970b-735d909ad9b9",
+      "code": "SE-9C6A27270BFE-RENT",
+      "compound": "Al Rehab",
+      "dealType": "rent",
+      "price": 121000,
+      "contentScore": 5,
+      "imageScore": 0,
+      "infoScore": 40,
+      "totalScore": 45,
+      "tier": "tier_3_needs_enrichment",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Description too short: 0 chars",
+        "Key specifications missing (bedrooms, bathrooms, area)",
+        "Zero valid photos attached"
+      ],
+      "recommendations": [
+        "Title length 28 chars (ideal: 30-60)"
+      ]
+    },
+    {
+      "id": "2d6c547c-b877-4644-90d9-3677f14d1ca0",
+      "code": "WA-2C4B780D",
+      "compound": "Hyde Park",
+      "dealType": "sale",
+      "price": 30750,
+      "contentScore": 17,
+      "imageScore": 0,
+      "infoScore": 10,
+      "totalScore": 27,
+      "tier": "tier_3_needs_enrichment",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Zero valid photos attached",
+        "Sale price is rent-level (30750 EGP)"
+      ],
+      "recommendations": [
+        "Title length 22 chars (ideal: 30-60)",
+        "Description length 633 chars (ideal: 750+)"
+      ]
+    },
+    {
+      "id": "db8a0038-2768-40bd-999e-4873dff61443",
+      "code": "BRK-S-2332-1CEC8",
+      "compound": "Lake View Residence",
+      "dealType": "sale",
+      "price": 3500000,
+      "contentScore": 12,
+      "imageScore": 0,
+      "infoScore": 40,
+      "totalScore": 52,
+      "tier": "tier_2_search_only",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Key specifications missing (bedrooms, bathrooms, area)",
+        "Zero valid photos attached"
+      ],
+      "recommendations": [
+        "Title length 66 chars (ideal: 30-60)",
+        "Description length 457 chars (ideal: 750+)"
+      ]
+    },
+    {
+      "id": "92779235-dac5-4609-8c7c-c80587ab7e82",
+      "code": "SE-WA-D5FDB9FE",
+      "compound": "New Cairo",
+      "dealType": "sale",
+      "price": 135000000,
+      "contentScore": 12,
+      "imageScore": 0,
+      "infoScore": 27,
+      "totalScore": 39,
+      "tier": "tier_3_needs_enrichment",
+      "isPublishable": false,
+      "validPhotos": 0,
+      "violations": [
+        "Key specifications missing (bedrooms, bathrooms, area)",
+        "Zero valid photos attached"
+      ],
+      "recommendations": [
+        "Title length 22 chars (ideal: 30-60)",
+        "Description length 219 chars (ideal: 750+)"
       ]
     }
   ]
