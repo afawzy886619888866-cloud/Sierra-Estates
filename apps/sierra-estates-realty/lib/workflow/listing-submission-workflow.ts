@@ -13,6 +13,7 @@ import {
 } from '@/lib/services/GoogleSheetSyncService';
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 import { SheetsIntegrationService } from '@/lib/services/SheetsIntegrationService';
+import { sendNewListingEmailAlert } from '@/lib/services/email-alert-service';
 
 export type ListingSubmissionWorkflowInput = {
   code?: string;
@@ -106,6 +107,13 @@ export async function listingSubmissionWorkflow(
     requestOrigin: data.requestOrigin ?? '',
   });
 
+  const configuredSite = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const siteOrigin = (
+    configuredSite.startsWith('https://') && !configuredSite.includes('localhost')
+      ? configuredSite
+      : data.requestOrigin || 'https://sierra-estates.net'
+  ).replace(/\/+$/, '');
+
   await Promise.allSettled([
     appendExcelInventoryStep({
       ...persisted.listing,
@@ -126,6 +134,11 @@ export async function listingSubmissionWorkflow(
     }),
     broadcastToAugustGroupStep({
       ...persisted.listing,
+    }),
+    sendEmailAlertStep({
+      ...persisted.listing,
+      sheetRowUrl: syncResult.inventoryUrl || undefined,
+      websiteUrl: `${siteOrigin}/property/${persisted.id}`,
     }),
   ]);
 
@@ -631,6 +644,64 @@ async function syncMasterInventoryStep({
       contactStatus: 'Not Contacted Yet',
       listingStatus: 'Pending Verification',
       sourcedByAgent: 'Website Easy Listing',
+    });
+  } catch {
+    // Non-fatal side effect.
+  }
+}
+
+async function sendEmailAlertStep({
+  code,
+  compound,
+  propertyType,
+  mode,
+  price,
+  beds,
+  baths,
+  area,
+  finishing,
+  ownerName,
+  ownerType,
+  mobile,
+  comment,
+  sheetRowUrl,
+  websiteUrl,
+}: {
+  code: string;
+  compound: string;
+  propertyType: string;
+  mode: 'sale' | 'rent';
+  price: number;
+  beds: number;
+  baths: number;
+  area: number;
+  finishing?: string;
+  ownerName: string;
+  ownerType: string;
+  mobile: string;
+  comment?: string;
+  sheetRowUrl?: string;
+  websiteUrl?: string;
+}) {
+  'use step';
+
+  try {
+    await sendNewListingEmailAlert({
+      code,
+      compound,
+      propertyType,
+      mode,
+      price,
+      beds,
+      baths,
+      area,
+      finishing,
+      ownerName,
+      ownerType,
+      mobile,
+      comment,
+      sheetRowUrl,
+      websiteUrl,
     });
   } catch {
     // Non-fatal side effect.

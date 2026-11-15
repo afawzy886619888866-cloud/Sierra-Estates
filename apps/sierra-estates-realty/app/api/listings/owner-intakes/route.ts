@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import fs from 'node:fs';
+import path from 'node:path';
 import { listRecords, insertRecord } from '@sierra-estates/db';
 
 export const runtime = 'nodejs';
@@ -181,7 +183,56 @@ export async function GET() {
       // Fallback to curated items if DB read is unavailable
     }
 
-    const merged = [...CURATED_BOT_INTAKES, ...dbItems.slice(0, 12)];
+    const harvestedItems: OwnerBotIntakeItem[] = [];
+    try {
+      const candidatePaths = [
+        path.resolve(process.cwd(), '../../apps/agents/whatsapp-multi-session/whatsapp-auth/harvested_units.jsonl'),
+        path.resolve(process.cwd(), '../agents/whatsapp-multi-session/whatsapp-auth/harvested_units.jsonl'),
+        path.resolve(process.cwd(), 'apps/agents/whatsapp-multi-session/whatsapp-auth/harvested_units.jsonl'),
+      ];
+      const targetFile = candidatePaths.find((p) => fs.existsSync(p));
+      if (targetFile) {
+        const fileContent = fs.readFileSync(targetFile, 'utf-8');
+        const lines = fileContent.trim().split(/\r?\n/).filter(Boolean);
+        const recentLines = lines.slice(-30).reverse();
+        for (const line of recentLines) {
+          try {
+            const item = JSON.parse(line);
+            if (!item.rawText && !item.compound) continue;
+            const phone = String(item.brokerPhone || item.ownerPhone || item.phone || '');
+            const role = phone.length > 0 ? (item.brokerName ? 'BROKER' : 'OWNER') : 'BOT';
+            harvestedItems.push({
+              id: String(item.id || `hw-${Math.random().toString(36).slice(2, 7)}`),
+              code: `WA-${String(item.id || '').replace(/^hw_/, '').slice(0, 10).toUpperCase()}`,
+              compound: String(item.compound || 'New Cairo'),
+              zone: String(item.zone || '5th Settlement'),
+              propertyType: String(item.unitType || 'Apartment'),
+              mode: String(item.dealType || 'Sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
+              area: Number(item.areaSqm || 180),
+              gardenArea: 0,
+              beds: Number(item.bedrooms || 3),
+              baths: 2,
+              price: Number(item.priceEgp || 0),
+              finishing: 'Fully Finished',
+              role: role as OwnerBotIntakeItem['role'],
+              contactName: String(item.brokerName || (role === 'BROKER' ? 'WhatsApp Broker' : 'WhatsApp Owner')),
+              ownerPhone: phone || '01092048333',
+              brokerPhone: role === 'BROKER' ? phone : undefined,
+              rawText: String(item.rawText || `${item.compound} - WhatsApp Ingest`),
+              status: 'owner_reply_yes',
+              createdAt: String(item.harvestedAt || new Date().toISOString()),
+              mapLink: `https://maps.google.com/?q=${encodeURIComponent((item.compound || 'New Cairo') + ' New Cairo')}`,
+            });
+          } catch {
+            // Skip invalid line
+          }
+        }
+      }
+    } catch {
+      // Best-effort local file read
+    }
+
+    const merged = [...harvestedItems.slice(0, 15), ...CURATED_BOT_INTAKES, ...dbItems.slice(0, 12)];
     return NextResponse.json({
       ok: true,
       count: merged.length,
