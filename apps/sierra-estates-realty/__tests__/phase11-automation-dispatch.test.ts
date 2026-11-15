@@ -324,7 +324,7 @@ describe('scheduling configuration (Phase 11)', () => {
             'buildCommand', 'devCommand', 'installCommand', 'outputDirectory',
             'functions', 'builds', 'routes', 'rewrites', 'redirects', 'headers',
             'cleanUrls', 'trailingSlash', 'github', 'git', 'regions', 'crons',
-            'env', 'exclude', 'live',
+            'env', 'exclude', 'live', 'fluid',
         ]);
         for (const file of [join(APP_DIR, 'vercel.json'), join(REPO_ROOT, 'vercel.json')]) {
             const config = JSON.parse(readFileSync(file, 'utf8'));
