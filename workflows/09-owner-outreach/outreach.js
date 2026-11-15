@@ -118,6 +118,76 @@ async function writeSheetDate(phone, rawMobile, dateStr) {
   }
 }
 
+const BROKER_REPLY_RE = /(?:بروكر|وسيط|مكتب|\bbroker\b|\bbrokerage\b|\bagent\b)/i;
+
+/**
+ * Classifies an inbound owner reply; on broker keywords, marks status
+ * 'Broker Excluded' and forwards an `outreach_feedback` JSON command to move
+ * the row to `Excluded_Brokers` via WF_SHEET_WRITE_URL.
+ */
+async function classifyAndHandleOwnerReply({
+  replyText,
+  unitCode,
+  phone,
+  compound,
+  price,
+  writeUrl,
+  secret,
+  dryRun,
+  fetchImpl,
+} = {}) {
+  const text = String(replyText || '').trim();
+  const phoneDigits = String(phone || '').replace(/\D/g, '');
+  const phoneLast7 = phoneDigits.length >= 7 ? phoneDigits.slice(-7) : phoneDigits;
+  const isBroker = BROKER_REPLY_RE.test(text);
+  const status = isBroker ? 'Broker Excluded' : 'Owner Reply';
+  const moveToTab = isBroker ? 'Excluded_Brokers' : null;
+
+  const targetUrl = String(writeUrl ?? WRITE_URL ?? process.env.WF_SHEET_WRITE_URL ?? '').trim();
+  const isDry = dryRun ?? DRY_RUN;
+  let sheetSync = { skipped: true };
+
+  if (isBroker && (targetUrl || isDry)) {
+    const payload = {
+      secret: secret ?? WRITE_SECRET ?? process.env.WF_SHEET_WRITE_SECRET ?? '',
+      action: 'outreach_feedback',
+      status: 'Broker Excluded',
+      moveToTab: 'Excluded_Brokers',
+      match: {
+        unit_code: unitCode || null,
+        phone_last7: phoneLast7 || null,
+        compound: compound || null,
+        price: price ?? null,
+      },
+    };
+    if (isDry && !fetchImpl) {
+      sheetSync = { ok: true, dryRun: true, payload };
+    } else if (targetUrl) {
+      const fn = fetchImpl || globalThis.fetch;
+      const res = await fn(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      sheetSync = { ok: !!res.ok, status: res.status, body: json };
+    }
+  }
+
+  return {
+    isBroker,
+    status,
+    moveToTab,
+    match: {
+      unit_code: unitCode || null,
+      phone_last7: phoneLast7 || null,
+      compound: compound || null,
+      price: price ?? null,
+    },
+    sheetSync,
+  };
+}
+
 function appendOutreachSpreadsheet(cand, session, dateStr) {
   try {
     const csvPath = path.resolve(__dirname, '../../data/outreach_contacted_units.csv');
@@ -1207,4 +1277,5 @@ module.exports = {
   ACTIVE_HOURS,
   ROTATE_SINGLE_LINE,
   mergeSupabaseOwners,
+  classifyAndHandleOwnerReply,
 };

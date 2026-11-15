@@ -2,10 +2,40 @@ param(
     [string]$Service = "all"
 )
 
-$RepoRoot = "H:\Sierra Estates"
+$RepoRoot = if (Test-Path (Join-Path $PSScriptRoot "..\workflows\runner.js")) {
+    (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+} else {
+    "H:\Sierra Estates"
+}
 $StateDir = Join-Path $RepoRoot ".state"
 if (-not (Test-Path $StateDir)) {
     New-Item -ItemType Directory -Path $StateDir -Force | Out-Null
+}
+
+function Test-Pm2Installed {
+    return [bool](Get-Command pm2 -ErrorAction SilentlyContinue)
+}
+
+if (Test-Pm2Installed -and ($Service -eq "all" -or $Service -eq "runner")) {
+    $EcosystemFile = Join-Path $RepoRoot "ecosystem.config.cjs"
+    if (Test-Path $EcosystemFile) {
+        if ($Service -eq "runner") {
+            pm2 startOrReload $EcosystemFile --only sierra-workflow-runner --update-env
+        } else {
+            pm2 startOrReload $EcosystemFile --update-env
+        }
+        pm2 save
+        Write-Output "PM2 daemonized services via $EcosystemFile and saved process list."
+        if ($Service -eq "all" -or $Service -eq "runner") {
+            try {
+                $health = Invoke-RestMethod -Uri "http://127.0.0.1:2786/health" -TimeoutSec 3 -ErrorAction SilentlyContinue
+                if ($health.ok) {
+                    Write-Output "Workflow Runner (:2786/health) verified OK."
+                }
+            } catch {}
+            exit 0
+        }
+    }
 }
 
 function Test-PortListening([int]$Port) {

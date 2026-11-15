@@ -31,7 +31,7 @@ export interface RoleChatSource {
   role: RoleKey;
   chatId: string;
   /** Where the id came from — surfaced in dispatch results for auditability. */
-  source: 'env' | 'database';
+  source: 'env' | 'database' | 'fallback';
 }
 
 export interface RoleChatMiss {
@@ -95,13 +95,28 @@ async function dbChatIdsByRole(): Promise<Partial<Record<RoleKey, string>>> {
  * Resolve every dispatch role at once (one DB read for all three).
  * Order per role: env override → database → miss.
  */
+export function getUnassignedDispatchFallback(includeLegacyEnv = false): string | null {
+  const value = (
+    process.env.UNASSIGNED_DISPATCH_FALLBACK ||
+    (includeLegacyEnv
+      ? process.env.TELEGRAM_GENERAL_CHAT_ID ||
+        process.env.TELEGRAM_ADMIN_CHAT_ID ||
+        process.env.TELEGRAM_CHAT_ID
+      : '') ||
+    ''
+  ).trim();
+  return value ? value : null;
+}
+
 export async function resolveRoleChats(): Promise<RoleChatResolution[]> {
   const fromDb = await dbChatIdsByRole();
+  const fallback = getUnassignedDispatchFallback(false);
   return ROLE_KEYS.map((role) => {
     const envId = envChatIdFor(role);
     if (envId) return { role, chatId: envId, source: 'env' as const };
     const dbId = fromDb[role];
     if (dbId) return { role, chatId: dbId, source: 'database' as const };
+    if (fallback) return { role, chatId: fallback, source: 'fallback' as const };
     return { role, chatId: null, source: 'none' as const };
   });
 }
@@ -125,6 +140,8 @@ export async function resolveRoleChat(role: RoleKey): Promise<RoleChatResolution
   } catch {
     /* env-only mode */
   }
+  const fallback = getUnassignedDispatchFallback(false);
+  if (fallback) return { role, chatId: fallback, source: 'fallback' };
   return { role, chatId: null, source: 'none' };
 }
 

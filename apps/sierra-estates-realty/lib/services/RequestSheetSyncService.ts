@@ -214,7 +214,11 @@ export async function getRequestsSpreadsheetRows(): Promise<RequestSheetRow[]> {
         campaign: inq.campaign || (inq.voucherCode ? `Black Friday (${inq.discountPercent || 25}%)` : ''),
         voucherCode: inq.voucherCode || '',
         targetDate: inq.targetDate || '',
-        matchedUnits: [],
+        matchedUnits: Array.isArray(inq.matchedUnits)
+          ? inq.matchedUnits
+          : Array.isArray(inq.matched_unit_codes)
+            ? inq.matched_unit_codes
+            : mergedMap.get(id)?.matchedUnits || [],
         status: (inq.status?.toLowerCase().includes('close') ? 'closed' : inq.status?.toLowerCase().includes('contact') ? 'contacted' : 'new'),
         notes: inq.notes || '',
         createdAt: inq.createdAt || new Date().toISOString(),
@@ -224,7 +228,15 @@ export async function getRequestsSpreadsheetRows(): Promise<RequestSheetRow[]> {
       if (!mergedMap.has(id)) {
         mergedMap.set(id, row);
       } else {
-        mergedMap.set(id, { ...row, ...mergedMap.get(id) });
+        const existing = mergedMap.get(id)!;
+        mergedMap.set(id, {
+          ...row,
+          ...existing,
+          matchedUnits:
+            existing.matchedUnits && existing.matchedUnits.length > 0
+              ? existing.matchedUnits
+              : row.matchedUnits,
+        });
       }
     }
   } catch (err) {
@@ -265,7 +277,15 @@ export async function getRequestsSpreadsheetRows(): Promise<RequestSheetRow[]> {
       if (!mergedMap.has(id)) {
         mergedMap.set(id, row);
       } else {
-        mergedMap.set(id, { ...row, ...mergedMap.get(id) });
+        const prev = mergedMap.get(id)!;
+        mergedMap.set(id, {
+          ...row,
+          ...prev,
+          matchedUnits:
+            prev.matchedUnits && prev.matchedUnits.length > 0
+              ? prev.matchedUnits
+              : row.matchedUnits,
+        });
       }
     }
   } catch (err) {

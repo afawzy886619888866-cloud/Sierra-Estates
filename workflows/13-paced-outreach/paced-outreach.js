@@ -62,6 +62,56 @@ const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state
 const LEDGER_FILE = path.join(STATE_DIR, 'paced-outreach-ledger.jsonl');
 const COUNTER_FILE = path.join(STATE_DIR, 'paced-outreach-counters.json');
 const HEARTBEAT_FILE = path.join(STATE_DIR, 'paced-outreach-heartbeat.json');
+const DLQ_FILE = path.join(STATE_DIR, 'outreach-dlq.jsonl');
+const P0_QUEUE_FILE = path.join(STATE_DIR, 'p0-inbound-queue.jsonl');
+
+function computeBackoffIso(attempts = 1, nowMs = Date.now()) {
+  const hours = [1, 4, 24];
+  const idx = Math.min(Math.max(1, Math.floor(attempts)) - 1, hours.length - 1);
+  return new Date(nowMs + hours[idx] * 3600 * 1000).toISOString();
+}
+
+async function enqueueDeadLetter({
+  phone,
+  listingCode = null,
+  sessionName = null,
+  worker = '13-paced-outreach',
+  payload = {},
+  errorMessage = 'send failed',
+  attempts = 1,
+  sb = supabase(),
+}) {
+  const nextRetryAt = computeBackoffIso(attempts);
+  const record = {
+    phone,
+    listing_code: listingCode,
+    session_name: sessionName,
+    worker,
+    payload,
+    error_message: String(errorMessage).slice(0, 1000),
+    attempts,
+    max_attempts: 3,
+    next_retry_at: nextRetryAt,
+    status: 'pending',
+    updated_at: new Date().toISOString(),
+  };
+
+  let persisted = 'local_fallback';
+  if (sb) {
+    try {
+      const { error } = await sb.from('outreach_dead_letter_queue').insert(record);
+      if (!error) persisted = 'supabase';
+    } catch (_) { /* fall through to JSONL */ }
+  }
+
+  if (persisted !== 'supabase') {
+    try {
+      fs.mkdirSync(STATE_DIR, { recursive: true });
+      fs.appendFileSync(DLQ_FILE, JSON.stringify(record) + '\n');
+    } catch (_) { /* best-effort */ }
+  }
+  return { ...record, storage: persisted };
+}
 
 const DRY_RUN = !/^(0|false|no)$/i.test(process.env.PACE_DRY_RUN || process.env.WF_DRY_RUN || '0');
 
@@ -496,7 +546,16 @@ async function runWorkerPass(worker, candidates, lines, globalClaimed = new Set(
         contacted.delete(entry.phone);
         globalClaimed.delete(entry.phone);
         await releaseOutreachClaim(supabase(), entry.phone);
-        continue; // budget not consumed — the owner is retried next slot
+        await enqueueDeadLetter({
+          phone: entry.phone,
+          listingCode: entry.code || null,
+          sessionName: sessionId,
+          worker,
+          payload: { compound: entry.compound, mode: entry.mode, template: templateName },
+          errorMessage: e.message,
+          attempts: 1,
+        });
+        continue; // budget not consumed — queued in outreach_dead_letter_queue with backoff
       }
     }
 
@@ -511,26 +570,88 @@ async function runWorkerPass(worker, candidates, lines, globalClaimed = new Set(
   return sent;
 }
 
-/** One scheduling pass: window check → pool check → both workers. */
-async function pass(reason) {
-  const now = cairoNow();
-  if (!inBusinessWindow(now)) {
-    log(`outside Cairo business window (${WIN_START}:00–${WIN_END}:00) — idle (reason=${reason})`);
-    await pulseSystemStatus({ status: 'idle', windowClosed: true, lastCheck: new Date().toISOString() });
+/** Drain urgent P0_INBOUND leads queued by Property Finder or inquiry webhooks. */
+async function processP0InboundQueue(outreachLines = []) {
+  if (!fs.existsSync(P0_QUEUE_FILE)) return 0;
+  let raw = '';
+  try {
+    raw = fs.readFileSync(P0_QUEUE_FILE, 'utf8');
+  } catch (_) {
     return 0;
   }
+  const items = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => { try { return JSON.parse(line); } catch (_) { return null; } })
+    .filter(Boolean);
+  if (!items.length) return 0;
 
+  let dispatched = 0;
+  const remaining = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const phone = normalizePhone(item.phone || (item.lead && item.lead.phone) || '');
+    if (!phone) continue;
+    const sessionId = outreachLines.length ? outreachLines[i % outreachLines.length] : 'line-1';
+    const message =
+      item.greeting ||
+      `أهلاً بك يا ${item.name || 'عميلنا العزيز'} من Sierra Estates بخصوص استفسارك على Property Finder${item.reference ? ` (${item.reference})` : ''}. معك المستشار العقاري للتواصل الفوري.`;
+    if (DRY_RUN) {
+      log(`DRY-RUN [P0_INBOUND] would dispatch to ${phone} via ${sessionId}`);
+      dispatched++;
+      continue;
+    }
+    try {
+      await gateway.sendText(`${phone}@c.us`, message, { sessionId });
+      dispatched++;
+      ledgerAppend({ at: new Date().toISOString(), worker: 'P0_INBOUND', phone, code: item.reference || item.unitCode || null, sessionId, dryRun: false });
+    } catch (e) {
+      log(`[P0_INBOUND] send failed to ${phone} via ${sessionId}: ${e.message}`);
+      await enqueueDeadLetter({
+        phone,
+        listingCode: item.reference || item.unitCode || null,
+        sessionName: sessionId,
+        worker: 'P0_INBOUND',
+        payload: item,
+        errorMessage: e.message,
+        attempts: 1,
+      });
+      remaining.push(item);
+    }
+  }
+  try {
+    fs.writeFileSync(P0_QUEUE_FILE, remaining.map((r) => JSON.stringify(r)).join('\n') + (remaining.length ? '\n' : ''));
+  } catch (_) {}
+  return dispatched;
+}
+
+/** One scheduling pass: window check → pool check → both workers. */
+async function pass(reason) {
   const pool = await gateway.healthyPool().catch(() => []);
+  const lines = assignLines(pool || []);
+  const p0Lines = [...lines['active-renting'], ...lines['massive-owners']];
+  let p0Dispatched = 0;
+  if (fs.existsSync(P0_QUEUE_FILE) && p0Lines.length) {
+    p0Dispatched = await processP0InboundQueue(p0Lines);
+  }
+
+  const now = cairoNow();
+  if (!inBusinessWindow(now)) {
+    log(`outside Cairo business window (${WIN_START}:00–${WIN_END}:00) — idle (reason=${reason}, p0=${p0Dispatched})`);
+    await pulseSystemStatus({ status: 'idle', windowClosed: true, p0Dispatched, lastCheck: new Date().toISOString() });
+    return p0Dispatched;
+  }
+
   if (!pool || !pool.length) {
     log('gateway pool has zero READY lines — idle (will retry)');
     await pulseSystemStatus({ status: 'degraded', reason: 'no_ready_lines', lastCheck: new Date().toISOString() });
-    return 0;
+    return p0Dispatched;
   }
 
-  const lines = assignLines(pool);
   const globalClaimed = await loadAllClaimedPhones(supabase(), STATE_DIR);
   const { activeRenting, massiveOwners } = await loadCandidates();
-  let total = 0;
+  let total = p0Dispatched;
   total += await runWorkerPass('active-renting', activeRenting, lines['active-renting'], globalClaimed);
   total += await runWorkerPass('massive-owners', massiveOwners, lines['massive-owners'], globalClaimed);
 
@@ -622,6 +743,9 @@ module.exports = {
   fetchSheetCandidates,
   parseCsv,
   typingDelay,
+  computeBackoffIso,
+  enqueueDeadLetter,
+  processP0InboundQueue,
   DEFAULT_OWNERS_SHEET_GID,
   DEFAULT_OWNERS_SHEET_ID,
 };

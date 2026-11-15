@@ -96,6 +96,10 @@ class BrokerHarvester {
    */
   async handleIncomingMessage(sessionId, msg) {
     if (!msg || !msg.body) return null;
+    if (msg.isGroupMsg === false || (msg.chat && !msg.chat.isGroup)) return null;
+    if (typeof msg.from === 'string' && !msg.from.endsWith('@g.us') && !(msg.chat && msg.chat.isGroup)) {
+      return null;
+    }
     this.stats.messagesProcessed++;
 
     const text = String(msg.body).trim();

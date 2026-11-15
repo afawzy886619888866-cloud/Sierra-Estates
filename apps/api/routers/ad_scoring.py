@@ -177,7 +177,20 @@ def train_and_score_units(
     4. Updates `ai_score` and `score_tier` in Supabase `properties`.
     """
     verify_secret(x_n8n_secret)
-    sb = get_supabase()
+    try:
+        sb = get_supabase()
+    except HTTPException:
+        if payload.dry_run:
+            return TrainScoreResponse(
+                status="ok",
+                mode="dry_run_unconfigured",
+                total_units_scored=0,
+                labeled_rows_used=0,
+                top_criteria=[],
+                top_units=[],
+                updated_at=datetime.now(timezone.utc).isoformat(),
+            )
+        raise
 
     # Fetch properties (adjust column names if your Supabase migration differs)
     res = (

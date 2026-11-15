@@ -155,6 +155,8 @@ export function NewListing({
   // ── Extracted Specs & Output ──
   const [fields, setFields] = useState<PropertyFields | null>(null)
   const [code, setCode] = useState('')
+  const [pfTitle, setPfTitle] = useState('')
+  const [geminiConfidence, setGeminiConfidence] = useState<number | null>(null)
   const [content, setContent] = useState<GeneratedContent | null>(null)
   const [syncResult, setSyncResult] = useState<MultiSyncResult | null>(null)
 
@@ -265,6 +267,18 @@ export function NewListing({
       if (!res.ok || !data.ok) throw new Error(data.error || 'تعذر استخراج البيانات')
       extracted = data.fields as PropertyFields
       setFields(extracted)
+      const rawConf = typeof data.confidence === 'number'
+        ? data.confidence
+        : (() => {
+            const keys = [extracted?.compound, extracted?.unitType, extracted?.area, extracted?.price, extracted?.bedrooms]
+            const found = keys.filter((v) => v !== null && v !== undefined && v !== '').length
+            return Number((found / keys.length).toFixed(2))
+          })()
+      const normConf = rawConf > 1 ? rawConf / 100 : rawConf
+      setGeminiConfidence(Number(normConf.toFixed(2)))
+      if (!pfTitle.trim() && extracted?.compound) {
+        setPfTitle(`${extracted.unitType || 'Apartment'} for ${offerType === 'rent' ? 'Rent' : 'Sale'} in ${extracted.compound}`)
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'تعذر استخراج البيانات')
       setPhase('idle')
@@ -404,6 +418,30 @@ export function NewListing({
       })
 
       const saveJson = await saveRes.json()
+
+      // Best-effort unified intake telemetry & confidence tracking
+      const intakeBase = (process.env.NEXT_PUBLIC_REALTY_API_URL || '').replace(/\/$/, '')
+      await fetch(`${intakeBase}/api/listings/intake`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: finalCode,
+          compound: fields.compound,
+          propertyType: fields.unitType || 'Apartment',
+          mode: offerType,
+          beds: Number(fields.bedrooms) || 0,
+          baths: Number(fields.bathrooms) || 0,
+          area: Number(fields.area) || 0,
+          price: Number(fields.price) || 0,
+          pfTitle: pfTitle.trim(),
+          description: (content.propertyFinder || description).trim(),
+          confidence: geminiConfidence ?? undefined,
+          mobile: fullPhone,
+          ownerName: contactName.trim() || 'Direct Owner',
+          submitterType: role.toLowerCase(),
+          rawText: description,
+        }),
+      }).catch(() => null)
 
       const supabaseSynced = Boolean(saveJson.supabase?.ok)
       const sheetSynced = Boolean(saveJson.sheet?.ok)
@@ -679,8 +717,17 @@ export function NewListing({
             className="w-full bg-surface-container-lowest text-on-surface placeholder:text-outline p-4 sm:p-5 rounded-lg focus:outline-none text-sm sm:text-base leading-relaxed resize-none transition-all shadow-inner border border-[#222a3d] focus-within:border-primary-container/60 focus:ring-1 focus:ring-primary-container/40"
             placeholder="الصق نص الإعلان، رسائل الواتساب، أو مسودة تفاصيل العقار بالعربية أو الإنجليزية (مثال: للبيع فيلا تاون هاوس في ميفيدا التجمع الخامس، مساحة 280م، 4 غرف، تشطيب كامل، السعر 18,500,000 ج.م كاش...)"
           />
-          <div className="absolute bottom-3 left-4 flex items-center gap-2 pointer-events-none text-outline text-[11px]">
+          <div className="absolute bottom-3 left-4 flex items-center gap-3 pointer-events-none text-outline text-[11px]">
             <span>يدعم العربية والإنجليزية تلقائياً</span>
+            <span
+              className={`font-mono font-bold ${
+                description.trim().length >= 750 && description.trim().length <= 2000
+                  ? 'text-emerald-400'
+                  : 'text-amber-400'
+              }`}
+            >
+              {description.trim().length}/750–2000 حرف
+            </span>
           </div>
         </div>
 
@@ -732,12 +779,72 @@ export function NewListing({
               مراجعة وتأكيد بيانات العقار
             </span>
           </div>
-          {fields && (
-            <span className="text-xs text-emerald-400 flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="h-4 w-4" />
-              تم استخراج وتحديث الحقول بنجاح
+          <div className="flex flex-wrap items-center gap-2">
+            {geminiConfidence !== null && (
+              <span
+                className={`text-xs px-2.5 py-1 rounded-md border font-semibold ${
+                  geminiConfidence < 0.75
+                    ? 'bg-amber-950/60 border-amber-500/60 text-amber-300'
+                    : 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                }`}
+              >
+                {geminiConfidence < 0.75
+                  ? `⚠ ثقة منخفضة ${Math.round(geminiConfidence * 100)}% (< 75%)`
+                  : `✓ ثقة Gemini ${Math.round(geminiConfidence * 100)}%`}
+              </span>
+            )}
+            {fields && (
+              <span className="text-xs text-emerald-400 flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="h-4 w-4" />
+                تم استخراج وتحديث الحقول بنجاح
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* PF Title + Description Char Validation Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-container-lowest/70 p-4 rounded-lg border border-[#222a3d]">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <label className="text-on-surface-variant font-medium" htmlFor="pf-title-input">
+                عنوان Property Finder (30–47 حرف)
+              </label>
+              <span
+                className={`font-mono font-bold ${
+                  pfTitle.trim().length >= 30 && pfTitle.trim().length <= 47
+                    ? 'text-emerald-400'
+                    : 'text-amber-400'
+                }`}
+              >
+                {pfTitle.trim().length}/30–47 chars
+              </span>
+            </div>
+            <input
+              id="pf-title-input"
+              value={pfTitle}
+              onChange={(e) => setPfTitle(e.target.value)}
+              placeholder="مثال: Luxury 3BR Apartment in Mivida"
+              className="w-full bg-surface-container text-on-surface text-xs py-2.5 px-3 rounded-lg border border-[#222a3d] focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-col justify-center gap-1 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-on-surface-variant font-medium">الوصف ثنائي اللغة (750–2,000 حرف)</span>
+              <span
+                className={`font-mono font-bold ${
+                  (content?.propertyFinder || description).trim().length >= 750 &&
+                  (content?.propertyFinder || description).trim().length <= 2000
+                    ? 'text-emerald-400'
+                    : 'text-amber-400'
+                }`}
+              >
+                {(content?.propertyFinder || description).trim().length}/750–2000 chars
+              </span>
+            </div>
+            <span className="text-[11px] text-outline">
+              يتحقق النظام من طول العنوان والوصف قبل البث إلى Property Finder.
             </span>
-          )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

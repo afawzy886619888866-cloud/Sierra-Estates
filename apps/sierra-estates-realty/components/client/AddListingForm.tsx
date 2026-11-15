@@ -224,6 +224,8 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
   const [rawText, setRawText] = useState('');
   const [isParsing, setIsParsing] = useState(false);
   const [parseFeedback, setParseFeedback] = useState<string | null>(null);
+  const [geminiConfidence, setGeminiConfidence] = useState<number | null>(null);
+  const [pfTitle, setPfTitle] = useState('');
 
   const [mode, setMode] = useState<'sale' | 'rent'>('sale');
   const [compound, setCompound] = useState('Mivida');
@@ -481,11 +483,23 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
           }
         }
         if (p.notes) setComment(p.notes);
+        if (typeof p.pfTitle === 'string' && p.pfTitle.trim()) {
+          setPfTitle(p.pfTitle.trim());
+        } else if (!pfTitle.trim() && (p.compound || p.propertyType)) {
+          setPfTitle(
+            `${p.propertyType || 'Apartment'} for ${p.mode === 'rent' ? 'Rent' : 'Sale'} in ${p.compound || 'New Cairo'}`,
+          );
+        }
+
+        const rawConf = typeof p.confidence === 'number' ? p.confidence : 0.92;
+        const normalizedConf = rawConf > 1 ? rawConf / 100 : rawConf;
+        setGeminiConfidence(Number(normalizedConf.toFixed(2)));
+        const pct = Math.round(normalizedConf * 100);
 
         setParseFeedback(
           isAr
-            ? `تم استخراج البيانات بنجاح بنسبة ثقة ${p.confidence || 92}% — راجع الحقول بالأسفل ثم اضغط مزامنة ونشر.`
-            : `Smart Extraction complete (${p.confidence || 92}% confidence) — review fields below & publish.`,
+            ? `تم استخراج البيانات بنجاح بنسبة ثقة ${pct}% — راجع الحقول بالأسفل ثم اضغط مزامنة ونشر.`
+            : `Smart Extraction complete (${pct}% confidence) — review fields below & publish.`,
         );
       } catch {
         setErrorMsg(
@@ -660,7 +674,7 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
           ? employeeName.trim() || contactName.trim() || 'Sierra Staff'
           : '';
 
-      const res = await fetch('/api/listings/submit', {
+      const res = await fetch('/api/listings/intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -674,6 +688,9 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
           gardenArea: Number(gardenArea) || 0,
           price: numericPrice,
           finishing,
+          pfTitle: pfTitle.trim(),
+          description: (comment || rawText).trim(),
+          confidence: geminiConfidence ?? undefined,
           ownerName:
             contactName.trim() ||
             (isBroker
@@ -1000,9 +1017,42 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
               </div>
 
               {parseFeedback && (
-                <div className={styles.parseFeedback}>
-                  <CheckCircle2 style={{ width: 16, height: 16, color: '#10b981', flexShrink: 0 }} />
+                <div
+                  className={styles.parseFeedback}
+                  style={
+                    geminiConfidence !== null && geminiConfidence < 0.75
+                      ? {
+                          borderColor: '#f59e0b',
+                          background: 'rgba(245, 158, 11, 0.14)',
+                          color: '#f59e0b',
+                        }
+                      : undefined
+                  }
+                >
+                  {geminiConfidence !== null && geminiConfidence < 0.75 ? (
+                    <AlertTriangle style={{ width: 16, height: 16, color: '#f59e0b', flexShrink: 0 }} />
+                  ) : (
+                    <CheckCircle2 style={{ width: 16, height: 16, color: '#10b981', flexShrink: 0 }} />
+                  )}
                   <span>{parseFeedback}</span>
+                  {geminiConfidence !== null && (
+                    <span
+                      style={{
+                        marginInlineStart: 'auto',
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        background: geminiConfidence < 0.75 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(16, 185, 129, 0.2)',
+                        color: geminiConfidence < 0.75 ? '#d97706' : '#10b981',
+                        border: `1px solid ${geminiConfidence < 0.75 ? '#f59e0b' : '#10b981'}`,
+                      }}
+                    >
+                      {geminiConfidence < 0.75
+                        ? `Low Confidence (${Math.round(geminiConfidence * 100)}% < 75%)`
+                        : `Gemini ${Math.round(geminiConfidence * 100)}%`}
+                    </span>
+                  )}
                 </div>
               )}
             </section>
@@ -1548,7 +1598,50 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
 
                 <div className={`${styles.field} ${styles.col6}`}>
                   <label className={styles.label}>
-                    <span>{isAr ? 'ملاحظات إضافية / تفاصيل المعاينة' : 'Additional Notes & Viewing Instructions'}</span>
+                    <span>{isAr ? 'عنوان Property Finder (30–47 حرف)' : 'Property Finder Title (30–47 chars)'}</span>
+                    <span
+                      className={styles.labelSub}
+                      style={{
+                        color:
+                          pfTitle.trim().length >= 30 && pfTitle.trim().length <= 47
+                            ? '#10b981'
+                            : '#f59e0b',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {pfTitle.trim().length}/30–47 {isAr ? 'حرف' : 'chars'}
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={pfTitle}
+                    onChange={(e) => setPfTitle(e.target.value)}
+                    placeholder={
+                      isAr
+                        ? 'مثال: شقة 185م في ميفيدا استلام فوري'
+                        : 'e.g. Prime 3BR Apartment in Mivida'
+                    }
+                    style={{ marginBottom: 12 }}
+                  />
+                  <label className={styles.label}>
+                    <span>
+                      {isAr
+                        ? 'الوصف ثنائي اللغة / تفاصيل المعاينة (750–2,000 حرف)'
+                        : 'Bilingual Description & Viewing Notes (750–2,000 chars)'}
+                    </span>
+                    <span
+                      className={styles.labelSub}
+                      style={{
+                        color:
+                          comment.trim().length >= 750 && comment.trim().length <= 2000
+                            ? '#10b981'
+                            : '#f59e0b',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {comment.trim().length}/750–2000 {isAr ? 'حرف' : 'chars'}
+                    </span>
                   </label>
                   <textarea
                     className={styles.pasteArea}

@@ -68,7 +68,7 @@ done
 # 2. RPC gate
 for SCHEMA in "${REPO_ROOT}/supabase/schema.sql" \
               "${REPO_ROOT}/apps/sierra-estates-realty/supabase/schema.sql"; do
-    if awk '/FUNCTION get_listings_near_capital/,/LANGUAGE plpgsql/' "$SCHEMA" \
+    if awk 'tolower($0) ~ /(create or replace )?function (public\.)?get_listings_near_capital/, /(^\$\$[[:space:]]+LANGUAGE|^\$function\$;)/' "$SCHEMA" \
         | grep -q "publish_status = 'PUBLISHABLE'"; then
         ok "${SCHEMA#${REPO_ROOT}/}: get_listings_near_capital gated on PUBLISHABLE"
     else
@@ -83,6 +83,24 @@ for DIR in "${REPO_ROOT}/supabase/migrations" \
         ok "${DIR#${REPO_ROOT}/}: migration 020 present"
     else
         bad "${DIR#${REPO_ROOT}/}: migration 020 (public publish gate) missing"
+    fi
+done
+
+# 3b. public_properties_view excludes all owner/broker PII columns + rpc_update_unit_field exists
+for SCHEMA in "${REPO_ROOT}/supabase/schema.sql" \
+              "${REPO_ROOT}/apps/sierra-estates-realty/supabase/schema.sql"; do
+    NAME="${SCHEMA#${REPO_ROOT}/}"
+    VIEW_BODY="$(awk '/CREATE OR REPLACE VIEW public.public_properties_view/,/;/' "$SCHEMA")"
+    if [[ -n "$VIEW_BODY" ]] \
+       && ! printf '%s' "$VIEW_BODY" | grep -qiE 'owner_name|owner_phone|Owner_Name_Internal|Owner_Mobile_Internal|broker_phone'; then
+        ok "${NAME}: public_properties_view excludes owner/broker PII columns"
+    else
+        bad "${NAME}: public_properties_view missing or leaks owner PII columns"
+    fi
+    if grep -q 'FUNCTION public.rpc_update_unit_field' "$SCHEMA"; then
+        ok "${NAME}: rpc_update_unit_field optimistic locking RPC present"
+    else
+        bad "${NAME}: rpc_update_unit_field missing"
     fi
 done
 

@@ -7,13 +7,17 @@ Run: pytest apps/api/tests/test_ad_scoring.py -v
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ad_scoring_router import router as ad_scoring_router
+from routers.ad_scoring import router as ad_scoring_router
 
 app = FastAPI()
 app.include_router(ad_scoring_router)
@@ -70,7 +74,7 @@ def test_rejects_invalid_n8n_secret(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_cold_start_heuristic_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("N8N_WEBHOOK_SECRET", "super-secret")
     rows = _make_sample_rows(10, with_leads=False)
-    with patch("ad_scoring_router.get_supabase", return_value=_mock_supabase(rows)):
+    with patch("routers.ad_scoring.get_supabase", return_value=_mock_supabase(rows)):
         res = client.post(
             "/api/ml/train-and-score",
             json={"min_labeled_rows": 30, "dry_run": True},
@@ -87,7 +91,7 @@ def test_lightgbm_training_mode(monkeypatch: pytest.MonkeyPatch, tmp_path) -> No
     monkeypatch.setenv("N8N_WEBHOOK_SECRET", "super-secret")
     monkeypatch.setenv("ML_MODEL_DIR", str(tmp_path))
     rows = _make_sample_rows(40, with_leads=True)
-    with patch("ad_scoring_router.get_supabase", return_value=_mock_supabase(rows)):
+    with patch("routers.ad_scoring.get_supabase", return_value=_mock_supabase(rows)):
         res = client.post(
             "/api/ml/train-and-score",
             json={"min_labeled_rows": 30, "dry_run": False, "batch_size": 20},

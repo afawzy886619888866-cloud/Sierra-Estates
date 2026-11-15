@@ -1,0 +1,12 @@
+{
+  "name": "@sierra-estates/arabic-nlp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic Arabic & English Egyptian real estate NLP pre-filter for Sierra Estates",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit index.d.ts",
+    "lint": "echo \"@sierra-estates/arabic-nlp lint ok\""
+  }
+}

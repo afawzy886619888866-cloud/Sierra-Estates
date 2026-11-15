@@ -74,8 +74,36 @@ const ZONE_MAP: Record<string, string> = {
   'el narges & choueifat area': 'New Cairo (Narges / Choueifat)',
 };
 
+export const GAZETTEER_ALIASES: Record<string, string> = {
+  'ميفيدا التجمع': 'Mivida',
+  'ميفيدا': 'Mivida',
+  'هاي سيلو': 'Hyde Park',
+  'هايد بارك': 'Hyde Park',
+  'ماونتن فيو اي سيتي': 'Mountain View iCity',
+  'بالم هيلز': 'Palm Hills New Cairo',
+  'سوديك ايست': 'Villette',
+  'فيليت': 'Villette',
+  'زيد ايست': 'ZED East',
+  'تاج سيتي': 'Taj City',
+  'سراي': 'Sarai',
+  'البوسكو': 'Il Bosco City',
+};
+
+export function resolveCompoundAlias(raw: string): string {
+  const normalized = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ');
+  return GAZETTEER_ALIASES[normalized] || String(raw || '').trim();
+}
+
 function zoneFor(nameEn: string, lat: number, lng: number): string {
-  const key = nameEn.trim().toLowerCase();
+  const canonical = resolveCompoundAlias(nameEn);
+  const key = canonical.trim().toLowerCase();
   if (ZONE_MAP[key]) return ZONE_MAP[key];
   // New Cairo / Greater Cairo bbox (coarse district truth from coordinates).
   const inNewCairo = lat > 29.9 && lat < 30.12 && lng > 31.4 && lng < 31.7;

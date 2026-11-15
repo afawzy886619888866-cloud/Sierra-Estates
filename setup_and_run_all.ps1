@@ -1,5 +1,5 @@
-# ==============================================================================
-# Sierra Estates — Self-Contained Setup, Sheet Merger, Test & Launch Script
+﻿# ==============================================================================
+# Sierra Estates -- Self-Contained Setup, Sheet Merger, Test & Launch Script
 # Run in PowerShell from your repo root (e.g., H:\Sierra Estates):
 #   powershell -ExecutionPolicy Bypass -File .\setup_and_run_all.ps1
 # ==============================================================================
@@ -290,7 +290,7 @@ $sheetFiles = Get-ChildItem -Path ".\downloads_sheets" -Include "*.xlsx", "*.xls
 if ($sheetFiles.Count -gt 0 -and (Test-Path ".\scripts\python\merge_local_sheets.py")) {
     python .\scripts\python\merge_local_sheets.py --input-dir .\downloads_sheets --output .\Sierra_Master_Merged.xlsx
 } else {
-    Write-Host "No .xlsx/.csv files in .\downloads_sheets yet — drop your downloaded sheets there and re-run merge_local_sheets.py anytime." -ForegroundColor Yellow
+    Write-Host "No .xlsx/.csv files in .\downloads_sheets yet -- drop your downloaded sheets there and re-run merge_local_sheets.py anytime." -ForegroundColor Yellow
 }
 
 # ------------------------------------------------------------------------------

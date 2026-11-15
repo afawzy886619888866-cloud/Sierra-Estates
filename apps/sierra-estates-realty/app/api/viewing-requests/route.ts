@@ -36,6 +36,27 @@ const requestSchema = z.object({
   message: z.string().max(2000).optional(),
 });
 
+const buyerDemandSchema = z.object({
+  mode: z.enum(['sale', 'rent']).optional(),
+  name: z.string().min(1).max(200),
+  phone: z.string().min(7).max(30),
+  email: z.string().email().max(320).optional().or(z.literal('')),
+  zone: z.string().max(200).optional(),
+  type: z.string().max(100).optional(),
+  unitType: z.string().max(100).optional(),
+  budget: z.string().max(100).optional(),
+  budgetMax: z.number().nonnegative().optional(),
+  compounds: z.array(z.string().max(120)).optional(),
+  bedrooms: z.number().int().min(0).max(20).optional(),
+  finishing: z.string().max(100).optional(),
+  notes: z.string().max(2000).optional(),
+  campaign: z.string().max(120).optional(),
+  discountPercent: z.number().min(0).max(100).optional(),
+  voucherCode: z.string().max(80).optional(),
+  dealType: z.string().max(50).optional(),
+  targetDate: z.string().max(50).optional(),
+});
+
 /** Normalize to E.164-ish digits for lookups and wa.me links. */
 function cleanPhone(raw: string): string {
   return raw.replace(/[^0-9+]/g, '');
@@ -58,6 +79,29 @@ export async function POST(request: NextRequest) {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const isBuyerDemand =
+    typeof body === 'object' &&
+    body !== null &&
+    !('propertyCode' in body) &&
+    ('name' in body || 'compounds' in body || 'budget' in body);
+
+  if (isBuyerDemand) {
+    const demandParsed = buyerDemandSchema.safeParse(body);
+    if (!demandParsed.success) {
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: demandParsed.error.issues.map((i) => ({ field: i.path.join('.'), message: i.message })),
+        },
+        { status: 400 }
+      );
+    }
+
+    const { processBuyerDemandRequest } = await import('@/lib/server/buyer-demand-request');
+    const result = await processBuyerDemandRequest(demandParsed.data);
+    return NextResponse.json(result, { status: 201 });
   }
 
   const parsed = requestSchema.safeParse(body);

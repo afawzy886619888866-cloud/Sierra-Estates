@@ -76,11 +76,25 @@ async function handleTelegramWebhook(req: NextRequest) {
     const body = await req.json();
     const { message } = body;
 
+    // ── Phase 2 audit trail: persist raw inbound Telegram payload before parsing ──
+    const updateId: number | null =
+      typeof body.update_id === 'number' ? body.update_id : null;
+    try {
+      await insertRecord('inbound_telegram_audit_log', {
+        update_id: updateId,
+        chat_id: message?.chat?.id != null ? String(message.chat.id) : null,
+        chat_type: message?.chat?.type ?? null,
+        sender_id: message?.from?.id != null ? String(message.from.id) : null,
+        message_text: String(message?.text ?? message?.caption ?? '').slice(0, 4000) || null,
+        payload: body,
+      });
+    } catch (auditErr: any) {
+      logger.warn(`[telegram] inbound audit log insert failed: ${auditErr?.message}`);
+    }
+
     // ── PHASE 6: update_id idempotency ledger ──
     // Telegram redelivers updates on non-200/timeouts and operators replay
     // webhooks; without the ledger every retry re-executed the command.
-    const updateId: number | null =
-      typeof body.update_id === 'number' ? body.update_id : null;
     if (updateId != null) {
       try {
         await insertRecord('telegram_processed_updates', {
@@ -378,9 +392,38 @@ Send a unit listing text or photos with a caption to open an owner intake.
         } else if (outcome.action === 'unit_recorded') {
           await sendMessage(`✅ Unit recorded (intake <code>${outcome.intakeCode}</code>) — <b>REVIEW_REQUIRED</b>, private until staff verification.`);
         }
-        // not_a_listing / duplicate_* → silent (conversational or replayed)
+        // not_a_listing / duplicate_* → forward unassigned short/general inquiries to UNASSIGNED_DISPATCH_FALLBACK
+        if (outcome.action === 'not_a_listing') {
+          const { getUnassignedDispatchFallback } = await import('@/lib/server/telegram-role-chats');
+          const fallbackChatId = getUnassignedDispatchFallback(true);
+          if (fallbackChatId && token && String(fallbackChatId) !== String(chatId)) {
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: fallbackChatId,
+                text: `📩 <b>Unassigned Inbound Telegram Inquiry</b>\nFrom chat <code>${chatId}</code>:\n${String(message.text ?? message.caption ?? '').slice(0, 1200)}`,
+                parse_mode: 'HTML',
+              }),
+            }).catch(() => {});
+          }
+        }
       } catch (err: any) {
         logger.warn(`[telegram] text intake failed: ${err?.message}`);
+      }
+    } else if (text.trim().length > 0 && !text.trim().startsWith('/')) {
+      const { getUnassignedDispatchFallback } = await import('@/lib/server/telegram-role-chats');
+      const fallbackChatId = getUnassignedDispatchFallback(true);
+      if (fallbackChatId && token) {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: fallbackChatId,
+            text: `📩 <b>Unassigned Inbound Telegram Message</b>\nFrom chat <code>${chatId}</code>:\n${String(message.text ?? message.caption ?? '').slice(0, 1200)}`,
+            parse_mode: 'HTML',
+          }),
+        }).catch(() => {});
       }
     }
 

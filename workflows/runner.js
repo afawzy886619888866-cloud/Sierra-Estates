@@ -108,6 +108,10 @@ const SLUGS = [
   'broker-sync',
   'usb-phone-harvester',
   'outreach-2h-digest',
+  'gemini-property-classifier',
+  'media-harvester',
+  'paced-outreach',
+  '13-paced-outreach',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -146,6 +150,10 @@ const SCRIPTS = {
   'broker-sync': '20-broker-sync/sync.js',
   'usb-phone-harvester': '21-usb-phone-harvester/index.js',
   'outreach-2h-digest': 'lib/two-hour-outreach-digest.js',
+  'gemini-property-classifier': '02-gemini-property-classifier/index.js',
+  'media-harvester': '03-media-harvester/index.js',
+  'paced-outreach': '13-paced-outreach/paced-outreach.js',
+  '13-paced-outreach': '13-paced-outreach/paced-outreach.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -278,7 +286,10 @@ async function runWorkflow(slug, trigger = 'cron') {
     }
 
     const exit = await new Promise((resolve) => {
-      const child = spawn('node', [path.join(WF_DIR, scriptRel)], {
+      const childArgs = (slug === 'paced-outreach' || slug === '13-paced-outreach')
+        ? [path.join(WF_DIR, scriptRel), '--once']
+        : [path.join(WF_DIR, scriptRel)];
+      const child = spawn('node', childArgs, {
         cwd: WF_DIR,
         env: process.env,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -586,7 +597,7 @@ function server() {
     const p = url.pathname;
 
     try {
-      if (p === '/api/health' && req.method === 'GET') {
+      if ((p === '/api/health' || p === '/health') && req.method === 'GET') {
         // P0 2.1: unauthenticated callers get MINIMAL liveness only — uptime is
         // not sensitive, but gateway/session/supabase details are operational
         // information and are reserved for authenticated operators.
@@ -777,12 +788,55 @@ setInterval(tick,5000);
         if (!authorized(req)) { deny(res, req); return; }
         const slug = runMatch[1];
         if (!SCRIPTS[slug]) return json(res, 404, { ok: false, error: 'unknown workflow' });
-        if (running.has(slug)) return json(res, 409, { ok: false, error: 'already_running' });
-        if (manualQueue.has(slug)) return json(res, 202, { ok: true, accepted: slug, note: 'already_queued' });
+        let body = {};
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) {}
+        const isP0Inbound = String(body.priority || '').toUpperCase() === 'P0_INBOUND';
+        if (isP0Inbound) {
+          try {
+            fs.mkdirSync(state.STATE_DIR, { recursive: true });
+            const queueFile = path.join(state.STATE_DIR, 'p0-inbound-queue.jsonl');
+            fs.appendFileSync(
+              queueFile,
+              JSON.stringify({
+                at: new Date().toISOString(),
+                priority: 'P0_INBOUND',
+                lead: body.lead || null,
+                leadId: body.leadId || null,
+                phone: body.phone || null,
+                name: body.name || null,
+                compound: body.compound || null,
+                unitCode: body.unitCode || null,
+                reference: body.reference || null,
+                listingId: body.listingId || null,
+                greeting: body.greeting || null,
+                source: body.source || 'webhook',
+              }) + '\n'
+            );
+          } catch (qe) {
+            log(`p0 inbound queue write error: ${qe.message}`);
+          }
+        }
+        if (running.has(slug)) {
+          return isP0Inbound
+            ? json(res, 202, { ok: true, accepted: slug, priority: 'P0_INBOUND', queued: true })
+            : json(res, 409, { ok: false, error: 'already_running' });
+        }
+        if (manualQueue.has(slug)) {
+          return json(res, 202, {
+            ok: true,
+            accepted: slug,
+            ...(isP0Inbound ? { priority: 'P0_INBOUND' } : {}),
+            note: 'already_queued',
+          });
+        }
         // respond first, run async — HTTP callers get immediate ack
-        manualQueue.set(slug, 'manual');
+        manualQueue.set(slug, isP0Inbound ? 'p0_inbound' : 'manual');
         setImmediate(() => schedulerTick().catch((e) => log(`manual tick error: ${e.message}`)));
-        return json(res, 202, { ok: true, accepted: slug });
+        return json(res, 202, {
+          ok: true,
+          accepted: slug,
+          ...(isP0Inbound ? { priority: 'P0_INBOUND' } : {}),
+        });
       }
 
       const patchMatch = p.match(/^\/api\/workflows\/([\w-]+)$/);

@@ -62,13 +62,16 @@ const DRY_RUN = !/^(0|false|no)$/i.test(process.env.WF_DRY_RUN || '0');
 const BATCH_SIZE = parseInt(process.env.SYNC_BATCH_SIZE || '50', 10);
 const MASTER_TAB = process.env.MASTER_INVENTORY_TAB || 'Master_Inventory';
 const REAL_TAB = process.env.REAL_AVAILABLE_TAB || 'Real_Available_Units';
+const WRITE_URL = (process.env.WF_SHEET_WRITE_URL || '').trim();
+const WRITE_SECRET = (process.env.WF_SHEET_WRITE_SECRET || '').trim();
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const summary = {
   dbRows: 0, sheetRows: 0, sheetToDb: 0, dbToSheet: 0,
-  realAvailable: 0, unpublished: 0, reset: 0, errors: 0,
+  realAvailable: 0, unpublished: 0, reset: 0, tier2SearchOnly: 0,
+  versionConflicts: 0, appsScriptFallback: false, errors: 0,
 };
 
 function log(...args) {
@@ -178,7 +181,7 @@ function supabase() {
 async function loadDbListings() {
   const client = supabase();
   if (!client) return [];
-  const selectCols = [
+  const baseCols = [
     'id', 'code', 'unit_code', 'se_code', 'created_at', 'updated_at',
     'deal_type', 'compound', 'property_type', 'area_sqm', 'bedrooms', 'bathroom_count',
     'floor_number', 'furnishing_status', 'finishing_type', 'price',
@@ -186,16 +189,22 @@ async function loadDbListings() {
     'contact_status', 'listing_status', 'availability', 'status',
     'publish_to_client', 'automation', 'images', 'photo_count',
     'agent', 'verified_by_employee', 'verified_available_date',
-  ].join(',');
-  // bathroom_count may not exist on older schemas — probe and fall back.
+  ];
+  const extendedCols = [...baseCols, 'version_id', 'score_tier', 'advertiser_role', 'source_type'];
+  let activeCols = extendedCols.join(',');
+  // Optional/renamed columns may not exist on older schemas — probe and fall back.
   const rows = [];
   let page = 0;
   for (;;) {
     const from = page * 1000;
-    let { data, error } = await client.from('listings').select(selectCols).range(from, from + 999);
+    let { data, error } = await client.from('listings').select(activeCols).range(from, from + 999);
+    if (error && /(version_id|score_tier|advertiser_role|source_type)/.test(error.message)) {
+      activeCols = baseCols.join(',');
+      ({ data, error } = await client.from('listings').select(activeCols).range(from, from + 999));
+    }
     if (error && /bathroom_count/.test(error.message)) {
-      const fallbackCols = selectCols.replace('bathroom_count', 'bathrooms');
-      ({ data, error } = await client.from('listings').select(fallbackCols).range(from, from + 999));
+      activeCols = activeCols.replace('bathroom_count', 'bathrooms');
+      ({ data, error } = await client.from('listings').select(activeCols).range(from, from + 999));
     }
     if (error) throw new Error(`listings read: ${error.message}`);
     rows.push(...(data || []));
@@ -211,7 +220,10 @@ function dbRowToSheetRow(r) {
   const v = validation;
   const gate = v.enforceDealTypePriceGate(r.deal_type, Number(r.price));
   const phone = r.owner_phone ? String(r.owner_phone) : '';
-  return {
+  const photoCount = Number.isFinite(Number(r.photo_count))
+    ? Number(r.photo_count)
+    : (Array.isArray(r.images) ? r.images.length : 0);
+  const row = {
     Unit_Code: (r.code || r.unit_code || r.se_code || '').trim(),
     Date_Added: r.created_at || '',
     Last_Action_Timestamp: r.updated_at || r.created_at || '',
@@ -241,7 +253,17 @@ function dbRowToSheetRow(r) {
     __updatedAt: Date.parse(r.updated_at || r.created_at || 0) || 0,
     __availability: r.availability || '',
     __status: r.status || '',
+    __versionId: r.version_id ?? null,
+    __scoreTier: r.score_tier || null,
+    __advertiserRole: r.advertiser_role || null,
+    __sourceType: r.source_type || null,
+    __photoCount: photoCount,
   };
+  const tierInfo = classifyBrokerTier(row);
+  row.__scoreTier = tierInfo.score_tier;
+  row.__triggerOutreach = tierInfo.trigger_outreach;
+  row.__requestPhotos = tierInfo.request_photos;
+  return row;
 }
 
 function sheetRowToRecord(headerRow, row) {
@@ -253,6 +275,111 @@ function sheetRowToRecord(headerRow, row) {
 const CODE_KEYS = ['Unit_Code'];
 function codeOf(rec) {
   return String(rec.Unit_Code || '').trim();
+}
+
+/**
+ * Deterministic fallback row matcher `(phone_last7, compound, price)` —
+ * replaces any reliance on filtered array indices.
+ */
+function compositeRowKey(phone, compound, price) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  const phoneLast7 = digits.length >= 7 ? digits.slice(-7) : digits;
+  if (!phoneLast7) return '';
+  const comp = validation.resolveCanonicalCompound(compound || '').toLowerCase().trim();
+  const numPrice = Math.round(Number(String(price ?? '').replace(/[^\d.]/g, '')) || 0);
+  if (!comp || !(numPrice > 0)) return '';
+  return `${phoneLast7}|${comp}|${numPrice}`;
+}
+
+/**
+ * Incomplete broker group units are classified as search-only
+ * (`tier_2_search_only`) and never trigger outreach or photo requests.
+ */
+function classifyBrokerTier(row = {}) {
+  const roleSignal = [
+    row.advertiser_role,
+    row.__advertiserRole,
+    row.source_type,
+    row.__sourceType,
+    row.Sourced_By_Agent,
+    row.Notes,
+  ].filter(Boolean).join(' ');
+  const isBroker = /(?:broker|brokerage|agency|group_broker|بروكر|وسيط|مكتب)/i.test(roleSignal);
+
+  const rawPrice = Number(String(row.Price_EGP ?? row.price ?? '').replace(/[^\d.]/g, ''));
+  const rawArea = Number(String(row.Area_SQM ?? row.area_sqm ?? '').replace(/[^\d.]/g, ''));
+  const mediaLinksCount = typeof row.Media_Links === 'string' && row.Media_Links !== 'NULL'
+    ? row.Media_Links.split(',').map((s) => s.trim()).filter(Boolean).length
+    : 0;
+  const photoCount = Number.isFinite(Number(row.__photoCount ?? row.photo_count))
+    ? Number(row.__photoCount ?? row.photo_count)
+    : (Array.isArray(row.images) ? row.images.length : mediaLinksCount);
+
+  const incomplete = !(rawPrice > 0) || !(rawArea > 0) || photoCount < 3;
+  if (isBroker && incomplete) {
+    return {
+      is_broker: true,
+      incomplete: true,
+      score_tier: 'tier_2_search_only',
+      trigger_outreach: false,
+      request_photos: false,
+    };
+  }
+  return {
+    is_broker: isBroker,
+    incomplete,
+    score_tier: row.__scoreTier || row.score_tier || (isBroker ? 'tier_1_broker_top' : 'tier_1_top_ad'),
+    trigger_outreach: !isBroker,
+    request_photos: !isBroker && photoCount < 3,
+  };
+}
+
+/**
+ * Fallback writer when GOOGLE_SERVICE_ACCOUNT_JSON is unset:
+ * POSTs JSON (`upsert_units`) directly to WF_SHEET_WRITE_URL (Code.gs Web App).
+ */
+async function pushUnitsViaAppsScript(writeUrl, payload = {}, opts = {}) {
+  const targetUrl = String(writeUrl || WRITE_URL || '').trim();
+  const dryRun = opts.dryRun ?? DRY_RUN;
+  const body = {
+    secret: opts.secret ?? WRITE_SECRET,
+    action: 'upsert_units',
+    tab: payload.tab || MASTER_TAB,
+    realTab: payload.realTab || REAL_TAB,
+    rows: Array.isArray(payload.rows) ? payload.rows : [],
+    realRows: Array.isArray(payload.realRows) ? payload.realRows : [],
+    headers: MASTER_HEADERS,
+    realHeaders: REAL_HEADERS,
+  };
+  if (dryRun) {
+    return {
+      ok: true,
+      dryRun: true,
+      action: 'upsert_units',
+      rowCount: body.rows.length,
+      realRowCount: body.realRows.length,
+      url: targetUrl || 'dry-run://wf_sheet_write_url',
+    };
+  }
+  if (!targetUrl) {
+    return { ok: false, skipped: true, reason: 'WF_SHEET_WRITE_URL_UNSET' };
+  }
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  if (typeof fetchImpl !== 'function') {
+    throw new Error('fetch_unavailable_for_apps_script_push');
+  }
+  const res = await fetchImpl(targetUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  let parsed = null;
+  try {
+    parsed = await res.json();
+  } catch {
+    parsed = await res.text().catch(() => '');
+  }
+  return { ok: !!res.ok, status: res.status, body: parsed };
 }
 
 /** Row equality for the Real tab rebuild. */
@@ -279,30 +406,36 @@ function maskPhone(phone) {
 async function main() {
   const ctx = sheetCtx();
   const client = supabase();
-  if (!ctx) {
-    console.log('UNCONFIGURED: Google Sheets credentials/sheet id missing');
-    process.exit(2);
+  const useAppsScript = !ctx;
+  if (useAppsScript) {
+    if (!WRITE_URL && !DRY_RUN) {
+      console.log('UNCONFIGURED: Google Sheets credentials/sheet id missing and WF_SHEET_WRITE_URL unset');
+      process.exit(2);
+    }
+    summary.appsScriptFallback = true;
   }
-  if (!client) {
+  if (!client && !DRY_RUN) {
     console.log('UNCONFIGURED: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing');
     process.exit(2);
   }
 
   // ── BULK RESET MODE (/reset_outreach_status) ────────────────────────────
   if (process.argv.includes('--reset-outreach')) {
+    if (!ctx || !client) {
+      console.log('UNCONFIGURED: --reset-outreach requires Google Sheets API context and Supabase');
+      process.exit(2);
+    }
     await resetOutreachStatus(ctx, client);
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
     process.exit(0);
   }
 
-  log(`sync start${DRY_RUN ? ' (DRY-RUN)' : ''} — master=${MASTER_TAB} real=${REAL_TAB} batch=${BATCH_SIZE}`);
-  await ensureTabs(ctx);
+  log(`sync start${DRY_RUN ? ' (DRY-RUN)' : ''}${useAppsScript ? ' (AppsScript-fallback)' : ''} — master=${MASTER_TAB} real=${REAL_TAB} batch=${BATCH_SIZE}`);
+  if (ctx && !DRY_RUN) await ensureTabs(ctx);
 
   // 1. Load both sides.
-  const [dbRows, sheetRaw] = await Promise.all([
-    withBackoff(loadDbListings, 'db-load'),
-    readTab(ctx, MASTER_TAB),
-  ]);
+  const dbRows = client ? await withBackoff(loadDbListings, 'db-load') : [];
+  const sheetRaw = ctx ? await readTab(ctx, MASTER_TAB) : [];
   summary.dbRows = dbRows.length;
   const header = sheetRaw[0] || MASTER_HEADERS;
   const sheetRecs = sheetRaw.slice(1).map((r) => sheetRowToRecord(header, r));
@@ -310,9 +443,17 @@ async function main() {
 
   const dbMapped = dbRows.map(dbRowToSheetRow);
   const dbByCode = new Map();
+  const dbByComposite = new Map();
   const dbByDedup = new Map();
   for (const m of dbMapped) {
+    if (m.__scoreTier === 'tier_2_search_only') summary.tier2SearchOnly++;
     if (codeOf(m)) dbByCode.set(codeOf(m), m);
+    const compKey = compositeRowKey(
+      m.Owner_Mobile_Internal === 'NULL' ? null : m.Owner_Mobile_Internal,
+      m.Canonical_Compound,
+      m.Price_EGP === 'NULL' ? null : m.Price_EGP,
+    );
+    if (compKey && !dbByComposite.has(compKey)) dbByComposite.set(compKey, m);
     const dk = dedupKey({
       ownerPhone: m.Owner_Mobile_Internal === 'NULL' ? null : m.Owner_Mobile_Internal,
       compound: m.Canonical_Compound, unitType: m.Unit_Type, areaSqm: m.Area_SQM === 'NULL' ? null : m.Area_SQM,
@@ -321,14 +462,22 @@ async function main() {
   }
 
   // 2. Sheets → Supabase: operational fields where the sheet row is newer.
+  //    Match strictly by Unit_Code (Col A) or (phone_last7, compound, price) — never filtered index.
   const dbUpdates = [];
   for (const rec of sheetRecs) {
     const code = codeOf(rec);
-    if (!code) continue;
-    const match = dbByCode.get(code) || dbByDedup.get(dedupKey({
-      ownerPhone: rec.Owner_Mobile_Internal === 'NULL' ? null : rec.Owner_Mobile_Internal,
-      compound: rec.Canonical_Compound, unitType: rec.Unit_Type, areaSqm: rec.Area_SQM === 'NULL' ? null : rec.Area_SQM,
-    }));
+    const compKey = compositeRowKey(
+      rec.Owner_Mobile_Internal === 'NULL' ? null : rec.Owner_Mobile_Internal,
+      rec.Canonical_Compound,
+      rec.Price_EGP === 'NULL' ? null : rec.Price_EGP,
+    );
+    if (!code && !compKey) continue;
+    const match = (code ? dbByCode.get(code) : null)
+      || (compKey ? dbByComposite.get(compKey) : null)
+      || dbByDedup.get(dedupKey({
+        ownerPhone: rec.Owner_Mobile_Internal === 'NULL' ? null : rec.Owner_Mobile_Internal,
+        compound: rec.Canonical_Compound, unitType: rec.Unit_Type, areaSqm: rec.Area_SQM === 'NULL' ? null : rec.Area_SQM,
+      }));
     if (!match) continue;
     const sheetTs = Date.parse(rec.Last_Action_Timestamp || 0) || 0;
     if (sheetTs <= match.__updatedAt) continue; // DB newer — DB → Sheets instead
@@ -345,16 +494,33 @@ async function main() {
     if (patch.contact_status === 'Verified Available' && patch.listing_status === 'Available') {
       patch.verified_available_date = new Date().toISOString();
     }
-    dbUpdates.push({ id: match.__dbId, patch });
+    dbUpdates.push({ id: match.__dbId, versionId: match.__versionId, patch });
   }
 
-  // Batched DB writes with backoff.
+  // Batched DB writes with backoff + optimistic locking.
   for (let i = 0; i < dbUpdates.length; i += BATCH_SIZE) {
     const chunk = dbUpdates.slice(i, i + BATCH_SIZE);
-    if (DRY_RUN) { summary.sheetToDb += chunk.length; continue; }
+    if (DRY_RUN || !client) { summary.sheetToDb += chunk.length; continue; }
     try {
       await withBackoff(async () => {
         for (const u of chunk) {
+          if (u.versionId != null && typeof client.rpc === 'function') {
+            const { data: rpcRes, error: rpcErr } = await client.rpc('rpc_update_unit_field', {
+              p_unit_id: String(u.id),
+              p_expected_version: Number(u.versionId),
+              p_patch: u.patch,
+            });
+            if (!rpcErr && rpcRes && rpcRes.ok === false && rpcRes.error === 'version_conflict') {
+              summary.versionConflicts++;
+              continue;
+            }
+            if (!rpcErr && rpcRes && rpcRes.ok === true) {
+              if (u.patch.raw_notes) {
+                await client.from('listings').update({ raw_notes: u.patch.raw_notes }).eq('id', u.id);
+              }
+              continue;
+            }
+          }
           await client.from('listings').update(u.patch).eq('id', u.id);
         }
       }, `db-update:${i}`);
@@ -368,29 +534,28 @@ async function main() {
   // 3. Supabase → Sheets: full ledger rewrite (DB is the merge master for
   //    non-operational fields; the upsert-in-place rule means one row per
   //    code, preserving sheet row order where possible).
-  const merged = new Map(); // code → mapped (sheet-first order, DB content)
+  const merged = new Map(); // code/compositeKey → mapped (sheet-first order, DB content)
   for (const rec of sheetRecs) {
     const code = codeOf(rec);
-    if (!code) continue;
-    const dbMatch = dbByCode.get(code);
-    merged.set(code, dbMatch ? mergePreferNewer(dbMatch, rec) : dbRowFromSheetRecord(rec));
+    const compKey = compositeRowKey(
+      rec.Owner_Mobile_Internal === 'NULL' ? null : rec.Owner_Mobile_Internal,
+      rec.Canonical_Compound,
+      rec.Price_EGP === 'NULL' ? null : rec.Price_EGP,
+    );
+    const key = code || compKey;
+    if (!key) continue;
+    const dbMatch = (code ? dbByCode.get(code) : null) || (compKey ? dbByComposite.get(compKey) : null);
+    merged.set(codeOf(dbMatch || rec) || key, dbMatch ? mergePreferNewer(dbMatch, rec) : dbRowFromSheetRecord(rec));
   }
   for (const m of dbMapped) {
-    const code = codeOf(m);
-    if (code && !merged.has(code)) merged.set(code, m);
+    const key = codeOf(m) || compositeRowKey(
+      m.Owner_Mobile_Internal === 'NULL' ? null : m.Owner_Mobile_Internal,
+      m.Canonical_Compound,
+      m.Price_EGP === 'NULL' ? null : m.Price_EGP,
+    );
+    if (key && !merged.has(key)) merged.set(key, m);
   }
   const masterRows = [...merged.values()].map(masterRowArray);
-
-  if (!DRY_RUN) {
-    // Clear the data area then write (header stays).
-    await withBackoff(() => ctx.sheets.spreadsheets.values.clear({
-      spreadsheetId: ctx.spreadsheetId, range: `'${MASTER_TAB}'!A2:W100000`,
-    }), 'clear:master');
-    if (masterRows.length) await writeRows(ctx, MASTER_TAB, 2, masterRows);
-    summary.dbToSheet = masterRows.length;
-  } else {
-    summary.dbToSheet = masterRows.length;
-  }
 
   // 4. Real_Available_Units rebuild + external feed unpublish.
   const realRows = [];
@@ -404,18 +569,40 @@ async function main() {
     // Removal rule: was live, now dead → unpublish from external feeds.
     const deadStatuses = ['Sold', 'Rented', 'Unavailable', 'Archived'];
     const deadContact = ['Sold', 'Rented', 'Not Available', 'Contacted - No Answer'];
-    if ((deadStatuses.includes(m.Listing_Status) || deadContact.includes(m.Contact_Status)) && m.__publishToClient) {
+    if ((deadStatuses.includes(m.Listing_Status) || deadContact.includes(m.Contact_Status)) && m.__publishToClient && m.__dbId) {
       unpublishIds.push(m.__dbId);
     }
   }
   summary.realAvailable = realRows.length;
 
-  if (!DRY_RUN) {
+  if (useAppsScript) {
+    const pushRes = await withBackoff(
+      () => pushUnitsViaAppsScript(WRITE_URL, { rows: masterRows, realRows, tab: MASTER_TAB, realTab: REAL_TAB }, { dryRun: DRY_RUN }),
+      'apps-script:upsert_units',
+    );
+    if (!pushRes.ok && !DRY_RUN) {
+      summary.errors++;
+      log(`Apps Script upsert_units failed: status=${pushRes.status}`);
+    } else {
+      summary.dbToSheet = masterRows.length;
+    }
+  } else if (!DRY_RUN) {
+    // Clear the data area then write (header stays).
+    await withBackoff(() => ctx.sheets.spreadsheets.values.clear({
+      spreadsheetId: ctx.spreadsheetId, range: `'${MASTER_TAB}'!A2:W100000`,
+    }), 'clear:master');
+    if (masterRows.length) await writeRows(ctx, MASTER_TAB, 2, masterRows);
+    summary.dbToSheet = masterRows.length;
+
     await withBackoff(() => ctx.sheets.spreadsheets.values.clear({
       spreadsheetId: ctx.spreadsheetId, range: `'${REAL_TAB}'!A2:X100000`,
     }), 'clear:real');
     if (realRows.length) await writeRows(ctx, REAL_TAB, 2, realRows);
+  } else {
+    summary.dbToSheet = masterRows.length;
+  }
 
+  if (!DRY_RUN && client) {
     for (let i = 0; i < unpublishIds.length; i += BATCH_SIZE) {
       const chunk = unpublishIds.slice(i, i + BATCH_SIZE);
       try {
@@ -558,4 +745,8 @@ module.exports = {
   realAvailableRow,
   maskPhone,
   resetOutreachStatus,
+  codeOf,
+  compositeRowKey,
+  classifyBrokerTier,
+  pushUnitsViaAppsScript,
 };

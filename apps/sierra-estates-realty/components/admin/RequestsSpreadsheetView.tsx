@@ -831,6 +831,26 @@ export default function RequestsSpreadsheetView({ lang = 'ar' }: { lang?: string
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ fontWeight: 600 }}>{row.unitType}</div>
                         <div style={{ color: '#64748b', fontSize: 11.5 }}>{row.budget}</div>
+                        {row.matchedUnits && row.matchedUnits.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                            {row.matchedUnits.slice(0, 3).map((code) => (
+                              <span
+                                key={code}
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 600,
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                  backgroundColor: '#fef3c7',
+                                  color: '#92400e',
+                                  border: '1px solid #fde68a',
+                                }}
+                              >
+                                {code}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: '10px 14px' }}>
                         {row.voucherCode ? (

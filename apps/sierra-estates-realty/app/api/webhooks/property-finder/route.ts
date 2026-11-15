@@ -6,6 +6,7 @@ import { enqueueWhatsAppJob, claimEligibleNumber, DEFAULT_OUTREACH_CONFIG } from
 import { sendWhatsApp, getTwilioStatusCallbackUrl } from '@/lib/server/twilio-client';
 import { generateLeadGreeting } from '@/lib/server/pf-lead-greeting';
 import { resolveGreetingLanguage } from '@/lib/server/whatsapp-language';
+import { dispatchP0InboundToWorkflowRunner } from '@/lib/server/p0-inbound-dispatch';
 
 /**
  * Property Finder Enterprise (Atlas OpenAPI 3.1.0) outbound webhook.
@@ -198,11 +199,21 @@ export async function POST(request: NextRequest) {
             body: greeting.body,
             metadata: {
               source: 'property-finder',
+              priority: 'P0_INBOUND',
               propertyRef: listingRef,
               language: greetingLanguage,
               greetingSource: greeting.source,
               pfLeadId: pfLeadId || null,
             },
+          });
+
+          // Trigger Workflow 13 (`13-paced-outreach`) with priority: P0_INBOUND for < 60s SLA
+          await dispatchP0InboundToWorkflowRunner({
+            leadId: pfLeadId,
+            phone: clientPhone,
+            name: clientName,
+            reference: listingRef,
+            greetingBody: greeting.body,
           });
 
           try {

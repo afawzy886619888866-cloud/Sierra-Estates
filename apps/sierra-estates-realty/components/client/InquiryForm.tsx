@@ -249,7 +249,7 @@ export default function InquiryForm({
       .join(' | ');
 
     try {
-      const res = await fetch('/api/inquiries', {
+      const res = await fetch('/api/viewing-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -32,6 +32,7 @@ import 'server-only';
  */
 
 import { Unit } from '../models/schema';
+import { resolveCanonicalCompoundFuzzy } from '../server/compound-gazetteer';
 
 /** Freshness windows (days) — mirror build_master_inventory.freshness_bucket(). */
 export const VERIFICATION_FRESH_DAYS = 30;
@@ -168,17 +169,18 @@ export class PublishGate {
         : `propertyType=${rawType ?? 'unset'} — no PF mapping (the old code silently defaulted unknown types to 'apartment')`,
     });
 
-    // 4 — usable, source-backed location.
+    // 4 — usable, source-backed location (enriched with fuzzy compound resolution).
     const lookup = [unit.compound, unit.location, unit.city]
       .map((v) => (typeof v === 'string' ? v.trim() : ''))
       .filter(Boolean);
+    const fuzzyMatch = resolveCanonicalCompoundFuzzy(unit.compound || unit.location || '');
     checks.push({
       condition: 'location',
       label: 'Usable, source-backed location',
       passed: lookup.length > 0,
       detail:
         lookup.length > 0
-          ? `location candidates: ${lookup.join(' | ')}`
+          ? `location candidates: ${lookup.join(' | ')}${fuzzyMatch ? ` [gazetteer: ${fuzzyMatch.name}]` : ''}`
           : 'no compound / location / city on the record',
     });
 
@@ -242,5 +244,66 @@ export class PublishGate {
 
     const failures = checks.filter((c) => !c.passed).map((c) => `${c.condition}: ${c.detail}`);
     return { eligible: failures.length === 0, checks, failures };
+  }
+
+  /**
+   * Returns a Telegram reminder when a direct-owner unit passes price, phone,
+   * and compound checks but has fewer than PUBLISH_MIN_PHOTOS (3) photos.
+   */
+  static getDirectOwnerMissingPhotoAlert(
+    unit: PublishGateUnit & { code?: string | null; unitCode?: string | null; id?: string | null },
+  ): string | null {
+    const ownerType = (unit.ownerType ?? '').toString().trim().toLowerCase();
+    if (ownerType !== 'owner') return null;
+
+    const result = PublishGate.evaluate(unit);
+    const byCondition = new Map(result.checks.map((c) => [c.condition, c.passed]));
+    const passesCore =
+      byCondition.get('price') === true &&
+      byCondition.get('contact') === true &&
+      byCondition.get('location') === true;
+
+    const photoCount = countRealPhotos(unit);
+    if (!passesCore || photoCount >= PUBLISH_MIN_PHOTOS) {
+      return null;
+    }
+
+    const code = (unit.code || unit.unitCode || unit.id || 'UNKNOWN').toString().trim();
+    return `Unit #${code} has ${photoCount}/${PUBLISH_MIN_PHOTOS} photos — upload remaining photos to publish to Property Finder`;
+  }
+
+  /**
+   * Evaluates the publish gate and dispatches the missing-photo Telegram alert
+   * when an otherwise eligible direct-owner unit has < 3 photos.
+   */
+  static async evaluateWithPhotoAlert(
+    unit: PublishGateUnit & { code?: string | null; unitCode?: string | null; id?: string | null },
+    notifyFn?: (message: string) => Promise<unknown>,
+  ): Promise<PublishGateResult & { photoAlert: string | null; photoAlertSent: boolean }> {
+    const result = PublishGate.evaluate(unit);
+    const photoAlert = PublishGate.getDirectOwnerMissingPhotoAlert(unit);
+    let photoAlertSent = false;
+
+    if (photoAlert) {
+      try {
+        if (notifyFn) {
+          await notifyFn(photoAlert);
+          photoAlertSent = true;
+        } else {
+          const chatId = process.env.ROLE_MANAGEMENT_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+          const { sendTelegramMessage } = await import('./telegram-controller');
+          await sendTelegramMessage(photoAlert, chatId);
+          photoAlertSent = true;
+        }
+      } catch {
+        photoAlertSent = false;
+      }
+    }
+
+    return {
+      ...result,
+      photoAlert,
+      photoAlertSent,
+    };
   }
 }

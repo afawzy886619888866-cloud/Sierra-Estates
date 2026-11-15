@@ -3005,3 +3005,129 @@ BEGIN
     WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
   END;
 END $$;
+
+-- ─── 7. Optimistic Locking, Non-PII public_properties_view & Queues (048/049) ─
+ALTER TABLE public.listings
+  ADD COLUMN IF NOT EXISTS lead_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS ai_score NUMERIC(5,1) NOT NULL DEFAULT 0.0,
+  ADD COLUMN IF NOT EXISTS score_tier TEXT NOT NULL DEFAULT 'tier_2_search_only',
+  ADD COLUMN IF NOT EXISTS ai_scored_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS version_id INTEGER NOT NULL DEFAULT 1;
+
+CREATE INDEX IF NOT EXISTS idx_listings_ai_score_desc
+  ON public.listings (ai_score DESC, score_tier);
+
+CREATE OR REPLACE FUNCTION public.rpc_update_unit_field(
+  p_unit_id TEXT,
+  p_expected_version INTEGER DEFAULT NULL,
+  p_patch JSONB DEFAULT '{}'::jsonb
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_current_version INTEGER;
+  v_new_version INTEGER;
+  v_updated_at TIMESTAMPTZ := NOW();
+BEGIN
+  SELECT COALESCE(version_id, 1)
+    INTO v_current_version
+    FROM public.listings
+   WHERE id::text = p_unit_id OR code = p_unit_id
+   FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'not_found');
+  END IF;
+
+  IF p_expected_version IS NOT NULL AND v_current_version <> p_expected_version THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'version_conflict', 'current_version', v_current_version);
+  END IF;
+
+  v_new_version := v_current_version + 1;
+
+  UPDATE public.listings
+     SET contact_status = COALESCE(NULLIF(p_patch->>'contact_status', ''), contact_status),
+         listing_status = COALESCE(NULLIF(p_patch->>'listing_status', ''), listing_status),
+         price = CASE
+           WHEN (p_patch ? 'price') AND NULLIF(p_patch->>'price', '') IS NOT NULL
+             THEN (p_patch->>'price')::numeric
+           WHEN (p_patch ? 'price_egp') AND NULLIF(p_patch->>'price_egp', '') IS NOT NULL
+             THEN (p_patch->>'price_egp')::numeric
+           ELSE price
+         END,
+         score_tier = COALESCE(NULLIF(p_patch->>'score_tier', ''), score_tier),
+         version_id = v_new_version,
+         updated_at = v_updated_at
+   WHERE id::text = p_unit_id OR code = p_unit_id;
+
+  RETURN jsonb_build_object('ok', true, 'version_id', v_new_version, 'updated_at', v_updated_at);
+END;
+$$;
+
+-- Strict non-PII public view (excludes owner/broker PII columns)
+CREATE OR REPLACE VIEW public.public_properties_view
+WITH (security_invoker = on) AS
+SELECT
+  id,
+  code,
+  COALESCE(unit_code, code) AS unit_code,
+  title,
+  title_ar,
+  description,
+  description_ar,
+  compound,
+  property_type,
+  deal_type,
+  finishing_type,
+  furnishing_status,
+  area_sqm,
+  bedrooms,
+  bathrooms,
+  price AS price_egp,
+  price_currency,
+  images,
+  photo_count,
+  virtual_tour_url,
+  ai_score,
+  score_tier,
+  status,
+  publish_status,
+  created_at,
+  updated_at
+FROM public.listings
+WHERE status IN ('active', 'available')
+  AND publish_status = 'PUBLISHABLE';
+
+GRANT SELECT ON public.public_properties_view TO anon, authenticated;
+
+CREATE TABLE IF NOT EXISTS public.outreach_dead_letter_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  phone TEXT NOT NULL,
+  unit_code TEXT,
+  line_id TEXT,
+  message_body TEXT,
+  error_message TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 1,
+  backoff_hours INTEGER NOT NULL DEFAULT 1,
+  next_retry_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour'),
+  status TEXT NOT NULL DEFAULT 'queued',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.outreach_dead_letter_queue ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service_role_all" ON public.outreach_dead_letter_queue;
+CREATE POLICY "service_role_all" ON public.outreach_dead_letter_queue FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.inbound_telegram_audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  update_id BIGINT,
+  chat_id TEXT,
+  raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.inbound_telegram_audit_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service_role_all" ON public.inbound_telegram_audit_log;
+CREATE POLICY "service_role_all" ON public.inbound_telegram_audit_log FOR ALL TO service_role USING (true) WITH CHECK (true);

@@ -307,3 +307,7 @@ Activate-WhatsAppGateway.ps1
 # Process core dumps (never commit crash artifacts)
 core
 core.*
+
+# Supabase local CLI temp artifacts & runtime downloads
+supabase/.temp/
+downloads_sheets/
