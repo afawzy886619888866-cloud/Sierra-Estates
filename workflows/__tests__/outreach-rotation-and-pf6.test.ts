@@ -12,7 +12,7 @@ describe('09-owner-outreach — 09:00-22:00 Cairo, 25 msgs/slot, 30-min rotating
   const savedRotate = process.env.WF_ROTATE_SINGLE_LINE;
   delete process.env.WF_SLOT_BATCH;
   delete process.env.WF_OUTREACH_ACTIVE_HOURS;
-  delete process.env.WF_ROTATE_SINGLE_LINE;
+  process.env.WF_ROTATE_SINGLE_LINE = '0';
 
   const outreach = require('../09-owner-outreach/outreach.js');
 

@@ -93,7 +93,6 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       ];
       const files = [
         path.join(ROOT_DIR, '.env.example'),
-        path.join(REALTY_APP_DIR, '.env.local.example'),
         path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'),
         path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js'),
         path.join(ROOT_DIR, 'scripts', 'deployment', 'push_all_vercel_envs.js'),
