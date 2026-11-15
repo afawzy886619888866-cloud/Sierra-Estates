@@ -76,14 +76,12 @@ export async function POST(request: Request) {
 
   try {
     // public.career_applications names these columns `name` / `position` /
-    // `message`; the form calls them fullName / role / notes. Every field the
-    // The legacy document payload is still stored under the table's names.
+    // `message`; the form calls them fullName / role / notes.
     const {
       fullName,
       role: _role,
       position,
       cvUrl,
-
       notes,
       hasVehicle,
       biggestAchievements,
@@ -106,6 +104,31 @@ export async function POST(request: Request) {
     persisted = true;
   } catch (error) {
     console.error('[careers/apply] Supabase write failed:', error);
+  }
+
+  // Real-time synchronization to Google Sheets (Tab: Career_Applications) and local mirror
+  try {
+    const { syncCareerToSheet } = await import('@/lib/services/CareerSheetSyncService');
+    await syncCareerToSheet({
+      id: applicationId,
+      role: application.role,
+      fullName: application.fullName,
+      phone: application.phone,
+      email: application.email,
+      position: application.position,
+      experience: application.experience,
+      hasVehicle: application.hasVehicle,
+      biggestAchievements: application.biggestAchievements,
+      expectedSalary: application.expectedSalary,
+      realEstateKnowledge: application.realEstateKnowledge,
+      availability: application.availability,
+      cvUrl: application.cvUrl,
+      notes: application.notes,
+      status: 'pending_review',
+      source: 'careers_page',
+    }).catch(() => {});
+  } catch (sheetErr) {
+    console.error('[careers/apply] Sheet sync warning:', sheetErr);
   }
 
   if (!persisted && process.env.NODE_ENV === 'production') {

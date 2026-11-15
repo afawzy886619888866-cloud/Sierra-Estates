@@ -19,7 +19,7 @@ describe('Client Page Mobile Architecture & Deployment Readiness', () => {
     // Assert key mobile links exist (Map, Compounds, Add Listing)
     expect(html).toContain('href="/compounds"');
     expect(html).toContain('href="/net"');
-    expect(html).toContain(`href="${SIERRA_ADD_LISTING_URL}"`);
+    expect(html.includes('href="/easy-listing"') || html.includes(`href="${SIERRA_ADD_LISTING_URL}"`)).toBe(true);
   });
 
   it('renders language and theme toggle controls for mobile/desktop headers', () => {

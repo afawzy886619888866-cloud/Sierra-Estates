@@ -17,6 +17,7 @@ import {
   X,
   PlusCircle,
   Radar,
+  Briefcase,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { SIERRA_ADD_LISTING_URL } from '@/lib/site/external-links';
@@ -241,6 +242,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               <Link href={infoBankHref} className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
+              </Link>
+              <Link href="/careers" className={`mobile-drawer-link${active === 'career' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <Briefcase className="i" style={{ width: 18, height: 18, color: '#6366f1' }} />
+                <span>{isAr ? 'الوظائف والانضمام لفريقنا' : 'Careers & Join Team'}</span>
               </Link>
 
               <a 

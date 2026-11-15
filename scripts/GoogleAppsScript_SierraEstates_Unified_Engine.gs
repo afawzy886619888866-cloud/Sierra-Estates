@@ -766,6 +766,11 @@ function doPost(e) {
       return handleRequestSubmission_(payload, ss);
     }
 
+    // Mode C / Career Submission (Candidate & Employee Applications):
+    if (payload.action === "career_submission" || payload.mode === "career_submission") {
+      return handleCareerSubmission_(payload, ss);
+    }
+
     // Direct Append to Master Inventory:
     if (payload.action === "appendRows" && Array.isArray(payload.rows)) {
       const targetSheet = ss.getSheetByName("Master_Inventory") || ss.getSheetByName("Owners-Rent") || ss.getSheets()[0];
@@ -975,6 +980,69 @@ function handleRequestSubmission_(payload, ss) {
     sheet: tabName,
     id: id,
     message: `Request ${id} saved cleanly to ${tabName}`
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Handle incoming career & employee job applications:
+ * Appends cleanly to the dedicated 'Career_Applications' spreadsheet tab.
+ */
+function handleCareerSubmission_(payload, ss) {
+  const tabName = "Career_Applications";
+  let sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+    const headers = [
+      "Application_ID",
+      "Date_Applied",
+      "Full_Name",
+      "Phone",
+      "Email",
+      "Position",
+      "Role_Category",
+      "Experience_Years",
+      "Has_Vehicle",
+      "Expected_Salary",
+      "Key_Achievements",
+      "Market_Knowledge",
+      "CV_Portfolio_URL",
+      "Status",
+      "Notes"
+    ];
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#6366f1").setFontColor("#ffffff");
+  }
+
+  const app = payload.application || payload;
+  const timestamp = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss");
+  const id = app.id || ("CAR-" + Utilities.formatDate(new Date(), "Africa/Cairo", "yyyyMMdd-HHmmss"));
+
+  const rowData = [
+    id,
+    timestamp,
+    app.fullName || app.name || "Candidate",
+    "'" + String(app.phone || "").replace(/[^0-9+]/g, ""),
+    app.email || "",
+    app.position || "Real Estate Consultant",
+    app.role || "sales",
+    app.experience || "0",
+    app.hasVehicle ? "Yes" : "No",
+    app.expectedSalary || "",
+    app.biggestAchievements || "",
+    app.realEstateKnowledge || "",
+    app.cvUrl || "",
+    app.status || "pending_review",
+    app.notes || ""
+  ];
+
+  sheet.appendRow(rowData);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    ok: true,
+    row: sheet.getLastRow(),
+    sheet: tabName,
+    id: id,
+    message: `Application ${id} saved cleanly to ${tabName}`
   })).setMimeType(ContentService.MimeType.JSON);
 }
 

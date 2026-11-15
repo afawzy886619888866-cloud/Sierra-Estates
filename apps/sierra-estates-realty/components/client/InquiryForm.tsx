@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useId } from 'react';
+import Link from 'next/link';
 import {
   Sparkles,
   CheckCircle,
@@ -23,6 +24,13 @@ import {
   Mail,
   Flame,
   RotateCcw,
+  Building,
+  MapPin,
+  Calendar,
+  Clock,
+  ArrowRight,
+  ExternalLink,
+  ShieldCheck,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
@@ -141,9 +149,32 @@ export default function InquiryForm({
   // Status & Feedback states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittedPass, setSubmittedPass] = useState<{
+    id: string;
     code: string;
     discount: number;
     timestamp: string;
+    name: string;
+    phone: string;
+    email: string;
+    serviceType: string;
+    compounds: string[];
+    unitType: string;
+    bedrooms: string;
+    finishing: string;
+    budgetDisplay: string;
+    urgency: string;
+    targetDate: string;
+    notes: string;
+    topMatches: Array<{
+      id: string;
+      code: string;
+      compound: string;
+      beds: number;
+      area: number;
+      egpM: number;
+      score: number;
+      reasons: string[];
+    }>;
   } | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -220,7 +251,7 @@ export default function InquiryForm({
           name: trimmedName,
           phone: trimmedPhone,
           email: email.trim() || undefined,
-          zone: selectedCompounds.slice(0, 2).join(', ') || 'New Cairo',
+          zone: selectedCompounds.slice(0, 2).join(', ') || undefined,
           type: unitType,
           budget: `${budget.toLocaleString()} EGP`,
           notes: structuredNotes,
@@ -237,12 +268,13 @@ export default function InquiryForm({
         }),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to submit inquiry.');
       }
 
       setSubmittedPass({
+        id: data.id || `REQ-${Date.now().toString(36).toUpperCase()}`,
         code: passCode,
         discount: discountPercent,
         timestamp: new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
@@ -250,6 +282,19 @@ export default function InquiryForm({
           month: 'short',
           day: 'numeric',
         }),
+        name: trimmedName,
+        phone: trimmedPhone,
+        email: email.trim(),
+        serviceType,
+        compounds: selectedCompounds,
+        unitType,
+        bedrooms,
+        finishing,
+        budgetDisplay: formatPriceDisplay(budget),
+        urgency,
+        targetDate,
+        notes: notes.trim(),
+        topMatches: Array.isArray(data.topMatches) ? data.topMatches : [],
       });
 
       if (onSuccess) {
@@ -386,7 +431,7 @@ export default function InquiryForm({
         </p>
       </div>
 
-      {/* ── Success VIP Pass Screen ────────────────────────────────────── */}
+      {/* ── Success VIP Pass & Information Gathering Response Screen ───── */}
       {submittedPass ? (
         <div
           style={{
@@ -418,12 +463,12 @@ export default function InquiryForm({
           </div>
 
           <h3 style={{ fontSize: 26, fontWeight: 900, color: '#FFFFFF', marginBottom: 8 }}>
-            {isAr ? 'تم استلام رغبتك العقارية بنجاح!' : 'Your Property Request is Registered!'}
+            {isAr ? 'تم استلام وتوثيق طلبك العقاري بنجاح!' : 'Your Property Request is Verified & Registered!'}
           </h3>
-          <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 580, margin: '0 auto 28px' }}>
+          <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640, margin: '0 auto 28px' }}>
             {isAr
-              ? 'تم إصدار بطاقة الخصم الذهبية الخاصة بك وتفعيل تخفيض 25% على أي خدمة وساطة أو استشارة عقارية.'
-              : 'Your VIP Gold Discount Pass has been minted. Enjoy 25% off all Sierra brokerage and advisory services.'}
+              ? 'تم تسجيل كافة مواصفات طلبك في شيت الطلبات والمخزون الحي، وتفعيل كود خصم البلاك فرايداي 25% على رسوم الخدمة.'
+              : 'All your property criteria have been logged into the live master inventory sheet with a 25% Black Friday service fee discount locked in.'}
           </p>
 
           {/* Luxury Metallic Pass Container */}
@@ -480,10 +525,157 @@ export default function InquiryForm({
               }}
             >
               {copied ? <Check style={{ width: 14, height: 14 }} /> : <Copy style={{ width: 14, height: 14 }} />}
-              <span>{copied ? (isAr ? 'تم نسخ الكود!' : 'Code Copied!') : (isAr ? 'نسخ الكود' : 'Copy VIP Pass')}</span>
+              <span>{copied ? (isAr ? 'تم نسخ الكود!' : 'Code Copied!') : (isAr ? 'نسخ كود الخصم' : 'Copy VIP Pass')}</span>
             </button>
           </div>
 
+          {/* ── Gathered Information Receipt Card ── */}
+          <div
+            style={{
+              textAlign: isAr ? 'right' : 'left',
+              background: 'rgba(15, 23, 42, 0.65)',
+              border: '1px solid rgba(201, 168, 76, 0.3)',
+              borderRadius: 18,
+              padding: '24px 26px',
+              maxWidth: 780,
+              margin: '0 auto 28px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <ShieldCheck style={{ width: 18, height: 18, color: '#10b981' }} />
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#f8fafc' }}>
+                {isAr ? 'بيانات الطلب المسجلة والموثقة' : 'Verified Request Specification Receipt'}
+              </h4>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                  color: '#94a3b8',
+                  marginLeft: isAr ? 'auto' : 0,
+                  marginRight: isAr ? 0 : 'auto',
+                }}
+              >
+                Ref: {submittedPass.id}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 14,
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'العميل' : 'Client Name'}</span>
+                <strong style={{ color: '#ffffff' }}>{submittedPass.name}</strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'رقم التواصل' : 'WhatsApp Phone'}</span>
+                <strong style={{ color: '#10b981', fontFamily: 'monospace' }}>{submittedPass.phone}</strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'نوع المعاملة' : 'Transaction Mode'}</span>
+                <strong style={{ color: '#fde047' }}>
+                  {submittedPass.serviceType} ({isRent ? (isAr ? 'إيجار' : 'Rent') : (isAr ? 'شراء/ريسيل' : 'Purchase')})
+                </strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'المناطق والكمبوندات' : 'Preferred Compounds'}</span>
+                <strong style={{ color: '#ffffff' }}>
+                  {submittedPass.compounds.length > 0 ? submittedPass.compounds.join(', ') : (isAr ? 'القاهرة الجديدة العامة' : 'New Cairo')}
+                </strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'مواصفات الوحدة' : 'Unit Specifications'}</span>
+                <strong style={{ color: '#ffffff' }}>
+                  {submittedPass.unitType} · {submittedPass.bedrooms} {isAr ? 'غرف' : 'Beds'} · {submittedPass.finishing}
+                </strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'الميزانية المحددة' : 'Target Budget'}</span>
+                <strong style={{ color: '#38bdf8' }}>{submittedPass.budgetDisplay}</strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10 }}>
+                <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'الأسبقية والاستلام' : 'Urgency & Move-in'}</span>
+                <strong style={{ color: '#ffffff' }}>
+                  {submittedPass.urgency} {submittedPass.targetDate ? `(${submittedPass.targetDate})` : ''}
+                </strong>
+              </div>
+              {submittedPass.notes && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: 10, gridColumn: '1 / -1' }}>
+                  <span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>{isAr ? 'ملاحظات العميل' : 'Special Notes'}</span>
+                  <p style={{ margin: '4px 0 0', color: '#e2e8f0', fontSize: 12.5 }}>{submittedPass.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Live AI Matched Units ── */}
+          {submittedPass.topMatches && submittedPass.topMatches.length > 0 && (
+            <div style={{ maxWidth: 780, margin: '0 auto 28px', textAlign: isAr ? 'right' : 'left' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Sparkles style={{ width: 16, height: 16, color: '#c9a84c' }} />
+                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fde047' }}>
+                  {isAr ? 'وحدات مطابقة فورية من الانفنتوري الحقيقي:' : 'Instant Matching Inventory Units:'}
+                </h4>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                {submittedPass.topMatches.map((unit) => (
+                  <div
+                    key={unit.code || unit.id}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(201, 168, 76, 0.25)',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{unit.compound}</span>
+                        <span style={{ fontSize: 10.5, fontFamily: 'monospace', color: '#c9a84c' }}>{unit.code}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
+                        {unit.beds} {isAr ? 'غرف' : 'Beds'} · {unit.area} م²
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>
+                        {unit.egpM > 0 ? `${unit.egpM.toFixed(1)} M EGP` : (isAr ? 'حسب الطلب' : 'On Request')}
+                      </div>
+                    </div>
+                    <Link
+                      href={`/properties?search=${encodeURIComponent(unit.code)}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        marginTop: 10,
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        background: 'rgba(201, 168, 76, 0.15)',
+                        border: '1px solid rgba(201, 168, 76, 0.4)',
+                        color: '#fde047',
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span>{isAr ? 'معاينة الوحدة' : 'View Unit Details'}</span>
+                      <ArrowRight style={{ width: 12, height: 12 }} />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Center Buttons */}
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
               href={whatsAppDirectUrl}

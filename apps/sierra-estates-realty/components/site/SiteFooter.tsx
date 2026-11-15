@@ -45,10 +45,10 @@ export default function SiteFooter() {
             <Link href="/net" style={{ color: '#e9c176', fontWeight: 600 }}>
               🎯 {isAr ? 'الخريطة والرادار العقاري' : 'Map & Radar Scanner'}
             </Link>
-            <a href={SIERRA_ADD_LISTING_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#10b981', fontWeight: 600 }}>
+            <Link href="/easy-listing" style={{ color: '#10b981', fontWeight: 600 }}>
               ➕ {isAr ? 'إضافة عقار (مالك أو وسيط)' : 'Add Property Listing'}
-            </a>
-            <Link href="/#contact">
+            </Link>
+            <Link href="/request">
               📝 {isAr ? 'طلب وحدة مخصصة' : 'Request Bespoke Unit'}
             </Link>
           </div>
@@ -61,10 +61,10 @@ export default function SiteFooter() {
             <Link href={infoBankHref} style={{ color: '#d4af37', fontWeight: 600 }}>
               🏦 {isAr ? 'بنك معلومات القاهرة الجديدة' : 'New Cairo Info Bank'}
             </Link>
-            <a href={SIERRA_RECRUITMENT_URL} target="_blank" rel="noopener noreferrer">
+            <Link href="/careers">
               💼 {isAr ? 'انضم لفريقنا (وظائف)' : 'Careers & Opportunities'}
-            </a>
-            <Link href="/#contact">{t('fAgent')}</Link>
+            </Link>
+            <Link href="/request">{t('fAgent')}</Link>
           </div>
 
           <div className="fcol">
