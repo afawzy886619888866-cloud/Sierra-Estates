@@ -1,0 +1,2123 @@
+[
+  {
+    "index": 1,
+    "userInput": "emerald-estates-e-9956926",
+    "ref": "emerald-estates-e-9956926",
+    "id": "01JPJ134EVEJYBTV0YS1NBH7RW",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Best Deal in Hyde park-Mountain view",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:43:04+02:00",
+        "expiresAt": "2026-12-15T15:43:04Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 2,
+    "userInput": "L K 1",
+    "ref": "L K 1",
+    "id": "01JPJ1358V5PWCMHJC23F3MX12",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 50000
+      },
+      "type": "monthly"
+    },
+    "title": "LVR 2BR",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:43:54+02:00",
+        "expiresAt": "2026-11-17T13:25:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 3,
+    "userInput": "emerald-estates-e-10900244",
+    "ref": "emerald-estates-e-10900244",
+    "id": "01JPHDG6D5AKGEF5F3NTJHPYXJ",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Twin House for Rent in Landmark 370m",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:01+02:00",
+        "expiresAt": "2026-11-24T04:20:06Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 4,
+    "userInput": "emerald-estates-e-9956916",
+    "ref": "emerald-estates-e-9956916",
+    "id": "01JPHTTH4WDXAJ590H2CHHSJRG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 40000
+      },
+      "type": "monthly"
+    },
+    "title": "Hidden JEM LUXURY Apartment",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:22+02:00",
+        "expiresAt": "2026-11-24T03:55:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 5,
+    "userInput": "01JSXYKSHC6QR90QAP68N1SYSX",
+    "ref": "01JSXYKSHC6QR90QAP68N1SYSX",
+    "id": "01JSXYKSHC6QR90QAP68N1SYSX",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Fully furnished apartment in Mivida-5th Tag",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:03+02:00",
+        "expiresAt": "2026-12-15T15:44:03Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 6,
+    "userInput": "emerald-estates-e-12089803",
+    "ref": "emerald-estates-e-12089803",
+    "id": "01JR1Z3ZVEXW1ZQ1AP43B4ABKM",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Spacious 2-Bedroom Apartment in Mivida",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:05+02:00",
+        "expiresAt": "2026-12-15T15:44:04Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 7,
+    "userInput": "01K51GQAAJYYZ3AT1R75VXED6R",
+    "ref": "01K51GQAAJYYZ3AT1R75VXED6R",
+    "id": "01K51GQAAJYYZ3AT1R75VXED6R",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "APARTMENT FOR RENT IN THE VILLAGE",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:25+02:00",
+        "expiresAt": "2026-12-15T15:38:25Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 8,
+    "userInput": "01K62W93C23P0Z78RYZFJN4JNY",
+    "ref": "01K62W93C23P0Z78RYZFJN4JNY",
+    "id": "01K62W93C23P0Z78RYZFJN4JNY",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "daily": 50000
+      },
+      "minimalRentalPeriod": 60,
+      "type": "daily"
+    },
+    "title": "Furnished Apartment for Rent in Madinaty",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:27+02:00",
+        "expiresAt": "2026-12-15T15:38:27Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 9,
+    "userInput": "M v A",
+    "ref": "M v A",
+    "id": "01JPJ134BX5T5Y4MDD99CHVT5V",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Hottest Hyde park Mountain view Ap",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:07+02:00",
+        "expiresAt": "2026-12-15T15:44:06Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 10,
+    "userInput": "7DWHF7TG5YC61395454KQ07KQR",
+    "ref": "7DWHF7TG5YC61395454KQ07KQR",
+    "id": "7DWHF7TG5YC61395454KQ07KQR",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 23000
+      },
+      "type": "monthly"
+    },
+    "title": "Apartment for Rent in The Square – New Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:29+02:00",
+        "expiresAt": "2026-12-15T15:38:28Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 11,
+    "userInput": "Miv 1132",
+    "ref": "Miv 1132 ",
+    "id": "01JRST1QXGNWXGWB0JZWCVPXPN",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "A premium fully furnished ground floor apartment",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:42:19+02:00",
+        "expiresAt": "2026-12-15T15:42:19Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 12,
+    "userInput": "Water way 2 jan 29",
+    "ref": "Water way 2 jan 29",
+    "id": "01JR1Z42Y05X5AMWQTF75DDS0E",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "Elegant 2-Bedroom Fully Furnished Apartment",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:30+02:00",
+        "expiresAt": "2026-12-15T15:38:30Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 13,
+    "userInput": "Ram2",
+    "ref": "Ram2",
+    "id": "01JPHT8HT24EMRQHC6G7TF8AP7",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Elegant Fully Furnished Apartment",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:08+02:00",
+        "expiresAt": "2026-11-17T11:50:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 14,
+    "userInput": "emerald-estates-e-9632065",
+    "ref": "emerald-estates-e-9632065",
+    "id": "01JPJ32XRG2RT48GT4VWE13S78",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Only 1000$ 25% Off for foreigner",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:11+02:00",
+        "expiresAt": "2026-12-15T15:44:10Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 15,
+    "userInput": "Mivida-009",
+    "ref": "Mivida-009",
+    "id": "01JP31340PMR514Z67BSE3X8P8",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 40000
+      },
+      "type": "monthly"
+    },
+    "title": "Live in the heart of Mivida Boulevard",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:31:52+02:00",
+        "expiresAt": "2026-12-15T15:31:52Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 16,
+    "userInput": "MovIL1",
+    "ref": "MovIL1",
+    "id": "SVZS8YJ0A694PCCRFT572SW71W",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 50000
+      },
+      "type": "monthly"
+    },
+    "title": "Premium Property Rental Sodic Villete",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:34+02:00",
+        "expiresAt": "2026-12-15T15:38:34Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 17,
+    "userInput": "6M0YYTH93HB6G4QV4M4DJ5PV2M",
+    "ref": "6M0YYTH93HB6G4QV4M4DJ5PV2M",
+    "id": "6M0YYTH93HB6G4QV4M4DJ5PV2M",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "High-End Deluxe 3BR",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:12+02:00",
+        "expiresAt": "2026-11-27T14:15:09Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 18,
+    "userInput": "emerald-estates-e-11367099",
+    "ref": "emerald-estates-e-11367099",
+    "id": "01JP77GHJWNY2C8HBCSBTEGVDF",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 45000
+      },
+      "type": "monthly"
+    },
+    "title": "Feel at Home Instantly: Luxurious",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:36+02:00",
+        "expiresAt": "2026-12-15T15:38:36Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 19,
+    "userInput": "01K4WS0DM4ZFAT70EZZQ7DPX4P",
+    "ref": "01K4WS0DM4ZFAT70EZZQ7DPX4P",
+    "id": "01K4WS0DM4ZFAT70EZZQ7DPX4P",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 25000
+      },
+      "type": "monthly"
+    },
+    "title": "Apartment for Rent in Mountain View iCity",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:37+02:00",
+        "expiresAt": "2026-12-15T15:38:37Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 20,
+    "userInput": "emerald-estates-e-9706051",
+    "ref": "emerald-estates-e-9706051",
+    "id": "01JMGA94NXVF25Q8R6VYVRV0Z4",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury apartment for rent in Cairo Festival City",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:38+02:00",
+        "expiresAt": "2026-12-15T15:38:38Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 21,
+    "userInput": "rehab11",
+    "ref": "rehab11",
+    "id": "Y7NWN101ZXYB79R3HZR2XHZ5JG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 35000
+      },
+      "type": "monthly"
+    },
+    "title": "For Rent – Prime Garden Apartment in Al Rehab",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:39+02:00",
+        "expiresAt": "2026-12-15T15:38:39Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 22,
+    "userInput": "01K2T6XPA3MEKW9GYGT2TPDR0P",
+    "ref": "01K2T6XPA3MEKW9GYGT2TPDR0P",
+    "id": "01K2T6XPA3MEKW9GYGT2TPDR0P",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 100000
+      },
+      "type": "monthly"
+    },
+    "title": "Standalone Villa for rent in Madinaty",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:41+02:00",
+        "expiresAt": "2026-12-15T15:38:40Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 23,
+    "userInput": "MIV-12557847",
+    "ref": "MIV-12557847",
+    "id": "01JR1Z47E8DXQT6TH588VJT4G7",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "The Heart of Mivida Awaits You Beautifully",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:14+02:00",
+        "expiresAt": "2026-12-15T15:44:14Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 24,
+    "userInput": "emerald-estates-e-13195662",
+    "ref": "emerald-estates-e-13195662",
+    "id": "01JPHSQN996B7J9MT3GJ1AR5FF",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 25000
+      },
+      "type": "monthly"
+    },
+    "title": "Your Studio in Hyde Park For Only 500$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:42+02:00",
+        "expiresAt": "2026-12-15T15:38:42Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 25,
+    "userInput": "L k 2",
+    "ref": "L k 2",
+    "id": "01JNQ7QEF0QJPEK1ERQHWJRX23",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 75000
+      },
+      "type": "monthly"
+    },
+    "title": "For delicate Cliental only !!!! Unimaginable $$$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:45:34+02:00",
+        "expiresAt": "2026-12-15T15:45:34Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 26,
+    "userInput": "01K5XTQ82TRZ80QT4DR0NWT1RH",
+    "ref": "01K5XTQ82TRZ80QT4DR0NWT1RH",
+    "id": "01K5XTQ82TRZ80QT4DR0NWT1RH",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 25000
+      },
+      "type": "monthly"
+    },
+    "title": "شقه للايجار في كومباوند ماونتن فيو اي سيتي",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:44+02:00",
+        "expiresAt": "2026-12-15T15:38:44Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 27,
+    "userInput": "Miv R 1",
+    "ref": "Miv R 1 ",
+    "id": "01JPXRDEY8239KNN4Q5CT7Y27F",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 125000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Villa for Rent in Mivida Compound – Prime L",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:17+02:00",
+        "expiresAt": "2026-12-15T15:44:17Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 28,
+    "userInput": "YEVNBV6613HTCSAS9RW2GQB0J0",
+    "ref": "YEVNBV6613HTCSAS9RW2GQB0J0",
+    "id": "YEVNBV6613HTCSAS9RW2GQB0J0",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Best Villa for rent wz25% Discount for Foreigners",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:46+02:00",
+        "expiresAt": "2026-12-15T15:38:46Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 29,
+    "userInput": "Miv F3",
+    "ref": "Miv F3",
+    "id": "01JR1Z3W3TM37NZHF3TD5X9VCG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Premium Lifestyle Discover Mivida’s Best Apart",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:48:18+02:00",
+        "expiresAt": "2026-12-15T15:38:47Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 30,
+    "userInput": "emerald-estates-e-11367140",
+    "ref": "emerald-estates-e-11367140",
+    "id": "01JNT5G674HVP882N4M8Y8GWDD",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Prime Location",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:19+02:00",
+        "expiresAt": "2026-12-15T15:44:19Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 31,
+    "userInput": "emerald-estates-e-11326929",
+    "ref": "emerald-estates-e-11326929",
+    "id": "01JNT5G5P6S933RE4W47DECFN6",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 45000
+      },
+      "type": "monthly"
+    },
+    "title": "Feel at Home Instantly: Luxurious",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:49+02:00",
+        "expiresAt": "2026-12-15T15:38:49Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 32,
+    "userInput": "01K7K61XAPHY39BDB0A24PQBP4",
+    "ref": "01K7K61XAPHY39BDB0A24PQBP4",
+    "id": "01K7K61XAPHY39BDB0A24PQBP4",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Perfect Family house in Hayde Park !!!",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:50+02:00",
+        "expiresAt": "2026-12-15T15:38:49Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 33,
+    "userInput": "Miv F 1",
+    "ref": "Miv F 1",
+    "id": "01JP31342GS3W2T5D1EH2RK1AG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Experience Luxury Living: Your Dream Home Awaits",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:21+02:00",
+        "expiresAt": "2026-12-15T15:44:21Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 34,
+    "userInput": "emerald-estates-e-9632054",
+    "ref": "emerald-estates-e-9632054",
+    "id": "01JNT5VA6FB3R0WKZSSX512CWN",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 70000
+      },
+      "type": "monthly"
+    },
+    "title": "Hottest Corner I villa Hyde park Mountain view",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:52+02:00",
+        "expiresAt": "2026-12-15T15:38:52Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 35,
+    "userInput": "emerald-estates-e-10899849",
+    "ref": "emerald-estates-e-10899849",
+    "id": "01JNT4J48NK7W8BQ3HDF37HYM3",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 40000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Apartment for Rent in Sodic Eastown 165m",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:53+02:00",
+        "expiresAt": "2026-12-15T15:38:53Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 36,
+    "userInput": "emerald-estates-e-9956925",
+    "ref": "emerald-estates-e-9956925",
+    "id": "01JPEKHYC2SMG6M8D1278Q0FCK",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Special Offer: Enjoy 25% discount for non-Egyptian",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:54+02:00",
+        "expiresAt": "2026-12-15T15:38:54Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 37,
+    "userInput": "Mv rVr",
+    "ref": "Mv rVr",
+    "id": "01JNT5G6YVTTTP8B8EMZT4VT1S",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "For delicate Cliental only !!!! Unimaginable $$$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:55+02:00",
+        "expiresAt": "2026-12-15T15:38:55Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 38,
+    "userInput": "HP22 dd",
+    "ref": "HP22 dd",
+    "id": "01JPHXBFYYSPXVVT3C0SX333JS",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Hottest apartment in Hyde park Mountain view",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:22+02:00",
+        "expiresAt": "2026-12-15T15:44:22Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 39,
+    "userInput": "Hys 2 F",
+    "ref": "Hys 2 F",
+    "id": "01JPEM162H7CDT6B93J1CG9MFJ",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 25000
+      },
+      "type": "monthly"
+    },
+    "title": "Your Studio in Hyde Park For Only 500$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:57+02:00",
+        "expiresAt": "2026-12-15T15:38:57Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 40,
+    "userInput": "JXXRJZNKY9B4VJEB8H4CVPQ8J0",
+    "ref": "JXXRJZNKY9B4VJEB8H4CVPQ8J0",
+    "id": "JXXRJZNKY9B4VJEB8H4CVPQ8J0",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 55000
+      },
+      "type": "monthly"
+    },
+    "title": "Spacious 3-Bedroom Apartment with Private Garden",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:38:58+02:00",
+        "expiresAt": "2026-12-15T15:38:58Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 41,
+    "userInput": "01JSXJJWXBXM7ABGDAHREFVYD4",
+    "ref": "01JSXJJWXBXM7ABGDAHREFVYD4",
+    "id": "01JSXJJWXBXM7ABGDAHREFVYD4",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Eastown Duplex for Rent – New Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:24+02:00",
+        "expiresAt": "2026-12-15T15:44:24Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 42,
+    "userInput": "D6EJRZGGGE4548BBXT0J4RCMJG",
+    "ref": "D6EJRZGGGE4548BBXT0J4RCMJG",
+    "id": "D6EJRZGGGE4548BBXT0J4RCMJG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "Exceptional Rental Opportunity in New Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:01+02:00",
+        "expiresAt": "2026-12-15T15:39:00Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 43,
+    "userInput": "01K2SVP13TKMJV5X8H61F8DNFS",
+    "ref": "01K2SVP13TKMJV5X8H61F8DNFS",
+    "id": "01K2SVP13TKMJV5X8H61F8DNFS",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 25000
+      },
+      "type": "monthly"
+    },
+    "title": "Fully Furnished studio for rent in Al Rehab City",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:01+02:00",
+        "expiresAt": "2026-12-15T15:39:01Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 44,
+    "userInput": "1NDA8CQB5X1X6WG39AYXHX7A6G",
+    "ref": "1NDA8CQB5X1X6WG39AYXHX7A6G",
+    "id": "1NDA8CQB5X1X6WG39AYXHX7A6G",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "High-End Deluxe 3BR",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:26+02:00",
+        "expiresAt": "2026-12-15T15:44:26Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 45,
+    "userInput": "East1",
+    "ref": "East1",
+    "id": "01K17EK6GVVDDCFHV0H6C1VDQC",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 100000
+      },
+      "type": "monthly"
+    },
+    "title": "EXCLUSIVE EASTOWN TRIPLEX – YOUR DREAM HOME AWAITS",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:03+02:00",
+        "expiresAt": "2026-12-15T15:39:03Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 46,
+    "userInput": "01K7F8FA12MK5HMGCQ71781B4P",
+    "ref": "01K7F8FA12MK5HMGCQ71781B4P",
+    "id": "01K7F8FA12MK5HMGCQ71781B4P",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 120000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Villa for Rent in Oriana 2 – Cairo Festival",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:05+02:00",
+        "expiresAt": "2026-12-15T15:39:04Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 47,
+    "userInput": "shreouk",
+    "ref": "shreouk",
+    "id": "59JP5NXCGDJN2NCNAT572303M4",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 75000
+      },
+      "type": "monthly"
+    },
+    "title": "Standalone Villa with Private Pool in El Shorouk",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:06+02:00",
+        "expiresAt": "2026-12-15T15:39:05Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 48,
+    "userInput": "KW4AWG2YTHDAJV8A4VRB8SVBFM",
+    "ref": "KW4AWG2YTHDAJV8A4VRB8SVBFM",
+    "id": "KW4AWG2YTHDAJV8A4VRB8SVBFM",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 70000
+      },
+      "type": "monthly"
+    },
+    "title": "For delicate Cliental only Unimaginable",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:07+02:00",
+        "expiresAt": "2026-12-15T15:39:06Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 49,
+    "userInput": "emerald-estates-e-9631941",
+    "ref": "emerald-estates-e-9631941",
+    "id": "01JPHCVH3PH9R0S2XAEK539XTC",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "A wonder piece of art !!! For Only ????",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:28+02:00",
+        "expiresAt": "2026-11-28T06:35:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 50,
+    "userInput": "TheSquares",
+    "ref": "TheSquares",
+    "id": "01K68785MKA2WCKRZZ0TPRB9GD",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 23000
+      },
+      "type": "monthly"
+    },
+    "title": "Apartment for Rent in The Square – New Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:09+02:00",
+        "expiresAt": "2026-11-28T23:50:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 51,
+    "userInput": "emerald-estates-e-11367193",
+    "ref": "emerald-estates-e-11367193",
+    "id": "01JR1Z3XSFCM9S95ZWS1WVBRX0",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Modern 2-Bedroom Apartment with Pool View",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:45:37+02:00",
+        "expiresAt": "2026-12-15T15:45:37Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 52,
+    "userInput": "5Y14H06SACZY7D0FFXA2P5K47C",
+    "ref": "5Y14H06SACZY7D0FFXA2P5K47C",
+    "id": "5Y14H06SACZY7D0FFXA2P5K47C",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 45000
+      },
+      "type": "monthly"
+    },
+    "title": "Best unit in CFC 25% Off for foreigners",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:11+02:00",
+        "expiresAt": "2026-12-15T15:39:10Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 53,
+    "userInput": "01K5RTG1FY1PPTJWYHXB65SK5D",
+    "ref": "01K5RTG1FY1PPTJWYHXB65SK5D",
+    "id": "01K5RTG1FY1PPTJWYHXB65SK5D",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 75000
+      },
+      "type": "monthly"
+    },
+    "title": "Townhouse for Rent in Hyde Park",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:12+02:00",
+        "expiresAt": "2026-12-15T15:39:12Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 54,
+    "userInput": "66DF297KA16TR1BJHQJX6WKZXG",
+    "ref": "66DF297KA16TR1BJHQJX6WKZXG",
+    "id": "66DF297KA16TR1BJHQJX6WKZXG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 45000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Apartment for Rent in Lake View Residence -",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:13+02:00",
+        "expiresAt": "2026-12-15T15:39:13Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 55,
+    "userInput": "M V 1",
+    "ref": "M V 1",
+    "id": "01JPJ3D3VBJCTMW32VPVSF18QP",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "High-End Deluxe 3BR",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:32+02:00",
+        "expiresAt": "2026-11-28T23:55:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 56,
+    "userInput": "emerald-estates-e-12800698",
+    "ref": "emerald-estates-e-12800698",
+    "id": "01JR1Z4DS5PJKQD98MEQVVY4YD",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 35000
+      },
+      "type": "monthly"
+    },
+    "title": "Your Studio in Hyde Park For Only 500$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:15+02:00",
+        "expiresAt": "2026-11-28T23:55:08Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 57,
+    "userInput": "F 4",
+    "ref": "F 4",
+    "id": "01JPJ1CGX9VPMQSKZXC4Q2T7ZH",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Hyde park Mountain view",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:33+02:00",
+        "expiresAt": "2026-12-15T15:44:33Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 58,
+    "userInput": "01K4VGT1VM7ADJ77HHZBGRG1VX",
+    "ref": "01K4VGT1VM7ADJ77HHZBGRG1VX",
+    "id": "01K4VGT1VM7ADJ77HHZBGRG1VX",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 85000
+      },
+      "type": "monthly"
+    },
+    "title": "Distinctive villa for rent in Levana-Uptown Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:17+02:00",
+        "expiresAt": "2026-12-15T15:39:17Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 59,
+    "userInput": "emerald-estates-e-10790886",
+    "ref": "emerald-estates-e-10790886",
+    "id": "01JPHC83FZAY1KW6V6A2CKS1EY",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 110000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Standalone Villa for Rent in Mivida",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:35+02:00",
+        "expiresAt": "2026-12-15T15:44:35Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 60,
+    "userInput": "01K690S0ZMTET6GPFZ9Z36S1YX",
+    "ref": "01K690S0ZMTET6GPFZ9Z36S1YX",
+    "id": "01K690S0ZMTET6GPFZ9Z36S1YX",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Serviced Luxury Apartment forRent in RimasCompound",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:37+02:00",
+        "expiresAt": "2026-12-15T15:44:37Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 61,
+    "userInput": "emerald-estates-e-12557864",
+    "ref": "emerald-estates-e-12557864",
+    "id": "01JP0Y7X14HWJA07M4KTDG2H28",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "Your Studio in Hyde Park For Only 650$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:20+02:00",
+        "expiresAt": "2026-12-15T15:39:19Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 62,
+    "userInput": "SE-PF-CCGRG2-55K",
+    "ref": "SE-PF-CCGRG2-55K",
+    "id": "5P1P6J9KWY4FM0D3B8KC0D0C0R",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 55000
+      },
+      "type": "monthly"
+    },
+    "title": "DREAM For only 1000$ in Uptown",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:20+02:00",
+        "expiresAt": "2026-12-15T15:39:20Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 63,
+    "userInput": "emerald-estates-e-10765199",
+    "ref": "emerald-estates-e-10765199",
+    "id": "01JPHC8G7T1YZY4346GASXDDEM",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 130000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Villa w/ Garden & Pool for Rent in Mivida",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:22+02:00",
+        "expiresAt": "2026-12-15T15:39:21Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 64,
+    "userInput": "MSS6ZFWB9TEWGBBC1WCGHQZ48M",
+    "ref": "MSS6ZFWB9TEWGBBC1WCGHQZ48M",
+    "id": "MSS6ZFWB9TEWGBBC1WCGHQZ48M",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Spacious 3-Bedroom Apartment with Private Garden",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:22+02:00",
+        "expiresAt": "2026-12-15T15:39:22Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 65,
+    "userInput": "emerald-estates-e-11367241",
+    "ref": "emerald-estates-e-11367241",
+    "id": "01JP76CY4E27V966J7YYMX90MC",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 45000
+      },
+      "type": "monthly"
+    },
+    "title": "Live in the heart of ْUptown Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:23+02:00",
+        "expiresAt": "2026-12-15T15:39:23Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 66,
+    "userInput": "SE-PF-4B9MZ8-65K",
+    "ref": "SE-PF-4B9MZ8-65K",
+    "id": "R8PQCKZMQEB309TA91V2JE55DG",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Best Villa for rent wz25% Discount for Foreigners",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:24+02:00",
+        "expiresAt": "2026-12-15T15:39:24Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 67,
+    "userInput": "emerald-estates-e-11755364",
+    "ref": "emerald-estates-e-11755364",
+    "id": "01JNTC2BNPEQ18C8XB2H4R0CZT",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 50000
+      },
+      "type": "monthly"
+    },
+    "title": "Spacious 3-Bedroom Apartment in Uptown Cairo",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:48:23+02:00",
+        "expiresAt": "2026-12-15T15:39:25Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 68,
+    "userInput": "01K1A9MJC3W14TFTFMM5WRQ906",
+    "ref": "01K1A9MJC3W14TFTFMM5WRQ906",
+    "id": "01K1A9MJC3W14TFTFMM5WRQ906",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 25000
+      },
+      "type": "monthly"
+    },
+    "title": "Apartment for Rent in Al Sheikh Zayed",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:27+02:00",
+        "expiresAt": "2026-12-15T15:39:27Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 69,
+    "userInput": "01K2TCG4VX5EAEB8ABAVD61F8H",
+    "ref": "01K2TCG4VX5EAEB8ABAVD61F8H",
+    "id": "01K2TCG4VX5EAEB8ABAVD61F8H",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "Semi furnished apartment for rent in Mountain View",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:28+02:00",
+        "expiresAt": "2026-11-17T16:15:10Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 70,
+    "userInput": "Park 25 jan tt",
+    "ref": "Park 25 jan tt",
+    "id": "01JP4AG491P1BRQMCKXF4SBXWH",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 45000
+      },
+      "type": "monthly"
+    },
+    "title": "For Delicate Foreigners A Twinhouse Only 1000$",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:29+02:00",
+        "expiresAt": "2026-12-15T15:39:29Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 71,
+    "userInput": "emerald-estates-e-9956903",
+    "ref": "emerald-estates-e-9956903",
+    "id": "01JPHB4GTYACJGH425SF6S2RQ4",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Hottest Corner I villa Hyde park Mountain view",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:38+02:00",
+        "expiresAt": "2026-12-15T15:44:38Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 72,
+    "userInput": "S F",
+    "ref": "S F",
+    "id": "01JPHE3YHGS9D128YYJ5TB7EH6",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Furnished Apartment for Rent in Villette",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:31+02:00",
+        "expiresAt": "2026-12-15T15:39:31Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 73,
+    "userInput": "0BMW0NT2XSN6V75C23YXAHC580",
+    "ref": "0BMW0NT2XSN6V75C23YXAHC580",
+    "id": "0BMW0NT2XSN6V75C23YXAHC580",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 20000
+      },
+      "type": "monthly"
+    },
+    "title": "شقة مفروشة للإيجار في المقصد (D6) | إطلالة مباشرة",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:32+02:00",
+        "expiresAt": "2026-12-15T15:39:32Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 74,
+    "userInput": "SE-PF-4PQBP4-65K",
+    "ref": "SE-PF-4PQBP4-65K",
+    "id": "Q7Z6SGWECVBXGDVNJ3B9NNPTVW",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 125000
+      },
+      "type": "monthly"
+    },
+    "title": "Perfect Family house in Hayde Park !!!",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:44:40+02:00",
+        "expiresAt": "2026-12-15T15:44:40Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 75,
+    "userInput": "Shrouk223",
+    "ref": "Shrouk223",
+    "id": "GCN044Y6N4GCJ4Y4GZJ40Z596W",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "sale": 25000000
+      },
+      "paymentMethods": [
+        "cash"
+      ],
+      "type": "sale"
+    },
+    "title": "Standalone Villa with Private Pool in El Shorouk",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:46:38+02:00",
+        "expiresAt": "2026-12-15T15:46:37Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 76,
+    "userInput": "shr1144",
+    "ref": "shr1144",
+    "id": "AKPE54NV3X1J8TPV03H3P36N8W",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 85000
+      },
+      "type": "monthly"
+    },
+    "title": "Standalone Villa with Private Pool in El Shorouk",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:35+02:00",
+        "expiresAt": "2026-12-15T15:39:35Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 77,
+    "userInput": "miv f9",
+    "ref": "miv f9",
+    "id": "01JP31348BWVJ852JXQEN30D7N",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 50000
+      },
+      "type": "monthly"
+    },
+    "title": "Feel at Home Instantly: Luxurious Mivida Boulevard",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:36+02:00",
+        "expiresAt": "2026-12-15T15:39:36Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 78,
+    "userInput": "01K5RVE1R8V7JM12Q1CS3YKD3S",
+    "ref": "01K5RVE1R8V7JM12Q1CS3YKD3S",
+    "id": "01K5RVE1R8V7JM12Q1CS3YKD3S",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "شقه للايجار في كومباوند ذا سكوير _ التجمع الخامس",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:37+02:00",
+        "expiresAt": "2026-11-28T23:50:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 79,
+    "userInput": "emerald-estates-e-9743549",
+    "ref": "emerald-estates-e-9743549",
+    "id": "01JP7G1HG6HKMHT5G9X75RCJHR",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 30000
+      },
+      "type": "monthly"
+    },
+    "title": "Luxury Apt in Fifth Square El Marassem Garden View",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:38+02:00",
+        "expiresAt": "2026-11-17T12:40:08Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 80,
+    "userInput": "Miv F5",
+    "ref": "Miv F5",
+    "id": "01JR1Z3WAA1025K605S3CBV5SF",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "A Fully Furnished Gem Awaits You in Mivida",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:39+02:00",
+        "expiresAt": "2026-12-15T15:39:39Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 81,
+    "userInput": "emerald-estates-e-12557793",
+    "ref": "emerald-estates-e-12557793",
+    "id": "01JP4C1Z4JVJ71HY4WXHCCGRG2",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 55000
+      },
+      "type": "monthly"
+    },
+    "title": "DREAM For only 1000$ in Uptown",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:40+02:00",
+        "expiresAt": "2026-12-15T15:39:40Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 82,
+    "userInput": "Elrehab",
+    "ref": "Elrehab",
+    "id": "01JSZSPFSWJBFXCJ5HSHHRRB93",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 35000
+      },
+      "type": "monthly"
+    },
+    "title": "For Rent – Prime Garden Apartment in Al Rehab",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:41+02:00",
+        "expiresAt": "2026-12-15T15:39:40Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 83,
+    "userInput": "01K7TP499WDGNE4EC0J3SC1A3F",
+    "ref": "01K7TP499WDGNE4EC0J3SC1A3F",
+    "id": "01K7TP499WDGNE4EC0J3SC1A3F",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 26000
+      },
+      "type": "monthly"
+    },
+    "title": "Apartment for rent in Fifth Square – Al Marasem",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:42+02:00",
+        "expiresAt": "2026-11-28T22:15:07Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 84,
+    "userInput": "01K8H4PAAJERQGVMHDD2Q59DMX",
+    "ref": "01K8H4PAAJERQGVMHDD2Q59DMX",
+    "id": "01K8H4PAAJERQGVMHDD2Q59DMX",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "sale": 9000000
+      },
+      "numberOfMortgageYears": 6,
+      "paymentMethods": [
+        "cash",
+        "installments"
+      ],
+      "type": "sale"
+    },
+    "title": "Luxury Duplex for Sale in Trio – Prime Location",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:42+02:00",
+        "expiresAt": "2026-12-15T15:39:42Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 85,
+    "userInput": "Mivida-0010",
+    "ref": "Mivida-0010",
+    "id": "01JR1Z3VXAEE3WYQEDBRNNYEE9",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 60000
+      },
+      "type": "monthly"
+    },
+    "title": "Experience modern elegance with this Apt Mivida",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:48:20+02:00",
+        "expiresAt": "2026-12-15T15:39:43Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 86,
+    "userInput": "emerald-estates-e-13195577",
+    "ref": "emerald-estates-e-13195577",
+    "id": "01JR1Z4HP0TSJPYM7QB30HW7HY",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 47000
+      },
+      "type": "monthly"
+    },
+    "title": "DREAM For only 1000$ Having 3 bedroom in Uptown",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:45+02:00",
+        "expiresAt": "2026-11-19T09:50:14Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 87,
+    "userInput": "emerald-estates-e-11367070",
+    "ref": "emerald-estates-e-11367070",
+    "id": "01JNT5G6DAWPNEQ484YE0CAKQQ",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 65000
+      },
+      "type": "monthly"
+    },
+    "title": "Premium Lifestyle:Discover Mivida’s Best Apart",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:45+02:00",
+        "expiresAt": "2026-12-15T15:39:45Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  },
+  {
+    "index": 88,
+    "userInput": "01K1ZMW49Y86VF68JTT0Q4ZSX6",
+    "ref": "01K1ZMW49Y86VF68JTT0Q4ZSX6",
+    "id": "01K1ZMW49Y86VF68JTT0Q4ZSX6",
+    "stage": "live",
+    "stateType": "live",
+    "reasons": [],
+    "price": {
+      "amounts": {
+        "monthly": 50000
+      },
+      "type": "monthly"
+    },
+    "title": "Mountain View best price for rent",
+    "products": {
+      "standard": {
+        "createdAt": "2026-11-15T17:39:46+02:00",
+        "expiresAt": "2026-12-15T15:39:46Z",
+        "id": "standard",
+        "renewalEnabled": true
+      }
+    }
+  }
+]

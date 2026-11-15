@@ -21,15 +21,21 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Full projection (migration 037 applied — the applicants view + cv_url). */
+/** Full projection (migration 037 + 046: applicants view + cv_url + Module-3 scorecard columns). */
 const SELECT_COLUMNS =
   'id,name,phone,email,position,experience,hasVehicle,biggestAchievements,' +
-  'expectedSalary,realEstateKnowledge,availability,cvUrl,message,source,status,createdAt,updatedAt';
+  'expectedSalary,realEstateKnowledge,availability,cvUrl,message,source,status,createdAt,updatedAt,' +
+  'roleApplied,workMode,experienceYears,brokerage,scorecardRating,stage,stageNotes';
 
 /** Fallback projection for databases that have not applied migration 037 yet. */
 const SELECT_COLUMNS_PRE_MIGRATION =
   'id,name,phone,email,position,experience,hasVehicle,biggestAchievements,' +
   'expectedSalary,realEstateKnowledge,availability,message,source,status,createdAt,updatedAt';
+
+/** Projection for databases with 037 (applicants view + cv_url) but not 046. */
+const SELECT_COLUMNS_037 =
+  'id,name,phone,email,position,experience,hasVehicle,biggestAchievements,' +
+  'expectedSalary,realEstateKnowledge,availability,cvUrl,message,source,status,createdAt,updatedAt';
 
 const APPLICANT_STATUSES = new Set([
   'new',
@@ -71,16 +77,37 @@ export async function GET(req: NextRequest) {
       })) as Record<string, unknown>[];
     } catch (err) {
       const message = String(err instanceof Error ? err.message : err);
-      if (!/applicants|cv_url|cvUrl/i.test(message)) {
+      // Migration 046 adds the Module-3 scorecard columns; on a database
+      // that has 037 but not 046, retry without them before the full
+      // pre-037 fallback.
+      if (/scorecard_rating|scorecardRating|stage_notes|stageNotes|role_applied|roleApplied|work_mode|workMode|experience_years|experienceYears|brokerage/i.test(message)) {
+        try {
+          rows = (await listRecords('applicants', {
+            select: SELECT_COLUMNS_037,
+            where,
+            limit,
+            orderBy: { column: 'createdAt', ascending: false },
+          })) as Record<string, unknown>[];
+        } catch {
+          migrationPending = true;
+          rows = (await listRecords('career_applications', {
+            select: SELECT_COLUMNS_PRE_MIGRATION,
+            where,
+            limit,
+            orderBy: { column: 'createdAt', ascending: false },
+          })) as Record<string, unknown>[];
+        }
+      } else if (!/applicants|cv_url|cvUrl/i.test(message)) {
         throw err;
+      } else {
+        migrationPending = true;
+        rows = (await listRecords('career_applications', {
+          select: SELECT_COLUMNS_PRE_MIGRATION,
+          where,
+          limit,
+          orderBy: { column: 'createdAt', ascending: false },
+        })) as Record<string, unknown>[];
       }
-      migrationPending = true;
-      rows = (await listRecords('career_applications', {
-        select: SELECT_COLUMNS_PRE_MIGRATION,
-        where,
-        limit,
-        orderBy: { column: 'createdAt', ascending: false },
-      })) as Record<string, unknown>[];
     }
 
     const filtered = q

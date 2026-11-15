@@ -58,6 +58,14 @@ interface ApplicantRow {
   status: string;
   createdAt: string | null;
   updatedAt: string | null;
+  /* Module-3 recruitment pipeline (migration 046). */
+  roleApplied?: string | null;
+  workMode?: string | null;
+  experienceYears?: number | null;
+  brokerage?: string | null;
+  scorecardRating?: string | null;
+  stage?: string | null;
+  stageNotes?: string | null;
 }
 
 interface ApplicantsResponse {
@@ -83,6 +91,11 @@ const STATUS_FLOW: Record<string, { label: string; next?: string[] }> = {
   hired: { label: 'Hired' },
   rejected: { label: 'Rejected' },
 };
+
+/** Module-3 recruitment pipeline stages (career_applications.stage). */
+const STAGES = ['New', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected'] as const;
+
+const RATINGS = ['A+', 'A', 'B', 'C', 'D'] as const;
 
 export default function ApplicantsConsole() {
   const [q, setQ] = useState('');
@@ -146,6 +159,39 @@ export default function ApplicantsConsole() {
       reload();
     } else {
       setNotice({ tone: 'err', text: String(res.body.error ?? 'Onboarding failed.') });
+    }
+  }
+
+  /** Module-3 stage transition — PATCHes `stage` (DB trigger keeps `status`
+   *  aligned) and mirrors the row into the Careers_Applicants Google Sheet. */
+  async function setStageFor(row: ApplicantRow, stage: string) {
+    setBusyId(row.id);
+    setNotice(null);
+    const res = await mutateApi(`/api/admin/applicants/${row.id}`, 'PATCH', { stage });
+    setBusyId(null);
+    if (res.ok) {
+      setNotice({ tone: 'ok', text: `${row.name} → stage ${stage} (sheet synced).` });
+      setOpenApplicant((current) => (current?.id === row.id ? { ...current, stage } : current));
+      reload();
+    } else {
+      setNotice({ tone: 'err', text: String(res.body.error ?? 'Stage update failed.') });
+    }
+  }
+
+  /** HR scorecard rating (A+ … D) — synced to the Careers_Applicants sheet. */
+  async function setRatingFor(row: ApplicantRow, scorecardRating: string) {
+    setBusyId(row.id);
+    setNotice(null);
+    const res = await mutateApi(`/api/admin/applicants/${row.id}`, 'PATCH', { scorecardRating });
+    setBusyId(null);
+    if (res.ok) {
+      setNotice({ tone: 'ok', text: `${row.name} scorecard: ${scorecardRating}.` });
+      setOpenApplicant((current) =>
+        current?.id === row.id ? { ...current, scorecardRating } : current,
+      );
+      reload();
+    } else {
+      setNotice({ tone: 'err', text: String(res.body.error ?? 'Scorecard update failed.') });
     }
   }
 
@@ -248,6 +294,8 @@ export default function ApplicantsConsole() {
                     <th className="px-4 py-3 font-semibold">Position</th>
                     <th className="px-4 py-3 font-semibold">Experience</th>
                     <th className="px-4 py-3 font-semibold">CV</th>
+                    <th className="px-4 py-3 font-semibold">Stage</th>
+                    <th className="px-4 py-3 font-semibold">Rating</th>
                     <th className="px-4 py-3 font-semibold">Status</th>
                     <th className="px-4 py-3 font-semibold">Applied</th>
                     <th className="px-4 py-3 text-right font-semibold">Workflow</th>
@@ -291,6 +339,33 @@ export default function ApplicantsConsole() {
                           ) : (
                             <span className="text-[0.66rem] text-[#f5f3ec]/30">no link</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <select
+                            aria-label={`Recruitment stage for ${row.name}`}
+                            value={row.stage ?? 'New'}
+                            onChange={(e) => setStageFor(row, e.target.value)}
+                            disabled={busyId === row.id}
+                            className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[0.7rem] text-[#f5f3ec]/85 outline-none focus:border-gold-500/50"
+                          >
+                            {STAGES.map((st) => (
+                              <option key={st} value={st}>{st}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <select
+                            aria-label={`Scorecard rating for ${row.name}`}
+                            value={row.scorecardRating ?? ''}
+                            onChange={(e) => setRatingFor(row, e.target.value)}
+                            disabled={busyId === row.id}
+                            className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[0.7rem] text-[#f5f3ec]/85 outline-none focus:border-gold-500/50"
+                          >
+                            <option value="">—</option>
+                            {RATINGS.map((r) => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-4 py-3">
                           <CcPill tone={STATUS_TONES[row.status] ?? 'neutral'}>
@@ -338,10 +413,10 @@ export default function ApplicantsConsole() {
                   })}
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={7}>
+                      <td colSpan={9}>
                         <CcEmpty
                           title="No applications in this view"
-                          hint="The public careers form (components/ApplicantForm.tsx) writes into career_applications."
+                          hint="The public careers form (components/client/CareerApplicationForm.tsx) writes into career_applications."
                         />
                       </td>
                     </tr>
@@ -379,6 +454,39 @@ export default function ApplicantsConsole() {
                   {openApplicant.status.replace(/_/g, ' ')}
                 </CcPill>
               </CcField>
+              <CcField label="Recruitment stage">
+                <select
+                  aria-label="Recruitment stage"
+                  value={openApplicant.stage ?? 'New'}
+                  onChange={(e) => setStageFor(openApplicant, e.target.value)}
+                  disabled={busyId === openApplicant.id}
+                  className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-xs text-[#f5f3ec]/85 outline-none focus:border-gold-500/50"
+                >
+                  {STAGES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              </CcField>
+              <CcField label="Scorecard rating">
+                <select
+                  aria-label="Scorecard rating"
+                  value={openApplicant.scorecardRating ?? ''}
+                  onChange={(e) => setRatingFor(openApplicant, e.target.value)}
+                  disabled={busyId === openApplicant.id}
+                  className="rounded-md border border-white/10 bg-black/30 px-2 py-1 text-xs text-[#f5f3ec]/85 outline-none focus:border-gold-500/50"
+                >
+                  <option value="">— not rated —</option>
+                  {RATINGS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </CcField>
+              {openApplicant.workMode && (
+                <CcField label="Work mode">{openApplicant.workMode}</CcField>
+              )}
+              {openApplicant.brokerage && (
+                <CcField label="Previous brokerage">{openApplicant.brokerage}</CcField>
+              )}
               <CcField label="CV">
                 {openApplicant.cvUrl ? (
                   <a

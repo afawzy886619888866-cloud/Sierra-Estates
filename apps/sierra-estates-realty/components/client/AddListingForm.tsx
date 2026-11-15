@@ -431,11 +431,14 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
         });
 
         const data = await res.json();
-        if (!res.ok || !data.parsed) {
+        // Contract: the route returns { success, data: {...} }; older builds used
+      // { parsed }. Accept both so Smart Extract works on every deployment.
+      const parsedPayload = data.parsed || data.data;
+      if (!res.ok || !parsedPayload) {
           throw new Error(data.error || 'Failed to parse text');
         }
 
-        const p = data.parsed;
+        const p = parsedPayload;
         if (p.mode) setMode(p.mode);
         if (p.compound) {
           const matched = COMPOUND_LIST.find(
@@ -455,13 +458,14 @@ export default function AddListingForm({ defaultLang, isAdmin = false }: AddList
         if (typeof p.beds === 'number') setBeds(p.beds);
         if (typeof p.baths === 'number') setBaths(p.baths);
         if (p.price > 0) setPrice(String(p.price));
-        if (p.suggestedCode) setCode(p.suggestedCode);
+        if (p.sierraCode || p.suggestedCode) setCode(p.sierraCode || p.suggestedCode);
 
         // Extract phones & role hints
-        const extractedPhone = p.ownerPhone || p.brokerPhone || '';
+        const extractedPhone = p.mobile || p.ownerPhone || p.brokerPhone || '';
         if (extractedPhone) {
           setPrimaryMobile(extractedPhone);
         }
+        if (p.mobile) setOwnerPhone(p.mobile);
         if (p.ownerPhone) setOwnerPhone(p.ownerPhone);
         if (p.brokerPhone) setBrokerPhone(p.brokerPhone);
         if (p.agentName) {

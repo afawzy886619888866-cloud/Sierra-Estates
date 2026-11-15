@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { insertRecord } from '@sierra-estates/db';
+import { processClientRequest } from '@/lib/services/ClientRequestPipeline';
+import { normalizeEgyptianPhone } from '@/lib/utils/phone';
+import { escapeTelegramHtml } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,13 +48,34 @@ export async function POST(request: Request) {
   }
 
   // `type` is the column name in public.inquiries' TypeScript model
-  // (`propertyType`); everything else maps 1:1.
-  const { type, ...rest } = parsed.data;
+  // (`propertyType`); everything else maps 1:1. Only REAL inquiry columns are
+  // inserted — the campaign/extended fields previously rode along into this
+  // insert (`...rest`) and PostgREST rejected the phantom columns, sending
+  // every submit down the catch branch (silent data loss through the dev-only
+  // fake-success fallback below). They now live in the leads mirror
+  // (metadata), the public.client_requests row, and the Sheets sync instead.
+  const {
+    type,
+    campaign, discountPercent, voucherCode, dealType, compounds,
+    unitType, bedrooms, finishing, budgetMin, budgetMax, targetDate,
+    ...inquiryFields
+  } = parsed.data;
+
+  // Canonical Egyptian phone gate — one rule on every intake surface.
+  const phoneNormalized = normalizeEgyptianPhone(inquiryFields.phone);
+  if (!phoneNormalized) {
+    return NextResponse.json(
+      { error: 'Enter a valid Egyptian mobile number (e.g. 01012345678).' },
+      { status: 400 }
+    );
+  }
+
   const payload = {
-    ...rest,
+    ...inquiryFields,
+    phone: phoneNormalized,
     propertyType: type,
     source: 'website',
-    status: 'S1_NEW_LEAD',
+    status: 'new',
     createdAt: new Date().toISOString(),
   };
 
@@ -67,19 +91,19 @@ export async function POST(request: Request) {
     try {
       const now = new Date().toISOString();
       const structuredPrefix = [
-        `[Intent: ${rest.mode.toUpperCase()}]`,
-        rest.zone ? `[Preferred Zone: ${rest.zone}]` : null,
+        `[Intent: ${inquiryFields.mode.toUpperCase()}]`,
+        inquiryFields.zone ? `[Preferred Zone: ${inquiryFields.zone}]` : null,
         type ? `[Property Type: ${type}]` : null,
-        rest.budget ? `[Budget: ${rest.budget} EGP]` : null,
+        inquiryFields.budget ? `[Budget: ${inquiryFields.budget} EGP]` : null,
       ]
         .filter(Boolean)
         .join(' | ');
       await insertRecord('leads', {
-        fullName: rest.name,
-        phone: rest.phone,
-        email: rest.email || undefined,
+        fullName: inquiryFields.name,
+        phone: phoneNormalized,
+        email: inquiryFields.email || undefined,
         channel: 'web',
-        mode: rest.mode,
+        mode: inquiryFields.mode,
         source: 'website',
         originChannel: 'website_inquiry_form',
         status: 'new',
@@ -87,25 +111,25 @@ export async function POST(request: Request) {
         phase: 'acquisition',
         priority: 'warm',
         via: 'Website',
-        zone: rest.zone || undefined,
+        zone: inquiryFields.zone || undefined,
         interest: type || 'General Inquiry',
-        capitalAllocation: rest.budget || 'To be determined',
-        summaryNotes: `${structuredPrefix}${rest.notes ? ` | ${rest.notes}` : ''}`,
+        capitalAllocation: inquiryFields.budget || 'To be determined',
+        summaryNotes: `${structuredPrefix}${inquiryFields.notes ? ` | ${inquiryFields.notes}` : ''}`,
         metadata: {
           inquiryId: created.id,
           mirroredFrom: 'public.inquiries',
           // /request campaign fields (present only when the extended form sent them)
-          ...(rest.campaign ? { campaign: rest.campaign } : {}),
-          ...(rest.discountPercent != null ? { discountPercent: rest.discountPercent } : {}),
-          ...(rest.voucherCode ? { voucherCode: rest.voucherCode } : {}),
-          ...(rest.dealType ? { dealType: rest.dealType } : {}),
-          ...(rest.compounds ? { compounds: rest.compounds } : {}),
-          ...(rest.unitType ? { unitType: rest.unitType } : {}),
-          ...(rest.bedrooms != null ? { bedrooms: rest.bedrooms } : {}),
-          ...(rest.finishing ? { finishing: rest.finishing } : {}),
-          ...(rest.budgetMin != null ? { budgetMin: rest.budgetMin } : {}),
-          ...(rest.budgetMax != null ? { budgetMax: rest.budgetMax } : {}),
-          ...(rest.targetDate ? { targetDate: rest.targetDate } : {}),
+          ...(campaign ? { campaign } : {}),
+          ...(discountPercent != null ? { discountPercent } : {}),
+          ...(voucherCode ? { voucherCode } : {}),
+          ...(dealType ? { dealType } : {}),
+          ...(compounds ? { compounds } : {}),
+          ...(unitType ? { unitType } : {}),
+          ...(bedrooms != null ? { bedrooms } : {}),
+          ...(finishing ? { finishing } : {}),
+          ...(budgetMin != null ? { budgetMin } : {}),
+          ...(budgetMax != null ? { budgetMax } : {}),
+          ...(targetDate ? { targetDate } : {}),
         },
         automation: { followupReminderEnabled: true, interactionFrequency: 'medium' },
         createdAt: now,
@@ -115,6 +139,35 @@ export async function POST(request: Request) {
       // Inquiry persisted — the mirror is repairable by the backfill script.
       console.error('[inquiries] CRM leads mirror failed:', mirrorErr);
     }
+
+    // MODULE 2 PIPELINE — Supabase public.client_requests (system of record
+    // for the requests funnel) + Google Sheets `Client_Requests` tab
+    // (auto-created via Sheets API v4) + formatted Telegram sales alert with
+    // matched unit codes. Best-effort by design: a pipeline failure never
+    // breaks the visitor's submit (it is honestly logged inside the
+    // pipeline), and its request code rides along in the response.
+    const pipelineResult = await processClientRequest({
+      clientName: inquiryFields.name,
+      phone: phoneNormalized,
+      email: inquiryFields.email || null,
+      transactionType: inquiryFields.mode === 'rent' ? 'Rent' : 'Sale',
+      propertyType: unitType || type || null,
+      compoundZone: inquiryFields.zone
+        || (Array.isArray(compounds) ? compounds.join(', ') : compounds || '') || null,
+      budgetEgp: budgetMax ?? budgetMin ??
+        (inquiryFields.budget ? Number(inquiryFields.budget.replace(/[^\d.]/g, '')) || null : null),
+      bedrooms: bedrooms ?? null,
+      promoApplied: campaign
+        ? `${campaign}${discountPercent != null ? ` (${discountPercent}% off)` : ''}`
+        : voucherCode
+          ? `Voucher ${voucherCode}`
+          : null,
+      notes: inquiryFields.notes || null,
+      source: 'website_inquiry',
+    }).catch((err) => {
+      console.error('[inquiries] Module-2 client_requests pipeline failed (non-fatal):', err);
+      return null;
+    });
 
     // Top-3 AI matches (25% discount request flow): reuse the SAME engine
     // and publish gate as /api/matches (rankMatches + PUBLISHABLE-only
@@ -129,8 +182,8 @@ export async function POST(request: Request) {
     }> = [];
     try {
       const budgetEgp =
-        rest.budgetMax ?? rest.budgetMin ??
-        (rest.budget ? Number(rest.budget.replace(/[^\d.]/g, '')) || 0 : 0);
+        budgetMax ?? budgetMin ??
+        (inquiryFields.budget ? Number(inquiryFields.budget.replace(/[^\d.]/g, '')) || 0 : 0);
       if (budgetEgp > 0) {
         const { listRecords } = await import('@sierra-estates/db');
         const { toListingRecord } = await import('@/lib/server/listing-columns');
@@ -144,13 +197,13 @@ export async function POST(request: Request) {
         });
         const onMarket = rows
           .map((row) => toListingRecord(row))
-          .filter((l) => l.mode === rest.mode) as never[];
+          .filter((l) => l.mode === inquiryFields.mode) as never[];
         const answers = {
           budget: Math.round(budgetEgp / 50), // EGP → USD (listings mapper rate)
-          beds: rest.bedrooms ?? 0,
-          type: (rest.unitType || type || 'apartment') as never,
-          mode: rest.mode,
-          ...(rest.zone ? { preferredZone: rest.zone as never } : {}),
+          beds: bedrooms ?? 0,
+          type: (unitType || type || 'apartment') as never,
+          mode: inquiryFields.mode,
+          ...(inquiryFields.zone ? { preferredZone: inquiryFields.zone as never } : {}),
         };
         topMatches = rankMatches(onMarket, answers)
           .slice(0, 3)
@@ -173,15 +226,15 @@ export async function POST(request: Request) {
     }
 
     // Buyer Concierge: queue advisory reply & notify sales rep (25% Commission Discount applied)
-    const advisoryNote = `Dear ${rest.name}, thank you for choosing Sierra Estates 🏛️\nAI Discovers. We Advise. You Decide.\nWe are verifying owner availability for your request and will confirm within 24 hours.\nYour 25% Website Commission Discount has been locked in.`;
+    const advisoryNote = `Dear ${inquiryFields.name}, thank you for choosing Sierra Estates 🏛️\nAI Discovers. We Advise. You Decide.\nWe are verifying owner availability for your request and will confirm within 24 hours.\nYour 25% Website Commission Discount has been locked in.`;
 
     try {
-      if (rest.phone) {
+      if (phoneNormalized) {
         const { enqueueWhatsAppJob } = await import('@/lib/server/whatsapp-queue');
         await enqueueWhatsAppJob({
           purpose: 'general-outreach',
-          toPhone: rest.phone,
-          toName: rest.name,
+          toPhone: phoneNormalized,
+          toName: inquiryFields.name,
           body: advisoryNote,
           metadata: { inquiryId: created.id, discount: '25%' },
         }).catch(() => {});
@@ -190,50 +243,58 @@ export async function POST(request: Request) {
       // WhatsApp queue is best-effort
     }
 
-    try {
-      const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
-      const { resolveRoleChat } = await import('@/lib/server/telegram-role-chats');
-      // Sales lane: explicit sales-rep/admin env vars keep precedence (ops
-      // escape hatch), then the self-registered Sales Advisor role chat
-      // (public.telegram_role_chats, migration 044). Unset → honest skip —
-      // sendTelegramMessage already no-ops on a missing chat id.
-      const salesEnv = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
-      const salesChatId = salesEnv || (await resolveRoleChat('sales_advisor')).chatId || undefined;
-      await sendTelegramMessage(
-        `🎯 <b>New Website Lead (${rest.mode.toUpperCase()}) — 25% Discount Applied</b>\n` +
-        `👤 Client: <b>${rest.name}</b> (${rest.phone})\n` +
-        (rest.zone ? `📍 Preferred Zone: ${rest.zone}\n` : '') +
-        (type ? `🏢 Unit Type: ${type}\n` : '') +
-        (rest.budget ? `💰 Budget: ${rest.budget} EGP\n` : '') +
-        `💡 <i>Buyer Concierge: Availability check in progress (24h SLA).</i>`,
-        salesChatId
-      ).catch(() => {});
-    } catch {
-      // Telegram notify is best-effort
+    // Telegram sales-lane alert. The Module-2 pipeline above already sent
+    // the formatted Client_Request alert (matched unit codes + normalized
+    // phone), so this legacy lane only fires when the pipeline did NOT
+    // succeed — no double notifications. Client values are HTML-escaped: a
+    // lead's free-text name/notes can otherwise inject Telegram markup or
+    // break the send outright.
+    if (!pipelineResult?.ok) {
+      try {
+        const { sendTelegramMessage } = await import('@/lib/services/telegram-controller');
+        const { resolveRoleChat } = await import('@/lib/server/telegram-role-chats');
+        // Sales lane: explicit sales-rep/admin env vars keep precedence (ops
+        // escape hatch), then the self-registered Sales Advisor role chat
+        // (public.telegram_role_chats, migration 044). Unset → honest skip —
+        // sendTelegramMessage already no-ops on a missing chat id.
+        const salesEnv = process.env.TELEGRAM_SALES_REP_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+        const salesChatId = salesEnv || (await resolveRoleChat('sales_advisor')).chatId || undefined;
+        await sendTelegramMessage(
+          `🎯 <b>New Website Lead (${inquiryFields.mode.toUpperCase()}) — 25% Discount Applied</b>\n` +
+          `👤 Client: <b>${escapeTelegramHtml(inquiryFields.name)}</b> (<code>${escapeTelegramHtml(phoneNormalized)}</code>)\n` +
+          (inquiryFields.zone ? `📍 Preferred Zone: ${escapeTelegramHtml(inquiryFields.zone)}\n` : '') +
+          (type ? `🏢 Unit Type: ${escapeTelegramHtml(type)}\n` : '') +
+          (inquiryFields.budget ? `💰 Budget: ${escapeTelegramHtml(inquiryFields.budget)} EGP\n` : '') +
+          `💡 <i>Buyer Concierge: Availability check in progress (24h SLA).</i>`,
+          salesChatId
+        ).catch(() => {});
+      } catch {
+        // Telegram notify is best-effort
+      }
     }
 
     // Mirror to Online Requests Spreadsheet (Google Sheets & local persistent mirror)
     try {
       const { syncRequestToSheet } = await import('@/lib/services/RequestSheetSyncService');
-      const compoundNames = Array.isArray(rest.compounds) ? rest.compounds.join(', ') : rest.compounds;
+      const compoundNames = Array.isArray(compounds) ? compounds.join(', ') : compounds;
       await syncRequestToSheet({
         id: created.id,
         type: 'buyer_demand',
-        clientName: rest.name,
-        clientPhone: rest.phone,
-        clientEmail: rest.email || '',
-        mode: rest.mode || 'sale',
-        preferredZone: rest.zone || compoundNames || '',
-        unitType: rest.unitType || type || '',
-        bedrooms: rest.bedrooms,
-        budget: rest.budgetMax ? `${rest.budgetMin || 0} - ${rest.budgetMax} EGP` : rest.budget || 'Open',
-        finishing: rest.finishing || 'Any',
-        campaign: rest.campaign || (rest.voucherCode ? `Black Friday (${rest.discountPercent || 25}%)` : ''),
-        voucherCode: rest.voucherCode || '',
-        targetDate: rest.targetDate || '',
+        clientName: inquiryFields.name,
+        clientPhone: phoneNormalized,
+        clientEmail: inquiryFields.email || '',
+        mode: inquiryFields.mode || 'sale',
+        preferredZone: inquiryFields.zone || compoundNames || '',
+        unitType: unitType || type || '',
+        bedrooms,
+        budget: budgetMax ? `${budgetMin || 0} - ${budgetMax} EGP` : inquiryFields.budget || 'Open',
+        finishing: finishing || 'Any',
+        campaign: campaign || (voucherCode ? `Black Friday (${discountPercent || 25}%)` : ''),
+        voucherCode: voucherCode || '',
+        targetDate: targetDate || '',
         matchedUnits: topMatches.map((m) => m.code),
         status: 'new',
-        notes: rest.notes || '',
+        notes: inquiryFields.notes || '',
         source: 'website_inquiry',
       }).catch(() => {});
     } catch (sheetErr) {
@@ -243,15 +304,16 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: created.id,
       status: 'received',
+      requestCode: pipelineResult?.requestCode ?? undefined,
       discountApplied: '25%',
       advisoryNote: 'AI Discovers. We Advise. You Decide. We are verifying owner availability within 24 hours.',
       topMatches,
     });
   } catch (error) {
     console.error('[inquiries] Supabase write failed:', error);
-    if (process.env.NODE_ENV !== 'production') {
-      return NextResponse.json({ id: `local-${crypto.randomUUID()}`, fallback: true });
-    }
+    // NO fake-success fallback: the old dev-only `local-<uuid>` response made
+    // submits "succeed" while nothing was persisted. An unwritten request is
+    // reported as failed so the client form surfaces the error honestly.
     return NextResponse.json(
       { error: 'Unable to save your request right now. Please try again shortly.' },
       { status: 503 }

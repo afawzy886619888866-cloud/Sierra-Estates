@@ -20,6 +20,7 @@ import { STAGE_META, FLOW_STAGES, norm, daysLeft, fmtM, type Stage } from './inv
 import { OsGrid } from './inventory-os/OsGrid';
 import { OsDrawer } from './inventory-os/OsDrawer';
 import { OsAnalytics } from './inventory-os/OsAnalytics';
+import QuickAddListingDrawer from '@/components/admin/command-center/QuickAddListingDrawer';
 
 type UnitRow = Record<string, any>;
 type Tab = 'pipeline' | 'grid' | 'analytics';
@@ -136,6 +137,7 @@ export default function InventoryOsView({ lang = 'en' }: { lang?: string }) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <QuickAddListingDrawer onCreated={load} />
             <button className="btn" onClick={load} disabled={loading} style={{ fontWeight: 800 }}>
               ⟳ {loading ? t('Loading…', 'جارٍ التحميل…') : t('Refresh', 'تحديث')}
             </button>

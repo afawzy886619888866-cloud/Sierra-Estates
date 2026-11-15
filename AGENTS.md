@@ -126,3 +126,53 @@ Read `docs/README.md` inside that installed package first, then read the relevan
 
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
 <!-- END:turborepo-agent-rules -->
+
+
+---
+
+# Sierra Estates — Platform Agent Guide (Module 1–5 Revision, 2026-11-15)
+
+## Core rules
+
+1. **Supabase is the sole system of record.** Google Sheets tabs are mirrors. A failed Supabase write fails the request — never fake success (`local-*` ids are forbidden; the old dev fallbacks in `/api/inquiries` and `/api/careers/apply` were removed).
+2. **No fabricated data** — matchers/feeds return empty sets when sources are unreachable.
+3. **Phone normalization**: every intake surface uses `apps/sierra-estates-realty/lib/utils/phone.ts` (`normalizeEgyptianPhone` → `+20XXXXXXXXXX`, Arabic-Indic digits handled; invalid → rejected).
+4. **Canonical unit codes**: `lib/server/unit-codes.ts` — `SE-SL/SE-RNT-[AREA]-[SERIAL]`, gazetteer area codes (`HYD`, `MVI`, `MVD`, `PK`…), deterministic serials (re-ingest never mints a second identity). Never random codes.
+5. **Telegram HTML escaping** — values pass through `escapeTelegramHtml` (re-exported by `lib/services/TelegramNotifier.ts`).
+6. **Honest side effects** — sheet/Telegram writes report `ok:false` + error on failure; no silent `ok:true`.
+
+## Key modules added in this revision
+
+| Concern | File(s) |
+| --- | --- |
+| Client Request pipeline (Module 2) | `lib/services/ClientRequestPipeline.ts`, `lib/actions/client-request.ts`, `app/api/admin/client-requests/route.ts` |
+| Careers pipeline (Module 3) | `lib/actions/career-application.ts`, `components/client/CareerApplicationForm.tsx`, `app/(site)/career/CareerPage.tsx` |
+| Add Listing pipeline (Module 4) | `lib/services/AddListingPipeline.ts`, `app/api/listings/add/route.ts`, `components/client/PublicAddListingForm.tsx`, `components/admin/command-center/QuickAddListingDrawer.tsx` |
+| Google Sheets v4 writer | `lib/services/GoogleSheetsV4Service.ts` (tab auto-create, append, update-by-key) |
+| Telegram notifier | `lib/services/TelegramNotifier.ts` (role lanes: hr / sales_advisor / team_leader / ceo / general) |
+| Phone utils | `lib/utils/phone.ts` |
+
+## End-to-end data flow
+
+```
+ingestion (web forms / WhatsApp / Telegram / cron)
+  → AI parsing (Gemini) & unit coding (unit-codes.ts)
+  → dedup (phone + compound + unit-no./BUA ±5% — AddListingPipeline.findDuplicateListing)
+  → Supabase persistence (packages/db, service-role)
+  → Google Sheets sync (GoogleSheetsV4Service + Apps Script bridge for owner tabs/Drive)
+  → Telegram 1-to-1 & group notifications (TelegramNotifier role lanes)
+```
+
+## Cache revalidation contract (admin inventory mutations)
+
+`bustInventoryCache()` + `revalidateTag('inventory', 'max')` + `revalidatePath('/admin…')` —
+reference implementation in `app/api/listings/add/route.ts` and `app/api/admin/listings/[id]/route.ts`.
+
+## Migrations (this revision)
+
+- `supabase/migrations/20261115_046_client_requests_pipeline.sql` — `client_requests` table + RLS, career scorecard columns (`role_applied`, `work_mode`, `experience_years`, `brokerage`, `cv_file_path`, `scorecard_rating`, `stage`, `stage_notes`), storage buckets (`property-media`, `career-applications`), `whatsapp_lead_sessions` DDL backfill.
+- `supabase/migrations/20261115_047_units_views_reproducible.sql` — `units`/`real_available_units` views DDL, `listings.floor`/`listings.availability` + availability↔status trigger, dedup indexes.
+
+## Environment
+
+`.env.example` is canonical. New keys: `GOOGLE_SERVICE_ACCOUNT_KEY` (raw/base64 service-account JSON), `GOOGLE_SHEET_ID`, tab overrides (`CLIENT_REQUESTS_TAB`…), `TELEGRAM_HR_CHAT_ID`, `TELEGRAM_GENERAL_CHAT_ID`.

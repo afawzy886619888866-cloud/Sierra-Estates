@@ -218,8 +218,14 @@ export default function InquiryForm({
       setErrorMsg(isAr ? 'يرجى كتابة الاسم بالكامل بشكل صحيح.' : 'Please enter your full name.');
       return;
     }
-    if (trimmedPhone.length < 8) {
-      setErrorMsg(isAr ? 'يرجى إدخال رقم هاتف صحيح للتواصل عبر واتساب.' : 'Please enter a valid phone or WhatsApp number.');
+    // Egyptian mobile gate — same rule the server enforces on /api/inquiries.
+    const phoneDigits = trimmedPhone.replace(/\D/g, '');
+    if (!/^01[0125]\d{8}$/.test(phoneDigits)) {
+      setErrorMsg(
+        isAr
+          ? 'يرجى إدخال رقم موبايل مصري صحيح (مثال: 01012345678).'
+          : 'Please enter a valid Egyptian mobile number (e.g. 01012345678).'
+      );
       return;
     }
 

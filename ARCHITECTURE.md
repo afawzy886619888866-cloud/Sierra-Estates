@@ -220,3 +220,49 @@ The following legacy components have been completely retired from the production
 2. **Legacy AWS EC2 Host (`54.89.162.250`):** Replaced by the containerized Docker Runner (`:2786`) and OpenWA RAG Station (`:2785`) via Cloudflare Tunnel.
 3. **Standalone Legacy Admin Repo:** Consolidated into the unified monorepo under `apps/sierra-estates-realty`.
 4. **Plaintext Admin Backdoors:** Removed and locked.
+
+
+---
+
+## 11. Intake Pipelines (Module 1–5 Revision, 2026-11-15)
+
+### 11.1 Route inventory (additions & fixes)
+
+| Route | Type | Purpose |
+| --- | --- | --- |
+| `/add-listing` | Public page | Owner/Broker listing submission (PublicAddListingForm) |
+| `/api/listings/add` | POST | Module-4 pipeline: dedup → unit code → Supabase+Sheets dual-write → storage → Telegram |
+| `/api/inquiries` | POST | Module-2 pipeline (client requests): normalized phone → matcher → `client_requests` + `Client_Requests` sheet + Telegram (fixed: phantom-column insert, fake-success fallback, Telegram HTML injection) |
+| `/api/admin/client-requests` | GET/PATCH | Admin console + two-way status sync (Supabase + sheet row update by `Request_ID`) |
+| `/api/careers/apply` | POST | Module-3 dual-write + Telegram HR alert (+ legacy Resend lane) |
+| `/api/admin/applicants/[id]` | PATCH | Stage (`New→Screening→Interview→Offer→Hired/Rejected`), scorecard rating (A+…D), notes — synced to `Careers_Applicants` sheet |
+
+### 11.2 Google Sheets schema (canonical, auto-created headers)
+
+**Client_Requests**: `Request_ID | Timestamp | Client_Name | Phone_Normalized | Transaction_Type | Property_Type | Compound_Zone | Budget_EGP | Area_SQM | Bedrooms | Promo_Applied | Matched_Unit_Codes | Assigned_Agent | Status | Notes`
+
+**Careers_Applicants**: `App_ID | Timestamp | Full_Name | Phone | Email | Role | Work_Mode | Experience_Yrs | Current_Brokerage | CV_Link | Scorecard_Rating | Stage | Notes`
+
+**Master_Inventory**: `Unit_Code | Date_Added | Last_Action_Timestamp | Deal_Type | Canonical_Compound | Unit_Type | Area_SQM | Bedrooms | Bathrooms | Floor | Furnishing | Finishing | Price_EGP | AI_Fair_Price_Benchmark | Is_Featured_Gem | Owner_Name_Internal | Owner_Mobile_Internal | Contact_Status | Listing_Status | Sourced_By_Agent | Verified_By_Employee | Media_Links | Notes`
+
+**Real_Available_Units**: Master_Inventory + `Verified_Available_Date` (inserted after `Last_Action_Timestamp`). Appended when availability = `Available`.
+
+**Owners Master family** (`owners rent` / `owners resale` via Apps Script bridge, `brokers rent` / `brokers resale` for co-brokers): 20-column positional row — see `lib/services/GoogleSheetSyncService.ts`.
+
+### 11.3 Status vocabularies (two-way sync)
+
+- Client requests: `New → Contacted → Viewing Scheduled → Closed` (Admin PATCH ↔ sheet row update keyed on `Request_ID`).
+- Applicants: `New → Screening → Interview → Offer → Hired | Rejected` + scorecard `A+…D` (DB trigger keeps legacy `status` aligned).
+
+### 11.4 Webhook & notification triggers
+
+| Trigger | Lane |
+| --- | --- |
+| New client request | Telegram `sales_advisor` (env `TELEGRAM_SALES_REP_CHAT_ID` → DB `telegram_role_chats`) with matched unit codes |
+| New career applicant | Telegram `hr` (`TELEGRAM_HR_CHAT_ID`) with scorecard-ready profile |
+| New/merged listing | Telegram `sales_advisor` with unit code, specs, admin+map links |
+| WhatsApp inbound (owner intake) | `OwnerListingIntakeService` event ledger → staff Telegram + WhatsApp prompts |
+
+### 11.5 Unit coding rules (canonical)
+
+`SE-SL/SE-RNT-[AREA]-[SERIAL]` — `[AREA]` from `COMPOUND_CODE_GAZETTEER` (Hyde Park→HYD, Mountain View→MVI, Mivida→MVD, Palm Hills→PK, 5th Settlement→5ST, …), `[SERIAL]` deterministic FNV-1a of `compound|dealType|seed` (seed = normalized phone + unit no. + BUA). Provided canonical codes pass through uppercase-normalized.

@@ -77,6 +77,13 @@ ecc_engine = EpisodicContextCache()
 valuation_agent = RealEstateValuationAgent()
 hubspot_hub = HubSpotSyncHub()
 
+try:
+    from routers.ad_scoring import router as ad_scoring_router
+    app.include_router(ad_scoring_router)
+    logger.info("Mounted ML Ad Scoring router at /api/ml")
+except Exception as e:
+    logger.warning("Could not mount ad_scoring router: %s", e)
+
 
 class PortfolioAsset(BaseModel):
     """Schema representing an individual portfolio asset."""

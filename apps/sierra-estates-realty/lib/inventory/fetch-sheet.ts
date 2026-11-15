@@ -26,14 +26,17 @@ export async function fetchSheetUnits(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 8000);
   try {
+    // `next: { revalidate }` is a Next.js fetch extension not modeled by the
+    // DOM lib types — cast through RequestInit to keep the type-check clean.
+    const nextRevalidate = { revalidate: opts.revalidate ?? 300 } as RequestInit;
     let res = await fetch(SHEET_CSV_URL, {
       signal: controller.signal,
-      next: { revalidate: opts.revalidate ?? 300 },
+      ...nextRevalidate,
     });
     if (!res.ok) {
       res = await fetch(SHEET_EXPORT_URL, {
         signal: controller.signal,
-        next: { revalidate: opts.revalidate ?? 300 },
+        ...nextRevalidate,
       });
     }
     if (!res.ok) return null;

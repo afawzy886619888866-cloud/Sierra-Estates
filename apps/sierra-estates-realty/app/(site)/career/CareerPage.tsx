@@ -10,7 +10,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import SiteShell from '@/components/site/SiteShell';
-import ApplicantForm from '@/components/ApplicantForm';
+import CareerApplicationForm from '@/components/client/CareerApplicationForm';
 import { useSite } from '@/lib/site/SiteContext';
 
 if (typeof window !== 'undefined') {
@@ -45,299 +45,150 @@ interface JobListing {
 }
 
 const JOBS: JobListing[] = [
-  // ── SALES ROLES ──
+  // ── THE THREE OPEN ROLES (Module 3 spec) ──
   {
-    id: 'sales-senior-consultant',
+    id: 'online-real-estate-consultant',
     dept: 'sales',
-    deptEn: 'Sales & Advisory',
-    deptAr: 'المبيعات والاستشارات',
-    titleEn: 'Senior Real Estate Sales Consultant',
-    titleAr: 'مستشار مبيعات عقارية أول (Senior Property Advisor)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo & Cairo Plaza Hub',
-    locAr: 'التجمع الخامس ومقر كايرو بلازا',
+    deptEn: 'Sales & Advisory — Online',
+    deptAr: 'المبيعات والاستشارات — أونلاين',
+    titleEn: 'Online Real Estate Consultant',
+    titleAr: 'مستشار عقاري أونلاين (Online Consultant)',
+    typeEn: 'Full-time · Remote',
+    typeAr: 'دوام كامل · عن بُعد',
+    locEn: 'Remote (New Cairo market)',
+    locAr: 'عن بُعد (سوق القاهرة الجديدة)',
     urgent: true,
-    salaryEn: 'Competitive Base + High Uncapped Commission',
-    salaryAr: 'راتب أساسي مجزي + عمولات فورية غير محدودة',
-    descEn: 'Join our flagship brokerage team managing high-net-worth investors across luxury residential compounds and prime commercial assets including Cairo Plaza.',
-    descAr: 'الانضمام لفريق المبيعات الرئيسي لإدارة ومتابعة طلبات كبار المستثمرين والمشترين في المشروعات السكنية الفاخرة والأصول التجارية المميزة مثل كايرو بلازا.',
+    salaryEn: 'Tier 1 Commission: 30% of Sierra fee + 25% online-channel discount to close',
+    salaryAr: 'شريحة 1: عمولة 30% من أتعاب سييرا + خصم 25% لقناة الأونلاين',
+    descEn: 'Run AI-matched buyer and tenant requests end-to-end from anywhere: instant inventory matching, virtual tours over WhatsApp video, and remote closings across Hyde Park, Mountain View iCity and every Fifth Settlement compound.',
+    descAr: 'إدارة طلبات الشراء والتأجير المؤهلة بالذكاء الاصطناعي بالكامل عن بُعد: مطابقة فورية للانفنتوري، جولات افتراضية عبر واتساب، وإغلاق صفقات التجمع الخامس وهايد بارك وأي سيتي عن بعد.',
     responsibilitiesEn: [
-      'Manage qualified leads delivered through our AI matching engine',
-      'Conduct high-level site tours, client presentations, and negotiations',
-      'Maintain strong ongoing relationships with top tier Egyptian developers',
-      'Close residential and commercial sale/lease transactions within agreed SLAs',
+      'Work the Client_Requests queue — every request arrives AI-matched to live unit codes',
+      'Host virtual tours and negotiate remotely with owners and buyers',
+      'Keep the CRM pipeline stages current (New → Contacted → Viewing → Closed)',
+      'Coordinate with in-office advisors for physical viewings and handovers',
     ],
     responsibilitiesAr: [
-      'متابعة وإدارة العملاء المؤهلين القادمين عبر منصة الذكاء الاصطناعي',
-      'تنظيم جلسات المعاينة الميدانية وتقديم العروض الاستثمارية والتفاوض',
-      'بناء وتوطيد علاقات العمل المستمرة مع كبرى شركات التطوير العقاري في مصر',
-      'إتمام الصفقات العقارية التجارية والسكنية مع تحقيق أهداف المبيعات المحددة',
+      'متابعة طلبات العملاء المؤهلة مسبقاً بنظام المطابقة الذكي',
+      'تنظيم الجولات الافتراضية والتفاوض عن بُعد مع الملاك والمشترين',
+      'تحديث مراحل الصفقات على نظام الـ CRM باستمرار',
+      'التنسيق مع مستشاري المكتب للمعاينات الميدانية والاستلام',
     ],
     requirementsEn: [
-      '2+ years experience in New Cairo or New Capital real estate sales',
-      'Proven track record of closing high-ticket deals',
-      'Excellent negotiation, communication, and presentation skills in Arabic & English',
+      '1+ year in New Cairo real estate brokerage',
+      'Fluent Arabic + presentable English; strong phone/WhatsApp etiquette',
+      'Comfortable with digital tools (CRM, Google Sheets, virtual tours)',
+      'Own smartphone + stable internet; laptop preferred',
+    ],
+    requirementsAr: [
+      'خبرة سنة أو أكثر في الوساطة العقارية بالتجمع الخامس',
+      'إجادة اللغة العربية ومستوى جيد بالإنجليزية مع لباقة في التواصل',
+      'إلمام بالأدوات الرقمية (CRM، جوجل شيتس، الجولات الافتراضية)',
+      'هاتف ذكي وإنترنت مستقر — يفضل امتلاك لابتوب',
+    ],
+    skills: ['Remote Advisory', 'AI-Matched Leads', 'Virtual Tours', 'WhatsApp Negotiation', 'CRM'],
+  },
+  {
+    id: 'in-office-senior-property-advisor',
+    dept: 'sales',
+    deptEn: 'Sales & Advisory — Fifth Settlement HQ',
+    deptAr: 'المبيعات والاستشارات — مقر التجمع الخامس',
+    titleEn: 'In-Office Senior Property Advisor (Fifth Settlement)',
+    titleAr: 'مستشار عقاري أول بالمكتب (التجمع الخامس)',
+    typeEn: 'Full-time · On-site',
+    typeAr: 'دوام كامل · من المكتب',
+    locEn: 'Sierra Estates HQ — Fifth Settlement, New Cairo',
+    locAr: 'مقر سييرا استيتس — التجمع الخامس، القاهرة الجديدة',
+    urgent: true,
+    salaryEn: 'Tier 2 Commission: 35% of Sierra fee + quarterly milestone bonus',
+    salaryAr: 'شريحة 2: عمولة 35% من أتعاب سييرا + بونص ربع سنوي',
+    descEn: 'The senior advisory seat at our Fifth Settlement headquarters: lead high-value site tours across Hyde Park and Mountain View iCity, mentor the online consultants, and own the direct owner relationships that keep our inventory exclusive.',
+    descAr: 'المقعد الاستشاري الأول في مقرنا بالتجمع الخامس: قيادة المعاينات عالية القيمة في هايد بارك وماونتن فيو أي سيتي، تدريب مستشاري الأونلاين، وإدارة علاقات الملاك المباشرة التي تحفظ حصرية الانفنتوري.',
+    responsibilitiesEn: [
+      'Lead physical viewings and closings for high-ticket sales & leasing mandates',
+      'Mentor online consultants; co-own their hardest negotiations',
+      'Build direct-owner pipelines (Owners Master) across target compounds',
+      'Represent Sierra in developer and owner meetings with the Sierra Blue Realty identity',
+    ],
+    responsibilitiesAr: [
+      'قيادة المعاينات الميدانية وإغلاق صفقات البيع والتأجير الكبرى',
+      'تدريب مستشاري الأونلاين والمشاركة في أصعب مفاوضاتهم',
+      'بناء قاعدة ملاك مباشرين في الكمبوندات المستهدفة',
+      'تمثيل سييرا في اجتماعات المطورين والملاك بهوية Sierra Blue Realty',
+    ],
+    requirementsEn: [
+      '3+ years New Cairo / Fifth Settlement brokerage with a closing track record',
+      'Deep compound knowledge (Hyde Park phases, iCity zones, Golden Square)',
       'Valid driving license and personal vehicle',
+      'Bilingual Arabic/English presentation skills',
     ],
     requirementsAr: [
-      'خبرة سابقة لا تقل عن سنتين في مبيعات عقارات التجمع الخامس أو العاصمة الإدارية',
-      'سجل نجاح مثبت في إتمام الصفقات الكبرى وتحقيق التارجت',
-      'مهارات تواصل وتفاوض وإقناع عالية باللغتين العربية والإنجليزية',
+      'خبرة 3 سنوات أو أكثر في وساطة التجمع الخامس مع سجل صفقات موثق',
+      'معرفة عميقة بالكمبوندات (مراحل هايد بارك، مناطق أي سيتي، جولدن سكوير)',
       'رخصة قيادة سارية وسيارة خاصة',
+      'مهارات عرض ثنائية اللغة (عربي/إنجليزي)',
     ],
-    skills: ['Direct Sales', 'Negotiation', 'Luxury Compounds', 'Commercial Portfolios', 'Client Relations'],
+    skills: ['Luxury Advisory', 'Owner Relations', 'Deal Closing', 'Mentoring', 'Negotiation'],
   },
   {
-    id: 'sales-team-leader',
-    dept: 'sales',
-    deptEn: 'Sales & Advisory',
-    deptAr: 'المبيعات والاستشارات',
-    titleEn: 'Sales Team Leader / Unit Head',
-    titleAr: 'قائد فريق مبيعات (Sales Team Leader)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo Office',
-    locAr: 'مكتب التجمع الخامس',
-    urgent: true,
-    salaryEn: 'High Fixed Salary + Team Overriding Commission + Quarterly Bonus',
-    salaryAr: 'راتب ثابت ممتاز + عمولات إشرافية على الفريق + بونص ربع سنوي',
-    descEn: 'Lead, coach, and drive a dedicated squad of 5-8 property advisors. Supervise client pipelines, assist in high-stakes negotiations, and ensure revenue goals are crushed.',
-    descAr: 'قيادة وتدريب وتطوير فريق مبيعات مكون من 5 إلى 8 مستشارين عقاريين، ومتابعة 파يبلاين المبيعات والمساعدة في إغلاق الصفقات الكبرى وتحقيق الأهداف البيعية.',
-    responsibilitiesEn: [
-      'Coach and mentor junior and senior property advisors daily',
-      'Lead high-stakes closing meetings with corporate & family-office buyers',
-      'Monitor CRM conversion rates and implement closing strategies',
-      'Report weekly forecasts and team performance to Sales Director',
-    ],
-    responsibilitiesAr: [
-      'تدريب وتوجيه مستشاري المبيعات يومياً ومتابعة خطط العمل الفردية',
-      'إدارة جلسات الإغلاق الكبرى مع كبار المستثمرين والشركات',
-      'متابعة نسب التحويل على الـ CRM ووضع استراتيجيات زيادة المبيعات',
-      'تقديم تقارير التوقعات الأسبوعية وأداء الفريق للإدارة العليا',
-    ],
-    requirementsEn: [
-      '4+ years in real estate brokerage with at least 1-2 years in leadership',
-      'Demonstrated ability to inspire, manage, and scale a sales team',
-      'Deep mastery of the Egyptian real estate market and key developers',
-    ],
-    requirementsAr: [
-      'خبرة 4 سنوات فأكثر في الوساطة العقارية مع سنة على الأقل في موقع قيادي/إشرافي',
-      'قدرة مثبتة على تحفيز وقيادة وتطوير فرق المبيعات',
-      'معرفة تامة بكافة مشروعات التجمع والعاصمة والساحل وأسعار السوق',
-    ],
-    skills: ['Team Leadership', 'Deal Closing', 'Pipeline Management', 'Strategy', 'CRM Mastery'],
-  },
-  {
-    id: 'sales-commercial-broker',
-    dept: 'sales',
-    deptEn: 'Sales & Advisory',
-    deptAr: 'المبيعات والاستشارات',
-    titleEn: 'Commercial & Retail Brokerage Specialist',
-    titleAr: 'أخصائي وساطة تجارية وإدارية (Commercial Specialist)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo / Cairo Plaza Project',
-    locAr: 'التجمع الخامس / مشروع كايرو بلازا',
-    urgent: false,
-    salaryEn: 'High Base + Uncapped Commercial Commissions',
-    salaryAr: 'راتب أساسي + عمولات صفقات تجارية استثنائية',
-    descEn: 'Focus exclusively on commercial retail storefronts, corporate office towers, clinics, and bank branch leases/sales across prime Cairo corridors.',
-    descAr: 'التخصص في تسويق وبيع وتأجير المحلات التجارية، المقرات الإدارية، العيادات الطبية، والفروع البنكية في المشروعات الحيوية مثل كايرو بلازا.',
-    responsibilitiesEn: [
-      'Originate commercial operator requirements (retail brands, clinics, banks)',
-      'Calculate ROI, cap rates, and payback models for commercial investors',
-      'Coordinate with commercial property owners and master developers',
-    ],
-    responsibilitiesAr: [
-      'استقطاب متطلبات المشغلين والعلامات التجارية الكبرى والبنوك والعيادات',
-      'حساب العوائد الاستثمارية (ROI) والتدفقات النقدية للمستثمرين التجاريين',
-      'التنسيق المستمر مع ملاك العقارات التجارية والمطورين',
-    ],
-    requirementsEn: [
-      '2+ years in commercial real estate sales or corporate leasing',
-      'Understanding of retail footfall, office floorplates, and commercial tenancy',
-    ],
-    requirementsAr: [
-      'خبرة سنتين فأكثر في مبيعات العقارات التجارية أو التأجير المؤسسي',
-      'فهم عميق لحسابات العائد والمساحات الإدارية والتجارية ومطابقة الأنشطة',
-    ],
-    skills: ['Commercial Real Estate', 'ROI Modeling', 'Retail Leasing', 'Corporate Clients'],
-  },
-  {
-    id: 'sales-telesales',
-    dept: 'sales',
-    deptEn: 'Sales & Advisory',
-    deptAr: 'المبيعات والاستشارات',
-    titleEn: 'Real Estate Telesales & Lead Qualifier',
-    titleAr: 'أخصائي مبيعات هاتفية وتأهيل عملاء (Real Estate Telesales)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo Office',
-    locAr: 'مكتب التجمع الخامس',
-    urgent: false,
-    salaryEn: 'Fixed Salary + Instant Meeting & Deal Bonus',
-    salaryAr: 'راتب ثابت مجزي + حوافز فورية على المعاينات والصفقات',
-    descEn: 'Engage incoming prospective property buyers, qualify budget and timeline parameters, and book high-intent meetings for senior consultants.',
-    descAr: 'التواصل الفوري مع العملاء المهتمين، تحديد متطلبات وميزانية الشراء، وتنسيق وحجز مواعيد المعاينات لمستشاري المبيعات.',
-    responsibilitiesEn: [
-      'Promptly call incoming inquiries from digital campaigns and WhatsApp',
-      'Qualify buyer requirements, target location, and financing preferences',
-      'Schedule confirmed meeting appointments in CRM calendar',
-    ],
-    responsibilitiesAr: [
-      'التواصل السريع مع العملاء الجدد الواردين من الحملات الإعلانية والواتساب',
-      'تحديد الميزانية والموقع المطلوب وخطة السداد المناسبة للعميل',
-      'تحديد وتأكيد مواعيد المعاينات والاجتماعات على نظام الـ CRM',
-    ],
-    requirementsEn: [
-      '1+ year in real estate telesales or call center outbound',
-      'Pleasant phone manner, persuasion skills, and resilience',
-      'Fluent Arabic with good English',
-    ],
-    requirementsAr: [
-      'خبرة سنة فأكثر في التلي سيلز العقاري أو خدمة العملاء في القطاع العقاري',
-      'لباقة في الحديث، سرعة بديهة، وقدرة ممتازة على الإقناع',
-      'إجادة تامة للغة العربية مع لغة إنجليزية جيدة',
-    ],
-    skills: ['Telesales', 'Lead Qualification', 'Cold Calling', 'Customer Service', 'CRM'],
-  },
-
-  // ── ADMIN & OPERATIONS ROLES ──
-  {
-    id: 'admin-operations-coordinator',
+    id: 'proptech-inventory-operations-specialist',
     dept: 'admin',
-    deptEn: 'Administration & Operations',
-    deptAr: 'الشؤون الإدارية والعمليات',
-    titleEn: 'Real Estate Operations & Admin Coordinator',
-    titleAr: 'منسق عمليات وإداري عقاري (Operations Coordinator)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo Office',
-    locAr: 'مكتب التجمع الخامس',
-    urgent: true,
-    salaryEn: 'Competitive Monthly Salary + Performance Incentives',
-    salaryAr: 'راتب شهري مجزي + حوافز أداء دورية',
-    descEn: 'Serve as the operational backbone of our brokerage. Coordinate deals workflow, developer booking forms, client files, and daily office workflows.',
-    descAr: 'إدارة وتنسيق كافة العمليات اليومية للشركة، متابعة استمارات الحجز مع المطورين، تنظيم ملفات العملاء والوحدات، ودعم فرق المبيعات والإدارة.',
-    responsibilitiesEn: [
-      'Coordinate reservation forms and follow up with developer sales desks',
-      'Maintain organized physical and digital listing registries and contracts',
-      'Assist management with office operations, supply procurement, and scheduling',
-      'Handle client paperwork and ensure seamless onboarding',
-    ],
-    responsibilitiesAr: [
-      'تنسيق استمارات الحجز ومتابعة تأكيد الوحدات مع إدارات مبيعات المطورين',
-      'أرشفة وتنظيم العقود والملفات والمستندات الورقية والإلكترونية للوحدات',
-      'إدارة متطلبات العمل المكتبي اليومية والمستلزمات وجداول العمل',
-      'متابعة أوراق العملاء وضمان اكتمال كافة الإجراءات الإدارية بدقة',
-    ],
-    requirementsEn: [
-      '2+ years experience in real estate administrative coordination or office management',
-      'High proficiency in Microsoft Office (Excel, Word), Google Workspace, and CRM',
-      'Meticulous attention to detail and strong organizational skills',
-      'Fluent Arabic and good professional English',
-    ],
-    requirementsAr: [
-      'خبرة سنتين فأكثر في التنسيق الإداري أو إدارة المكاتب في شركات التطوير أو الوساطة العقارية',
-      'إجادة تامة لبرامج Microsoft Office (Excel, Word) وGoogle Workspace والـ CRM',
-      'دقة عالية في تنظيم البيانات ومتابعة التفاصيل والالتزام بالمواعيد',
-      'إجادة تامة للغة العربية مع مستوى جيد جداً باللغة الإنجليزية',
-    ],
-    skills: ['Operations Management', 'Contract Tracking', 'MS Excel', 'Office Admin', 'Developer Coordination'],
-  },
-  {
-    id: 'admin-crm-data-specialist',
-    dept: 'admin',
-    deptEn: 'Administration & Operations',
-    deptAr: 'الشؤون الإدارية والعمليات',
-    titleEn: 'CRM & Property Data Administrator',
-    titleAr: 'مسؤول إدخال بيانات وعلاقات عملاء (CRM & Data Admin)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo / Hybrid',
-    locAr: 'مكتب التجمع الخامس / هجين',
+    deptEn: 'PropTech & Inventory Operations',
+    deptAr: 'التقنية العقارية وعمليات الانفنتوري',
+    titleEn: 'PropTech & Inventory Operations Specialist',
+    titleAr: 'أخصائي عمليات الانفنتوري والتقنية العقارية',
+    typeEn: 'Full-time · On-site (hybrid possible)',
+    typeAr: 'دوام كامل · من المكتب (هجين ممكن)',
+    locEn: 'Sierra Estates HQ — Fifth Settlement, New Cairo',
+    locAr: 'مقر سييرا استيتس — التجمع الخامس، القاهرة الجديدة',
     urgent: false,
-    salaryEn: 'Competitive Salary + Quarterly Performance Bonus',
-    salaryAr: 'راتب شهري تنافسي + مكافآت دورية',
-    descEn: 'Maintain our central inventory database, distribute leads to sales squads, and audit CRM pipelines to ensure zero lead slippage.',
-    descAr: 'إدارة وتحديث قاعدة بيانات الوحدات والمشروعات، توزيع الليدات على مستشاري المبيعات، ومراقبة الـ CRM لضمان عدم إهدار أي فرصة بيعية.',
+    salaryEn: 'Fixed salary + Tier 3 override on every unit you code & verify',
+    salaryAr: 'راتب ثابت + حافز على كل وحدة تقوم بترميزها وتوثيقها',
+    descEn: 'Own the inventory OS behind every deal: unit coding (SE-SL/SE-RNT gazetteer rules), deduplication, the Google Sheets ↔ Supabase sync health (Owners Master, Master_Inventory, Real_Available_Units), and the Telegram/WhatsApp automation pipelines.',
+    descAr: 'امتلاك نظام تشغيل الانفنتوري خلف كل صفقة: ترميز الوحدات، إزالة التكرار، سلامة المزامنة بين جوجل شيتس وسوبابيس (Owners Master / Master_Inventory / Real_Available_Units)، وخطوط أتمتة تليجرام وواتساب.',
     responsibilitiesEn: [
-      'Input, update, and clean property inventory records and price sheets',
-      'Manage lead routing rules and assign incoming inquiries to agents',
-      'Generate weekly pipeline health and sales conversion analytics reports',
+      'Code, verify and dedupe every incoming unit against Owners Master & Master_Inventory',
+      'Keep the Real_Available_Units mirror honest — statuses, prices, photos',
+      'Run the SVG masterplan zone/pin tagging for Hyde Park & Mountain View iCity',
+      'Monitor the automation workflows (ingestion → AI parsing → coding → sync → notifications)',
     ],
     responsibilitiesAr: [
-      'إدخال وتحديث بيانات الوحدات والأسعار والمشروعات الجديدة باستمرار',
-      'إدارة توزيع الليدات على المستشارين حسب التخصص والمنطقة',
-      'استخراج تقارير دورية عن أداء المبيعات ومعدلات الاستجابة والإغلاق',
+      'ترميز وتوثيق كل وحدة واردة ومطابقتها ضد شيتات الملاك والانفنتوري الرئيسي',
+      'الحفاظ على دقة مرآة الوحدات المتاحة — الحالات والأسعار والصور',
+      'تشغيل التوسيم المكاني على المسقط الافتتاحي لهايد بارك وأي سيتي',
+      'مراقبة سير العمل الآلي (الاستقبال ← التحليل الذكي ← الترميز ← المزامنة ← التنبيهات)',
     ],
     requirementsEn: [
-      '1-2 years experience managing CRM systems (HubSpot, Salesforce, Zoho, or proprietary)',
-      'High typing speed and advanced Excel/Sheets formula proficiency',
-      'Analytical mindset and strong data hygiene ethics',
+      '1+ year in real estate operations, data, or PropTech',
+      'Advanced Google Sheets + Excel; comfort with SQL/CRMs a strong plus',
+      'Obsessive data hygiene — duplicates and stale statuses are your enemy',
+      'Based in / commuting to New Cairo',
     ],
     requirementsAr: [
-      'خبرة سنة إلى سنتين في إدارة أنظمة الـ CRM وإدخال البيانات العقارية',
-      'إجادة متقدمة لـ Excel وقواعد البيانات وسرعة ودقة إدخال البيانات',
-      'دقة والتزام بأعلى معايير سرية وحماية بيانات العملاء',
+      'خبرة سنة أو أكثر في العمليات العقارية أو البيانات أو التقنية العقارية',
+      'إجادة متقدمة لجوجل شيتس وإكسل — معرفة SQL أنظمة CRM ميزة قوية',
+      'دقة هوس في نظافة البيانات — التكرار والحالات القديمة عدوك الأول',
+      'الإقامة أو القدرة على التنقل إلى القاهرة الجديدة',
     ],
-    skills: ['CRM Administration', 'Data Entry', 'Lead Routing', 'Excel Formulas', 'Reporting'],
-  },
-  {
-    id: 'admin-executive-assistant',
-    dept: 'admin',
-    deptEn: 'Administration & Operations',
-    deptAr: 'الشؤون الإدارية والعمليات',
-    titleEn: 'Executive Assistant & Office Manager',
-    titleAr: 'مدير مكتب ومساعد تنفيذي (Executive Assistant)',
-    typeEn: 'Full-time',
-    typeAr: 'دوام كامل',
-    locEn: 'New Cairo Headquarters',
-    locAr: 'المقر الرئيسي بالتجمع الخامس',
-    urgent: false,
-    salaryEn: 'Attractive Salary + Full Benefits Package',
-    salaryAr: 'راتب متميز + حزمة مزايا وتأمينات كاملة',
-    descEn: 'Support the Managing Director and Executive Board with calendar coordination, VIP partner reception, board meeting agendas, and executive correspondence.',
-    descAr: 'تقديم الدعم التنفيذي الشامل للإدارة العليا، تنظيم جداول المواعيد والاجتماعات، استقبال كبار المطورين والمستثمرين، وإعداد المراسلات الرسمية.',
-    responsibilitiesEn: [
-      'Manage CEO/MD calendar, appointments, and travel arrangements',
-      'Prepare board meeting agendas, take detailed minutes, and track action items',
-      'Welcome high-profile VIP guests and institutional partners to our headquarters',
-    ],
-    responsibilitiesAr: [
-      'تنظيم جدول أعمال ومواعيد الإدارة العامة والاجتماعات الخارجية',
-      'إعداد جداول أعمال الاجتماعات وتدوين المحاضر ومتابعة تنفيذ القرارات',
-      'استقبال كبار الزوار والوفود الاستثمارية والمطورين في المقر الرئيسي',
-    ],
-    requirementsEn: [
-      '3+ years as an Executive Assistant to C-level executives (real estate background preferred)',
-      'Polished appearance, executive presence, and discreet confidentiality',
-      'Exceptional bilingual written and spoken English and Arabic',
-    ],
-    requirementsAr: [
-      'خبرة لا تقل عن 3 سنوات كمساعد تنفيذي للإدارة العليا (يفضل في القطاع العقاري أو الشركات الكبرى)',
-      'مظهر لائق واحترافية عالية وأمانة وسرية تامة',
-      'إتقان تام للغتين العربية والإنجليزية تحدثاً وكتابة',
-    ],
-    skills: ['Executive Support', 'Calendar Management', 'Business Writing', 'VIP Protocol', 'Organization'],
+    skills: ['Data Operations', 'Google Sheets API', 'Unit Coding Rules', 'Deduplication', 'Automation'],
   },
 ];
+
 
 const VALUES = [
   {
     icon: DollarSign,
-    titleEn: 'Uncapped Earning Potential',
-    titleAr: 'دخل وعمولات غير محدودة',
-    descEn: 'Industry-leading commission tiers paid promptly with zero caps on your earning capability.',
-    descAr: 'أعلى نسب عمولات في السوق العقاري المصري تُصرف بانتظام وبدون حد أقصى لأرباحك.',
+    titleEn: 'Clear Commission Tiers',
+    titleAr: 'شرائح عمولة واضحة',
+    descEn: 'Tier 1 — Online Consultant: 30% of the Sierra fee. Tier 2 — In-Office Senior Advisor: 35% + quarterly milestone bonus. Tier 3 — PropTech Ops: fixed salary + per-unit coding override. All uncapped, all paid promptly.',
+    descAr: 'الشريحة 1 — مستشار أونلاين: 30% من أتعاب سييرا. الشريحة 2 — مستشار أول بالمكتب: 35% + بونص ربع سنوي. الشريحة 3 — عمليات الانفنتوري: راتب ثابت + حافز لكل وحدة. جميعها بدون سقف وتُصرف فوراً.',
   },
   {
     icon: Sparkles,
-    titleEn: 'AI-Powered Warm Leads',
-    titleAr: 'ليدات حصرية بالذكاء الاصطناعي',
-    descEn: 'Stop cold-calling. Our proprietary AVM & matching engine feeds you pre-qualified high intent buyers.',
-    descAr: 'وداعاً للاتصالات العشوائية. نظامنا الذكي يوفر لك يومياً عملاء جادين جاهزين للتعاقد.',
+    titleEn: 'AI-Powered Leads & Inventory Tools',
+    titleAr: 'ليدات وأدوات انفنتوري بالذكاء الاصطناعي',
+    descEn: 'Every client request arrives AI-matched to live unit codes from Real_Available_Units; every listing you touch is coded, deduped and synced across Supabase + Google Sheets automatically. Stop cold-calling — start advising.',
+    descAr: 'كل طلب عميل يصلك مطابقاً مسبقاً لأكواد وحدات حقيقية من الوحدات المتاحة؛ وكل إعلان تعمل عليه يُرمز ويُنقّى من التكرار ويُزامن تلقائياً بين سوبابيس وجوجل شيتس. وداعاً للاتصال العشوائي — ابدأ الاستشارة.',
   },
   {
     icon: Rocket,
@@ -348,10 +199,10 @@ const VALUES = [
   },
   {
     icon: Building,
-    titleEn: 'Prime Project Mandates',
-    titleAr: 'مشروعات حصرية ومحافظ مميزة',
-    descEn: 'Exclusive marketing mandates on premier commercial assets like Cairo Plaza and top compounds.',
-    descAr: 'تفويضات تسويق حصرية لأقوى المشروعات التجارية والسكنية مثل كايرو بلازا والتجمع.',
+    titleEn: 'Sierra Blue Realty — New Cairo & Fifth Settlement',
+    titleAr: 'Sierra Blue Realty — القاهرة الجديدة والتجمع الخامس',
+    descEn: 'THE BEST DECISIONS, AI-DRIVEN. Exclusive mandates across Hyde Park, Mountain View iCity and the Golden Square compounds of the Fifth Settlement.',
+    descAr: 'أفضل القرارات، بالذكاء الاصطناعي. تفويضات حصرية في هايد بارك وماونتن فيو أي سيتي وكمبوندات جولدن سكوير بالتجمع الخامس.',
   },
 ];
 
@@ -608,7 +459,7 @@ export default function CareerPage() {
                   }}
                   className="cr-job-apply-form"
                 >
-                  {isAr ? 'وظائف المبيعات الشاغرة (4)' : 'View Sales Roles (4)'} →
+                  {isAr ? 'وظائف المبيعات الشاغرة (2)' : 'View Sales Roles (2)'} →
                 </button>
               </div>
 
@@ -638,7 +489,7 @@ export default function CareerPage() {
                   className="cr-job-apply-form"
                   style={{ background: 'linear-gradient(135deg, #c99436, #9e7934)', color: '#081423' }}
                 >
-                  {isAr ? 'وظائف الإدارة الشاغرة (3)' : 'View Admin Roles (3)'} →
+                  {isAr ? 'وظائف العمليات الشاغرة (1)' : 'View Operations Role (1)'} →
                 </button>
               </div>
             </div>
@@ -678,8 +529,8 @@ export default function CareerPage() {
             <div className="cr-dept-filters" aria-label={isAr ? 'أقسام الوظائف' : 'Department filters'}>
               {[
                 { id: 'all', labelEn: 'All Openings', labelAr: 'جميع الوظائف الشاغرة' },
-                { id: 'sales', labelEn: 'Sales & Advisory (4)', labelAr: 'المبيعات والاستشارات (4)' },
-                { id: 'admin', labelEn: 'Admin & Operations (3)', labelAr: 'الشؤون الإدارية والعمليات (3)' },
+                { id: 'sales', labelEn: 'Sales & Advisory (2)', labelAr: 'المبيعات والاستشارات (2)' },
+                { id: 'admin', labelEn: 'PropTech & Operations (1)', labelAr: 'التقنية والعمليات (1)' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -764,7 +615,7 @@ export default function CareerPage() {
                           <a
                             href="#apply"
                             onClick={() => {
-                              setSelectedPosition(isAr ? j.titleAr : j.titleEn);
+                              setSelectedPosition(j.titleEn);
                             }}
                             className="cr-job-apply-form"
                           >
@@ -828,9 +679,9 @@ export default function CareerPage() {
               {isAr ? 'ابدأ خطوتك القادمة معنا' : 'Submit Your Application'}
             </h2>
 
-            <div className="cr-form-card">
-              {/* WhatsApp Fast-Track Banner */}
-              <div className="cr-wa-fasttrack">
+            {/* WhatsApp Fast-Track Banner */}
+            <div className="cr-form-card" style={{ marginBottom: 24, padding: 0, overflow: 'hidden' }}>
+              <div className="cr-wa-fasttrack" style={{ marginBottom: 0, border: 'none' }}>
                 <div className="cr-wa-fasttrack-text">
                   <strong>{isAr ? '⚡ تفضل التقديم المباشر والسريع؟' : '⚡ Prefer Fast WhatsApp Submission?'}</strong>
                   <span>{isAr ? 'تواصل مع مسؤول التوظيف وأرسل سيرتك الذاتية في ثوانٍ' : 'Chat with our hiring desk and send your CV directly via WhatsApp'}</span>
@@ -844,19 +695,13 @@ export default function CareerPage() {
                   {isAr ? 'محادثة واتساب مباشرة' : 'Direct WhatsApp Chat'}
                 </button>
               </div>
-
-              <ApplicantForm
-                key={selectedPosition}
-                positions={JOBS.map((j) => ({
-                  value: isAr ? j.titleAr : j.titleEn,
-                  label: isAr ? j.titleAr : j.titleEn,
-                  role: j.dept === 'admin' ? 'admin' : 'sales',
-                }))}
-                isAr={isAr}
-                defaultPosition={selectedPosition}
-                whatsappApplyHref="https://chat.whatsapp.com/BTjxkLJFO6m7lgaS4dzh1F"
-              />
             </div>
+
+            <CareerApplicationForm
+              key={selectedPosition}
+              isAr={isAr}
+              defaultRole={selectedPosition}
+            />
 
             {/* Direct HR Contacts */}
             <div className="cr-contact-bar">
