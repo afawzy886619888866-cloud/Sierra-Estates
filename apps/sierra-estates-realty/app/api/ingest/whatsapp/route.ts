@@ -173,24 +173,35 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── Authoritative Real Estate Excel & Supabase Chat Router (Rules 1, 1.1, 2, 3, 4) ──
+    // ── Client-request router (Rules 1.1) ──────────────────────────────────
+    // The ChatListingRouter's CASE B (listing extraction/insert) runs BEFORE
+    // the canonical G2 pipeline below and inserts its own `listings` row for
+    // every broker listing message — double-inserting what the canonical
+    // path (dupeCheckHash dedupe + §21 staging) already handles. The router
+    // is therefore gated to client_request messages ONLY: requests are its
+    // net-new capability (Client_Requests sheet + client_requests table);
+    // listing messages keep flowing through the canonical pipeline. The
+    // router's dedupe (Rule 2, phone/price) remains available for its own
+    // inserts the day client-request handling is extended.
     const { ChatListingRouter } = await import('@/lib/services/ChatListingRouter');
-    const chatResult = await ChatListingRouter.processChatMessage({
-      rawMessage,
-      senderPhone: sender,
-      senderName: sender,
-      sourceGroup: group,
-      mediaUrls: body.mediaUrls || (body.media?.url ? [body.media.url] : []),
-    });
-
-    if (chatResult.category === 'client_request') {
-      return NextResponse.json({
-        success: true,
-        category: 'client_request',
-        requestCode: chatResult.referenceCode,
-        targetSheets: chatResult.targetSheets,
-        orchestration: 'Isolated to Client_Requests sheet and Supabase client_requests table',
+    if (ChatListingRouter.isClientRequest(rawMessage)) {
+      const chatResult = await ChatListingRouter.processChatMessage({
+        rawMessage,
+        senderPhone: sender,
+        senderName: sender,
+        sourceGroup: group,
+        mediaUrls: body.mediaUrls || (body.media?.url ? [body.media.url] : []),
       });
+
+      if (chatResult.category === 'client_request') {
+        return NextResponse.json({
+          success: true,
+          category: 'client_request',
+          requestCode: chatResult.referenceCode,
+          targetSheets: chatResult.targetSheets,
+          orchestration: 'Isolated to Client_Requests sheet and Supabase client_requests table',
+        });
+      }
     }
 
     const parsed = await WhatsAppParserService.parseMessage(rawMessage);
