@@ -222,7 +222,7 @@ export function NewListing({
     // Auto-detect role hint
     const roleHint = detectRoleFromText(val)
     if (roleHint && role === 'OWNER') {
-      setRole(roleHint)
+      setRole(roleHint.role)
     }
     // Detect rent vs sale
     if (val.includes('إيجار') || val.includes('ايجار') || val.toLowerCase().includes('rent')) {
