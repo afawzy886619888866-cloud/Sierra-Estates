@@ -553,7 +553,7 @@ def build_joker_workbook(listings, client_requests):
     build_dynamic_joker_tab("Property_Finder_Ads", "SELECT * WHERE Q IS NOT NULL AND E > 0", pf_ads)
 
     # =========================================================
-    # TAB 8: Dashboard (Formulas pointing directly to Joker)
+    # TAB 8: Dashboard (Standard Full-Column Formulas for Google Sheets & Excel)
     # =========================================================
     ws_dash = wb.create_sheet(title="Dashboard")
     ws_dash.views.sheetView[0].showGridLines = True
@@ -567,18 +567,30 @@ def build_joker_workbook(listings, client_requests):
     ws_dash.cell(row=3, column=2, value="VALUE").font = font_header
     ws_dash.cell(row=3, column=2).fill = fill_header
 
-    dash_formulas = [
-        ("Total Clean Inventory (Master Joker)", '=COUNTA(Master_Inventory!A2:A)'),
-        ("Direct Owners Rent (<= 400k)", '=COUNTIFS(Master_Inventory!B2:B, "Direct Owner", Master_Inventory!C2:C, "Rent")'),
-        ("Direct Owners Resale (> 400k)", '=COUNTIFS(Master_Inventory!B2:B, "Direct Owner", Master_Inventory!C2:C, "Resale")'),
-        ("Brokers Network Rent (<= 400k)", '=COUNTIFS(Master_Inventory!B2:B, "Broker", Master_Inventory!C2:C, "Rent")'),
-        ("Brokers Network Resale (> 400k)", '=COUNTIFS(Master_Inventory!B2:B, "Broker", Master_Inventory!C2:C, "Resale")'),
-        ("Confirmed Available Units", '=COUNTIF(Master_Inventory!O2:O, "Available")'),
-        ("Property Finder Syndication Ready (Photos)", '=COUNTIFS(Master_Inventory!Q2:Q, "<>", Master_Inventory!E2:E, ">0")'),
-        ("Client Demand Requests (Isolated)", '=COUNTA(Client_Requests!A2:A)'),
+    # Pre-calculated reference counts
+    c_total = len(listings)
+    c_or = len(owners_rent)
+    c_os = len(owners_resale)
+    c_br = len(brokers_rent)
+    c_bs = len(brokers_resale)
+    c_avail = len(available_units)
+    c_pf = len(pf_ads)
+    c_req = len(client_requests)
+
+    # Standard OpenXML formulas compatible with both Google Sheets and Excel
+    # Avoid open ranges like A2:A which trigger #ERROR! / #REF! upon Google Sheets import.
+    dash_metrics = [
+        ("Total Clean Inventory (Master Joker)", '=COUNTA(Master_Inventory!A:A)-1', c_total),
+        ("Direct Owners Rent (<= 400k)", '=COUNTIFS(Master_Inventory!B:B, "Direct Owner", Master_Inventory!C:C, "Rent")', c_or),
+        ("Direct Owners Resale (> 400k)", '=COUNTIFS(Master_Inventory!B:B, "Direct Owner", Master_Inventory!C:C, "Resale")', c_os),
+        ("Brokers Network Rent (<= 400k)", '=COUNTIFS(Master_Inventory!B:B, "Broker", Master_Inventory!C:C, "Rent")', c_br),
+        ("Brokers Network Resale (> 400k)", '=COUNTIFS(Master_Inventory!B:B, "Broker", Master_Inventory!C:C, "Resale")', c_bs),
+        ("Confirmed Available Units", '=COUNTIF(Master_Inventory!O:O, "Available")', c_avail),
+        ("Property Finder Syndication Ready (Photos)", '=COUNTIFS(Master_Inventory!Q:Q, "<>", Master_Inventory!E:E, ">0")', c_pf),
+        ("Client Demand Requests (Isolated)", '=COUNTA(Client_Requests!A:A)-1', c_req),
     ]
 
-    for idx, (label, formula) in enumerate(dash_formulas, start=4):
+    for idx, (label, formula, initial_val) in enumerate(dash_metrics, start=4):
         ws_dash.row_dimensions[idx].height = 22
         c1 = ws_dash.cell(row=idx, column=1, value=label)
         c2 = ws_dash.cell(row=idx, column=2, value=formula)
