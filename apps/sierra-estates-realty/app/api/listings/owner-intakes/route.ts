@@ -142,7 +142,7 @@ export async function GET() {
           syncSource.includes('easy-listing') ||
           String(r.source ?? '') === 'web-submission'
         ) {
-          const compound = String(r.compound ?? r.cmp ?? 'New Cairo');
+          const compound = String(r.compound ?? r.cmp ?? '');
           const ownerType = String(r.ownerType ?? r.owner_type ?? 'Owner').toUpperCase();
           const agentName = String(r.agentName ?? r.agent_name ?? r.agent ?? '');
           const role: OwnerBotIntakeItem['role'] =
@@ -158,15 +158,15 @@ export async function GET() {
             id: String(r.id ?? r.code ?? Math.random()),
             code: String(r.code ?? 'SE-UNIT'),
             compound,
-            zone: String(r.city ?? r.locationArea ?? '5th Settlement'),
-            propertyType: String(r.propertyType ?? r.property_type ?? r.type ?? 'Apartment'),
+            zone: String(r.city ?? r.locationArea ?? ''),
+            propertyType: String(r.propertyType ?? r.property_type ?? r.type ?? 'Unit'),
             mode: String(r.mode ?? r.dealType ?? 'sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
-            area: Number(r.areaSqm ?? r.area_sqm ?? r.area ?? 160),
+            area: Number(r.areaSqm ?? r.area_sqm ?? r.area ?? 0),
             gardenArea: Number(r.gardenArea ?? r.garden_area ?? 0),
-            beds: Number(r.bedrooms ?? r.beds ?? 3),
-            baths: Number(r.bathrooms ?? r.baths ?? 2),
+            beds: Number(r.bedrooms ?? r.beds ?? 0),
+            baths: Number(r.bathrooms ?? r.baths ?? 0),
             price: Number(r.price ?? 0),
-            finishing: String(r.finishingType ?? r.finishing ?? 'Fully Finished'),
+            finishing: String(r.finishingType ?? r.finishing ?? ''),
             role,
             contactName: String(r.ownerName ?? r.owner_name ?? r.brokerName ?? 'Direct Owner'),
             ownerPhone: String(r.ownerPhone ?? r.owner_phone ?? r.mobile ?? '01092048333'),
@@ -175,7 +175,7 @@ export async function GET() {
             rawText: String(r.description ?? r.comment ?? `${compound} - ${r.code}`),
             status: sourceChannel === 'bot' ? 'owner_reply_yes' : 'synced',
             createdAt: String(r.createdAt ?? r.created_at ?? new Date().toISOString()),
-            mapLink: `https://maps.google.com/?q=${encodeURIComponent(compound + ' New Cairo')}`,
+            mapLink: compound ? `https://maps.google.com/?q=${encodeURIComponent(compound + ' New Cairo')}` : '',
           });
         }
       }
@@ -204,24 +204,24 @@ export async function GET() {
             harvestedItems.push({
               id: String(item.id || `hw-${Math.random().toString(36).slice(2, 7)}`),
               code: `WA-${String(item.id || '').replace(/^hw_/, '').slice(0, 10).toUpperCase()}`,
-              compound: String(item.compound || 'New Cairo'),
-              zone: String(item.zone || '5th Settlement'),
-              propertyType: String(item.unitType || 'Apartment'),
+              compound: String(item.compound || ''),
+              zone: String(item.zone || ''),
+              propertyType: String(item.unitType || 'Unit'),
               mode: String(item.dealType || 'Sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
-              area: Number(item.areaSqm || 180),
+              area: Number(item.areaSqm || 0),
               gardenArea: 0,
-              beds: Number(item.bedrooms || 3),
-              baths: 2,
+              beds: Number(item.bedrooms || 0),
+              baths: 0,
               price: Number(item.priceEgp || 0),
-              finishing: 'Fully Finished',
+              finishing: '',
               role: role as OwnerBotIntakeItem['role'],
               contactName: String(item.brokerName || (role === 'BROKER' ? 'WhatsApp Broker' : 'WhatsApp Owner')),
               ownerPhone: phone || '01092048333',
               brokerPhone: role === 'BROKER' ? phone : undefined,
-              rawText: String(item.rawText || `${item.compound} - WhatsApp Ingest`),
+              rawText: String(item.rawText || `${item.compound || 'Unit'} - WhatsApp Ingest`),
               status: 'owner_reply_yes',
               createdAt: String(item.harvestedAt || new Date().toISOString()),
-              mapLink: `https://maps.google.com/?q=${encodeURIComponent((item.compound || 'New Cairo') + ' New Cairo')}`,
+              mapLink: item.compound ? `https://maps.google.com/?q=${encodeURIComponent(item.compound + ' New Cairo')}` : '',
             });
           } catch {
             // Skip invalid line
@@ -252,7 +252,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const code = String(body.code || `SE-BOT-${Date.now().toString().slice(-4)}`);
-    const compound = String(body.compound || 'New Cairo');
+    const compound = String(body.compound || '');
     const phone = String(body.ownerPhone || body.phone || '');
 
     try {
@@ -269,7 +269,7 @@ export async function POST(request: Request) {
           price: Number(body.price || 0),
           bedrooms: Number(body.beds || 0),
           bathrooms: Number(body.baths || 0),
-          unitType: String(body.propertyType || 'Apartment'),
+          unitType: String(body.propertyType || 'Unit'),
         },
       });
     } catch {

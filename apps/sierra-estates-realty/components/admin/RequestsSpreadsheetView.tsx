@@ -4,25 +4,15 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Table2,
   Search,
-  Filter,
   RefreshCw,
   ExternalLink,
   Download,
-  CheckCircle2,
-  Clock,
   Phone,
-  MessageSquare,
-  Users,
-  Eye,
   Sparkles,
-  Calendar,
-  Building,
-  Check,
-  Copy,
   Briefcase,
-  Car,
   FileText,
-  UserCheck,
+  Plus,
+  X,
 } from 'lucide-react';
 import type { RequestSheetRow } from '@/lib/services/RequestSheetSyncService';
 import type { CareerSheetRow } from '@/lib/services/CareerSheetSyncService';
@@ -65,9 +55,36 @@ export default function RequestsSpreadsheetView({ lang = 'ar' }: { lang?: string
   const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [filterStatus] = useState<string>('all');
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  // Add Request / Add Candidate Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [savingNew, setSavingNew] = useState(false);
+  const [newReq, setNewReq] = useState({
+    type: 'buyer_demand' as 'buyer_demand' | 'viewing_request',
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    mode: 'sale' as 'sale' | 'rent',
+    preferredZone: 'New Cairo',
+    unitType: 'Apartment',
+    bedrooms: '3',
+    budget: '',
+    notes: '',
+  });
+  const [newCareer, setNewCareer] = useState({
+    role: 'sales' as 'sales' | 'admin',
+    fullName: '',
+    phone: '',
+    email: '',
+    position: 'Senior Real Estate Sales Consultant',
+    experience: '2',
+    hasVehicle: true,
+    expectedSalary: '',
+    cvUrl: '',
+    notes: '',
+  });
 
   const fetchSpreadsheetData = useCallback(async () => {
     setLoading(true);
@@ -128,10 +145,96 @@ export default function RequestsSpreadsheetView({ lang = 'ar' }: { lang?: string
     }
   };
 
-  const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const handleStatusChange = async (id: string, status: string, tab: 'requests' | 'careers') => {
+    try {
+      const res = await fetch('/api/admin/requests/sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_status', tab, id, status }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (tab === 'careers') {
+          setCareerRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: status as CareerSheetRow['status'] } : r)));
+        } else {
+          setReqRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: status as RequestSheetRow['status'] } : r)));
+        }
+        setStatusMsg({
+          type: 'ok',
+          text: isAr ? `✓ تم تحديث الحالة إلى ${status}` : `✓ Updated status to ${status}`,
+        });
+        setTimeout(() => setStatusMsg(null), 3000);
+      }
+    } catch (err: any) {
+      setStatusMsg({ type: 'err', text: err.message || 'Status update failed' });
+    }
+  };
+
+  const handleCreateEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingNew(true);
+    setStatusMsg(null);
+    try {
+      const payload =
+        activeTab === 'requests'
+          ? {
+              action: 'add',
+              requestData: {
+                type: newReq.type,
+                clientName: newReq.clientName.trim(),
+                clientPhone: newReq.clientPhone.trim(),
+                clientEmail: newReq.clientEmail.trim(),
+                mode: newReq.mode,
+                preferredZone: newReq.preferredZone.trim() || 'New Cairo',
+                unitType: newReq.unitType,
+                bedrooms: Number(newReq.bedrooms || 0),
+                budget: newReq.budget.trim() || 'Open',
+                notes: newReq.notes.trim(),
+                source: 'admin_online_sheet',
+              },
+            }
+          : {
+              action: 'add_career',
+              careerData: {
+                role: newCareer.role,
+                fullName: newCareer.fullName.trim(),
+                phone: newCareer.phone.trim(),
+                email: newCareer.email.trim(),
+                position: newCareer.position.trim(),
+                experience: newCareer.experience.trim() || '1',
+                hasVehicle: newCareer.hasVehicle,
+                expectedSalary: newCareer.expectedSalary.trim(),
+                cvUrl: newCareer.cvUrl.trim(),
+                notes: newCareer.notes.trim(),
+                source: 'admin_online_sheet',
+              },
+            };
+
+      const res = await fetch('/api/admin/requests/sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to save entry');
+
+      setShowAddModal(false);
+      await fetchSpreadsheetData();
+      setStatusMsg({
+        type: 'ok',
+        text: isAr
+          ? '✓ تم إضافة السجل ومزامنته مع الشيت أونلاين فوراً!'
+          : '✓ Entry added and synchronized to the Online Sheet!',
+      });
+      setTimeout(() => setStatusMsg(null), 4000);
+    } catch (err: any) {
+      setStatusMsg({
+        type: 'err',
+        text: isAr ? `✕ تعذر الحفظ: ${err.message}` : `✕ Save failed: ${err.message}`,
+      });
+    } finally {
+      setSavingNew(false);
+    }
   };
 
   // Filtered Requests
@@ -429,6 +532,36 @@ export default function RequestsSpreadsheetView({ lang = 'ar' }: { lang?: string
 
           <button
             type="button"
+            onClick={() => setShowAddModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              borderRadius: 10,
+              background: activeTab === 'careers' ? '#4f46e5' : '#0ea5e9',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(14, 165, 233, 0.22)',
+            }}
+          >
+            <Plus style={{ width: 14, height: 14 }} />
+            <span>
+              {activeTab === 'careers'
+                ? isAr
+                  ? '+ إضافة متقدم'
+                  : '+ Add Applicant'
+                : isAr
+                ? '+ إضافة طلب'
+                : '+ Add Request'}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={exportCsv}
             style={{
               display: 'inline-flex',
@@ -719,18 +852,24 @@ export default function RequestsSpreadsheetView({ lang = 'ar' }: { lang?: string
                         )}
                       </td>
                       <td style={{ padding: '10px 14px' }}>
-                        <span
+                        <select
+                          value={row.status}
+                          onChange={(e) => handleStatusChange(row.id, e.target.value, 'requests')}
                           style={{
-                            padding: '3px 8px',
+                            padding: '3px 6px',
                             borderRadius: 6,
                             fontSize: 11,
                             fontWeight: 700,
                             background: row.status === 'new' ? '#dbeafe' : '#f1f5f9',
                             color: row.status === 'new' ? '#1e40af' : '#475569',
+                            border: '1px solid #cbd5e1',
                           }}
                         >
-                          {row.status}
-                        </span>
+                          <option value="new">new</option>
+                          <option value="contacted">contacted</option>
+                          <option value="viewing_scheduled">viewing_scheduled</option>
+                          <option value="closed">closed</option>
+                        </select>
                       </td>
                       <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                         <a
@@ -899,6 +1038,206 @@ export default function RequestsSpreadsheetView({ lang = 'ar' }: { lang?: string
           )}
         </div>
       </div>
+
+      {/* ── Inline Add Request / Add Candidate Modal ── */}
+      {showAddModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 60,
+            background: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 520,
+              background: '#ffffff',
+              borderRadius: 16,
+              padding: 24,
+              boxShadow: '0 20px 50px rgba(15, 23, 42, 0.25)',
+              direction: isAr ? 'rtl' : 'ltr',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+                {activeTab === 'careers'
+                  ? isAr
+                    ? 'إضافة مرشح / موظف جديد للشيت أونلاين'
+                    : 'Add Candidate to Careers Online Sheet'
+                  : isAr
+                  ? 'إضافة طلب عقاري جديد للشيت أونلاين'
+                  : 'Add Client Request to Online Sheet'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X style={{ width: 18, height: 18 }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateEntry} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {activeTab === 'requests' ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <input
+                      required
+                      placeholder={isAr ? 'اسم العميل' : 'Client Name'}
+                      value={newReq.clientName}
+                      onChange={(e) => setNewReq((p) => ({ ...p, clientName: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                    <input
+                      required
+                      placeholder={isAr ? 'رقم الموبايل (01xxxxxxxxx)' : 'Phone (01xxxxxxxxx)'}
+                      value={newReq.clientPhone}
+                      onChange={(e) => setNewReq((p) => ({ ...p, clientPhone: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <select
+                      value={newReq.type}
+                      onChange={(e) => setNewReq((p) => ({ ...p, type: e.target.value as 'buyer_demand' | 'viewing_request' }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    >
+                      <option value="buyer_demand">{isAr ? 'طلب شراء / إيجار' : 'Buyer Demand'}</option>
+                      <option value="viewing_request">{isAr ? 'طلب معاينة' : 'Viewing Request'}</option>
+                    </select>
+                    <select
+                      value={newReq.mode}
+                      onChange={(e) => setNewReq((p) => ({ ...p, mode: e.target.value as 'sale' | 'rent' }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    >
+                      <option value="sale">{isAr ? 'شراء (Sale)' : 'Sale'}</option>
+                      <option value="rent">{isAr ? 'إيجار (Rent)' : 'Rent'}</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <input
+                      placeholder={isAr ? 'الكومباوند / المنطقة المفضلة' : 'Preferred Zone / Compound'}
+                      value={newReq.preferredZone}
+                      onChange={(e) => setNewReq((p) => ({ ...p, preferredZone: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                    <input
+                      placeholder={isAr ? 'الميزانية (مثال: 14M)' : 'Budget (e.g. 14M)'}
+                      value={newReq.budget}
+                      onChange={(e) => setNewReq((p) => ({ ...p, budget: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                  </div>
+                  <textarea
+                    rows={2}
+                    placeholder={isAr ? 'ملاحظات إضافية...' : 'Additional notes...'}
+                    value={newReq.notes}
+                    onChange={(e) => setNewReq((p) => ({ ...p, notes: e.target.value }))}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <input
+                      required
+                      placeholder={isAr ? 'الاسم بالكامل' : 'Full Name'}
+                      value={newCareer.fullName}
+                      onChange={(e) => setNewCareer((p) => ({ ...p, fullName: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                    <input
+                      required
+                      placeholder={isAr ? 'رقم الموبايل (01xxxxxxxxx)' : 'Phone (01xxxxxxxxx)'}
+                      value={newCareer.phone}
+                      onChange={(e) => setNewCareer((p) => ({ ...p, phone: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <select
+                      value={newCareer.role}
+                      onChange={(e) => setNewCareer((p) => ({ ...p, role: e.target.value as 'sales' | 'admin' }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    >
+                      <option value="sales">{isAr ? 'مبيعات (Sales)' : 'Sales & Advisory'}</option>
+                      <option value="admin">{isAr ? 'إدارة (Admin / Ops)' : 'Admin & Operations'}</option>
+                    </select>
+                    <input
+                      placeholder={isAr ? 'المسمى الوظيفي' : 'Position Title'}
+                      value={newCareer.position}
+                      onChange={(e) => setNewCareer((p) => ({ ...p, position: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <input
+                      placeholder={isAr ? 'سنوات الخبرة' : 'Experience Years'}
+                      value={newCareer.experience}
+                      onChange={(e) => setNewCareer((p) => ({ ...p, experience: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                    <input
+                      placeholder={isAr ? 'الراتب المتوقع' : 'Expected Salary'}
+                      value={newCareer.expectedSalary}
+                      onChange={(e) => setNewCareer((p) => ({ ...p, expectedSalary: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    />
+                  </div>
+                  <textarea
+                    rows={2}
+                    placeholder={isAr ? 'ملاحظات أو رابط CV...' : 'Notes or CV summary...'}
+                    value={newCareer.notes}
+                    onChange={(e) => setNewCareer((p) => ({ ...p, notes: e.target.value }))}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#475569',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingNew}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: savingNew ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {savingNew ? (isAr ? 'جاري الحفظ...' : 'Saving...') : isAr ? 'حفظ ومزامنة مع الشيت' : 'Save & Sync to Sheet'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

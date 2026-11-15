@@ -96,6 +96,26 @@ POST /api/memory/events
 ```
 
 
+## Agent Registry, I/O Contracts & Critical Invariants
+
+Centralized prompt contracts live in [`prompts/index.ts`](./prompts/index.ts) (mirrored in `apps/sierra-estates-realty/lib/prompts/index.ts`), unified agent handlers live in [`agents/index.ts`](./agents/index.ts), core validators live in [`core/index.ts`](./core/index.ts), and automation status definitions live in [`automations/index.ts`](./automations/index.ts).
+
+| Agent | Role | Prompt ID | Trigger Condition | Input Contract | Output Schema (Zod / Type) |
+|---|---|---|---|---|---|
+| **PropertyParserAgent** | Extracts structured Arabic/English unit data & owner vs broker source | `property-parser` | WhatsApp group chat paste/stream, Telegram intake, sheet import | `{ rawText, source?, defaultPhone? }` | `PropertyListingExtractionSchema` |
+| **UnitCoderAgent** | Generates canonical `SE-<COMP>-<S\|R>-<AREA>-<SUFFIX>` codes | `unit-coder` | Post-extraction or `/add-listing` / `/easy-listing` submit | `{ compound, mode, areaSqm?, phone?, unitNumber? }` | `UnitCodeValidationSchema` |
+| **InventoryMatcherAgent** | Matches client requests against available units & computes arbitrage | `inventory-matcher` | New `/request`, `/api/inquiries`, or group demand message | `{ requestId, zone, mode, budgetEgp, candidates }` | `InventoryMatchResultSchema` |
+| **LeadQualifierAgent** | Scores lead intent (`HIGH`/`MEDIUM`/`LOW`) & drafts Arabic WhatsApp greeting | `lead-qualifier` | Website inquiry, viewing request, campaign voucher capture | `{ leadId, name, zone, budget }` | `LeadQualificationSchema` |
+| **WhatsAppDispatcherAgent** | Generates public group unit reply + private admin phone forward | `owner-reply-classifier` | Group match or closed-loop owner reply webhook | `{ unitCode, compound, unitType, mode, contactPhone, channelSource }` | `{ publicGroupMessage, privateAdminForward, adminRecipient }` |
+| **CareerEvaluatorAgent** | Evaluates `/career` candidates across Sales & Admin tracks (`Tier A/B/C`) | `career-evaluator` | `POST /api/careers/apply` or Admin Career Sheet sync | `{ applicationId, role, experienceYears, hasVehicle, achievements }` | `CareerEvaluationSchema` |
+
+### Critical System Invariants (Never Violate)
+1. **Public Group Contact Privacy Lock:** `WhatsAppDispatcherAgent` (`formatPublicGroupAutoReply`) MUST restrict WhatsApp group auto-replies strictly to unit details and `unitCode` — NEVER expose owner or broker phone numbers in public/group chats. Forward confidential phone numbers privately ONLY to `01092048333` (`AGENCY_HELPLINE`).
+2. **Phone & Unit Deduplication Lock:** All incoming phones must pass through `normalizeEgyptianPhone()` (`core/deduplication.ts`) into 11-digit `01xxxxxxxxx` format and be keyed with canonical compound + area bucket (`buildUnitDedupKey`) before database upsert or Google Sheets append.
+3. **Rent Ceiling & Commission Guard:** Rental units use monthly EGP rates (`<= 400,000 EGP`); resale listings store full EGP price. Standard brokerage commission rates and AVM pricing estimates must never be silently fabricated.
+4. **Online Spreadsheet Mirrors:** Every customer inquiry (`/request`, `/api/inquiries`, `/api/viewing-requests`) syncs to `Client_Requests` and every job/employee submission (`/career`, `/api/careers/apply`) syncs to `Career_Applications`, both viewable and editable inside `/admin` -> Online Spreadsheet (`RequestsSpreadsheetView`).
+5. **No Silent Failures:** All LLM outputs must be validated with `validatePromptOutput(promptId, payload)`, and missing required environment secrets must surface explicitly via `validateEnv()` (`core/env-validator.ts`).
+
 <!-- BEGIN:turborepo-agent-rules -->
 
 # This is NOT the Turborepo you know

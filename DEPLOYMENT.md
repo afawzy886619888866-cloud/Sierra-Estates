@@ -73,6 +73,13 @@ flowchart TD
 | `TELEGRAM_BOT_TOKEN` | Secret | Bot token for agency operations alerts (`@arias_sierra_blue_bot`). |
 | `PROPERTY_FINDER_API_KEY` | Secret | Property Finder Enterprise Atlas v1 client key. |
 | `PROPERTY_FINDER_API_SECRET` | Secret | Property Finder Enterprise Atlas v1 client secret. |
+| `CRON_SECRET` | Secret | Bearer token authenticating Vercel daily cron endpoints (`/api/cron/*`). |
+| `GEMINI_API_KEY` / `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` | Secret | LLM structured extraction, inventory matching & evaluation APIs. |
+| `SHEETS_WEBAPP_URL` / `SIERRA_SECRET_KEY` | Env / Secret | Google Apps Script Web App endpoint + secret for Client_Requests, Career_Applications & Inventory sync. |
+| `WHATSAPP_API_URL` / `OPENWA_ADMIN_API_KEY` / `WA_ADMIN_NUMBER` | Secret | OpenWA 8-line gateway URL, auth key & confidential admin phone (`01092048333`). |
+
+### Startup Environment Validation (`core/env-validator.ts`)
+Run `validateEnv({ strict: true })` (or inspect `GET /api/admin/prompts`) to fail fast with grouped diagnostics across all 5 service domains (`DATABASE`, `LLM_APIS`, `GOOGLE_SHEETS`, `WHATSAPP_TELEGRAM`, `DEPLOYMENT`).
 
 ---
 

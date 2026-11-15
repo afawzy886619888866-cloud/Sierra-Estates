@@ -66,29 +66,33 @@ The codebase is structured under **Turborepo** with strict boundary isolation be
 
 ```text
 Sierra-Estates/
+├── prompts/                        # Centralized versioned system prompts, Zod schemas & WA/TG templates
+├── agents/                         # Unified AI Agent Bus (PropertyParser, UnitCoder, InventoryMatcher, LeadQualifier, Dispatcher, CareerEvaluator)
+├── automations/                    # Central automation & worker registry (scrapes, dispatchers, sheet syncs, crons)
+├── core/                           # Grouped startup env validator, phone/unit deduplication & PII redaction utilities
 ├── apps/
-│   ├── sierra-estates-realty/      # Next.js 16.4 Dual-Domain Application (105 routes)
-│   ├── agents/                     # WhatsApp bot router & agent routing services
-│   ├── api/                        # Python integration workers (Property Finder sync & bot hooks)
+│   ├── sierra-estates-realty/      # Next.js 16.4 Dual-Domain Portal (sierra-estates.net & admin.sierra-estates.net) + /api/* routes
+│   ├── agents/                     # OpenWA 8-line station (:2785) & WhatsApp bot routers
+│   ├── api/                        # Python FastAPI integration workers (Property Finder sync & bot hooks)
 │   └── automations/                # Scheduled worker entry points writing through DB helpers
 ├── packages/
 │   ├── memory-engine/              # Unified Obsidian + ECC MemoryBrainEngine RAG
 │   ├── db/                         # Authoritative Supabase clients & typed records
 │   ├── agents/                     # Autonomous agents (Matchmaker, Closer, Scribe)
 │   ├── agents-core/                # Agent lifecycle contracts & dispatch helpers
-│   ├── agents/                     # Operational agent scripts and bot routing
 │   ├── ai-agent-sdk/               # Shared agent runtime & tool SDK
-│   ├── ai-orchestrator/            # Multi-model gateway (Google Gemini & DeepSeek)
+│   ├── ai-orchestrator/            # Multi-model gateway (Google Gemini, OpenAI & DeepSeek)
 │   ├── deepseek-harness/           # 10-scenario Egyptian real-estate benchmark suite
 │   ├── exchange/                   # FX currency, gold-parity & financial arbitrage calculator
 │   ├── property-finder-api/        # Property Finder Atlas v1 OAuth2 API connector
 │   ├── obsidian/                   # Obsidian vault markdown parser & sync
 │   ├── shared/                     # Common types, validation schemas & utilities
-│   └── ui/                         # Luxury obsidian glassmorphism UI design tokens
-├── workflows/                      # 19 orchestrated workflow modules & reply classifier
+│   └── ui/                         # Luxury design tokens & shared primitives
+├── workflows/                      # 19 orchestrated workflow modules, Telegram intake & reply classifier
 ├── infra/                          # Docker Compose definitions (RAG station & workflow runner)
-├── scripts/                        # Operational scripts, deployment gates & verification suites
-└── supabase/                       # 27 SQL migrations, schema definitions & RLS tests
+├── scripts/                        # Apps Script unified engines, deployment gates & verification suites
+├── .github/workflows/              # CI/CD pipelines, cron triggers & Vercel production dispatch
+└── supabase/                       # 27+ SQL migrations, schema definitions & RLS tests
 ```
 
 ### Boundary Rules
@@ -126,7 +130,37 @@ Sierra-Estates/
 
 ---
 
-## 4. Request & Event Lifecycle
+## 4. End-to-End 4-Stage Data Pipeline & Event Lifecycle
+
+Every property unit, buyer demand, viewing request, and career candidate flows through four deterministic stages:
+
+```text
+[Stage 1: Ingestion]
+  ├─► WhatsApp 8-Line OpenWA Pool (:2785) & Group Listener (https://chat.whatsapp.com/D6AExC2APpoArzhYkmns5i)
+  ├─► Telegram 1-to-1 & Group Intake (@arias_sierra_blue_bot → Telegram_Intake)
+  ├─► Owner / Broker Google Spreadsheets (Owners Master, Master_Inventory)
+  └─► Website Landing Pages (/add-listing, /easy-listing, /request, /career, /careers, /broker)
+          │
+          ▼
+[Stage 2: AI Parsing, Coding & Deduplication] (/prompts/index.ts + /agents/index.ts + /core/deduplication.ts)
+  ├─► PropertyParserAgent: Extracts bilingual Arabic/English specs into PropertyListingExtractionSchema (Zod)
+  ├─► Channel Classifier: Separates Direct Owner ("من المالك") vs Broker listings
+  ├─► UnitCoderAgent: Assigns canonical code SE-<COMPOUND>-<S|R>-<AREA>-<SUFFIX>
+  └─► Dedup Lock: Normalizes Egyptian mobile (01xxxxxxxxx) + compound + area bucket
+          │
+          ▼
+[Stage 3: Persistence & Bi-Directional Sync] (packages/db + Google Apps Script v6.0/v6.1)
+  ├─► Supabase PostgreSQL: Upserts public.listings, public.inquiries, public.leads, public.viewings, public.career_applications
+  ├─► Inventory Online Sheets: Syncs Owners Master, Master_Inventory, Real_Available_Units
+  └─► Requests & Hiring Online Sheets: Syncs Client_Requests & Career_Applications (live inside /admin)
+          │
+          ▼
+[Stage 4: Matching, Privacy-Safe Auto-Reply & Dispatch] (/api/whatsapp/webhook + /api/inquiries)
+  ├─► InventoryMatcherAgent: Ranks matching units + calculates EGP/sqm arbitrage verdict
+  ├─► Public Group Auto-Reply: Publishes ONLY unit details & unit code (ZERO owner/broker phone numbers)
+  ├─► Private Admin Forward: Sends confidential owner/broker contact phone exclusively to 01092048333
+  └─► External Syndication & Outreach: Property Finder Atlas v1 + Scheduled WhatsApp Station Outbox
+```
 
 ### A. Client Search & Discovery Flow
 ```text

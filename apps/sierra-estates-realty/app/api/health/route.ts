@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { brainRAG } from '@sierra-estates/memory-engine';
 import { resolveTableName } from '@sierra-estates/db';
+import { validateEnv } from '@/lib/core';
+import { listRegisteredPrompts } from '@/lib/prompts';
+import { getAutomationStatusMatrix } from '@/lib/automations-registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,6 +141,24 @@ export async function GET() {
           status: 'ready',
         },
       },
+    },
+    systemAlignment: {
+      promptsRegistered: listRegisteredPrompts().length,
+      automations: (() => {
+        const matrix = getAutomationStatusMatrix();
+        return {
+          total: matrix.length,
+          active: matrix.filter((m) => m.status === 'ACTIVE').length,
+          needsEnvKey: matrix.filter((m) => m.status === 'NEEDS_ENV_KEY').length,
+        };
+      })(),
+      envValidation: (() => {
+        const res = validateEnv({ strict: false });
+        return {
+          valid: res.valid,
+          missingRequiredCount: res.missingRequired.length,
+        };
+      })(),
     },
   };
 
