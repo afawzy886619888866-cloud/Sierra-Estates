@@ -2291,7 +2291,7 @@ function AdminApp() {
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
-    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach' | 'outbox'>('outbox');
+    const [subTab, setSubTab] = useState<'outreach' | 'outbox' | 'scan' | 'qr'>('outreach');
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
@@ -2312,19 +2312,19 @@ function AdminApp() {
           <span style={{ fontSize: 22 }}>💬</span>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: '#F0C040' }}>
-              {isArabic ? 'مركز تحكم الواتساب — الإصدار الجديد' : 'WhatsApp Command Center — new console'}
+              {isArabic ? 'تطبيق إرسال الواتساب والجدولة — Sierra Estates' : 'WhatsApp Sender & Scheduling Workstation'}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--tx-m)', marginTop: 3 }}>
               {isArabic
-                ? 'جدار الخطوط الثمانية، ربط QR، محرر الرسائل، والصادر — بتصميم ITQANE التشخيصي.'
-                : '8-line live wall, QR pairing, message composer and outbox — in the ITQANE diagnostic design.'}
+                ? 'إرسال فوري مع محاكاة بشرية ذكية لمنع الحظر، أو جدولة رسائل لأوقات وتواريخ محددة، ومراقبة حالة التسليم الحية.'
+                : 'Direct human-simulated instant dispatch with anti-ban stealth, custom future scheduling, and real-time delivery monitoring.'}
             </div>
           </div>
           <button
             className="btn btn-gold"
             onClick={() => window.open('/admin/whatsapp', '_blank')}
           >
-            🛰️ {isArabic ? 'افتح مركز التحكم' : 'Open Command Center'} ↗
+            🛰️ {isArabic ? 'افتح مركز العمليات الشامل' : 'Open Full 8-Line Console'} ↗
           </button>
           <button
             className="btn btn-ghost"
@@ -2345,6 +2345,26 @@ function AdminApp() {
           }}
         >
           <button
+            onClick={() => setSubTab('outreach')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outreach' ? '1px solid #25D366' : '1px solid var(--bd)',
+              background: subTab === 'outreach' ? 'rgba(37, 211, 102, 0.18)' : 'var(--bg-e)',
+              color: subTab === 'outreach' ? '#25D366' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>✉️</span>
+            <span>{isArabic ? 'مرسل رسائل الواتساب والجدولة' : 'WhatsApp Sender & Scheduler'}</span>
+          </button>
+
+          <button
             onClick={() => setSubTab('outbox')}
             style={{
               padding: '8px 18px',
@@ -2360,8 +2380,8 @@ function AdminApp() {
               gap: 8,
             }}
           >
-            <span>📡</span>
-            <span>{isArabic ? 'غرفة عمليات الخطوط الـ 8 والبوابة الحية' : '8-Line Gateway & Operator Console'}</span>
+            <span>📤</span>
+            <span>{isArabic ? 'الصادر وطابور الرسائل الحية' : 'Outbox & Delivery Queue'}</span>
           </button>
 
           <button
@@ -2372,9 +2392,9 @@ function AdminApp() {
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
-              border: subTab === 'scan' ? '1px solid #25D366' : '1px solid var(--bd)',
-              background: subTab === 'scan' ? 'rgba(37, 211, 102, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'scan' ? '#25D366' : 'var(--tx-m)',
+              border: subTab === 'scan' ? '1px solid #60A5FA' : '1px solid var(--bd)',
+              background: subTab === 'scan' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'scan' ? '#60A5FA' : 'var(--tx-m)',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
@@ -2382,26 +2402,6 @@ function AdminApp() {
           >
             <span>📥</span>
             <span>{isArabic ? 'ماسح محادثات الموبايل ومزامنة العقارات' : 'Mobile Chat Scanner & Ingestion'}</span>
-          </button>
-
-          <button
-            onClick={() => setSubTab('outreach')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: subTab === 'outreach' ? '1px solid #60A5FA' : '1px solid var(--bd)',
-              background: subTab === 'outreach' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'outreach' ? '#60A5FA' : 'var(--tx-m)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span>🚀</span>
-            <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
           </button>
 
           <button
@@ -2421,7 +2421,7 @@ function AdminApp() {
             }}
           >
             <span>📱</span>
-            <span>{isArabic ? 'ربط الموبايل المباشر (Legacy Single QR)' : 'Legacy Mobile QR'}</span>
+            <span>{isArabic ? 'ربط الموبايل المباشر (QR Portal)' : 'Legacy Mobile QR'}</span>
           </button>
         </div>
 
