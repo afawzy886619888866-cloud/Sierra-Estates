@@ -1,8 +1,10 @@
 # Sierra Estates — Total Project Status, Workflow Audit & Gap Analysis
 
-**Generated:** November 10, 2026 (Africa/Cairo)  
+**Updated:** November 16, 2026 (Africa/Cairo) — **Commit `e1054b919` on `main`**  
 **Repository:** `H:\Sierra Estates` (`https://github.com/afawzy886619888866-cloud/Sierra-Estates`)  
 **Authoritative Database:** Supabase PostgreSQL (`gaxfqcietzoonlmatiot.supabase.co`)
+
+> **Phase 1–5 Update (Nov 16, 2026):** All core engineering gaps from the Nov 10–15 audit are now **✅ Resolved in Commit `e1054b919`**: PM2 daemonization (`ecosystem.config.cjs`), `version_id` + `rpc_update_unit_field` optimistic locking, `public_properties_view` PII lock, `session-guardian.ts` + `outreach_dead_letter_queue`, `inbound_telegram_audit_log` + `UNASSIGNED_DISPATCH_FALLBACK`, `@sierra-estates/arabic-nlp` + `02-gemini-property-classifier` + `03-media-harvester` WebP upload, `14-sheets-supabase-sync` `WF_SHEET_WRITE_URL` fallback + `tier_2_search_only`, `09-owner-outreach` broker exclusion, fuzzy Jaro-Winkler compound matching + `< 3` photo alerts, `P0_INBOUND` PF speed-to-lead, LightGBM `/api/ml/train-and-score`, and unified `/api/listings/intake` + `/api/viewing-requests` (top-3 `tier_1` matching). Latest verification: `1,871` Jest tests passing (`186` suites), ESLint `0` errors, `sierra-estates-client-page` & `sierra-easy-listing` type-check + build green, `3/3` pytest, `12/12` offline RLS checks `PASS`.
 
 ---
 
@@ -109,15 +111,24 @@ Below is the exact status of every workflow managed by `workflows/runner.js` (`:
 
 ---
 
-## 5. Summary of Remaining Gaps & Recommended Next Steps
+## 5. Summary of Remaining Gaps & Recommended Next Steps (Post-`e1054b919`)
 
-1. **Optional — Google Service Account for Workflow 14 (`sheets-supabase-sync`):**
-   * *Current State:* Reading inventory from Google Sheets (`08-units-sync`) and writing `تاريخ اخر تواصل` back to the sheet (`09-owner-outreach` via `WF_SHEET_WRITE_URL` Apps Script webhook) both work **without** a service account.
-   * *To Close Gap:* If you want Workflow 14 (`14-sheets-supabase-sync`) to also write full 23-column unit rows into `Master_Inventory`, add a Google Cloud `GOOGLE_SERVICE_ACCOUNT_JSON` path to `workflows/.env`.
-2. **Optional — Re-scan `line-1` QR Only If Needed:**
-   * `line-2` (`+201061399688`), `line-3` (`+201032206443`), and `line-6` (`+201031622600`) are active and rotating automatically. If `line-1`'s WhatsApp token was revoked on the phone side when the old container overwrote it on Nov 9, you can scan its QR once at <http://127.0.0.1:2785> and the new Session Vault Guard will lock and protect it permanently.
-3. **Optional — Live SendGrid Key (`04-email-sender`) & Property Finder Live Push (`17-atlas-sync-guardian`):**
-   * Only needed if you want automated email blasts or direct OAuth2 push to Property Finder (XML/CSV syndication feeds are already live).
+### Resolved in Phases 1–5 (Commit `e1054b919`)
+1. **✅ Workflow Orchestration & Supervision:** `workflows/runner.js` exposes `/health` + `P0_INBOUND` queueing, defined under PM2 (`ecosystem.config.cjs`, `500M` limit) and live on `:2786`.
+2. **✅ WhatsApp Session Guardian & Dead-Letter Queue:** `session-guardian.ts` enforces `!chat.isGroup`, alerts management on disconnect/logout with QR/pairing details, and routes failed `13-paced-outreach` sends to `outreach_dead_letter_queue` (`1h / 4h / 24h`).
+3. **✅ Telegram Webhook Audit & Fallback:** `app/api/telegram/webhook/route.ts` logs raw inbound updates into `inbound_telegram_audit_log` and routes missing role chats to `UNASSIGNED_DISPATCH_FALLBACK`.
+4. **✅ Two-Way Sheets Fallback, Optimistic Locking & Broker Isolation:** `14-sheets-supabase-sync/sync.js` now falls back automatically to `WF_SHEET_WRITE_URL` (`upsert_units`) when `GOOGLE_SERVICE_ACCOUNT_JSON` is unset, matches rows by `Unit_Code` or `(phone_last7, compound, price)`, uses `rpc_update_unit_field` (`version_id`), and isolates incomplete broker units (`tier_2_search_only`) while `09-owner-outreach` marks broker replies into `Excluded_Brokers`.
+5. **✅ Arabic Pre-Filter, WebP Media, PF Gate, LightGBM & Unified Intake/Requests:** `02-gemini-property-classifier`, `03-media-harvester`, fuzzy Jaro-Winkler `compound-gazetteer.ts` + `< 3` photo alert, `P0_INBOUND` Property Finder webhook dispatch, LightGBM `/api/ml/train-and-score`, `/api/listings/intake`, and `/api/viewing-requests` top-3 `tier_1` matching are all implemented and verified.
+
+### Remaining Live Environment & Operational Items
+1. **Live Supabase Migration & RLS Execution:** Set `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_URL` to apply `20261115_048_add_ai_scoring_columns.sql` and `20261115_049_optimistic_locking_public_view_and_queues.sql` against live Supabase and run `pnpm test:rls`.
+2. **Production Secrets Configuration:** Verify `WF_SHEET_WRITE_URL`, `WF_SHEET_WRITE_SECRET`, `UNASSIGNED_DISPATCH_FALLBACK`, `RUNNER_API_KEY`, `WORKFLOW_RUNNER_URL`, `N8N_WEBHOOK_SECRET`, `PYTHON_API_URL`, and optional keys (`SENDGRID_API_KEY`, `GOOGLE_CSE_API_KEY`, `NEXT_PUBLIC_OPENWA_MAP_URL`, `MCP_DEV_REDIRECT_URI`).
+3. **Port `:2786` Loopback Cutover:** Docker container `sierra-workflow-runner` currently holds `127.0.0.1:2786->2786/tcp` alongside PM2 on `0.0.0.0:2786`; retire/replace the old container when ready for pure PM2 loopback binding.
+4. **Community Sheet Field Completion & `line-1` QR:** Fill missing owner phones/areas on the audited community units and re-scan `line-1` at `http://127.0.0.1:2785` if its mobile link expired.
+5. **Code-Level Security, RLS & Stub Backlog (Surfaced by `1,986`-File / `390`-Route Floorplan Audit):**
+   * **RLS & Schema Drift:** Restrict `"client_requests_staff_access"` in `20261115_046_client_requests_pipeline.sql` (`FOR ALL TO authenticated USING (TRUE)`) to `public.is_staff()`, and synchronize `apps/sierra-estates-realty/supabase/schema.sql` with root `supabase/schema.sql`.
+   * **Unauthenticated Routes:** Require staff auth or secret tokens on `apps/easy-listing` (`/api/save`, `/api/extract`, `/api/generate`), `apps/sierra-estates-realty` (`/api/whatsapp/{pairing-code,qr,heartbeat}`, `/api/inventory/scan-and-merge`, `/api/listings/owner-intakes`, `/api/agent-orchestrator`, `/api/contracts/[id]/sign`, `/api/integrations/jira`, `/api/broker-brain`, `/api/concierge/{dashboard,complete}`, `/api/memory/ecc`, `/api/mcp/oauth/{authorize,register}`, `/api/teasers/video`), `apps/api/main.py`, `apps/agents/vertex-omni-agent/api.py`, `worker.js` (`/api/pair/reload` & local auth bypass), `packages/memory-engine/src/api-router.ts`, and `workflows/sierra-admin-bridge.mjs` (`:2790`).
+   * **Hardcoded Fallbacks & Simulated Endpoints:** Remove fallback secret/URL literals when env vars are unset (`easy-listing` `/api/save`, `sync/sheet-webhook`, `admin/whatsapp/{screen,outbox,qr}`, `email-alert-service.ts`, `multiLineListener.ts`, `worker.js`), and wire or retire stubbed handlers (`/api/internal/*`, `/api/admin/{workflows/[id],agents/repair,deploy}`, `/api/sync/obsidian`, `/api/closer/initiate`, `/api/concierge/voice-briefing`, `/api/intelligence/deepseek-reasoning`, `VipInquiryModal.tsx`, `CareerSheetSyncService`/`RequestSheetSyncService` `{ ok: true, error }`, and `17-atlas-sync-guardian/atlas.js` `isPublishedToPF = true` on connector fallback).
 
 
 ---

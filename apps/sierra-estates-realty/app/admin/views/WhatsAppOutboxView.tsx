@@ -348,7 +348,7 @@ export default function WhatsAppOutboxView({ lang }: { lang: string }) {
           </HyouzMagneticButton>
 
           <a
-            href="http://127.0.0.1:2785/map"
+            href={process.env.NEXT_PUBLIC_OPENWA_MAP_URL || '/admin?tab=map'}
             target="_blank"
             rel="noreferrer"
             style={{

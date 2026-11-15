@@ -13,7 +13,7 @@ dbc install postgresql
 Connect with a standard PostgreSQL [connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING):
 
 ```text
-postgresql://[user[:auth_token]@][host[:port]][/dbname][?param1=value1&...]
+postgresql://[user[:<token>]@][host[:port]][/dbname][?param1=value1&...]
 ```
 
 Examples:

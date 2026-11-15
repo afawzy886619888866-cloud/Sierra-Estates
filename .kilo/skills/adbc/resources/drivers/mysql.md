@@ -13,7 +13,7 @@ dbc install mysql
 Connect with the following URI syntax:
 
 ```text
-mysql://[user[:[auth_token]]@]host[:port][/schema][?attribute1=value1&...]
+mysql://[user[:<token>]@]host[:port][/schema][?attribute1=value1&...]
 ```
 
 Examples:

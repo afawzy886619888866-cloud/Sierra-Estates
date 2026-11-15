@@ -47,7 +47,7 @@ clients.set(DEFAULT_CLIENT_ID, {
   redirect_uris: [
     'https://claude.ai/api/auth/callback',
     'https://claude.ai/oauth/callback',
-    'http://localhost:3000/callback',
+    ...(process.env.MCP_DEV_REDIRECT_URI ? [process.env.MCP_DEV_REDIRECT_URI] : []),
   ],
   grant_types: ['authorization_code', 'refresh_token'],
   response_types: ['code'],
