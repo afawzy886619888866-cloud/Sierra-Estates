@@ -212,6 +212,34 @@ export async function POST(request: Request) {
       // Telegram notify is best-effort
     }
 
+    // Mirror to Online Requests Spreadsheet (Google Sheets & local persistent mirror)
+    try {
+      const { syncRequestToSheet } = await import('@/lib/services/RequestSheetSyncService');
+      const compoundNames = Array.isArray(rest.compounds) ? rest.compounds.join(', ') : rest.compounds;
+      await syncRequestToSheet({
+        id: created.id,
+        type: 'buyer_demand',
+        clientName: rest.name,
+        clientPhone: rest.phone,
+        clientEmail: rest.email || '',
+        mode: rest.mode || 'sale',
+        preferredZone: rest.zone || compoundNames || 'New Cairo',
+        unitType: rest.unitType || type || 'Apartment',
+        bedrooms: rest.bedrooms,
+        budget: rest.budgetMax ? `${rest.budgetMin || 0} - ${rest.budgetMax} EGP` : rest.budget || 'Open',
+        finishing: rest.finishing || 'Any',
+        campaign: rest.campaign || (rest.voucherCode ? `Black Friday (${rest.discountPercent || 25}%)` : ''),
+        voucherCode: rest.voucherCode || '',
+        targetDate: rest.targetDate || '',
+        matchedUnits: topMatches.map((m) => m.code),
+        status: 'new',
+        notes: rest.notes || '',
+        source: 'website_inquiry',
+      }).catch(() => {});
+    } catch (sheetErr) {
+      console.error('[inquiries] Request sheet sync warning:', sheetErr);
+    }
+
     return NextResponse.json({
       id: created.id,
       status: 'received',

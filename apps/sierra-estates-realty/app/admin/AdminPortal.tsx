@@ -52,6 +52,7 @@ import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender'
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
 import WhatsAppOutboxView from '@/app/admin/views/WhatsAppOutboxView';
+import RequestsSpreadsheetView from '@/components/admin/RequestsSpreadsheetView';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -2081,6 +2082,7 @@ const DEPARTMENT_HUBS: Record<string, { parent: string; titleEn: string; titleAr
     titleAr: 'المبيعات والمعاينات',
     items: [
       { id: 'leads', labelEn: 'CRM Leads', labelAr: 'العملاء والمهتمين', icon: '👥' },
+      { id: 'requests_sheet', labelEn: 'Requests Online Spreadsheet', labelAr: 'شيت طلبات العملاء أونلاين', icon: '📋' },
       { id: 'pipeline', labelEn: 'Deals Pipeline (S1-S10)', labelAr: 'مراحل الصفقات', icon: '💼' },
       { id: 'viewings', labelEn: 'Viewings & Feedback', labelAr: 'المعاينات والتقييم', icon: '👁️' },
       { id: 'closer', labelEn: 'Stage-9 Closer Bot', labelAr: 'المغلق الذكي', icon: '🤝' },
@@ -2724,6 +2726,7 @@ function AdminApp() {
       case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={guardedSetTab}/>;
       case 'listings':return <ListingsView lang={langKey} restricted={isPartner}/>;
       case 'viewings':return <ViewingsView lang={langKey}/>;
+      case 'requests_sheet':return <RequestsSpreadsheetView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={guardedSetTab}/>;
@@ -2889,6 +2892,7 @@ function AdminApp() {
                     // Stage 1 · Most Used Real Estate Operations
                     { id: 'inventory_command', label: isAr ? 'المخزون العقاري الموحد' : 'Inventory Command & OS', icon: '🏢' },
                     { id: 'easy_listing', label: isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio', icon: '🏷️' },
+                    { id: 'requests_sheet', label: isAr ? 'شيت طلبات العملاء أونلاين' : 'Requests Online Spreadsheet', icon: '📋' },
                     { id: 'whatsapp_outreach', label: isAr ? 'محطة الواتساب' : 'WhatsApp Station', icon: '🛰️' },
                     // Stage 2 · Autonomous AI & Workflows
                     { id: 'agents', label: isAr ? 'أسطول الوكلاء الذكي' : 'Autonomous Agents Fleet', icon: '🤖' },

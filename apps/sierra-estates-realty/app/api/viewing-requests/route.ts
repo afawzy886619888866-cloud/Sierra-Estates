@@ -271,6 +271,29 @@ export async function POST(request: NextRequest) {
     const waNumber = phone.startsWith('+') ? phone.replace('+', '') : `2${phone.replace(/^0+/, '')}`;
     const calendarLink = staffCalendarLink;
 
+    // ── 5. Mirror to Online Requests Spreadsheet ────────────────────────
+    try {
+      const { syncRequestToSheet } = await import('@/lib/services/RequestSheetSyncService');
+      await syncRequestToSheet({
+        id: viewing.id,
+        type: 'viewing_request',
+        clientName: data.visitorName,
+        clientPhone: phone,
+        clientEmail: data.visitorEmail || '',
+        mode: 'resale',
+        preferredZone: `Unit ${data.propertyCode}`,
+        unitType: 'Viewing Request',
+        budget: 'Viewing Tour',
+        targetDate: `${data.preferredDate}${data.preferredTime ? ` ${data.preferredTime}` : ''}`,
+        matchedUnits: [data.propertyCode],
+        status: 'viewing_scheduled',
+        notes: data.message || '',
+        source: 'viewing_request',
+      }).catch(() => {});
+    } catch {
+      /* sheet mirror is best-effort */
+    }
+
     return NextResponse.json(
       {
         success: true,

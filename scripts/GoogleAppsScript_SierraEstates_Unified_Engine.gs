@@ -761,6 +761,11 @@ function doPost(e) {
       return handleEasyListing_(payload, ss);
     }
 
+    // Mode R / Request Submission (Client Demands & Viewing Requests):
+    if (payload.action === "request_submission" || payload.mode === "request_submission") {
+      return handleRequestSubmission_(payload, ss);
+    }
+
     // Direct Append to Master Inventory:
     if (payload.action === "appendRows" && Array.isArray(payload.rows)) {
       const targetSheet = ss.getSheetByName("Master_Inventory") || ss.getSheetByName("Owners-Rent") || ss.getSheets()[0];
@@ -906,6 +911,71 @@ function doPost(e) {
       error: err.message
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * Handle incoming buyer requests and viewing appointments:
+ * Appends cleanly to the dedicated 'Client_Requests' spreadsheet tab.
+ */
+function handleRequestSubmission_(payload, ss) {
+  const tabName = "Client_Requests";
+  let sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+    const headers = [
+      "Request_ID",
+      "Date_Added",
+      "Client_Name",
+      "Client_Phone",
+      "Client_Email",
+      "Request_Type",
+      "Mode",
+      "Preferred_Zone",
+      "Unit_Type",
+      "Bedrooms",
+      "Budget",
+      "Campaign_Voucher",
+      "Target_Date_Slot",
+      "Matched_Units",
+      "Status",
+      "Notes"
+    ];
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0ea5e9").setFontColor("#ffffff");
+  }
+
+  const req = payload.request || payload;
+  const timestamp = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd HH:mm:ss");
+  const id = req.id || ("REQ-" + Utilities.formatDate(new Date(), "Africa/Cairo", "yyyyMMdd-HHmmss"));
+
+  const rowData = [
+    id,
+    timestamp,
+    req.clientName || req.name || "Client",
+    "'" + String(req.clientPhone || req.phone || "").replace(/[^0-9+]/g, ""),
+    req.clientEmail || req.email || "",
+    req.type || "buyer_demand",
+    req.mode || "sale",
+    req.preferredZone || req.zone || "New Cairo",
+    req.unitType || req.propertyType || "Apartment",
+    req.bedrooms || "",
+    req.budget || "Open",
+    req.campaign || req.voucherCode || "",
+    req.targetDate || "",
+    Array.isArray(req.matchedUnits) ? req.matchedUnits.join(", ") : (req.matchedUnitsStr || ""),
+    req.status || "new",
+    req.notes || ""
+  ];
+
+  sheet.appendRow(rowData);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    ok: true,
+    row: sheet.getLastRow(),
+    sheet: tabName,
+    id: id,
+    message: `Request ${id} saved cleanly to ${tabName}`
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
