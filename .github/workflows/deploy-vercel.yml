@@ -16,6 +16,16 @@ name: Deploy Vercel (Client + Admin)
 #
 # A workflow_run deployment checks out the exact commit CI validated. Do not
 # change it to a pull-request trigger: this workflow has deployment secrets.
+#
+# VERCEL ACCOUNT MIGRATION (docs/VERCEL_ACCOUNT_MIGRATION_PLAN.md): the target
+# Vercel account is switched purely by repository configuration — no code
+# change at cutover time:
+#   • Secrets   VERCEL_TOKEN, VERCEL_ORG_ID                        -> new account
+#   • Variables CLIENT_VERCEL_PROJECT_ID, ADMIN_VERCEL_PROJECT_ID  -> new projects
+# Every fallback below points at the CURRENT account, so this workflow is safe
+# to merge before the migration starts and changes nothing until you set them.
+# Vercel-side Git builds get the same protection via
+# scripts/vercel-ignore-build.sh (Ignored Build Step, per-project role arg).
 
 on:
   workflow_run:
@@ -145,13 +155,17 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
+        # Project IDs are overridable via repository VARIABLES for the Vercel
+        # account migration; the fallbacks are the current (legacy) account's
+        # projects, so behavior is unchanged until the cutover. Keep the
+        # env-sync step's CLIENT_/ADMIN_VERCEL_PROJECT_ID values in lockstep.
         include:
           - role: client
             domain: sierra-estates.net
-            projectId: prj_ieVcIcoeTtHndspXMzlE0cwLl89c
+            projectId: ${{ vars.CLIENT_VERCEL_PROJECT_ID || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}
           - role: admin
             domain: admin.sierra-estates.net
-            projectId: prj_inhTu8kppYhQv2NZZV3GTUdU8uBi
+            projectId: ${{ vars.ADMIN_VERCEL_PROJECT_ID || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -204,11 +218,22 @@ jobs:
           #   Security:              SESSION_SECRET, SBR_SECRET_KEY, CRON_SECRET, ADMIN_API_KEY
           #   Communications:        TELEGRAM_BOT_TOKEN, WHATSAPP_API_TOKEN, SENDGRID_API_KEY,
           #                         TELEGRAM_*_CHAT_ID role lanes (migration 044), TELEGRAM_STAFF_USER_IDS
-          # Skip deployment if this run is from an automated commit that did not modify frontend code
+          # Skip deployment if this run is from an automated commit that did
+          # not modify files relevant to THIS role's project. Mirrors
+          # scripts/vercel-ignore-build.sh:
+          #   client -> apps/sierra-estates-realty + workspace packages + pnpm
+          #             patches + root build config (vercel-build.sh inputs)
+          #   admin  -> same Next.js codebase plus the static deploy/ fallback
+          #             SPA (superset: never ships a stale admin whichever
+          #             root directory the admin project uses)
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null || true)
-            if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(apps/sierra-estates-realty|packages|deploy|turbo\.json|package\.json|pnpm-lock\.yaml)'; then
-              echo "::notice::Commit does not modify frontend application files. Skipping build/deploy for ${{ matrix.role }} to conserve daily Vercel deployment limits."
+            ROLE_PATHS='^(apps/sierra-estates-realty|packages|patches|deploy|turbo\.json|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|vercel\.json|scripts/vercel-build\.sh|scripts/ci-preflight\.sh|scripts/sync-inventory-snapshot\.mjs)'
+            if [ "${{ matrix.role }}" = "client" ]; then
+              ROLE_PATHS='^(apps/sierra-estates-realty|packages|patches|turbo\.json|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|vercel\.json|scripts/vercel-build\.sh|scripts/ci-preflight\.sh|scripts/sync-inventory-snapshot\.mjs)'
+            fi
+            if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE "$ROLE_PATHS"; then
+              echo "::notice::Commit does not modify ${{ matrix.role }}-relevant files. Skipping build/deploy for ${{ matrix.role }} to conserve daily Vercel deployment limits."
               exit 0
             fi
           fi
@@ -247,6 +272,13 @@ jobs:
         # re-synced and production ran without it (/api/health degraded,
         # /api/inventory empty).
         env:
+          # Migration wiring: sync-vercel-env.js reads these two variables to
+          # pick its targets (it syncs BOTH projects on every run — the --role
+          # argument is informational only). Keep the fallback IDs in lockstep
+          # with the matrix projectId values above.
+          CLIENT_VERCEL_PROJECT_ID: ${{ vars.CLIENT_VERCEL_PROJECT_ID || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}
+          ADMIN_VERCEL_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi' }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
