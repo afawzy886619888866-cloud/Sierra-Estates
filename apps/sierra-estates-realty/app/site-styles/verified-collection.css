@@ -1,0 +1,467 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   SIERRA ESTATES — VERIFIED COLLECTION + PRIVATE ADVISORY (public showcase)
+   Styles for the /properties page additions: the server-rendered verified
+   rail (freshness ≥ 90% & status verified — the command center's public
+   gate) and the LeadForm advisory card (components/LeadForm.tsx).
+
+   Uses the site's shared token system (app/site-styles/shared.css) — the
+   public portal does not run Tailwind by design (see PRODUCT.md).
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.vc-section {
+  padding: 72px 0 8px;
+}
+
+.vc-wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.vc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.vc-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold-accent);
+}
+
+.vc-title {
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 10px 0 8px;
+}
+
+.vc-sub {
+  max-width: 640px;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.vc-freshness-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-s);
+  padding: 10px 18px;
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.vc-freshness-value {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* ── Verified rail ─────────────────────────────────────────────────────── */
+.vc-rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.vc-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-s);
+  transition: transform 240ms var(--silk), box-shadow 240ms var(--silk), border-color 240ms var(--silk);
+  text-decoration: none;
+  color: inherit;
+}
+
+.vc-card:hover,
+.vc-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-m);
+  border-color: var(--gold-accent);
+}
+
+.vc-card-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(150deg, var(--navy) 0%, #0a192f 100%);
+  overflow: hidden;
+}
+
+.vc-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms var(--silk);
+}
+
+.vc-card:hover .vc-card-media img {
+  transform: scale(1.04);
+}
+
+.vc-card-fresh {
+  position: absolute;
+  top: 12px;
+  inset-inline-start: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #14532d;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 5px 11px;
+}
+
+[data-theme='dark'] .vc-card-fresh {
+  background: rgba(6, 34, 22, 0.9);
+  color: #86efac;
+}
+
+.vc-card-secode {
+  position: absolute;
+  bottom: 12px;
+  inset-inline-end: 12px;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(10, 25, 47, 0.72);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 6px;
+  padding: 4px 9px;
+}
+
+.vc-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 18px;
+  flex: 1;
+}
+
+.vc-card-compound {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold-accent);
+}
+
+.vc-card-title {
+  font-family: var(--display);
+  font-size: 1.06rem;
+  line-height: 1.35;
+  color: var(--ink);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vc-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.vc-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.vc-card-price {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+
+.vc-card-link {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-accent);
+  text-decoration: none;
+}
+
+.vc-card:hover .vc-card-link {
+  text-decoration: underline;
+}
+
+.vc-empty {
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  padding: 28px 24px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+/* ── Advisory card (LeadForm) ──────────────────────────────────────────── */
+.vc-advisory {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 0;
+  margin-top: 56px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-m);
+}
+
+@media (max-width: 900px) {
+  .vc-advisory {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vc-advisory-copy {
+  padding: 40px 42px;
+  background:
+    linear-gradient(150deg, var(--royal-navy) 0%, #0a192f 78%),
+    var(--navy);
+  color: #f5f3ec;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+.vc-advisory-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.vc-advisory-title {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+  line-height: 1.2;
+  margin: 0;
+  color: #ffffff;
+}
+
+.vc-advisory-text {
+  color: rgba(245, 243, 236, 0.72);
+  font-size: 0.92rem;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.vc-advisory-points {
+  list-style: none;
+  display: grid;
+  gap: 9px;
+  padding: 0;
+  margin: 8px 0 0;
+  font-size: 0.84rem;
+  color: rgba(245, 243, 236, 0.82);
+}
+
+.vc-advisory-points li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.vc-advisory-points li::before {
+  content: '◆';
+  color: #d4af37;
+  font-size: 0.6rem;
+}
+
+.vc-advisory-form {
+  padding: 36px 38px 40px;
+}
+
+/* ── LeadForm controls ─────────────────────────────────────────────────── */
+.vc-lead-form {
+  display: grid;
+  gap: 16px;
+}
+
+.vc-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .vc-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vc-form-group {
+  display: grid;
+  gap: 7px;
+}
+
+.vc-form-group label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.vc-form-group input,
+.vc-form-group select,
+.vc-form-group textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 11px 13px;
+  transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+
+.vc-form-group input:focus,
+.vc-form-group select:focus,
+.vc-form-group textarea:focus {
+  outline: none;
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.18);
+}
+
+.vc-form-group textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.vc-form-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid #d4af37;
+  border-radius: var(--r-btn);
+  background: linear-gradient(150deg, #d4af37 0%, #aa8222 130%);
+  color: #0a192f;
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  padding: 13px 22px;
+  cursor: pointer;
+  transition: transform 160ms var(--silk), box-shadow 160ms var(--silk), opacity 160ms;
+}
+
+.vc-form-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px -8px rgba(212, 175, 55, 0.55);
+}
+
+.vc-form-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.vc-btn-spinner {
+  width: 15px;
+  height: 15px;
+  animation: vcSpin 0.7s linear infinite;
+}
+
+@keyframes vcSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vc-form-privacy {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.vc-form-error {
+  border: 1px solid rgba(230, 57, 70, 0.45);
+  background: rgba(230, 57, 70, 0.08);
+  color: var(--red);
+  border-radius: var(--r-chip);
+  font-size: 0.8rem;
+  padding: 10px 14px;
+}
+
+.vc-form-success {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  border: 1px solid rgba(40, 167, 69, 0.4);
+  background: rgba(40, 167, 69, 0.08);
+  border-radius: var(--r-card);
+  padding: 22px 24px;
+}
+
+.vc-form-success-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.vc-form-success-title {
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+}
+
+.vc-form-success-sub {
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-card,
+  .vc-card-media img,
+  .vc-form-submit {
+    transition: none;
+  }
+}

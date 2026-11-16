@@ -1,0 +1,557 @@
+/* ==========================================================================
+   Sierra Estates Google NotebookLM Studio Styles
+   Ultra-luxury dark glassmorphism, gold accents, animated audio waveform
+   ========================================================================== */
+
+.nlm-studio-page {
+  min-height: 100vh;
+  padding: 100px 0 60px;
+  background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.08) 0%, rgba(10, 12, 16, 1) 70%);
+  color: #f0f2f5;
+  font-family: inherit;
+}
+
+.nlm-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.nlm-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.nlm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.nlm-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #ffffff 30%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nlm-subtitle {
+  font-size: 1.15rem;
+  color: #94a3b8;
+  max-width: 760px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Tabs Navigation */
+.nlm-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.nlm-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.nlm-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.nlm-tab-btn.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
+  border-color: #d4af37;
+  color: #d4af37;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+/* Layout Grid */
+.nlm-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 28px;
+}
+
+@media (max-width: 960px) {
+  .nlm-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Sidebar / Sources Panel */
+.nlm-sources-card {
+  background: rgba(18, 22, 28, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  height: fit-content;
+}
+
+.nlm-sources-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nlm-sources-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nlm-source-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.nlm-source-item:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.04);
+}
+
+.nlm-source-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.15);
+  color: #d4af37;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.nlm-source-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.nlm-source-preview {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Main Studio Panel */
+.nlm-main-card {
+  background: rgba(18, 22, 28, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 32px;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Grounded Q&A Chat */
+.nlm-chat-history {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 520px;
+  padding-right: 8px;
+}
+
+.nlm-message {
+  display: flex;
+  gap: 14px;
+  max-width: 90%;
+}
+
+.nlm-message.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.nlm-message.ai {
+  align-self: flex-start;
+}
+
+.nlm-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.nlm-message.ai .nlm-avatar {
+  background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+  color: #0b0f15;
+}
+
+.nlm-message.user .nlm-avatar {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.nlm-bubble {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px 20px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #f1f5f9;
+}
+
+.nlm-message.user .nlm-bubble {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #ffffff;
+}
+
+.nlm-citations-container {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nlm-citation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #d4af37;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nlm-citation-chip:hover {
+  background: rgba(212, 175, 55, 0.25);
+  border-color: #d4af37;
+}
+
+.nlm-citation-excerpt {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid #d4af37;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+/* Prompt Input Bar */
+.nlm-input-bar {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+.nlm-input-field {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 16px 20px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.nlm-input-field:focus {
+  border-color: #d4af37;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+.nlm-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 28px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #d4af37 0%, #b89014 100%);
+  color: #0b0f15;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nlm-send-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+}
+
+.nlm-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Suggested Chips */
+.nlm-suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.nlm-suggest-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nlm-suggest-chip:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+}
+
+/* Audio Overview / Podcast Studio */
+.nlm-podcast-card {
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, rgba(18, 22, 28, 0.95) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.nlm-podcast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.nlm-podcast-hosts {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nlm-host-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.nlm-host-pill.active {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+.nlm-audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nlm-play-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d4af37 0%, #b89014 100%);
+  color: #0b0f15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+}
+
+.nlm-play-btn:hover {
+  transform: scale(1.08);
+}
+
+.nlm-waveform {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+}
+
+.nlm-waveform-bar {
+  width: 4px;
+  border-radius: 4px;
+  background: #d4af37;
+  height: 8px;
+  transition: height 0.2s ease;
+}
+
+.nlm-waveform.playing .nlm-waveform-bar:nth-child(odd) {
+  animation: pulseHeight 0.6s infinite alternate ease-in-out;
+}
+
+.nlm-waveform.playing .nlm-waveform-bar:nth-child(even) {
+  animation: pulseHeight 0.9s infinite alternate ease-in-out;
+}
+
+@keyframes pulseHeight {
+  0% { height: 6px; }
+  100% { height: 28px; }
+}
+
+.nlm-dialogue-turn {
+  padding: 16px 20px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+.nlm-dialogue-turn.current-playing {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+}
+
+.nlm-speaker-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #d4af37;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nlm-dialogue-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+/* Study Guide Styles */
+.nlm-guide-section {
+  margin-bottom: 28px;
+}
+
+.nlm-guide-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nlm-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.nlm-metric-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.nlm-metric-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #d4af37;
+  margin-bottom: 4px;
+}
+
+.nlm-metric-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 6px;
+}
+
+.nlm-metric-sig {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* RTL Support */
+[dir="rtl"] .nlm-message.user {
+  flex-direction: row;
+}
+
+[dir="rtl"] .nlm-citation-excerpt {
+  border-left: none;
+  border-right: 3px solid #d4af37;
+}

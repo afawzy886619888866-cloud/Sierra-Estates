@@ -1,0 +1,59 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Sierra Estates — Root Docker Compose Orchestrator
+# Includes n8n automation and 4-line Baileys WhatsApp bot
+# ═══════════════════════════════════════════════════════════════════════════
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: sierra-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST:-0.0.0.0}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - GENERIC_TIMEZONE=Africa/Cairo
+      - TZ=Africa/Cairo
+    volumes:
+      - ./infra/n8n-data:/home/node/.n8n
+    networks:
+      - sierra-net
+
+  # ─────────────────────────────────────────────────────────────────────────
+  #  WhatsApp Bot — 4-Line Parallel Group Harvester (Baileys)
+  #  Listens concurrently on line_1, line_2, line_3, line_4 and forwards
+  #  incoming broker group messages to n8n with x-n8n-webhook-secret auth.
+  # ─────────────────────────────────────────────────────────────────────────
+  whatsapp-bot:
+    build:
+      context: ./apps/whatsapp-bot
+      dockerfile: Dockerfile
+    container_name: sierra-whatsapp-bot
+    restart: unless-stopped
+    environment:
+      - N8N_W1_WEBHOOK_URL=${N8N_W1_WEBHOOK_URL:-http://n8n:5678/webhook/whatsapp-incoming}
+      - N8N_WEBHOOK_SECRET=${N8N_WEBHOOK_SECRET:-a7f29b4e18d63c5092e1f4a7c8b3d0e5}
+      - WHATSAPP_LINES=${WHATSAPP_LINES:-line_1,line_2,line_3,line_4}
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+      - NODE_ENV=production
+    volumes:
+      - ./sessions:/app/sessions
+    networks:
+      - sierra-net
+    depends_on:
+      - n8n
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"process.exit(0)\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+networks:
+  sierra-net:
+    driver: bridge
+    name: sierra-network

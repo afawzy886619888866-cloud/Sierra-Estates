@@ -1,0 +1,232 @@
+/**
+ * Tests: Edge Proxy (proxy.ts)
+ *
+ * Target architecture (INTEGRATION.md — two-domain host split):
+ *   - CLIENT host (sierra-estates.net): serves the public site; /admin is
+ *     directly accessible (no host redirect) but gated by the RBAC session
+ *     wall (FIX 4, 2026-10-31): unauthenticated visitors are 307-redirected
+ *     to /admin/login?redirect=<path>.
+ *   - ADMIN host (admin.sierra-estates.net): the root `/` is rewritten to
+ *     /admin so the console is served directly on its own domain — behind
+ *     the same session wall.
+ *   - Single-deployment mode (no ADMIN_HOST): same gate, fail-closed.
+ *
+ * The proxy also handles:
+ *   1. CORS preflight for /api routes
+ *   2. Shared-secret gate on /api/orchestrate
+ */
+import { NextRequest } from 'next/server';
+import { config, middleware } from '../proxy';
+import { SESSION_COOKIE, signSession } from '../lib/auth';
+
+const ORIGINAL_SBR = process.env.SBR_SECRET_KEY;
+const ORIGINAL_ADMIN_HOST = process.env.ADMIN_HOST;
+
+async function adminSessionCookie(role = 'admin'): Promise<string> {
+  const token = await signSession({
+    uid: `middleware-test-${role}`,
+    email: `staff-${role}@sierra-estates.net`,
+    role,
+    name: 'Middleware Test User',
+  });
+  return `${SESSION_COOKIE}=${token}`;
+}
+
+function request(url: string, init?: RequestInit): NextRequest {
+  return new NextRequest(url, init as any);
+}
+
+function restore(name: string, value: string | undefined) {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+
+afterEach(() => {
+  restore('SBR_SECRET_KEY', ORIGINAL_SBR);
+  restore('ADMIN_HOST', ORIGINAL_ADMIN_HOST);
+});
+
+describe('proxy config', () => {
+  it('matches the root, /api and /admin routes', () => {
+    expect(config.matcher).toEqual(['/', '/api/:path*', '/admin/:path*']);
+  });
+});
+
+describe('proxy — admin / public host split', () => {
+  // The host split was removed deliberately ("/admin is directly accessible
+  // across all domains without host redirect") but the session wall (FIX 4)
+  // now gates every /admin path except /admin/login. These assert that
+  // contract: no host redirect, but unauthenticated visitors hit the login
+  // wall (307) and authenticated admin sessions are admitted (200).
+  it('gates /admin on the client host behind the login wall (not the admin host)', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(request('https://sierra-estates.net/admin'));
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location') ?? '';
+    expect(location).toContain('/admin/login');
+    // The redirect is the LOCAL login wall — never a redirect to the admin host.
+    expect(location).not.toContain('admin.sierra-estates.net');
+  });
+
+  it('serves /admin on the client host to an authenticated admin session', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(
+      request('https://sierra-estates.net/admin', {
+        headers: { cookie: await adminSessionCookie() },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('serves /admin/login directly without redirecting away', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(request('https://admin.sierra-estates.net/admin/login'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('gates the admin-host root `/` behind the login wall when unauthenticated', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(request('https://admin.sierra-estates.net/'));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/admin/login');
+  });
+
+  it('serves the admin-host root `/` as the console to an authenticated session', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(
+      request('https://admin.sierra-estates.net/', {
+        headers: { cookie: await adminSessionCookie() },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+    // Root rewrite to the console still happens behind the wall.
+    expect(res.headers.get('x-pathname')).toBe('/admin');
+  });
+
+  it('leaves the client-host root / untouched', async () => {
+    process.env.ADMIN_HOST = 'admin.sierra-estates.net';
+    const res = await middleware(request('https://sierra-estates.net/'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('gates /admin behind the login wall when ADMIN_HOST is omitted (fail-closed)', async () => {
+    delete process.env.ADMIN_HOST;
+    const admin = await middleware(request('https://example.com/admin'));
+    expect(admin.status).toBe(307);
+    expect(admin.headers.get('location')).toContain('/admin/login');
+    const root = await middleware(request('https://example.com/'));
+    expect(root.status).toBe(200);
+  });
+});
+
+describe('proxy — CORS preflight', () => {
+  it('answers OPTIONS /api with 204', async () => {
+    const res = await middleware(
+      request('https://sierra-estates.net/api/listings', { method: 'OPTIONS' }),
+    );
+    expect(res.status).toBe(204);
+  });
+
+  it('does not hijack OPTIONS on non-api routes', async () => {
+    const res = await middleware(
+      request('https://sierra-estates.net/', { method: 'OPTIONS' }),
+    );
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('proxy — /api/orchestrate shared-secret gate', () => {
+  beforeEach(() => {
+    process.env.SBR_SECRET_KEY = 'test-secret';
+  });
+
+  it('blocks /api/orchestrate without X-SBR-SECRET-KEY', async () => {
+    const res = await middleware(
+      request('https://sierra-estates.net/api/orchestrate', { method: 'POST' }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('blocks /api/orchestrate with wrong X-SBR-SECRET-KEY', async () => {
+    const res = await middleware(
+      request('https://sierra-estates.net/api/orchestrate', {
+        method: 'POST',
+        headers: { 'X-SBR-SECRET-KEY': 'wrong' },
+      }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('allows /api/orchestrate with correct X-SBR-SECRET-KEY', async () => {
+    const res = await middleware(
+      request('https://sierra-estates.net/api/orchestrate', {
+        method: 'POST',
+        headers: { 'X-SBR-SECRET-KEY': 'test-secret' },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('allows /api/orchestrate when SBR_SECRET_KEY is unset (local dev)', async () => {
+    delete process.env.SBR_SECRET_KEY;
+    const res = await middleware(
+      request('https://sierra-estates.net/api/orchestrate', { method: 'POST' }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('blocks /api/orchestrate in production when SBR_SECRET_KEY is unset', async () => {
+    delete process.env.SBR_SECRET_KEY;
+    const originalEnv = process.env.NODE_ENV;
+    (process.env as any).NODE_ENV = 'production';
+
+    try {
+      const res = await middleware(
+        request('https://sierra-estates.net/api/orchestrate', { method: 'POST' }),
+      );
+      expect(res.status).toBe(503);
+    } finally {
+      (process.env as any).NODE_ENV = originalEnv;
+    }
+  });
+});
+
+describe('proxy — /api/internal security gate', () => {
+  it('blocks internal routes in production when the shared secret is missing', async () => {
+    delete process.env.SBR_SECRET_KEY;
+    const originalEnv = process.env.NODE_ENV;
+    (process.env as any).NODE_ENV = 'production';
+
+    try {
+      const res = await middleware(
+        request('https://sierra-estates.net/api/internal/health'),
+      );
+      expect(res.status).toBe(503);
+    } finally {
+      (process.env as any).NODE_ENV = originalEnv;
+    }
+  });
+
+  it('allows trusted services with the shared secret', async () => {
+    process.env.SBR_SECRET_KEY = 'internal-secret';
+    const res = await middleware(
+      request('https://sierra-estates.net/api/internal/health', {
+        headers: { 'X-SBR-SECRET-KEY': 'internal-secret' },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('keeps internal routes available in local development without a secret', async () => {
+    delete process.env.SBR_SECRET_KEY;
+    const res = await middleware(
+      request('https://sierra-estates.net/api/internal/health'),
+    );
+    expect(res.status).toBe(200);
+  });
+});

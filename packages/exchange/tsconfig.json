@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "noImplicitAny": false,
+    "paths": {
+      "@sierra-estates/db": [
+        "../db/lib/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "exchange-client.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "sierra-estates": {
+      "url": "https://sierra-estates.net/api/mcp",
+      "transport": "http",
+      "oauth": {
+        "client_name": "Claude Desktop",
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "mcp:read mcp:tools mcp:write mcp:spend"
+      }
+    }
+  }
+}

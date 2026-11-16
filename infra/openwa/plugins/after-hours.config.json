@@ -1,0 +1,19 @@
+﻿{
+  "plugin": "after-hours",
+  "description": "Auto-reply outside business hours (Egypt time)",
+  "config": {
+    "timezone": "Africa/Cairo",
+    "businessHours": {
+      "monday":    { "start": "09:00", "end": "21:00" },
+      "tuesday":   { "start": "09:00", "end": "21:00" },
+      "wednesday": { "start": "09:00", "end": "21:00" },
+      "thursday":  { "start": "09:00", "end": "21:00" },
+      "friday":    { "start": "09:00", "end": "21:00" },
+      "saturday":  { "start": "10:00", "end": "18:00" },
+      "sunday":    { "start": "10:00", "end": "18:00" }
+    },
+    "message": "🏡 مرحباً بك في سيرا استيتس!\nنحن حالياً خارج أوقات العمل.\nسيتواصل معك فريقنا في أقرب وقت.\n\n🏡 Welcome to Sierra Estates!\nWe're currently outside business hours.\nOur team will reach out to you soon.\n\n⏰ 9AM–9PM Sun–Fri | 10AM–6PM Sat",
+    "respectGroupMessages": false,
+    "onlyNewContacts": false
+  }
+}

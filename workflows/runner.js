@@ -1,0 +1,1317 @@
+#!/usr/bin/env node
+'use strict';
+/**
+ * runner.js — Sierra Estates server-side Workflow Control Plane.
+ * ─────────────────────────────────────────────────────────────────────
+ * One daemon that:
+ *   1. READS the schedule + status of every server workflow from the
+ *      Supabase `public.workflows` table — the SAME rows the admin
+ *      Workflow Studio (apps/sierra-estates-realty → WorkflowStudioView)
+ *      displays and edits. Admin edits apply within one 60 s poll:
+ *        status: active/paused/draft   → run / don't run
+ *        schedule: cron expression     → rescheduled
+ *   2. SPAWNS each due workflow (with an overlap lock and a 10 min
+ *      timeout), captures output + exit code into .state/<slug>.json.
+ *   3. PATCHES live telemetry back to the same DB rows:
+ *        last_run_at, last_run_ms, success_rate, runs, last_run_label
+ *      — never name/description/graph/script (admin-owned fields).
+ *      last_run_label is HONEST: "ec2-runner:ok | :error | :timeout |
+ *      :unconfigured" so the Studio never dresses up a blocked run as a
+ *      healthy one (2026-10 improvement).
+ *   4. Exposes an HTTP control API (default 127.0.0.1:2786) guarded by
+ *      X-API-Key / Bearer RUNNER_API_KEY (timing-safe compare, fail-closed
+ *      when the key is not configured):
+ *        GET  /api/health      minimal public liveness; FULL payload only
+ *                              with a valid API key (gateway/supabase/running
+ *                              details are operational information)
+ *        GET  /api/workflows                 DB rows + local run state
+ *        POST /api/workflows/:slug/run       manual trigger (locked)
+ *        GET  /api/workflows/:slug/logs?n=10 run history tails
+ *        POST /pair/code                     pairing-code mint (auth + rate-limited)
+ *        GET  /pair/qr                       pairing QR (auth)
+ *        GET  /api/fleet                     fleet task registry + config (auth)
+ *        POST /api/fleet/run                 dispatch the GitHub Production
+ *                              agent fleet via workflow_dispatch (auth +
+ *                              rate-limited + cooldown; fail-closed without
+ *                              FLEET_GITHUB_TOKEN — secrets stay on GitHub)
+ *        GET  /api/fleet/status              live status of the latest fleet
+ *                              run on GitHub (auth)
+ *        GET  /tracker.csv                   outreach ledger export (auth ONLY —
+ *                              the legacy hard-coded query key was removed)
+ *
+ * Manual runs are what the (prepared) admin patch
+ * `/api/admin/workflow-ops` + WorkflowStudio "Run now" button calls.
+ *
+ * Exit semantics of child workflows: 0 ok · 2 unconfigured (does NOT
+ * count against success_rate) · other/timeout = error.
+ */
+const { spawn } = require('child_process');
+const http = require('http');
+const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
+const { loadWorkflowEnv } = require('./lib/google-sheets'); loadWorkflowEnv(__dirname);
+const { isDue } = require('./lib/crone');
+const state = require('./lib/state');
+const sb = require('./lib/supabase-sync');
+const inbox = require('./lib/inbox');
+const fleet = require('./lib/fleet-dispatch');
+const { GatewayClient } = require('./lib/gateway-client');
+
+const WF_DIR = __dirname;
+const POLL_MS = parseInt(process.env.RUNNER_POLL_MS || '60000', 10);
+const CHILD_TIMEOUT_MS = parseInt(process.env.RUNNER_CHILD_TIMEOUT_MS || '600000', 10);
+// Per-workflow timeout budget. owner-outreach slots send up to WF_SLOT_BATCH
+// messages with 45–55 s pacing PER LANE — a flat 10-min budget SIGKILLed
+// every full slot mid-batch (the "why it stop a lot" report, Oct 2026).
+// Parallel lanes finish a 20-msg slot in ~5 min; a degraded single line
+// needs ~18 min. Default outreach budget: 25 min — still under the 30-min
+// slot cadence, so a stuck run can never overlap the next slot.
+const CHILD_TIMEOUTS_MS = {
+  'owner-outreach': parseInt(process.env.RUNNER_OUTREACH_TIMEOUT_MS || '1500000', 10),
+};
+const PORT = parseInt(process.env.RUNNER_PORT || '2786', 10);
+const BIND = process.env.RUNNER_BIND || '127.0.0.1';
+// Honest telemetry identity: where this runner ACTUALLY executes. Default
+// keeps the historical EC2 label; the Docker migration
+// (infra/docker-compose.runner.yml) sets RUNNER_LABEL=docker-runner so the
+// Workflow Studio never confuses the two execution paths.
+const RUNNER_LABEL = process.env.RUNNER_LABEL || 'docker-runner';
+const API_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
+
+// Local → GitHub fleet dispatch anti-hammer guard. The agent-fleet workflow
+// itself refuses to cancel a run mid-flight (concurrency cancel-in-progress:
+// false), so stacking dispatches during a run buys nothing — the cooldown
+// keeps an excited operator (or a retry loop) from queueing a stampede.
+const FLEET_COOLDOWN_MS = parseInt(process.env.FLEET_DISPATCH_COOLDOWN_MS || '600000', 10);
+let fleetDispatchedInFlight = false;
+
+const SLUGS = [
+  'whatsapp-scraper',
+  'owner-search',
+  'owner-contact',
+  'email-sender',
+  'unit-adder',
+  'gateway-sentinel',
+  'daily-digest',
+  'units-sync',
+  'owner-outreach',
+  'whatsapp-dispatch',
+  'sheets-supabase-sync',
+  'scribe-guardian',
+  'curator-guardian',
+  'atlas-sync-guardian',
+  'antigravity-closer-guardian',
+  'ops-watchdog',
+  'contact-partitioner',
+  'daily-outreach-report',
+  'broker-sync',
+  'usb-phone-harvester',
+  'outreach-2h-digest',
+  'gemini-property-classifier',
+  'media-harvester',
+  'paced-outreach',
+  '13-paced-outreach',
+];
+
+// Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
+// this runner is ALLOWED to dispatch; unset = all (the EC2 control-plane
+// default). The Windows bottom-side host sets RUNNER_WORKFLOWS=owner-outreach
+// so sentinel/digest/units-sync never double-dispatch across hosts while
+// outreach itself runs on BOTH hosts (each walking its own sheet half).
+const RUNNER_WORKFLOWS = String(process.env.RUNNER_WORKFLOWS || '')
+  .split(',').map((s) => s.trim()).filter(Boolean);
+const DISPATCH_SLUGS = RUNNER_WORKFLOWS.length
+  ? SLUGS.filter((s) => RUNNER_WORKFLOWS.includes(s))
+  : SLUGS;
+for (const requested of RUNNER_WORKFLOWS) {
+  if (!SLUGS.includes(requested)) log(`unknown RUNNER_WORKFLOWS slug '${requested}' — ignored`);
+}
+
+const SCRIPTS = {
+  'whatsapp-scraper': '01-whatsapp-scraper/index.js',
+  'owner-search': '02-owner-search/search.js',
+  'owner-contact': '03-owner-contact/contact.js',
+  'email-sender': '04-email-sender/send.js',
+  'unit-adder': '05-unit-adder/add.js',
+  'gateway-sentinel': '06-gateway-sentinel/sentinel.js',
+  'daily-digest': '07-daily-digest/digest.js',
+  'units-sync': '08-units-sync/sync.js',
+  'owner-outreach': '09-owner-outreach/outreach.js',
+  'whatsapp-dispatch': '10-whatsapp-dispatch/dispatch.js',
+  'sheets-supabase-sync': '14-sheets-supabase-sync/sync.js',
+  'scribe-guardian': '15-scribe-guardian/scribe.js',
+  'curator-guardian': '16-curator-guardian/curator.js',
+  'atlas-sync-guardian': '17-atlas-sync-guardian/atlas.js',
+  'antigravity-closer-guardian': '18-antigravity-closer-guardian/closer.js',
+  'ops-watchdog': '19-ops-watchdog/watchdog.js',
+  'contact-partitioner': '09-owner-outreach/contact-partitioner.js',
+  'daily-outreach-report': 'lib/daily-outreach-report.js',
+  'broker-sync': '20-broker-sync/sync.js',
+  'usb-phone-harvester': '21-usb-phone-harvester/index.js',
+  'outreach-2h-digest': 'lib/two-hour-outreach-digest.js',
+  'gemini-property-classifier': '02-gemini-property-classifier/index.js',
+  'media-harvester': '03-media-harvester/index.js',
+  'paced-outreach': '13-paced-outreach/paced-outreach.js',
+  '13-paced-outreach': '13-paced-outreach/paced-outreach.js',
+};
+
+const running = new Set(); // slugs currently executing
+const lastFiredMinute = new Map(); // slug → "YYYY-MM-DD HH:MM" already handled
+const lastFiredHour = new Map(); // slug → "YYYY-MM-DD-HH" already handled for hourly active slots
+const manualQueue = new Map(); // slug → trigger origin ('cron' | 'manual' | 'studio')
+let lastOutreachFinishedAt = 0;
+const lastFiredTwoHour = new Map(); // slug → "YYYY-MM-DD-HH"
+const startedAt = Date.now();
+
+function log(...args) {
+  console.log(new Date().toISOString(), '[runner]', ...args);
+}
+
+// ── P0 2.1: fail-closed authentication + timing-safe comparison ──────────
+// A missing RUNNER_API_KEY means the control plane is NOT authenticated:
+// every protected route must refuse (401) instead of opening up. The old
+// "missing key = allow everything" interpretation is gone.
+function authorized(req) {
+  if (!API_KEY) return false;
+  const h = req.headers['x-api-key'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!h) return false;
+  // Compare fixed-length scrypt digests so both length and content checks
+  // are timing-safe and adhere to secure password/key hashing standards.
+  const a = crypto.scryptSync(String(h), 'runner-auth-salt', 32);
+  const b = crypto.scryptSync(String(API_KEY), 'runner-auth-salt', 32);
+  return crypto.timingSafeEqual(a, b);
+}
+
+function isLoopbackHost(host) {
+  return host === '127.0.0.1' || host === 'localhost' || host === '::1' || host === '[::1]';
+}
+
+// ── P0 2.1/2.3: in-memory per-IP abuse protection for sensitive actions ──
+// Buckets: failed authentications and pairing-code mints. Best-effort (an
+// attacker spoofing source IPs can bypass it), but stops trivial abuse of a
+// loopback/tunnel-exposed runner.
+const RATE_BUCKETS = new Map(); // bucketKey:ip → { count, resetAt }
+function rateLimited(bucket, ip, max, windowMs) {
+  const now = Date.now();
+  const key = `${bucket}:${ip}`;
+  const entry = RATE_BUCKETS.get(key);
+  if (!entry || entry.resetAt <= now) {
+    RATE_BUCKETS.set(key, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  entry.count += 1;
+  if (RATE_BUCKETS.size > 10000) { // keep the map bounded
+    for (const [k, v] of RATE_BUCKETS) if (v.resetAt <= now) RATE_BUCKETS.delete(k);
+  }
+  return entry.count > max;
+}
+
+function clientIp(req) {
+  return String(req.socket?.remoteAddress || 'unknown');
+}
+
+/** Module-level JSON responder shared by deny() and the server handler. */
+function sendJson(res, code, obj) {
+  const body = JSON.stringify(obj, null, 1);
+  res.writeHead(code, {
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(body),
+    'Cache-Control': 'no-store',
+  });
+  res.end(body);
+}
+const json = sendJson;
+
+/** Uniform 401/429 denial for protected routes (fail-closed + abuse guard). */
+function deny(res, req) {
+  if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+    sendJson(res, 429, { ok: false, error: 'rate_limited' });
+    return true;
+  }
+  sendJson(res, 401, { ok: false, error: 'unauthorized' });
+  return true;
+}
+
+/** Run one workflow to completion; update local state + Supabase telemetry. */
+async function runWorkflow(slug, trigger = 'cron') {
+  if (running.has(slug)) {
+    log(`${slug}: still running — ${trigger} trigger skipped`);
+    return { skipped: true, reason: 'already_running' };
+  }
+  const scriptRel = SCRIPTS[slug];
+  if (!scriptRel) return { skipped: true, reason: 'unknown_slug' };
+
+  // P0-9 STATUS RECHECK immediately before execution. Automatic triggers
+  // (cron / hourly-window / studio run-request) must never run a workflow
+  // whose persisted status is not 'active' — a paused/draft workflow can only
+  // be executed through the authenticated explicit POST /run endpoint by a
+  // human operator (deliberate emergency action, honestly labelled).
+  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', '30m-window', 'studio', 'run-requested']);
+  if (AUTOMATIC_TRIGGERS.has(trigger) && sb.configured()) {
+    try {
+      const current = await sb.getWorkflows([slug]);
+      const status = current.length ? String(current[0].status || '').toLowerCase() : '';
+      if (!current.length || status !== 'active') {
+        log(`${slug}: dispatch refused — persisted status '${status || '(no row)'}' (trigger ${trigger})`);
+        return { skipped: true, reason: 'not_active', status: status || '(no row)' };
+      }
+    } catch (e) {
+      let cachedStatus = null;
+      try {
+        const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+        if (fs.existsSync(cachePath)) {
+          const cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+          const r = cached.find((x) => x.slug === slug);
+          if (r) cachedStatus = String(r.status || '').toLowerCase();
+        }
+      } catch (_) {}
+      if (cachedStatus === 'active') {
+        log(`${slug}: Supabase recheck failed (${e.message}) — proceeding using verified active cached status`);
+      } else {
+        log(`${slug}: dispatch refused — status recheck failed (fail-closed): ${e.message}`);
+        return { skipped: true, reason: 'status_check_failed' };
+      }
+    }
+  }
+
+  running.add(slug);
+  try {
+    const started = Date.now();
+    log(`${slug}: ${trigger} run started`);
+    try {
+      state.save(slug, { lastRun: new Date().toISOString() });
+    } catch (saveErr) {
+      log(`${slug}: initial state.save failed: ${saveErr.message}`);
+    }
+
+    const exit = await new Promise((resolve) => {
+      const childArgs = (slug === 'paced-outreach' || slug === '13-paced-outreach')
+        ? [path.join(WF_DIR, scriptRel), '--once']
+        : [path.join(WF_DIR, scriptRel)];
+      const child = spawn('node', childArgs, {
+        cwd: WF_DIR,
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let out = '';
+      let errOut = '';
+      const cap = (s) => s.length > 8000 ? `${s.slice(0, 8000)}…[truncated]` : s;
+      child.stdout.on('data', (d) => { out += d.toString(); if (out.length > 200000) out = out.slice(-100000); });
+      child.stderr.on('data', (d) => { errOut += d.toString(); if (errOut.length > 200000) errOut = errOut.slice(-100000); });
+
+      const childTimeoutMs = CHILD_TIMEOUTS_MS[slug] || CHILD_TIMEOUT_MS;
+      const killer = setTimeout(() => {
+        log(`${slug}: timeout after ${childTimeoutMs / 1000}s — killing`);
+        if (process.platform === 'win32' && child.pid) {
+          try {
+            require('child_process').execSync(`taskkill /pid ${child.pid} /t /f`);
+          } catch (_) {
+            try { child.kill(); } catch (_) {}
+          }
+        } else {
+          try { child.kill('SIGKILL'); } catch (_) {}
+        }
+      }, childTimeoutMs);
+
+      child.on('exit', (code, signal) => {
+        clearTimeout(killer);
+        resolve({ code, signal, out: cap(out), err: cap(errOut) });
+      });
+      child.on('error', (e) => {
+        clearTimeout(killer);
+        resolve({ code: -1, signal: null, out: '', err: `spawn error: ${e.message}` });
+      });
+    });
+
+    const durationMs = Date.now() - started;
+    const combined = `${exit.out}\n${exit.err}`.trim();
+    const summaryLine =
+      (combined.match(/^SUMMARY (.+)$/m) || [])[1] ||
+      (combined.match(/^UNCONFIGURED: (.+)$/m) || [])[1] ||
+      (combined.match(/^BLOCKED: (.+)$/m) || [])[1] ||
+      (combined.split('\n').filter(Boolean).pop() || '').slice(0, 300);
+
+    let exitKind = 'error';
+    if (exit.signal || exit.code === -1) {
+      exitKind = 'timeout';
+    } else if (exit.code === 2) {
+      exitKind = 'unconfigured';
+    } else if (exit.code === 0) {
+      const hasFailedSummary = /"sent":\s*0\b/.test(summaryLine) && /"failed":\s*[1-9]\d*/.test(summaryLine);
+      const isExplicitFail = /\bFAILED:/i.test(summaryLine) || /^FAILED\b/i.test(summaryLine);
+      if (hasFailedSummary || isExplicitFail) {
+        exitKind = 'error';
+      } else {
+        exitKind = 'ok';
+      }
+    }
+
+    const entry = {
+      at: new Date().toISOString(),
+      exit: exitKind,
+      ms: durationMs,
+      trigger,
+      summary: summaryLine.slice(0, 300),
+    };
+    let st = null;
+    try {
+      st = state.save(slug, {
+        lastDurationMs: durationMs,
+        lastExit: exitKind,
+        lastSummary: summaryLine.slice(0, 300),
+      }, entry);
+    } catch (saveErr) {
+      log(`${slug}: final state.save failed: ${saveErr.message}`);
+    }
+
+    // Telemetry → Supabase (best-effort; runner must survive SB outages)
+    // Label carries the exit kind so the Studio shows the truth at a glance.
+    try {
+      const current = await sb.getWorkflows([slug]);
+      const runsNow = current.length ? (current[0].runs || 0) + 1 : 1;
+      await sb.patchTelemetry(slug, {
+        lastRunMs: durationMs,
+        successRate: st?.successRate ?? undefined,
+        runsBump: runsNow,
+        label: `${RUNNER_LABEL}:${exitKind}`,
+      });
+    } catch (e) {
+      log(`${slug}: telemetry patch failed: ${e.message}`);
+    }
+
+    log(`${slug}: ${trigger} run ${exitKind} in ${(durationMs / 1000).toFixed(1)}s — ${summaryLine.slice(0, 120)}`);
+    return { skipped: false, exitKind, durationMs, summary: summaryLine };
+  } finally {
+    running.delete(slug);
+    if (slug === 'owner-outreach') {
+      lastOutreachFinishedAt = Date.now();
+    }
+  }
+}
+
+/** Read a request body with a hard cap (for the inbound webhook). */
+function readBody(req, cap) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > cap) { req.destroy(); reject(new Error('body too large')); return }
+      chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
+  });
+}
+
+/** One scheduler pass. */
+async function schedulerTick() {
+  // FAIL-CLOSED (P0-9): when Supabase is not configured (or the read fails)
+  // there are NO authoritative workflow rows — the runner must stay idle
+  // instead of inventing active scheduled rows. HTTP manual runs of explicit
+  // human operators remain available; automatic dispatch requires live rows.
+  if (!sb.configured()) {
+    log('supabase not configured — scheduler idle, no dispatch (fail-closed)');
+    return;
+  }
+  let rows = [];
+  try {
+    rows = await sb.getWorkflows(DISPATCH_SLUGS);
+    try {
+      const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+      fs.writeFileSync(cachePath, JSON.stringify(rows, null, 2));
+    } catch (_) {}
+  } catch (e) {
+    let cached = null;
+    try {
+      const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+      if (fs.existsSync(cachePath)) cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    } catch (_) {}
+    if (cached && Array.isArray(cached) && cached.length) {
+      log(`workflows read failed (${e.message}) — using cached rows to maintain scheduled operations`);
+      rows = cached;
+    } else {
+      log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
+      if (!manualQueue.size) return;
+    }
+  }
+  const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
+
+  // Hourly window check (09:00-22:00 Cairo time) — Owner Outreach Continuous / 30m Slot Scheduler
+  try {
+    const cairoFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Cairo',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10) % 24;
+    const cairoMin = parseInt(cairoFmt.find((p) => p.type === 'minute')?.value || '0', 10);
+    const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
+    const slotMin = cairoMin < 30 ? '00' : '30';
+    const hourKey = `${cairoDate}-${cairoHour}:${slotMin}`;
+
+    // Read config
+    const defaultDailyCap = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '240', 10);
+    let outreachConfig = { continuous: true, cooldownSec: 90, dailyCap: defaultDailyCap, activeHours: [9, 22] };
+    try {
+      const cfgPath = path.join(state.STATE_DIR, 'owner-outreach-config.json');
+      if (fs.existsSync(cfgPath)) {
+        outreachConfig = { ...outreachConfig, ...JSON.parse(fs.readFileSync(cfgPath, 'utf8')) };
+      }
+    } catch (_) {}
+
+    // Read daily sent
+    let dailySent = 0;
+    try {
+      const dPath = path.join(state.STATE_DIR, 'owner-outreach-daily.json');
+      if (fs.existsSync(dPath)) {
+        const dObj = JSON.parse(fs.readFileSync(dPath, 'utf8'));
+        if (dObj.date === cairoDate) dailySent = dObj.sent || 0;
+      }
+    } catch (_) {}
+
+    const outreachRow = rowBySlug.get('owner-outreach');
+    const isOutreachActive = outreachRow && String(outreachRow.status || '').toLowerCase() === 'active';
+    const customStart = outreachConfig.activeHours?.[0] ?? 9;
+    const customEnd = outreachConfig.activeHours?.[1] ?? 22;
+    const inActiveHours = (customStart === 9 && customEnd === 22)
+      ? (cairoHour >= 9 && cairoHour < 22)
+      : (cairoHour >= customStart && cairoHour < customEnd);
+    const underCap = dailySent < (outreachConfig.dailyCap || defaultDailyCap);
+
+    if (inActiveHours && isOutreachActive && !running.has('owner-outreach') && !manualQueue.has('owner-outreach')) {
+      if (underCap) {
+        if (outreachConfig.continuous) {
+          const cooldownMs = (outreachConfig.cooldownSec || 90) * 1000;
+          const elapsed = Date.now() - lastOutreachFinishedAt;
+          if (elapsed >= cooldownMs) {
+            log(`Continuous autonomous outreach: queueing next rotated batch (${dailySent}/${outreachConfig.dailyCap} today)`);
+            manualQueue.set('owner-outreach', 'continuous-loop');
+          }
+        } else {
+          if (lastFiredHour.get('owner-outreach') !== hourKey) {
+            log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing 25-msg batch`);
+            lastFiredHour.set('owner-outreach', hourKey);
+            manualQueue.set('owner-outreach', '30m-window');
+          }
+        }
+      }
+    }
+
+    // ── 2-Hour Executive Outreach Digest (every 2 hours in 09:00–22:00 Cairo) ──
+    const twoHourBlock = Math.floor(cairoHour / 2) * 2;
+    const twoHourKey = `${cairoDate}-${twoHourBlock}`;
+    const digestRow = rowBySlug.get('outreach-2h-digest');
+    const isDigestActive = !digestRow || String(digestRow.status || '').toLowerCase() === 'active';
+    let reportStale = false;
+    try {
+      const repFile = path.join(state.STATE_DIR, 'two-hour-outreach-report.json');
+      if (!fs.existsSync(repFile)) {
+        reportStale = true;
+      } else {
+        const repObj = JSON.parse(fs.readFileSync(repFile, 'utf8'));
+        const genMs = repObj && repObj.generated_at ? Date.parse(repObj.generated_at) : 0;
+        if (!genMs || Date.now() - genMs >= 2 * 3600 * 1000) reportStale = true;
+      }
+    } catch (_) {
+      reportStale = true;
+    }
+
+    if (
+      DISPATCH_SLUGS.includes('outreach-2h-digest') &&
+      cairoHour >= 9 && cairoHour <= 22 &&
+      (cairoHour % 2 === 0 || reportStale) &&
+      isDigestActive &&
+      !running.has('outreach-2h-digest') &&
+      !manualQueue.has('outreach-2h-digest') &&
+      lastFiredTwoHour.get('outreach-2h-digest') !== twoHourKey
+    ) {
+      log(`2-hour executive digest due: Cairo hour ${cairoHour} (${twoHourKey}, stale=${reportStale}) — queueing outreach-2h-digest`);
+      lastFiredTwoHour.set('outreach-2h-digest', twoHourKey);
+      manualQueue.set('outreach-2h-digest', '2h-digest-slot');
+    }
+  } catch (err) {
+    log(`outreach / 2h-digest scheduler error: ${err.message}`);
+  }
+
+  const now = new Date();
+  const minuteKey = `${now.toISOString().slice(0, 16)}`;
+
+  for (const row of rows) {
+    const slug = row.slug;
+    if (!SCRIPTS[slug]) continue;
+    if (row.status !== 'active') continue;
+    if (slug === 'owner-outreach') continue; // Handled exclusively by Cairo continuous / slot scheduler above
+    if (slug === 'outreach-2h-digest') continue; // Handled exclusively by Cairo 2h digest scheduler above
+
+    // admin pressed "Run now" in the Studio? (Layer-2 patch sets last_run_label='run-requested')
+    if (row.last_run_label === 'run-requested' && !manualQueue.has(slug)) {
+      manualQueue.set(slug, 'studio');
+    }
+
+    const sched = String(row.schedule || '').trim();
+    if (sched === 'webhook' || sched === 'manual') continue;
+
+    if (manualQueue.has(slug)) continue; // already queued this pass
+    if (lastFiredMinute.get(slug) === minuteKey) continue;
+    if (isDue(sched, now)) {
+      lastFiredMinute.set(slug, minuteKey);
+      manualQueue.set(slug, 'cron'); // executed below, sequential, lock-guarded
+    }
+  }
+
+  // Execute due/manual runs sequentially — the gateway + Sheets prefer low concurrency.
+  while (manualQueue.size) {
+    const slug = manualQueue.keys().next().value;
+    const trigger = manualQueue.get(slug) || 'cron';
+    manualQueue.delete(slug);
+    try {
+      await runWorkflow(slug, trigger);
+    } catch (e) {
+      log(`${slug}: runner error: ${e.message}`);
+    }
+  }
+}
+
+/** HTTP control API. */
+function server() {
+  const gw = new GatewayClient();
+
+  const json = (res, code, obj) => {
+    const body = JSON.stringify(obj, null, 1);
+    res.writeHead(code, {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+      'Cache-Control': 'no-store', // pairing/health responses must never be cached
+    });
+    res.end(body);
+  };
+
+  return http.createServer(async (req, res) => {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const p = url.pathname;
+
+    try {
+      if ((p === '/api/health' || p === '/health') && req.method === 'GET') {
+        // P0 2.1: unauthenticated callers get MINIMAL liveness only — uptime is
+        // not sensitive, but gateway/session/supabase details are operational
+        // information and are reserved for authenticated operators.
+        if (!authorized(req)) {
+          return json(res, 200, { ok: true, service: 'se-workflow-runner' });
+        }
+        let gateway = { reachable: false };
+        try { gateway = await gw.status(); } catch (e) { gateway = { reachable: false, error: e.message }; }
+        let gh = null;
+        try { gh = JSON.parse(fs.readFileSync(path.join(state.STATE_DIR, 'gateway-health.json'), 'utf8')); } catch (_) { /* none */ }
+        return json(res, 200, {
+          ok: true,
+          service: 'se-workflow-runner',
+          uptimeSec: Math.round((Date.now() - startedAt) / 1000),
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          supabase: sb.configured(),
+          running: [...running],
+          fleet: fleet.fleetConfig(), // configured + repo/workflow only — no token material
+          gateway,
+          gatewayHealth: gh,
+        });
+      }
+
+      // ── Pairing portal: always-fresh QR so the owner can re-link anytime ──
+      // P0 2.3: the portal page itself carries no secrets, but every pairing
+      // ASSET (QR image, pairing code, gateway status) is fetched with the
+      // operator's API key — unauthenticated callers get nothing.
+      if (p === '/pair' && req.method === 'GET') {
+        const html = `<!doctype html><html lang="ar"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Sierra Estates — WhatsApp Link</title>
+<style>body{font-family:system-ui,'Segoe UI',Tahoma,sans-serif;background:#0b141a;color:#e9edef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+.card{background:#111b21;border:1px solid #2a3942;border-radius:16px;padding:28px 24px;max-width:420px;text-align:center}
+h1{font-size:18px;margin:0 0 6px;color:#00a884}p{font-size:13px;line-height:1.7;color:#8696a0;margin:8px 0}
+img{width:270px;height:270px;border-radius:10px;background:#fff;padding:8px}
+.st{font-size:13px;margin-top:10px;padding:6px 10px;border-radius:8px;display:inline-block}
+.ok{background:#0b3d2e;color:#00d95f}.bad{background:#3d2b0b;color:#ffc861}
+.code{font-size:26px;letter-spacing:6px;font-weight:700;color:#00d95f;background:#0b3d2e;border-radius:10px;padding:10px 16px;margin:12px 0;display:none;font-family:monospace}
+.code.show{display:block}
+.btn{background:#00a884;color:#0b141a;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.5}
+.key{background:#111b21;color:#e9edef;border:1px solid #2a3942;border-radius:8px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;margin:6px 0 2px}
+.divider{display:flex;align-items:center;gap:10px;color:#8696a0;font-size:12px;margin:14px 0 0}
+.divider:before,.divider:after{content:'';flex:1;height:1px;background:#2a3942}
+b{color:#e9edef}</style></head><body><div class="card">
+<h1>Sierra Estates — ربط الواتساب</h1>
+<p>أدخل مفتاح الوصول (Access Key) للمتابعة — صفحة الربط محمية.</p>
+<input class="key" id="key" type="password" placeholder="Access key" autocomplete="off">
+<button class="btn" id="save" onclick="saveKey()">فتح صفحة الربط</button>
+<div id="portal" style="display:none">
+<p style="font-size:12px;color:#d4af37;background:#1a231d;border:1px solid #2e4438;border-radius:8px;padding:8px 10px;margin-bottom:12px;">💡 المنظومة تعمل بـ 4 خطوط مخصصة. لإدارة الخطوط الأربعة معاً افتح <a href="http://127.0.0.1:2785" target="_blank" style="color:#00d95f;font-weight:700;text-decoration:underline;">محطة البوابة المجمعة (:2785)</a>.</p>
+<p>1) افتح واتساب على الجوال المراد ربطه<br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
+<img id="qr" alt="QR">
+<p class="st bad" id="st">…</p>
+<p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>
+<div class="divider">أو بدون كاميرا</div>
+<button class="btn" id="mint" onclick="mintCode()">🔗 إنشاء رمز ربط برقم الهاتف</button>
+<div class="code" id="code"></div>
+<p id="codehint" style="display:none">1) واتساب ← الأجهزة المرتبطة ← ربط جهاز<br>2) اختر «الربط برقم الهاتف بدلاً من ذلك»<br>3) أدخل الرمز أعلاه (صالح لعدة دقائق فقط)</p>
+</div>
+</div><script>
+const KEY_STORE='se_pair_access_key';
+let KEY='';
+function hdrs(){return {'X-API-Key':KEY}}
+function saveKey(){
+  KEY=document.getElementById('key').value.trim();
+  if(!KEY){alert('أدخل مفتاح الوصول أولاً');return}
+  try{sessionStorage.setItem(KEY_STORE,KEY)}catch(e){}
+  document.getElementById('portal').style.display='block';
+  document.getElementById('save').style.display='none';
+  document.getElementById('key').style.display='none';
+  tick();
+}
+const img=document.getElementById('qr'), st=document.getElementById('st');
+async function mintCode(){
+  const b=document.getElementById('mint'), c=document.getElementById('code'), h=document.getElementById('codehint');
+  b.disabled=true; b.textContent='… جاري إنشاء الرمز';
+  c.className='code show'; c.textContent='…';
+  try{
+    const r=await fetch('/pair/code',{method:'POST',headers:hdrs()}); const j=await r.json();
+    if(r.ok&&j&&j.ok&&j.code){ c.textContent=String(j.code).replace(/[^A-Z0-9]/gi,'').toUpperCase(); h.style.display='block'; }
+    else if(r.status===429){ c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit';
+      c.textContent='تم تجاوز الحد المسموح من المحاولات — انتظر عشر دقائق ثم حاول مجدداً.'; h.style.display='none'; }
+    else{ c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit';
+      c.textContent='تعذر إنشاء رمز الآن — واتساب يفرض حظراً مؤقتاً على الرموز لهذا الرقم. استخدم مسح QR أعلاه، أو حاول بعد ٣٠ دقيقة.'; h.style.display='none'; }
+  }catch(e){ c.className='code show'; c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit'; c.textContent='خطأ في الاتصال — حاول مرة أخرى'; h.style.display='none'; }
+  b.disabled=false; b.textContent='🔗 إنشاء رمز ربط برقم الهاتف';
+}
+let lastObj=null;
+async function tick(){
+  if(!KEY)return;
+  try{
+    const r=await fetch('/pair/qr?t='+Date.now(),{headers:hdrs(),cache:'no-store'});
+    if(r.status===401){st.className='st bad';st.textContent='مفتاح الوصول غير صحيح';return}
+    if(!r.ok){st.className='st bad';st.textContent='لا يوجد رمز QR متاح حالياً';return}
+    const blob=await r.blob();
+    if(lastObj)URL.revokeObjectURL(lastObj);
+    lastObj=URL.createObjectURL(blob); img.src=lastObj;
+  }catch(e){st.className='st bad';st.textContent='تعذر الاتصال بالخادم';return}
+  try{const h=await fetch('/api/health',{headers:hdrs(),cache:'no-store'});const j=await h.json();
+  const s=j.gateway&&j.gateway.status;
+  if(s==='ready'){st.className='st ok';st.textContent='تم الربط بنجاح ✓ — يمكنك إغلاق الصفحة';}
+  else{st.className='st bad';st.textContent='بانتظار الربط… ('+(s||'offline')+')';}
+  }catch(e){st.className='st bad';st.textContent='تعذر الاتصال بالخادم';}
+}
+try{const k=sessionStorage.getItem(KEY_STORE);if(k){KEY=k;saveKey()}}catch(e){}
+setInterval(tick,5000);
+</script></body></html>`;
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+        return res.end(html);
+      }
+
+      // On-demand pairing code (phone-number link, no camera needed).
+      // P0 2.3: authenticated + rate-limited (5 mints / 10 min / IP) — a minted
+      // code is a sensitive linking capability, not a public endpoint.
+      if (p === '/pair/code' && req.method === 'POST') {
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        if (rateLimited('paircode', clientIp(req), 5, 10 * 60 * 1000)) {
+          return json(res, 429, { ok: false, error: 'rate_limited', retryAfterMin: 10 });
+        }
+        try {
+          const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+          const sid = process.env.OPENWA_SESSION_ID || '';
+          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201000000003').replace(/\D/g, '');
+          const r = await fetch(`${base}/api/sessions/${sid}/pairing-code`, {
+            method: 'POST',
+            headers: {
+              'X-API-Key': process.env.OPENWA_OPERATOR_KEY || process.env.WHATSAPP_API_TOKEN || '',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ phoneNumber: phone }),
+            signal: AbortSignal.timeout(20000),
+          });
+          const d = await r.json().catch(() => ({}));
+          const code = String(d.code || d.pairingCode || d.pairing_code || '').trim();
+          if (!r.ok || !code) return json(res, 502, { ok: false, error: (d && d.message) || `gateway ${r.status}` });
+          return json(res, 200, { ok: true, code });
+        } catch (e) {
+          return json(res, 502, { ok: false, error: e.message });
+        }
+      }
+
+      if (p === '/pair/qr' && req.method === 'GET') {
+        // P0 2.3: pairing QR is a sensitive linking capability — auth required.
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        try {
+          const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+          const sid = process.env.OPENWA_SESSION_ID || '';
+          const r = await fetch(`${base}/api/sessions/${sid}/qr`, {
+            headers: { 'X-API-Key': process.env.OPENWA_OPERATOR_KEY || process.env.WHATSAPP_API_TOKEN || '' },
+            signal: AbortSignal.timeout(8000),
+          });
+          const d = await r.json();
+          const b64 = String(d.qrCode || d.qr || '').includes(',') ? String(d.qrCode || d.qr).split(',')[1] : String(d.qrCode || d.qr || '');
+          if (!b64) return json(res, 404, { ok: false, error: 'no qr available' });
+          const img = Buffer.from(b64, 'base64');
+          res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
+          return res.end(img);
+        } catch (e) {
+          return json(res, 502, { ok: false, error: e.message });
+        }
+      }
+
+      if (p === '/api/workflows' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const [rows, local] = await Promise.all([
+          sb.configured() ? sb.getWorkflows(SLUGS) : Promise.resolve([]),
+          Promise.resolve(state.all()),
+        ]);
+        const byslug = Object.fromEntries(local.map((s) => [s.slug, s]));
+        return json(res, 200, {
+          ok: true,
+          workflows: rows.map((r) => ({ ...r, local: byslug[r.slug] || null })),
+        });
+      }
+
+      const runMatch = p.match(/^\/api\/workflows\/([\w-]+)\/run$/);
+      if (runMatch && req.method === 'POST') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const slug = runMatch[1];
+        if (!SCRIPTS[slug]) return json(res, 404, { ok: false, error: 'unknown workflow' });
+        let body = {};
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) {}
+        const isP0Inbound = String(body.priority || '').toUpperCase() === 'P0_INBOUND';
+        if (isP0Inbound) {
+          try {
+            fs.mkdirSync(state.STATE_DIR, { recursive: true });
+            const queueFile = path.join(state.STATE_DIR, 'p0-inbound-queue.jsonl');
+            fs.appendFileSync(
+              queueFile,
+              JSON.stringify({
+                at: new Date().toISOString(),
+                priority: 'P0_INBOUND',
+                lead: body.lead || null,
+                leadId: body.leadId || null,
+                phone: body.phone || null,
+                name: body.name || null,
+                compound: body.compound || null,
+                unitCode: body.unitCode || null,
+                reference: body.reference || null,
+                listingId: body.listingId || null,
+                greeting: body.greeting || null,
+                source: body.source || 'webhook',
+              }) + '\n'
+            );
+          } catch (qe) {
+            log(`p0 inbound queue write error: ${qe.message}`);
+          }
+        }
+        if (running.has(slug)) {
+          return isP0Inbound
+            ? json(res, 202, { ok: true, accepted: slug, priority: 'P0_INBOUND', queued: true })
+            : json(res, 409, { ok: false, error: 'already_running' });
+        }
+        if (manualQueue.has(slug)) {
+          return json(res, 202, {
+            ok: true,
+            accepted: slug,
+            ...(isP0Inbound ? { priority: 'P0_INBOUND' } : {}),
+            note: 'already_queued',
+          });
+        }
+        // respond first, run async — HTTP callers get immediate ack
+        manualQueue.set(slug, isP0Inbound ? 'p0_inbound' : 'manual');
+        setImmediate(() => schedulerTick().catch((e) => log(`manual tick error: ${e.message}`)));
+        return json(res, 202, {
+          ok: true,
+          accepted: slug,
+          ...(isP0Inbound ? { priority: 'P0_INBOUND' } : {}),
+        });
+      }
+
+      const patchMatch = p.match(/^\/api\/workflows\/([\w-]+)$/);
+      if (patchMatch && (req.method === 'PATCH' || req.method === 'POST')) {
+        if (!authorized(req)) { deny(res, req); return; }
+        const slug = patchMatch[1];
+        if (!SCRIPTS[slug]) return json(res, 404, { ok: false, error: 'unknown workflow' });
+        let body = {};
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) {}
+        const patch = {};
+        if (typeof body.status === 'string' && ['active', 'paused', 'draft'].includes(body.status.toLowerCase())) {
+          patch.status = body.status.toLowerCase();
+        }
+        if (typeof body.schedule === 'string' && body.schedule.trim()) {
+          patch.schedule = body.schedule.trim();
+        }
+        if (!Object.keys(patch).length) {
+          return json(res, 400, { ok: false, error: 'nothing_to_patch' });
+        }
+        const ok = sb.configured() ? await sb.patchWorkflowRow(slug, patch) : false;
+        return json(res, 200, { ok, slug, patched: patch });
+      }
+
+      if (p === '/api/outreach/radar' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const repFile = path.join(state.STATE_DIR, 'two-hour-outreach-report.json');
+        const cfgFile = path.join(state.STATE_DIR, 'owner-outreach-config.json');
+        let report = null;
+        if (fs.existsSync(repFile)) {
+          try { report = JSON.parse(fs.readFileSync(repFile, 'utf8')); } catch (_) {}
+        }
+        let config = {
+          continuous: true,
+          cooldownSec: 90,
+          dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+          activeHours: [9, 22],
+        };
+        if (fs.existsSync(cfgFile)) {
+          try { config = { ...config, ...JSON.parse(fs.readFileSync(cfgFile, 'utf8')) }; } catch (_) {}
+        }
+        return json(res, 200, { ok: true, report, config });
+      }
+
+      if (p === '/api/outreach/config' && req.method === 'POST') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const cfgFile = path.join(state.STATE_DIR, 'owner-outreach-config.json');
+        let config = {
+          continuous: true,
+          cooldownSec: 90,
+          dailyCap: parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '150', 10),
+          activeHours: [9, 22],
+        };
+        if (fs.existsSync(cfgFile)) {
+          try { config = { ...config, ...JSON.parse(fs.readFileSync(cfgFile, 'utf8')) }; } catch (_) {}
+        }
+        let body = {};
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) {}
+        if (body.continuous !== undefined) config.continuous = Boolean(body.continuous);
+        if (Number.isFinite(Number(body.cooldownSec)) && Number(body.cooldownSec) >= 15) {
+          config.cooldownSec = Number(body.cooldownSec);
+        }
+        if (Number.isFinite(Number(body.dailyCap)) && Number(body.dailyCap) >= 1) {
+          config.dailyCap = Number(body.dailyCap);
+        }
+        if (Array.isArray(body.activeHours) && body.activeHours.length === 2) {
+          config.activeHours = [Number(body.activeHours[0]) || 9, Number(body.activeHours[1]) || 22];
+        }
+        fs.mkdirSync(state.STATE_DIR, { recursive: true });
+        fs.writeFileSync(cfgFile, JSON.stringify(config, null, 2), 'utf8');
+        return json(res, 200, { ok: true, config });
+      }
+
+      // ── Local → GitHub fleet dispatch bridge (Production agent fleet) ──
+      // The fleet's secrets (Property Finder / DeepSeek / Cline keys) live
+      // ONLY as GitHub secrets, so the bridge dispatches the already-green
+      // agent-fleet workflow instead of re-plumbing keys into this container.
+      // Fail-closed: without FLEET_GITHUB_TOKEN these routes answer honestly
+      // and dispatch nothing.
+      if (p === '/api/fleet' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const fleetState = fleet.loadFleetState();
+        return json(res, 200, {
+          ok: true,
+          ...fleet.fleetConfig(),
+          tasks: fleet.FLEET_TASKS,
+          runAll: fleet.FLEET_RUN_ALL,
+          lastDispatch: fleetState.lastDispatch || null,
+          recentDispatches: (fleetState.history || []).slice(0, 5),
+          cooldownSec: Math.round(FLEET_COOLDOWN_MS / 1000),
+        });
+      }
+
+      if (p === '/api/fleet/run' && req.method === 'POST') {
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        if (rateLimited('fleetrun', clientIp(req), 6, 10 * 60 * 1000)) {
+          return json(res, 429, { ok: false, error: 'rate_limited', retryAfterMin: 10 });
+        }
+        if (fleetDispatchedInFlight) {
+          return json(res, 409, { ok: false, error: 'dispatch_in_flight' });
+        }
+        const fsLast = fleet.loadFleetState().lastDispatch;
+        if (fsLast && Date.now() - Date.parse(fsLast.at || 0) < FLEET_COOLDOWN_MS) {
+          const waitSec = Math.ceil((FLEET_COOLDOWN_MS - (Date.now() - Date.parse(fsLast.at))) / 1000);
+          return json(res, 429, { ok: false, error: 'cooldown', retryAfterSec: waitSec, lastDispatch: fsLast });
+        }
+        let body = null;
+        try { body = JSON.parse(await readBody(req, 16 * 1024) || '{}'); } catch (_) { body = null; }
+        const tasksInput = body ? (body.tasks !== undefined ? body.tasks : body.task) : null;
+        if (!tasksInput) return json(res, 400, { ok: false, error: 'missing_tasks', hint: 'Send {"tasks":"briefing:daily,check-thresholds"} or {"tasks":["fleet:run-all"]}.' });
+        fleetDispatchedInFlight = true;
+        try {
+          const out = await fleet.dispatchFleet(tasksInput);
+          if (!out.ok && out.error === 'invalid_tasks') {
+            return json(res, 400, { ok: false, error: 'invalid_tasks', unknown: out.unknown, allowed: [...fleet.FLEET_TASKS, fleet.FLEET_RUN_ALL] });
+          }
+          if (!out.ok) return json(res, 502, out);
+          log(`fleet dispatch accepted: ${out.dispatched.tasks.join(',')} → ${fleet.fleetConfig().repo}#${fleet.fleetConfig().workflow}`);
+          return json(res, 202, { ok: true, accepted: true, dispatch: out.dispatched, note: 'Track via GET /api/fleet/status (GitHub run starts within ~30s).' });
+        } finally {
+          fleetDispatchedInFlight = false;
+        }
+      }
+
+      if (p === '/api/fleet/status' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const out = await fleet.fleetRunStatus();
+        const fleetState = fleet.loadFleetState();
+        if (!out.ok) return json(res, out.configured === false ? 503 : 502, out);
+        return json(res, 200, { ok: true, live: out.run, lastLocalDispatch: fleetState.lastDispatch || null });
+      }
+
+      const logsMatch = p.match(/^\/api\/workflows\/([\w-]+)\/logs$/);
+      if (logsMatch && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const n = Math.min(parseInt(url.searchParams.get('n') || '10', 10) || 10, 20);
+        return json(res, 200, { ok: true, slug: logsMatch[1], history: state.tail(logsMatch[1], n) });
+      }
+
+      // ── Inbound WhatsApp webhook target (gateway → runner, same box) ──
+      if (p === '/api/inbound' && req.method === 'POST') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const raw = await readBody(req, 256 * 1024);
+        let body = null;
+        try { body = JSON.parse(raw); } catch (_) { body = { raw: String(raw).slice(0, 2000) } }
+        const out = await inbox.handleInbound(body);
+        return json(res, 202, { ok: true, ...out });
+      }
+
+      if (p === '/api/inbound/preview' && req.method === 'GET') {
+        if (!authorized(req)) { deny(res, req); return; }
+        const n = Math.min(parseInt(url.searchParams.get('n') || '20', 10) || 20, 100);
+        return json(res, 200, { ok: true, messages: inbox.preview(n) });
+      }
+
+      if (p === '/tracker.csv' && req.method === 'GET') {
+        // P0 2.2: the hard-coded query-key bypass (static shared secret in a
+        // URL parameter) is REMOVED. Outreach ledgers contain owner phone
+        // numbers, outreach codes and session details — the export is
+        // authenticated exactly like every other protected route, and never
+        // via a URL query parameter (URLs persist in proxy logs, browser
+        // history and monitoring systems).
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        const ledgerFile = path.join(WF_DIR, '.state', 'owner-outreach-ledger.jsonl');
+        if (!fs.existsSync(ledgerFile)) {
+          res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8' });
+          return res.end('phone,code,at,avail,session,worker,cursor\n');
+        }
+        const lines = fs.readFileSync(ledgerFile, 'utf8').split('\n').filter(Boolean);
+        const csvRows = ['phone,code,at,avail,session,worker,cursor'];
+        for (const line of lines) {
+          try {
+            const entry = JSON.parse(line);
+            const phone = entry.phone || '';
+            const code = entry.code || '';
+            const at = entry.at || entry.ts || '';
+            const avail = entry.avail || '';
+            const session = entry.session || '';
+            const worker = entry.worker || '';
+            const cursor = entry.cursor !== undefined ? entry.cursor : '';
+            csvRows.push(`"${phone}","${code}","${at}","${avail}","${session}","${worker}","${cursor}"`);
+          } catch (_) {}
+        }
+        res.writeHead(200, {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'inline; filename="tracker.csv"',
+        });
+        return res.end(csvRows.join('\n'));
+      }
+
+      return json(res, 404, { ok: false, error: 'not_found' });
+    } catch (e) {
+      return json(res, 500, { ok: false, error: e.message });
+    }
+  });
+}
+
+async function main() {
+  log(`workflow runner starting — bind=${BIND}:${PORT} poll=${POLL_MS / 1000}s tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+
+  // P0 2.1: a non-loopback bind WITHOUT an API key would expose an
+  // unauthenticated control plane (run triggers, owner ledger export,
+  // inbound webhook) to the network — refuse to start instead.
+  if (!isLoopbackHost(BIND) && !API_KEY) {
+    console.error(`runner fatal: RUNNER_BIND=${BIND} is not loopback and RUNNER_API_KEY is not set — refusing to expose an unauthenticated control plane. Set RUNNER_API_KEY (or bind to 127.0.0.1).`);
+    process.exit(1);
+  }
+  if (!API_KEY) {
+    log('WARNING: RUNNER_API_KEY is not set — every protected route will fail closed (401) until it is configured');
+  }
+
+  // ensure one-shot seeding of the sentinel row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'gateway-sentinel',
+      name: 'Gateway Sentinel',
+      name_ar: 'حارس بوابة الواتساب',
+      description: '5-minute OpenWA gateway health probe — session reachability + ready status, feeds Studio telemetry and /api/health. Escalates via email/WhatsApp after repeated failures.',
+      status: 'active',
+      schedule: '*/5 * * * *',
+      category: 'operations',
+      trigger_type: 'cron',
+      source_path: 'workflows/06-gateway-sentinel/sentinel.js',
+    });
+    if (seeded) log('sentinel row present in workflows registry');
+  } catch (e) {
+    log(`sentinel seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the daily-digest row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'daily-digest',
+      name: 'Morning Ops Briefing',
+      name_ar: 'التقرير الصباحي للعمليات',
+      description: '03:00 Cairo — Arabic WhatsApp morning briefing to the ops number: gateway health, workflow run stats, campaign results (owner-outreach sends from owner_outreach_log), new leads and units from the last 24h.',
+      status: 'active',
+      schedule: '0 3 * * *',
+      category: 'operations',
+      trigger_type: 'cron',
+      source_path: 'workflows/07-daily-digest/digest.js',
+    });
+    if (seeded) log('daily-digest row present in workflows registry');
+  } catch (e) {
+    log(`daily-digest seeding skipped: ${e.message}`);
+  }
+
+  // One-time default migration (2026-10-31, owner decision "B"): the digest
+  // moved 08:00 -> 03:00 Cairo and the outreach lane opens 10:00 -> 09:00.
+  // upsertWorkflowRow is insert-if-missing, so rows that already exist in
+  // Supabase keep their OLD defaults — migrate ONLY rows still carrying an
+  // old default; a schedule customized by the operator is never touched.
+  try {
+    const rows = await sb.getWorkflows(['daily-digest', 'owner-outreach']);
+    const bySlug = new Map(rows.map((r) => [r.slug, r]));
+    const digestRow = bySlug.get('daily-digest');
+    if (digestRow && String(digestRow.schedule || '').trim() === '0 8 * * *') {
+      const ok = await sb.patchWorkflowRow('daily-digest', {
+        schedule: '0 3 * * *',
+        name: 'Morning Ops Briefing',
+        name_ar: 'التقرير الصباحي للعمليات',
+        description: '03:00 Cairo — Arabic WhatsApp morning briefing to the ops number: gateway health, workflow run stats, campaign results (owner-outreach sends from owner_outreach_log), new leads and units from the last 24h.',
+      });
+      if (ok) log('daily-digest schedule migrated 08:00 -> 03:00 Cairo (owner morning briefing)');
+    }
+    const outreachRow = bySlug.get('owner-outreach');
+    if (outreachRow && String(outreachRow.schedule || '').trim() === '*/30 10-21 * * *') {
+      const ok = await sb.patchWorkflowRow('owner-outreach', {
+        schedule: '*/30 9-21 * * *',
+        description: 'Daily 09:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
+      });
+      if (ok) log('owner-outreach registry schedule migrated 10:00 -> 09:00 Cairo lane opening');
+    }
+  } catch (e) {
+    log(`schedule default migration skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the units-sync row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'units-sync',
+      name: 'Units Sheet Sync',
+      name_ar: 'مزامنة وحدات شيت الجرد',
+      description: 'Reads the owner inventory Google Sheet (public gviz CSV) and upserts every unit into Supabase listings by unit Code — availability, price, owner contact. Runs every 2 hours.',
+      status: 'active',
+      schedule: '23 */2 * * *',
+      category: 'ingestion',
+      trigger_type: 'cron',
+      source_path: 'workflows/08-units-sync/sync.js',
+    });
+    if (seeded) log('units-sync row present in workflows registry');
+  } catch (e) {
+    log(`units-sync seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the owner-outreach row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'owner-outreach',
+      name: 'Owner Outreach',
+      name_ar: 'التواصل مع الملاك',
+      description: 'Daily 09:00–22:00 Cairo WhatsApp introductions to property owners every 30 minutes (25 msgs/slot, rotating sending number every 30 min, ledger + sheet dedupe).',
+      status: 'active',
+      schedule: '*/30 9-21 * * *',
+      category: 'outreach',
+      trigger_type: 'cron',
+      source_path: 'workflows/09-owner-outreach/outreach.js',
+    });
+    if (seeded) log('owner-outreach row present in workflows registry');
+  } catch (e) {
+    log(`owner-outreach seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the whatsapp-dispatch row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'whatsapp-dispatch',
+      name: 'WhatsApp Outbox Dispatch',
+      name_ar: 'إرسال رسائل واتساب الصادرة',
+      description: 'Every 15 minutes — dispatches queued WhatsApp outbox messages from Supabase via the local OpenWA multi-session gateway.',
+      status: 'active',
+      schedule: '*/15 * * * *',
+      category: 'outreach',
+      trigger_type: 'cron',
+      source_path: 'workflows/10-whatsapp-dispatch/dispatch.js',
+    });    if (seeded) log('whatsapp-dispatch row present in workflows registry');
+  } catch (e) {
+    log(`whatsapp-dispatch seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the broker-sync row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'broker-sync',
+      name: 'Broker & WhatsApp Harvester Sync',
+      name_ar: 'مزامنة عروض البروكرز من جروبات واتساب',
+      description: 'Aggregates, deduplicates, and synchronizes real-time WhatsApp broker group listings and buyer requests across all active lines into Google Sheets (Brokers_Inventory, Client_Requests, Owners_Rent_Master) and Supabase.',
+      status: 'active',
+      schedule: '*/30 * * * *',
+      category: 'ingestion',
+      trigger_type: 'cron',
+      source_path: 'workflows/20-broker-sync/sync.js',
+    });
+    if (seeded) log('broker-sync row present in workflows registry');
+  } catch (e) {
+    log(`broker-sync seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the sheets-supabase-sync row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'sheets-supabase-sync',
+      name: 'Sheets ↔ Supabase Two-Way Sync',
+      name_ar: 'المزامنة ثنائية الاتجاه بين الشيت وقاعدة البيانات',
+      description: 'Mission 3 (2026-11-01): every 10 minutes — two-way responsive sync between the Master Google Sheet (Master_Inventory 23-col ledger + Real_Available_Units live view) and public.listings. Batched API calls with exponential backoff, strict validation (no-phone-reject, no blank cells, 400k rent gate, canonical compounds, smart coding), upsert-in-place, external-feed unpublish on dead units. Bulk reset: POST /api/workflows/sheets-supabase-sync/run with {"resetOutreach":true} or run `node 14-sheets-supabase-sync/sync.js --reset-outreach` (/reset_outreach_status).',
+      status: 'active',
+      schedule: '*/10 * * * *',
+      category: 'ingestion',
+      trigger_type: 'cron',
+      source_path: 'workflows/14-sheets-supabase-sync/sync.js',
+    });
+    if (seeded) log('sheets-supabase-sync row present in workflows registry');
+  } catch (e) {
+    log(`sheets-supabase-sync seeding skipped: ${e.message}`);
+  }
+
+  // ── Guardian fleet seeding (Mission 4, 2026-11-01) — idempotent ──────────
+  const GUARDIANS = [
+    {
+      slug: 'scribe-guardian',
+      name: 'Supply & Harvester Guardian',
+      name_ar: 'حارس المعروض والحصاد',
+      description: 'Mission 4 Bot 1: monitors agent Telegram groups, WhatsApp broker groups and owner responses; flags Featured/Gem units (💎 priced ≥15% below compound average or prime views); queues WhatsApp photo-requests for photo-less Featured/Direct-Owner units and alerts the Admin OS after 12h unanswered.',
+      schedule: '*/30 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'curator-guardian',
+      name: 'Data Quality, Pricing & Sanitizer Guardian',
+      name_ar: 'حارس جودة البيانات والتسعير والتعقيم',
+      description: 'Mission 4 Bot 2: studies daily incoming prices per New Cairo compound, updates the AI Fair-Market Price benchmark on every unit card, learns price trends into unified_memory; enforces Sanitizer v3 (owner mobiles redacted from public descriptions, inquiries routed to +201092048333).',
+      schedule: '5 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'atlas-sync-guardian',
+      name: 'Syndication & Broadcast Guardian',
+      name_ar: 'حارس النشر والبث',
+      description: 'Mission 4 Bot 3: watches Real_Available_Units; the instant a unit is Available+Verified — Navy/Gold watermark (Canvas engine), sanitized broadcast + photo album + Unit_Code to the General Telegram group, Property Finder Atlas v1 push, GIS map publish.',
+      schedule: '*/10 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'antigravity-closer-guardian',
+      name: 'Buyer Concierge, Matchmaker & Closer Guardian',
+      name_ar: 'حارس خدمة العملاء والمطابقة وإتمام الصفقات',
+      description: 'Mission 4 Bot 4: answers Property Finder + Website inquiries with the Sierra Advisory Script (AI Discovers. We Advise. You Decide.), 24h owner-availability verification notice, Client Request Form link + 25% website commission discount; matchPropertiesToLead Top 3-5 + sales-rep Telegram notification; viewing confirmation → Google Calendar booking + CEO/TL/Advisor invites + 60-minute Golden Hour tracker.',
+      schedule: '*/15 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'ops-watchdog',
+      name: 'System Supervisor & Self-Optimizer',
+      name_ar: 'المشرف العام للنظام',
+      description: 'Mission 4 Bot 5: every 15 minutes — Docker containers, OpenWA lines, Supabase RLS + latency, public/admin API health, WhatsApp queue backlog; auto-restarts stalled workers via the runner control plane; daily 03:00 Cairo executive briefing to Telegram; learns incidents into unified_memory.',
+      schedule: '*/15 * * * *',
+      category: 'guardian',
+    },
+    {
+      slug: 'usb-phone-harvester',
+      name: 'USB Phone WhatsApp Group Harvester & Date Organizer',
+      name_ar: 'جامع ومصنف وحدات واتساب عبر كابل USB حسب تاريخ النشر',
+      description: 'Automatically pulls and scrapes WhatsApp group chat exports from connected Samsung/Android phones over USB MTP twice a week (Sunday & Wednesday 10:00 AM Cairo) and upon USB cable connect; extracts all property units and buyer requests, parses exact posted dates, organizes multi-tab Excel/CSV spreadsheets, and syncs listings to Supabase.',
+      schedule: '0 10 * * 0,3',
+      category: 'harvester',
+    },
+    {
+      slug: 'outreach-2h-digest',
+      name: '2-Hour Outreach Radar Digest',
+      name_ar: 'تقرير متابعة تواصل الملاك كل ساعتين',
+      description: 'Every 2 hours during 09:00–22:00 Cairo — evaluates owner outreach sends, line rotation, sheet cursor progress, and owner replies, writes .state/two-hour-outreach-report.json and dispatches an Arabic executive briefing via WhatsApp to the admin phone.',
+      schedule: '0 9-21/2 * * *',
+      category: 'outreach',
+    },
+    {
+      slug: 'daily-outreach-report',
+      name: 'Daily Outreach & Replies Audit',
+      name_ar: 'تقرير المراسلات والردود اليومي',
+      description: 'Daily audit of all contacted owners, inbound replies, opt-outs, and sheet write-back verification.',
+      schedule: '30 21 * * *',
+      category: 'outreach',
+    },
+  ];
+  for (const g of GUARDIANS) {
+    try {
+      const seeded = await sb.upsertWorkflowRow({
+        slug: g.slug,
+        name: g.name,
+        name_ar: g.name_ar,
+        description: g.description,
+        status: 'active',
+        schedule: g.schedule,
+        category: g.category,
+        trigger_type: 'cron',
+        source_path: `workflows/${SCRIPTS[g.slug]}`,
+      });
+      if (seeded) log(`${g.slug} row present in workflows registry`);
+    } catch (e) {
+      log(`${g.slug} seeding skipped: ${e.message}`);
+    }
+  }
+
+  server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));
+  log(RUNNER_WORKFLOWS.length
+    ? `host role: dispatching ONLY [${DISPATCH_SLUGS.join(', ')}] (RUNNER_WORKFLOWS)`
+    : 'host role: dispatching ALL workflows');
+
+  const tick = async () => {
+    try { await schedulerTick(); } catch (e) { log(`tick error: ${e.message}`); }
+  };
+  await tick(); // immediate first pass
+  setInterval(tick, POLL_MS);
+}
+
+process.on('unhandledRejection', (e) => log(`unhandledRejection: ${e?.message || e}`));
+main().catch((e) => {
+  console.error('runner fatal:', e);
+  process.exit(1);
+});

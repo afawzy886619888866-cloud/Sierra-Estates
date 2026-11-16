@@ -1,0 +1,53 @@
+{
+  "dashboard": {
+    "greeting": "Welcome back",
+    "morning": "Good Morning",
+    "afternoon": "Good Afternoon",
+    "evening": "Good Evening",
+    "institutionalIntelligence": "Institutional Intelligence",
+    "neuralLinkActive": "Neural Link Active",
+    "marketIntelligence": "Market Intelligence",
+    "incorporateAsset": "Incorporate Asset",
+    "operationalVelocity": "Operational Velocity",
+    "globalRegistry": "Global Registry",
+    "securityNodeStatus": "Security Node Status",
+    "neuralCore": "Neural Core",
+    "optimal": "Optimal",
+    "syncGateway": "Sync Gateway",
+    "stable": "Stable",
+    "dataPersistence": "Data Persistence",
+    "precisionMotto": "Precision is the architect of excellence.",
+    "upcomingMilestone": "Upcoming Milestone",
+    "quarterlyReview": "Quarterly Review",
+    "portfolioAssets": "Portfolio Assets",
+    "liveInventory": "Live Inventory",
+    "activeStakeholders": "Active Stakeholders",
+    "priority": "Priority",
+    "capitalTransacted": "Capital Transacted",
+    "executivePartners": "Executive Partners",
+    "secured": "Secured"
+  },
+  "ai": {
+    "title": "Strategic Intelligence Portal",
+    "analyzing": "ANALYZING MARKET SIGNALS...",
+    "active": "NEURAL CORE ACTIVE",
+    "sync": "SYNC",
+    "reconstructing": "RECONSTRUCTING PARADIGMS",
+    "ledger": "Operational Orchestration Ledger (V4.0)",
+    "synchronized": "10 STAGES SYNCHRONIZED",
+    "signal": "SIGNAL",
+    "critical": "Critical Protocol",
+    "fallbackOppText": "Structural demand for premium littoral assets in the North Coast corridor continues to accelerate.",
+    "fallbackOppAction": "Analyze Portfolio",
+    "fallbackWarnText": "High-intensity stakeholders require immediate executive consultation to maintain lifecycle velocity.",
+    "fallbackWarnAction": "Command Pipeline"
+  },
+  "activity": {
+    "title": "Operational Velocity",
+    "liveFeed": "Live Feed",
+    "noSignals": "Zero operational signals detected in the current window.",
+    "justNow": "Just now",
+    "minutesAgo": "m ago",
+    "hoursAgo": "h ago"
+  }
+}

@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  openwa:
+    image: ghcr.io/rmyndharis/openwa:latest
+    container_name: sierra-openwa
+    restart: unless-stopped
+    ports:
+      - "${OPENWA_PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - TZ=${TIMEZONE:-Africa/Cairo}
+      - DATABASE_TYPE=sqlite
+      - DATABASE_PATH=/data/openwa.db
+      - ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY}
+      - DEFAULT_OPERATOR_KEY=${OPENWA_OPERATOR_KEY}
+      - DEFAULT_ENGINE=${OPENWA_ENGINE:-wwebjs}
+      - GLOBAL_WEBHOOK_URL=${SE_API_URL:-https://admin.sierra-estates.net}/api/webhooks/whatsapp
+      - GLOBAL_WEBHOOK_HMAC_SECRET=${SBR_SECRET_KEY}
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_MESSAGES=${OPENWA_RATE_LIMIT:-30}
+      - STORAGE_BACKEND=local
+      - STORAGE_LOCAL_PATH=/data/media
+      - N8N_BASE_URL=http://n8n:5678
+      - N8N_API_KEY=${N8N_API_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-https://gaxfqcietzoonlmatiot.supabase.co}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    volumes:
+      - ./openwa-data:/data
+      - ./whatsapp-auth:/home/node/.wwebjs_auth
+      - ./plugins:/plugins:ro
+    networks:
+      - sierra-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/health | grep -q ok || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: sierra-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - N8N_EDITOR_BASE_URL=${N8N_EDITOR_BASE_URL:-http://localhost:5678}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      - GENERIC_TIMEZONE=${TIMEZONE:-Africa/Cairo}
+      - TZ=${TIMEZONE:-Africa/Cairo}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-https://gaxfqcietzoonlmatiot.supabase.co}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - OPENWA_BASE_URL=http://openwa:3000
+      - OPENWA_OPERATOR_KEY=${OPENWA_OPERATOR_KEY}
+      - PROPERTY_FINDER_WEBHOOK_SECRET=${PROPERTY_FINDER_WEBHOOK_SECRET:-}
+    volumes:
+      - ./n8n-data:/home/node/.n8n
+    networks:
+      - sierra-net
+    depends_on:
+      openwa:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  sierra-net:
+    driver: bridge
+    name: sierra-network

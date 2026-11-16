@@ -1,0 +1,21 @@
+{
+  "name": "@sierra-estates/types",
+  "version": "1.0.0",
+  "description": "Sierra Estates shared TypeScript types — canonical Firestore schema contract",
+  "private": true,
+  "main": "./src/types/index.ts",
+  "types": "./src/types/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/types/index.ts",
+      "default": "./src/types/index.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

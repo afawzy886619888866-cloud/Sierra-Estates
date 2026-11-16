@@ -1,0 +1,1281 @@
+'use strict';
+/**
+ * Workflow 09: Owner Outreach — scheduled owner connection from the inventory sheet
+ * ──────────────────────────────────────────────────────────────────────────────────
+ * Runs on the EC2 se-workflow-runner cron, Africa/Cairo time.
+ *
+ * PARALLEL SENDER ("N lines here + N lines on the other side", Oct 2026):
+ *   Up to WF_PARALLEL_LINES (default 2; start-sierra.bat sets 8) READY pool
+ *   lines send SIMULTANEOUSLY,
+ *   each lane with its own 45–55 s pacing clock — the per-LINE rate is
+ *   unchanged (anti-ban), the slot simply finishes in a fraction of the time.
+ *   The sheet is partitioned by direction so lines never collide:
+ *
+ *     WF_HOST_SIDE=split (default)
+ *         even-numbered lanes walk the sheet front→back, odd lanes walk
+ *         back→front — "N lines here and N lines on the other side" — the
+ *         cursors meet in the middle. With 2 lanes: 1 top + 1 bottom.
+ *         With 8 lanes (8-line gateway): 4 top + 4 bottom. With 1: top only.
+ *     WF_HOST_SIDE=top      all lanes walk front→back (host A of a 2-host setup)
+ *     WF_HOST_SIDE=bottom   all lanes walk back→front  (host B of a 2-host setup)
+ *
+ *   Two runner hosts can therefore work the SAME sheet in parallel: host A
+ *   (top) + host B (bottom) converge in the middle from opposite ends.
+ *
+ * Data flow (zero-credential, same as 08-units-sync):
+ *   Google Sheet (public gviz CSV, owner inventory tab gid 1127958606 —
+ *   the gid 341562911 default was WRONG: that tab is the broker inbox
+ *   and has no Mobile column, so outreach exited UNCONFIGURED with zero
+ *   sends; fixed 2026-10-17)
+ *     → rows with Code + Mobile + outreach-able Availability
+ *     → personalized Arabic intro via the OpenWA gateway (session pool)
+ *     → local JSONL ledger (one line per contacted phone, never re-contacted)
+ *     → sheet contact-date column (تاريخ اخر تواصل) ALSO dedupes: a row
+ *       whose last-contact cell is non-empty is skipped, so a fresh
+ *       runner host never re-texts owners contacted elsewhere
+ *       (WF_SHEET_DEDUPE=0 disables — re-contact campaigns only)
+ *
+ * Safety rails:
+ *   • Daily cap (WF_OWNER_CONTACT_DAILY_CAP, default 40 PER LINE) counted per
+ *     CAIRO day; with a pool the cap becomes per-line × pool size unless set
+ *     explicitly (then it is a TOTAL, honored as-is)
+ *   • Active hours 10:00–20:00 Cairo only; outside the window the run exits 0
+ *   • Slot batch cap WF_SLOT_BATCH (default 30) — exact even with parallel
+ *     lanes (synchronous ticket reservation; a claimed-but-unsent row is
+ *     rewound so no candidate is ever lost)
+ *   • Graceful slot deadline WF_SLOT_DEADLINE_MS (default 23 min): lanes stop
+ *     claiming new rows in time to exit cleanly before the runner's kill —
+ *     batches are never cut mid-send again
+ *   • 45–55 s jittered pacing PER LANE between sends
+ *   • Permanent-4xx aborts the batch; a benched line's rows are picked up by
+ *     the surviving lanes
+ *   • Gateway pre-flight: only `ready` lines join the slot; zero ready lines
+ *     exits 0 (retry next cron)
+ *   • Skip list: Not available / Sold / rows without Mobile
+ *   • Opt-out line in EVERY message (Arabic disclaimer + "إلغاء" unsubscribe)
+ *   • Ledger dedupe: a phone is contacted at most once EVER (across reruns)
+ *   • WF_DRY_RUN=1 → prints would-send lines, touches nothing
+ *
+ * Env: UNITS_SHEET_ID / UNITS_SHEET_GID (defaults = owner inventory sheet),
+ *      WHATSAPP_API_TOKEN, OPENWA_SESSION_ID, WHATSAPP_API_URL,
+ *      OPENWA_SESSION_IDS (pool: 'line-1,…,line-8' — overrides
+ *      OPENWA_SESSION_ID when set), WF_HOST_SIDE (split|top|bottom),
+ *      WF_PARALLEL_LINES (2 default; 8 in start-sierra.bat), WF_SLOT_BATCH (30), WF_SLOT_DEADLINE_MS
+ *      (1380000 = 23 min),
+ *      WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
+ *      WF_OUTREACH_AVAILABILITIES, WF_OUTREACH_ACTIVE_HOURS (9-22)
+ * Exit: 0 ok · 2 unconfigured · 1 error
+ */
+const fs = require('fs');
+const path = require('path');
+const { loadWorkflowEnv } = require('../lib/google-sheets');
+loadWorkflowEnv(path.join(__dirname, '..'));
+const { GatewayClient } = require('../lib/gateway-client');
+const { normalizePhone, toWesternDigits, toLocalPhone } = require('../lib/phone-utils');
+const { loadOptOutSet } = require('../lib/inbox');
+const { loadAllClaimedPhones, readLocalLedgers, claimOutreachPhone, releaseOutreachClaim } = require('../lib/outreach-dedupe');
+
+const WRITE_URL = process.env.WF_SHEET_WRITE_URL;
+const WRITE_SECRET = process.env.WF_SHEET_WRITE_SECRET;
+
+function formatCairoDate(d = new Date()) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Cairo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(d);
+  } catch {
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  }
+}
+
+async function writeSheetDate(phone, rawMobile, dateStr) {
+  if (!WRITE_URL || !WRITE_SECRET || DRY_RUN) return;
+  const rows = [];
+  if (rawMobile) rows.push({ phone: rawMobile, date: dateStr });
+  if (phone && phone !== rawMobile) rows.push({ phone, date: dateStr });
+  if (!rows.length) return;
+  try {
+    const res = await fetch(WRITE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: WRITE_SECRET,
+        rows
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (json.ok) {
+      console.log(`[outreach] sheet write-back ok for ${phone} (updated: ${json.updated || 0})`);
+    } else {
+      console.warn(`[outreach] sheet write-back non-ok for ${phone}: ${json.error || res.status}`);
+    }
+  } catch (err) {
+    console.warn(`[outreach] sheet write-back failed for ${phone}: ${err.message}`);
+  }
+}
+
+const BROKER_REPLY_RE = /(?:بروكر|وسيط|مكتب|\bbroker\b|\bbrokerage\b|\bagent\b)/i;
+
+/**
+ * Classifies an inbound owner reply; on broker keywords, marks status
+ * 'Broker Excluded' and forwards an `outreach_feedback` JSON command to move
+ * the row to `Excluded_Brokers` via WF_SHEET_WRITE_URL.
+ */
+async function classifyAndHandleOwnerReply({
+  replyText,
+  unitCode,
+  phone,
+  compound,
+  price,
+  writeUrl,
+  secret,
+  dryRun,
+  fetchImpl,
+} = {}) {
+  const text = String(replyText || '').trim();
+  const phoneDigits = String(phone || '').replace(/\D/g, '');
+  const phoneLast7 = phoneDigits.length >= 7 ? phoneDigits.slice(-7) : phoneDigits;
+  const isBroker = BROKER_REPLY_RE.test(text);
+  const status = isBroker ? 'Broker Excluded' : 'Owner Reply';
+  const moveToTab = isBroker ? 'Excluded_Brokers' : null;
+
+  const targetUrl = String(writeUrl ?? WRITE_URL ?? process.env.WF_SHEET_WRITE_URL ?? '').trim();
+  const isDry = dryRun ?? DRY_RUN;
+  let sheetSync = { skipped: true };
+
+  if (isBroker && (targetUrl || isDry)) {
+    const payload = {
+      secret: secret ?? WRITE_SECRET ?? process.env.WF_SHEET_WRITE_SECRET ?? '',
+      action: 'outreach_feedback',
+      status: 'Broker Excluded',
+      moveToTab: 'Excluded_Brokers',
+      match: {
+        unit_code: unitCode || null,
+        phone_last7: phoneLast7 || null,
+        compound: compound || null,
+        price: price ?? null,
+      },
+    };
+    if (isDry && !fetchImpl) {
+      sheetSync = { ok: true, dryRun: true, payload };
+    } else if (targetUrl) {
+      const fn = fetchImpl || globalThis.fetch;
+      const res = await fn(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      sheetSync = { ok: !!res.ok, status: res.status, body: json };
+    }
+  }
+
+  return {
+    isBroker,
+    status,
+    moveToTab,
+    match: {
+      unit_code: unitCode || null,
+      phone_last7: phoneLast7 || null,
+      compound: compound || null,
+      price: price ?? null,
+    },
+    sheetSync,
+  };
+}
+
+function appendOutreachSpreadsheet(cand, session, dateStr) {
+  try {
+    const csvPath = path.resolve(__dirname, '../../data/outreach_contacted_units.csv');
+    const dir = path.dirname(csvPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(csvPath)) {
+      fs.writeFileSync(csvPath, 'Code,Name,Phone,Location,Price,Bedrooms,DealType,ContactDate,Session,Status\n', 'utf8');
+    }
+    const clean = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
+    const row = [
+      clean(cand.code),
+      clean(cand.name),
+      clean(cand.phone),
+      clean(cand.location),
+      clean(cand.price),
+      clean(cand.bedrooms),
+      clean(cand.dealType),
+      clean(dateStr),
+      clean(session),
+      clean('تم التواصل')
+    ].join(',') + '\n';
+    fs.appendFileSync(csvPath, row, 'utf8');
+  } catch (e) {
+    console.warn(`[outreach] local sheet export failed: ${e.message}`);
+  }
+}
+
+const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
+const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
+
+// ── Supabase audit trail (G2 queue item 4, 2026-10-19) ─────────────────────
+// One row per REAL send in public.owner_outreach_log (migration 033) — the
+// canonical, queryable record for compliance + analytics. Fail-open by
+// design: the operational dedupe stays in the JSONL ledger + sheet column
+// and a send is NEVER blocked or retried because the audit DB is unhealthy.
+// DRY-RUN sends never write audit rows (§21 no-fabrication).
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabaseAuditClient = null;
+let auditDisabledNoted = false;
+function getAuditClient() {
+  if (supabaseAuditClient) return supabaseAuditClient;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    if (!auditDisabledNoted) {
+      auditDisabledNoted = true;
+      console.log('[outreach] Supabase audit DISABLED: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing (ledger + sheet remain the record)');
+    }
+    return null;
+  }
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    supabaseAuditClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  } catch (err) {
+    console.error(`[outreach] Supabase audit client init failed: ${err.message}`);
+    return null;
+  }
+  return supabaseAuditClient;
+}
+
+/**
+ * Fire-and-forget audit write. Owns its own failure accounting
+ * (summary.auditFailed) — never throws into the send path.
+ */
+function auditContact(entry) {
+  const db = getAuditClient();
+  if (!db) { summary.auditSkipped++; return Promise.resolve(false); }
+  return db
+    .from('owner_outreach_log')
+    .insert({
+      phone: entry.phone,
+      listing_code: entry.code || null,
+      session_name: entry.session || null,
+      direction: entry.direction || null,
+      host_side: HOST_SIDE,
+      sheet_row_idx: typeof entry.idx === 'number' ? entry.idx : null,
+      availability: entry.avail || null,
+      message_text: entry.text || null,
+      dry_run: false, // callers only invoke this for REAL sends
+      sent_at: entry.at || new Date().toISOString(),
+    })
+    .then(({ error }) => {
+      if (error) {
+        summary.auditFailed++;
+        console.error(`[outreach] Supabase audit INSERT failed for ${entry.phone}: ${error.message}`);
+        return false;
+      }
+      summary.auditWritten++;
+      return true;
+    })
+    .catch((err) => {
+      summary.auditFailed++;
+      console.error(`[outreach] Supabase audit write failed for ${entry.phone}: ${err.message}`);
+      return false;
+    });
+}
+
+const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '100', 10);
+// Pool-aware: recomputed in main() as per-line × pool unless the operator set
+// WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
+const CAP_EXPLICIT = process.env.WF_OWNER_CONTACT_DAILY_CAP != null && process.env.WF_OWNER_CONTACT_DAILY_CAP !== '';
+let DAILY_CAP = PER_LINE_DAILY_CAP;
+const BATCH_CAP = parseInt(process.env.WF_SLOT_BATCH || '25', 10);
+// Graceful slot deadline: lanes stop claiming NEW rows after this many ms so
+// a slot ALWAYS ends cleanly (checkpoint saved, exit 0) well before the
+// runner's SIGKILL backstop — the message cap alone cannot bound slot time
+// when a line degrades to a slow crawl. Default 23 min < the 25-min runner
+// kill < the 30-min slot cadence. Anything already mid-send finishes first.
+const SLOT_DEADLINE_MS = parseInt(process.env.WF_SLOT_DEADLINE_MS || '1380000', 10);
+const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
+const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer,not available,متاح,غير متاح')
+  .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const AH_ENV = String(process.env.WF_OUTREACH_ACTIVE_HOURS || '9-22').split('-');
+const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || AH_ENV[1] === '' || parseInt(AH_ENV[1], 10) > 23 ? 24 : parseInt(AH_ENV[1], 10)];
+// ── Rotating / Parallel sender configuration ───────────────────────
+// Default (`WF_ROTATE_SINGLE_LINE=1`): 1 active WhatsApp line per 30-min slot,
+// rotating to the next ready number every 30 minutes across 09:00-22:00 Cairo
+// (owner requirement 2026-10-31: lane open at least 09:00–21:00 Cairo;
+// 25 msgs per number per slot, ~30-40s spacing). Set `WF_ROTATE_SINGLE_LINE=0`
+// only if simultaneous multi-lane sending is explicitly desired.
+const ROTATE_SINGLE_LINE = !/^(0|false|no)$/i.test(process.env.WF_ROTATE_SINGLE_LINE ?? '1');
+const PACE_MIN_MS = Math.max(5000, parseInt(process.env.WF_PACE_MIN_MS || '30000', 10));
+const PACE_JITTER_MS = Math.max(1000, parseInt(process.env.WF_PACE_JITTER_MS || '10000', 10));
+const HOST_SIDE_RAW = String(process.env.WF_HOST_SIDE || 'split').trim().toLowerCase();
+const HOST_SIDE = (HOST_SIDE_RAW === 'bottom' || HOST_SIDE_RAW === 'b' || HOST_SIDE_RAW === 'other') ? 'bottom'
+  : (HOST_SIDE_RAW === 'top' || HOST_SIDE_RAW === 'a') ? 'top' : 'split';
+const PARALLEL_LINES = Math.max(1, parseInt(process.env.WF_PARALLEL_LINES || '1', 10));
+
+const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
+const LEDGER = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
+const DAILY = path.join(STATE_DIR, 'owner-outreach-daily.json');
+const CHECKPOINT = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
+const ROTATION_FILE = path.join(STATE_DIR, 'owner-outreach-rotation.json');
+
+/**
+ * Pure round-robin selector for single-line 30-minute rotation.
+ * Advances to the next ready WhatsApp number every 30-minute slot.
+ */
+function selectNextRotatedLane(entries, prevRotation, hostSide = 'split') {
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+  const lastSession = prevRotation && typeof prevRotation.lastSessionName === 'string'
+    ? prevRotation.lastSessionName
+    : null;
+  const prevIdx = lastSession ? entries.findIndex((e) => e.name === lastSession) : -1;
+  const nextIdx = prevIdx >= 0 ? (prevIdx + 1) % entries.length : 0;
+  const chosen = entries[nextIdx];
+  const nextSlotIndex = (Number(prevRotation && prevRotation.slotIndex) || 0) + 1;
+  const direction = hostSide === 'split'
+    ? (nextSlotIndex % 2 === 1 ? 'top' : 'bottom')
+    : hostSide;
+
+  return {
+    lane: {
+      name: chosen.name,
+      uuid: chosen.uuid || null,
+      direction,
+    },
+    nextState: {
+      lastSessionName: chosen.name,
+      slotIndex: nextSlotIndex,
+      lastDirection: direction,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+}
+
+function loadRotationState() {
+  try {
+    return JSON.parse(fs.readFileSync(ROTATION_FILE, 'utf8'));
+  } catch {
+    return { lastSessionName: null, slotIndex: 0 };
+  }
+}
+
+function saveRotationState(rotState) {
+  if (DRY_RUN) return;
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.writeFileSync(ROTATION_FILE, JSON.stringify(rotState, null, 2));
+  } catch (err) {
+    console.warn(`[outreach] failed to write rotation state: ${err.message}`);
+  }
+}
+
+const summary = {
+  candidates: 0,
+  sent: 0,
+  skippedDup: 0,
+  skippedCap: 0,
+  skippedHours: false,
+  failed: 0,
+  dryRun: DRY_RUN,
+  bySession: {},
+  byDirection: { top: 0, bottom: 0 },
+  metInTheMiddle: false,
+  sheetDeduped: 0,
+  lanes: 0,
+  slotDeadline: false,
+  skippedDupRow: 0,
+  skippedOptOut: 0,
+  auditWritten: 0,
+  auditFailed: 0,
+  auditSkipped: 0,
+  supabaseCandidates: 0,
+  supabaseDeduped: 0,
+};
+
+/**
+ * Checkpoint v2 (direction-aware). Schema:
+ *   split:  { side:'split',  topCursor, bottomCursor, totalCount, completed }
+ *   top:    { side:'top',    cursor (0→n),            totalCount, completed }
+ *   bottom: { side:'bottom', cursor (n-1→0, counts DOWN), totalCount, completed }
+ * A legacy rotation checkpoint (no `side`) or a side change resets the walk —
+ * safe because the sheet contact-date dedupe skips already-contacted rows.
+ */
+function freshCheckpoint(totalCount, side) {
+  return {
+    side,
+    ...(side === 'split'
+      ? { topCursor: 0, bottomCursor: Math.max(0, totalCount - 1) }
+      // top walks UP from 0; bottom walks DOWN from the last row
+      : { cursor: side === 'bottom' ? Math.max(0, totalCount - 1) : 0 }),
+    totalCount,
+    completed: false,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function loadCheckpoint(totalCount) {
+  if (/^(1|true|yes)$/i.test(process.env.WF_RESET_CHECKPOINT || "")) {
+    console.log("[outreach] WF_RESET_CHECKPOINT active — starting a fresh sweep cycle (dedupe ledger protects already contacted owners)");
+    const cp = freshCheckpoint(totalCount, HOST_SIDE);
+    saveCheckpoint(cp);
+    return cp;
+  }
+  try {
+    const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
+    if (typeof cp.cursor === 'number' || typeof cp.topCursor === 'number') {
+      if (cp.side && cp.side === HOST_SIDE) {
+        if (totalCount > (cp.totalCount || 0)) {
+          console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows`);
+          cp.totalCount = totalCount;
+          cp.completed = false;
+        }
+        // Always clamp cursors within [0, totalCount - 1] to prevent undefined candidate access
+        if (cp.side === 'split') {
+          cp.topCursor = Math.max(0, Math.min(typeof cp.topCursor === 'number' ? cp.topCursor : 0, Math.max(0, totalCount - 1)));
+          cp.bottomCursor = Math.max(0, Math.min(typeof cp.bottomCursor === 'number' ? cp.bottomCursor : totalCount - 1, Math.max(0, totalCount - 1)));
+        } else if (cp.side === 'bottom') {
+          cp.cursor = Math.max(0, Math.min(typeof cp.cursor === 'number' ? cp.cursor : totalCount - 1, Math.max(0, totalCount - 1)));
+        } else {
+          cp.cursor = Math.max(0, Math.min(typeof cp.cursor === 'number' ? cp.cursor : 0, Math.max(0, totalCount - 1)));
+        }
+        saveCheckpoint(cp);
+        return cp;
+      }
+      console.log(`[outreach] checkpoint side '${cp.side || '(legacy rotation)'}' ≠ current '${HOST_SIDE}' — resetting walk for this side (sheet dedupe keeps already-contacted rows safe)`);
+    }
+  } catch { /* first run */ }
+  return freshCheckpoint(totalCount, HOST_SIDE);
+}
+
+function saveCheckpoint(cp) {
+  if (DRY_RUN) return;
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    cp.updatedAt = new Date().toISOString();
+    fs.writeFileSync(CHECKPOINT, JSON.stringify(cp, null, 2));
+  } catch (err) {
+    console.warn(`[outreach] failed to write checkpoint: ${err.message}`);
+  }
+}
+
+function parseCsv(text) {
+  const rows = []; let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; } else field += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); field = ''; if (row.length > 1 || row[0] !== '') rows.push(row); row = []; }
+    else if (c !== '\r') field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); if (row.length > 1 || row[0] !== '') rows.push(row); }
+  return rows;
+}
+
+/* phone normalization handled by workflows/lib/phone-utils.js */
+
+function cairoNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
+}
+
+const RECONTACT_AFTER_DAYS = Math.max(0, parseInt(process.env.WF_RECONTACT_AFTER_DAYS || '0', 10));
+
+function loadLedgerPhones() {
+  const seen = new Set();
+  const cutoffMs = RECONTACT_AFTER_DAYS > 0 ? Date.now() - RECONTACT_AFTER_DAYS * 86400_000 : 0;
+  const PACED_LEDGER = path.join(STATE_DIR, 'paced-outreach-ledger.jsonl');
+  for (const file of [LEDGER, PACED_LEDGER]) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const lines = fs.readFileSync(file, 'utf8').split('\n');
+      for (const l of lines) {
+        if (!l.trim()) continue;
+        try {
+          const entry = JSON.parse(l);
+          if (!entry || !entry.phone) continue;
+          if (cutoffMs > 0 && entry.at) {
+            const ts = Date.parse(entry.at);
+            if (!Number.isNaN(ts) && ts < cutoffMs) continue;
+          }
+          seen.add(entry.phone);
+        } catch { /* skip bad line */ }
+      }
+    } catch { /* first run */ }
+  }
+  return seen;
+}
+
+const INVALID_CACHE = path.join(STATE_DIR, 'invalid-whatsapp-numbers.json');
+
+function loadInvalidPhones() {
+  try {
+    if (fs.existsSync(INVALID_CACHE)) {
+      const data = JSON.parse(fs.readFileSync(INVALID_CACHE, 'utf8'));
+      if (Array.isArray(data)) return new Set(data);
+    }
+  } catch (_) { /* ignore */ }
+  return new Set();
+}
+
+function appendInvalidPhone(phone) {
+  try {
+    const set = loadInvalidPhones();
+    set.add(phone);
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.writeFileSync(INVALID_CACHE, JSON.stringify(Array.from(set).sort(), null, 2), 'utf8');
+  } catch (_) { /* ignore */ }
+}
+
+function appendLedger(entry) {
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+  fs.appendFileSync(LEDGER, JSON.stringify(entry) + '\n');
+}
+
+function loadDaily() {
+  const today = cairoNow().toISOString().slice(0, 10);
+  try {
+    const d = JSON.parse(fs.readFileSync(DAILY, 'utf8'));
+    if (d.date === today) return d;
+  } catch { /* new day */ }
+  return { date: today, sent: 0 };
+}
+
+function saveDaily(d) {
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+  fs.writeFileSync(DAILY, JSON.stringify(d));
+}
+
+const TEMPLATE = `السلام عليكم ورحمة الله وبركاته يا فندم، بعد التحية،
+
+أنا ليلى، أول بوت عقاري مصري خاص بالعقارات وتحديداً الريسيل والإيجارات في التجمع الخامس من فريق Sierra Estates 🏡✨
+
+بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة للإيجار أو البيع {_LOCATION_} لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين حيث يتوفر لدينا عدد من العملاء المهتمين.
+
+إذا كانت الوحدة غير متاحة حالياً فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝
+(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
+
+function buildMessage(r) {
+  const rawLoc = (r.location || r.compound || '').trim();
+  let loc = 'في القاهرة الجديدة';
+  if (rawLoc) {
+    if (/^(new cairo|القاهرة الجديدة|التجمع|التجمع الخامس|5th settlement)$/i.test(rawLoc)) {
+      loc = 'في القاهرة الجديدة';
+    } else {
+      loc = 'في ' + rawLoc;
+    }
+  }
+  const isRent = String(r.dealType || '').toLowerCase() === 'rent' || (Number(r.price) > 0 && Number(r.price) < 500000);
+  const dealLabel = isRent ? 'للإيجار' : 'للبيع';
+
+  // Optional dynamic missing info inquiries (enabled only via WF_DYNAMIC_INQUIRY=1; default is clean simple message per operator instruction)
+  const missingPrompts = [];
+  if (process.env.WF_DYNAMIC_INQUIRY === '1') {
+    const photoNum = Number(r.photoCount || 0);
+    if (photoNum < 6) {
+      const needed = Math.max(1, 6 - photoNum);
+      missingPrompts.push('• إرسال ' + (needed >= 6 ? '6 صور' : (needed + ' صور إضافية')) + ' واضحة وعالية الدقة (ريسبشن، غرف، حمام، مطبخ، إطلالة) لاعتماد إعلان مميز على Property Finder');
+    }
+    const areaNum = Number(String(r.areaSqm || '').replace(/[^\d]/g, '')) || 0;
+    if (areaNum <= 0) {
+      missingPrompts.push('• تأكيد المساحة الإجمالية بالمتر المربع (م²)');
+    }
+    if (process.env.WF_INQUIRE_PRICE === '1' && (!r.price || Number(r.price) <= 0)) {
+      missingPrompts.push('• تأكيد السعر النهائي المطلوب حالياً');
+    }
+  }
+
+  let inquiryBody = 'بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة ' + dealLabel + ' ' + loc + ' لا تزال متاحة حالياً للتنسيق المباشر مع حضرتك، حيث يتوفر لدينا عدد من العملاء المهتمين.';
+  if (missingPrompts.length > 0) {
+    inquiryBody += '\n\nوفي حال إتاحتها نرجو التكرم بالتوضيح التالي:\n' + missingPrompts.join('\n');
+  }
+
+  return [
+    'السلام عليكم ورحمة الله وبركاته يا فندم، بعد التحية،',
+    'أنا ليلى، أول بوت عقاري مصري خاص بالعقارات وتحديداً الريسيل والإيجارات في التجمع الخامس من فريق Sierra Estates 🏡✨',
+    '',
+    inquiryBody,
+    '',
+    'إذا كانت الوحدة تم بيعها أو غير متاحة فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝',
+    '(لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")'
+  ].join('\n');
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Unifies Supabase system inventory (public.listings) with Google Sheet candidates.
+ * Unlocks uncontacted property owners directly in the authoritative DB so the
+ * 30-min rotating sender never starves when the single sheet tab has been swept.
+ */
+async function mergeSupabaseOwners({ candidates, contacted, phoneFirstIdx, summary, client = null }) {
+  const ENABLED = !/^(0|false|no)$/i.test(process.env.WF_INCLUDE_SUPABASE_OWNERS || '1');
+  if (!ENABLED) return 0;
+  const allowDryRun = process.env.WF_INCLUDE_SUPABASE_IN_DRY_RUN === '1' || (DRY_RUN && (candidates.length === 0 || !/^(0|false|no)$/i.test(process.env.WF_INCLUDE_SUPABASE_IN_DRY_RUN || '1')));
+  if (DRY_RUN && !allowDryRun) return 0;
+  const sb = client || getAuditClient();
+  if (!sb) return 0;
+
+  try {
+    // 1. Fetch ALL historical outreach phones from Supabase (claims + log, paginated)
+    const allClaimed = await loadAllClaimedPhones(sb, null);
+    for (const p of allClaimed) {
+      if (p && !contacted.has(p)) {
+        contacted.add(p);
+        summary.supabaseDeduped = (summary.supabaseDeduped || 0) + 1;
+      }
+    }
+
+    // 2. Fetch active listings prioritizing RENT units first
+    const selectCols = 'id,code,unit_code,owner_name,owner_phone,compound,location_area,price,bedrooms,area_sqm,photo_count,images,property_type,deal_type,status,availability,created_at';
+    let added = 0;
+
+    const processListingRow = (r) => {
+      const status = String(r.status || '').toLowerCase().trim();
+      const avail = String(r.availability || '').toLowerCase().trim();
+      if (['sold', 'rented', 'off-market', 'unavailable', 'archived'].includes(status)) return false;
+      if (['sold', 'rented', 'unavailable'].includes(avail)) return false;
+
+      const rawPhone = String(r.owner_phone || '').trim();
+      const phone = normalizePhone(rawPhone);
+      if (!phone || !/^201[0125]\d{8}$/.test(phone)) return false;
+
+      const dupOf = phoneFirstIdx.has(phone) ? phoneFirstIdx.get(phone) : null;
+      if (dupOf === null) phoneFirstIdx.set(phone, candidates.length);
+
+      candidates.push({
+        code: (r.code || r.unit_code || '').trim() || ('SE-DB-' + (candidates.length + 1)),
+        name: (r.owner_name || '').trim() || 'صاحب الإعلان',
+        phone,
+        rawMobile: rawPhone,
+        avail: avail || status || 'available',
+        dupOf,
+        location: (r.compound || r.location_area || '').trim(),
+        price: String(r.price || '').replace(/[^\d]/g, ''),
+        bedrooms: String(r.bedrooms || '').replace(/[^\d]/g, ''),
+        propertyType: (r.property_type || '').trim(),
+        dealType: String(r.deal_type || '').toLowerCase().trim(),
+        areaSqm: Number(r.area_sqm) || 0,
+        photoCount: Number(r.photo_count) || (Array.isArray(r.images) ? r.images.length : 0),
+        source: 'supabase_listings',
+      });
+      return true;
+    };
+
+    // Pass 1: RENT units first (deal_type ~ 'rent')
+    let rentPage = 0;
+    const pageSize = 1000;
+    const maxRentPages = 5;
+    while (rentPage < maxRentPages) {
+      const { data, error } = await sb.from('listings')
+        .select(selectCols)
+        .ilike('deal_type', '%rent%')
+        .not('owner_phone', 'is', null)
+        .neq('owner_phone', '')
+        .order('created_at', { ascending: false })
+        .range(rentPage * pageSize, (rentPage + 1) * pageSize - 1);
+      if (error || !data || !data.length) break;
+
+      for (const r of data) {
+        if (processListingRow(r)) added++;
+      }
+      if (data.length < pageSize) break;
+      rentPage++;
+    }
+
+    // Pass 2: Remaining non-rent units (Sale or unclassified)
+    let otherPage = 0;
+    const maxOtherPages = 5;
+    while (otherPage < maxOtherPages) {
+      const { data, error } = await sb.from('listings')
+        .select(selectCols)
+        .not('deal_type', 'ilike', '%rent%')
+        .not('owner_phone', 'is', null)
+        .neq('owner_phone', '')
+        .order('created_at', { ascending: false })
+        .range(otherPage * pageSize, (otherPage + 1) * pageSize - 1);
+      if (error || !data || !data.length) break;
+
+      for (const r of data) {
+        if (processListingRow(r)) added++;
+      }
+      if (data.length < pageSize) break;
+      otherPage++;
+    }
+    summary.supabaseCandidates = added;
+    return added;
+  } catch (err) {
+    console.warn('[outreach] mergeSupabaseOwners warning:', err.message);
+    return 0;
+  }
+}
+
+async function main() {
+  console.log(`owner-outreach: starting (dryRun=${DRY_RUN}, cap=${DAILY_CAP}, window=${ACTIVE_HOURS[0]}-${ACTIVE_HOURS[1]} Cairo, side=${HOST_SIDE}, parallelLines=${PARALLEL_LINES})`);
+  if (!process.env.WHATSAPP_API_TOKEN && !process.env.WHATSAPP_API_KEY) {
+    console.log('UNCONFIGURED: WHATSAPP_API_TOKEN (operator key) missing');
+    process.exit(2);
+  }
+  if (!process.env.OPENWA_SESSION_ID && !process.env.OPENWA_SESSION_IDS) { console.log('UNCONFIGURED: OPENWA_SESSION_ID / OPENWA_SESSION_IDS missing'); process.exit(2); }
+
+  // Active-hours gate (Cairo) — strictly 09:00 AM up to 10:00 PM (9..21:59 when window is 9-22)
+  const hr = cairoNow().getHours();
+  if (hr < ACTIVE_HOURS[0] || hr >= ACTIVE_HOURS[1]) {
+    summary.skippedHours = true;
+    console.log(`outside active hours (${hr}:00 Cairo, window ${ACTIVE_HOURS[0]}:00-${ACTIVE_HOURS[1]}:00) — nothing sent`);
+    console.log(`SUMMARY ${JSON.stringify(summary)}`);
+    process.exit(0);
+  }
+
+  // Gateway pre-flight — resolve the pool, keep only READY lines for this slot.
+  const gw = new GatewayClient();
+  const poolEntries = await gw.resolvePool().catch(() => []);
+  const readyEntries = [];
+  if (poolEntries.length) {
+    DAILY_CAP = CAP_EXPLICIT ? PER_LINE_DAILY_CAP : PER_LINE_DAILY_CAP * poolEntries.length;
+    try {
+      const cfgPath = path.join(STATE_DIR, 'owner-outreach-config.json');
+      if (fs.existsSync(cfgPath)) {
+        const cfgObj = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        if (cfgObj && Number(cfgObj.dailyCap) > DAILY_CAP) {
+          DAILY_CAP = Number(cfgObj.dailyCap);
+        }
+      }
+    } catch (_) {}
+    for (const e of poolEntries) {
+      try {
+        const one = await gw.statusFor(e.uuid);
+        console.log(`pool session ${e.name} (${e.uuid.slice(0, 8)}): ${one.status}${one.phone ? ` ${one.phone}` : ''}`);
+        if (one.status === 'ready') readyEntries.push(e);
+      } catch (err) {
+        console.log(`pool session ${e.name}: unreachable (${err.message})`);
+      }
+    }
+    if (!readyEntries.length && !DRY_RUN) {
+      console.log('no pool session ready — retry at next cron tick');
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      process.exit(0);
+    }
+  } else {
+    const st = await gw.status().catch(() => ({ status: 'offline' }));
+    if (st.status !== 'ready' && !DRY_RUN) {
+      console.log(`gateway session not ready (${st.status}) — retry at next cron tick`);
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      process.exit(0);
+    }
+  }
+  console.log(`gateway: ${poolEntries.length ? `${readyEntries.length}/${poolEntries.length} pool line(s) ready` : 'single-session mode'} | cap ${DAILY_CAP}/day | ${HOST_SIDE} walk`);
+
+  // Engine 1: Trigger deterministic contact partitioning across all ready lines
+  try {
+    const { partitionOwnerContacts } = require('./contact-partitioner');
+    await partitionOwnerContacts().catch((err) => console.warn(`[outreach] partitioner notice: ${err.message}`));
+  } catch (_) {}
+
+  // Fetch sheet
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(25000) });
+  if (!res.ok) throw new Error(`sheet fetch HTTP ${res.status}`);
+  const parsed = parseCsv(await res.text());
+  const headers = parsed[0].map((h) => String(h).trim());
+  const col = (names) => headers.findIndex((h) => {
+    const clean = h.trim().toLowerCase();
+    return names.some((n) => clean === n || clean.includes(n));
+  });
+  const iCode = col(['code', 'كود']),
+    iName = col(['name', 'owner', 'الاسم', 'مالك', 'المرسل']),
+    iMob = col(['mobile', 'phone', 'موبايل', 'هاتف', 'تليفون', 'المرسل', 'sender']),
+    iAvail = col(['availablty', 'availability', 'الحالة']),
+    iLoc = col(['location', 'الكمبوند', 'الموقع']),
+    iPrice = col(['unit price', 'price', 'السعر']),
+    iBed = col(['bedrooms', 'غرف', 'الغرف']),
+    iType = col(['property tybe', 'property type', 'نوع العقار', 'النوع']),
+    // Last-contact write-back column ("تاريخ اخر تواصل") — the cross-host
+    // dedupe source. 'تواصل' uniquely matches it ("تاريخ اخر تحديث" = update
+    // date does NOT contain 'تواصل').
+    iLastContact = col(['تواصل', 'contacted', 'last_contact', 'last contact']);
+  if (iMob < 0) {
+    console.log(`UNCONFIGURED: no Mobile column in sheet. Found headers: [${headers.join(', ')}]`);
+    process.exit(2);
+  }
+  const SHEET_DEDUPE = !/^(0|false|no)$/i.test(process.env.WF_SHEET_DEDUPE || '');
+
+  const contacted = loadLedgerPhones();
+  for (const p of readLocalLedgers(STATE_DIR)) contacted.add(p);
+  const optedOut = loadOptOutSet(STATE_DIR);
+  const invalidPhones = loadInvalidPhones();
+  const daily = loadDaily();
+
+  const candidates = [];
+  const sheetContacted = new Set(); // phones the sheet already shows as contacted
+  const phoneFirstIdx = new Map();  // phone → index of its FIRST candidate row
+  for (const r of parsed.slice(1)) {
+    const code = (iCode >= 0 ? (r[iCode] || '') : '').trim() || `SE-${candidates.length + 1}`;
+    const name = (iName >= 0 ? (r[iName] || '') : '').trim() || 'صاحب الإعلان';
+    const phone = normalizePhone(iMob >= 0 ? r[iMob] : '');
+    // Cross-host dedupe input: a non-empty last-contact date marks the owner
+    // as already contacted EVEN IF the local ledger is fresh (new runner
+    // host). Collected before the candidate filters so history is never lost.
+    if (phone && iLastContact >= 0 && String(r[iLastContact] || '').trim()) {
+      sheetContacted.add(phone);
+    }
+    const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
+    if (!phone || !/^201[0125]\d{8}$/.test(phone)) continue; // no usable Egyptian mobile
+    if (['201031622600', '201092048333', '201032206443', '201061399688', '201009006157', '201112345678', '201119876543'].includes(phone)) continue; // internal / test numbers
+    if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
+    // FIRST-OCCURRENCE-WINS (two-host parallel, Oct 2026): an owner with
+    // several listings must get ONE intro ever — via their FIRST sheet row.
+    // Later duplicate rows are skipped by BOTH hosts (dupOf marker), so the
+    // top and bottom walkers can never text the same owner in the same slot
+    // through two different rows.
+    const dupOf = phoneFirstIdx.has(phone) ? phoneFirstIdx.get(phone) : null;
+    if (dupOf === null) phoneFirstIdx.set(phone, candidates.length);
+    candidates.push({
+      code, name, phone, rawMobile: (iMob >= 0 ? (r[iMob] || '') : '').trim(), avail,
+      dupOf,
+      location: (iLoc >= 0 ? (r[iLoc] || '') : '').trim(),
+      price: (iPrice >= 0 ? (r[iPrice] || '') : '').trim().replace(/[^\d]/g, ''),
+      bedrooms: (iBed >= 0 ? (r[iBed] || '') : '').trim().replace(/[^\d]/g, ''),
+      propertyType: (iType >= 0 ? (r[iType] || '') : '').trim(),
+    });
+  }
+  // Merge the sheet's contact dates into the ledger set BEFORE any send —
+  // a fresh .state dir on a new host must never re-text the 63 owners the
+  // Windows run already contacted (their dates are in the sheet).
+  if (SHEET_DEDUPE) {
+    for (const p of sheetContacted) {
+      if (!contacted.has(p)) {
+        contacted.add(p);
+        summary.sheetDeduped++;
+      }
+    }
+  }
+  await mergeSupabaseOwners({ candidates, contacted, phoneFirstIdx, summary });
+  summary.candidates = candidates.length;
+  console.log(`candidates: ${candidates.length} valid rows (${summary.supabaseCandidates || 0} from Supabase listings) | already-contacted ledger: ${contacted.size} (local ledger + ${sheetContacted.size} sheet date(s), ${summary.sheetDeduped} newly deduped${SHEET_DEDUPE ? '' : ', sheet dedupe DISABLED'})`);
+
+  const checkpoint = loadCheckpoint(candidates.length);
+
+  // ── Lane construction (Rotating Single-Line 30m OR Parallel) ──────
+  let laneEntries = readyEntries.length ? readyEntries : [];
+  if (!laneEntries.length && !poolEntries.length) {
+    // legacy single-session mode: resolve the configured session name → UUID
+    laneEntries = await gw.healthyPool().catch(() => []);
+  }
+  let lanes;
+  if (ROTATE_SINGLE_LINE && laneEntries.length) {
+    const prevRotation = loadRotationState();
+    const rotated = selectNextRotatedLane(laneEntries, prevRotation, HOST_SIDE);
+    saveRotationState(rotated.nextState);
+    lanes = [rotated.lane];
+    summary.rotatedSession = rotated.lane.name;
+    summary.rotationSlotIndex = rotated.nextState.slotIndex;
+  } else if (laneEntries.length) {
+    const count = Math.max(1, Math.min(PARALLEL_LINES, laneEntries.length));
+    lanes = Array.from({ length: count }, (_, i) => {
+      const e = laneEntries[i % laneEntries.length];
+      return {
+        name: e.name,
+        uuid: e.uuid || null,
+        direction: HOST_SIDE === 'split' ? (i % 2 === 0 ? 'top' : 'bottom') : HOST_SIDE,
+      };
+    });
+  } else if (DRY_RUN) {
+    if (ROTATE_SINGLE_LINE) {
+      const pseudoPool = Array.from({ length: 4 }, (_, i) => ({ name: `dry-line-${i + 1}`, uuid: null }));
+      const rotated = selectNextRotatedLane(pseudoPool, loadRotationState(), HOST_SIDE);
+      lanes = [rotated.lane];
+    } else {
+      const PSEUDO_LANE_MAX = 8;
+      const count = Math.max(1, Math.min(PARALLEL_LINES, PSEUDO_LANE_MAX));
+      lanes = Array.from({ length: count }, (_, i) => ({
+        name: `dry-lane-${i + 1}`,
+        uuid: null,
+        direction: HOST_SIDE === 'split' ? (i % 2 === 0 ? 'top' : 'bottom') : HOST_SIDE,
+      }));
+    }
+  } else {
+    lanes = [{ name: 'session-default', uuid: null, direction: HOST_SIDE === 'split' ? 'top' : HOST_SIDE }];
+  }
+  summary.lanes = lanes.length;
+
+  const dirCount = { top: 0, bottom: 0 };
+  for (const l of lanes) dirCount[l.direction]++;
+
+  console.log(`\n======================================================`);
+  console.log(`[outreach] 30-MIN SLOT — ${ROTATE_SINGLE_LINE ? 'ROTATING SINGLE SENDER' : `${lanes.length} PARALLEL LINE(S)`}:`);
+  for (const l of lanes) console.log(`[outreach]   • ${l.name} → walks ${l.direction === 'top' ? 'FRONT→BACK (top)' : 'BACK→FRONT (bottom)'} (batch ${BATCH_CAP} msgs)`);
+  console.log(`[outreach] Window ${ACTIVE_HOURS[0]}:00–${ACTIVE_HOURS[1]}:00 Cairo | slot batch ${BATCH_CAP} msgs | ${HOST_SIDE === 'split' ? `topCursor ${checkpoint.topCursor} / bottomCursor ${checkpoint.bottomCursor}` : `cursor ${checkpoint.cursor}`}/${candidates.length}`);
+  console.log(`======================================================\n`);
+
+  const remaining =
+    HOST_SIDE === 'split'
+      ? (checkpoint.bottomCursor - checkpoint.topCursor + 1)
+      : HOST_SIDE === 'bottom'
+        ? (checkpoint.cursor + 1)
+        : (candidates.length - checkpoint.cursor);
+  if (remaining <= 0 || checkpoint.completed) {
+    const uncontactedCount = candidates.filter((c) => !contacted.has(c.phone) && c.dupOf === null).length;
+    if (uncontactedCount > 0 && !process.env.WF_NO_RECYCLE) {
+      console.log(`[outreach] Walk completed previous pass, but found ${uncontactedCount} uncontacted owners remaining — refreshing sweep cursors (ledger dedupe active)`);
+      const recycled = freshCheckpoint(candidates.length, HOST_SIDE);
+      saveCheckpoint(recycled);
+      checkpoint.topCursor = recycled.topCursor;
+      checkpoint.bottomCursor = recycled.bottomCursor;
+      checkpoint.cursor = recycled.cursor;
+      checkpoint.completed = false;
+    } else {
+      summary.completed = true;
+      console.log('🏁 All candidates in the sheet have already been contacted!');
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      return;
+    }
+  }
+
+  // ── Direction-aware atomic claim ───────────────────────────────────
+  // JS runs single-threaded: cursor++ between awaits is atomic, so two lanes
+  // can never hold the same row. A claimed-but-unsent row (cap boundary) is
+  // rewound — candidates are never lost.
+  function claim(direction) {
+    if (HOST_SIDE === 'split') {
+      if (direction === 'bottom') {
+        if (checkpoint.bottomCursor >= checkpoint.topCursor) {
+          const idx = checkpoint.bottomCursor--;
+          return { idx, from: 'bottom' };
+        }
+        return null;
+      }
+      if (checkpoint.topCursor <= checkpoint.bottomCursor) {
+        const idx = checkpoint.topCursor++;
+        return { idx, from: 'top' };
+      }
+      return null;
+    }
+    if (HOST_SIDE === 'bottom') {
+      if (checkpoint.cursor >= 0) {
+        const idx = checkpoint.cursor--;
+        return { idx, from: 'bottom' };
+      }
+      return null;
+    }
+    if (checkpoint.cursor < candidates.length) {
+      const idx = checkpoint.cursor++;
+      return { idx, from: 'top' };
+    }
+    return null;
+  }
+
+  function rewind(c) {
+    if (HOST_SIDE === 'split') {
+      if (c.from === 'top') checkpoint.topCursor = Math.min(checkpoint.topCursor, c.idx);
+      else checkpoint.bottomCursor = Math.max(checkpoint.bottomCursor, c.idx);
+    } else if (HOST_SIDE === 'bottom') {
+      checkpoint.cursor = Math.max(checkpoint.cursor, c.idx);
+    } else {
+      checkpoint.cursor = Math.min(checkpoint.cursor, c.idx);
+    }
+    saveCheckpoint(checkpoint);
+  }
+
+  function walkDone() {
+    if (HOST_SIDE === 'split') return checkpoint.topCursor > checkpoint.bottomCursor;
+    if (HOST_SIDE === 'bottom') return checkpoint.cursor < 0;
+    return checkpoint.cursor >= candidates.length;
+  }
+
+  let batchDone = false;
+  let abortBatch = false;
+  let inFlightSends = 0; // active sends in progress; only completed sends count toward BATCH_CAP
+  const slotStart = Date.now(); // graceful deadline clock (t0 of the send loop)
+
+  // Mid-slot sheet re-sync: re-fetch the contact-date column every 5 minutes
+  // and merge freshly-marked phones into `contacted`, so the OTHER host's
+  // writes (1–5 min gviz cache lag) are picked up WITHOUT waiting for the
+  // next slot. This is what keeps the meeting-in-the-middle region race-free.
+  let lastSheetSync = Date.now();
+  async function resyncSheetContacted() {
+    if (DRY_RUN) return; // dry-run touches nothing — the sheet cannot change
+    try {
+      const res2 = await fetch(url, { signal: AbortSignal.timeout(25000) });
+      if (!res2.ok) return;
+      const parsed2 = parseCsv(await res2.text());
+      let pickedUp = 0;
+      for (const r of parsed2.slice(1)) {
+        const phone2 = normalizePhone(iMob >= 0 ? r[iMob] : '');
+        if (phone2 && iLastContact >= 0 && String(r[iLastContact] || '').trim()) {
+          if (!contacted.has(phone2)) { contacted.add(phone2); pickedUp++; }
+        }
+      }
+      if (pickedUp) {
+        summary.sheetDeduped += pickedUp;
+        console.log(`[outreach] mid-slot re-sync: ${pickedUp} phone(s) newly marked by the other host — skipped`);
+      }
+    } catch (e) {
+      console.warn(`[outreach] sheet re-sync failed (continuing): ${e.message}`);
+    }
+  }
+
+  async function laneLoop(lane) {
+    while (!batchDone && !abortBatch) {
+      // Stop claiming new rows if Cairo clock reaches 10:00 PM (ACTIVE_HOURS[1]) mid-slot
+      if (cairoNow().getHours() >= ACTIVE_HOURS[1]) {
+        summary.skippedHours = true;
+        console.log(`\n[outreach] Reached end of active window (${ACTIVE_HOURS[1]}:00 Cairo) — stopping cleanly`);
+        batchDone = true;
+        break;
+      }
+      // Graceful slot deadline — stop claiming NEW rows so the run exits
+      // cleanly (checkpoint saved) instead of being SIGKILLed by the runner.
+      if (Date.now() - slotStart >= SLOT_DEADLINE_MS) {
+        summary.slotDeadline = true;
+        break;
+      }
+      // Mid-slot cross-host re-sync (5-min cadence, single-flight)
+      if (Date.now() - lastSheetSync > 5 * 60_000) {
+        lastSheetSync = Date.now();
+        await resyncSheetContacted();
+      }
+      if (summary.sent >= BATCH_CAP) {
+        console.log(`\n[outreach] Slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next 30m slot`);
+        batchDone = true;
+        break;
+      }
+      if (daily.sent >= DAILY_CAP) {
+        summary.skippedCap++;
+        console.log(`\n[outreach] Daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next active window`);
+        batchDone = true;
+        break;
+      }
+      const claimed = claim(lane.direction);
+      if (!claimed) break; // this lane's direction is exhausted
+      const { idx } = claimed;
+      const cand = candidates[idx];
+      if (!cand || !cand.phone) continue;
+      const phone = cand.phone;
+
+      if (cand.dupOf !== null && cand.dupOf !== undefined) {
+        // Later duplicate row for an owner already carried by an earlier row —
+        // the first-occurrence row (wherever the walkers reach it) does the send.
+        summary.skippedDupRow++;
+      } else if (optedOut.has(phone)) {
+        summary.skippedOptOut++;
+      } else if (invalidPhones.has(phone)) {
+        summary.skippedInvalid = (summary.skippedInvalid || 0) + 1;
+      } else if (!contacted.has(phone)) {
+        const text = buildMessage(cand);
+        if (DRY_RUN) {
+          console.log(`[dry-run][${lane.direction}][#${idx}] would send → ${toLocalPhone(phone)} (${cand.code}) via ${lane.name}`);
+          summary.sent++;
+          summary.bySession[lane.name] = (summary.bySession[lane.name] || 0) + 1;
+          summary.byDirection[lane.direction]++;
+        } else {
+          if (summary.sent >= BATCH_CAP || daily.sent >= DAILY_CAP) {
+            rewind(claimed);
+            batchDone = true;
+            break;
+          }
+          if (summary.sent + inFlightSends >= BATCH_CAP) {
+            // Other lanes already have enough in-flight sends to hit BATCH_CAP.
+            // Rewind and wait for them to settle in case any fail.
+            rewind(claimed);
+            await sleep(500);
+            continue;
+          }
+          inFlightSends++;
+          // Synchronous in-process lock BEFORE any await so concurrent lanes never race
+          contacted.add(phone);
+          // Atomic DB-level claim across all containers/hosts
+          let claimRes;
+          try {
+            claimRes = await claimOutreachPhone(getAuditClient(), {
+              phone,
+              source: `09-owner-outreach:${HOST_SIDE}`,
+              listingCode: cand.code,
+              sessionName: lane.name,
+            });
+          } catch (claimErr) {
+            inFlightSends--;
+            contacted.delete(phone);
+            rewind(claimed);
+            throw claimErr;
+          }
+          if (!claimRes.claimed) {
+            inFlightSends--;
+            summary.skippedDbDuplicate = (summary.skippedDbDuplicate || 0) + 1;
+            console.log(`[outreach] skipped duplicate ${toLocalPhone(phone)} (${claimRes.reason})`);
+            continue;
+          }
+          let sentThisRow = false;
+          try {
+            const sendOpts = { retries: 2 };
+            if (lane.uuid) sendOpts.sessionId = lane.uuid;
+            let sendRes;
+            try {
+              sendRes = await gw.sendText(phone, text, sendOpts);
+            } catch (primaryErr) {
+              const isPerm = primaryErr.permanent || (primaryErr.message && (
+                primaryErr.message.includes('not_registered') ||
+                primaryErr.message.includes('unusable chatId')
+              ));
+              const altEntry = !isPerm && readyEntries.find((e) => e.uuid && e.uuid !== lane.uuid);
+              if (altEntry) {
+                console.warn(`[outreach] Primary line ${lane.name} failed (${primaryErr.message}) — failing over to ${altEntry.name}...`);
+                sendRes = await gw.sendText(phone, text, { retries: 1, sessionId: altEntry.uuid });
+              } else {
+                throw primaryErr;
+              }
+            }
+            const usedSession = sendRes.session || lane.name;
+            sentThisRow = true;
+            summary.sent++;
+            summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
+            summary.byDirection[lane.direction]++;
+            daily.sent++;
+            saveDaily(daily);
+            appendLedger({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction });
+            // Canonical audit row (migration 033) — fire-and-forget, REAL
+            // sends only (dry-run never fabricates contact records, §21).
+            void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
+            console.log('\n┌─────────────────────────────────────────────────────────────┐');
+            console.log('│ 📤 [إرسال ناجح للواتساب] [' + lane.direction + '][#' + idx + ']');
+            console.log('│ 👤 المالك: ' + (cand.name || 'مالك مباشر') + ' | 📱 الرقم: ' + toLocalPhone(phone));
+            console.log('│ 🏠 الوحدة: ' + (cand.code || 'بدون كود') + ' | 📍 الكمبوند/الموقع: ' + (cand.location || 'القاهرة الجديدة'));
+            console.log('│ 💰 السعر: ' + (cand.price ? cand.price + ' EGP' : 'غير محدد') + ' | 🏷️ النوع: ' + (cand.dealType || 'بيع'));
+            console.log('│ 📡 الخط المستخدم: ' + usedSession + ' | 📊 إجمالي اليوم: [' + daily.sent + '/' + DAILY_CAP + ']');
+            console.log('├─────────────────────────────────────────────────────────────┤');
+            console.log('│ 💬 نص الرسالة المرسلة:');
+            for (const l of text.split('\n')) {
+              console.log('│   ' + l);
+            }
+            console.log('└─────────────────────────────────────────────────────────────┘\n');
+            await writeSheetDate(phone, cand.rawMobile, formatCairoDate(), cand.code, 'تم التواصل');
+            appendOutreachSpreadsheet(cand, usedSession, formatCairoDate());
+            saveCheckpoint(checkpoint);
+            // Update listing availability and status in Supabase if code present
+            if (cand.code) {
+              const auditDb = getAuditClient();
+              if (auditDb) {
+                auditDb.from('listings').update({
+                  availability: 'contacted',
+                  updated_at: new Date().toISOString()
+                  }).or('code.eq.' + cand.code + ',unit_code.eq.' + cand.code).then(() => null).catch(() => null);
+              }
+            }
+          } catch (err) {
+            summary.failed++;
+            console.error(`Send failed for ${phone} via ${lane.name}: ${err.message}`);
+            const isInvalidPhone = err.permanent || (err.message && (
+              err.message.includes('not_registered') ||
+              err.message.includes('unusable chatId')
+            ));
+            if (isInvalidPhone) {
+              appendInvalidPhone(phone);
+              invalidPhones.add(phone);
+              saveCheckpoint(checkpoint);
+              if (cand.code) {
+                const auditDb = getAuditClient();
+                if (auditDb) {
+                  auditDb.from('listings').update({
+                    availability: 'invalid_phone',
+                    updated_at: new Date().toISOString()
+                  }).or('code.eq.' + cand.code + ',unit_code.eq.' + cand.code).then(() => null).catch(() => null);
+                }
+              }
+            } else {
+              // Transient error: release claim ONLY if sendText did not succeed
+              if (!sentThisRow) {
+                contacted.delete(phone);
+                await releaseOutreachClaim(getAuditClient(), phone);
+              }
+              // Transient error: rewind cursor so this owner is not skipped without receiving a message
+              rewind(claimed);
+            }
+            if (err.httpStatus === 401 || err.httpStatus === 403) {
+              console.error('gateway authentication failure — aborting batch');
+              abortBatch = true;
+              break;
+            }
+          } finally {
+            inFlightSends = Math.max(0, inFlightSends - 1);
+          }
+          if (!sentThisRow) continue;
+        }
+        contacted.add(phone);
+        // Human anti-ban pacing per LINE: default 30–40 s (100 ms in dry-run) so
+        // 25 messages finish in ~14.5 minutes inside the 30-min slot before the
+        // sending number rotates and rests for 90+ minutes.
+        const paceMs = DRY_RUN ? 100 : PACE_MIN_MS + Math.floor(Math.random() * PACE_JITTER_MS);
+        if (!DRY_RUN) {
+          const paceSec = Math.round(paceMs / 1000);
+          console.log('⏳ فاصل أمان بشري مانع للحظر (' + paceSec + ' ثانية) قبل المالك التالي...');
+          for (let rem = paceSec; rem > 0; rem -= 5) {
+            await sleep(Math.min(5000, rem * 1000));
+            if (rem - 5 > 0) process.stdout.write('... متبقي ' + (rem - 5) + ' ثانية ');
+          }
+          console.log('\n🚀 جاهز للانتقال للمالك التالي!\n');
+        } else {
+          await sleep(paceMs);
+        }
+      } else {
+        summary.skippedDup++;
+      }
+      saveCheckpoint(checkpoint);
+    }
+  }
+
+  await Promise.all(lanes.map((lane) => laneLoop(lane)));
+
+  if (summary.slotDeadline) {
+    console.log(`[outreach] Slot time budget reached (${Math.round((Date.now() - slotStart) / 60000)} min, ${summary.sent} sent) — resuming at the next 30m slot (checkpoint saved)`);
+  }
+
+  if (walkDone()) {
+    checkpoint.completed = true;
+    summary.completed = true;
+    console.log('🎉 Reached the end of all sheet candidates on this side!');
+  }
+  // Halfway flag: this host's cursors crossed the sheet's middle — the walk
+  // is now in territory the other side covers too (sheet dedupe keeps it safe).
+  if (HOST_SIDE === 'split') {
+    summary.metInTheMiddle = checkpoint.topCursor > checkpoint.bottomCursor
+      || checkpoint.topCursor >= Math.ceil(candidates.length / 2);
+  } else if (HOST_SIDE === 'top') {
+    summary.metInTheMiddle = checkpoint.cursor >= Math.ceil(candidates.length / 2);
+  } else {
+    summary.metInTheMiddle = checkpoint.cursor <= Math.floor((candidates.length - 1) / 2);
+  }
+  saveCheckpoint(checkpoint);
+
+  console.log(`[outreach] Completed slot: ${summary.sent} sent, ${summary.failed} failed, ${summary.skippedDup} skipped-dup | byDirection: top ${summary.byDirection.top} / bottom ${summary.byDirection.bottom}`);
+  console.log(`SUMMARY ${JSON.stringify(summary)}`);
+  if (!DRY_RUN && summary.failed > 0 && summary.sent === 0) {
+    console.error(`owner-outreach FAILED: all ${summary.failed} attempted sends failed in this slot (0 sent)`);
+    process.exit(1);
+  }
+  console.log('owner-outreach: done');
+  return;
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`owner-outreach FAILED: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  main,
+  buildMessage,
+  normalizePhone,
+  toWesternDigits,
+  selectNextRotatedLane,
+  BATCH_CAP,
+  ACTIVE_HOURS,
+  ROTATE_SINGLE_LINE,
+  mergeSupabaseOwners,
+  classifyAndHandleOwnerReply,
+};

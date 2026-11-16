@@ -1,0 +1,193 @@
+{
+  "name": "OpenClaw WhatsApp Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-openclaw",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o",
+        "messages": {
+          "messageValues": [
+            {
+              "content": "=Extract real estate unit information from this WhatsApp message and format it strictly as JSON. Extract these fields: Type (Apartment/Villa/Office), Location, Price, Area, Bedrooms, Bathrooms, Contact Info, and Status (Rent/Resale/Available/Not Available).\n\nMessage:\n{{ $json.body.Body || $json.body.message || $json.body.text?.body || \"\" }}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "jsonObject"
+        }
+      },
+      "id": "2",
+      "name": "OpenClaw AI Extraction",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Owners-Rent",
+          "mode": "name"
+        },
+        "dataMode": "defineBelow",
+        "valuesUi": {
+          "values": [
+            {
+              "column": "Type",
+              "value": "={{ $json.message.content.Type }}"
+            },
+            {
+              "column": "Location",
+              "value": "={{ $json.message.content.Location }}"
+            },
+            {
+              "column": "Price",
+              "value": "={{ $json.message.content.Price }}"
+            },
+            {
+              "column": "Contact",
+              "value": "={{ $json.message.content['Contact Info'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        650,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_BASE_ID",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Units",
+          "mode": "name"
+        },
+        "columnsUi": {
+          "columnValues": [
+            {
+              "column": "Type",
+              "value": "={{ $json.message.content.Type }}"
+            },
+            {
+              "column": "Location",
+              "value": "={{ $json.message.content.Location }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4",
+      "name": "Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        650,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "✅ OpenClaw successfully categorized your unit!"
+      },
+      "id": "5",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "OpenClaw AI Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenClaw AI Extraction": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "pinData": {}
+}

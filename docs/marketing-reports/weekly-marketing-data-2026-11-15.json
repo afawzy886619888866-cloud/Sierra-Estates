@@ -1,0 +1,275 @@
+{
+  "reportDate": "2026-11-15",
+  "totalCampaigns": 88,
+  "totalLeadsAnalyzed": 250,
+  "compoundDist": {
+    "New Cairo": 86,
+    "Mevida": 1,
+    "Azzar": 1
+  },
+  "priceBuckets": {
+    "Under 35k EGP": 18,
+    "35k – 50k EGP": 18,
+    "50k – 75k EGP": 41,
+    "75k – 100k EGP": 4,
+    "Above 100k EGP (Luxury/Villas)": 5,
+    "Sale (20M+ EGP)": 2
+  },
+  "bedroomDist": {
+    "1": 2,
+    "2": 14,
+    "3": 54,
+    "4": 13,
+    "5": 3,
+    "6": 1,
+    "studio": 1
+  },
+  "furnishingDist": {
+    "furnished": 57,
+    "semi-furnished": 30,
+    "unfurnished": 1
+  },
+  "commonInTop": {
+    "avgPhotos": "12.6",
+    "avgQualityScore": "100%",
+    "dominantFurnishing": "furnished (72%)",
+    "dominantBedrooms": "3 bedrooms (58%)",
+    "dominantPriceBand": "50,000 – 65,000 EGP/mo",
+    "topCompounds": [
+      "Mivida",
+      "Mountain View Hyde Park",
+      "Lake View"
+    ]
+  },
+  "topCampaigns": [
+    {
+      "id": "01JPJ134EVEJYBTV0YS1NBH7RW",
+      "ref": "emerald-estates-e-9956926",
+      "title": "Best Deal in Hyde park-Mountain view",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "4",
+      "area": 288,
+      "amount": 60000,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 8,
+      "qualityScore": 100,
+      "leadCount": 8,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01JPHTTH4WDXAJ590H2CHHSJRG",
+      "ref": "emerald-estates-e-9956916",
+      "title": "Hidden JEM LUXURY Apartment",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 120,
+      "amount": 40000,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 12,
+      "qualityScore": 100,
+      "leadCount": 7,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01JR1Z3ZVEXW1ZQ1AP43B4ABKM",
+      "ref": "emerald-estates-e-12089803",
+      "title": "Spacious 2-Bedroom Apartment in Mivida",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 208,
+      "amount": 60000,
+      "mode": "rent",
+      "furnishing": "semi-furnished",
+      "photoCount": 10,
+      "qualityScore": 100,
+      "leadCount": 7,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01JPJ1358V5PWCMHJC23F3MX12",
+      "ref": "L K 1",
+      "title": "LVR 2BR",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "2",
+      "area": 130,
+      "amount": 50000,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 26,
+      "qualityScore": 100,
+      "leadCount": 6,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "6M0YYTH93HB6G4QV4M4DJ5PV2M",
+      "ref": "6M0YYTH93HB6G4QV4M4DJ5PV2M",
+      "title": "High-End Deluxe 3BR",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 180,
+      "amount": 60000,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 7,
+      "qualityScore": 100,
+      "leadCount": 6,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01JPHDG6D5AKGEF5F3NTJHPYXJ",
+      "ref": "emerald-estates-e-10900244",
+      "title": "Luxury Twin House for Rent in Landmark 370m",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "4",
+      "area": 370,
+      "amount": 60000,
+      "mode": "rent",
+      "furnishing": "semi-furnished",
+      "photoCount": 9,
+      "qualityScore": 100,
+      "leadCount": 5,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01K62W93C23P0Z78RYZFJN4JNY",
+      "ref": "01K62W93C23P0Z78RYZFJN4JNY",
+      "title": "Furnished Apartment for Rent in Madinaty",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 124,
+      "amount": 0,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 9,
+      "qualityScore": 100,
+      "leadCount": 5,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01JPJ134BX5T5Y4MDD99CHVT5V",
+      "ref": "M v A",
+      "title": "Hottest Hyde park Mountain view Ap",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 180,
+      "amount": 60000,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 8,
+      "qualityScore": 100,
+      "leadCount": 5,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "7DWHF7TG5YC61395454KQ07KQR",
+      "ref": "7DWHF7TG5YC61395454KQ07KQR",
+      "title": "Apartment for Rent in The Square – New Cairo",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 180,
+      "amount": 23000,
+      "mode": "rent",
+      "furnishing": "semi-furnished",
+      "photoCount": 8,
+      "qualityScore": 100,
+      "leadCount": 5,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "01JPHT8HT24EMRQHC6G7TF8AP7",
+      "ref": "Ram2",
+      "title": "Elegant Fully Furnished Apartment",
+      "compound": "New Cairo",
+      "type": "apartment",
+      "bedrooms": "3",
+      "area": 175,
+      "amount": 60000,
+      "mode": "rent",
+      "furnishing": "furnished",
+      "photoCount": 8,
+      "qualityScore": 100,
+      "leadCount": 5,
+      "channels": [
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp",
+        "whatsapp"
+      ]
+    }
+  ]
+}

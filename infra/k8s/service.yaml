@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sierra-estates-realty-svc
+  namespace: sierra-estates
+  labels:
+    app.kubernetes.io/name: sierra-estates-realty
+    app.kubernetes.io/part-of: sierra-estates-platform
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: sierra-estates-realty

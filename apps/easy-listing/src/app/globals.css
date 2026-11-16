@@ -1,0 +1,300 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Hyouz Luxury Design System Tokens ── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Cairo", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-navy: var(--navy);
+  --color-obsidian: var(--obsidian);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ── Stitch Obsidian Cyber-HUD Tokens ── */
+  --color-surface-container-lowest: #090e1c;
+  --color-surface-container-low: #111625;
+  --color-surface-container: #171b2a;
+  --color-surface-container-high: #1f2538;
+  --color-surface-container-highest: #303444;
+  --color-surface-bright: #22283c;
+  --color-surface-variant: #282e44;
+  --color-primary-container: #00e5ff;
+  --color-on-primary-container: #002a30;
+  --color-on-surface: #dfe1f6;
+  --color-on-surface-variant: #94a3b8;
+  --color-outline: #475569;
+  --color-outline-variant: #222a3d;
+  --color-tertiary-container: #ffc681;
+  --color-on-tertiary-container: #7e4e00;
+}
+
+:root {
+  --radius: 0.85rem;
+  --gold: #c8961a;
+  --gold-light: #e9c176;
+  --gold-dark: #a17812;
+  --navy: #002b4b;
+  --obsidian: #070b12;
+
+  /* Hyouz Dark / Obsidian Default */
+  --background: #070b12;
+  --foreground: #f8fafc;
+  --card: #0d1524;
+  --card-foreground: #f8fafc;
+  --popover: #0d1524;
+  --popover-foreground: #f8fafc;
+  --primary: #c8961a;
+  --primary-foreground: #070b12;
+  --secondary: #121d30;
+  --secondary-foreground: #e2e8f0;
+  --muted: #111a2a;
+  --muted-foreground: #94a3b8;
+  --accent: #1e2c45;
+  --accent-foreground: #e9c176;
+  --destructive: #ef4444;
+  --border: rgba(212, 175, 55, 0.22);
+  --input: rgba(18, 29, 48, 0.85);
+  --ring: #c8961a;
+}
+
+.light {
+  --background: #f8f6f0;
+  --foreground: #0d1e2e;
+  --card: #ffffff;
+  --card-foreground: #0d1e2e;
+  --popover: #ffffff;
+  --popover-foreground: #0d1e2e;
+  --primary: #002b4b;
+  --primary-foreground: #ffffff;
+  --secondary: #ede7d9;
+  --secondary-foreground: #002b4b;
+  --muted: #f1ede2;
+  --muted-foreground: #64748b;
+  --accent: #f5eedb;
+  --accent-foreground: #c8961a;
+  --destructive: #b91c1c;
+  --border: rgba(200, 150, 26, 0.35);
+  --input: #e2dac7;
+  --ring: #c8961a;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv02";
+    background-color: #070b12;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(200, 150, 26, 0.08) 0%, transparent 60%),
+      radial-gradient(circle at 10% 20%, rgba(0, 43, 75, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(0, 43, 75, 0.2) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+/* ── Hyouz Luxury Glass Cards ── */
+.hyouz-card {
+  background: rgba(13, 21, 36, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(212, 175, 55, 0.15) inset;
+}
+
+.hyouz-gold-btn {
+  background: linear-gradient(135deg, #e9c176 0%, #c8961a 100%);
+  color: #070b12;
+  font-weight: 800;
+  box-shadow: 0 4px 20px rgba(200, 150, 26, 0.32);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hyouz-gold-btn:hover {
+  background: linear-gradient(135deg, #f0cd8b 0%, #d4a32b 100%);
+  box-shadow: 0 6px 26px rgba(200, 150, 26, 0.45);
+  transform: translateY(-1px);
+}
+
+.hyouz-glass-btn {
+  background: rgba(18, 29, 48, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  color: #f8fafc;
+  transition: all 0.2s ease;
+}
+.hyouz-glass-btn:hover {
+  background: rgba(30, 44, 69, 0.85);
+  border-color: #e9c176;
+  color: #e9c176;
+}
+
+/* ── Stitch Obsidian Cyber-HUD Design System ── */
+.stitch-card {
+  background: #171b2a;
+  border: 1px solid #222a3d;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(0, 229, 255, 0.08) inset;
+}
+
+.stitch-card-low {
+  background: #111625;
+  border: 1px solid #222a3d;
+}
+
+.stitch-cyan-btn {
+  background: #00e5ff;
+  color: #002a30;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stitch-cyan-btn:hover {
+  background: #33ebff;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.55);
+  transform: translateY(-1px);
+}
+.stitch-cyan-btn:active {
+  transform: translateY(0);
+}
+
+.stitch-ghost-btn {
+  background: #1f2538;
+  border: 1px solid #222a3d;
+  color: #dfe1f6;
+  transition: all 0.2s ease;
+}
+.stitch-ghost-btn:hover {
+  background: #282e44;
+  border-color: #00e5ff;
+  color: #c3f5ff;
+}
+
+.stitch-input {
+  background: #090e1c;
+  border: 1px solid #222a3d;
+  color: #dfe1f6;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.stitch-input:focus,
+.stitch-input:focus-within {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+  outline: none;
+}
+
+/* ── Custom scrollbars ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 150, 26, 0.3) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(200, 150, 26, 0.3);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(233, 193, 118, 0.6);
+}
+
+/* ── Mono/LTR helpers for codes, links and numbers inside RTL layout ── */
+.ltr-embed {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+
+.content-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  line-height: 1.85;
+}
+
+/* ── React View Transitions Recipes (vercel-react-view-transitions) ── */
+:root {
+  --duration-exit: 150ms;
+  --duration-enter: 220ms;
+  --duration-move: 360ms;
+}
+
+@keyframes vt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vt-slide-y {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.fade-out) {
+  animation: var(--duration-exit) ease-in vt-fade reverse;
+}
+
+::view-transition-new(.fade-in) {
+  animation: var(--duration-enter) ease-out var(--duration-exit) both vt-fade;
+}
+
+::view-transition-old(.slide-down) {
+  animation: var(--duration-exit) ease-out both vt-fade reverse;
+}
+
+::view-transition-new(.slide-up) {
+  animation: var(--duration-enter) ease-out both vt-slide-y;
+}
+
+::view-transition-group(.tab-underline) {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

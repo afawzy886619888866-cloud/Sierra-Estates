@@ -1,0 +1,46 @@
+/* Page styles ported verbatim from deploy/property.html */
+
+/* ── Property Detail Specific Styles ── */
+.pdetail-head{margin-bottom:28px;}
+.pdetail-title{font-family:var(--display);font-size:clamp(1.75rem,1.2rem + 1.8vw,2.5rem);font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1.15;}
+.pdetail-loc{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14.5px;margin-top:6px;font-weight:500;}
+.pdetail-layout{display:grid;grid-template-columns:1fr 380px;gap:36px;align-items:start;}
+
+/* Gallery */
+.gallery-main{position:relative;width:100%;height:480px;border-radius:18px;overflow:hidden;background:#0a1622;border:1px solid var(--line);box-shadow:var(--shadow-m);}
+.gallery-main img{width:100%;height:100%;object-fit:cover;transition:transform .4s var(--silk);}
+.gallery-thumbs{display:flex;gap:12px;margin-top:14px;overflow-x:auto;padding-bottom:6px;}
+.gallery-thumb{width:100px;height:70px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;opacity:.7;transition:all .2s;}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;}
+.gallery-thumb.active,.gallery-thumb:hover{opacity:1;border-color:var(--pri);transform:translateY(-2px);}
+.gallery-badges{position:absolute;top:18px;left:18px;display:flex;gap:8px;z-index:2;}
+.gallery-3d-btn{position:absolute;bottom:20px;right:20px;z-index:3;background:rgba(0,43,75,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.08em;padding:10px 18px;border-radius:999px;border:1px solid rgba(233,193,118,.4);display:inline-flex;align-items:center;gap:8px;text-decoration:none;transition:all .2s;}
+.gallery-3d-btn:hover{background:linear-gradient(135deg,#c8961a,#e9c176);color:#09090f;transform:scale(1.04);}
+
+/* Specs Grid */
+.specs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;margin:28px 0;}
+.spec-box{display:flex;flex-direction:column;gap:4px;}
+.spec-box span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.spec-box b{font-size:16px;color:var(--ink);display:flex;align-items:center;gap:6px;}
+
+/* Detail Sections */
+.detail-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:24px;}
+.detail-card h3{font-size:19px;font-weight:700;margin-bottom:14px;color:var(--ink);}
+.detail-card p{font-size:14.5px;line-height:1.7;color:var(--text);}
+
+/* AVM Valuation Box */
+.avm-box{background:linear-gradient(135deg,rgba(0,43,75,.08),rgba(200,150,26,.08));border:1.5px solid rgba(200,150,26,.3);border-radius:16px;padding:22px;margin-bottom:24px;}
+.avm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.avm-val{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--pri);}
+[data-theme="dark"] .avm-val{color:#e9c176;}
+
+/* Sticky Right Booking Card */
+.booking-card{position:sticky;top:88px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:18px;padding:28px;box-shadow:var(--shadow-m);}
+.price-display{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+.price-tag{font-family:var(--mono);font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
+.price-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.agent-banner{display:flex;align-items:center;gap:14px;background:var(--surface-2);border-radius:12px;padding:12px 14px;margin-bottom:22px;}
+.agent-banner .av{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;}
+[data-theme="dark"] .agent-banner .av{background:#c8961a;color:#09090f;}
+
+@media(max-width:980px){.pdetail-layout{grid-template-columns:1fr;}.booking-card{position:static;}.specs-grid{grid-template-columns:repeat(2,1fr);}}

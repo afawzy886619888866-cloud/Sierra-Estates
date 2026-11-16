@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Sierra Estates — Listing Studio · Admin</title>
+<meta name="description" content="Sierra Estates internal tool: paste a property description, generate the listing code, WhatsApp / Facebook / Property Finder content, offer image and PDF brochure.">
+
+<!-- ─── Fonts: Playfair Display (headings) · Inter (body) · Cairo (Arabic) ─── -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ─── Font Awesome icons ─── -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+<!-- ─── html2canvas (offer image → PNG) · jsPDF (brochure → PDF) ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIERRA ESTATES · LISTING STUDIO
+   Brand: Navy #0A1A3A · Gold #C9A24A · Light #F5F7FA
+   Fonts: Playfair Display (display) · Inter (UI) · Cairo (Arabic)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --navy:#0A1A3A;
+  --navy-2:#13264F;
+  --navy-3:#1C3368;
+  --gold:#C9A24A;
+  --gold-soft:#E4CE96;
+  --gold-deep:#A98634;
+  --light:#F5F7FA;
+  --paper:#FFFFFF;
+  --ink:#182035;
+  --muted:#66708A;
+  --line:#E2E7F0;
+  --ok:#177A4C;
+  --ok-bg:#E9F7F0;
+  --err:#B3372B;
+  --err-bg:#FBEDEA;
+  --wa:#1FA855;
+  --fb:#1877F2;
+  --pf:#0A6E5C;
+  --radius:14px;
+  --shadow:0 10px 30px rgba(10,26,58,.08);
+  --shadow-lg:0 18px 50px rgba(10,26,58,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(201,162,74,.10), transparent 60%),
+    radial-gradient(900px 480px at -10% 0%, rgba(19,38,79,.10), transparent 55%),
+    var(--light);
+  color:var(--ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.ar,[dir="rtl"],.ar-font{font-family:'Cairo','Inter',sans-serif}
+.display{font-family:'Playfair Display',Georgia,serif}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font:inherit;color:inherit}
+::selection{background:rgba(201,162,74,.35)}
+
+/* ─── Top bar ─────────────────────────────────────────────────────────── */
+.topbar{
+  background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 70%,var(--navy-3) 100%);
+  color:#fff;border-bottom:3px solid var(--gold);
+  padding:20px clamp(16px,4vw,44px) 18px;
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;gap:3px}
+.brand-name{
+  font-family:'Playfair Display',serif;font-size:clamp(19px,2.4vw,26px);
+  letter-spacing:.14em;font-weight:600;white-space:nowrap;
+}
+.brand-name .star{color:var(--gold);font-size:.8em;letter-spacing:0}
+.brand-sub{font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-soft);font-weight:500}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{
+  font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  padding:7px 13px;border-radius:999px;border:1px solid rgba(201,162,74,.55);
+  color:var(--gold-soft);background:rgba(201,162,74,.08);white-space:nowrap;
+}
+.pill.solid{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+
+/* ─── Layout ──────────────────────────────────────────────────────────── */
+.studio{
+  display:grid;grid-template-columns:minmax(0,27fr) minmax(0,33fr);
+  gap:26px;padding:28px clamp(14px,3.4vw,44px) 60px;
+  max-width:1560px;margin:0 auto;align-items:start;
+}
+@media (max-width:1023px){.studio{grid-template-columns:1fr}}
+
+.panel{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.panel-head{
+  display:flex;align-items:center;gap:12px;
+  padding:18px 24px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#FFFFFF, #FAFBFE);
+}
+.step-no{
+  width:30px;height:30px;border-radius:9px;flex:none;
+  display:grid;place-items:center;
+  background:var(--navy);color:var(--gold);
+  font-weight:700;font-size:14px;font-family:'Playfair Display',serif;
+}
+.panel-title{font-size:16.5px;font-weight:700;letter-spacing:.02em}
+.panel-title small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;margin-top:2px}
+.panel-body{padding:22px 24px 26px;display:flex;flex-direction:column;gap:19px}
+
+/* ─── Form fields ─────────────────────────────────────────────────────── */
+.field label{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--navy);margin-bottom:9px;
+}
+.field label .req{color:var(--gold-deep)}
+.field label .la{font-family:'Cairo',sans-serif;text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted);font-size:12px}
+textarea#description{
+  width:100%;min-height:190px;resize:vertical;
+  border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;
+  font-family:'Cairo','Inter',sans-serif;font-size:15px;line-height:1.9;
+  background:#FDFEFF;transition:border-color .18s, box-shadow .18s;
+}
+textarea#description:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(201,162,74,.16)}
+textarea#description::placeholder{color:#A6AFC4}
+.char-note{margin-top:7px;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between}
+.sample-row{display:flex;gap:8px;flex-wrap:wrap}
+.sample-btn{
+  font-size:11.5px;font-weight:600;color:var(--navy-2);
+  border:1px dashed var(--gold);border-radius:999px;padding:5px 12px;
+  background:rgba(201,162,74,.07);transition:background .15s;
+}
+.sample-btn:hover{background:rgba(201,162,74,.18)}
+input#phone{
+  width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12.5px 15px;
+  font-size:15px;letter-spacing:.04em;background:#FDFEFF;direction:ltr;text-align:left;
+  transition:border-color .18s, box-shadow .18s;
+}
+input#phone:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(201,162,74,.16)}
+
+/* ─── Dropzone / previews ─────────────────────────────────────────────── */
+.dropzone{
+  border:2px dashed var(--line);border-radius:12px;background:#FBFCFE;
+  padding:26px 18px;display:flex;flex-direction:column;align-items:center;gap:9px;
+  color:var(--muted);cursor:pointer;text-align:center;
+  transition:border-color .18s, background .18s, transform .18s;
+}
+.dropzone:hover{border-color:var(--gold);background:rgba(201,162,74,.05)}
+.dropzone.dragover{border-color:var(--gold);background:rgba(201,162,74,.12);transform:scale(1.01)}
+.dropzone i{font-size:26px;color:var(--gold)}
+.dropzone .dz-main{font-size:13.5px;font-weight:600;color:var(--navy)}
+.dropzone .dz-sub{font-size:11.5px}
+.previews{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px}
+.thumb{
+  position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;
+  border:1px solid var(--line);background:#EEF1F7;
+}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .rm{
+  position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:7px;
+  background:rgba(10,26,58,.78);color:#fff;font-size:10.5px;
+  display:grid;place-items:center;transition:background .15s;
+}
+.thumb .rm:hover{background:var(--err)}
+.thumb .lead-tag{
+  position:absolute;left:4px;bottom:4px;font-size:9px;font-weight:700;letter-spacing:.06em;
+  background:var(--gold);color:var(--navy);border-radius:5px;padding:2px 6px;
+}
+
+/* ─── Generate button ─────────────────────────────────────────────────── */
+.generate-btn{
+  width:100%;border-radius:12px;padding:15px 18px;
+  background:linear-gradient(120deg,var(--gold) 0%,var(--gold-deep) 130%);
+  color:var(--navy);font-weight:800;font-size:15px;letter-spacing:.03em;
+  box-shadow:0 8px 22px rgba(201,162,74,.35);
+  display:flex;align-items:center;justify-content:center;gap:11px;
+  transition:transform .16s, box-shadow .16s, filter .16s;
+}
+.generate-btn:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(201,162,74,.44)}
+.generate-btn:disabled{filter:saturate(.55) brightness(.92);cursor:wait;transform:none}
+.spinner{
+  width:17px;height:17px;border-radius:50%;flex:none;
+  border:2.5px solid rgba(10,26,58,.25);border-top-color:var(--navy);
+  animation:spin .7s linear infinite;display:none;
+}
+.generate-btn.loading .spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-banner{
+  display:none;gap:11px;align-items:flex-start;
+  background:var(--err-bg);border:1px solid rgba(179,55,43,.3);border-left:4px solid var(--err);
+  color:#7C2419;border-radius:11px;padding:13px 15px;font-size:13.5px;line-height:1.75;
+}
+.error-banner.show{display:flex}
+.error-banner i{margin-top:4px;color:var(--err)}
+.warn-banner{
+  display:none;gap:10px;align-items:center;
+  background:#FFF8E8;border:1px solid rgba(201,162,74,.45);border-left:4px solid var(--gold);
+  color:#7A5E14;border-radius:11px;padding:11px 14px;font-size:13px;
+}
+.warn-banner.show{display:flex}
+
+/* ─── Output panel ────────────────────────────────────────────────────── */
+#outputPanel{display:none}
+#outputPanel.show{display:block;animation:rise .4s cubic-bezier(.2,.7,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.code-card{
+  position:relative;border-radius:12px;overflow:hidden;
+  background:linear-gradient(130deg,var(--navy) 0%,var(--navy-3) 120%);
+  color:#fff;padding:20px 22px;
+  border:1px solid rgba(201,162,74,.5);
+}
+.code-card::before{
+  content:"";position:absolute;inset:7px;border:1px dashed rgba(201,162,74,.45);border-radius:8px;pointer-events:none;
+}
+.code-card .cc-label{
+  font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-soft);
+  font-weight:700;display:flex;align-items:center;gap:8px;
+}
+.code-card .cc-label::after{content:"";height:1px;flex:1;background:rgba(201,162,74,.35)}
+.code-row{display:flex;align-items:center;gap:14px;margin-top:9px;flex-wrap:wrap}
+.code-value{
+  font-family:'Playfair Display',serif;font-weight:700;
+  font-size:clamp(26px,3.4vw,38px);letter-spacing:.08em;color:var(--gold);
+  line-height:1.1;word-break:break-all;
+}
+.copy-btn{
+  margin-left:auto;display:inline-flex;align-items:center;gap:7px;
+  border:1px solid rgba(201,162,74,.6);color:var(--gold-soft);
+  border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:.06em;
+  background:rgba(201,162,74,.1);transition:background .15s,color .15s;white-space:nowrap;
+}
+.copy-btn:hover{background:var(--gold);color:var(--navy)}
+.copy-btn.copied{background:var(--gold);color:var(--navy)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  background:#F6F8FC;border:1px solid var(--line);border-radius:999px;
+  padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--navy-2);
+}
+.chip i{color:var(--gold-deep);font-size:11px}
+.chip b{font-weight:800}
+.chip .ar-val{font-family:'Cairo',sans-serif}
+
+/* channel blocks */
+.channel-block{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.channel-head{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  border-bottom:1px solid var(--line);background:#FAFBFE;
+}
+.channel-head i{font-size:15px;width:22px;text-align:center}
+.channel-head .ch-name{font-size:13px;font-weight:700;letter-spacing:.04em}
+.channel-head .ch-sub{font-size:11px;color:var(--muted);font-family:'Cairo',sans-serif}
+.channel-head .ch-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ch-copy{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:700;color:var(--navy-2);
+  border:1px solid var(--line);border-radius:8px;padding:6px 11px;background:#fff;
+  transition:border-color .15s, background .15s;white-space:nowrap;
+}
+.ch-copy:hover{border-color:var(--gold);background:rgba(201,162,74,.08)}
+.ch-copy.copied{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.ch-wa{border-left:4px solid var(--wa)} .ch-wa .channel-head i{color:var(--wa)}
+.ch-fb{border-left:4px solid var(--fb)} .ch-fb .channel-head i{color:var(--fb)}
+.ch-pf{border-left:4px solid var(--pf)} .ch-pf .channel-head i{color:var(--pf)}
+
+.preview{
+  padding:16px 18px;font-size:14px;line-height:2;white-space:pre-wrap;word-break:break-word;
+}
+.preview.wa{
+  direction:rtl;text-align:right;font-family:'Cairo',sans-serif;
+  background:#F2FAF4;color:#123B24;font-size:14.5px;
+}
+.preview.fb{
+  direction:rtl;text-align:right;font-family:'Cairo',sans-serif;
+  background:#F5F9FF;color:#10233F;
+}
+.preview.pf{background:#F4FBF9;color:#0E2B25;direction:ltr;text-align:left;font-size:13.5px;line-height:1.85}
+.pf-title-box{
+  display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px dashed var(--line);
+  background:#F8FCFB;
+}
+.pf-title-box .pf-t{font-weight:800;font-size:14.5px;color:var(--navy)}
+.pf-count{
+  margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);
+  background:#EEF3F1;border-radius:999px;padding:3px 10px;white-space:nowrap;
+}
+.pf-count.danger{color:#fff;background:var(--err)}
+.pf-body-count{display:block;text-align:right;padding:8px 18px 10px;font-size:11px;color:var(--muted);border-top:1px dashed var(--line)}
+
+/* actions */
+.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px}
+.act-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border-radius:11px;padding:13.5px 12px;font-weight:700;font-size:13px;letter-spacing:.02em;
+  border:1.5px solid var(--line);background:#fff;color:var(--navy);
+  transition:transform .15s, box-shadow .15s, border-color .15s;
+}
+.act-btn i{font-size:15px}
+.act-btn:hover{transform:translateY(-1.5px);box-shadow:var(--shadow);border-color:var(--gold)}
+.act-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.act-btn.primary:hover{background:var(--navy-2)}
+.act-btn.gold{background:linear-gradient(120deg,var(--gold),var(--gold-deep));color:var(--navy);border-color:transparent}
+.act-btn:disabled{opacity:.55;cursor:wait;transform:none}
+.act-btn .mock-tag{
+  font-size:9px;font-weight:800;letter-spacing:.08em;background:rgba(10,26,58,.12);
+  border-radius:5px;padding:2px 5px;text-transform:uppercase;
+}
+.asset-strip{
+  display:none;gap:16px;align-items:center;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#FAFBFE;
+}
+.asset-strip.show{display:flex}
+.asset-strip img{
+  width:118px;height:148px;object-fit:cover;border-radius:9px;border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.asset-info{font-size:12.5px;color:var(--muted);line-height:1.8}
+.asset-info b{color:var(--navy)}
+
+/* ─── Offer image stage (rendered off-screen, captured by html2canvas) ─── */
+.offer-stage{position:fixed;left:-12000px;top:0;z-index:-1;pointer-events:none}
+.offer-card{
+  width:1080px;height:1350px;position:relative;overflow:hidden;
+  background:var(--navy);color:#fff;
+  font-family:'Inter',sans-serif;
+  display:flex;flex-direction:column;
+}
+.offer-hero{position:relative;height:715px;flex:none;overflow:hidden;background:var(--navy-2)}
+.offer-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.offer-hero .hero-fallback{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(700px 420px at 50% 30%, rgba(201,162,74,.28), transparent 65%),
+    linear-gradient(160deg,var(--navy-2),var(--navy));
+}
+.offer-hero .hero-fallback span{
+  font-family:'Playfair Display',serif;font-size:190px;color:rgba(201,162,74,.5);letter-spacing:.05em;
+}
+.offer-hero::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(10,26,58,.42) 0%,rgba(10,26,58,.06) 42%,rgba(10,26,58,.88) 100%);
+}
+.offer-hero .offer-logo{
+  position:absolute;top:52px;left:0;right:0;text-align:center;z-index:2;
+  font-family:'Playfair Display',serif;font-size:37px;font-weight:600;
+  letter-spacing:.22em;color:#fff;text-shadow:0 3px 22px rgba(0,0,0,.5);
+}
+.offer-hero .offer-logo .star{color:var(--gold)}
+.offer-content{flex:1;padding:46px 74px 0;display:flex;flex-direction:column;position:relative;z-index:2;margin-top:-58px}
+.offer-kicker{
+  align-self:center;font-size:20px;font-weight:700;letter-spacing:.46em;text-transform:uppercase;
+  color:var(--gold);text-indent:.46em;
+}
+.offer-title{
+  align-self:center;margin-top:14px;text-align:center;
+  font-family:'Playfair Display',serif;font-size:74px;font-weight:700;letter-spacing:.045em;
+  color:#fff;line-height:1.05;
+}
+.offer-compound{
+  align-self:center;margin-top:16px;text-align:center;
+  font-size:33px;font-weight:600;color:var(--gold-soft);letter-spacing:.03em;
+}
+.offer-specs{
+  display:flex;justify-content:center;gap:46px;margin-top:34px;flex-wrap:wrap;
+}
+.offer-spec{display:flex;flex-direction:column;align-items:center;gap:8px}
+.offer-spec .os-val{font-size:38px;font-weight:800;color:#fff;line-height:1}
+.offer-spec .os-lab{font-size:17px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.66);text-indent:.2em}
+.offer-price{
+  margin-top:auto;align-self:center;margin-bottom:8px;
+  font-family:'Playfair Display',serif;font-size:92px;font-weight:700;color:var(--gold);
+  letter-spacing:.015em;line-height:1;
+}
+.offer-footer{
+  flex:none;height:96px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 74px;border-top:1px solid rgba(201,162,74,.4);
+  background:rgba(255,255,255,.03);
+}
+.offer-footer .of-brand{
+  font-family:'Playfair Display',serif;font-size:26px;letter-spacing:.16em;color:#fff;
+}
+.offer-footer .of-brand .star{color:var(--gold);letter-spacing:0}
+.offer-footer .of-tag{font-size:18px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-soft);text-indent:.3em}
+
+/* ─── Toasts ──────────────────────────────────────────────────────────── */
+.toast-stack{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:min(420px,calc(100vw - 36px))}
+.toast{
+  display:flex;gap:11px;align-items:flex-start;
+  background:var(--navy);color:#fff;border-radius:12px;padding:13px 16px;
+  box-shadow:var(--shadow-lg);font-size:13.5px;line-height:1.65;
+  border-left:4px solid var(--gold);animation:toastIn .32s cubic-bezier(.2,.7,.3,1);
+}
+.toast i{margin-top:3px;font-size:14px;color:var(--gold)}
+.toast.ok{border-left-color:#2FBF71}.toast.ok i{color:#2FBF71}
+.toast.err{border-left-color:#FF7A6B}.toast.err i{color:#FF7A6B}
+.toast.hide{animation:toastOut .3s forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px) scale(.97)}}
+.toast .t-ar{font-family:'Cairo',sans-serif}
+
+/* footer */
+.page-foot{
+  text-align:center;padding:26px 16px 34px;color:var(--muted);font-size:12px;letter-spacing:.06em;
+}
+.page-foot b{color:var(--navy)}
+@media (max-width:640px){
+  .panel-body{padding:18px 16px 22px}
+  .panel-head{padding:15px 16px}
+  .preview{padding:13px 14px}
+  .code-row .copy-btn{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-name"><span class="star">✦</span>&nbsp;SIERRA&nbsp;ESTATES&nbsp;<span class="star">✦</span></div>
+    <div class="brand-sub">Listing Studio · Code &amp; Content Generator</div>
+  </div>
+  <div class="topbar-right">
+    <span class="pill"><i class="fa-solid fa-shield-halved"></i>&nbsp; Staff Only</span>
+    <span class="pill solid">Internal Admin</span>
+  </div>
+</header>
+
+<main class="studio">
+
+  <!-- ═══════════════════ INPUT PANEL (left) ═══════════════════ -->
+  <section class="panel" id="inputPanel" aria-label="Property intake">
+    <div class="panel-head">
+      <span class="step-no">1</span>
+      <div class="panel-title">Property Intake
+        <small>الإدخال — الصق وصف الوحدة</small>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="field">
+        <label for="description">
+          <i class="fa-solid fa-align-right"></i> Property Description
+          <span class="req">*</span>
+          <span class="la">وصف الوحدة (عربي / English)</span>
+        </label>
+        <textarea id="description" dir="auto" spellcheck="false"
+placeholder="مثال: ميفيدا — شقة 3 غرف نوم مفروشة بالكامل، 3 حمامات، مساحة 180 متر، السعر 10 مليون جنيه، جاهزة للسكن…
+
+Example: Furnished 3 bedrooms apartment in Mivida, 3 bathrooms, 185 sqm, 10.5M EGP"></textarea>
+        <div class="char-note">
+          <span>Compound · bedrooms · price · furnishing are required</span>
+          <span id="descCount">0 chars</span>
+        </div>
+        <div class="sample-row" style="margin-top:8px">
+          <button type="button" class="sample-btn" id="sampleAr"><i class="fa-solid fa-pen"></i> تجربة نموذج عربي</button>
+          <button type="button" class="sample-btn" id="sampleEn"><i class="fa-solid fa-pen"></i> English sample</button>
+          <button type="button" class="sample-btn" id="clearAll"><i class="fa-solid fa-eraser"></i> Clear</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="phone">
+          <i class="fa-solid fa-phone"></i> Employee Phone
+          <span class="la">رقم هاتف الموظف</span>
+        </label>
+        <input id="phone" type="tel" inputmode="tel" dir="ltr" placeholder="01xxxxxxxxx" value="">
+      </div>
+
+      <div class="field">
+        <label for="photos">
+          <i class="fa-solid fa-images"></i> Property Photos
+          <span class="la">صور الوحدة (اختياري)</span>
+        </label>
+        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload photos">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <div class="dz-main">Click or drag photos here</div>
+          <div class="dz-sub">JPG / PNG / WebP — the first photo becomes the offer hero &amp; brochure cover</div>
+        </div>
+        <input type="file" id="photos" accept="image/*" multiple hidden>
+        <div class="previews" id="previews"></div>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" type="button">
+        <span class="spinner"></span>
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span id="generateLabel">Generate Code &amp; Content</span>
+      </button>
+
+      <div class="error-banner" id="errorBanner" role="alert" dir="rtl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div id="errorText"></div>
+      </div>
+      <div class="warn-banner" id="warnBanner" role="status">
+        <i class="fa-solid fa-circle-info"></i>
+        <div id="warnText"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ OUTPUT PANEL (right) ═══════════════════ -->
+  <section class="panel" id="outputPanel" aria-label="Generated listing package">
+    <div class="panel-head">
+      <span class="step-no">2</span>
+      <div class="panel-title">Generated Listing Package
+        <small>الكود والمحتوى الجاهز للنشر</small>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div class="code-card">
+        <div class="cc-label">Property Code · كود الوحدة</div>
+        <div class="code-row">
+          <div class="code-value" id="codeValue">—</div>
+          <button class="copy-btn" id="copyCode" type="button"><i class="fa-regular fa-copy"></i> Copy</button>
+        </div>
+      </div>
+
+      <div class="chips" id="extractedChips"></div>
+
+      <div class="channel-block ch-wa">
+        <div class="channel-head">
+          <i class="fa-brands fa-whatsapp"></i>
+          <div>
+            <div class="ch-name">WhatsApp Broadcast</div>
+            <div class="ch-sub">رسالة واتساب جاهزة</div>
+          </div>
+          <div class="ch-actions">
+            <button class="ch-copy" data-copy="whatsapp" type="button"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+        </div>
+        <div class="preview wa" id="waPreview"></div>
+      </div>
+
+      <div class="channel-block ch-fb">
+        <div class="channel-head">
+          <i class="fa-brands fa-facebook"></i>
+          <div>
+            <div class="ch-name">Facebook Post</div>
+            <div class="ch-sub">بوست عربي + هاشتاجات</div>
+          </div>
+          <div class="ch-actions">
+            <button class="ch-copy" data-copy="facebook" type="button"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+        </div>
+        <div class="preview fb" id="fbPreview"></div>
+      </div>
+
+      <div class="channel-block ch-pf">
+        <div class="channel-head">
+          <i class="fa-solid fa-building-columns"></i>
+          <div>
+            <div class="ch-name">Property Finder Listing</div>
+            <div class="ch-sub">Title ≤ 50 chars · Body ≤ 2,000 chars</div>
+          </div>
+          <div class="ch-actions">
+            <button class="ch-copy" data-copy="pf" type="button"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+        </div>
+        <div class="pf-title-box">
+          <div class="pf-t" id="pfTitle"></div>
+          <span class="pf-count" id="pfTitleCount">0 / 50</span>
+        </div>
+        <div class="preview pf" id="pfBody"></div>
+        <span class="pf-body-count" id="pfBodyCount">0 / 2,000 characters</span>
+      </div>
+
+      <div class="actions">
+        <button class="act-btn gold" id="offerBtn" type="button">
+          <i class="fa-solid fa-image"></i> Generate Offer Image <small style="font-weight:600;opacity:.75">(PNG)</small>
+        </button>
+        <button class="act-btn primary" id="pdfBtn" type="button">
+          <i class="fa-solid fa-file-pdf"></i> Generate PDF Brochure
+        </button>
+        <button class="act-btn" id="saveBtn" type="button">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Save to Firebase <span class="mock-tag">mock</span>
+        </button>
+      </div>
+
+      <div class="asset-strip" id="assetStrip">
+        <img id="assetThumb" alt="Generated offer image thumbnail">
+        <div class="asset-info" id="assetInfo"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="page-foot">
+  <b>Sierra Estates</b> · Beyond Brokerage — Listing Studio for internal staff use. Generated content is a draft; review before publishing.
+</footer>
+
+<!-- ═════════════════ OFFER IMAGE STAGE (off-screen render target) ═════════════════ -->
+<div class="offer-stage" id="offerStage" aria-hidden="true">
+  <div class="offer-card" id="offerCard">
+    <div class="offer-hero" id="offerHero">
+      <div class="hero-fallback"><span>SE</span></div>
+      <div class="offer-logo"><span class="star">✦</span>&nbsp;SIERRA ESTATES&nbsp;<span class="star">✦</span></div>
+    </div>
+    <div class="offer-content">
+      <div class="offer-kicker">Exclusive Listing</div>
+      <div class="offer-title">READY TO MOVE IN!</div>
+      <div class="offer-compound" id="offerCompound"></div>
+      <div class="offer-specs" id="offerSpecs"></div>
+      <div class="offer-price" id="offerPrice"></div>
+    </div>
+    <div class="offer-footer">
+      <div class="of-brand"><span class="star">✦</span>&nbsp;SIERRA ESTATES&nbsp;<span class="star">✦</span></div>
+      <div class="of-tag">Beyond Brokerage</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIERRA ESTATES · LISTING STUDIO — application logic
+   1) Extraction (Arabic/English) → 2) Code generation → 3) Validation
+   4) Channel content templates → 5) Offer image (html2canvas)
+   6) PDF brochure (jsPDF) → 7) Firebase save (mock)
+   ═══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+/* ─── Brand constants ────────────────────────────────────────────────── */
+const BRAND = { name: 'Sierra Estates', tagline: 'Beyond Brokerage' };
+
+/* ─── Compound dictionary (extend freely — longest keys are matched first)
+        Arabic key → {code, en} ; English keys are matched case-insensitively */
+const COMPOUND_DICT = [
+  { keys: ['ماونتن فيو', 'ماونتن ڤيو', 'mountain view', 'mountainview'],      code: 'MV', en: 'Mountain View' },
+  { keys: ['ميفيدا', 'ميفيدى', 'mivida'],                                      code: 'MI', en: 'Mivida' },
+  { keys: ['فيليت', 'فيليتى', 'لا فيليت', 'villette'],                         code: 'VS', en: 'Villette' },
+];
+
+/* Arabic → Latin letter map for the compound-code fallback rule
+   ("first two letters of the first word", transliterated to Latin). */
+const AR2LAT = {
+  'ا':'A','أ':'A','إ':'I','آ':'A','ب':'B','ت':'T','ث':'TH','ج':'G','ح':'H','خ':'KH',
+  'د':'D','ذ':'TH','ر':'R','ز':'Z','س':'S','ش':'SH','ص':'S','ض':'D','ط':'T','ظ':'TH',
+  'ع':'A','غ':'GH','ف':'F','ق':'Q','ك':'K','ل':'L','م':'M','ن':'N','ه':'H','و':'W',
+  'ي':'Y','ى':'A','ة':'H','ء':'A','ئ':'Y','ؤ':'W'
+};
+
+/* Property type vocabulary */
+const TYPE_DICT = [
+  { re: /تاون\s?هاوس|تاونهاوس|town\s?house/i,                ar: 'تاون هاوس',  en: 'Townhouse' },
+  { re: /توين\s?هاوس|twin\s?house/i,                          ar: 'توين هاوس',  en: 'Twin House' },
+  { re: /بنت\s?هاوس|بنتهاوس|penthouse/i,                      ar: 'بنتهاوس',    en: 'Penthouse' },
+  { re: /شاليه|شاليهات|chalet/i,                               ar: 'شاليه',      en: 'Chalet' },
+  { re: /دوبلكس|duplex/i,                                      ar: 'دوبلكس',     en: 'Duplex' },
+  { re: /استوديو|ستوديو|studio/i,                              ar: 'استوديو',    en: 'Studio' },
+  { re: /فيل[لا]|فيلا|villas?/i,                               ar: 'فيلا',       en: 'Villa' },
+  { re: /شقق|شقة|apartments?|flats?/i,                         ar: 'شقة',        en: 'Apartment' },
+  { re: /روف|رووف|roof/i,                                      ar: 'روف',        en: 'Roof' },
+  { re: /(?<![\u0600-\u06FF\w])مكتب(?![\u0600-\u06FF\w])|offices?/i,          ar: 'مكتب',  en: 'Office' },
+  { re: /(?<![\u0600-\u06FF\w])محلات?(?![\u0600-\u06FF\w])|shops?|retail/i,     ar: 'محل',   en: 'Retail' },
+  { re: /(?<![\u0600-\u06FF\w])[أا]رض(?![\u0600-\u06FF\w])|lands?/i,            ar: 'أرض',   en: 'Land' },
+];
+
+/* Arabic number words (1–10) for bedrooms / bathrooms */
+const AR_NUM_WORDS = {
+  'واحد':1,'واحدة':1,'احد':1,'واحده':1,
+  'اثنين':2,'اتنين':2,'اثنان':2,
+  'ثلاث':3,'تلات':3,'ثلاثة':3,'ثلاثه':3,
+  'اربع':4,'اربعة':4,'اربعه':4,'أربع':4,
+  'خمس':5,'خمسة':5,'خمسه':5,
+  'ست':6,'ستة':6,'سته':6,
+  'سبع':7,'سبعة':7,'سبعه':7,
+  'ثمان':8,'تمن':8,'ثمانية':8,'ثمانيه':8,
+  'تسع':9,'تسعة':9,'تسعه':9,
+  'عشر':10,'عشرة':10,'عشره':10,
+};
+const EN_NUM_WORDS = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10 };
+
+/* Furnished status — check order matters (most specific first) */
+const FURNISHED_LABELS = {
+  F: { ar: 'مفروش بالكامل',   en: 'Fully Furnished'  },
+  S: { ar: 'نصف مفروش',       en: 'Semi-Furnished'   },
+  K: { ar: 'مطبخ مجهز',       en: 'Kitchen Equipped' },
+  U: { ar: 'غير مفروش',       en: 'Unfurnished'      },
+};
+
+/* ═══════════════ 1 · NORMALIZATION & DIGIT HELPERS ═══════════════ */
+
+/** Convert Arabic-Indic (٠-٩) and Eastern (۰-۹) digits + decimal separators to English. */
+function toEnglishDigits(s) {
+  return s
+    .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0))
+    .replace(/\u066B/g, '.').replace(/\u066C/g, ',');
+}
+
+/** Normalize Arabic text for dictionary matching (tashkeel, tatweel, alef forms). */
+function normAr(s) {
+  return toEnglishDigits(s)
+    .replace(/[\u064B-\u0652\u0670\u0640]/g, '')   // tashkeel + tatweel
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ')
+    .trim().toLowerCase();
+}
+
+function parseNum(s) {
+  const n = parseFloat(String(s).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+/* ═══════════════ 2 · EXTRACTION ═══════════════ */
+
+function extractCompound(raw) {
+  const text = normAr(raw);
+  // dictionary match — longest keys first
+  const dict = [...COMPOUND_DICT].sort((a, b) =>
+    Math.max(...b.keys.map(normAr).map(k => k.length)) - Math.max(...a.keys.map(normAr).map(k => k.length)));
+  for (const entry of dict) {
+    for (const key of entry.keys) {
+      if (text.includes(normAr(key))) {
+        const arabicKey = /[\u0600-\u06FF]/.test(key) ? key : null;
+        return { name: arabicKey || entry.en, code: entry.code, en: entry.en };
+      }
+    }
+  }
+  // fallback: first two letters of the first word (transliterated if Arabic)
+  const firstWord = (raw.trim().replace(/^[^\p{L}\p{N}]+/u, '').split(/\s+/)[0]) || '';
+  if (!firstWord) return null;
+  let latin = '';
+  for (const ch of firstWord) {
+    if (/[a-zA-Z]/.test(ch)) latin += ch.toUpperCase();
+    else if (AR2LAT[ch]) latin += AR2LAT[ch];
+    if (latin.length >= 2) break;
+  }
+  return { name: firstWord, code: (latin || 'XX').slice(0, 2).toUpperCase(), en: null };
+}
+
+function extractType(raw) {
+  for (const t of TYPE_DICT) if (t.re.test(raw)) return { ar: t.ar, en: t.en };
+  return null;
+}
+
+function extractCount(raw, kind) {
+  const text = toEnglishDigits(raw);
+  /* NB: JS \b is ASCII-only — it never matches next to Arabic letters.
+     Use an explicit "not followed by an Arabic/Latin word char" lookahead. */
+  const EDGE = '(?![\u0600-\u06FF\\w])';
+  const unit = kind === 'bed'
+    ? 'غرف(?:\\s*نوم)?|غرفه|غرفة|بر' + EDGE + '|br\\b|bd\\b|beds?\\b|bedrooms?\\b'
+    : 'حمامات|حمام|با' + EDGE + '|ba\\b|baths?\\b|bathrooms?\\b';
+  const dual = kind === 'bed' ? 'غرفتين|غرفتان' : 'حمامين|حمامتان';
+
+  // 1) number before the unit: "3 غرف" / "3 bedrooms" / "3BR"
+  let m = text.match(new RegExp('(\\d{1,2})\\s*(?:' + unit + ')', 'i'));
+  if (m) return parseInt(m[1], 10);
+  // 2) unit before the number: "غرف: 3" / "غرف 3"
+  m = text.match(new RegExp('(?:' + unit + ')\\s*[:،,-]?\\s*(\\d{1,2})\\b', 'i'));
+  if (m) return parseInt(m[1], 10);
+  // 3) Arabic dual form: "غرفتين" / "حمامين"
+  if (new RegExp(dual).test(text)) return 2;
+  // 4) number words: "ثلاث غرف" / "three bedrooms"
+  const words = Object.keys(AR_NUM_WORDS).join('|');
+  m = text.match(new RegExp('(' + words + ')\\s*(?:' + unit + ')', 'i'));
+  if (m) return AR_NUM_WORDS[m[1]];
+  m = text.match(new RegExp('(' + Object.keys(EN_NUM_WORDS).join('|') + ')\\s*(?:' + unit + ')', 'i'));
+  if (m) return EN_NUM_WORDS[m[1].toLowerCase()];
+  return null;
+}
+
+function extractArea(raw) {
+  const text = toEnglishDigits(raw);
+  const m = text.match(
+    /(\d{2,5}(?:[.,]\d+)?)\s*(?:متر(?:\s*مربع)?|م²|م٢|m2|m²|sqm|sq\.?\s*m(?:eters?)?)(?![\u0600-\u06FF\w])/i
+  ) || text.match(/(?:مساحة|area|buil[dt][ -]?up)\s*[:،,-]?\s*(\d{2,5}(?:[.,]\d+)?)/i);
+  return m ? parseNum(m[1]) : null;
+}
+
+function extractPrice(raw) {
+  const text = toEnglishDigits(raw);
+  // currency detection (first match near the price; USD/AED are explicit, else EGP)
+  const currency = /درهم|aed/i.test(text) ? 'AED' : (/دولار|usd|\$/i.test(text) ? 'USD' : 'EGP');
+
+  // 1) millions: "10 مليون" / "4.5 مليون جنيه" / "3.5m" / "3.5 million"
+  let m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:مليون|مليونه|million)/i)
+        || text.match(/(\d+(?:[.,]\d+)?)\s*m(?![²2a-z])/i);
+  if (m) return { value: parseNum(m[1]) * 1e6, currency };
+  // 2) thousands: "35 ألف" / "35k" / "35 thousand"
+  m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:ألف|الف|thousand|k)(?![\u0600-\u06FF\w])/i);
+  if (m) return { value: parseNum(m[1]) * 1e3, currency };
+  // 3) full number with a currency/unit nearby: "10,000,000 جنيه" / "350000 EGP" / "3,000 USD"
+  m = text.match(/(\d{1,3}(?:[,\s]\d{3})+|\d{4,})(?:[.,]\d+)?\s*(?:جنيه|egp|ج\.?م|دولار|usd|درهم|aed|مليون|ألف)/i)
+    || text.match(/(?:جنيه|egp|usd|دولار|درهم|aed)\s*[:،]?\s*(\d{1,3}(?:[,\s]\d{3})+|\d{4,})/i);
+  if (m) return { value: parseNum(m[1]), currency };
+  // 4) bare large number (≥ 100,000 is safely a price, never an area/room count)
+  m = text.match(/\b(\d{6,})\b/);
+  if (m) return { value: parseNum(m[1]), currency };
+  return null;
+}
+
+function extractFurnished(raw) {
+  const text = normAr(raw);
+  if (/غير\s*مفروش|unfurnished/i.test(text))        return { code: 'U' };
+  if (/نصف\s*مفروش|نص\s*مفروش|semi[\s-]*furnished/i.test(text)) return { code: 'S' };
+  if (/مفروش|فرنش|furnished/i.test(text))           return { code: 'F' };
+  if (/مطبخ|kitchen/i.test(text))                    return { code: 'K' };
+  return null;
+}
+
+function extractAll(raw) {
+  return {
+    compound: extractCompound(raw),
+    type: extractType(raw),
+    bedrooms: extractCount(raw, 'bed'),
+    bathrooms: extractCount(raw, 'bath'),
+    area: extractArea(raw),
+    price: extractPrice(raw),
+    furnished: extractFurnished(raw),
+    isRent: /ايجار|إيجار|للايجار|rent/i.test(raw),
+    isNewCairo: /new\s*cairo|القاهرة\s*الجديدة/i.test(raw),
+  };
+}
+
+/* ═══════════════ 3 · CODE GENERATION ═══════════════ */
+
+function trimNum(n) {
+  const r = Math.round(n * 10) / 10;
+  return String(r);
+}
+
+/** Short money form: 35,000 → "35K" · 10,000,000 → "10M" · 4.5M → "4.5M" */
+function shortMoney(v) {
+  if (v >= 1e6) return trimNum(v / 1e6) + 'M';
+  if (v >= 1e3) return Math.round(v / 1e3) + 'K';
+  return trimNum(v);
+}
+
+/** Price code per currency: EGP → "35K"/"10M" · USD → "$3K" · AED → "45K AED" */
+function priceCode(p) {
+  if (!p) return '';
+  const s = shortMoney(p.value);
+  if (p.currency === 'USD') return '$' + s;
+  if (p.currency === 'AED') return s + ' AED';
+  return s;
+}
+
+function buildCode(d) {
+  return `${d.compound.code}-${d.bedrooms}${d.furnished.code}-${priceCode(d.price)}`;
+}
+
+/* ═══════════════ 4 · VALIDATION ═══════════════ */
+
+function validate(d) {
+  const missing = [];
+  if (!d.compound)        missing.push('المجمع السكني (Compound)');
+  if (!d.bedrooms)        missing.push('عدد غرف النوم (Bedrooms)');
+  if (!d.price)           missing.push('السعر (Price)');
+  if (!d.furnished)       missing.push('حالة التجهيز (Furnished)');
+  return missing;
+}
+
+/* ═══════════════ 5 · CONTENT TEMPLATES ═══════════════ */
+
+const CUR_AR  = { EGP: 'جنيه', USD: 'دولار', AED: 'درهم' };
+const CUR_EN  = { EGP: 'EGP', USD: 'USD', AED: 'AED' };
+
+function priceAr(p) {
+  if (!p) return '';
+  if (p.value >= 1e6) return `${trimNum(p.value / 1e6)} مليون ${CUR_AR[p.currency]}`;
+  return `${Math.round(p.value).toLocaleString('en-US')} ${CUR_AR[p.currency]}`;
+}
+function priceEn(p) {
+  return p ? `${CUR_EN[p.currency]} ${Math.round(p.value).toLocaleString('en-US')}` : '';
+}
+
+function dealAr(d)  { return d.isRent ? 'للإيجار' : 'للبيع'; }
+function dealEn(d)  { return d.isRent ? 'For Rent' : 'For Sale'; }
+function typeAr(d)  { return (d.type && d.type.ar) || 'وحدة'; }
+function typeEn(d)  { return (d.type && d.type.en) || 'Unit'; }
+function cmpName(d) { return d.compound.name; }
+function cmpEn(d)   { return (d.compound && d.compound.en) || d.compound.name; }
+function furAr(d)   { return FURNISHED_LABELS[d.furnished.code].ar; }
+function furEn(d)   { return FURNISHED_LABELS[d.furnished.code].en; }
+
+function buildWhatsApp(d, code, phone) {
+  const baths = d.bathrooms ? `\n🛁 الحمامات: ${d.bathrooms}` : '';
+  const area  = d.area ? `\n📐 المساحة: ${trimNum(d.area)} م²` : '';
+  return [
+    `🏡 ${typeAr(d)} ${dealAr(d)} في ${cmpName(d)} — ${furAr(d)}`,
+    ``,
+    `🔖 الكود: ${code}`,
+    `🛏 غرف النوم: ${d.bedrooms}${baths}${area}`,
+    `🛋 التجهيز: ${furAr(d)}`,
+    `💰 السعر: ${priceAr(d.price)}`,
+    phone ? `📞 للتواصل: ${phone}` : `📞 للتواصل: — أضف رقم الهاتف —`,
+    ``,
+    `✦ ${BRAND.name} ✦ — ${BRAND.tagline}`,
+  ].join('\n');
+}
+
+function buildFacebook(d, code, phone) {
+  const cmpTag = d.compound.en ? d.compound.en.replace(/\s+/g, '_') : d.compound.name.replace(/\s+/g, '_');
+  const tags = ['#Sierra_Estates', `#${cmpTag}`, `#${typeEn(d).replace(/\s+/g, '_')}`,
+                d.isRent ? '#للإيجار' : '#للبيع', '#عقارات_مصر', '#فرص_عقارية'];
+  if (d.isNewCairo) tags.push('#New_Cairo');
+  const specs = [
+    `🛏 ${d.bedrooms} غرف نوم`,
+    d.bathrooms ? `🛁 ${d.bathrooms} حمام` : null,
+    d.area ? `📐 ${trimNum(d.area)} م²` : null,
+  ].filter(Boolean).join(' | ');
+  return [
+    `🚨 فرصة مميزة في ${cmpName(d)} 🚨`,
+    ``,
+    `${typeAr(d)} ${dealAr(d)} — ${furAr(d)}`,
+    specs,
+    `💰 السعر: ${priceAr(d.price)}`,
+    `🔖 كود الوحدة: ${code}`,
+    phone ? `📞 للتواصل: ${phone}` : `📞 للتواصل: — أضف رقم الهاتف —`,
+    ``,
+    `${BRAND.name} — ${BRAND.tagline}`,
+    ``,
+    tags.join(' '),
+  ].join('\n');
+}
+
+/** Property Finder title — hard cap 50 chars. */
+function buildPfTitle(d) {
+  let t = `${d.bedrooms} BR ${typeEn(d)} in ${cmpEn(d)} — ${furEn(d)}`;
+  if (t.length > 50) t = `${d.bedrooms} BR ${typeEn(d)} in ${cmpEn(d)}`;
+  if (t.length > 50) t = `${d.bedrooms} BR ${typeEn(d)} — ${buildCode(d)}`;
+  if (t.length > 50) t = t.slice(0, 50).trimEnd();
+  return t;
+}
+
+/** Property Finder body — hard cap 2,000 chars. */
+function buildPfBody(d, code, phone) {
+  const lines = [
+    `${buildPfTitle(d)}`,
+    ``,
+    `Property Code: ${code}`,
+    `Compound: ${cmpEn(d)}`,
+    `Type: ${typeEn(d)} (${dealEn(d)})`,
+    `Bedrooms: ${d.bedrooms}`,
+    d.bathrooms ? `Bathrooms: ${d.bathrooms}` : null,
+    d.area ? `Built-up Area: ${trimNum(d.area)} sqm` : null,
+    `Furnishing: ${furEn(d)}`,
+    `Price: ${priceEn(d.price)}`,
+    ``,
+    `Ready to move in. ${furEn(d)} unit in ${cmpEn(d)}${d.isNewCairo ? ', New Cairo' : ''} — ${dealEn(d)} by ${BRAND.name}.`,
+    ``,
+    `For viewing and more details, contact ${phone || '— add phone —'}.`,
+    ``,
+    `${BRAND.name} — ${BRAND.tagline}`,
+  ].filter(l => l !== null);
+  let body = lines.join('\n');
+  if (body.length > 2000) body = body.slice(0, 1997).trimEnd() + '...';
+  return body;
+}
+
+/* ═══════════════ 6 · STATE & DOM ═══════════════ */
+
+const $ = id => document.getElementById(id);
+const state = { photos: [], record: null };
+
+/* ─── Toasts ─── */
+function toast(msg, kind = 'info', ms = 4200) {
+  const el = document.createElement('div');
+  el.className = `toast ${kind === 'ok' ? 'ok' : kind === 'err' ? 'err' : ''}`;
+  const icon = kind === 'ok' ? 'fa-circle-check' : kind === 'err' ? 'fa-circle-exclamation' : 'fa-circle-info';
+  el.innerHTML = `<i class="fa-solid ${icon}"></i><div class="t-ar">${msg}</div>`;
+  $('toastStack').appendChild(el);
+  setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 320); }, ms);
+}
+
+/* ─── Clipboard ─── */
+async function copyText(text, btn, label) {
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  } catch (e) {
+    // file:// / older browsers fallback
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch (e2) { ok = false; }
+  }
+  if (ok) {
+    toast(`تم نسخ ${label} ✓`, 'ok', 2600);
+    if (btn) {
+      const prev = btn.innerHTML;
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+      setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = prev; }, 1800);
+    }
+  } else {
+    toast('تعذّر النسخ — انسخ يدويًا من المعاينة', 'err');
+  }
+}
+
+/* ─── Photos: upload / previews ─── */
+function renderPreviews() {
+  const wrap = $('previews');
+  wrap.innerHTML = '';
+  state.photos.forEach((p, i) => {
+    const t = document.createElement('div');
+    t.className = 'thumb';
+    t.innerHTML = `<img src="${p.url}" alt="photo ${i + 1}">` +
+      (i === 0 ? '<span class="lead-tag">HERO</span>' : '') +
+      `<button class="rm" title="Remove" type="button"><i class="fa-solid fa-xmark"></i></button>`;
+    t.querySelector('.rm').addEventListener('click', () => {
+      URL.revokeObjectURL(p.url);
+      state.photos.splice(i, 1);
+      renderPreviews();
+    });
+    wrap.appendChild(t);
+  });
+}
+
+function addPhotos(files) {
+  const imgs = [...files].filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) { toast('الملفات المختارة ليست صورًا', 'err'); return; }
+  imgs.forEach(f => state.photos.push({ file: f, url: URL.createObjectURL(f) }));
+  renderPreviews();
+  toast(`تمت إضافة ${imgs.length} صورة ✓`, 'ok', 2200);
+}
+
+$('dropzone').addEventListener('click', () => $('photos').click());
+$('dropzone').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') $('photos').click(); });
+$('photos').addEventListener('change', e => addPhotos(e.target.files));
+['dragenter', 'dragover'].forEach(ev => $('dropzone').addEventListener(ev, e => {
+  e.preventDefault(); $('dropzone').classList.add('dragover');
+}));
+['dragleave', 'drop'].forEach(ev => $('dropzone').addEventListener(ev, e => {
+  e.preventDefault(); $('dropzone').classList.remove('dragover');
+}));
+$('dropzone').addEventListener('drop', e => addPhotos(e.dataTransfer.files));
+
+/* ─── Samples / clear ─── */
+const SAMPLE_AR = 'ميفيدا — شقة 3 غرف نوم مفروشة بالكامل، 3 حمامات، مساحة 180 متر مربع، السعر 10 مليون جنيه، جاهزة للسكن فورًا، مطلة على الحديقة.';
+const SAMPLE_EN = 'Furnished 3 bedrooms apartment in Mivida, New Cairo. 3 bathrooms, 185 sqm, asking 10.5M EGP. Ready to move in.';
+$('sampleAr').addEventListener('click', () => { $('description').value = SAMPLE_AR; updateCount(); });
+$('sampleEn').addEventListener('click', () => { $('description').value = SAMPLE_EN; updateCount(); });
+$('clearAll').addEventListener('click', () => {
+  $('description').value = ''; $('phone').value = '';
+  state.photos.forEach(p => URL.revokeObjectURL(p.url));
+  state.photos = []; renderPreviews(); updateCount();
+  $('outputPanel').classList.remove('show');
+  $('errorBanner').classList.remove('show'); $('warnBanner').classList.remove('show');
+});
+
+function updateCount() {
+  $('descCount').textContent = `${$('description').value.length} chars`;
+}
+$('description').addEventListener('input', updateCount);
+
+/* ═══════════════ 7 · GENERATE FLOW ═══════════════ */
+
+$('generateBtn').addEventListener('click', async () => {
+  const btn = $('generateBtn');
+  const raw = $('description').value.trim();
+  $('errorBanner').classList.remove('show');
+  $('warnBanner').classList.remove('show');
+
+  if (!raw) {
+    showError('⚠️ البيانات الناقصة: وصف الوحدة (Description). الرجاء إكمالها.');
+    return;
+  }
+
+  btn.disabled = true; btn.classList.add('loading');
+  $('generateLabel').textContent = 'Extracting & Generating…';
+  await new Promise(r => setTimeout(r, 650));   // deliberate beat for the spinner (perceptible feedback)
+
+  let d;
+  try {
+    d = extractAll(raw);
+  } catch (err) {
+    showError('حدث خطأ أثناء تحليل الوصف — أعد المحاولة.');
+    console.error(err);
+    return;
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading');
+    $('generateLabel').textContent = 'Generate Code & Content';
+  }
+
+  const missing = validate(d);
+  if (missing.length) {
+    // Validation failed → show the Arabic error and generate NOTHING.
+    $('outputPanel').classList.remove('show');
+    showError(`⚠️ البيانات الناقصة: ${missing.join('، ')}. الرجاء إكمالها.`);
+    toast('البيانات غير مكتملة — أكمل الوصف ثم أعد المحاولة', 'err');
+    return;
+  }
+
+  const phone = $('phone').value.trim();
+  if (!phone) {
+    $('warnText').textContent = 'لم يتم إدخال رقم الهاتف — سيظهر مكان الرقم "أضف رقم الهاتف" حتى تتم إضافته.';
+    $('warnBanner').classList.add('show');
+  }
+
+  const code = buildCode(d);
+  const wa = buildWhatsApp(d, code, phone);
+  const fb = buildFacebook(d, code, phone);
+  const pfTitle = buildPfTitle(d);
+  const pfBody = buildPfBody(d, code, phone);
+
+  state.record = {
+    code, description: raw, phone,
+    compound: { name: d.compound.name, code: d.compound.code, en: d.compound.en || null },
+    type: d.type ? { ar: d.type.ar, en: d.type.en } : null,
+    bedrooms: d.bedrooms, bathrooms: d.bathrooms, area: d.area,
+    price: { value: d.price.value, currency: d.price.currency },
+    furnished: d.furnished.code,
+    dealType: d.isRent ? 'rent' : 'sale',
+    photoCount: state.photos.length,
+    contents: { whatsapp: wa, facebook: fb, propertyFinder: { title: pfTitle, body: pfBody } },
+    createdAt: new Date().toISOString(),
+  };
+
+  // ── render output ──
+  $('codeValue').textContent = code;
+  $('waPreview').textContent = wa;
+  $('fbPreview').textContent = fb;
+  $('pfTitle').textContent = pfTitle;
+  $('pfBody').textContent = pfBody;
+  $('pfTitleCount').textContent = `${pfTitle.length} / 50`;
+  $('pfTitleCount').classList.toggle('danger', pfTitle.length > 50);
+  $('pfBodyCount').textContent = `${pfBody.length.toLocaleString('en-US')} / 2,000 characters`;
+
+  const chips = [
+    ['fa-city',        'Compound',  `<span class="ar-val">${escapeHtml(cmpName(d))}</span> · ${d.compound.code}`],
+    ['fa-door-open',   'Type',      `${typeEn(d)} · <span class="ar-val">${typeAr(d)}</span>`],
+    ['fa-bed',         'Bedrooms',  `<b>${d.bedrooms}</b>`],
+    d.bathrooms ? ['fa-bath', 'Bathrooms', `<b>${d.bathrooms}</b>`] : null,
+    d.area ? ['fa-ruler-combined', 'Area', `<b>${trimNum(d.area)}</b> m²`] : null,
+    ['fa-tags',        'Furnished', `${d.furnished.code} · <span class="ar-val">${furAr(d)}</span>`],
+    ['fa-money-bill-wave', 'Price', `<b>${escapeHtml(priceAr(d.price))}</b>`],
+    ['fa-right-left',  'Deal',     d.isRent ? 'Rent · إيجار' : 'Sale · بيع'],
+  ].filter(Boolean);
+  $('extractedChips').innerHTML = chips.map(([ic, lab, val]) =>
+    `<span class="chip"><i class="fa-solid ${ic}"></i>${lab}: ${val}</span>`).join('');
+
+  $('assetStrip').classList.remove('show');
+  $('outputPanel').classList.add('show');
+  $('outputPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast('تم توليد الكود والمحتوى ✓', 'ok', 2800);
+});
+
+function showError(msgAr) {
+  $('errorText').textContent = msgAr;
+  $('errorBanner').classList.add('show');
+  $('errorBanner').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ─── Copy bindings ─── */
+$('copyCode').addEventListener('click', () => {
+  if (state.record) copyText(state.record.code, $('copyCode'), 'الكود');
+});
+document.querySelectorAll('.ch-copy[data-copy]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!state.record) return;
+    const which = btn.dataset.copy;
+    const map = {
+      whatsapp: ['محتوى الواتساب', state.record.contents.whatsapp],
+      facebook: ['بوست الفيسبوك', state.record.contents.facebook],
+      pf: ['إعلان Property Finder',
+           `${state.record.contents.propertyFinder.title}\n\n${state.record.contents.propertyFinder.body}`],
+    };
+    copyText(map[which][1], btn, map[which][0]);
+  });
+});
+
+/* ═══════════════ 8 · OFFER IMAGE (html2canvas → PNG) ═══════════════ */
+
+$('offerBtn').addEventListener('click', async () => {
+  if (!state.record) return;
+  const btn = $('offerBtn');
+  btn.disabled = true;
+  try {
+    const r = state.record;
+    const d = extractAll(r.description);
+
+    // hero photo (first upload) if present
+    const hero = $('offerHero');
+    let heroImg = hero.querySelector('img');
+    if (state.photos.length) {
+      if (!heroImg) {
+        heroImg = document.createElement('img');
+        hero.insertBefore(heroImg, hero.firstChild);
+      }
+      heroImg.src = state.photos[0].url;
+    } else if (heroImg) {
+      heroImg.remove();
+    }
+
+    $('offerCompound').textContent = `${cmpEn(d)}${r.type ? ` — ${r.type.en}` : ''}`;
+    $('offerSpecs').innerHTML = [
+      ['fa-bed', r.bedrooms, 'Bedrooms'],
+      ['fa-couch', furEn(d), 'Furnishing'],
+      d.area ? ['fa-ruler-combined', `${trimNum(d.area)} m²`, 'Area'] : null,
+      d.bathrooms ? ['fa-bath', String(r.bathrooms), 'Bathrooms'] : null,
+    ].filter(Boolean).map(([, v, l]) =>
+      `<div class="offer-spec"><span class="os-val">${escapeHtml(v)}</span><span class="os-lab">${l}</span></div>`).join('');
+    $('offerPrice').textContent = priceEn(r.price);
+
+    await new Promise(res => {
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(res); else res();
+    });
+
+    const canvas = await html2canvas($('offerCard'), {
+      scale: 2, backgroundColor: null, useCORS: true, logging: false,
+      windowWidth: 1080, windowHeight: 1350,
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    downloadDataUrl(dataUrl, `${r.code}-offer.png`);
+
+    $('assetThumb').src = dataUrl;
+    $('assetInfo').innerHTML =
+      `✓ <b>Offer image generated</b> — ${r.code}-offer.png<br>` +
+      `${canvas.width} × ${canvas.height} px · PNG · ready for WhatsApp / Facebook / Instagram`;
+    $('assetStrip').classList.add('show');
+    toast('تم توليد صورة العرض وتنزيلها ✓', 'ok');
+  } catch (err) {
+    console.error('[OFFER_IMAGE_ERROR]', err);
+    toast('تعذّر توليد صورة العرض — حاول مرة أخرى', 'err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function downloadDataUrl(url, filename) {
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ═══════════════ 9 · PDF BROCHURE (jsPDF) ═══════════════ */
+
+/* Optional Arabic support — loads Amiri (OFL, google/fonts via jsDelivr) at
+   generate-time and registers it with jsPDF. Silently skipped when offline. */
+async function loadArabicFont(doc) {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/amiri/Amiri-Regular.ttf');
+    if (!res.ok) return false;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 0x8000)
+      bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    const b64 = btoa(bin);
+    doc.addFileToVFS('Amiri-Regular.ttf', b64);
+    doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+    return true;
+  } catch (e) {
+    console.warn('Arabic font unavailable — brochure stays English-only.', e);
+    return false;
+  }
+}
+
+/* Draw a small gold diamond (logo star substitute — no font dependency). */
+function drawDiamond(doc, x, y, r) {
+  doc.setFillColor(201, 162, 74);
+  doc.triangle(x - r, y, x, y - r, x, y + r, 'F');
+  doc.triangle(x, y - r, x + r, y, x, y + r, 'F');
+}
+
+function arText(doc, text, x, y) {
+  // jsPDF ships an Arabic shaping pass (processArabic); use it when present.
+  if (typeof doc.processArabic === 'function') {
+    doc.text(doc.processArabic(text), x, y, { align: 'right', isInputVisual: true });
+  } else {
+    doc.text(text, x, y, { align: 'right' });
+  }
+}
+
+$('pdfBtn').addEventListener('click', async () => {
+  if (!state.record) return;
+  const btn = $('pdfBtn');
+  btn.disabled = true;
+  try {
+    const r = state.record;
+    const d = extractAll(r.description);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = 210, M = 18;                       // page width / margin
+    const NAVY = [10, 26, 58], GOLD = [201, 162, 74], MUTED = [102, 112, 138];
+
+    const hasArabic = await loadArabicFont(doc);
+
+    /* header band */
+    doc.setFillColor(...NAVY);
+    doc.rect(0, 0, W, 46, 'F');
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.8);
+    doc.line(0, 46, W, 46);
+    drawDiamond(doc, M + 3, 16, 3.2);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(19);
+    doc.text('SIERRA ESTATES', M + 11, 19.5, { charSpace: 1.4 });
+    drawDiamond(doc, M + 78, 16, 3.2);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.setTextColor(...GOLD);
+    doc.text('BEYOND BROKERAGE  ·  PROPERTY BROCHURE', M, 29, { charSpace: 0.8 });
+    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(24);
+    doc.text(r.code, M, 40);
+
+    let y = 62;
+
+    /* hero photo */
+    if (state.photos.length) {
+      try {
+        const dataUrl = await fileToDataUrl(state.photos[0].file);
+        const fmt = (state.photos[0].file.type === 'image/jpeg') ? 'JPEG' : 'PNG';
+        const imgW = W - 2 * M, imgH = 78;
+        doc.addImage(dataUrl, fmt, M, y, imgW, imgH);
+        doc.setDrawColor(...GOLD); doc.setLineWidth(1);
+        doc.rect(M, y, imgW, imgH);
+        y += imgH + 14;
+      } catch (e) { /* skip photo on decode issues */ }
+    }
+
+    /* title block */
+    doc.setTextColor(...NAVY); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
+    doc.text(`${r.bedrooms} BR ${typeEn(d)} — ${dealEn(d)}`, M, y);
+    y += 8;
+    doc.setTextColor(...MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text(`${cmpEn(d)}${d.isNewCairo ? ', New Cairo' : ''}  ·  ${furEn(d)}`, M, y);
+    y += 13;
+
+    doc.setDrawColor(226, 231, 240); doc.setLineWidth(0.4);
+    doc.line(M, y, W - M, y); y += 12;
+
+    /* details grid */
+    const rows = [
+      ['Property Code', r.code],
+      ['Compound', cmpEn(d)],
+      ['Type', `${typeEn(d)} (${dealEn(d)})`],
+      ['Bedrooms', String(r.bedrooms)],
+      ['Bathrooms', r.bathrooms ? String(r.bathrooms) : '—'],
+      ['Built-up Area', r.area ? `${trimNum(r.area)} sqm` : '—'],
+      ['Furnishing', furEn(d)],
+      ['Price', priceEn(r.price)],
+      ['Contact', r.phone || '—'],
+    ];
+    doc.setFontSize(10.5);
+    rows.forEach(([lab, val], i) => {
+      const rowY = y + (i % 5) * 10.5;
+      const col = Math.floor(i / 5);
+      const x = M + col * ((W - 2 * M) / 2);
+      doc.setTextColor(...MUTED); doc.setFont('helvetica', 'normal');
+      doc.text(lab.toUpperCase(), x, rowY, { charSpace: 0.5 });
+      doc.setTextColor(...NAVY); doc.setFont('helvetica', 'bold');
+      doc.text(String(val), x, rowY + 5.6);
+    });
+    y += 5 * 10.5 + 10;
+
+    /* Arabic summary line (when the Amiri font loaded) */
+    if (hasArabic) {
+      try {
+        doc.setFont('Amiri', 'normal'); doc.setFontSize(13);
+        doc.setTextColor(...NAVY);
+        const line = `${cmpName(d)} — ${typeAr(d)} ${r.bedrooms} غرف نوم — ${furAr(d)} — ${priceAr(r.price)}`;
+        arText(doc, line, W - M, y);
+        y += 10;
+      } catch (e) { /* Arabic line is decorative — ignore shaping issues */ }
+    }
+
+    /* footer */
+    doc.setFillColor(...NAVY);
+    doc.rect(0, 285, W, 12, 'F');
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.5);
+    doc.line(0, 285, W, 285);
+    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
+    doc.text('SIERRA ESTATES  ·  BEYOND BROKERAGE', M, 292.5, { charSpace: 0.7 });
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated ${new Date().toLocaleDateString('en-GB')}`, W - M, 292.5, { align: 'right' });
+
+    doc.save(`${r.code}-brochure.pdf`);
+    toast('تم توليد ملف PDF وتنزيله ✓', 'ok');
+  } catch (err) {
+    console.error('[PDF_BROCHURE_ERROR]', err);
+    toast('تعذّر توليد ملف PDF — حاول مرة أخرى', 'err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(file);
+  });
+}
+
+/* ═══════════════ 10 · SAVE TO FIREBASE (mock) ═══════════════
+   Mock layer: persists to localStorage so the tool is fully usable before
+   Firebase is wired. To go live:
+     1) add the Firebase compat SDK <script> tags,
+     2) paste your config into FIREBASE_CONFIG below,
+     3) replace saveMock() with the Firestore write in saveRecord().
+   The payload shape below already matches the intended
+   `properties` collection documents.                                   */
+const FIREBASE_CONFIG = null; // e.g. { apiKey, authDomain, projectId, ... }
+
+$('saveBtn').addEventListener('click', () => {
+  if (!state.record) return;
+  const btn = $('saveBtn');
+  btn.disabled = true;
+  setTimeout(() => { btn.disabled = false; }, 600);
+  try {
+    if (FIREBASE_CONFIG) {
+      // real write path (not active in mock mode)
+      saveMock(state.record);
+    } else {
+      saveMock(state.record);
+    }
+    toast('تم حفظ الوحدة محليًا ✓ (Firebase mock — يعمل عبر localStorage حتى ربط المشروع)', 'ok', 4600);
+  } catch (e) {
+    console.error('[SAVE_ERROR]', e);
+    toast('تعذّر الحفظ — حاول مرة أخرى', 'err');
+  }
+});
+
+function saveMock(record) {
+  const KEY = 'sierra_listings';
+  const store = JSON.parse(localStorage.getItem(KEY) || '[]');
+  record.savedAt = new Date().toISOString();
+  store.push(record);
+  localStorage.setItem(KEY, JSON.stringify(store));
+  return record;
+}
+
+/* ─── init ─── */
+updateCount();
+console.info('%c✦ Sierra Estates — Listing Studio ready', 'color:#C9A24A;font-weight:bold');
+</script>
+</body>
+</html>

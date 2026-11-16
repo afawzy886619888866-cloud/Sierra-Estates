@@ -1,0 +1,150 @@
+{
+  "name": "💬 Leila Agent — Lead Scoring & Agent Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "leila-lead-webhook",
+        "options": {}
+      },
+      "id": "219e0758-c0b8-4d57-b08e-17482811a001",
+      "name": "Leila Webhook Ingestion",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": "=Analyze the following real estate lead conversation summary and extract values for Leila's 3 Gold Questions. Output as JSON:\n- intent: 'buy_resale' | 'rent' | 'invest' | 'unknown'\n- budget_egp: number\n- timeline_months: number\n- confidence_score: 0-100\n- client_summary: brief one-liner summary of requirements\n\nConversation Context: {{ $json.body.conversation_summary }}",
+        "options": {
+          "jsonMode": true
+        }
+      },
+      "id": "319e0758-c0b8-4d57-b08e-17482811a002",
+      "name": "Gemini/OpenAI Lead Parser",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "4",
+          "name": "OpenAI Api Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Leila Webhook Ingestion').item.json.body;\nconst analysis = $('Gemini/OpenAI Lead Parser').item.json.choices[0].message.content;\nconst data = typeof analysis === 'string' ? JSON.parse(analysis) : analysis;\n\n// Calculate CRM Lead Priority Score\nlet priorityScore = 50; // Base score\nif (data.intent === 'buy_resale' || data.intent === 'invest') priorityScore += 20;\nif (data.budget_egp > 15000000) priorityScore += 15; // Luxury Segment\nif (data.timeline_months <= 2) priorityScore += 15;   // High Urgency\n\nlet priority = 'Low';\nif (priorityScore >= 80) priority = 'High';\nelse if (priorityScore >= 65) priority = 'Medium';\n\nreturn {\n  json: {\n    client_name: lead.client_name,\n    client_phone: lead.client_phone,\n    raw_intent: data.intent,\n    budget: data.budget_egp,\n    timeline: data.timeline_months,\n    summary: data.client_summary,\n    score: priorityScore,\n    priority: priority,\n    assigned_agent: lead.assigned_agent_id || \"agent_unassigned\"\n  }\n};"
+      },
+      "id": "419e0758-c0b8-4d57-b08e-17482811a003",
+      "name": "CRM Lead Scorer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://firestore.googleapis.com/v1/projects/sierra-estates-prod/databases/(default)/documents/leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={\"name\":{\"stringValue\":\"{{ $json.client_name }}\"},\"phone\":{\"stringValue\":\"{{ $json.client_phone }}\"},\"priority\":{\"stringValue\":\"{{ $json.priority }}\"},\"score\":{\"integerValue\":\"{{ $json.score }}\"},\"summary\":{\"stringValue\":\"{{ $json.summary }}\"},\"status\":{\"stringValue\":\"Lead_Ingested\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "519e0758-c0b8-4d57-b08e-17482811a004",
+      "name": "Create Lead in Firestore CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        800,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Google OAuth Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=-1001928374",
+        "text": "=🚨 *New Hot Lead Received via Leila AI!* \n\n👤 *Client:* {{ $json.client_name }}\n📱 *Phone:* {{ $json.client_phone }}\n💰 *Budget:* {{ $json.budget }} EGP\n⏱️ *Timeline:* {{ $json.timeline }} Month(s)\n🎯 *Priority:* {{ $json.priority }} (Score: {{ $json.score }})\n📝 *Summary:* {{ $json.summary }}\n\nAgent Assigned, please review on your CRM dashboard immediately!"
+      },
+      "id": "619e0758-c0b8-4d57-b08e-17482811a005",
+      "name": "Telegram Alert to Agent Channel",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        800,
+        400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "5",
+          "name": "Telegram Bot Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Leila Webhook Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Gemini/OpenAI Lead Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini/OpenAI Lead Parser": {
+      "main": [
+        [
+          {
+            "node": "CRM Lead Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Lead Scorer": {
+      "main": [
+        [
+          {
+            "node": "Create Lead in Firestore CRM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram Alert to Agent Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

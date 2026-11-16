@@ -1,0 +1,286 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   SIERRA ESTATES — UNIFIED ADMIN COMMAND CENTER · "Luxury Minimal" theme
+   (Apple-inspired: Deep Navy #0A192F + Royal Gold #D4AF37, crisp borders,
+   glassmorphism cards).
+
+   Tailwind lives here rather than in app/globals.css — same isolation
+   contract as app/admin/admin-portal.css: the client site's design comes
+   from app/site-styles/*.css and must never receive Tailwind's preflight.
+   Imported only by the command-center pages under app/admin/ (overview,
+   pipeline, properties, leads, bots, applicants) so the legacy Intelligence
+   OS portal keeps its own stylesheet untouched.
+   ──────────────────────────────────────────────────────────────────────────── */
+@import "tailwindcss";
+
+@theme {
+  /* Deep Navy — brand surface scale */
+  --color-navy-950: #05080f;
+  --color-navy-900: #0a192f;
+  --color-navy-850: #0d1f3a;
+  --color-navy-800: #102542;
+  --color-navy-700: #16305a;
+  --color-navy-600: #1d3f73;
+  --color-navy-500: #265091;
+
+  /* Royal Gold — accent scale */
+  --color-gold-200: #f8e7b3;
+  --color-gold-300: #f5d77f;
+  --color-gold-400: #e9c176;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #aa8222;
+  --color-gold-700: #866619;
+
+  /* Semantic */
+  --color-emerald-soft: #34d399;
+  --color-ruby-soft: #e63946;
+  --color-azure-soft: #1e88d9;
+
+  --font-sans: 'Inter', 'Cairo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+/* ── Command-center tokens ─────────────────────────────────────────────── */
+:root {
+  --cc-bg: #05080f;
+  --cc-surface: rgba(16, 25, 40, 0.62);
+  --cc-surface-solid: #0a192f;
+  --cc-border: rgba(212, 175, 55, 0.16);
+  --cc-border-strong: rgba(212, 175, 55, 0.34);
+  --cc-text: #f5f3ec;
+  --cc-text-dim: rgba(245, 243, 236, 0.66);
+  --cc-text-faint: rgba(245, 243, 236, 0.4);
+  --cc-gold: #d4af37;
+  --cc-silk: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Glassmorphism surfaces ────────────────────────────────────────────── */
+.cc-glass {
+  background:
+    linear-gradient(155deg, rgba(16, 25, 40, 0.92) 0%, rgba(10, 19, 33, 0.88) 55%, rgba(5, 8, 15, 0.94) 100%);
+  border: 1px solid var(--cc-border);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 56px -18px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+}
+
+.cc-glass-raised {
+  background:
+    linear-gradient(155deg, rgba(22, 34, 54, 0.96) 0%, rgba(13, 20, 34, 0.97) 60%, rgba(8, 12, 20, 0.98) 100%);
+  border: 1px solid var(--cc-border-strong);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border-radius: 22px;
+  box-shadow:
+    0 28px 64px -16px rgba(0, 0, 0, 0.9),
+    0 0 32px rgba(212, 175, 55, 0.07);
+}
+
+.cc-glass-hover {
+  transition: transform 280ms var(--cc-silk), border-color 280ms var(--cc-silk),
+    box-shadow 280ms var(--cc-silk);
+}
+
+.cc-glass-hover:hover {
+  transform: translateY(-2px);
+  border-color: var(--cc-border-strong);
+  box-shadow:
+    0 32px 72px -18px rgba(0, 0, 0, 0.92),
+    0 0 36px rgba(212, 175, 55, 0.12);
+}
+
+/* ── Gold typography ───────────────────────────────────────────────────── */
+.cc-gold-text {
+  background: linear-gradient(100deg, #f5d77f 0%, #d4af37 45%, #f8e7b3 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cc-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ── Interactive elements ──────────────────────────────────────────────── */
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  transition: all 220ms var(--cc-silk);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.cc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cc-btn-gold {
+  background: linear-gradient(155deg, rgba(212, 175, 55, 0.16) 0%, rgba(170, 130, 34, 0.1) 100%);
+  border-color: rgba(212, 175, 55, 0.42);
+  color: #f5d77f;
+}
+
+.cc-btn-gold:hover:not(:disabled) {
+  background: linear-gradient(155deg, rgba(212, 175, 55, 0.28) 0%, rgba(170, 130, 34, 0.18) 100%);
+  border-color: rgba(212, 175, 55, 0.7);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.22);
+}
+
+.cc-btn-ghost {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--cc-text-dim);
+}
+
+.cc-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--cc-text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cc-btn-danger {
+  background: rgba(230, 57, 70, 0.12);
+  border-color: rgba(230, 57, 70, 0.4);
+  color: #ff8b95;
+}
+
+.cc-btn-danger:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.22);
+}
+
+.cc-input {
+  width: 100%;
+  background: rgba(5, 8, 15, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--cc-text);
+  font-size: 0.875rem;
+  padding: 0.6rem 0.9rem;
+  transition: border-color 200ms var(--cc-silk), box-shadow 200ms var(--cc-silk);
+}
+
+.cc-input::placeholder {
+  color: var(--cc-text-faint);
+}
+
+.cc-input:focus {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+}
+
+select.cc-input option {
+  background: #0a192f;
+  color: var(--cc-text);
+}
+
+/* ── Scrollbars (long lists) ──────────────────────────────────────────── */
+.cc-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.cc-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cc-scroll::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.22);
+  border-radius: 8px;
+}
+
+.cc-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.4);
+}
+
+/* ── Pipeline stage tones (lib/crm-stages.ts CRM_STAGE_META) ──────────── */
+.cc-stage-neutral { --cc-stage-accent: rgba(245, 243, 236, 0.5); }
+.cc-stage-cool    { --cc-stage-accent: rgba(30, 136, 217, 0.75); }
+.cc-stage-warm    { --cc-stage-accent: rgba(245, 158, 11, 0.8); }
+.cc-stage-gold    { --cc-stage-accent: rgba(212, 175, 55, 0.9); }
+.cc-stage-green   { --cc-stage-accent: rgba(52, 211, 153, 0.85); }
+
+.cc-stage-column {
+  background: rgba(8, 13, 22, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 2px solid var(--cc-stage-accent, rgba(245, 243, 236, 0.5));
+  border-radius: 16px;
+}
+
+.cc-card-dragging {
+  opacity: 0.55;
+  transform: rotate(1.5deg) scale(0.98);
+}
+
+/* ── Status pills ─────────────────────────────────────────────────────── */
+.cc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid;
+}
+
+/* ── Live pulse dot (Realtime indicator) ──────────────────────────────── */
+@keyframes cc-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+  50% { opacity: 0.65; box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+}
+
+.cc-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #34d399;
+  animation: cc-pulse 2.2s ease-in-out infinite;
+}
+
+.cc-live-dot-off {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(245, 243, 236, 0.25);
+}
+
+@keyframes cc-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.cc-skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 75%);
+  background-size: 800px 100%;
+  animation: cc-shimmer 1.6s linear infinite;
+  border-radius: 10px;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cc-glass-hover,
+  .cc-btn,
+  .cc-input {
+    transition: none;
+  }
+  .cc-live-dot,
+  .cc-skeleton {
+    animation: none;
+  }
+}

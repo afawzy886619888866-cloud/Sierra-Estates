@@ -1,0 +1,11 @@
+{
+  "name": "openmemory-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpenMemory Vercel Deployment & Standalone Service",
+  "scripts": {
+    "build": "cd packages/openmemory-js && npm install && npm run build",
+    "start": "cd packages/openmemory-js && npm start",
+    "test": "cd packages/openmemory-js && npm test"
+  }
+}

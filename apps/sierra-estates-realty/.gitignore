@@ -1,0 +1,6 @@
+tsconfig.tsbuildinfo
+/public/agents
+.vercel
+eslint-results.json
+.env*
+/.swc

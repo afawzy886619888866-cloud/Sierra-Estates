@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<!--
+  Sierra Estates — صفحة /add-listing المطورة
+  ============================================
+  التركيب:
+  (1) ارفع الملف ده مكان صفحة add-listing (أو الصق المحتوى من <style> لـ </script>
+      جوه Custom HTML block لو الموقع ووردبريس).
+  (2) افتح الملف وعدّل SCRIPT_URL تحت في السكريبت — حط فيه لينك
+      الويب آب بتاع Apps Script (Deploy → Manage deployments → اللينك).
+  الصور: بعد التسجيل الصفحة بتفتح واتساب مباشرة لابعت الصور — زي ما الصفحة القديمة عاملة.
+-->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0e1626">
+<title>سييرا إستيتس — أضف وحدتك في ثواني</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Tajawal',sans-serif; }
+  body {
+    background:linear-gradient(160deg,#0e1626 0%,#1a2942 60%,#233754 100%);
+    min-height:100vh; color:#1f2937; padding-bottom:40px;
+  }
+  header { text-align:center; padding:28px 16px 10px; color:#fff; }
+  header .logo {
+    font-weight:800; letter-spacing:4px; font-size:22px; color:#d4af37;
+    text-transform:uppercase;
+  }
+  header .sub { font-size:14px; opacity:.75; margin-top:6px; }
+  header .title { font-size:26px; font-weight:800; margin-top:18px; }
+  header .title span { color:#d4af37; }
+  header .badge {
+    display:inline-block; margin-top:10px; background:rgba(212,175,55,.15);
+    color:#e9ce7a; border:1px solid rgba(212,175,55,.4); border-radius:99px;
+    padding:6px 16px; font-size:13px; font-weight:700;
+  }
+  .card {
+    background:#fff; max-width:640px; margin:20px auto 0; border-radius:20px;
+    padding:24px 20px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  .q { font-weight:700; font-size:15px; margin:18px 0 8px; color:#111827; }
+  .q:first-child { margin-top:0; }
+  .q small { font-weight:400; color:#9ca3af; font-size:12px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips input { display:none; }
+  .chips label {
+    border:2px solid #e5e7eb; border-radius:99px; padding:9px 18px;
+    font-size:14px; font-weight:700; cursor:pointer; user-select:none;
+    transition:.15s; background:#fff;
+  }
+  .chips input:checked + label {
+    background:#14263f; color:#fff; border-color:#14263f;
+  }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:480px){ .grid { grid-template-columns:1fr; } }
+  input[type=text], input[type=tel], input[type=number], select, textarea {
+    width:100%; height:50px; border:2px solid #e5e7eb; border-radius:12px;
+    padding:0 14px; font-size:16px; font-weight:500; background:#fff;
+    transition:.15s; -webkit-appearance:none; appearance:none;
+  }
+  textarea { height:auto; padding:12px 14px; resize:vertical; min-height:90px; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#d4af37; }
+  input.bad, select.bad { border-color:#ef4444; }
+  select { background-image:none; }
+  .hint { font-size:12px; color:#9ca3af; margin-top:5px; }
+  .maps-link input { text-align:left; direction:ltr; }
+  #submit {
+    width:100%; margin-top:24px; height:56px; border:none; border-radius:14px;
+    background:linear-gradient(135deg,#d4af37,#b8860b); color:#fff;
+    font-size:19px; font-weight:800; cursor:pointer; letter-spacing:.5px;
+    box-shadow:0 10px 26px rgba(184,134,11,.4); transition:.2s;
+  }
+  #submit:disabled { opacity:.6; cursor:wait; }
+  #err {
+    display:none; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca;
+    border-radius:12px; padding:12px 16px; margin-top:14px; font-size:14px; font-weight:700;
+  }
+  /* شاشة النجاح */
+  #done { display:none; text-align:center; }
+  #done .tick {
+    width:76px; height:76px; margin:10px auto 0; border-radius:50%;
+    background:#dcfce7; color:#16a34a; font-size:40px; line-height:76px;
+  }
+  #done h2 { margin-top:14px; font-size:22px; }
+  #done .ref {
+    display:inline-block; margin-top:8px; background:#f3f4f6; border-radius:10px;
+    padding:8px 18px; font-weight:800; letter-spacing:1px; color:#14263f;
+  }
+  #done .lbl { margin-top:18px; font-size:13px; color:#6b7280; font-weight:700; }
+  #botbox {
+    background:#f8fafc; border:1px dashed #cbd5e1; border-radius:14px;
+    padding:14px; text-align:right; font-size:14px; white-space:pre-wrap;
+    line-height:1.8; margin-top:8px; max-height:260px; overflow:auto;
+  }
+  .btns { display:flex; gap:10px; margin-top:16px; }
+  .btns a, .btns button {
+    flex:1; height:52px; border-radius:12px; border:none; font-size:15px;
+    font-weight:800; cursor:pointer; text-decoration:none; display:flex;
+    align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-wa { background:#25d366; color:#fff; }
+  .btn-cp { background:#14263f; color:#fff; }
+  #again {
+    margin-top:14px; background:none; border:none; color:#b8860b;
+    font-weight:800; font-size:15px; cursor:pointer; width:100%; height:44px;
+  }
+  footer { text-align:center; color:rgba(255,255,255,.5); font-size:12px; margin-top:26px; }
+  .honeypot { display:none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Sierra Estates</div>
+  <div class="sub">AI Real Estate · New Cairo</div>
+  <div class="title">أضف وحدتك في <span>٣٠ ثانية</span></div>
+  <div class="badge">من غير تسجيل ولا اكسيس — أي مالك أو بروكر</div>
+</header>
+
+<main class="card">
+
+  <!-- ====== الفورم ====== -->
+  <form id="f" novalidate>
+    <input class="honeypot" type="text" name="honey" tabindex="-1" autocomplete="off">
+
+    <div class="q">إنت مين؟</div>
+    <div class="chips" data-name="role">
+      <input type="radio" id="r1" value="مالك" checked><label for="r1">مالك</label>
+      <input type="radio" id="r2" value="بروكر"><label for="r2">بروكر</label>
+      <input type="radio" id="r3" value="موظف"><label for="r3">موظف بالشركة</label>
+    </div>
+
+    <div class="q">عايز تبيع ولا تؤجر؟</div>
+    <div class="chips" data-name="deal">
+      <input type="radio" id="d1" value="بيع" checked><label for="d1">بيع</label>
+      <input type="radio" id="d2" value="إيجار"><label for="d2">إيجار</label>
+    </div>
+
+    <div class="q">نوع الوحدة</div>
+    <div class="chips" data-name="unitType">
+      <input type="radio" id="u1" value="شقة" checked><label for="u1">شقة</label>
+      <input type="radio" id="u2" value="فيلا"><label for="u2">فيلا</label>
+      <input type="radio" id="u3" value="تاون هاوس"><label for="u3">تاون هاوس</label>
+      <input type="radio" id="u4" value="توين هاوس"><label for="u4">توين هاوس</label>
+      <input type="radio" id="u5" value="بنتهاوس"><label for="u5">بنتهاوس</label>
+      <input type="radio" id="u6" value="دوبلكس"><label for="u6">دوبلكس</label>
+      <input type="radio" id="u7" value="استوديو"><label for="u7">استوديو</label>
+      <input type="radio" id="u8" value="شاليه"><label for="u8">شاليه</label>
+    </div>
+
+    <div class="q">المشروع / الكمبوند <small>(ابدأ اكتب وهيظهرلك)</small></div>
+    <input type="text" id="compound" list="compounds" placeholder="مثال: Mountain View iCity">
+    <datalist id="compounds">
+      <option>Mountain View iCity</option>
+      <option>Mountain View New Cairo</option>
+      <option>Hyde Park</option>
+      <option>Palm Hills New Cairo</option>
+      <option>Katameya Dunes</option>
+      <option>Allegria</option>
+      <option>Villette</option>
+      <option>Taj City</option>
+      <option>Royal City</option>
+      <option>Al Reyada</option>
+      <option>Moon Valley</option>
+      <option>Aroma</option>
+      <option>La Vista New Cairo</option>
+      <option>الرحاب</option>
+      <option>مدينتي</option>
+    </datalist>
+
+    <div class="q">المنطقة</div>
+    <div class="chips" data-name="area">
+      <input type="radio" id="a1" value="التجمع الشمالي" checked><label for="a1">التجمع الشمالي</label>
+      <input type="radio" id="a2" value="التجمع الجنوبي"><label for="a2">التجمع الجنوبي</label>
+      <input type="radio" id="a3" value="التجمع الخامس"><label for="a3">التجمع الخامس</label>
+      <input type="radio" id="a4" value="مدينتي"><label for="a4">مدينتي</label>
+      <input type="radio" id="a5" value="الشروق"><label for="a5">الشروق</label>
+    </div>
+
+    <div class="grid" style="margin-top:18px">
+      <div>
+        <div class="q">المساحة (م²) *</div>
+        <input type="number" id="size" inputmode="numeric" min="20" placeholder="150">
+      </div>
+      <div>
+        <div class="q">السعر (EGP) *</div>
+        <input type="text" id="price" inputmode="numeric" placeholder="3,500,000">
+      </div>
+      <div>
+        <div class="q">غرف النوم</div>
+        <select id="rooms">
+          <option value="">—</option><option>استوديو</option>
+          <option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6+</option>
+        </select>
+      </div>
+      <div>
+        <div class="q">الحمامات</div>
+        <select id="baths">
+          <option value="">—</option><option>1</option><option>2</option>
+          <option>3</option><option>4</option><option>5+</option>
+        </select>
+      </div>
+      <div>
+        <div class="q">الدور</div>
+        <select id="floor">
+          <option value="">—</option><option>أرضي</option><option>متكرر</option>
+          <option>أول</option><option>تاني</option><option>تالت</option>
+          <option>رابع</option><option>خامس</option><option>أخير</option><option>رووف</option>
+        </select>
+      </div>
+      <div>
+        <div class="q">نظام الدفع</div>
+        <select id="payment"></select>
+      </div>
+    </div>
+
+    <div class="q">التشطيب</div>
+    <div class="chips" data-name="finish">
+      <input type="radio" id="f1" value="بتشطيب كامل" checked><label for="f1">كامل</label>
+      <input type="radio" id="f2" value="نص تشطيب"><label for="f2">نص تشطيب</label>
+      <input type="radio" id="f3" value="على الطوب الأحمر"><label for="f3">طوب أحمر</label>
+      <input type="radio" id="f4" value="بديكور"><label for="f4">بديكور</label>
+    </div>
+
+    <div class="q">مفروشة؟</div>
+    <div class="chips" data-name="furnished">
+      <input type="radio" id="fu0" value="" checked><label for="fu0">—</label>
+      <input type="radio" id="fu1" value="مفروشة"><label for="fu1">مفروشة</label>
+      <input type="radio" id="fu2" value="غير مفروشة"><label for="fu2">غير مفروشة</label>
+      <input type="radio" id="fu3" value="مطبخ بس"><label for="fu3">مطبخ بس</label>
+    </div>
+
+    <div class="q">المواصفات / ملاحظات <small>(فيو؟ جاراج؟ أسانسير؟)</small></div>
+    <textarea id="specs" maxlength="400" placeholder="مثال: فيو لاند سكيب، جاراج خاص، أسانسير، تكييفات، مطبخ مجهز..."></textarea>
+
+    <div class="q">رابط اللوكيشن <small>(اختياري)</small></div>
+    <div class="maps-link">
+      <input type="text" id="mapsUrl" placeholder="https://maps.app.goo.gl/..." dir="ltr">
+    </div>
+    <div class="hint">افتح اللوكيشن في جوجل ماب → شارك → انسخ اللينك والصقه هنا. لو سيبته فاضي هنحدد اللوكيشن من الكمبوند تلقائي.</div>
+
+    <div class="grid" style="margin-top:18px">
+      <div>
+        <div class="q">الاسم *</div>
+        <input type="text" id="name" placeholder="اسمك">
+      </div>
+      <div>
+        <div class="q">واتساب *</div>
+        <input type="tel" id="phone" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr">
+      </div>
+    </div>
+
+    <div id="err"></div>
+    <button type="submit" id="submit">سجّل الوحدة ✦</button>
+    <div class="hint" style="text-align:center;margin-top:10px">
+      بياناتك بتروح لفريق سييرا إستيتس — بنراجع الوحدة ونتواصل معاك في 24 ساعة.
+    </div>
+  </form>
+
+  <!-- ====== شاشة النجاح ====== -->
+  <section id="done">
+    <div class="tick">✓</div>
+    <h2>وحدتك اتسجلت! 🎉</h2>
+    <div class="ref" id="ref"></div>
+    <div class="lbl">المحتوى الجاهز للنشر في الجروب:</div>
+    <div id="botbox"></div>
+    <div class="btns">
+      <a id="wa" class="btn-wa" target="_blank" rel="noopener">📲 شارك على الجروب</a>
+      <button type="button" class="btn-cp" id="cp">📋 نسخ</button>
+    </div>
+    <button type="button" id="again">➕ إضافة وحدة جديدة</button>
+    <div class="hint" style="margin-top:10px">
+      الصور؟ ابعتها على واتساب بعد ما تضغط "شارك على الجروب".
+    </div>
+  </section>
+
+</main>
+
+<footer>Sierra Estates — sierra-estates.net · New Cairo</footer>
+
+<script>
+/* ================== الإعدادات — عدّل السطرين دول بس ================== */
+var SCRIPT_URL = 'https://script.google.com/macros/s/ضع_لينك_الويب_آب_هنا/exec';
+var TOKEN      = 'EASY_PUBLIC_2026';
+/* ===================================================================== */
+
+// نظام الدفع بيتغير حسب بيع/إيجار
+var PAY = {
+  'بيع':  ['', 'كاش', 'تقسيط', 'كاش أو تقسيط'],
+  'إيجار': ['', 'شهري', 'سنوي', 'نصف سنوي', 'ربع سنوي']
+};
+function dealVal() {
+  var c = document.querySelector('[data-name="deal"] input:checked');
+  return c ? c.value : 'بيع';
+}
+function fillPayment() {
+  var sel = document.getElementById('payment');
+  sel.innerHTML = PAY[dealVal()].map(function(p){
+    return '<option value="' + p + '">' + (p === '' ? '—' : p) + '</option>';
+  }).join('');
+}
+Array.prototype.forEach.call(
+  document.querySelectorAll('[data-name="deal"] input'), function(r){
+    r.addEventListener('change', fillPayment);
+  });
+fillPayment();
+
+function chip(name) {
+  var el = document.querySelector('[data-name="' + name + '"] input:checked');
+  return el ? el.value : '';
+}
+function val(id) { return document.getElementById(id).value.trim(); }
+
+// تنسيق السعر بالفواصل وهو بيتكتب
+var priceEl = document.getElementById('price');
+priceEl.addEventListener('input', function(){
+  var raw = this.value.replace(/[^\d]/g, '');
+  this.value = raw ? Number(raw).toLocaleString('en-US') : '';
+});
+
+// تحقق بسيط قبل الإرسال
+function bad(id, is) {
+  var el = document.getElementById(id);
+  el.classList.toggle('bad', !!is);
+  return !!is;
+}
+document.getElementById('f').addEventListener('submit', function(e){
+  e.preventDefault();
+
+  var phone = val('phone').replace(/\D/g, '');
+  var price = val('price').replace(/[^\d]/g, '');
+  var hasBad = false;
+  hasBad = bad('name',    !val('name'))                 || hasBad;
+  hasBad = bad('phone',   !/^01[0125][0-9]{8}$/.test(phone)) || hasBad;
+  hasBad = bad('price',   !price)                        || hasBad;
+  hasBad = bad('size',    !val('size'))                  || hasBad;
+  hasBad = bad('compound', !val('compound'))             || hasBad;
+
+  var err = document.getElementById('err');
+  if (hasBad) {
+    err.textContent = 'اكمل الحقول المطلوبة (باللون الأحمر) — والرقم لازم يبدأ بـ 010 / 011 / 012 / 015.';
+    err.style.display = 'block';
+    var first = document.querySelector('.bad');
+    if (first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  err.style.display = 'none';
+
+  var payload = {
+    token: TOKEN,
+    honey: document.querySelector('.honeypot').value,
+    role: chip('role'), deal: chip('deal'), unitType: chip('unitType'),
+    compound: val('compound'), area: chip('area'),
+    size: val('size'), rooms: val('rooms'), baths: val('baths'), floor: val('floor'),
+    price: price, payment: val('payment'),
+    finish: chip('finish'), furnished: chip('furnished'),
+    specs: val('specs'), mapsUrl: val('mapsUrl'),
+    name: val('name'), phone: phone
+  };
+
+  var btn = document.getElementById('submit');
+  btn.disabled = true; btn.textContent = 'بنسجّل الوحدة...';
+
+  // POST بـ text/plain عشان يعدّي CORS من غير preflight
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if (res.ok) {
+      document.getElementById('f').style.display = 'none';
+      document.getElementById('done').style.display = 'block';
+      document.getElementById('ref').textContent = 'كود الوحدة: ' + res.ref;
+      document.getElementById('botbox').textContent = res.botMsg;
+      document.getElementById('wa').href = 'https://wa.me/?text=' +
+        encodeURIComponent(res.botMsg);
+      window.__botMsg = res.botMsg;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      err.textContent = res.msg || 'حصل خطأ — جرّب تاني.';
+      err.style.display = 'block';
+    }
+  })
+  .catch(function(){
+    err.textContent = 'النت ضعيف أو اللينك غلط — اتأكد من SCRIPT_URL وجرّب تاني.';
+    err.style.display = 'block';
+  })
+  .then(function(){
+    btn.disabled = false; btn.textContent = 'سجّل الوحدة ✦';
+  });
+});
+
+// نسخ المحتوى
+document.getElementById('cp').addEventListener('click', function(){
+  var t = this;
+  navigator.clipboard.writeText(window.__botMsg || '').then(function(){
+    t.textContent = '✓ اتنسخ';
+    setTimeout(function(){ t.textContent = '📋 نسخ'; }, 1500);
+  });
+});
+
+// إضافة وحدة جديدة
+document.getElementById('again').addEventListener('click', function(){
+  document.getElementById('f').reset();
+  fillPayment();
+  document.getElementById('done').style.display = 'none';
+  document.getElementById('f').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
+</body>
+</html>

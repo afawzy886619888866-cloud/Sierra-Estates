@@ -1,0 +1,64 @@
+# PR Labeler configuration
+# Maps file path patterns → GitHub labels (auto-created if missing)
+
+'client-page':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'apps/sierra-estates-realty/public/client-page/**'
+      - 'apps/sierra-estates-realty/app/(client)/**'
+
+'admin':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'apps/sierra-estates-realty/app/admin/**'
+      - 'apps/sierra-estates-realty/app/(admin)/**'
+      - 'apps/sierra-estates-realty/components/admin/**'
+
+'agents':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'packages/agents/**'
+      - 'packages/agents-core/**'
+      - 'packages/memory-engine/**'
+      - 'infra/whatsapp-scraper/**'
+
+'workflows':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**'
+      - 'workflows/**'
+
+'supabase':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'supabase/**'
+      - '**/*supabase*'
+      - 'apps/sierra-estates-realty/lib/supabaseClient.ts'
+      - 'packages/db/lib/supabase*.ts'
+
+'dependencies':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'pnpm-lock.yaml'
+      - '**/package.json'
+
+'infrastructure':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'infra/**'
+      - 'docker-compose*.yml'
+      - 'vercel.json'
+
+'api':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'apps/sierra-estates-realty/app/api/**'
+      - 'packages/api/**'
+
+'documentation':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**'
+      - '**/*.md'
+      - 'CONTRIBUTING.md'
+      - 'README.md'

@@ -1,0 +1,88 @@
+name: CodeQL Security Scan
+
+# Static security analysis over the JavaScript/TypeScript surface.
+# Pinned by __tests__/actions-and-workflows.test.ts (must exist, must define
+# an explicit permissions block).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Weekly, Sunday 03:30 UTC — off-peak for the Cairo working day.
+    - cron: '30 3 * * 0'
+
+permissions:
+  contents: read
+  security-events: write
+  # actions: read — required by the codeql-action status report (it queries
+  # GET /repos/{owner}/{repo}/actions/runs/{id}); without it the analyze step
+  # fails with "Resource not accessible by integration" even though the scan
+  # itself completed and the SARIF was exported.
+  actions: read
+
+concurrency:
+  group: codeql
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+          config: |
+            paths:
+              - apps
+              - packages
+              - workflows
+              - infra
+            paths-ignore:
+              - '**/__tests__/**'
+              - '**/*.test.ts'
+              - '**/*.test.js'
+              - '**/scripts/**'
+              - 'packages/open-memory/tools/**'
+              - docs
+              - assets
+              - transport
+              - node_modules
+
+      # 2026-11-01: GitHub Advanced Security / code scanning is NOT available on
+      # this repo (private repo owned by a personal account — GHAS is
+      # org/enterprise-only; the code-scanning API returns 403 "Code scanning
+      # is not enabled for this repository" and security_and_analysis exposes
+      # no advanced_security toggle). The scan itself runs clean — only the
+      # SARIF upload to the code scanning API fails, which broke EVERY run
+      # since 87d9a49 with a configuration-error red X and zero signal.
+      # Fix: upload 'never' + archive the SARIF as a workflow artifact so the
+      # scan stays green and manually reviewable.
+      # TO REVERT once GHAS/code scanning is enabled (org transfer or license):
+      # remove the upload/output inputs and the artifact step below.
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+          upload: never
+          # Inside the workspace — actions/upload-artifact rejects paths
+          # containing '..' ("Relative pathing '.' and '..' is not allowed").
+          output: codeql-results
+
+      - name: Archive CodeQL SARIF (code scanning disabled on this repo)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: codeql-results/
+          retention-days: 14
+          if-no-files-found: warn

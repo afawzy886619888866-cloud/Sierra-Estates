@@ -1,0 +1,18 @@
+[Unit]
+Description=OpenWA WhatsApp Gateway (Sierra Estates)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust WorkingDirectory + User to your install path (default: /opt/openwa).
+WorkingDirectory=/opt/openwa
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+# Session + DB persistence
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
