@@ -113,7 +113,10 @@ async function runVerification(): Promise<void> {
   // 4. Check Local Next.js Dev Server (optional)
   total++;
   process.stdout.write('4. Local Next.js Server & QR Route (localhost:3000)... ');
-  const localQr = await checkUrl('http://localhost:3000/api/whatsapp/qr');
+  // /api/whatsapp/qr is service-gated — send the runner key when configured
+  const localQr = await checkUrl('http://localhost:3000/api/whatsapp/qr', {
+    headers: process.env.RUNNER_API_KEY ? { 'x-runner-key': process.env.RUNNER_API_KEY } : {},
+  });
   if (localQr.ok) {
     console.log(`${GREEN}✓ OPERATIONAL${RESET} (200 OK)`);
     passed++;

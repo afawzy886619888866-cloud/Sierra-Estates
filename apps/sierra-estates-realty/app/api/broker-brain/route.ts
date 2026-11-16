@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -175,6 +176,9 @@ RULES:
 // ── Main POST handler ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
+
+  const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
     const body = await req.json();
     const { message, sessionId = 'default', language = 'en' } = body;
 

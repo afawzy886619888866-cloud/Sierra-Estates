@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { VoiceBriefingEngine } from '@sierra-estates/agents-core';
+import { requireStaffOrServiceKey, requireServiceKey } from '@/lib/server/route-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,9 @@ const voiceBriefingRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const rawBody = await req.json();
     const parseResult = voiceBriefingRequestSchema.safeParse(rawBody);
 

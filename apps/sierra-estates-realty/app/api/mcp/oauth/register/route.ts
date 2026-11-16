@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { OAuthStore } from '@/lib/mcp/oauth-store';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+
+  const denied = await requireStaffOrServiceKey(request);
+  if (denied) return denied;
     const body = await request.json();
 
     if (body.redirect_uris && !Array.isArray(body.redirect_uris)) {

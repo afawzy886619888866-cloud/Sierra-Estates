@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 min timeout for heavy inventory processing
@@ -27,6 +28,9 @@ interface ScanResponse {
 
 export async function POST(req: NextRequest): Promise<NextResponse<ScanResponse>> {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const body = await req.json().catch(() => ({}));
     // §21 no-fabrication: a server route must not silently fall back to a
     // developer's local machine path ('I:\supabase\Sheets') — the scan
@@ -153,7 +157,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScanResponse>
   }
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
   const targetDir = 'I:\\supabase\\Sheets';
   const masterExcel = path.join(targetDir, 'Final_RealEstate_Master_Unified.xlsx');
   const airtableCsv = path.join(targetDir, 'Unified_Airtable_Inventory.csv');
@@ -164,6 +168,9 @@ export async function GET(): Promise<NextResponse> {
 
   let excelStat = null;
   if (excelExists) {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const s = fs.statSync(masterExcel);
     excelStat = {
       sizeBytes: s.size,

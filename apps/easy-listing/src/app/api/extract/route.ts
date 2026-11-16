@@ -2,6 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
 import { extractJsonFromText, fallbackExtract, sanitizeFields } from '@/lib/extract'
 
+/**
+ * SIERRA ESTATES (easy-listing) — service-key route guard.
+ * Fails closed: when SBR_SECRET_KEY / RUNNER_API_KEY are not configured in
+ * this deployment's environment, every request is rejected. The shared key
+ * is distributed to staff/owners through the app's Settings dialog.
+ */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
+export function requireServiceKey(req: Request): NextResponse | null {
+  const expected =
+    process.env.SBR_SECRET_KEY || process.env.RUNNER_API_KEY || ''
+  const provided =
+    req.headers.get('x-sbr-secret-key') || req.headers.get('x-runner-key') || ''
+  if (expected && provided && safeEqual(provided, expected)) return null
+  return NextResponse.json(
+    { error: 'unauthorized', hint: 'configure the service key in Settings; server compares x-sbr-secret-key against SBR_SECRET_KEY' },
+    { status: 401 },
+  )
+}
+
 export const runtime = 'nodejs'
 
 const SYSTEM_PROMPT = `You are a data-extraction assistant for "Sierra Estates", an Egyptian real-estate brokerage. You receive a property description written by an agent (may be Arabic, Egyptian dialect, English, or mixed) and must extract structured data from it.
@@ -24,6 +49,9 @@ Numbers may be written as "10 مليون", "10.5 مليون", "١٠ مليون",
 
 export async function POST(req: NextRequest) {
   try {
+
+  const denied = requireServiceKey(req)
+  if (denied) return denied
     const body = await req.json()
     const description = String(body?.description ?? '').trim()
     if (!description) {

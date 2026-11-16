@@ -3,6 +3,9 @@ import { OAuthStore } from '../lib/mcp/oauth-store';
 import { GET as getAuthMetadata } from '../app/api/well-known/oauth-authorization-server/route';
 import { GET as getResourceMetadata } from '../app/api/well-known/oauth-protected-resource/route';
 import { POST as registerClientRoute } from '../app/api/mcp/oauth/register/route';
+
+// DCR route is service/staff-gated; tests authenticate with the runner key.
+process.env.RUNNER_API_KEY = 'test-runner-key';
 import { GET as authorizeRoute } from '../app/api/mcp/oauth/authorize/route';
 import { POST as tokenRoute } from '../app/api/mcp/oauth/token/route';
 
@@ -78,7 +81,7 @@ describe('OAuth 2.1 Remote MCP Authorization Engine', () => {
     it('handles DCR registration route', async () => {
       const req = new Request('https://sierra-estates.net/api/mcp/oauth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-runner-key': 'test-runner-key' },
         body: JSON.stringify({
           client_name: 'Dynamic Claude Client',
           redirect_uris: ['https://claude.ai/api/auth/callback'],

@@ -18,7 +18,7 @@ except Exception:
     pass
 
 if TYPE_CHECKING:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Depends, Request, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
 else:
@@ -55,6 +55,25 @@ from hubspot_sync import HubSpotSyncHub
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
+
+# ── Service authentication (fail-closed) ─────────────────────────────────────
+# Every route except /health requires a service key: x-runner-key or
+# x-sbr-secret-key matching RUNNER_API_KEY / SBR_SECRET_KEY. No hardcoded
+# fallbacks — when the env keys are absent, every request is rejected.
+_SERVICE_KEYS = [k for k in (os.getenv("RUNNER_API_KEY", ""), os.getenv("SBR_SECRET_KEY", "")) if k]
+
+import hmac as _hmac
+
+async def require_service_key(request: Request) -> None:
+    if request.url.path == "/health":
+        return
+    if not _SERVICE_KEYS:
+        raise HTTPException(status_code=503, detail="service keys not configured (RUNNER_API_KEY / SBR_SECRET_KEY)")
+    provided = request.headers.get("x-runner-key") or request.headers.get("x-sbr-secret-key") or ""
+    if provided and any(_hmac.compare_digest(provided, k) for k in _SERVICE_KEYS):
+        return
+    raise HTTPException(status_code=401, detail="unauthorized: service key required")
+
 app = FastAPI(
     title="Sierra Estates API",
     description=(
@@ -62,7 +81,9 @@ app = FastAPI(
         "ECC Memory, CRM & Valuation Engine."
     ),
     version="1.0.0",
+    dependencies=[Depends(require_service_key)],
 )
+
 
 app.add_middleware(
     CORSMiddleware,

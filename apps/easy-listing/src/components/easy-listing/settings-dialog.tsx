@@ -152,7 +152,7 @@ export function SettingsDialog({ open, onOpenChange, settings, onSavedSettings, 
               id="s-secret"
               dir="ltr"
               className="text-start text-xs"
-              placeholder="SE_OUTREACH_SECRET_2026_CAIRO"
+              placeholder="paste the shared service key (x-sbr-secret-key)"
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
             />

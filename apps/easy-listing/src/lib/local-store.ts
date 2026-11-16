@@ -14,7 +14,10 @@ export const DEFAULT_APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbziL2a1R8N4ytEI8BNu8WFfVSbviUxfYRcfoOyVOpCC7q3NUogxSKMCn6DoTuN6jEdW/exec'
 
 export const DEFAULT_COMPANY_PHONE = '01092048333'
-export const DEFAULT_SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO'
+// Fail-closed: no hardcoded outreach secret in the client bundle.
+// Staff/owners configure the shared service key in Settings; the server
+// rejects unauthenticated /api/save|extract|generate calls without it.
+export const DEFAULT_SECRET = ''
 
 export const DEFAULT_SETTINGS: AppSettings = {
   appsScriptUrl: DEFAULT_APPS_SCRIPT_URL,

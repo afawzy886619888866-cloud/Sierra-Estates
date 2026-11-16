@@ -30,11 +30,51 @@ export const VipInquiryModal: React.FC<VipInquiryModalProps> = ({
   const [submitted, setSubmitted] = useState(false);
   const [bookingRef, setBookingRef] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  // §21 no-fabrication: this used to mint a fake "SE-VIP-XXXXXX" reference
+  // without any network call. It now submits a real viewing request through
+  // /api/viewing-requests (the canonical intake — lead row, viewing slot,
+  // golden-hour followup, stakeholder dispatch) and shows the REAL request
+  // id. Failures surface an honest error instead of a fabricated success.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const refCode = 'SE-VIP-' + Math.floor(100000 + Math.random() * 900000);
-    setBookingRef(refCode);
-    setSubmitted(true);
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/viewing-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyCode: (selectedUnit?.unitCode as string) || preferredCompound || 'VIP-PRIVATE-DESK',
+          visitorName: fullName.trim(),
+          visitorPhone: phone.trim(),
+          ...(email.trim() ? { visitorEmail: email.trim() } : {}),
+          preferredDate: preferredDate, // <input type="date"> → YYYY-MM-DD
+          ...(preferredDate ? {} : {}),
+          message: `VIP private-client consultation — ${preferredCompound || 'general'}${preferredDate ? ` (requested slot ${preferredDate})` : ''}`,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        setSubmitError(
+          data?.error ||
+            (res.status === 400 && data?.details
+              ? data.details.map((d: { message: string }) => d.message).join('; ')
+              : '') ||
+            (isAr ? 'تعذّر إرسال الطلب — برجاء المحاولة مرة أخرى.' : 'Submission failed — please try again.'),
+        );
+        return;
+      }
+      setBookingRef(String(data.requestId || ''));
+      setSubmitted(true);
+    } catch {
+      setSubmitError(isAr ? 'تعذّر الاتصال بالخدمة — برجاء المحاولة مرة أخرى.' : 'Could not reach the booking service — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

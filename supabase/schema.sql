@@ -3131,3 +3131,24 @@ CREATE TABLE IF NOT EXISTS public.inbound_telegram_audit_log (
 ALTER TABLE public.inbound_telegram_audit_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "service_role_all" ON public.inbound_telegram_audit_log;
 CREATE POLICY "service_role_all" ON public.inbound_telegram_audit_log FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+
+-- ============================================================================
+-- APPENDIX — Live reconciliation delta (2026-11-16, idempotent)
+-- Applied live to Supabase project gaxfqcietzoonlmatiot via migrations
+-- 20261115046000..20261115049000 (see supabase/migrations/). Reproduced here
+-- so a database bootstrapped from this file converges to the live state.
+-- ============================================================================
+-- (full statements live in supabase/migrations/20261115_046..049 — this file
+--  intentionally keeps only the delta inventory to avoid format drift:
+--   * 046: client_requests staff policy gated on public.is_staff() (no USING(TRUE)),
+--          career_applications recruitment columns, whatsapp_lead_sessions,
+--          storage buckets property-media + career-applications
+--   * 047: public.units / public.real_available_units view DDL (live defs)
+--   * 048: listings lead_count/ai_score/score_tier/ai_scored_at/version_id
+--   * 049: rpc_update_unit_field (optimistic locking), public_properties_view
+--          (PII-free, security_invoker), outreach_dead_letter_queue,
+--          inbound_telegram_audit_log (code-shaped columns), staff-read policies
+--   * grants: listings SELECT for anon+authenticated, TRUNCATE revoked from all
+--             non-admin roles; client_requests anon-free (service-role doctrine)
+-- )

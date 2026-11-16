@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 const execFileAsync = promisify(execFile);
 
@@ -49,8 +50,11 @@ async function runAoCli(args: string[]): Promise<any> {
  * GET /api/agent-orchestrator
  * Returns live status of Windows Agent Orchestrator app, registered projects, active sessions, and AI harnesses.
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     // 1. Try querying local daemon over HTTP
 
     const projectsData = await queryAoDaemon('/api/v1/projects');
@@ -141,6 +145,9 @@ export async function GET(_req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     let body: any = {};
     try {
       body = await req.json();

@@ -8,7 +8,25 @@ import uvicorn
 
 from agent_core import run_agent_turn
 
-app = FastAPI(title="Vertex Omni-Agent (Titan)")
+
+# ── Service authentication (fail-closed) ─────────────────────────────────────
+import os as _os, hmac as _hmac
+from fastapi import Depends, Request, HTTPException as _HTTPException
+
+_SERVICE_KEYS = [k for k in (_os.getenv("RUNNER_API_KEY", ""), _os.getenv("SBR_SECRET_KEY", "")) if k]
+
+async def require_service_key(request: Request) -> None:
+    if request.url.path == "/health":
+        return
+    if not _SERVICE_KEYS:
+        raise _HTTPException(status_code=503, detail="service keys not configured (RUNNER_API_KEY / SBR_SECRET_KEY)")
+    provided = request.headers.get("x-runner-key") or request.headers.get("x-sbr-secret-key") or ""
+    if provided and any(_hmac.compare_digest(provided, k) for k in _SERVICE_KEYS):
+        return
+    raise _HTTPException(status_code=401, detail="unauthorized: service key required")
+
+app = FastAPI(title="Vertex Omni-Agent (Titan)", dependencies=[Depends(require_service_key)])
+
 logger = logging.getLogger("uvicorn.error")
 
 class AgentRunPayload(BaseModel):

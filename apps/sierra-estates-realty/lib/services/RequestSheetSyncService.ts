@@ -120,10 +120,13 @@ export async function syncRequestToSheet(
   // 2. Dispatch to Google Apps Script Web App
   const url = process.env.SHEETS_WEBAPP_URL || process.env.WF_SHEET_WRITE_URL;
   const secret =
+    // Fail-closed: env-only secret chain — the hardcoded legacy literal was
+    // removed (rotation point: SIERRA_SECRET_KEY). An empty secret makes the
+    // Apps Script reject the write; the DB/local-mirror save still succeeds.
     process.env.SIERRA_SECRET_KEY ||
     process.env.SHEETS_WEBAPP_SECRET ||
     process.env.WF_SHEET_WRITE_SECRET ||
-    'SE_OUTREACH_SECRET_2026_CAIRO';
+    '';
 
   if (!url) {
     logger.info('[REQUEST_SHEET] SHEETS_WEBAPP_URL not configured — saved to local requests mirror & DB.');
@@ -172,7 +175,8 @@ export async function syncRequestToSheet(
     };
   } catch (err: any) {
     logger.warn('[REQUEST_SHEET] Google Sheet sync dispatch warning:', err.message);
-    return { ok: true, error: err.message, sheet: 'Client_Requests (Local Mirror)' };
+    // honest failure: ok:true here masked dispatch outages
+    return { ok: false, error: err.message, sheet: 'Client_Requests (Local Mirror only — Apps Script dispatch failed)' };
   }
 }
 

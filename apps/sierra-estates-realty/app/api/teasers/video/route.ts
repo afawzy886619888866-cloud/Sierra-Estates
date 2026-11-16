@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { VideoTeaserEngine } from '@sierra-estates/agents-core';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,9 @@ const videoTeaserRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const rawBody = await req.json();
     const parseResult = videoTeaserRequestSchema.safeParse(rawBody);
 

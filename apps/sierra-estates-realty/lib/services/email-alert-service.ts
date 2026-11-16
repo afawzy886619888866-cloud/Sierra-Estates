@@ -152,15 +152,16 @@ export async function sendNewListingEmailAlert(data: ListingNotificationData): P
   }
 
   // 2. Google Apps Script MailApp Relay Attempt
+  // Fail-closed: env-only relay URL (no hardcoded Apps Script deployment URL).
   const scriptUrl =
     process.env.SHEETS_WEBAPP_URL ||
     process.env.APPS_SCRIPT_URL ||
-    'https://script.google.com/macros/s/AKfycbziL2a1R8N4ytEI8BNu8WFfVSbviUxfYRcfoOyVOpCC7q3NUogxSKMCn6DoTuN6jEdW/exec';
+    '';
 
   const secret =
     process.env.SIERRA_SECRET_KEY ||
     process.env.SHEETS_WEBAPP_SECRET ||
-    'SE_OUTREACH_SECRET_2026_CAIRO';
+    '';
 
   if (scriptUrl) {
     try {

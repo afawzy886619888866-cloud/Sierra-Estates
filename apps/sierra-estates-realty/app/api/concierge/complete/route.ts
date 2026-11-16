@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { generateCloserHandoff } from '@/lib/services/handoff-service';
 import { escapeTelegramHtml } from '@/lib/telegram';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 export async function POST(req: Request) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const { leadId } = await req.json().catch(() => ({}));
     if (typeof leadId !== 'string' || leadId.length === 0 || leadId.length > 200) {
       return NextResponse.json({ error: 'Missing or invalid leadId' }, { status: 400 });

@@ -2,6 +2,11 @@ import crypto from 'crypto';
 import { GET as getAuthMetadata } from '../app/api/well-known/oauth-authorization-server/route';
 import { GET as getResourceMetadata } from '../app/api/well-known/oauth-protected-resource/route';
 import { POST as registerRoute } from '../app/api/mcp/oauth/register/route';
+
+// /api/mcp/oauth/register + /authorize are service/staff-gated — the smoke
+// runner authenticates with the runner key.
+process.env.RUNNER_API_KEY = 'test-runner-key';
+const GATE = { 'x-runner-key': 'test-runner-key' };
 import { GET as authorizeRoute } from '../app/api/mcp/oauth/authorize/route';
 import { POST as tokenRoute } from '../app/api/mcp/oauth/token/route';
 import { POST as mcpPostRoute } from '../app/api/mcp/route';
@@ -39,7 +44,7 @@ describe('MCP End-to-End Smoke Verification (M10.4)', () => {
     // 3. Dynamic Client Registration (RFC 7591)
     const dcrReq = new Request('https://sierra-estates.net/api/mcp/oauth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...GATE },
       body: JSON.stringify({
         client_name: 'Claude Custom Cutover Connector',
         redirect_uris: ['https://claude.ai/api/auth/callback'],
@@ -57,7 +62,7 @@ describe('MCP End-to-End Smoke Verification (M10.4)', () => {
     const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
 
     const authUrl = `https://sierra-estates.net/api/mcp/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=https://claude.ai/api/auth/callback&code_challenge=${challenge}&code_challenge_method=S256&state=cutover-smoke`;
-    const authorizeRes = await authorizeRoute(new Request(authUrl));
+    const authorizeRes = await authorizeRoute(new Request(authUrl, { headers: GATE }));
     expect(authorizeRes.status).toBe(302);
     const location = authorizeRes.headers.get('location') || '';
     const redirectUrl = new URL(location);

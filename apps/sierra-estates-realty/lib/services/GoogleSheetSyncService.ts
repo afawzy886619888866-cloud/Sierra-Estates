@@ -146,13 +146,15 @@ export async function syncWebsiteSubmissionToSheet(
 ): Promise<WebsiteSheetSyncResult> {
   const url = process.env.SHEETS_WEBAPP_URL || process.env.WF_SHEET_WRITE_URL;
   // Secret chain mirrors /api/sync/sheet-webhook: SIERRA_SECRET_KEY is the
-  // canonical rotation point; the legacy vars and constant keep already-
-  // configured deployments authenticating.
+  // canonical rotation point. No hardcoded fallback.
   const secret =
+    // Fail-closed: env-only secret chain — the hardcoded legacy literal was
+    // removed (rotation point: SIERRA_SECRET_KEY). An empty secret makes the
+    // Apps Script reject the write; the DB/local-mirror save still succeeds.
     process.env.SIERRA_SECRET_KEY ||
     process.env.SHEETS_WEBAPP_SECRET ||
     process.env.WF_SHEET_WRITE_SECRET ||
-    'SE_OUTREACH_SECRET_2026_CAIRO';
+    '';
 
   if (!url) {
     logger.info(

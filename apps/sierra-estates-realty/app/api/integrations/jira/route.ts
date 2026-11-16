@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 const jiraLeadSchema = z.object({
   phone: z.string().min(6, 'Phone number must be at least 6 digits'),
@@ -15,6 +16,9 @@ const jiraLeadSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const rawBody = await req.json();
     const parseResult = jiraLeadSchema.safeParse(rawBody);
 

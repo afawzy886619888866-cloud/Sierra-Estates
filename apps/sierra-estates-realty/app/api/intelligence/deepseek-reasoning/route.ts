@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deepseekReasoningEngine } from '@sierra-estates/deepseek-harness';
 import { eccMemory } from '@/lib/eccMemoryEngine';
 import { logger } from '@/lib/logger';
+import { requireStaffOrServiceKey, requireServiceKey } from '@/lib/server/route-guard';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const eccStats = eccMemory.getStats();
     return NextResponse.json({
       success: true,
@@ -26,6 +30,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'reason';
 

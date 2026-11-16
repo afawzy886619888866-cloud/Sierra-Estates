@@ -4,9 +4,13 @@ import {
   VipInvestorProfile,
   VipNegotiationSummary,
 } from '@sierra-estates/agents-core';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const profile: VipInvestorProfile = {
       investorId: 'vip_inv_8892',
       fullName: 'Eng. Tamer Hegazy',

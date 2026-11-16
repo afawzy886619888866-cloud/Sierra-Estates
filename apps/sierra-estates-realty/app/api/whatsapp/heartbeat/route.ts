@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 /**
  * POST /api/whatsapp/heartbeat
  * Called by the scraper bot every ~60s to signal it is alive.
  */
 export async function POST(req: Request) {
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
   const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

@@ -179,11 +179,39 @@ function sendJson(res, status, payload) {
   res.end(body);
 }
 
+
+// ── Service authentication (fail-closed) ─────────────────────────────────────
+// The admin bridge is bound to loopback only; requests still must carry a
+// service key (x-sbr-secret-key / x-runner-key / x-api-key). /api/health and
+// the static /admin page stay readable; everything else requires the key.
+import crypto from 'node:crypto';
+const ADMIN_BRIDGE_SERVICE_KEYS = [
+  process.env.SBR_SECRET_KEY,
+  process.env.RUNNER_API_KEY,
+  process.env.ADMIN_API_KEY,
+].filter(Boolean);
+
+function bridgeAuthorized(req, url) {
+  if (url.pathname === '/api/health') return true;
+  if (ADMIN_BRIDGE_SERVICE_KEYS.length === 0) return false; // fail closed
+  const provided =
+    req.headers['x-sbr-secret-key'] || req.headers['x-runner-key'] || req.headers['x-api-key'] || '';
+  if (!provided) return false;
+  return ADMIN_BRIDGE_SERVICE_KEYS.some((k) => crypto.timingSafeEqual(Buffer.from(String(provided)), Buffer.from(k)) ||
+    (String(provided).length === k.length && String(provided) === k));
+}
+
 const server = http.createServer(async (req, res) => {
+  const url0 = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (!bridgeAuthorized(req, url0)) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'unauthorized: service key required' }));
+    return;
+  }
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const p = url.pathname;
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
 
@@ -380,7 +408,7 @@ const server = http.createServer(async (req, res) => {
   sendJson(res, 404, { error: 'Not Found', path: p });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '127.0.0.1', () => {
   log(`Sierra Admin Bridge listening on http://127.0.0.1:${PORT}/admin`);
   log(`Connected to OpenWA Gateway (${GATEWAY_URL}) and Workflow Runner (${RUNNER_URL})`);
 });

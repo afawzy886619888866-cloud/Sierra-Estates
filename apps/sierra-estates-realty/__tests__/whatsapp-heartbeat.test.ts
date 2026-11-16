@@ -10,6 +10,7 @@ import { GET, POST } from '@/app/api/whatsapp/heartbeat/route';
 
 describe('/api/whatsapp/heartbeat route', () => {
   beforeEach(() => {
+    process.env.RUNNER_API_KEY = 'test-runner-key';
     jest.clearAllMocks();
   });
 
@@ -25,7 +26,10 @@ describe('/api/whatsapp/heartbeat route', () => {
   test('POST records active heartbeat and returns ok payload', async () => {
     recordHeartbeatMock.mockResolvedValue(undefined);
 
-    const req = new Request('http://localhost:3000/api/whatsapp/heartbeat', { method: 'POST' });
+    const req = new Request('http://localhost:3000/api/whatsapp/heartbeat', {
+      method: 'POST',
+      headers: { 'x-runner-key': 'test-runner-key' },
+    });
     const res = await POST(req);
     const body = await res.json();
 

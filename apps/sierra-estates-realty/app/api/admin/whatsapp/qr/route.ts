@@ -59,7 +59,8 @@ function getCandidateEndpoints(): string[] {
 }
 
 function gatewayKey(): string {
-  return process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || 'sierra-admin-secret';
+  // Fail-closed: env-only. No hardcoded admin key literal.
+  return process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || '';
 }
 
 async function firstReachableEndpoint(): Promise<string | null> {

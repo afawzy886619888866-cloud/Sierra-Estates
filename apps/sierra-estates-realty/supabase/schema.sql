@@ -118,6 +118,9 @@ CREATE TABLE IF NOT EXISTS public.listings (
     raw_data JSONB DEFAULT '{}'::jsonb,
     embedding vector(1536),
     embedding_768 vector(768),          -- Gemini gemini-embedding-001 target (see 013)
+    -- Migration 042: last owner-contact date (dd/MM/yyyy string) written
+    -- back by the Google Sheets outreach sync (/api/sync/sheet-webhook).
+    last_contact_date TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -361,6 +364,13 @@ CREATE INDEX IF NOT EXISTS idx_listings_embedding ON public.listings USING hnsw 
 CREATE INDEX IF NOT EXISTS listings_geo_idx ON public.listings USING gist (location_coords);
 
 -- Admin Portal & Dashboard Performance Optimization Indexes (database-design skill)
+-- Live-DB reconciliation: the production public.listings table predates the
+-- agent / ai_score columns (canonical in the CREATE TABLE baseline since
+-- 2026-09-17). CREATE TABLE IF NOT EXISTS cannot add columns to an existing
+-- table, so reconcile idempotently before indexing — same guard pattern the
+-- migration-037 section below already uses for freshness_score / se_code.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS ai_score NUMERIC(4, 2) DEFAULT 0;
 CREATE INDEX IF NOT EXISTS idx_listings_agent ON public.listings(agent) WHERE agent IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_listings_status_ai_score ON public.listings(status, ai_score DESC);
 CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON public.inquiries(created_at DESC);
@@ -756,6 +766,14 @@ CREATE TABLE IF NOT EXISTS public.viewings (
     source TEXT DEFAULT 'website'
         CHECK (source IN ('website', 'whatsapp', 'admin', 'property-finder', 'concierge')),
     calendar_link TEXT,
+    -- Migration 043: 3-way dispatch roster + Golden Hour deadline for the
+    -- public viewing flow (app/api/viewing-requests). Before this, the route
+    -- inserted these as columns that existed nowhere, so PostgREST rejected
+    -- every public viewing request (PGRST204).
+    ceo_email TEXT,
+    team_leader_email TEXT,
+    sales_advisor_email TEXT,
+    golden_hour_at TIMESTAMPTZ,
     -- Phase 9 (migration 015): client-survey capability token, minted when
     -- an agent marks the viewing completed. The public survey endpoint
     -- validates it server-side (service-role lookup, token = capability);
@@ -2437,22 +2455,198 @@ BEGIN
 END $$;
 
 -- ─── 47. Proximity Search Function (New Capital & Compound Radius) ────────────
-CREATE OR REPLACE FUNCTION get_listings_near_capital(capital_lat numeric, capital_lng numeric, radius_meters numeric)
-RETURNS SETOF public.listings AS $$
-BEGIN
-  RETURN QUERY
-  SELECT *
-  FROM public.listings
-  WHERE location_coords IS NOT NULL
-    AND ST_DWithin(
-      location_coords,
-      ST_SetSRID(ST_MakePoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
+-- Baseline parity with migration 041 (2026-11-01): the RPC returns a TABLE
+-- over exactly the anon-granted public-safe columns — never SELECT *, so
+-- owner/broker PII cannot leave the database. The return type changed from
+-- the original SETOF public.listings, so a drop-guard precedes the create
+-- (CREATE OR REPLACE alone cannot change a return type: 42P13).
+drop function if exists public.get_listings_near_capital(numeric, numeric, numeric);
+
+create or replace function public.get_listings_near_capital(
+  capital_lat numeric, capital_lng numeric, radius_meters numeric
+)
+returns table (
+  id text,
+  ref_id text,
+  title text,
+  title_ar text,
+  description text,
+  description_ar text,
+  compound text,
+  developer text,
+  location_area text,
+  city text,
+  property_type text,
+  deal_type text,
+  offer_type text,
+  listing_type text,
+  price numeric,
+  price_currency text,
+  price_per_sqm numeric,
+  bedrooms integer,
+  bathrooms integer,
+  area_sqm numeric,
+  garden_sqm numeric,
+  roof_sqm numeric,
+  terrace_sqm numeric,
+  plot_sqm numeric,
+  floor_number integer,
+  unit_view text,
+  finishing_type text,
+  furnishing_status text,
+  delivery_year integer,
+  delivery_quarter text,
+  down_payment numeric,
+  installment_years integer,
+  monthly_installment numeric,
+  maintenance_fee_per_sqm numeric,
+  roi_percentage numeric,
+  cap_rate numeric,
+  valuation_status text,
+  status text,
+  publish_status text,
+  stale boolean,
+  featured boolean,
+  is_hot_deal boolean,
+  is_featured_gem boolean,
+  source_channel text,
+  images text[],
+  img text,
+  tag text,
+  ai_score numeric,
+  amenities text[],
+  floor_plan_url text,
+  virtual_tour_url text,
+  photo_count integer,
+  has_floor_plan boolean,
+  has_virtual_tour boolean,
+  data_quality_score integer,
+  freshness_score integer,
+  verified boolean,
+  publish_to_client boolean,
+  availability text,
+  days_on_market integer,
+  se_code text,
+  code text,
+  sbr_code text,
+  unit_code text,
+  reference_code text,
+  pf_reference_number text,
+  pf_status text,
+  project_id text,
+  compound_id text,
+  developer_id text,
+  latitude double precision,
+  longitude double precision,
+  agent_name text,
+  automation jsonb,
+  sync_source text,
+  last_sync_at timestamptz,
+  created_at timestamptz,
+  updated_at timestamptz,
+  published_at timestamptz,
+  verified_at timestamptz
+)
+language plpgsql
+stable
+as $function$
+begin
+  return query
+  select
+    l.id,
+    l.ref_id,
+    l.title,
+    l.title_ar,
+    l.description,
+    l.description_ar,
+    l.compound,
+    l.developer,
+    l.location_area,
+    l.city,
+    l.property_type,
+    l.deal_type,
+    l.offer_type,
+    l.listing_type,
+    l.price,
+    l.price_currency,
+    l.price_per_sqm,
+    l.bedrooms,
+    l.bathrooms,
+    l.area_sqm,
+    l.garden_sqm,
+    l.roof_sqm,
+    l.terrace_sqm,
+    l.plot_sqm,
+    l.floor_number,
+    l.unit_view,
+    l.finishing_type,
+    l.furnishing_status,
+    l.delivery_year,
+    l.delivery_quarter,
+    l.down_payment,
+    l.installment_years,
+    l.monthly_installment,
+    l.maintenance_fee_per_sqm,
+    l.roi_percentage,
+    l.cap_rate,
+    l.valuation_status,
+    l.status,
+    l.publish_status,
+    l.stale,
+    l.featured,
+    l.is_hot_deal,
+    l.is_featured_gem,
+    l.source_channel,
+    l.images,
+    l.img,
+    l.tag,
+    l.ai_score,
+    l.amenities,
+    l.floor_plan_url,
+    l.virtual_tour_url,
+    l.photo_count,
+    l.has_floor_plan,
+    l.has_virtual_tour,
+    l.data_quality_score,
+    l.freshness_score,
+    l.verified,
+    l.publish_to_client,
+    l.availability,
+    l.days_on_market,
+    l.se_code,
+    l.code,
+    l.sbr_code,
+    l.unit_code,
+    l.reference_code,
+    l.pf_reference_number,
+    l.pf_status,
+    l.project_id,
+    l.compound_id,
+    l.developer_id,
+    l.latitude,
+    l.longitude,
+    l.agent_name,
+    l.automation,
+    l.sync_source,
+    l.last_sync_at,
+    l.created_at,
+    l.updated_at,
+    l.published_at,
+    l.verified_at
+  from public.listings l
+  where l.location_coords is not null
+    and st_dwithin(
+      l.location_coords,
+      st_setsrid(st_makepoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
       radius_meters::float8
     )
-    AND (status = 'available' OR status = 'active')
-    AND publish_status = 'PUBLISHABLE';
-END;
-$$ LANGUAGE plpgsql;
+    and (l.status = 'available' or l.status = 'active')
+    and l.publish_status = 'PUBLISHABLE';
+end;
+$function$;
+
+comment on function public.get_listings_near_capital is
+'Public radius search: returns only PUBLISHABLE units (Phase D publish gate) and only the anon-granted public-safe columns (migration 041 — no owner/broker PII, no raw_data).';
 
 -- ─── 48. Supabase Realtime Publication ────────────────────────────────────────
 DO $$
@@ -2478,8 +2672,8 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.broker_sessions (
     id              BIGSERIAL PRIMARY KEY,
     session_id      TEXT UNIQUE NOT NULL,
-    messages        JSONB NOT NULL DEFAULT '[]',
-    profile         JSONB NOT NULL DEFAULT '{}',
+    messages        JSONB NOT NULL DEFAULT '[]'::jsonb,
+    profile         JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -2504,7 +2698,315 @@ CREATE POLICY "service_role_all" ON public.broker_sessions
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 
--- ─── 50. Optimistic Locking, Non-PII public_properties_view & Queues (048/049) ─
+
+-- ==============================================================================
+-- Migration 037 — UNIFIED ADMIN COMMAND CENTER (additive; mirrored from
+-- supabase/migrations/20261031_037_unified_command_center.sql — see that file
+-- for the full design notes. Every statement is idempotent and guarded so it
+-- applies cleanly on schema.sql-only databases as well.)
+-- ==============================================================================
+-- Migration 037 — UNIFIED ADMIN COMMAND CENTER
+-- ============================================================================
+-- Powers the command-center routes added under app/admin/ (overview, pipeline,
+-- properties, leads, bots, applicants) and the public verified showcase:
+--
+--   1. listings.freshness_score  — 0..100 inventory freshness discipline.
+--      Public verified showcase requires freshness_score >= 90 (spec target).
+--      Score decays 2 points per day since updated_at (floor 20): 5 days = 90,
+--      30 days = 40 — aligned with migration 011's 30-day stale SLA.
+--   2. listings.se_code          — the canonical Sierra Estates inventory
+--      code, UNIQUE when present. Backfilled from the legacy code /
+--      reference_code columns (one row per code — no duplicate keys created).
+--   3. public.webhook_logs        — unified inbound webhook observability for
+--      /api/webhooks/whatsapp and /api/telegram/webhook (source, payload,
+--      signature validity, processing status, latency). Staff-only read,
+--      written by the service-role route handlers, streamed over Realtime so
+--      the /admin/bots operations desk tails it live.
+--   4. career_applications.cv_url — recruitment CV link inspected by
+--      /admin/applicants.
+--   5. public.applicants          — security_invoker VIEW aliasing
+--      career_applications, so the command center reads one source of truth
+--      under the spec's "applicants" name (public insert stays on the base
+--      table; staff read flows through the base table's RLS).
+--
+-- Design rules honoured: 100% additive & idempotent (safe to re-run — verified
+-- against a real PostgreSQL in scripts/validate-migration-037.mjs), no
+-- fabricated data (§21 — freshness is derived from updated_at, never invented),
+-- no destructive changes to the listing status state machine from migrations
+-- 011/035 (verified/stale/sold toggles ride the existing publish_status,
+-- stale BOOLEAN and guarded status transitions). Every statement referencing
+-- columns introduced by other migrations is guarded by a catalog check, so
+-- this file applies cleanly on schema.sql-only databases as well.
+-- ============================================================================
+
+-- ─── 1. Inventory freshness score ──────────────────────────────────────────
+-- Added NULL-defaulted: a column DEFAULT of 100 would retro-fill every EXISTING
+-- row with a fabricated perfect score (a 60-day-old listing must not read 100%
+-- fresh). Real values come from the backfill below; only NEW rows default 100
+-- (a row created now IS fresh).
+ALTER TABLE public.listings
+  ADD COLUMN IF NOT EXISTS freshness_score INTEGER;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'listings_freshness_score_check'
+  ) THEN
+    ALTER TABLE public.listings
+      ADD CONSTRAINT listings_freshness_score_check
+      CHECK (freshness_score IS NULL OR (freshness_score >= 0 AND freshness_score <= 100));
+  END IF;
+END $$;
+
+COMMENT ON COLUMN public.listings.freshness_score IS
+  'Inventory freshness 0..100 (command center). 100 = updated today; decays 2/day (floor 20). Public verified showcase requires >= 90. Recomputed by public.refresh_all_listing_freshness().';
+
+-- Freshness from a timestamp: 100 - 2*days, floored at 20.
+-- STABLE (not IMMUTABLE): the result depends on NOW(), so it must never be
+-- usable in an index expression — computing it per-row keeps semantics honest.
+CREATE OR REPLACE FUNCTION public.compute_listing_freshness(p_updated_at TIMESTAMPTZ)
+RETURNS INTEGER
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT GREATEST(20, 100 - 2 * COALESCE(FLOOR(EXTRACT(EPOCH FROM (NOW() - p_updated_at)) / 86400)::INT, 0))::INT;
+$$;
+
+-- Backfill every row once (idempotent: only rows without a score are touched).
+--
+-- handle_updated_at gains a transaction-scoped opt-out first (the repo already
+-- uses custom GUCs — see app.actor in migration 011): freshness_score is
+-- DERIVED from updated_at, so writing it must never restart the clock. Without
+-- the opt-out the backfill would stamp NOW() onto every listing at once —
+-- wiping the real edit history and making the whole inventory instantly
+-- "fresh". Every other caller behaves exactly as before (the GUC is never set
+-- outside these derived writes).
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF current_setting('app.skip_updated_at', true) = 'on' THEN
+        RETURN NEW;
+    END IF;
+    NEW.updated_at = TIMEZONE('utc'::text, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Heal semantics (not just backfill): recompute any row whose stored score
+-- disagrees with its clock — covers both never-scored NULLs AND rows
+-- fabricated by an earlier DEFAULT-100 apply of this migration (a 60-day-old
+-- listing must never read 100% fresh). Idempotent: a re-run is a no-op.
+SET app.skip_updated_at = 'on';
+UPDATE public.listings
+   SET freshness_score = public.compute_listing_freshness(updated_at)
+ WHERE freshness_score IS DISTINCT FROM public.compute_listing_freshness(updated_at);
+RESET app.skip_updated_at;
+
+-- Future rows default to 100 (created now = fresh); set AFTER the heal so
+-- the default never fabricates scores for existing inventory.
+ALTER TABLE public.listings ALTER COLUMN freshness_score SET DEFAULT 100;
+
+CREATE INDEX IF NOT EXISTS idx_listings_freshness_score ON public.listings(freshness_score);
+
+-- Composite gate index — only when the publish_status column (migration 013)
+-- is present, so a schema.sql-only database still applies cleanly.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'listings' AND column_name = 'publish_status'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_listings_fresh_verify_gate
+               ON public.listings (freshness_score, publish_status)
+               WHERE publish_status = ''PUBLISHABLE''';
+  END IF;
+END $$;
+
+-- Full recompute used by the Curator workflow and /admin/properties.
+-- The 30-day stale SLA mirrors migration 011's flag_stale_listings() on the
+-- raw status vocabulary (guarded on the `stale` column existing). Returns
+-- stats so the console renders honest numbers.
+CREATE OR REPLACE FUNCTION public.refresh_all_listing_freshness()
+RETURNS TABLE (refreshed BIGINT, avg_freshness NUMERIC, fresh_over_90 BIGINT, stale_flagged BIGINT)
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  v_refreshed   BIGINT;
+  v_stale_count BIGINT := 0;
+  v_avg         NUMERIC;
+  v_over_90     BIGINT;
+BEGIN
+  -- Derived writes only — the freshness clock must not restart (see
+  -- handle_updated_at above). Transaction-local, restored before returning.
+  PERFORM set_config('app.skip_updated_at', 'on', true);
+
+  UPDATE public.listings
+     SET freshness_score = public.compute_listing_freshness(updated_at)
+   WHERE freshness_score IS DISTINCT FROM public.compute_listing_freshness(updated_at);
+  GET DIAGNOSTICS v_refreshed = ROW_COUNT;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'listings' AND column_name = 'stale'
+  ) THEN
+    UPDATE public.listings
+       SET stale = TRUE
+     WHERE stale = FALSE
+       AND status IN ('active', 'available', 'verified', 'published')
+       AND updated_at < NOW() - INTERVAL '30 days';
+    GET DIAGNOSTICS v_stale_count = ROW_COUNT;
+  END IF;
+
+  PERFORM set_config('app.skip_updated_at', 'off', true);
+
+  SELECT COALESCE(ROUND(AVG(freshness_score)), 0), COUNT(*) FILTER (WHERE freshness_score >= 90)
+    INTO v_avg, v_over_90
+    FROM public.listings
+   WHERE freshness_score IS NOT NULL;
+
+  RETURN QUERY SELECT v_refreshed, v_avg, v_over_90, v_stale_count;
+END;
+$$;
+
+COMMENT ON FUNCTION public.refresh_all_listing_freshness IS
+  'Command center Curator action: recompute listings.freshness_score from updated_at and apply the 30-day stale SLA. Returns (refreshed, avg_freshness, fresh_over_90, stale_flagged).';
+
+-- ─── 2. Canonical se_code (UNIQUE Sierra Estates inventory code) ───────────
+ALTER TABLE public.listings
+  ADD COLUMN IF NOT EXISTS se_code TEXT;
+
+COMMENT ON COLUMN public.listings.se_code IS
+  'Canonical Sierra Estates inventory code (e.g. SE-SUB-123456). UNIQUE when present; backfilled from legacy code/reference_code.';
+
+-- Backfill: one owner per code so the unique index can never fail on legacy
+-- duplicates. The pick is DETERMINISTIC — code, created_at, then id as the
+-- final tiebreaker — so a re-run always selects the same row (bulk imports
+-- share created_at; without the id tiebreak a re-run could pick the other
+-- duplicate and violate idx_listings_se_code_unique). Bookkeeping only: the
+-- clock is not restarted (see handle_updated_at above).
+SET app.skip_updated_at = 'on';
+UPDATE public.listings l
+   SET se_code = src.code
+  FROM (
+    SELECT DISTINCT ON (TRIM(COALESCE(c.code, c.reference_code)))
+           c.id,
+           TRIM(COALESCE(c.code, c.reference_code)) AS code
+      FROM public.listings c
+     WHERE COALESCE(c.code, c.reference_code) IS NOT NULL
+       AND TRIM(COALESCE(c.code, c.reference_code)) <> ''
+    ORDER BY TRIM(COALESCE(c.code, c.reference_code)), c.created_at ASC, c.id ASC
+  ) AS src
+ WHERE l.id = src.id
+   AND l.se_code IS NULL;
+RESET app.skip_updated_at;
+
+-- Partial unique index: enforces uniqueness for every SET value while any
+-- number of rows may still have NULL (not yet coded).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_listings_se_code_unique
+  ON public.listings (se_code)
+  WHERE se_code IS NOT NULL;
+
+-- ─── 3. Unified webhook observability ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.webhook_logs (
+  id              TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  source          TEXT NOT NULL CHECK (source IN ('whatsapp', 'telegram', 'other')),
+  event_type      TEXT,
+  external_id     TEXT,
+  payload         JSONB DEFAULT '{}'::jsonb,
+  signature_valid BOOLEAN,
+  status          TEXT DEFAULT 'received'
+                  CHECK (status IN ('received', 'processed', 'duplicate', 'rejected', 'error')),
+  error           TEXT,
+  latency_ms      INT,
+  created_at      TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at      TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+COMMENT ON TABLE public.webhook_logs IS
+  'Inbound webhook ledger for /api/webhooks/whatsapp and /api/telegram/webhook — the /admin/bots operations desk tails this live over Realtime. Written by service-role route handlers; staff-only read.';
+
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_source  ON public.webhook_logs(source);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_created ON public.webhook_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_status  ON public.webhook_logs(status);
+
+ALTER TABLE public.webhook_logs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "webhook_logs_staff_read" ON public.webhook_logs;
+  CREATE POLICY "webhook_logs_staff_read" ON public.webhook_logs
+    FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
+-- Inserts happen through the service-role client (webhook route handlers),
+-- which bypasses RLS; no anon/authenticated write policy by design.
+
+GRANT SELECT ON public.webhook_logs TO authenticated;
+GRANT ALL ON public.webhook_logs TO service_role;
+
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.webhook_logs;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;  -- already streamed
+    WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
+  END;
+END $$;
+
+-- ─── 4. Recruitment: CV link ───────────────────────────────────────────────
+ALTER TABLE public.career_applications
+  ADD COLUMN IF NOT EXISTS cv_url TEXT;
+
+COMMENT ON COLUMN public.career_applications.cv_url IS
+  'Candidate CV / portfolio link (public careers form, inspected in /admin/applicants).';
+
+-- ─── 5. applicants VIEW (spec alias over career_applications) ──────────────
+-- security_invoker = the caller's own RLS rights on career_applications apply:
+-- staff read flows through "career_applications_staff_access", the public
+-- intake keeps INSERTing into career_applications directly.
+-- Guarded: if ANY relation named applicants already exists (e.g. a manually
+-- created table), the view AND its comment are skipped — CREATE OR REPLACE
+-- VIEW cannot replace a table, and the command-center reads fall back to
+-- career_applications.
+DO $guard$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'applicants'
+  ) THEN
+    EXECUTE $view$CREATE OR REPLACE VIEW public.applicants
+WITH (security_invoker = on) AS
+SELECT * FROM public.career_applications$view$;
+    EXECUTE $cmt$COMMENT ON VIEW public.applicants IS
+'Command-center alias for public.career_applications (single source of truth for recruitment). Reads are subject to the base table''s RLS via security_invoker.'$cmt$;
+  END IF;
+END
+$guard$;
+
+-- security_invoker executes with the INVOKER's privileges, so the base table
+-- needs an explicit SELECT grant for the viewing role. Supabase's default
+-- privileges usually cover this; the explicit grant keeps the view functional
+-- on any Postgres. Reads stay staff-only through the base table's RLS.
+GRANT SELECT ON public.career_applications TO authenticated;
+
+GRANT SELECT ON public.applicants TO authenticated;
+
+-- ─── 6. Realtime for the applicants desk ───────────────────────────────────
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.career_applications;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;  -- already streamed
+    WHEN undefined_object THEN NULL;  -- publication absent (non-Supabase test hosts)
+  END;
+END $$;
+
+-- ─── 7. Optimistic Locking, Non-PII public_properties_view & Queues (048/049) ─
 ALTER TABLE public.listings
   ADD COLUMN IF NOT EXISTS lead_count INTEGER NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS ai_score NUMERIC(5,1) NOT NULL DEFAULT 0.0,
@@ -2629,3 +3131,24 @@ CREATE TABLE IF NOT EXISTS public.inbound_telegram_audit_log (
 ALTER TABLE public.inbound_telegram_audit_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "service_role_all" ON public.inbound_telegram_audit_log;
 CREATE POLICY "service_role_all" ON public.inbound_telegram_audit_log FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+
+-- ============================================================================
+-- APPENDIX — Live reconciliation delta (2026-11-16, idempotent)
+-- Applied live to Supabase project gaxfqcietzoonlmatiot via migrations
+-- 20261115046000..20261115049000 (see supabase/migrations/). Reproduced here
+-- so a database bootstrapped from this file converges to the live state.
+-- ============================================================================
+-- (full statements live in supabase/migrations/20261115_046..049 — this file
+--  intentionally keeps only the delta inventory to avoid format drift:
+--   * 046: client_requests staff policy gated on public.is_staff() (no USING(TRUE)),
+--          career_applications recruitment columns, whatsapp_lead_sessions,
+--          storage buckets property-media + career-applications
+--   * 047: public.units / public.real_available_units view DDL (live defs)
+--   * 048: listings lead_count/ai_score/score_tier/ai_scored_at/version_id
+--   * 049: rpc_update_unit_field (optimistic locking), public_properties_view
+--          (PII-free, security_invoker), outreach_dead_letter_queue,
+--          inbound_telegram_audit_log (code-shaped columns), staff-read policies
+--   * grants: listings SELECT for anon+authenticated, TRUNCATE revoked from all
+--             non-admin roles; client_requests anon-free (service-role doctrine)
+-- )

@@ -121,7 +121,8 @@ function normalizeWaPhone(raw: string): string {
 
 async function fetchGatewayStatus(): Promise<GatewayInfo> {
   const endpoints = getCandidateEndpoints();
-  const key = process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || 'sierra-admin-secret';
+  // Fail-closed: env-only (no hardcoded admin key literal)
+  const key = process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || '';
 
   let lastError = 'No gateway endpoints configured';
 
@@ -302,7 +303,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'sessionId is required' }, { status: 400 });
       }
       const endpoints = getCandidateEndpoints();
-      const key = process.env.OPENWA_ADMIN_API_KEY || 'sierra-admin-secret';
+      const key = process.env.OPENWA_ADMIN_API_KEY || ''; // fail-closed, no literal
       let triggered = false;
       for (const endpoint of endpoints) {
         try {
@@ -331,7 +332,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Invalid phone number format' }, { status: 400 });
       }
       const endpoints = getCandidateEndpoints();
-      const key = process.env.OPENWA_ADMIN_API_KEY || 'sierra-admin-secret';
+      const key = process.env.OPENWA_ADMIN_API_KEY || ''; // fail-closed, no literal
       let sendResult: any = null;
       for (const endpoint of endpoints) {
         try {

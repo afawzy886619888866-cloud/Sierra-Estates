@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'node:fs';
 import path from 'node:path';
 import { listRecords, insertRecord } from '@sierra-estates/db';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
+import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -122,8 +124,11 @@ const CURATED_BOT_INTAKES: OwnerBotIntakeItem[] = [
   },
 ];
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const dbItems: OwnerBotIntakeItem[] = [];
 
     try {
@@ -250,6 +255,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+
+  const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
     const body = await request.json().catch(() => ({}));
     const code = String(body.code || `SE-BOT-${Date.now().toString().slice(-4)}`);
     const compound = String(body.compound || '');

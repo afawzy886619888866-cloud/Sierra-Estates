@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import fs from 'node:fs';
 import path from 'node:path';
+import { requireStaffOrServiceKey, requireServiceKey } from '@/lib/server/route-guard';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+
+  const denied = await requireServiceKey(req);
+  if (denied) return denied;
     const storePath = path.join(process.cwd(), '../../obsidian-store.json');
     const rootStorePath = path.join(process.cwd(), 'obsidian-store.json');
     const target = fs.existsSync(storePath) ? storePath : rootStorePath;

@@ -1,6 +1,31 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+/**
+ * SIERRA ESTATES (easy-listing) — service-key route guard.
+ * Fails closed: when SBR_SECRET_KEY / RUNNER_API_KEY are not configured in
+ * this deployment's environment, every request is rejected. The shared key
+ * is distributed to staff/owners through the app's Settings dialog.
+ */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
+export function requireServiceKey(req: Request): NextResponse | null {
+  const expected =
+    process.env.SBR_SECRET_KEY || process.env.RUNNER_API_KEY || ''
+  const provided =
+    req.headers.get('x-sbr-secret-key') || req.headers.get('x-runner-key') || ''
+  if (expected && provided && safeEqual(provided, expected)) return null
+  return NextResponse.json(
+    { error: 'unauthorized', hint: 'configure the service key in Settings; server compares x-sbr-secret-key against SBR_SECRET_KEY' },
+    { status: 401 },
+  )
+}
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +37,9 @@ const SUPABASE_KEY =
 
 export async function POST(req: Request) {
   try {
+
+  const denied = requireServiceKey(req)
+  if (denied) return denied
     const body = await req.json()
     const {
       role = 'OWNER',
@@ -26,8 +54,6 @@ export async function POST(req: Request) {
       mapLink = '',
       images = [],
       imageUrls = [],
-      appsScriptUrl = '',
-      secret = 'SE_OUTREACH_SECRET_2026_CAIRO',
     } = body
 
     const now = new Date().toISOString()
@@ -149,14 +175,16 @@ export async function POST(req: Request) {
 
     // 2. Google Sheets Apps Script Sync
     let sheetResult = { ok: false, urls: [] as string[], error: null as string | null }
-    const targetScriptUrl =
-      appsScriptUrl ||
-      'https://script.google.com/macros/s/AKfycbziL2a1R8N4ytEI8BNu8WFfVSbviUxfYRcfoOyVOpCC7q3NUogxSKMCn6DoTuN6jEdW/exec'
+    // Fail-closed: the Apps Script target and its secret come from the
+    // server environment only (WF_SHEET_WRITE_URL / WF_SHEET_WRITE_SECRET) —
+    // never from the request body, never from hardcoded literals.
+    const targetScriptUrl = process.env.WF_SHEET_WRITE_URL || ''
+    const sheetSecret = process.env.WF_SHEET_WRITE_SECRET || ''
 
-    if (targetScriptUrl) {
+    if (targetScriptUrl && sheetSecret) {
       try {
         const payload = {
-          secret: secret || 'SE_OUTREACH_SECRET_2026_CAIRO',
+          secret: sheetSecret,
           mode: 'easy_listing',
           code: code || effectiveInternalCode,
           compound: fields.compound || 'Not Specified',

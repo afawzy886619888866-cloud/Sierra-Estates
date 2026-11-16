@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { insertRecord, upsertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
-export async function POST() {
+import { requireStaffOrServiceKey, requireServiceKey } from '@/lib/server/route-guard';
+export async function POST(req: Request) {
   try {
+
+  const denied = await requireServiceKey(req);
+  if (denied) return denied;
     // const sync = new ObsidianVaultSync();
     // const notes = await sync.scanVault();
     const notes: any[] = [];

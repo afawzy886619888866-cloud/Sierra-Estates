@@ -73,7 +73,9 @@ const { harvesterInstance } = require('./harvester');
 const appBridge = require('./app-bridge');
 
 const PORT = parseInt(process.env.WHATSAPP_GATEWAY_PORT || process.env.PORT || '2785', 10);
-const ADMIN_API_KEY = process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || 'sierra-admin-secret';
+// Fail-closed: no hardcoded admin key literals. OPENWA_ADMIN_API_KEY (or
+// WHATSAPP_API_KEY) MUST be configured, otherwise every mutation returns 401.
+const ADMIN_API_KEY = process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_KEY || '';
 const OPERATOR_KEY = process.env.OPENWA_OPERATOR_KEY || process.env.WHATSAPP_API_TOKEN || ADMIN_API_KEY;
 
 // Session definitions: default to line-1 .. line-8 or OPENWA_SESSION_IDS
@@ -129,11 +131,13 @@ function checkAuth(req, res, next) {
   const rawIp = String(req.ip || '');
   const cleanIp = rawIp.replace(/^::ffff:/, '');
   // Check if request is genuine localhost or docker internal bridge
+  // Only true loopback is "local". RFC-1918 ranges (docker bridges / LAN) are
+  // NOT trusted — a container on the same bridge is not the operator.
   const isDirectLocal = (
     !req.headers['cf-connecting-ip'] &&
     !req.headers['cf-ray'] &&
     !req.headers['x-forwarded-for'] &&
-    (cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp.startsWith('172.') || cleanIp.startsWith('10.') || cleanIp.startsWith('192.168.'))
+    (cleanIp === '127.0.0.1' || cleanIp === '::1')
   );
 
   // Health check endpoint is safe for all (returns minimal status)
@@ -165,14 +169,14 @@ function checkAuth(req, res, next) {
     req.query.key
   );
 
+  // No hardcoded key literals — env-configured keys only. (Two static keys
+  // committed to git were removed: 'sierra-admin-secret' and two long-lived
+  // hex/owa_ keys; rotate anything that relied on them.)
   const validKeys = [
     ADMIN_API_KEY,
     OPERATOR_KEY,
     process.env.WHATSAPP_API_KEY,
     process.env.RUNNER_API_KEY,
-    'sierra-admin-secret',
-    '1363cf79809a371e01cab4e2d7dc042ef863d6f50be32cf6',
-    'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c'
   ].filter(Boolean);
   const isValidKey = Boolean(apiKey && validKeys.includes(apiKey));
 
@@ -180,8 +184,14 @@ function checkAuth(req, res, next) {
     return next();
   }
 
-  // Direct localhost write permission if strict auth is disabled
-  if (isDirectLocal && process.env.STRICT_GATEWAY_AUTH !== '1' && process.env.STRICT_GATEWAY_AUTH !== 'true') {
+  // Local (loopback) mutations are only allowed in explicit non-production
+  // dev mode with STRICT_GATEWAY_AUTH disabled — never in production.
+  const devLocalWritesAllowed = (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.STRICT_GATEWAY_AUTH !== '1' &&
+    process.env.STRICT_GATEWAY_AUTH !== 'true'
+  );
+  if (isDirectLocal && devLocalWritesAllowed) {
     return next();
   }
 

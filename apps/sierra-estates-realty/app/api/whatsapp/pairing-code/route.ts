@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 /**
  * Gateway configuration is read per-request (not captured at module load) so
@@ -44,6 +45,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
   if (!gatewayConfigured()) {
     return NextResponse.json(
       { error: 'WhatsApp gateway is not configured. Set OPENWA_HOST and OPENWA_ADMIN_API_KEY environment variables.', status: 'not_configured' },

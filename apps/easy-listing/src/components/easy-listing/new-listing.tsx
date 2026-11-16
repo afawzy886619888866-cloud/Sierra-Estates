@@ -399,7 +399,12 @@ export function NewListing({
       // 2. Call unified server sync route (/api/save)
       const saveRes = await fetch('/api/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // shared service key (configured in Settings) — the server compares
+          // it against SBR_SECRET_KEY / RUNNER_API_KEY and rejects anonymous calls
+          'x-sbr-secret-key': settings.secret || '',
+        },
         body: JSON.stringify({
           role,
           phone: fullPhone,
@@ -412,8 +417,6 @@ export function NewListing({
           content,
           mapLink,
           images: images.map((i) => ({ name: i.name, mime: i.mime, data: i.base64 })),
-          appsScriptUrl: settings.appsScriptUrl,
-          secret: settings.secret || DEFAULT_SECRET,
         }),
       })
 

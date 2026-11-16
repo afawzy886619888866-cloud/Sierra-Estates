@@ -10,19 +10,17 @@ export const dynamic = 'force-dynamic';
  * Mirrors the Google Apps Script doGet/doPost contract from
  * scripts/GoogleAppsScript_SierraEstates_Unified_Engine.gs.
  *
- * Secret resolution (in order):
- *   1. SIERRA_SECRET_KEY env — the canonical bridge secret for the sheet
- *      tabs (Master_Inventory / Real_Available_Units) and all sheet
- *      write-back callers. Set it to rotate the shared secret without a
- *      code change.
- *   2. Legacy fallback 'SE_OUTREACH_SECRET_2026_CAIRO' — the value the
- *      deployed Apps Script engine hardcodes, kept so the existing sheet
- *      keeps working until its CONFIG is rotated to the env value.
+ * Secret resolution:
+ *   SIERRA_SECRET_KEY env — the canonical bridge secret for the sheet tabs
+ *   (Master_Inventory / Real_Available_Units) and all sheet write-back
+ *   callers. Rotate it there without a code change. Fail-closed: when the
+ *   env value is missing the endpoint answers 503 (config error) instead of
+ *   falling back to a hardcoded secret. The Apps Script engine's CONFIG
+ *   must be rotated to the same SIERRA_SECRET_KEY value.
  * Matches by phone → updates public.listings.last_contact_date
  * Busts the in-memory /api/inventory cache on success.
  */
-const LEGACY_SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO';
-const EXPECTED_SECRET = process.env.SIERRA_SECRET_KEY?.trim() || LEGACY_SECRET;
+const EXPECTED_SECRET = process.env.SIERRA_SECRET_KEY?.trim() || '';
 
 /**
  * GET /api/sync/sheet-webhook
@@ -53,6 +51,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
 
+    if (!EXPECTED_SECRET) {
+      return NextResponse.json(
+        { ok: false, error: 'service configuration error: SIERRA_SECRET_KEY not set' },
+        { status: 503 },
+      );
+    }
     if (!body.secret || body.secret !== EXPECTED_SECRET) {
       return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
     }

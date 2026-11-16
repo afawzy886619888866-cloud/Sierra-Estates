@@ -203,10 +203,19 @@ async function atlasGuardian(ctx) {
 
     // 3. Property Finder Atlas v1 + GIS map publish (idempotent).
     if (!auto.isPublishedToPF) {
+      // §21 no-fabrication: only mark published when the connector actually
+      // succeeded — a forced true silenced the publish gate forever, even on
+      // failures. Failed pushes retry on the next guardian cycle.
       const pf = await pushToPropertyFinder(unit);
-      auto.isPublishedToPF = true; // bulk XML lane reconciles details
-      auto.pfPush = pf && pf.note ? String(pf.note).slice(0, 200) : 'ok';
-      stats.syndicated++;
+      if (pf && pf.ok !== false && pf.published !== false) {
+        auto.isPublishedToPF = true;
+        auto.pfPush = pf && pf.note ? String(pf.note).slice(0, 200) : 'ok';
+        stats.syndicated++;
+      } else {
+        const reason = pf && pf.error ? String(pf.error).slice(0, 160) : 'connector returned no confirmation';
+        await ctx.telegramAlert(`⚠️ Atlas Sync: PF push for <code>${code}</code> FAILED (${reason}) — will retry next cycle.`).catch(() => {});
+        stats.pfPushFailures = (stats.pfPushFailures || 0) + 1;
+      }
     }
     if (!unit.publish_to_client) {
       await withBackoff(() => sb.from('listings').update({

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { OAuthStore } from '@/lib/mcp/oauth-store';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,9 @@ export async function GET(request: Request) {
 
   // Validate response_type
   if (responseType !== 'code') {
+
+  const denied = await requireStaffOrServiceKey(request);
+  if (denied) return denied;
     return NextResponse.json(
       { error: 'unsupported_response_type', error_description: 'Only response_type=code is supported' },
       { status: 400 },

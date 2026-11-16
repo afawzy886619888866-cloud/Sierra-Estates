@@ -16,12 +16,19 @@ const GATEWAY_ENV = {
   OPENWA_ADMIN_API_KEY: process.env.OPENWA_ADMIN_API_KEY,
 };
 
+/** The route is service-gated (x-runner-key / x-sbr-secret-key). */
+const gateReq = () =>
+  new Request('http://localhost:3000/api/whatsapp/qr', {
+    headers: { 'x-runner-key': 'test-runner-key' },
+  });
+
 describe('/api/whatsapp/qr Route', () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
     process.env.OPENWA_HOST = 'openwa-gateway.internal';
     process.env.OPENWA_ADMIN_API_KEY = 'test-gateway-api-key';
+    process.env.RUNNER_API_KEY = 'test-runner-key';
   });
 
   afterEach(() => {
@@ -37,7 +44,7 @@ describe('/api/whatsapp/qr Route', () => {
     delete process.env.OPENWA_HOST;
     delete process.env.OPENWA_ADMIN_API_KEY;
 
-    const response = await GET();
+    const response = await GET(gateReq())
     expect(response.status).toBe(503);
 
     const data = await response.json();
@@ -67,7 +74,7 @@ describe('/api/whatsapp/qr Route', () => {
       } as unknown as Response;
     });
 
-    const response = await GET();
+    const response = await GET(gateReq())
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -99,7 +106,7 @@ describe('/api/whatsapp/qr Route', () => {
       } as unknown as Response;
     });
 
-    const response = await GET();
+    const response = await GET(gateReq())
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -111,7 +118,7 @@ describe('/api/whatsapp/qr Route', () => {
   it('returns 502 Bad Gateway when fetch throws network error', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('Connection refused to OpenWA'));
 
-    const response = await GET();
+    const response = await GET(gateReq())
     expect(response.status).toBe(502);
 
     const data = await response.json();

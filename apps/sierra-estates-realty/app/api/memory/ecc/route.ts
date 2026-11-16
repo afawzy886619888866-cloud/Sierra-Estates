@@ -8,6 +8,9 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const { searchParams } = new URL(req.url);
     const entityId = searchParams.get('entityId');
     const query = searchParams.get('query');
@@ -57,6 +60,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
     const body = await req.json();
 
     if (body.action === 'track_price_drop') {

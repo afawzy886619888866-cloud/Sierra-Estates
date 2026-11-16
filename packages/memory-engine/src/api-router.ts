@@ -3,11 +3,37 @@
  * Exposes endpoints for agents to read/write shared memory, track repo goals, update contexts, and log execution.
  */
 
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { memoryEngine } from './memory-engine'
 import { sharedMemory, AgentName } from './shared-memory-bus'
 
 export const memoryApiRouter: Router = Router()
+
+// ── Service authentication (fail-closed) ─────────────────────────────────────
+// The memory engine exposes agent read/write surfaces; every route requires a
+// service key (x-runner-key / x-sbr-secret-key). No hardcoded fallbacks: when
+// neither RUNNER_API_KEY nor SBR_SECRET_KEY is configured, all requests fail.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
+const MEMORY_SERVICE_KEYS = [
+  process.env.RUNNER_API_KEY,
+  process.env.SBR_SECRET_KEY,
+].filter(Boolean) as string[]
+
+memoryApiRouter.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path === '/status' && req.method === 'GET') return next() // liveness read
+  if (MEMORY_SERVICE_KEYS.length === 0) {
+    return res.status(503).json({ success: false, error: 'service keys not configured (RUNNER_API_KEY / SBR_SECRET_KEY)' })
+  }
+  const provided = (req.headers['x-runner-key'] || req.headers['x-sbr-secret-key'] || '') as string
+  if (provided && MEMORY_SERVICE_KEYS.some((k) => timingSafeEqual(provided, k))) return next()
+  return res.status(401).json({ success: false, error: 'unauthorized: service key required' })
+})
 
 /**
  * Helper to safely extract single string param

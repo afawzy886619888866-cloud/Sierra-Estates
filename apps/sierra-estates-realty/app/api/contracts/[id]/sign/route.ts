@@ -3,6 +3,7 @@ import { renderBilingualContractHtml, DigitalContractData } from '@/lib/services
 import { getRecord } from '@sierra-estates/db';
 import { sharedMemory } from '@sierra-estates/memory-engine';
 import { logger } from '@/lib/logger';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 // §21 no-fabrication: this route used to invent an entire contract for ANY
 // id — a "Madinaty B14" unit, buyer/seller names with real-looking 14-digit
@@ -17,6 +18,9 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
   const { id } = await params;
 
   let contract: DigitalContractData | null = null;
@@ -49,6 +53,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+
+  const denied = await requireStaffOrServiceKey(req);
+  if (denied) return denied;
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
 

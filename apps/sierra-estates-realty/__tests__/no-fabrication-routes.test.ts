@@ -61,9 +61,14 @@ import {
 import type { NextRequest } from 'next/server';
 import type { DigitalContractData } from '@/lib/services/digital-contracts';
 
+// Routes gated by lib/server/route-guard require a service key; the test
+// runner authenticates as the workflow runner would.
+process.env.RUNNER_API_KEY = process.env.RUNNER_API_KEY || 'test-runner-key';
+
 const req = (path: string, body?: unknown, method?: string) =>
   new Request(`http://localhost${path}`, {
     method: method ?? (body !== undefined ? 'POST' : 'GET'),
+    headers: { 'x-runner-key': 'test-runner-key' },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   }) as unknown as NextRequest;
 
