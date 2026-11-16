@@ -132,7 +132,22 @@ flowchart LR
 
 ---
 
-## 3. Local Production Daemons (PM2 Architecture)
+## 3. Autonomous AI Agent Fleet & Prompt Contracts
+
+The multi-agent system executes across a 4-Stage intake and qualification funnel governed by standardized I/O contracts:
+
+| Agent Name | Architectural Stage | Primary Role | Prompt Contract ID | Canonical Input Contract | Output Schema / Validation |
+|---|---|---|---|---|---|
+| **PropertyParserAgent** | Stage 1 (Intake) | Extracts structured unit data from unstructured Arabic/English chat streams | `property-parser` | `{ rawText, source?, defaultPhone? }` | `PropertyListingExtractionSchema` |
+| **UnitCoderAgent** | Stage 2 (Identity) | Generates canonical `SE-<COMP>-<S\|R>-<AREA>-<SUFFIX>` codes | `unit-coder` | `{ compound, mode, areaSqm?, phone?, unitNumber? }` | `UnitCodeValidationSchema` |
+| **InventoryMatcherAgent** | Stage 3 (Matchmaking) | Matches client requests against available units & computes pricing arbitrage | `inventory-matcher` | `{ requestId, zone, mode, budgetEgp, candidates }` | `InventoryMatchResultSchema` |
+| **LeadQualifierAgent** | Stage 3 (Qualification) | Evaluates buyer intent (`HIGH`/`MEDIUM`/`LOW`) & drafts personalized Arabic WhatsApp greeting | `lead-qualifier` | `{ leadId, name, zone, budget }` | `LeadQualificationSchema` |
+| **WhatsAppDispatcherAgent** | Stage 4 (Dispatch) | Formats public group unit updates and routes confidential owner contacts strictly to agency helpline (`01092048333`) | `owner-reply-classifier` | `{ unitCode, compound, unitType, mode, contactPhone, channelSource }` | `{ publicGroupMessage, privateAdminForward, adminRecipient: "01092048333" }` |
+| **CareerEvaluatorAgent** | Stage 4 (Recruitment) | Evaluates broker/staff applications across Sales & Admin tracks (`Tier A/B/C`) | `career-evaluator` | `{ applicationId, role, experienceYears, hasVehicle, achievements }` | `CareerEvaluationSchema` |
+
+---
+
+## 4. Local Production Daemons (PM2 Architecture)
 
 All autonomous daemons run on the local production node, supervised by **PM2** via [`ecosystem.config.cjs`](./ecosystem.config.cjs) with automatic restart on failure and memory caps:
 
@@ -145,7 +160,7 @@ All autonomous daemons run on the local production node, supervised by **PM2** v
 
 ---
 
-## 4. Cloudflare DNS & Email Routing Blueprint
+## 5. Cloudflare DNS & Email Routing Blueprint
 
 To resolve **"DNS email DNS misconfigured"** and **"no data available"** / blocked deployment conflicts:
 
@@ -184,7 +199,7 @@ flowchart TD
 
 ---
 
-## 5. CI/CD & Deployment Lifecycle
+## 6. CI/CD & Deployment Lifecycle
 
 ```mermaid
 sequenceDiagram
@@ -214,7 +229,7 @@ sequenceDiagram
 
 ---
 
-## 6. Monorepo Structure & Package Boundaries
+## 7. Monorepo Structure & Package Boundaries
 
 ```text
 H:\Sierra Estates/
@@ -239,7 +254,7 @@ H:\Sierra Estates/
 
 ---
 
-## 7. Security, Deduplication & Operational Invariants
+## 8. Security, Deduplication & Operational Invariants
 
 1. **Owner Privacy Lock:** Owner and broker phone numbers are **strictly redacted** from public views (`public_properties_view`) and client-facing API responses. All public inquiries route exclusively to the agency concierge helpline (`+201092048333`).
 2. **Phone Normalization Standard:** Every phone intake passes through `normalizeEgyptianPhone()` into the canonical 11-digit `01xxxxxxxxx` format (`+20XXXXXXXXXX`).

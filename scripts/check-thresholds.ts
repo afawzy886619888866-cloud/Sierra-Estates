@@ -51,9 +51,10 @@ async function resolveMetrics(): Promise<SystemMetricThreshold[]> {
 
       if (!wfErr && Array.isArray(wfRows) && wfRows.length > 0) {
         telemetrySource = 'live-supabase';
-        // Exclude long-paced 30m outreach slot from API/control latency average
+        // Exclude long-paced 30m outreach and bulk ETL jobs (units-sync, master-sheet-sync) from control latency average
+        const batchEtlSlugs = new Set(['owner-outreach', 'units-sync', 'master-sheet-sync']);
         const fastRuns = wfRows
-          .filter((r) => r.slug !== 'owner-outreach' && typeof r.last_run_ms === 'number' && r.last_run_ms > 0)
+          .filter((r) => !batchEtlSlugs.has(r.slug) && typeof r.last_run_ms === 'number' && r.last_run_ms > 0)
           .map((r) => Number(r.last_run_ms));
         if (fastRuns.length > 0) {
           avgWorkflowLatencyMs = Math.round(fastRuns.reduce((a, b) => a + b, 0) / fastRuns.length);
