@@ -30,7 +30,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScanResponse>
   try {
 
   const denied = await requireStaffOrServiceKey(req);
-  if (denied) return denied;
+  if (denied) return denied as NextResponse<ScanResponse>;
     const body = await req.json().catch(() => ({}));
     // §21 no-fabrication: a server route must not silently fall back to a
     // developer's local machine path ('I:\supabase\Sheets') — the scan

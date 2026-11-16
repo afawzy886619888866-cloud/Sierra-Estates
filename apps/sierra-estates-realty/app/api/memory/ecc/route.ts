@@ -5,6 +5,7 @@ import {
   recordEccEpisodeViaPythonApi,
   trackPriceReductionViaPythonApi,
 } from '@/lib/server/python-api-client';
+import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 
 export async function GET(req: NextRequest) {
   try {

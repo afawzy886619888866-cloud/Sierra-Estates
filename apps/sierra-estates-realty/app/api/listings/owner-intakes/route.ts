@@ -256,7 +256,7 @@ export async function GET(req: Request) {
 export async function POST(request: Request) {
   try {
 
-  const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
+  const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
     const body = await request.json().catch(() => ({}));
     const code = String(body.code || `SE-BOT-${Date.now().toString().slice(-4)}`);
