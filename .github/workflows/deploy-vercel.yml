@@ -157,6 +157,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
           submodules: false  # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - name: Setup pnpm
@@ -203,11 +204,25 @@ jobs:
           #   Security:              SESSION_SECRET, SBR_SECRET_KEY, CRON_SECRET, ADMIN_API_KEY
           #   Communications:        TELEGRAM_BOT_TOKEN, WHATSAPP_API_TOKEN, SENDGRID_API_KEY,
           #                         TELEGRAM_*_CHAT_ID role lanes (migration 044), TELEGRAM_STAFF_USER_IDS
+          # Skip deployment if this run is from an automated commit that did not modify frontend code
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null || true)
+            if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(apps/sierra-estates-realty|packages|deploy|turbo\.json|package\.json|pnpm-lock\.yaml)'; then
+              echo "::notice::Commit does not modify frontend application files. Skipping build/deploy for ${{ matrix.role }} to conserve daily Vercel deployment limits."
+              exit 0
+            fi
+          fi
+
           ARGS=""
           if [ "$TARGET_ENV" = "production" ]; then ARGS="--prod"; fi
           attempt=1
-          until npx --yes vercel@59.23.2 deploy $ARGS --token "$VERCEL_TOKEN_VALUE" --yes; do
-            status=$?
+          until npx --yes vercel@59.23.2 deploy $ARGS --token "$VERCEL_TOKEN_VALUE" --yes 2>&1 | tee /tmp/deploy.log; do
+            status=${PIPESTATUS[0]}
+            if [ $status -eq 0 ]; then break; fi
+            if grep -q "api-deployments-free-per-day" /tmp/deploy.log 2>/dev/null; then
+              echo "::warning::Vercel daily deployment quota reached (api-deployments-free-per-day: >100 deployments in 24 hours on Vercel free tier). Halting retry cycle."
+              exit 1
+            fi
             if [ $attempt -ge 5 ]; then
               echo "::error::Vercel deploy failed after $attempt attempts (last exit $status) for ${{ matrix.role }}."
               exit 1

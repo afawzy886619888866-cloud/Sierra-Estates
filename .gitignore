@@ -130,6 +130,8 @@ Thumbs.db
 *.sql.zip
 *.db.dump
 testrun/
+# Local clones / artifacts
+Sierra-Estates/
 scripts/test-results/
 output/
 work-items-out/
