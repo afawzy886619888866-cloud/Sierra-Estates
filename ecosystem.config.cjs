@@ -57,5 +57,23 @@ module.exports = {
       out_file: './.state/pm2-bridge-out.log',
       merge_logs: true,
     },
+    {
+      name: 'sierra-fastapi-engine',
+      script: './sierra_webhook.py',
+      interpreter: 'C:\\Users\\Sierr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe',
+      cwd: __dirname,
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '400M',
+      env: {
+        PORT: 8000,
+        FASTAPI_PORT: 8000,
+      },
+      error_file: './.state/pm2-fastapi-error.log',
+      out_file: './.state/pm2-fastapi-out.log',
+      merge_logs: true,
+    },
   ],
 };

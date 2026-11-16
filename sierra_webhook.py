@@ -204,7 +204,8 @@ def analyze_payload(event_type: str, text: str, sender_phone: str):
 @app.get("/")
 @app.get("/health")
 async def health_endpoint():
-    return {"status": "ok", "app": "Sierra PropTech Intelligence Engine", "port": 5000}
+    port = int(os.getenv("FASTAPI_PORT") or os.getenv("PORT") or 8000)
+    return {"status": "ok", "app": "Sierra PropTech Intelligence Engine", "port": port}
 
 @app.post("/webhook")
 async def evolution_webhook(request: Request):
@@ -248,4 +249,5 @@ async def evolution_webhook(request: Request):
     return result
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    port = int(os.getenv("FASTAPI_PORT") or os.getenv("PORT") or 8000)
+    uvicorn.run(app, host="0.0.0.0", port=port)
