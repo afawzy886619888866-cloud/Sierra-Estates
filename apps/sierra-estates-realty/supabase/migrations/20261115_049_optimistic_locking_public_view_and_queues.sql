@@ -129,18 +129,34 @@ END $$;
 -- 3. WhatsApp Outreach Dead-Letter Queue (Phase 2)
 CREATE TABLE IF NOT EXISTS public.outreach_dead_letter_queue (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  phone TEXT NOT NULL,
+  phone TEXT,
   unit_code TEXT,
   line_id TEXT,
+  -- columns written by the committed producers (13-paced-outreach /
+  -- session-guardian.ts DeadLetterPayload):
+  listing_code TEXT,
+  session_name TEXT,
+  worker TEXT DEFAULT '13-paced-outreach',
+  payload JSONB DEFAULT '{}'::jsonb,
+  max_attempts INTEGER NOT NULL DEFAULT 3,
+  -- legacy columns kept for backwards compatibility with earlier drafts
   message_body TEXT,
   error_message TEXT NOT NULL,
   attempts INTEGER NOT NULL DEFAULT 1,
   backoff_hours INTEGER NOT NULL DEFAULT 1,
   next_retry_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour'),
-  status TEXT NOT NULL DEFAULT 'queued',
+  status TEXT NOT NULL DEFAULT 'pending',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- heal deployments where the table already exists from an older draft
+ALTER TABLE public.outreach_dead_letter_queue
+  ADD COLUMN IF NOT EXISTS listing_code TEXT,
+  ADD COLUMN IF NOT EXISTS session_name TEXT,
+  ADD COLUMN IF NOT EXISTS worker TEXT DEFAULT '13-paced-outreach',
+  ADD COLUMN IF NOT EXISTS payload JSONB DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS max_attempts INTEGER NOT NULL DEFAULT 3;
 
 CREATE INDEX IF NOT EXISTS idx_outreach_dlq_next_retry
   ON public.outreach_dead_letter_queue (status, next_retry_at);
@@ -157,9 +173,22 @@ CREATE TABLE IF NOT EXISTS public.inbound_telegram_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   update_id BIGINT,
   chat_id TEXT,
-  raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  -- columns written by app/api/telegram/webhook/route.ts before parsing:
+  chat_type TEXT,
+  sender_id TEXT,
+  message_text TEXT,
+  payload JSONB,
+  -- legacy column kept for backwards compatibility with earlier drafts
+  raw_payload JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- heal deployments where the table already exists from an older draft
+ALTER TABLE public.inbound_telegram_audit_log
+  ADD COLUMN IF NOT EXISTS chat_type TEXT,
+  ADD COLUMN IF NOT EXISTS sender_id TEXT,
+  ADD COLUMN IF NOT EXISTS message_text TEXT,
+  ADD COLUMN IF NOT EXISTS payload JSONB;
 
 CREATE INDEX IF NOT EXISTS idx_inbound_telegram_audit_update_id
   ON public.inbound_telegram_audit_log (update_id);
@@ -170,3 +199,16 @@ DROP POLICY IF EXISTS "service_role_all" ON public.inbound_telegram_audit_log;
 CREATE POLICY "service_role_all" ON public.inbound_telegram_audit_log
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
+
+-- 5. Staff read access (traceability per plan §1.2/§1.3): staff consoles may
+--    inspect the queues through authenticated clients; writes stay with the
+--    service-role workers. RLS is already enabled on both tables.
+DROP POLICY IF EXISTS "outreach_dlq_staff_read" ON public.outreach_dead_letter_queue;
+CREATE POLICY "outreach_dlq_staff_read" ON public.outreach_dead_letter_queue
+  FOR SELECT TO authenticated
+  USING (public.is_staff());
+
+DROP POLICY IF EXISTS "telegram_audit_staff_read" ON public.inbound_telegram_audit_log;
+CREATE POLICY "telegram_audit_staff_read" ON public.inbound_telegram_audit_log
+  FOR SELECT TO authenticated
+  USING (public.is_staff());

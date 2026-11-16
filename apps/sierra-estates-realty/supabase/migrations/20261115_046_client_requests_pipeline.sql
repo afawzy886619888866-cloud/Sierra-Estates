@@ -92,8 +92,8 @@ ALTER TABLE public.client_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "client_requests_staff_access" ON public.client_requests;
 CREATE POLICY "client_requests_staff_access" ON public.client_requests
     FOR ALL TO authenticated
-    USING (TRUE)
-    WITH CHECK (TRUE);
+    USING (public.is_staff())
+    WITH CHECK (public.is_staff());
 
 -- ---------------------------------------------------------------------------
 -- B. public.career_applications — recruitment pipeline columns

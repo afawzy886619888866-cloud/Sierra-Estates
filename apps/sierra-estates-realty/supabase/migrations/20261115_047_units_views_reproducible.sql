@@ -9,11 +9,17 @@
 -- cannot reproduce the schema. This migration creates them idempotently so
 -- the app's reads work on a fresh database.
 --
+-- 2026-11-16: view bodies regenerated verbatim from the live project
+-- (pg_get_viewdef) — the previous hand-written bodies referenced
+-- listings.zone / listings.garden_area, columns that do not exist (the
+-- district lives in location_area and the garden size in garden_sqm; see
+-- migration 011 for the same aliasing rule), so a fresh replay would fail.
 -- No data changes. Safe to re-run.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- public.units — the app-vocabulary view over listings (beds/bath/area/type/mode)
+-- public.units — the app-vocabulary view over listings
+-- (definition mirrors the live project exactly)
 -- ---------------------------------------------------------------------------
 
 DO $$
@@ -23,55 +29,110 @@ BEGIN
         WHERE schemaname = 'public' AND viewname = 'units'
     ) THEN
         EXECUTE $view$
-            CREATE VIEW public.units AS
-            SELECT
-                l.id,
-                l.code,
-                l.ref_id,
-                l.title,
-                l.title_ar,
-                l.description,
-                l.compound,
-                l.developer,
-                l.zone,
-                l.city,
-                l.property_type,
-                l.deal_type,
-                l.price,
-                l.price_currency,
-                l.bedrooms,
-                l.bathrooms,
-                l.area_sqm,
-                l.garden_area,
-                l.finishing_type,
-                l.floor,
-                l.status,
-                l.publish_status,
-                l.verified,
-                l.publish_to_client,
-                l.owner_name,
-                l.owner_phone,
-                l.broker_name,
-                l.broker_phone,
-                l.agent,
-                l.img,
-                l.photos,
-                l.images,
-                l.latitude,
-                l.longitude,
-                l.created_at,
-                l.updated_at
-            FROM public.listings l
+            SELECT id,
+    ref_id,
+    title,
+    title_ar,
+    description,
+    description_ar,
+    compound,
+    developer,
+    location_area,
+    city,
+    property_type,
+    deal_type,
+    price,
+    price_currency,
+    bedrooms,
+    bathrooms,
+    area_sqm,
+    finishing_type,
+    delivery_year,
+    down_payment,
+    installment_years,
+    monthly_installment,
+    roi_percentage,
+    cap_rate,
+    valuation_status,
+    status,
+    featured,
+    is_hot_deal,
+    owner_id,
+    owner_phone,
+    owner_name,
+    broker_name,
+    broker_phone,
+    source_channel,
+    images,
+    floor_plan_url,
+    virtual_tour_url,
+    amenities,
+    raw_data,
+    embedding,
+    created_at,
+    updated_at,
+    embedding_768,
+    code,
+    pf_reference_number,
+    pf_status,
+    automation,
+    sync_hash,
+    sync_source,
+    last_sync_at,
+    agent_name,
+    furnishing_status,
+    registry_asset_id,
+    synced_to_registry,
+    last_registry_sync,
+    registry_status,
+    sbr_code,
+    price_per_sqm,
+    latitude,
+    longitude,
+    location_coords,
+    reference_code,
+    unit_code,
+    project_id,
+    compound_id,
+    developer_id,
+    offer_type,
+    listing_type,
+    garden_sqm,
+    roof_sqm,
+    terrace_sqm,
+    plot_sqm,
+    floor_number,
+    unit_view,
+    maintenance_fee_per_sqm,
+    delivery_quarter,
+    verified_at,
+    verified_by,
+    ownership_doc_ref,
+    published_at,
+    reserved_until,
+    reservation_ref,
+    days_on_market,
+    photo_count,
+    has_floor_plan,
+    has_virtual_tour,
+    data_quality_score,
+    stale,
+    publish_status,
+    dupe_check_hash,
+    source_verified_at,
+    availability,
+    sources,
+    status_history
+   FROM listings
         $view$;
         EXECUTE 'ALTER VIEW public.units SET (security_invoker = on)';
-        EXECUTE 'GRANT SELECT ON public.units TO authenticated';
-        -- anon gets nothing on units (PII-bearing view; public reads go
-        -- through the listings column grants of migration 041).
     END IF;
 END $$;
 
 -- ---------------------------------------------------------------------------
 -- public.real_available_units — the verified-available mirror view
+-- (definition mirrors the live project exactly: rows are those whose
+-- listing_status = 'Available' AND contact_status = 'Verified Available')
 -- ---------------------------------------------------------------------------
 
 DO $$
@@ -81,27 +142,37 @@ BEGIN
         WHERE schemaname = 'public' AND viewname = 'real_available_units'
     ) THEN
         EXECUTE $view$
-            CREATE VIEW public.real_available_units AS
-            SELECT
-                l.id,
-                l.code,
-                l.compound,
-                l.property_type,
-                l.deal_type,
-                l.area_sqm,
-                l.bedrooms,
-                l.bathrooms,
-                l.price,
-                l.finishing_type,
-                l.status,
-                l.owner_name,
-                l.owner_phone,
-                l.img,
-                l.created_at,
-                l.updated_at
-            FROM public.listings l
-            WHERE l.status IN ('active', 'available')
-              AND l.publish_status = 'PUBLISHABLE'
+            SELECT id,
+    code,
+    unit_code,
+    se_code,
+    contact_status,
+    listing_status,
+    verified_available_date,
+    deal_type,
+    compound,
+    property_type,
+    area_sqm,
+    bedrooms,
+    bathrooms,
+    floor_number,
+    furnishing_status,
+    finishing_type,
+    price,
+    ai_fair_price,
+    is_featured_gem,
+    owner_name,
+    owner_phone,
+    availability,
+    sourced_by_agent,
+    verified_by_employee,
+    images,
+    photo_count,
+    source_channel,
+    created_at,
+    updated_at
+   FROM listings
+  WHERE listing_status = 'Available'::text AND contact_status = 'Verified Available'::text
         $view$;
         EXECUTE 'ALTER VIEW public.real_available_units SET (security_invoker = on)';
         EXECUTE 'GRANT SELECT ON public.real_available_units TO authenticated';
