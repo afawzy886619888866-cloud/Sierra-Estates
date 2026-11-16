@@ -26,8 +26,9 @@ export default async function AdminLayout({
     const session = token ? await verifySession(token) : null;
     const isAuthorized = session && isAdminPortalRole(session.role);
 
-    if (!isAuthorized && pathname) {
-      redirect(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
+    if (!isAuthorized) {
+      const redirectParam = pathname ? `?redirect=${encodeURIComponent(pathname)}` : '';
+      redirect(`/admin/login${redirectParam}`);
     }
   }
 
