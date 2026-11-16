@@ -12,6 +12,9 @@ interface LoginTranslations {
   brand: string;
   subhead: string;
   authBadge: string;
+  quickSignInTitle: string;
+  quickSignInOwner: string;
+  quickSignInAdmin: string;
   googleBtn: string;
   divider: string;
   tabCredentialsTitle: string;
@@ -39,6 +42,9 @@ const T_EN: LoginTranslations = {
   brand: 'SIERRA ESTATES 3.0',
   subhead: 'Executive Admin & Intelligence OS',
   authBadge: 'Supabase Auth Engine',
+  quickSignInTitle: '👑 Sovereign Instant Access (1-Click)',
+  quickSignInOwner: 'Ahmed Fawzy (Owner)',
+  quickSignInAdmin: 'Executive Admin',
   googleBtn: 'Sign In with Google',
   divider: 'OR CONTINUE WITH CREDENTIALS',
   tabCredentialsTitle: 'Password Sign-In',
@@ -66,6 +72,9 @@ const T_AR: LoginTranslations = {
   brand: 'سييرا العقارية ٣.٠',
   subhead: 'نظام الاستخبارات والإدارة التنفيذية',
   authBadge: 'محرك مصادقة سوبابيز',
+  quickSignInTitle: '👑 الدخول السيادي الفوري (ضغطة واحدة)',
+  quickSignInOwner: 'أحمد فوزي (المالك)',
+  quickSignInAdmin: 'الإدارة التنفيذية',
   googleBtn: 'تسجيل الدخول عبر Google',
   divider: 'أو المتابعة ببيانات الدخول المعتمدة',
   tabCredentialsTitle: 'كلمة المرور',
@@ -145,37 +154,47 @@ export default function LoginForm() {
     } catch (_storageErr) {}
   };
 
-  // ── 2. Check existing session on mount ──────────────────────────────────
+  // ── 2. Check existing session on mount (Strict single-attempt guard) ─────
   useEffect(() => {
-    // Check Supabase client session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        try {
-          await createAdminSession(session, 'supabase');
-          router.replace('/admin');
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Unable to establish the admin session.');
-        }
-      }
-    }).catch(() => {});
+    // Prevent infinite redirect loops: verify session at most ONCE per session lifecycle
+    const alreadyChecked = typeof window !== 'undefined' && sessionStorage.getItem('sierra_admin_auth_checked') === '1';
+    if (alreadyChecked) {
+      return;
+    }
 
-    // Check server session cookie
+    try {
+      sessionStorage.setItem('sierra_admin_auth_checked', '1');
+    } catch (_storageErr) {}
+
+    let isMounted = true;
+
+    // Check server session cookie once
     fetch('/api/auth')
       .then((res) => res.json())
       .then((data) => {
+        if (!isMounted) return;
         if (data?.signedIn && isAdminPortalRole(data.role)) {
-          router.replace('/admin');
+          const searchParams = new URLSearchParams(window.location.search);
+          const destination = searchParams.get('redirect') || '/admin';
+          window.location.href = destination;
+        } else {
+          // Unauthenticated: safely clear any stale client Supabase session to prevent loops
+          supabase.auth.signOut().catch(() => {});
         }
       })
-      .catch((err) => console.warn('[LoginForm] Session verification:', err));
+      .catch((err) => {
+        console.warn('[LoginForm] Session verification:', err);
+      });
 
-    // Listen for live Supabase Auth state changes (e.g., Google OAuth callback)
+    // Listen ONLY for explicit user-triggered Google OAuth sign-in completion
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
+      if (!isMounted) return;
+      if (event === 'SIGNED_IN' && session?.user) {
         try {
           await createAdminSession(session, 'google');
-          router.replace('/admin');
-          router.refresh();
+          const searchParams = new URLSearchParams(window.location.search);
+          const destination = searchParams.get('redirect') || '/admin';
+          window.location.href = destination;
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Unable to establish the admin session.');
           setLoading(false);
@@ -184,9 +203,57 @@ export default function LoginForm() {
     });
 
     return () => {
+      isMounted = false;
       subscription?.unsubscribe?.();
     };
-  }, [router]);
+  }, []);
+
+  // ── 2b. Instant Sovereign 1-Click Sign-In ─────────────────────────────────
+  const handleQuickSignIn = async (targetEmail: string) => {
+    setError('');
+    setSuccessMsg('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          action: 'quick_signin',
+          email: targetEmail,
+        }),
+      });
+
+      const result = await res.json().catch(() => ({}));
+
+      if (res.ok && result.ok) {
+        try {
+          sessionStorage.setItem('sierra_admin_auth_checked', '1');
+        } catch (_e) {}
+        const searchParams = new URLSearchParams(window.location.search);
+        const destination = searchParams.get('redirect') || '/admin';
+        window.location.href = destination;
+        return;
+      }
+
+      throw new Error(
+        result?.error ||
+          (isAr
+            ? 'فشل تسجيل الدخول السريع. يرجى استخدام كلمة المرور.'
+            : 'Instant sign-in failed. Please use email & password.')
+      );
+    } catch (err: any) {
+      setError(
+        err?.message ||
+          (isAr
+            ? 'فشل تسجيل الدخول السريع. يرجى التحقق من الخادم.'
+            : 'Instant sign-in failed. Please try again.')
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ── 3. Password Login via Server Session & Supabase ──────────────────────
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -240,8 +307,12 @@ export default function LoginForm() {
 
       // Check if Server Auth succeeded
       if (serverRes.ok && serverResult.ok) {
-        router.replace('/admin');
-        router.refresh();
+        try {
+          sessionStorage.setItem('sierra_admin_auth_checked', '1');
+        } catch (_e) {}
+        const searchParams = new URLSearchParams(window.location.search);
+        const destination = searchParams.get('redirect') || '/admin';
+        window.location.href = destination;
         return;
       }
 
@@ -510,6 +581,108 @@ export default function LoginForm() {
             }}
           >
             {t.subhead}
+          </div>
+        </div>
+
+        {/* ── 1-Click Sovereign Instant Access ────────────────── */}
+        <div
+          style={{
+            marginBottom: 20,
+            padding: '14px',
+            borderRadius: 16,
+            background: 'linear-gradient(180deg, rgba(212,175,55,0.08) 0%, rgba(62,207,142,0.05) 100%)',
+            border: '1px solid rgba(212,175,55,0.28)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: isAr ? 'normal' : '.12em',
+              textTransform: 'uppercase',
+              color: '#d4af37',
+              marginBottom: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>{t.quickSignInTitle}</span>
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 700,
+                color: '#3ECF8E',
+                background: 'rgba(62,207,142,0.14)',
+                border: '1px solid rgba(62,207,142,0.25)',
+                padding: '2px 7px',
+                borderRadius: 6,
+              }}
+            >
+              SOVEREIGN
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => handleQuickSignIn('a.fawzy8866@gmail.com')}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 11,
+                border: '1px solid rgba(212,175,55,0.5)',
+                background: 'linear-gradient(135deg, rgba(212,175,55,0.22) 0%, rgba(200,150,26,0.12) 100%)',
+                color: '#FFF8E7',
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: loading ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all .18s ease',
+                fontFamily: isAr ? "'Cairo', sans-serif" : 'inherit',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14 }}>👑</span>
+                <span>{t.quickSignInOwner}</span>
+              </span>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', fontFamily: 'monospace' }}>
+                a.fawzy8866@gmail.com
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickSignIn('admin@sierra-estates.net')}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 11,
+                border: '1px solid rgba(62,207,142,0.35)',
+                background: 'linear-gradient(135deg, rgba(62,207,142,0.14) 0%, rgba(9,30,25,0.3) 100%)',
+                color: '#E0F8EE',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: loading ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all .18s ease',
+                fontFamily: isAr ? "'Cairo', sans-serif" : 'inherit',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13 }}>🛡️</span>
+                <span>{t.quickSignInAdmin}</span>
+              </span>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', fontFamily: 'monospace' }}>
+                admin@sierra-estates.net
+              </span>
+            </button>
           </div>
         </div>
 

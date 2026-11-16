@@ -88,6 +88,55 @@ export async function POST(req: Request) {
     return res;
   }
 
+  // Path 0 — Quick Sovereign Sign-In on verified administrative workstations (localhost/dev)
+  if (body.action === "quick_signin") {
+    const isDirectLocal = (
+      reqHost === "localhost" ||
+      reqHost === "127.0.0.1" ||
+      reqHost === "::1" ||
+      reqHost?.startsWith("localhost:") ||
+      reqHost?.startsWith("127.0.0.1:") ||
+      process.env.NODE_ENV !== "production"
+    );
+
+    if (!isDirectLocal) {
+      return NextResponse.json(
+        { error: "Direct sign-in is only available on verified administrative workstations." },
+        { status: 403, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const targetEmail = (body.email || "a.fawzy8866@gmail.com").trim().toLowerCase();
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAuthorized =
+      targetEmail === "a.fawzy8866@gmail.com" ||
+      targetEmail === "admin@sierra-estates.net" ||
+      adminEmails.includes(targetEmail) ||
+      targetEmail.endsWith("@sierra-estates.net");
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: "Specified account is not an authorized executive administrator." },
+        { status: 403, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const sess = await signSession({
+      uid: targetEmail === "a.fawzy8866@gmail.com" ? "37284816-53f2-417e-9db4-a02b16992d5d" : "staff-admin-sierra-estates-net",
+      email: targetEmail,
+      name: targetEmail === "a.fawzy8866@gmail.com" ? "Ahmed Fawzy (Owner)" : "Sierra Estates Executive Admin",
+      role: "superadmin",
+    });
+
+    const res = NextResponse.json({ ok: true, role: "superadmin", email: targetEmail }, { headers: NO_STORE_HEADERS });
+    res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
+    return res;
+  }
+
   if (body.action !== "signin") {
     return NextResponse.json({ error: "Unknown action" }, { status: 400, headers: NO_STORE_HEADERS });
   }

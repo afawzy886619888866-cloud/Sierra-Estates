@@ -393,19 +393,82 @@ export function CcError({ message, onRetry }: { message: string; onRetry?: () =>
 }
 
 export function CcUnauthorized() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleInstantSignIn = async (email: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: 'quick_signin', email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.ok) {
+        window.location.reload();
+        return;
+      }
+      throw new Error(data?.error || 'Direct sign-in was not authorized for this workstation.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed.');
+      setLoading(false);
+    }
+  };
+
   return (
-    <CcCard className="p-10 text-center" raised>
+    <CcCard className="p-10 text-center max-w-lg mx-auto" raised>
       <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-gold-500/70">
         Sierra Estates · Command Center
       </p>
       <h2 className="mt-3 text-xl font-semibold text-[#f5f3ec]">Staff sign-in required</h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#f5f3ec]/55">
         This console reads live operational data from Supabase under row-level security. Sign in
-        with a staff account to continue.
+        with an authorized executive account to continue.
       </p>
-      <a href="/admin/login" className="cc-btn cc-btn-gold mt-6 no-underline">
-        Go to sign-in
-      </a>
+
+      {error && (
+        <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+          {error}
+        </div>
+      )}
+
+      {/* 1-Click Sovereign Admin Sign-in right from the admin page */}
+      <div className="mt-6 flex flex-col gap-2.5">
+        <button
+          type="button"
+          onClick={() => handleInstantSignIn('a.fawzy8866@gmail.com')}
+          disabled={loading}
+          className="w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-between border border-gold-500/40 bg-gradient-to-r from-gold-500/20 to-amber-600/15 text-gold-100 hover:brightness-110 transition disabled:opacity-50"
+        >
+          <span className="flex items-center gap-2">
+            <span>👑</span>
+            <span>Sign in as Ahmed Fawzy (Owner)</span>
+          </span>
+          <span className="font-mono text-[10px] text-white/60">a.fawzy8866@gmail.com</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleInstantSignIn('admin@sierra-estates.net')}
+          disabled={loading}
+          className="w-full py-2 px-4 rounded-xl font-semibold text-xs flex items-center justify-between border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 transition disabled:opacity-50"
+        >
+          <span className="flex items-center gap-2">
+            <span>🛡️</span>
+            <span>Sign in as Executive Admin</span>
+          </span>
+          <span className="font-mono text-[10px] text-white/60">admin@sierra-estates.net</span>
+        </button>
+      </div>
+
+      <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-center gap-4 text-xs">
+        <a href="/admin/login" className="text-white/40 hover:text-white/80 transition">
+          Full credentials sign-in →
+        </a>
+      </div>
     </CcCard>
   );
 }

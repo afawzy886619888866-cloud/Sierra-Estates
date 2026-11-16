@@ -12,8 +12,37 @@ if (-not (Test-Path $StateDir)) {
     New-Item -ItemType Directory -Path $StateDir -Force | Out-Null
 }
 
+function Test-PortListening([int]$Port) {
+    $tcp = New-Object System.Net.Sockets.TcpClient
+    try {
+        $async = $tcp.BeginConnect("127.0.0.1", $Port, $null, $null)
+        $wait = $async.AsyncWaitHandle.WaitOne(600, $false)
+        if ($wait -and $tcp.Connected) {
+            return $true
+        }
+        return $false
+    } catch {
+        return $false
+    } finally {
+        $tcp.Close()
+    }
+}
+
 function Test-Pm2Installed {
     return [bool](Get-Command pm2 -ErrorAction SilentlyContinue)
+}
+
+# Fast-path check: If all required background daemons are already active and listening,
+# exit immediately without triggering PM2 reloads or console window flashing.
+if ($Service -eq "all") {
+    $p2785 = Test-PortListening 2785
+    $p2786 = Test-PortListening 2786
+    $p2790 = Test-PortListening 2790
+    $p8000 = Test-PortListening 8000
+    if ($p2785 -and $p2786 -and $p2790 -and $p8000) {
+        Write-Output "All background daemons (:2785, :2786, :2790, :8000) are healthy and active. No reload needed."
+        exit 0
+    }
 }
 
 if (Test-Pm2Installed -and ($Service -eq "all" -or $Service -eq "runner")) {
