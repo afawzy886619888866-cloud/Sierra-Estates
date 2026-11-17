@@ -36,20 +36,34 @@ function normalizePhone(raw) {
 
 function classifyReply(text) {
   const t = String(text || '').trim().toLowerCase();
-  if (/إلغاء|الغاء|stop|unsubscribe|مش عاوز|لا ترسل/i.test(t)) {
+  // Opt-out first (highest priority)
+  if (/إلغاء|الغاء|stop|unsubscribe|مش عاوز|لا ترسل|بلوكني|حذفني|امسحني/i.test(t)) {
     return { category: 'opt_out', label: 'إلغاء اشتراك' };
   }
+  // Broker detection (before available — brokers also say "متاح" for other people's units)
+  if (/بروكر|وسيط|سمسار|مكتب عقار|وكالة عقار|شركة عقار|هعمل عقد|نص في النص|انا بشتغل|بشتغل في العقار|broker|agent|commission only|مش مالك|مش عندي وحدة|بتواصل لصالح|بشتغل سمسرة/i.test(t)) {
+    return { category: 'broker', label: 'بروكر / وسيط' };
+  }
+  // Available units
   if (/متاح|متاحه|متاحة|فاضية|فاضيه|جهزه|جاهزه|جاهزة|ايوه|أيوة|لسه|لسة|موجود|موجودة|ستديو|شقة|فيلا|بريفادو|مدينتي|yes|available/i.test(t)) {
     return { category: 'available', label: 'الوحدة متاحة / تفاصيل مالك' };
   }
+  // Sold or rented
   if (/اتباعت|اتأجرت|اتاجرت|تم البيع|تم التأجير|خلاص|مش متاح|sold|rented/i.test(t)) {
     return { category: 'unavailable', label: 'تم البيع أو الإيجار' };
   }
+  // Negotiating
   if (/سعر|كام|تأجير|تفاوض|نهائي|عمولة|عموله|تفاصيل|صور|اوڤر|أوفر|المدفوع|price|negotiate/i.test(t)) {
     return { category: 'negotiating', label: 'تفاوض / تفاصيل مالية' };
   }
+  // Blocked/delivery-failure sentinel (injected programmatically by outreach engine)
+  if (/\[BLOCKED\]|\[DELIVERY_FAIL\]|\[UNREACHABLE\]/i.test(t)) {
+    return { category: 'blocked', label: 'رقم محظور / غير قابل للتسليم' };
+  }
   return { category: 'general_reply', label: 'رد مالك (رسالة / صوتي)' };
 }
+
+
 
 function generateDailyOutreachReport(targetDate = getCairoDate()) {
   // 1. Read contacted units
@@ -209,6 +223,8 @@ function generateDailyOutreachReport(targetDate = getCairoDate()) {
     unavailable: effectiveResponses.filter(r => r.category === 'unavailable').length,
     negotiating: effectiveResponses.filter(r => r.category === 'negotiating').length,
     opt_out: effectiveResponses.filter(r => r.category === 'opt_out').length,
+    broker: effectiveResponses.filter(r => r.category === 'broker').length,
+    blocked: effectiveResponses.filter(r => r.category === 'blocked').length,
     general_reply: effectiveResponses.filter(r => r.category === 'general_reply').length,
   };
 
@@ -263,4 +279,4 @@ if (require.main === module) {
   console.log(JSON.stringify(rep, null, 2));
 }
 
-module.exports = { generateDailyOutreachReport };
+module.exports = { generateDailyOutreachReport, classifyReply };

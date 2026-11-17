@@ -41,6 +41,7 @@ import {
   CairoPlazaAdminView,
   ViewingsView,
   AccessApprovalsView,
+  OwnerFeedbackRegistryView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import AddListingForm from '@/components/client/AddListingForm';
@@ -2669,6 +2670,7 @@ function AdminApp() {
       case 'whatsapp_outreach':
       case 'whatsapp_sync':
       case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;
+      case 'owner_feedback':return <OwnerFeedbackRegistryView lang={langKey} />;
       case 'openclaw':return <OpenClawPage T={T}/>;
       case 'nexus':return <NexusAIPage T={T}/>;
       case 'leads':return <LeadsPage T={T}/>;

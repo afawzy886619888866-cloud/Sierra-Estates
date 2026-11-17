@@ -73,6 +73,7 @@ loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient } = require('../lib/gateway-client');
 const { normalizePhone, toWesternDigits, toLocalPhone } = require('../lib/phone-utils');
 const { loadOptOutSet } = require('../lib/inbox');
+const { loadFeedbackExcludeSet } = require('../lib/owner-feedback-registry');
 const { loadAllClaimedPhones, readLocalLedgers, claimOutreachPhone, releaseOutreachClaim } = require('../lib/outreach-dedupe');
 
 const WRITE_URL = process.env.WF_SHEET_WRITE_URL;
@@ -389,6 +390,7 @@ const summary = {
   slotDeadline: false,
   skippedDupRow: 0,
   skippedOptOut: 0,
+  skippedFeedbackExcluded: 0,
   auditWritten: 0,
   auditFailed: 0,
   auditSkipped: 0,
@@ -807,6 +809,7 @@ async function main() {
   const contacted = loadLedgerPhones();
   for (const p of readLocalLedgers(STATE_DIR)) contacted.add(p);
   const optedOut = loadOptOutSet(STATE_DIR);
+  const feedbackExcluded = loadFeedbackExcludeSet();
   const invalidPhones = loadInvalidPhones();
   const daily = loadDaily();
 
@@ -1063,6 +1066,8 @@ async function main() {
         summary.skippedDupRow++;
       } else if (optedOut.has(phone)) {
         summary.skippedOptOut++;
+      } else if (feedbackExcluded.has(phone)) {
+        summary.skippedFeedbackExcluded = (summary.skippedFeedbackExcluded || 0) + 1;
       } else if (invalidPhones.has(phone)) {
         summary.skippedInvalid = (summary.skippedInvalid || 0) + 1;
       } else if (!contacted.has(phone)) {

@@ -214,7 +214,16 @@ export const NAV_ITEMS = (T: TranslationFn, role?: unknown): NavItem[] => {
       badge: 'Multi-Host',
       badgeCls: 'nb-green',
     },
-    // 4b. Server-Side Workflow Control Plane (10 background automation jobs & runner control)
+    // 4b. Owner Feedback Registry (سجل فيدباك الملاك)
+    {
+      id: 'owner_feedback',
+      label: isAr ? 'سجل فيدباك الملاك' : 'Owner Feedback',
+      icon: '📋',
+      section: isAr ? 'المراسلات والتسويق' : 'Outreach & Comms',
+      badge: 'Registry',
+      badgeCls: 'nb-blue',
+    },
+    // 4c. Server-Side Workflow Control Plane (10 background automation jobs & runner control)
     {
       id: 'workflow_ops',
       label: isAr ? 'مركز التحكم بمسارات العمل' : 'Workflow Ops & Control',

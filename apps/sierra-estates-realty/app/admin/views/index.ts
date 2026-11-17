@@ -27,3 +27,4 @@ export { default as ViewingsView } from './ViewingsView';
 export { default as AccessApprovalsView } from './AccessApprovalsView';
 export { default as AdminInventoryTable } from './AdminInventoryTable';
 export { default as InvenTreeHubView } from './InvenTreeHubView';
+export { default as OwnerFeedbackRegistryView } from './OwnerFeedbackRegistryView';
