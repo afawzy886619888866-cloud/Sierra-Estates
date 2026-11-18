@@ -149,7 +149,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
 
   describe('GET /api/intelligence/code', () => {
     it('returns 400 when code query parameter is missing', async () => {
-      const req = new NextRequest('http://localhost/api/intelligence/code');
+      const req = new NextRequest('http://localhost/api/intelligence/code', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } });
       const res = await GET(req);
       expect(res.status).toBe(400);
       const json = (await res.json()) as ApiResponse;
@@ -170,7 +170,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
     });
 
     it('returns 422 when code query parameter is unparseable', async () => {
-      const req = new NextRequest('http://localhost/api/intelligence/code?code=BAD');
+      const req = new NextRequest('http://localhost/api/intelligence/code?code=BAD', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } });
       const res = await GET(req);
       expect(res.status).toBe(422);
       const json = (await res.json()) as ApiResponse;

@@ -63,7 +63,7 @@ function daysAgo(n: number): string {
 }
 
 function callDashboard(): Promise<Response> {
-    return dashboardGET(new Request('https://sierra-estates.net/api/admin/dashboard'));
+    return dashboardGET(new Request('https://sierra-estates.net/api/admin/dashboard', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } }));
 }
 
 /** Route tables by name — mirrors the projections the route asks for. */

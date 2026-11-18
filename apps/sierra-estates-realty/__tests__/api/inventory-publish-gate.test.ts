@@ -162,7 +162,7 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
       from: (t: string) => makeChain({ data: [PUBLISHABLE_ROW], error: null }, calls, t),
     });
 
-    const res = await GET(new Request('http://localhost/api/inventory'));
+    const res = await GET(new Request('http://localhost/api/inventory', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } }));
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -182,7 +182,7 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
       from: (t: string) => makeChain({ data: [row], error: null }, [], t),
     });
 
-    const res = await GET(new Request('http://localhost/api/inventory'));
+    const res = await GET(new Request('http://localhost/api/inventory', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } }));
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -215,7 +215,7 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
       },
     ]);
 
-    const res = await GET(new Request('http://localhost/api/inventory'));
+    const res = await GET(new Request('http://localhost/api/inventory', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } }));
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -243,7 +243,7 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
     });
     listRecordsMock.mockResolvedValue([]);
 
-    const res = await GET(new Request('http://localhost/api/inventory'));
+    const res = await GET(new Request('http://localhost/api/inventory', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } }));
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -263,7 +263,7 @@ describe('GET /api/inventory — publish gate (Phase D)', () => {
     // workbooks) were removed from this public response entirely.
     listRecordsMock.mockResolvedValue([]);
 
-    const res = await GET(new Request('http://localhost/api/inventory?sheetOnly=true'));
+    const res = await GET(new Request('http://localhost/api/inventory?sheetOnly=true', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } }));
     const body = await res.json();
     expect(body.units).toEqual([]);
     expect(body.count).toBe(0);

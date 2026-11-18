@@ -38,7 +38,7 @@ describe('/api/whatsapp/heartbeat route', () => {
   });
 
   test('GET returns endpoint status payload', async () => {
-    const req = new Request('http://localhost:3000/api/whatsapp/heartbeat');
+    const req = new Request('http://localhost:3000/api/whatsapp/heartbeat', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } });
     const res = await GET(req);
     const body = await res.json();
 

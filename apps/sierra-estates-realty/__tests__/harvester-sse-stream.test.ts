@@ -37,7 +37,7 @@ jest.mock('@/lib/server/auth-guard', () => {
 
 describe('GET /api/harvester/stream (HARV-030-003)', () => {
   it('returns a 200 Response with text/event-stream Content-Type', async () => {
-    const req = new NextRequest('http://localhost:3000/api/harvester/stream');
+    const req = new NextRequest('http://localhost:3000/api/harvester/stream', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } });
     const res = await GET(req);
 
     expect(res.status).toBe(200);
@@ -46,7 +46,7 @@ describe('GET /api/harvester/stream (HARV-030-003)', () => {
   });
 
   it('delivers initial connection and pubsub opportunity events through the stream', async () => {
-    const req = new NextRequest('http://localhost:3000/api/harvester/stream');
+    const req = new NextRequest('http://localhost:3000/api/harvester/stream', { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } });
     const res = await GET(req);
 
     expect(res.body).toBeDefined();
