@@ -50,7 +50,7 @@ jobs:
       CLINE_KEY_SET: ${{ secrets.CLINE_API_KEY != '' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: false
 
