@@ -8,6 +8,13 @@ name: Deploy Cloudflare (Client + Admin)
 # for the custom-domain attach). CLOUDFLARE_ACCOUNT_ID is a repo variable.
 
 on:
+  # Auto-deploy on every push to main: the gate re-verifies a green CI run
+  # for the exact commit before releasing (fail-closed). workflow_run is
+  # kept as the canonical post-CI trigger; push covers the case where
+  # GitHub's workflow_run scheduling is unavailable (e.g. right after the
+  # workflow file itself changes).
+  push:
+    branches: [main]
   workflow_run:
     workflows: ["CI"]
     types: [completed]
@@ -27,7 +34,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-cloudflare-production
+  # push + workflow_run on main share refs/heads/main -> one production
+  # queue; dispatches on other refs stay isolated.
+  group: deploy-cloudflare-${{ github.ref }}
   cancel-in-progress: true
 
 env:
