@@ -48,6 +48,12 @@ on:
         required: false
         default: false
         type: boolean
+  # Auto-deploy: any green CI run on main releases to production. The gate
+  # job verifies the run's conclusion, branch and repository before letting
+  # the deploy matrix proceed, so this stays fail-closed.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
 permissions:
   contents: read
   actions: read
@@ -158,10 +164,10 @@ jobs:
         include:
           - role: client
             domain: sierra-estates.net
-            projectId: ${{ secrets.CLIENT_VERCEL_PROJECT_ID || vars.CLIENT_VERCEL_PROJECT_ID }}
+            projectIdEnv: CLIENT_VERCEL_PROJECT_ID
           - role: admin
             domain: admin.sierra-estates.net
-            projectId: ${{ secrets.ADMIN_VERCEL_PROJECT_ID || vars.ADMIN_VERCEL_PROJECT_ID }}
+            projectIdEnv: ADMIN_VERCEL_PROJECT_ID
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -192,6 +198,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
+      - name: Resolve Vercel project ID
+        # secrets/vars contexts are not readable inside strategy.matrix
+        # (GitHub rejects the workflow at parse time), so the project ID is
+        # resolved here, at step level, from the role's env var NAME.
+        id: project
+        run: |
+          if [ "${{ matrix.role }}" = "client" ]; then
+            echo "id=${{ secrets.CLIENT_VERCEL_PROJECT_ID || vars.CLIENT_VERCEL_PROJECT_ID }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "id=${{ secrets.ADMIN_VERCEL_PROJECT_ID || vars.ADMIN_VERCEL_PROJECT_ID }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy ${{ matrix.role }} project (${{ matrix.domain }})
         # env_sync_only dispatches skip the deploy entirely — env-var PATCHes
         # are not deployments and do not consume the Vercel deploy quota
@@ -199,7 +217,7 @@ jobs:
         if: ${{ inputs.env_sync_only != true }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || vars.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ matrix.projectId }}
+          VERCEL_PROJECT_ID: ${{ steps.project.outputs.id }}
         run: |
           set -euo pipefail
           VERCEL_TOKEN_VALUE="${{ secrets.VERCEL_TOKEN }}"
@@ -306,5 +324,5 @@ jobs:
         run: |
           echo "### Deployment (${{ matrix.role }}) — ${{ matrix.domain }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Environment: $TARGET_ENV" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Project: ${{ matrix.projectId }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Project: ${{ steps.project.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- App: apps/sierra-estates-realty" >> "$GITHUB_STEP_SUMMARY"
