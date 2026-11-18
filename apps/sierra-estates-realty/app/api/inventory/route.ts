@@ -37,6 +37,7 @@ import { appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import { scrubOwnerContactText } from "@/lib/server/owner-privacy";
 import { getCompoundGisData } from "@/lib/gis/compound-polygons";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -568,6 +569,8 @@ export async function GET(request: Request) {
  * Security: requires the last 12 chars of SUPABASE_SERVICE_ROLE_KEY in x-admin-secret header.
  */
 export async function DELETE(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const secret = request.headers.get('x-admin-secret');
   const expected = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(-12);
   if (!secret || !expected || secret !== expected) {
@@ -581,6 +584,8 @@ export async function DELETE(request: Request) {
  * POST /api/inventory → Append newly submitted listing to Excel inventory sheet and Supabase
  */
 export async function POST(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await request.json();
     if (!body || !body.compound || !body.price) {

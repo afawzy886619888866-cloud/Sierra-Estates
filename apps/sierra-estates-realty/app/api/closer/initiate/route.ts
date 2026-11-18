@@ -3,6 +3,7 @@ import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { requireRole } from '@/lib/auth';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * API: INITIATE CLOSING (STAGE 9)
@@ -23,6 +24,8 @@ import { logger } from '@/lib/logger';
  * strips owner PII before it reaches a client).
  */
 export async function POST(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

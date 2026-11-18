@@ -12,6 +12,16 @@
 import { NextResponse } from "next/server";
 import { listRecords, updateRecord, insertRecord, type RecordData } from "@sierra-estates/db";
 import { requireRole } from "@/lib/auth";
+import { verifyRequest, verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+
+async function checkAuth(request: Request) {
+  const auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (auth.authenticated && auth.method === 'secret-key') return null;
+  const adminAuth = await verifyAdminRequest(request as import('next/server').NextRequest);
+  if (adminAuth.authenticated) return null;
+  return unauthorizedResponse();
+}
+
 
 
 export const runtime = "nodejs";
@@ -23,6 +33,8 @@ function rowToInquiry(row: RecordData): Record<string, unknown> {
 }
 
 export async function GET(req: Request) {
+  const __authError = await checkAuth(req);
+  if (__authError) return __authError;
   try {
     await requireRole(req, "manager");
   } catch (err) {
@@ -53,6 +65,8 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const __authError = await checkAuth(req);
+  if (__authError) return __authError;
   const sess = await requireRole(req, "manager");
   const url = new URL(req.url);
   const id = url.searchParams.get("id");

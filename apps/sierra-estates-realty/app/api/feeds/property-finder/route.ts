@@ -18,6 +18,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

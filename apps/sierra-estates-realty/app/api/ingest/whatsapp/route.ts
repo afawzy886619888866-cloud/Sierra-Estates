@@ -22,6 +22,7 @@ import { sharedPubSub } from '@/lib/pubsub';
 import { NEW_CAIRO_COMPOUNDS } from '@/components/Maps/compounds-data';
 
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 function verifyWebhookSecret(req: NextRequest) {
   return verifySharedSecret(req, {
@@ -126,6 +127,8 @@ const buildListingDocument = (
 };
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const denied = verifyWebhookSecret(req);
   if (denied) return denied;
 

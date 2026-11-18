@@ -25,7 +25,8 @@ function post(body: unknown) {
   return POST(
     new Request('http://localhost/api/matches', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+     headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+      headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
   );

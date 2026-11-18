@@ -25,6 +25,16 @@ import { requireRole } from "@/lib/auth";
 import { canElevateRoles } from "@/lib/types";
 import { notifyAccessRequestDecided } from "@/lib/server/access-request-notifier";
 import type { Role, UserStatus } from "@/lib/types";
+import { verifyRequest, verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+
+async function checkAuth(request: Request) {
+  const auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (auth.authenticated && auth.method === 'secret-key') return null;
+  const adminAuth = await verifyAdminRequest(request as import('next/server').NextRequest);
+  if (adminAuth.authenticated) return null;
+  return unauthorizedResponse();
+}
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +49,8 @@ const ALL_ROLES: Role[] = [
 const ELEVATED_ROLES: Role[] = ["superadmin", "admin", "operations_manager", "auditor"];
 
 export async function GET(req: Request) {
+  const __authError = await checkAuth(req);
+  if (__authError) return __authError;
   try {
     await requireRole(req, "manager");
   } catch (err) {
@@ -79,6 +91,8 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const __authError = await checkAuth(req);
+  if (__authError) return __authError;
   const sess = await requireRole(req, "admin");
   const url = new URL(req.url);
   const uid = url.searchParams.get("uid");
@@ -138,6 +152,8 @@ export async function PUT(req: Request) {
  * their next sign-in attempt, where /api/auth reports the real ledger state.
  */
 export async function POST(req: Request) {
+  const __authError = await checkAuth(req);
+  if (__authError) return __authError;
   const sess = await requireRole(req, "admin");
   if (!canElevateRoles(sess.role)) {
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { VideoTeaserEngine } from '@sierra-estates/agents-core';
 import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,8 @@ const videoTeaserRequestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);

@@ -68,7 +68,7 @@ process.env.RUNNER_API_KEY = process.env.RUNNER_API_KEY || 'test-runner-key';
 const req = (path: string, body?: unknown, method?: string) =>
   new Request(`http://localhost${path}`, {
     method: method ?? (body !== undefined ? 'POST' : 'GET'),
-    headers: { 'x-runner-key': 'test-runner-key' },
+    headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'x-runner-key': 'test-runner-key' },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   }) as unknown as NextRequest;
 

@@ -4,8 +4,11 @@ import {
   type CandidateProperty,
   type StakeholderIntelligence,
 } from '@sierra-estates/agents';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json();
 

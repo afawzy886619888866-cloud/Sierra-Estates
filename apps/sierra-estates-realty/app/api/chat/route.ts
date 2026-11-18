@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { OmnichannelChatService } from '@/lib/services/OmnichannelChatService';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { parseRequestBody } from '@/lib/server/schemas';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * SIERRA ESTATES WEB CONCIERGE CHAT API
@@ -19,6 +20,8 @@ const chatRequestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

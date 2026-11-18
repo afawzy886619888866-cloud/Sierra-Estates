@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 const conciergeParamsSchema = z.object({
   leadId: z.string().min(1, 'Lead ID is required'),
@@ -13,6 +14,8 @@ export const GET = async (
   req: Request,
   { params }: { params: Promise<{ leadId: string }> }
 ) => {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

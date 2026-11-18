@@ -2,6 +2,16 @@
 import { NextResponse } from "next/server";
 import { listRecords } from "@sierra-estates/db";
 import { requireRole } from "@/lib/auth";
+import { verifyRequest, verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+
+async function checkAuth(request: Request) {
+  const auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (auth.authenticated && auth.method === 'secret-key') return null;
+  const adminAuth = await verifyAdminRequest(request as import('next/server').NextRequest);
+  if (adminAuth.authenticated) return null;
+  return unauthorizedResponse();
+}
+
 
 
 export const runtime = "nodejs";
@@ -9,6 +19,8 @@ export const dynamic = "force-dynamic";
 
 
 export async function GET(req: Request) {
+  const __authError = await checkAuth(req);
+  if (__authError) return __authError;
   await requireRole(req, "manager");
   try {
     const rows = await listRecords("audit_logs", {

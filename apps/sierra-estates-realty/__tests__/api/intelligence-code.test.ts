@@ -27,6 +27,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
     it('generates a valid Sierra property code when compound and specs are provided', async () => {
       const req = new NextRequest('http://localhost/api/intelligence/code', {
         method: 'POST',
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         body: JSON.stringify({
           compound: 'Mivida',
           rooms: 3,
@@ -50,6 +51,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
     it('rejects code generation without a compound or locationArea (§21 no-fabrication)', async () => {
       const req = new NextRequest('http://localhost/api/intelligence/code', {
         method: 'POST',
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         body: JSON.stringify({
           rooms: 2,
           price: 50000,
@@ -66,6 +68,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
     it('parses a valid property code when action is parse', async () => {
       const req = new NextRequest('http://localhost/api/intelligence/code', {
         method: 'POST',
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         body: JSON.stringify({
           action: 'parse',
           code: 'MVD-3F-75K+G',
@@ -89,6 +92,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
     it('rejects parse action when code is missing', async () => {
       const req = new NextRequest('http://localhost/api/intelligence/code', {
         method: 'POST',
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         body: JSON.stringify({
           action: 'parse',
           code: '',
@@ -105,6 +109,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
     it('returns 422 error when code format cannot be parsed', async () => {
       const req = new NextRequest('http://localhost/api/intelligence/code', {
         method: 'POST',
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         body: JSON.stringify({
           action: 'parse',
           code: 'INVALID_CODE_SAMPLE',

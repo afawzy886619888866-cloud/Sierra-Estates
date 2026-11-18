@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { start } from 'workflow/api';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { listingSubmissionWorkflow } from '@/lib/workflow/listing-submission-workflow';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,8 @@ const submitListingSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

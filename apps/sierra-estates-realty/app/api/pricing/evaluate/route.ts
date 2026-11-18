@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * POST /api/pricing/evaluate — zone-rate valuation heuristic.
@@ -44,6 +45,8 @@ function readNumber(value: unknown, field: string, fallback: number): number {
 }
 
 export async function POST(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json();
     const { zone = 'New Cairo', area, beds, fin, furn } = body ?? {};

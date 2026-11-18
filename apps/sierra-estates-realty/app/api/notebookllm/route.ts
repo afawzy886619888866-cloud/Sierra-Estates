@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NotebookLMEngine, SourceDocument } from '@sierra-estates/agents-core';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const maxDuration = 60; // 60 seconds for deep audio overview synthesis
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json();
     const { action = 'query', query, sources = [], focusTopic, language = 'ar' } = body;

@@ -3,8 +3,11 @@ import { deepseekReasoningEngine } from '@sierra-estates/deepseek-harness';
 import { eccMemory } from '@/lib/eccMemoryEngine';
 import { logger } from '@/lib/logger';
 import { requireStaffOrServiceKey, requireServiceKey } from '@/lib/server/route-guard';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function GET(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);
@@ -29,6 +32,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);

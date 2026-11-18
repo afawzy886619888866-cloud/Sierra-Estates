@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { sharedPubSub, HarvesterOpportunityEvent } from '@/lib/pubsub';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -17,6 +18,8 @@ export const runtime = 'nodejs';
  * - Complies with §21 No-Fabrication and MCD protocol HARV-030-003.
  */
 export async function GET(req: NextRequest): Promise<Response> {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const encoder = new TextEncoder();
   let heartbeatTimer: NodeJS.Timeout | null = null;
   let unsubscribeHarvester: (() => void) | null = null;

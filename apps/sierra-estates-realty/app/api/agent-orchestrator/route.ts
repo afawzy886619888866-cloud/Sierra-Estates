@@ -3,6 +3,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 const execFileAsync = promisify(execFile);
 
@@ -51,6 +52,8 @@ async function runAoCli(args: string[]): Promise<any> {
  * Returns live status of Windows Agent Orchestrator app, registered projects, active sessions, and AI harnesses.
  */
 export async function GET(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);
@@ -144,6 +147,8 @@ export async function GET(req: NextRequest) {
  * - action: 'send' -> dispatches prompt to active session
  */
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);

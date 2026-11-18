@@ -5,8 +5,11 @@ import {
   VipNegotiationSummary,
 } from '@sierra-estates/agents-core';
 import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function GET(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { listRecords, insertRecord } from '@sierra-estates/db';
 import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -254,6 +255,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);

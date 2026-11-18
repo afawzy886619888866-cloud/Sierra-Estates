@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { evaluatePropertyValuation, ValuationInput } from '@/lib/valuationArbitrageEngine';
 import { analyzeValuationViaPythonApi } from '@/lib/server/python-api-client';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body: ValuationInput = await req.json();
 

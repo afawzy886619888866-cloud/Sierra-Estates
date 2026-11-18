@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * GET /api/whatsapp/health
@@ -18,6 +19,8 @@ const PULSE_INTERVAL_MS = 60_000;
 const STALE_AFTER_MS = 5 * PULSE_INTERVAL_MS;
 
 export async function GET(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

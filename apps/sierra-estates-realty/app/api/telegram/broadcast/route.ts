@@ -19,6 +19,7 @@ import { insertRecord } from "@sierra-estates/db";
 import { formatListingForTelegram, type TelegramListingSpec } from "@/lib/server/telegram-listing-formatter";
 import { sendListingToTelegramChannel } from "@/lib/server/telegram-broadcaster";
 import { syndicateListingBroadcast } from "@/lib/server/listing-syndication";
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,8 @@ export const dynamic = "force-dynamic";
 const MAX_PHOTOS = 10;
 
 export async function POST(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   // Auth: a verified staff session holding inventory:write (default-deny).
   let sess;
   try {

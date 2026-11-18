@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { getRecord, updateRecord } from "@sierra-estates/db";
 import { toListingColumns, toListingRecord } from "@/lib/server/listing-columns";
 import { requireRole } from "@/lib/auth";
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   await requireRole(req, "manager");
   const { id } = await ctx.params;
   const patch = await req.json().catch(() => ({}));
@@ -44,6 +47,8 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
 }
 
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   await requireRole(req, "admin");
   const { id } = await ctx.params;
   await updateRecord("listings", id, {

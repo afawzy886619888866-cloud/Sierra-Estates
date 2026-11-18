@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { countRecords } from '@sierra-estates/db';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * Internal liveness/readiness probe.
@@ -15,7 +16,9 @@ import { countRecords } from '@sierra-estates/db';
  * memory / pubsub / inference_proxy are still unprobed placeholders — they are
  * not part of this migration and are left exactly as they were.
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   let supabase: 'online' | 'offline' = 'online';
   try {
     await countRecords('system_config');

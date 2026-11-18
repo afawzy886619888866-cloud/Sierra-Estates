@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PropertyMatchmaker, type PropertyListing, type ClientProfile } from '@sierra-estates/agents-core';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 const SAMPLE_LUXURY_INVENTORY: PropertyListing[] = [
   {
@@ -61,6 +62,8 @@ const SAMPLE_LUXURY_INVENTORY: PropertyListing[] = [
 ];
 
 export async function GET(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const { searchParams } = new URL(req.url);
   const compound = searchParams.get('compound') || undefined;
   const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
@@ -85,6 +88,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
     const clientProfile: ClientProfile = {

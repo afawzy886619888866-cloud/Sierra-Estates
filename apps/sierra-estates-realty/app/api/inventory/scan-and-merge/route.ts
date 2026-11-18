@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 min timeout for heavy inventory processing
@@ -27,6 +28,8 @@ interface ScanResponse {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);

@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { invenTreeHub, type InvenTreeStatus } from "@/lib/inventory/InvenTreeInventoryHub";
 import { logger } from "@/lib/logger";
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json();
     const { action } = body;

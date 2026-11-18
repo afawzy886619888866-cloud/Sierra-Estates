@@ -47,7 +47,8 @@ const ADMIN_SESSION = { ...SUPERADMIN_SESSION, uid: 'admin-uid', role: 'admin' }
 const request = (body: unknown) =>
   new Request('http://localhost:3000/api/admin/users', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+   headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+    headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 

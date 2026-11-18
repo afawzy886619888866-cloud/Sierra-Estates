@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { VoiceBriefingEngine, VoiceBriefingRequest } from '@sierra-estates/agents-core';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,8 @@ function missingBriefingFields(input: {
 }
 
 export async function GET(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code') || searchParams.get('propertyId') || 'UNSPECIFIED';
   const compound = searchParams.get('compound');
@@ -69,6 +72,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json();
     // Nullable until proven present — the gate below rejects anything missing.

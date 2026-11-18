@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import { generateCloserHandoff } from '@/lib/services/handoff-service';
 import { escapeTelegramHtml } from '@/lib/telegram';
 import { requireStaffOrServiceKey } from '@/lib/server/route-guard';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function POST(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireStaffOrServiceKey(req);

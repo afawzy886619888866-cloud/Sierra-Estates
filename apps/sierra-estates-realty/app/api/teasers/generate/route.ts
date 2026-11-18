@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { TearSheetGenerator, TearSheetListingInput } from '@sierra-estates/agents-core/src/memo-generator';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * §21 no-fabrication contract: a tear-sheet documents a REAL listing. Every
@@ -39,6 +40,8 @@ function missingTearSheetFields(body: Record<string, unknown>): string[] {
 }
 
 export async function POST(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await request.json().catch(() => ({}));
 

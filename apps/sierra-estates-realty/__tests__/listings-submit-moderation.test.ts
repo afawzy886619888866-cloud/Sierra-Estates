@@ -85,6 +85,7 @@ const validSubmission = {
 const submit = (body: unknown) =>
   new Request('http://localhost/api/listings/submit', {
     method: 'POST',
+    headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
     body: JSON.stringify(body),
   });
 

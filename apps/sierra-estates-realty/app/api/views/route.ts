@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { SavedViewsService } from '@/lib/services/SavedViewsService';
 import type { Visibility } from '@sierra-estates/db';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,8 @@ export async function GET(req: NextRequest) {
  * Parse DSL, validate, and save a broker view.
  */
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
     const parseResult = createViewSchema.safeParse(body);

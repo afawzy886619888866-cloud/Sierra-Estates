@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { buildSierraCodeMetadata } from "@/lib/services/coding-algorithm";
 import { extractEcoSmartTags } from "@/lib/services/listing-normalize";
 import { logger } from "@/lib/logger";
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -350,6 +351,8 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
  * Uses AI to instantly parse unstructured property intake text into the EasyListing schema.
  */
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
     const parseResult = rawInputSchema.safeParse(body);

@@ -4,6 +4,7 @@ import { publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { getSupabaseAdmin, listRecords } from '@sierra-estates/db';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -263,6 +264,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   // 1. Public rate limiting per IP
   const rateLimitResponse = await publicEndpointLimiter(req);
   if (rateLimitResponse) {

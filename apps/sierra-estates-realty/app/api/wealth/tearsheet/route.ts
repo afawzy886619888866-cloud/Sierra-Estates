@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TearSheetGenerator, TearSheetListingInput } from '@sierra-estates/agents-core';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * §21 no-fabrication contract: an investor tearsheet is a client-facing
@@ -38,6 +39,8 @@ function missingTearSheetFields(body: Record<string, unknown>): string[] {
 }
 
 export async function POST(req: NextRequest) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
 

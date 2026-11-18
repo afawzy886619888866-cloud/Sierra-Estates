@@ -54,7 +54,8 @@ const enqueueMock = enqueueWhatsAppJob as jest.Mock;
 const createReq = (body: unknown) =>
   new NextRequest('http://localhost:3000/api/inventory/request-photos', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+   headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+    headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 

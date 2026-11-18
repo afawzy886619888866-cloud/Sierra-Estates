@@ -46,6 +46,7 @@ import {
   GEMINI_EMBEDDING_MODEL,
   GEMINI_EMBEDDING_DIMENSIONS,
 } from '@/lib/server/gemini-embeddings';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -177,6 +178,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const body = await req.json().catch(() => ({}));
   const batch = clampBatch(body?.batch);
 

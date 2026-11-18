@@ -15,11 +15,14 @@ import {
 } from '@sierra-estates/memory-engine';
 import { verifySession, SESSION_COOKIE, parseCookies } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const __auth = await verifyRequest(request as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const cookies = parseCookies(request.headers.get('cookie'));
   const session = await verifySession(cookies[SESSION_COOKIE]);
   

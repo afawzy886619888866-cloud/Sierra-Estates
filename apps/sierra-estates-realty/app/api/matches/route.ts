@@ -13,6 +13,7 @@ import { listRecords } from "@sierra-estates/db";
 import { toListingRecord } from "@/lib/server/listing-columns";
 import { rankMatches } from "@/lib/server/match-scoring";
 import type { Listing, MatchAnswers, MatchResult } from "@/lib/types";
+import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +71,8 @@ function isOnMarket(status?: string | null): boolean {
 }
 
 export async function POST(req: Request) {
+  const __auth = await verifyRequest(req as import('next/server').NextRequest);
+  if (!__auth.authenticated) return unauthorizedResponse();
   const parsed = matchAnswersSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
