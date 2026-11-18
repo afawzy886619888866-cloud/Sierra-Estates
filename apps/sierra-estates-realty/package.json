@@ -14,7 +14,9 @@
     "seed:admin": "node scripts/seed-admin.mjs",
     "inventory:snapshot": "node scripts/generate-inventory-snapshot.mjs",
     "test": "node scripts/ensure-snapshot.mjs && jest --testPathPatterns=__tests__",
-    "test:ci": "node scripts/ensure-snapshot.mjs && jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__"
+    "test:ci": "node scripts/ensure-snapshot.mjs && jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__",
+    "build:cf": "node scripts/ensure-snapshot.mjs && next build --webpack && opennextjs-cloudflare build --skipNextBuild",
+    "preview:cf": "opennextjs-cloudflare preview"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.62",
@@ -92,6 +94,7 @@
     "@jest/transform": "^30.5.1",
     "@jest/types": "^30.5.1",
     "@next/eslint-plugin-next": "16.4.3",
+    "@opennextjs/cloudflare": "^1.20.17",
     "@tailwindcss/postcss": "^4",
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5.0.6",
@@ -117,6 +120,7 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.4.12",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "wrangler": "^4.164.0"
   }
 }

@@ -314,3 +314,7 @@ core.*
 supabase/.temp/
 downloads_sheets/
 sierra-live-cutover/
+
+# OpenNext / Cloudflare local artifacts
+.open-next/
+.wrangler/

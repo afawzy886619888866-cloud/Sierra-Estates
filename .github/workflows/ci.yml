@@ -152,3 +152,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
           SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
+
+      - name: OpenNext Cloudflare transform (hosting artifact smoke)
+        # 2026-11-18: hosting moved to Cloudflare Workers. The production
+        # artifact is produced by @opennextjs/cloudflare from the same .next
+        # output the step above validated — run the transform here so any
+        # adapter/config regression surfaces in CI, not at deploy time.
+        run: pnpm --filter sierra-estates-client-page exec opennextjs-cloudflare build --skipNextBuild
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: test-service-role-key

@@ -16,6 +16,10 @@ const SERVER_ONLY_PACKAGES = [
 ];
 
 const nextConfig: NextConfig = {
+  // Required by @opennextjs/cloudflare: the Workers transform reads the
+  // standalone server artifacts from .next/standalone. No effect on
+  // Vercel-style builders; CI's OpenNext transform smoke validates this.
+  output: "standalone",
   // Local memory guard: cap dev-server RSS on 4GB boxes (verified live:
   // peak RSS 3.2GB without -> settled 2.3-2.7GB with the flag active).
   // Env-gated so production builds are unaffected.
