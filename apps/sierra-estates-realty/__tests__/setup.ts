@@ -54,3 +54,8 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
 });
+
+// M1 hardening: guarded routes verify x-sbr-secret-key against
+// SBR_SECRET_KEY captured at route-module load. Suites that need it absent
+// (fail-closed contract tests) delete/override this in their own scopes.
+process.env.SBR_SECRET_KEY = 'test-sbr-secret';

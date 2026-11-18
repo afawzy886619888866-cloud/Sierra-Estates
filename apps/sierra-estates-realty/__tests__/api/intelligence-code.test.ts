@@ -159,7 +159,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
 
     it('parses a valid code from query parameter', async () => {
       const code = 'MVD-3F-75K+G';
-      const req = new NextRequest(`http://localhost/api/intelligence/code?code=${encodeURIComponent(code)}`);
+      const req = new NextRequest(`http://localhost/api/intelligence/code?code=${encodeURIComponent(code)}`, { headers: { 'x-sbr-secret-key': 'test-sbr-secret' } });
       const res = await GET(req);
       expect(res.status).toBe(200);
       const json = (await res.json()) as ApiResponse;

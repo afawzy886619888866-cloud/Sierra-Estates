@@ -58,7 +58,7 @@ describe('POST /api/matches validation', () => {
 
   it('rejects a malformed body', async () => {
     const res = await POST(
-      new Request('http://localhost/api/matches', { method: 'POST', body: 'not json' })
+      new Request('http://localhost/api/matches', { method: 'POST', headers: { 'x-sbr-secret-key': 'test-sbr-secret' }, body: 'not json' })
     );
     expect(res.status).toBe(400);
   });

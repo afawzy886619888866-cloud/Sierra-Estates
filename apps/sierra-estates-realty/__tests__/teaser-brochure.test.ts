@@ -60,7 +60,7 @@ describe('Luxury Property Brochure & Investment Teaser Suite', () => {
 
   describe('§21 no-fabrication: tear-sheet routes refuse to invent listings', () => {
     const postJson = (url: string, payload: unknown) =>
-      new NextRequest(url, { method: 'POST', body: JSON.stringify(payload) });
+      new NextRequest(url, { method: 'POST', headers: { 'x-sbr-secret-key': 'test-sbr-secret' }, body: JSON.stringify(payload) });
 
     it('teasers/generate: empty body is a 400 with an explicit missing list', async () => {
       const res = await postTeaserGenerate(

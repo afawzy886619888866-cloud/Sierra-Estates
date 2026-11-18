@@ -30,6 +30,19 @@ jest.mock('@/lib/server/rate-limit', () => ({
 jest.mock('@/lib/server/auth-guard', () => ({
   __esModule: true,
   requireAdminSession: jest.fn().mockResolvedValue({ authorized: false }),
+  verifyRequest: jest.fn(async (req) => {
+    const h = req?.headers?.get?.('x-sbr-secret-key');
+    return h && h === 'test-sbr-secret'
+      ? { authenticated: true, method: 'secret-key' }
+      : { authenticated: false, method: 'none' };
+  }),
+  verifyAdminRequest: jest.fn(async (req) => {
+    const h = req?.headers?.get?.('x-sbr-secret-key');
+    return h && h === 'test-sbr-secret'
+      ? { authenticated: true, method: 'secret-key', role: 'admin' }
+      : { authenticated: false, method: 'none' };
+  }),
+  unauthorizedResponse: jest.requireActual('@/lib/server/auth-guard').unauthorizedResponse,
 }));
 
 jest.mock('@/lib/services/telegram-controller', () => ({
@@ -93,7 +106,6 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
     it('flags confidence < 0.75 and validates PF Title (30-47 chars) & Bilingual Description (750-2000 chars)', async () => {
       const lowReq = new NextRequest('http://localhost/api/listings/intake', {
         method: 'POST',
-       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'analyze',
@@ -114,7 +126,6 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
       const validDesc = 'شقة للبيع في كمبوند ميفيدا التجمع الخامس تشطيب الترا سوبر لوكس 3 غرف نوم '.repeat(12).slice(0, 820);
       const highReq = new NextRequest('http://localhost/api/listings/intake', {
         method: 'POST',
-       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'analyze',
@@ -140,7 +151,6 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
 
       const req = new NextRequest('http://localhost/api/listings/intake', {
         method: 'POST',
-       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           compound: 'Mivida',
@@ -170,7 +180,6 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
         'https://script.google.com/macros/s/test/exec',
         expect.objectContaining({
           method: 'POST',
-          headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
           body: expect.stringContaining('"action":"upsert_units"'),
         })
       );
@@ -238,7 +247,6 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
 
       const req = new NextRequest('http://localhost/api/viewing-requests', {
         method: 'POST',
-       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
         headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'sale',
