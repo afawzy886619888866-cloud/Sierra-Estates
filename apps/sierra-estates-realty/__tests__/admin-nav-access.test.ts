@@ -86,6 +86,15 @@ describe('lib/admin-nav-access — spec role matrix', () => {
     }
   });
 
+  it('limits owner feedback to roles with inventory write permission', () => {
+    expect(NAV_REQUIRED_PERMISSIONS.owner_feedback).toEqual(['inventory:write']);
+    expect(isNavTabAllowedForRole('owner_feedback', 'superadmin')).toBe(true);
+    expect(isNavTabAllowedForRole('owner_feedback', 'inventory_manager')).toBe(true);
+    for (const role of ['viewer', 'sales_agent', 'marketing_manager', 'partner']) {
+      expect(isNavTabAllowedForRole('owner_feedback', role)).toBe(false);
+    }
+  });
+
   it('gives the marketing manager campaigns, brochure (curator), reports and deep insights', () => {
     for (const id of ['whatsapp_outreach', 'curator', 'reports', 'deep_insights']) {
       expect(isNavTabAllowedForRole(id, 'marketing_manager')).toBe(true);

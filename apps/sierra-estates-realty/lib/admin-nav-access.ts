@@ -47,6 +47,7 @@ export const NAV_REQUIRED_PERMISSIONS: Readonly<Record<string, readonly string[]
   leads: ['leads:read:all', 'leads:read:assigned'],
   pipeline: ['leads:read:all'],
   tasks: ['leads:read:all'],
+  owner_feedback: ['inventory:write'],
   inventory_os: ['inventory:read'],
   masterplan_gis: ['inventory:read'],
   cairo_plaza: ['inventory:read'],
