@@ -39,7 +39,6 @@ export const NAV_REQUIRED_PERMISSIONS: Readonly<Record<string, readonly string[]
   inventory_command: ['inventory:write'],
   easy_listing: ['inventory:write'],
   whatsapp_outreach: ['campaigns:write'],
-  owner_feedback: ['campaigns:write'],
   agents: ['automation:read'],
   workflows: ['automation:read'],
   all_apps: ['inventory:read'],
