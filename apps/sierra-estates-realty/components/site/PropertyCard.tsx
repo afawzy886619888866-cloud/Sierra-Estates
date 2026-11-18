@@ -10,6 +10,7 @@
  * - High-res image carousel navigation
  */
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   Heart,
@@ -253,8 +254,14 @@ export default function PropertyCard({
       >
         <div className="photo relative group">
           <Link href={href}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={currentImg} alt={`${p.type} in ${p.cmp}`} loading="lazy" />
+            <Image
+              src={currentImg}
+              alt={`${p.type} in ${p.cmp}`}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px"
+              loading="lazy"
+              style={{ objectFit: 'cover' }}
+            />
           </Link>
 
           {/* Verified Unit Badges */}
@@ -354,8 +361,14 @@ export default function PropertyCard({
       >
         <div className="photo relative group" style={{ height: 180 }}>
           <Link href={href}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={currentImg} alt={`${p.type} in ${p.cmp}`} loading="lazy" />
+            <Image
+              src={currentImg}
+              alt={`${p.type} in ${p.cmp}`}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px"
+              loading="lazy"
+              style={{ objectFit: 'cover' }}
+            />
           </Link>
           <div className="badges">
             {imgCuratedBadge}
@@ -463,8 +476,14 @@ export default function PropertyCard({
       >
         <div className="photo" style={{ height: 230 }}>
           <Link href={href}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={currentImg} alt={`${p.type} in ${p.cmp}`} loading="lazy" />
+            <Image
+              src={currentImg}
+              alt={`${p.type} in ${p.cmp}`}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px"
+              loading="lazy"
+              style={{ objectFit: 'cover' }}
+            />
           </Link>
           <div className="badges">
             {imgCuratedBadge}
@@ -556,8 +575,14 @@ export default function PropertyCard({
     <article className={`pcard luxury-inst-card rv d${(i % 3) + 1} ${className}`} data-type={p.type} data-mode={p.mode}>
       <div className="photo relative group">
         <Link href={href}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={currentImg} alt={`${p.type} in ${p.cmp}`} loading="lazy" />
+          <Image
+            src={currentImg}
+            alt={`${p.type} in ${p.cmp}`}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px"
+            loading="lazy"
+            style={{ objectFit: 'cover' }}
+          />
         </Link>
 
         {/* Multi-Image Carousel Controls */}
