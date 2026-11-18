@@ -24,7 +24,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
   });
 
   describe('Node.js Version & Package Manager Standards', () => {
-    it('uses Node.js 24-compatible versions of checkout and dependency-review actions', () => {
+    it('uses Node.js 24-compatible versions of GitHub Actions', () => {
       const workflowDirs = [
         WORKFLOWS_DIR,
         path.join(ROOT_DIR, 'packages', 'open-memory', '.github', 'workflows'),
@@ -35,6 +35,8 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
         for (const wf of workflows) {
           const content = fs.readFileSync(path.join(dir, wf), 'utf-8');
           expect(content, `${wf} must not use the Node.js 20 checkout action`).not.toContain('actions/checkout@v4');
+          expect(content, `${wf} must not use the Node.js 20 setup-node action`).not.toContain('actions/setup-node@v4');
+          expect(content, `${wf} must not use the Node.js 20 pnpm setup action`).not.toContain('pnpm/action-setup@v4');
           expect(content, `${wf} must not use the Node.js 20 dependency-review action`).not.toContain('actions/dependency-review-action@v4');
         }
       }
