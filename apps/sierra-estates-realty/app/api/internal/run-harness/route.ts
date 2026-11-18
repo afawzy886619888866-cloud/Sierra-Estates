@@ -40,5 +40,5 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const __auth = await verifyRequest(request as import('next/server').NextRequest);
   if (!__auth.authenticated) return unauthorizedResponse();
-  return POST();
+  return POST(request);
 }
