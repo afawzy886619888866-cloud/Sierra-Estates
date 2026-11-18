@@ -369,7 +369,7 @@ def load_all_records(filepath):
 def build_joker_workbook(listings, client_requests):
     print(f"[The Joker Processor] Assembling Joker master workbook...")
     wb = openpyxl.Workbook()
-    wb.remove(wb.active) # Remove default sheet
+    wb.remove(wb.active) # type: ignore # Remove default sheet
 
     font_header = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
     fill_header = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
