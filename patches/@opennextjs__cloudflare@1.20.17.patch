@@ -1,0 +1,15 @@
+diff --git a/dist/cli/build/bundle-server.js b/dist/cli/build/bundle-server.js
+index 9d0375ab175ff83d0476fc52be6f69e9fd06e9a4..8224dfb693bbdada0002709127d5b3f533eaaae7 100644
+--- a/dist/cli/build/bundle-server.js
++++ b/dist/cli/build/bundle-server.js
+@@ -42,6 +42,10 @@ const optionalDependencies = [
+     "probe-image-size",
+     // `server.edge` is not available in react-dom@18
+     "react-dom/server.edge",
++    // ws optional native deps required by the Vercel workflow routes and
++    // admin negotiate route; ws try/catches their absence at runtime.
++    "bufferutil",
++    "utf-8-validate",
+ ];
+ /**
+  * Imports left external in the server bundle.
