@@ -3,8 +3,25 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
+import { verifyRequest, verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 const execAsync = promisify(exec);
+
+/**
+ * Admin authentication guard — every handler must pass through this before
+ * touching the registry or spawning the rebuild script.
+ */
+async function checkAuth(request: NextRequest) {
+  const auth = await verifyRequest(request);
+  if (auth.authenticated && auth.method === 'secret-key') {
+    return null; // internal secret key authorized
+  }
+  const adminAuth = await verifyAdminRequest(request);
+  if (adminAuth.authenticated) {
+    return null; // admin session authorized
+  }
+  return unauthorizedResponse();
+}
 
 /**
  * GET /api/admin/owner-feedback
@@ -16,6 +33,8 @@ const execAsync = promisify(exec);
  *   ?tab=available|negotiating|brokers|inactive|no_reply|general_reply
  */
 export async function GET(request: NextRequest) {
+  const authError = await checkAuth(request);
+  if (authError) return authError;
   try {
     const { searchParams } = request.nextUrl;
     const refresh = searchParams.get('refresh') === '1';
@@ -81,6 +100,8 @@ export async function GET(request: NextRequest) {
  * Body: { phone: string, category: string, notes?: string }
  */
 export async function POST(request: NextRequest) {
+  const authError = await checkAuth(request);
+  if (authError) return authError;
   try {
     const body = await request.json();
     const { phone, category, notes } = body;
