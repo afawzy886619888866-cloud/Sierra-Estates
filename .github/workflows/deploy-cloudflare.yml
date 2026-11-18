@@ -98,7 +98,11 @@ jobs:
   deploy:
     name: OpenNext deploy · ${{ matrix.role }}
     needs: gate
-    if: ${{ needs.gate.outputs.proceed == 'true' && (needs.gate.outputs.target == 'both' || needs.gate.outputs.target == matrix.role) }}
+    # NOTE: matrix context is NOT legal in a job-level if that also
+    # references needs (GitHub evaluates the needs pass first and rejects
+    # 'matrix' as unrecognized). The per-role target filter therefore
+    # lives on the step-level conditions below.
+    if: ${{ needs.gate.outputs.proceed == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
@@ -117,6 +121,18 @@ jobs:
             hostname: admin.sierra-estates.net
             siteUrl: https://admin.sierra-estates.net
     steps:
+      - name: Role target filter
+        id: role_gate
+        env:
+          TARGET: ${{ needs.gate.outputs.target }}
+        run: |
+          if [ "$TARGET" != "both" ] && [ "$TARGET" != "${{ matrix.role }}" ]; then
+            echo "::notice::target=$TARGET — skipping ${{ matrix.role }}."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -136,6 +152,7 @@ jobs:
           cache: pnpm
 
       - name: Verify deployment credentials (fail loudly)
+        if: ${{ steps.role_gate.outputs.skip != 'true' }}
         run: |
           if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
             echo "::error::CLOUDFLARE_API_TOKEN repository secret is missing. Create a Cloudflare API token with 'Workers Scripts:Edit' (account) + 'Zone DNS:Edit' (zone sierra-estates.net) and add it as the CLOUDFLARE_API_TOKEN repository secret — deploys must never silently skip."
@@ -144,9 +161,11 @@ jobs:
           echo "Cloudflare credentials present for the ${{ matrix.role }} worker."
 
       - name: Install dependencies
+        if: ${{ steps.role_gate.outputs.skip != 'true' }}
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Build ${{ matrix.role }} worker (Next.js → OpenNext)
+        if: ${{ steps.role_gate.outputs.skip != 'true' }}
         working-directory: apps/sierra-estates-realty
         env:
           NODE_OPTIONS: --max-old-space-size=6144
@@ -164,6 +183,7 @@ jobs:
           npx opennextjs-cloudflare build --skipNextBuild
 
       - name: Deploy worker ${{ matrix.worker }}
+        if: ${{ steps.role_gate.outputs.skip != 'true' }}
         working-directory: apps/sierra-estates-realty
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -194,6 +214,7 @@ jobs:
           rm -f /tmp/cf-secrets.json
 
       - name: Attach custom domain (auto-creates DNS)
+        if: ${{ steps.role_gate.outputs.skip != 'true' }}
         # Worker Custom Domains replace manual DNS records: attaching the
         # hostname to the worker creates/updates the zone record itself.
         env:
@@ -219,7 +240,7 @@ jobs:
           fi
 
       - name: Smoke the deployment
-        if: ${{ matrix.role == 'client' }}
+        if: ${{ steps.role_gate.outputs.skip != 'true' && matrix.role == 'client' }}
         run: |
           set -euo pipefail
           for i in $(seq 1 10); do
