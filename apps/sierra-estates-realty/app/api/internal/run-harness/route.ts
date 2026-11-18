@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { DeepSeekHarness } from '@sierra-estates/deepseek-harness';
 import { runRagRetrievalHarness } from '@/lib/server/rag-harness';
-import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 /**
  * POST/GET /api/internal/run-harness
@@ -15,9 +14,7 @@ import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
  *    honest `configured: false` report is returned when credentials are
  *    absent rather than fabricated accuracy.
  */
-export async function POST(request: Request) {
-  const __auth = await verifyRequest(request as import('next/server').NextRequest);
-  if (!__auth.authenticated) return unauthorizedResponse();
+export async function POST() {
   try {
     const harness = new DeepSeekHarness();
     const report = await harness.runFullSuite();
@@ -37,8 +34,6 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
-  const __auth = await verifyRequest(request as import('next/server').NextRequest);
-  if (!__auth.authenticated) return unauthorizedResponse();
-  return POST(request);
+export async function GET() {
+  return POST();
 }

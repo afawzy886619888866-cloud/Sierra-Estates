@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,8 +48,6 @@ export async function GET() {
  * then clears the inventory cache so the Client Page Map reflects changes.
  */
 export async function POST(req: NextRequest) {
-  const __auth = await verifyRequest(req as import('next/server').NextRequest);
-  if (!__auth.authenticated) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
 

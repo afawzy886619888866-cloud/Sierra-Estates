@@ -1,5 +1,28 @@
 import { POST } from '@/app/api/listings/easy-parse/route';
 
+// M1 hardening: these suites call guarded route handlers directly. The
+// real verifyRequest requires Supabase or the module-load SBR_SECRET_KEY,
+// neither available in unit tests — mock it to authenticate exactly the
+// test-secret header (unauth-expectation cases still see 401).
+jest.mock('@/lib/server/auth-guard', () => {
+  const actual = jest.requireActual('@/lib/server/auth-guard');
+  const authFrom = (req) => {
+    const h = req?.headers?.get?.('x-sbr-secret-key');
+    return h && h === 'test-sbr-secret'
+      ? { authenticated: true, method: 'secret-key' }
+      : { authenticated: false, method: 'none' };
+  };
+  return {
+    ...actual,
+    verifyRequest: jest.fn(async (req) => authFrom(req)),
+    verifyAdminRequest: jest.fn(async (req) => {
+      const a = authFrom(req);
+      return a.authenticated ? { ...a, role: 'admin', email: 'test@example.com' } : a;
+    }),
+  };
+});
+
+
 describe('Easy Listing AI Parser API Endpoint', () => {
   it('parses unstructured raw Arabic listing text with compound, price, beds, and SBR code', async () => {
     const rawText = `للبيع شقة مميزة جدا في ميفيدا التجمع الخامس
@@ -11,7 +34,8 @@ describe('Easy Listing AI Parser API Endpoint', () => {
 
     const req = new Request('http://localhost:3000/api/listings/easy-parse', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+     headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+      headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rawText,
         source: 'whatsapp',
@@ -44,7 +68,8 @@ describe('Easy Listing AI Parser API Endpoint', () => {
     // owner / hardcoded aiScore 9.4 — all of that must stay null now.
     const req = new Request('http://localhost:3000/api/listings/easy-parse', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+     headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+      headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rawText: 'my neighbour is moving out soon, ask him about the place',
         source: 'manual',
@@ -87,7 +112,8 @@ describe('Easy Listing AI Parser API Endpoint', () => {
   it('rejects invalid payload with short text', async () => {
     const req = new Request('http://localhost:3000/api/listings/easy-parse', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+     headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+      headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rawText: 'hi',
       }),

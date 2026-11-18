@@ -3,6 +3,29 @@ import { POST as postTeaserGenerate } from '../app/api/teasers/generate/route';
 import { POST as postWealthTearsheet } from '../app/api/wealth/tearsheet/route';
 import { NextRequest } from 'next/server';
 
+// M1 hardening: these suites call guarded route handlers directly. The
+// real verifyRequest requires Supabase or the module-load SBR_SECRET_KEY,
+// neither available in unit tests — mock it to authenticate exactly the
+// test-secret header (unauth-expectation cases still see 401).
+jest.mock('@/lib/server/auth-guard', () => {
+  const actual = jest.requireActual('@/lib/server/auth-guard');
+  const authFrom = (req) => {
+    const h = req?.headers?.get?.('x-sbr-secret-key');
+    return h && h === 'test-sbr-secret'
+      ? { authenticated: true, method: 'secret-key' }
+      : { authenticated: false, method: 'none' };
+  };
+  return {
+    ...actual,
+    verifyRequest: jest.fn(async (req) => authFrom(req)),
+    verifyAdminRequest: jest.fn(async (req) => {
+      const a = authFrom(req);
+      return a.authenticated ? { ...a, role: 'admin', email: 'test@example.com' } : a;
+    }),
+  };
+});
+
+
 describe('Luxury Property Brochure & Investment Teaser Suite', () => {
   it('generates a full luxury tear sheet with 5-year growth and rental forecast', () => {
     const input: TearSheetListingInput = {

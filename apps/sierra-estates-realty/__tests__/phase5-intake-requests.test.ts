@@ -93,7 +93,8 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
     it('flags confidence < 0.75 and validates PF Title (30-47 chars) & Bilingual Description (750-2000 chars)', async () => {
       const lowReq = new NextRequest('http://localhost/api/listings/intake', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'analyze',
           rawText: 'شقة في التجمع',
@@ -113,7 +114,8 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
       const validDesc = 'شقة للبيع في كمبوند ميفيدا التجمع الخامس تشطيب الترا سوبر لوكس 3 غرف نوم '.repeat(12).slice(0, 820);
       const highReq = new NextRequest('http://localhost/api/listings/intake', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'analyze',
           rawText: 'شقة للبيع في ميفيدا 185 متر 3 غرف 01012345678 المالك',
@@ -138,7 +140,8 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
 
       const req = new NextRequest('http://localhost/api/listings/intake', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           compound: 'Mivida',
           propertyType: 'Apartment',
@@ -167,6 +170,7 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
         'https://script.google.com/macros/s/test/exec',
         expect.objectContaining({
           method: 'POST',
+          headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
           body: expect.stringContaining('"action":"upsert_units"'),
         })
       );
@@ -234,7 +238,8 @@ describe('Phase 5: Unified Add Listing & Add Request Pipelines', () => {
 
       const req = new NextRequest('http://localhost/api/viewing-requests', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+       headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+        headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'sale',
           name: 'Karim Hassan',

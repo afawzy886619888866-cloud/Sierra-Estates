@@ -2,11 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'node:fs';
 import path from 'node:path';
 import { requireStaffOrServiceKey, requireServiceKey } from '@/lib/server/route-guard';
-import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function GET(req: Request) {
-  const __auth = await verifyRequest(req as import('next/server').NextRequest);
-  if (!__auth.authenticated) return unauthorizedResponse();
   try {
 
   const denied = await requireServiceKey(req);

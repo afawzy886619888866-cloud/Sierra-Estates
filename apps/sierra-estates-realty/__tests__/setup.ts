@@ -54,9 +54,3 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
 });
-
-// Task 2 (M1 hardening): route handlers now verify x-sbr-secret-key against
-// SBR_SECRET_KEY — tests that call handlers directly authenticate with this
-// constant (set BEFORE route modules are imported so module-load SECRET_KEY
-// picks it up).
-process.env.SBR_SECRET_KEY = 'test-sbr-secret';

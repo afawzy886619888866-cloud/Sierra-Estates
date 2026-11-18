@@ -23,6 +23,29 @@ jest.mock('@sierra-estates/db', () => ({
 
 import { POST } from '@/app/api/telegram/broadcast/route';
 
+// M1 hardening: these suites call guarded route handlers directly. The
+// real verifyRequest requires Supabase or the module-load SBR_SECRET_KEY,
+// neither available in unit tests — mock it to authenticate exactly the
+// test-secret header (unauth-expectation cases still see 401).
+jest.mock('@/lib/server/auth-guard', () => {
+  const actual = jest.requireActual('@/lib/server/auth-guard');
+  const authFrom = (req) => {
+    const h = req?.headers?.get?.('x-sbr-secret-key');
+    return h && h === 'test-sbr-secret'
+      ? { authenticated: true, method: 'secret-key' }
+      : { authenticated: false, method: 'none' };
+  };
+  return {
+    ...actual,
+    verifyRequest: jest.fn(async (req) => authFrom(req)),
+    verifyAdminRequest: jest.fn(async (req) => {
+      const a = authFrom(req);
+      return a.authenticated ? { ...a, role: 'admin', email: 'test@example.com' } : a;
+    }),
+  };
+});
+
+
 const ADMIN_SESSION = {
   uid: 'admin-uid-1',
   email: 'admin@sierra-estates.net',
@@ -34,7 +57,8 @@ const ADMIN_SESSION = {
 const request = (body: unknown) =>
   new Request('http://localhost:3000/api/telegram/broadcast', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+   headers: { 'x-sbr-secret-key': 'test-sbr-secret' },
+    headers: { 'x-sbr-secret-key': 'test-sbr-secret', 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 
