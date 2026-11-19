@@ -78,6 +78,8 @@ export default function OwnerFeedbackRegistryView({ lang = 'en' }: { lang?: stri
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [search, setSearch] = useState('');
   const [reclassifying, setReclassifying] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -122,6 +124,7 @@ export default function OwnerFeedbackRegistryView({ lang = 'en' }: { lang?: stri
           e.phone === phone ? { ...e, category: newCategory, label: data.entry?.label || newCategory, lastStatusDate: data.entry?.lastStatusDate || e.lastStatusDate } : e
         ));
         if (data.stats) setStats(data.stats);
+        if (data.tabs) setTabCounts(data.tabs);
       }
     } catch (err: unknown) {
       console.error('Reclassify error:', err);
@@ -129,6 +132,32 @@ export default function OwnerFeedbackRegistryView({ lang = 'en' }: { lang?: stri
       setReclassifying(null);
     }
   }, []);
+
+  const handleSyncSheet = useCallback(async () => {
+    try {
+      setSyncing(true);
+      setSyncNotice(null);
+      const res = await fetch('/api/admin/owner-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync_sheet' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        const msg = data?.syncResult?.error || data?.error || `HTTP ${res.status}`;
+        setSyncNotice({ ok: false, text: isAr ? `تعذر المزامنة: ${msg}` : `Sync failed: ${msg}` });
+        return;
+      }
+      const tabsSummary = Array.isArray(data?.syncResult?.results)
+        ? data.syncResult.results.map((r: { tab: string; rows: number; status: string }) => `${r.tab}: ${r.rows} (${r.status})`).join(' • ')
+        : (isAr ? 'تمت المزامنة بنجاح' : 'Synced successfully');
+      setSyncNotice({ ok: true, text: isAr ? `✅ تمت مزامنة Google Sheets — ${tabsSummary}` : `✅ Google Sheets synced — ${tabsSummary}` });
+    } catch (err: unknown) {
+      setSyncNotice({ ok: false, text: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setSyncing(false);
+    }
+  }, [isAr]);
 
   const filteredEntries = useMemo(() => {
     let result = entries;
