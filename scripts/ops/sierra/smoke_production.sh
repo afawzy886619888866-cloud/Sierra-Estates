@@ -151,7 +151,7 @@ PY
   # --- 5 (deferred): property detail page -------------------------------------
   pid=$(python3 -c "import json,sys;us=json.load(open(sys.argv[1])).get('units') or [];print(us[0]['id'] if us else '')" "$INV" 2>/dev/null)
   if [ -n "$pid" ]; then
-    code=$(http_code "$BASE_URL/property/$pid" "$TMP/detail.html")
+    code=$(http_code_retry "$BASE_URL/property/$pid" "$TMP/detail.html" 3)
     [ "$code" = "200" ] && ok "GET /property/<live-id> → 200" || bad "GET /property/$pid → $code"
   else
     bad "no live property id available for detail-page check"
@@ -161,7 +161,7 @@ else
 fi
 
 # --- 12: /api/health ---------------------------------------------------------
-code=$(http_code "$BASE_URL/api/health" "$TMP/health.json")
+code=$(http_code_retry "$BASE_URL/api/health" "$TMP/health.json" 3)
 if [ "$code" = "200" ] && python3 - "$TMP/health.json" <<'PY'
 import json, sys
 h = json.load(open(sys.argv[1]))
@@ -171,7 +171,7 @@ PY
 then ok "/api/health → healthy (supabase connected)"; else bad "/api/health → $code or unhealthy"; fi
 
 # --- 13: robots.txt ------------------------------------------------------------
-code=$(http_code "$BASE_URL/robots.txt" "$TMP/robots.txt")
+code=$(http_code_retry "$BASE_URL/robots.txt" "$TMP/robots.txt" 3)
 [ "$code" = "200" ] && ok "GET /robots.txt → 200" || bad "GET /robots.txt → $code"
 
 # --- 14: sitemap.xml (P3: dynamic render, retry on cold start) -----------------
@@ -183,9 +183,37 @@ for attempt in 1 2 3; do
 done
 [ "$sm_ok" = "1" ] && ok "GET /sitemap.xml → 200 + <urlset> (attempt $attempt)" || bad "GET /sitemap.xml → $code after 3 attempts"
 
-# --- 15: admin surface ----------------------------------------------------------
-code=$(http_code "$ADMIN_URL/" "$TMP/admin.html")
+# --- 15: admin surface (Cloudflare Access / admin portal) --------------------
+code=$(http_code_retry "$ADMIN_URL/" "$TMP/admin.html" 3)
 [ "$code" = "200" ] && ok "GET admin host / → 200" || bad "GET admin host / → $code"
+
+# --- 16: www -> apex Cloudflare Edge 301 redirect ------------------------------
+WWW_URL="https://www.sierra-estates.net/"
+www_code=$(curl -s -D "$TMP/www.hdr" -o /dev/null -w '%{http_code}' --max-time 15 "$WWW_URL" 2>/dev/null || echo "000")
+www_loc=$(python3 - "$TMP/www.hdr" <<'PY'
+import sys
+for line in open(sys.argv[1], errors="ignore"):
+    if line.lower().startswith("location:"):
+        print(line.split(":", 1)[1].strip())
+        break
+PY
+)
+if { [ "$www_code" = "301" ] || [ "$www_code" = "308" ]; } && [[ "$www_loc" == https://sierra-estates.net* ]]; then
+  ok "GET www.sierra-estates.net/ → $www_code ($www_loc)"
+else
+  bad "GET www.sierra-estates.net/ → $www_code (location='$www_loc', want 301 -> https://sierra-estates.net/)"
+fi
+
+# --- 17: 4-Engine Brain + OpenClaw terminal wiring -----------------------------
+code=$(http_code_retry "$BASE_URL/api/openclaw-terminal" "$TMP/brain.json" 3)
+if [ "$code" = "200" ] && python3 - "$TMP/brain.json" <<'PY'
+import json, sys
+b = json.load(open(sys.argv[1]))
+assert b.get("status") == "wired", b.get("status")
+engines = (b.get("brain") or {}).get("engines") or {}
+assert all(bool(engines.get(k)) for k in ("memory", "ragAndGis", "valuationHarness", "workflowsAndCloser")), engines
+PY
+then ok "/api/openclaw-terminal → wired (all 4 engines active)"; else bad "/api/openclaw-terminal → $code or unwired"; fi
 
 # --- summary ---------------------------------------------------------------------
 TOTAL=$((PASS+FAIL))

@@ -111,12 +111,10 @@ jobs:
         # fonts.googleapis.com at build time; GitHub's Azure runner IPs are
         # intermittently rate-limited by Google, making the loader crash
         # ("Cannot read properties of null (reading '1')" in
-        # @next/font/dist/google/loader.js) on otherwise-identical trees —
-        # observed 3x on 2026-10-22 while the same commits built clean on
-        # Vercel and on CI re-runs. Bounded retry (3 attempts, 20s backoff)
-        # keeps the flake class from masking real regressions. The deployed
-        # artifact is always built by Vercel (unaffected network path), so
-        # this step is validation-only and a retry cannot ship a bad build.
+        # @next/font/dist/google/loader.js) on otherwise-identical trees.
+        # Bounded retry (3 attempts, 20s backoff) keeps the flake class from
+        # masking real regressions; deploy-cloudflare.yml builds the deployed
+        # Worker artifact independently from the verified main commit.
         #
         # 2026-11-12: retries are now SIGNATURE-GATED. The loop used to
         # retry (and mislabel) ANY failure as the font flake — a real CSS
@@ -156,7 +154,15 @@ jobs:
         # artifact is produced by @opennextjs/cloudflare from the same .next
         # output the step above validated — run the transform here so any
         # adapter/config regression surfaces in CI, not at deploy time.
-        run: pnpm --filter sierra-estates-client-page exec opennextjs-cloudflare build --skipNextBuild
+        run: |
+          pnpm --filter sierra-estates-client-page exec opennextjs-cloudflare build --skipNextBuild --minify
+          HANDLER_PATH="apps/sierra-estates-realty/.open-next/server-functions/default/handler.mjs"
+          if [ -f "$HANDLER_PATH" ]; then
+            HANDLER_SIZE=$(ls -lh "$HANDLER_PATH" | awk '{print $5}')
+            echo "CI OpenNext minified handler.mjs size: $HANDLER_SIZE"
+            echo "### CI OpenNext Bundle Check" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Minified \`handler.mjs\` size: **$HANDLER_SIZE**" >> "$GITHUB_STEP_SUMMARY"
+          fi
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
