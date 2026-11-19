@@ -8,19 +8,19 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run (simulation only, touches nothing)'
+        description: "Dry run (simulation only, touches nothing)"
         required: true
         type: boolean
         default: false
       batch_size:
-        description: 'Number of candidates to contact in this slot'
+        description: "Number of candidates to contact in this slot"
         required: false
-        default: '25'
+        default: "25"
         type: string
       host_side:
-        description: 'Walk direction across inventory sheet'
+        description: "Walk direction across inventory sheet"
         required: false
-        default: 'split'
+        default: "split"
         type: choice
         options:
           - split
@@ -28,7 +28,7 @@ on:
           - bottom
   schedule:
     # Runs every 30 minutes between 08:00 and 18:00 UTC (10:00 - 20:00 Cairo)
-    - cron: '*/30 8-18 * * *'
+    - cron: "*/30 8-18 * * *"
 
 permissions:
   contents: read
@@ -77,7 +77,7 @@ jobs:
           WF_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || (vars.WHATSAPP_LIVE_OUTREACH == 'true' && 'false' || 'true') }}
           WF_SLOT_BATCH: ${{ inputs.batch_size || '25' }}
           WF_HOST_SIDE: ${{ inputs.host_side || 'split' }}
-          WF_OUTREACH_ACTIVE_HOURS: '10-20'
+          WF_OUTREACH_ACTIVE_HOURS: "10-20"
 
           # Target Sheet & Writeback
           UNITS_SHEET_ID: ${{ vars.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk' }}
@@ -96,6 +96,13 @@ jobs:
           OPENWA_SESSION_ID: ${{ secrets.OPENWA_SESSION_ID || vars.OPENWA_SESSION_ID || 'line-1' }}
           OPENWA_SESSION_IDS: ${{ secrets.OPENWA_SESSION_IDS || vars.OPENWA_SESSION_IDS || 'line-1,line-2,line-3,line-4' }}
         run: |
+          {
+            echo "### WhatsApp Owner Outreach Run"
+            echo "- Mode (\`WF_DRY_RUN\`): \`${WF_DRY_RUN}\`"
+            echo "- Slot Batch: \`${WF_SLOT_BATCH}\`"
+            echo "- Direction: \`${WF_HOST_SIDE}\`"
+            echo "- Gateway configured: \`$([ -n "${WHATSAPP_API_URL}" ] && echo yes || echo no)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
           echo "======================================================="
           echo "🚀 Starting WhatsApp Owner Outreach from GitHub Actions"
           echo "Mode: WF_DRY_RUN=${WF_DRY_RUN}"
