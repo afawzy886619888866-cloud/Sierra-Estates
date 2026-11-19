@@ -216,19 +216,44 @@ export default function OwnerFeedbackRegistryView({ lang = 'en' }: { lang?: stri
             {stats?.generatedDate && <span style={{ marginLeft: 8, opacity: 0.7 }}>• {stats.generatedDate}</span>}
           </p>
         </div>
-        <button
-          onClick={() => fetchData(true)}
-          disabled={refreshing}
-          style={{
-            padding: '8px 16px', fontSize: 13, fontWeight: 600,
-            background: refreshing ? '#94a3b8' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            color: '#fff', border: 'none', borderRadius: 8, cursor: refreshing ? 'wait' : 'pointer',
-            boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
-          }}
-        >
-          {refreshing ? '⏳' : '🔄'} {isAr ? 'تحديث' : 'Refresh'}
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={handleSyncSheet}
+            disabled={syncing || refreshing}
+            style={{
+              padding: '8px 16px', fontSize: 13, fontWeight: 600,
+              background: syncing ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
+              color: '#fff', border: 'none', borderRadius: 8, cursor: syncing ? 'wait' : 'pointer',
+              boxShadow: '0 2px 8px rgba(16,185,129,0.28)', transition: 'all 0.2s',
+            }}
+          >
+            {syncing ? '⏳' : '📤'} {isAr ? 'مزامنة الشيت' : 'Sync to Google Sheets'}
+          </button>
+          <button
+            onClick={() => fetchData(true)}
+            disabled={refreshing}
+            style={{
+              padding: '8px 16px', fontSize: 13, fontWeight: 600,
+              background: refreshing ? '#94a3b8' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              color: '#fff', border: 'none', borderRadius: 8, cursor: refreshing ? 'wait' : 'pointer',
+              boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s',
+            }}
+          >
+            {refreshing ? '⏳' : '🔄'} {isAr ? 'تحديث' : 'Refresh'}
+          </button>
+        </div>
       </div>
+
+      {syncNotice && (
+        <div style={{
+          background: syncNotice.ok ? '#ecfdf5' : '#fef2f2',
+          border: `1px solid ${syncNotice.ok ? '#a7f3d0' : '#fecaca'}`,
+          borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+          color: syncNotice.ok ? '#065f46' : '#991b1b', fontSize: 13,
+        }}>
+          {syncNotice.text}
+        </div>
+      )}
 
       {error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#991b1b', fontSize: 13 }}>
