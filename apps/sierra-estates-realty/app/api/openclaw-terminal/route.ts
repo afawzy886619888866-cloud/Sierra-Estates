@@ -1,17 +1,15 @@
 /**
- * POST /api/openclaw-terminal
+ * GET & POST /api/openclaw-terminal
  * ─────────────────────────────────────────────────────────────────
- * AI Architect backend for the OpenClaw terminal tab.
+ * AI Architect & 4-Engine Brain backend for the OpenClaw terminal tab.
  *
- * Accepts natural-language change requests and returns a JSON
- * response with a conversational reply + optional unified diff.
+ * GET:  Returns non-secret brain wiring & domain readiness status.
+ * POST: Accepts natural-language requests ({ prompt: string }) and
+ *       returns { reply: string, diff?: string }.
  *
- * Request:  { prompt: string }
- * Response: { reply: string, diff?: string }
- *
- * Environment variables (.env.local):
- *   OPENCLAW_PROVIDER  = "openai" | "openrouter" | "gemini"
- *   OPENCLAW_API_KEY   = your LLM API key
+ * Environment variables (Cloudflare Worker secrets / .env.local):
+ *   OPENCLAW_PROVIDER  = "gemini" | "openai" | "openrouter" (auto-selects gemini if GEMINI_API_KEY is set)
+ *   OPENCLAW_API_KEY   = optional override LLM API key (falls back to GEMINI_API_KEY / GOOGLE_AI_API_KEY)
  *   OPENCLAW_MODEL     = model slug (defaults below)
  * ─────────────────────────────────────────────────────────────────
  */
@@ -23,22 +21,29 @@ import { applyRateLimit, publicEndpointLimiter } from "@/lib/server/rate-limit";
 /** Longest prompt we will forward to the LLM provider. */
 const MAX_PROMPT_CHARS = 4000;
 
-/* ── Sierra-specific system prompt ──────────────────────────────────────── */
+/* ── Sierra-specific 4-Engine Brain system prompt ───────────────────────── */
 
-const SYSTEM_PROMPT = `You are OpenClaw — the AI architect embedded inside the Sierra Estates admin dashboard.
+const SYSTEM_PROMPT = `You are OpenClaw — the autonomous AI architect & executive twin embedded inside Sierra Estates Intelligence OS.
 
-Sierra Estates is a luxury real estate portal for New Cairo (Egypt).
-Stack: Next.js 16 App Router · TypeScript (strict) · Tailwind CSS v4 · Supabase PostgreSQL (pgvector)
-Design language: Premium Lime — OLED black #020617, electric lime #84CC16, Plus Jakarta Sans
-Key files: app/(client)/page.tsx (client home), components/admin/ (admin UI), public/client-page/ (legacy vanilla JS assets)
+Sierra Estates is a luxury real estate brokerage & PropTech portal for New Cairo, Egypt (Mivida, Hyde Park, Eastown, Villette, Palm Hills, Mountain View iCity, Fifth Square, Madinaty, Al Rehab).
+Production Hosting: Unified Cloudflare Worker (\`sierra-estates\`) via @opennextjs/cloudflare serving:
+  - https://sierra-estates.net & https://www.sierra-estates.net (Public Client Portal)
+  - https://admin.sierra-estates.net (Admin Intelligence OS via host rewrite to /admin + Cloudflare Zero Trust Access)
+Stack: Next.js 16 App Router · TypeScript (strict) · Supabase PostgreSQL + pgvector (sole system of record)
+Design language: Obsidian Deep Navy (#061122 / #0A1628), Signature Metallic Gold (#C9A84C / #D4AF37), Luxury Alabaster (#FAF8F5), Playfair/Cinzel + Plus Jakarta Sans + Cairo (AR) + JetBrains Mono
+4-Engine Brain:
+  - Engine 1 (Memory): ECC Memory Engine + Obsidian shared store + OpenClaw episodic ledger
+  - Engine 2 (RAG & GIS): Supabase listings/real_available_units + pgvector + New Cairo GIS masterplan
+  - Engine 3 (Valuation & Harness): Cairo AVM + DeepSeek/invariant harness (rent ceiling <= 400,000 EGP/mo)
+  - Engine 4 (Workflows & Closer): Stage-9 Closer, WhatsApp multi-line outreach, Telegram 3-way dispatch
+Key files: app/(site)/ (client portal), app/admin/ (admin Intelligence OS), app/site-styles/shared.css, components/site/, lib/services/
 
-Rules you MUST follow:
-1. When the user asks to change something, output BOTH a "reply" and a "diff".
-2. The "diff" must be a valid unified diff (--- a/ +++ b/ @@ format).
-3. Never claim you have deployed, pushed, or applied anything.
-4. Keep diffs minimal — surgical edits only.
-5. If the request is unclear or too complex for a single diff, explain why and ask a clarifying question (no diff).
-6. If the request is a question (not a change), just answer in "reply" (no diff).
+Non-Negotiable Invariants:
+1. Public Group Privacy Lock: NEVER expose owner or broker phone numbers in public/group replies (route privately only to 01092048333).
+2. Supabase is the sole system of record; never fabricate prices, units, or AVM scores.
+3. When asked to change code, output BOTH a "reply" and a minimal unified "diff" (--- a/ +++ b/ @@ format).
+4. Never claim you have deployed, pushed, or mutated secrets without verification.
+5. If the request is a question, answer concisely in "reply" (no diff).
 
 Always respond with valid JSON:
 {
@@ -49,32 +54,47 @@ Always respond with valid JSON:
 /* ── Provider routing ────────────────────────────────────────────────────── */
 
 const DEFAULT_MODELS: Record<string, string> = {
+  gemini:     "gemini-2.5-flash",
   openai:     "gpt-4o-mini",
   openrouter: "openai/gpt-4o-mini",
-  gemini:     "gemini-2.0-flash",
 };
 
 const BASE_URLS: Record<string, string> = {
+  gemini:     "https://generativelanguage.googleapis.com/v1beta/openai",
   openai:     "https://api.openai.com/v1",
   openrouter: "https://openrouter.ai/api/v1",
-  gemini:     "https://generativelanguage.googleapis.com/v1beta/openai",
 };
 
+function resolveProviderConfig() {
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+  const openclawKey = process.env.OPENCLAW_API_KEY;
+  const explicitProvider = process.env.OPENCLAW_PROVIDER?.toLowerCase();
+
+  const provider =
+    explicitProvider ||
+    (geminiKey ? "gemini" : "openai");
+
+  const apiKey =
+    openclawKey ||
+    (provider === "gemini" ? geminiKey : process.env.OPENAI_API_KEY) ||
+    geminiKey ||
+    "";
+
+  const model = process.env.OPENCLAW_MODEL || DEFAULT_MODELS[provider] || "gemini-2.5-flash";
+  const baseUrl = BASE_URLS[provider] || BASE_URLS.gemini;
+
+  return { provider, apiKey, model, baseUrl };
+}
+
 async function callLLM(prompt: string): Promise<{ reply: string; diff?: string }> {
-  const provider = (process.env.OPENCLAW_PROVIDER ?? "openai").toLowerCase();
-  const apiKey   = process.env.OPENCLAW_API_KEY;
-  const model    = process.env.OPENCLAW_MODEL ?? DEFAULT_MODELS[provider] ?? "gpt-4o-mini";
+  const { provider, apiKey, model, baseUrl } = resolveProviderConfig();
 
   if (!apiKey) {
     return {
       reply:
-        "⚠️ **OpenClaw is not configured.** Add these to your `.env.local` then restart the dev server:\n\n" +
-        "```\nOPENCLAW_PROVIDER=openai\nOPENCLAW_API_KEY=sk-...\nOPENCLAW_MODEL=gpt-4o-mini\n```\n\n" +
-        "Supported providers: `openai`, `openrouter`, `gemini`.",
+        "OpenClaw LLM key is not configured in this environment. Bind `GEMINI_API_KEY` (recommended) or `OPENCLAW_API_KEY` in Cloudflare Worker secrets / `.env.local`.",
     };
   }
-
-  const baseUrl = BASE_URLS[provider] ?? BASE_URLS.openai;
 
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
@@ -113,22 +133,38 @@ async function callLLM(prompt: string): Promise<{ reply: string; diff?: string }
       diff:  parsed.diff  ?? undefined,
     };
   } catch {
-    // Model returned plain text instead of JSON — wrap it
     return { reply: String(raw) };
   }
 }
 
-/* ── Route handler ───────────────────────────────────────────────────────── */
+/* ── Route handlers ──────────────────────────────────────────────────────── */
+
+export async function GET() {
+  const { provider, apiKey, model } = resolveProviderConfig();
+  return NextResponse.json({
+    status: "wired",
+    worker: "sierra-estates",
+    domains: ["sierra-estates.net", "www.sierra-estates.net", "admin.sierra-estates.net"],
+    brain: {
+      provider,
+      model,
+      configured: Boolean(apiKey),
+      engines: {
+        memory: true,
+        ragAndGis: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
+        valuationHarness: true,
+        workflowsAndCloser: true,
+      },
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
-  // 1. Verify App Check Attestation (same gate as /api/openclaw) — without it
-  //    any anonymous caller can spend the LLM budget on this endpoint.
   const { isValid, errorResponse } = await verifyAppCheck(request);
   if (!isValid) {
     return errorResponse;
   }
 
-  // 2. Rate limit per IP on top of attestation.
   const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 

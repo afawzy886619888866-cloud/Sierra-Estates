@@ -107,7 +107,7 @@ export default function PropertyCard({
       title={isAr ? 'صورة تعبيرية من الكتالوج — صور الوحدة الفعلية قيد التحقق' : 'Representative catalog imagery — actual unit photos pending verification'}
       style={{ background: 'rgba(15,23,42,0.85)', color: '#e2e8f0', display: 'inline-flex', alignItems: 'center', gap: 4 }}
     >
-      {isAr ? '📷 صورة تعبيرية' : '📷 Representative'}
+      {isAr ? 'صورة تعبيرية' : 'Representative'}
     </span>
   ) : null;
 
