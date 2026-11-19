@@ -56,6 +56,7 @@ async function main() {
 
   if (DRY_RUN) {
     console.log(`🔍 [DRY RUN MODE] Simulating outreach batch without sending...`);
+    return;
   }
 
   console.log(`1. Scanning eligible owner listings from inventory sheet...`);
