@@ -17,7 +17,8 @@ for (const p of envPaths) {
   }
 }
 
-import makeWASocket, {
+import {
+  makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
