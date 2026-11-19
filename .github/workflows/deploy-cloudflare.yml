@@ -147,6 +147,7 @@ jobs:
           node scripts/ensure-snapshot.mjs
           pnpm exec next build --webpack
           npx opennextjs-cloudflare build --skipNextBuild --minify
+          find .open-next -name '*.map' -delete
 
       - name: Deploy unified worker sierra-estates & sync runtime secrets
         working-directory: apps/sierra-estates-realty

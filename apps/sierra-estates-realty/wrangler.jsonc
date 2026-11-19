@@ -10,6 +10,7 @@
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "minify": true,
+  "upload_source_maps": false,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
