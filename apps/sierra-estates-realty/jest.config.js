@@ -9,6 +9,10 @@ process.env.TZ = 'UTC';
 const config = {
   testEnvironment: 'node',
   roots: ['<rootDir>'],
+  modulePathIgnorePatterns: [
+    '<rootDir>/\\.next/',
+    '<rootDir>/\\.open-next/',
+  ],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   // `tsc` without an outDir emits a .js next to every .ts source, and those
   // artifacts have been committed under lib/ and app/. Jest's default order
