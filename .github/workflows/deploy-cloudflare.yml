@@ -4,8 +4,16 @@ name: Deploy Cloudflare (Unified · sierra-estates)
 # built with @opennextjs/cloudflare. Serves all 3 hostnames via Next.js host-based
 # rewrites in apps/sierra-estates-realty/next.config.ts:
 #   - sierra-estates.net       (Public Client Portal)
-#   - www.sierra-estates.net   (Public Client Portal)
+#   - www.sierra-estates.net   (Cloudflare Edge 301 Redirect -> https://sierra-estates.net)
 #   - admin.sierra-estates.net (Admin OS — host rewrite to /admin + Zero Trust Access)
+#
+# IMPORTANT NOTICE (Deferred — Cloudflare Workers Plan):
+#   Production currently runs on the Cloudflare Workers Free Plan (10 ms CPU limit
+#   per request), which can occasionally trigger cold-start `error code: 1102` (CPU
+#   time exceeded) on heavy SSR/cron isolates until bundle size is reduced and/or
+#   the account is upgraded to Cloudflare Workers Paid ($5/month, 30,000 ms CPU limit).
+#   Do NOT enable paid billing automatically — kept as a deferred operator upgrade
+#   notice while bundle-reduction work shrinks `.open-next/.../handler.mjs`.
 #
 # Enhancements:
 #   - Clean trigger: runs ONLY after CI completes (`workflow_run`) or manual `workflow_dispatch`
@@ -80,6 +88,11 @@ jobs:
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           fi
 
+  # IMPORTANT NOTICE (Deferred — Cloudflare Workers Plan):
+  # Free Plan enforces a 10 ms CPU cap per isolate, so heavy cold starts can
+  # occasionally emit `error code: 1102` until bundle size is trimmed (dropping
+  # `googleapis` + static `snapshot.json`) or Workers Paid ($5/mo -> 30,000 ms)
+  # is enabled manually by the owner.
   deploy:
     name: OpenNext deploy · sierra-estates
     needs: gate

@@ -43,7 +43,7 @@ export class NexusAgent {
           { role: 'user', content: order }
         ],
         {
-          model: 'gemini-1.5-pro',
+          model: 'gemini-2.5-pro',
           tools: tools,
           temperature: 0.2
         }

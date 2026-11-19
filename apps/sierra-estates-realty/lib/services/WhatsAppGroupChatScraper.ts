@@ -169,7 +169,7 @@ async function batchParseListings(messages: ParsedMessage[]): Promise<ScrapedLis
     return messages.map((m) => regexFallbackParse(m));
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const results: ScrapedListing[] = [];
   const BATCH_SIZE = 8;
 

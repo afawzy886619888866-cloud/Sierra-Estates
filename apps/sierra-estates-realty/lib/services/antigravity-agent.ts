@@ -74,7 +74,7 @@ Format: JSON only: {"type": "intent_name", "params": {}}`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: text }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0 }
+      { model: 'gemini-2.5-flash', temperature: 0 }
     );
 
     const content = data.choices[0].message.content;

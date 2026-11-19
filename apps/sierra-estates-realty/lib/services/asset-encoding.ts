@@ -43,7 +43,7 @@ FORMAT: Return ONLY a JSON object.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Encode this listing information: ${rawText}` }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0.1 }
+      { model: 'gemini-2.5-flash', temperature: 0.1 }
     );
 
     const content = data.choices[0].message.content;
