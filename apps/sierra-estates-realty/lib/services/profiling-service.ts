@@ -46,7 +46,7 @@ export async function extractProfileFromChat(history: string): Promise<Extracted
         { role: 'system', content: 'You are an institutional data extractor for Sierra Estates.' },
         { role: 'user', content: prompt }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0 }
+      { model: 'gemini-2.5-flash', temperature: 0 }
     );
 
     const content = data.choices[0].message.content;
@@ -157,7 +157,7 @@ export async function extractFeedbackAndSentiment(transcript: string) {
         { role: 'system', content: 'Analyze stakeholder sentiment and feedback.' },
         { role: 'user', content: prompt }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0 }
+      { model: 'gemini-2.5-flash', temperature: 0 }
     );
 
     const content = data.choices[0].message.content;

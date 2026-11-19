@@ -77,7 +77,7 @@ const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
   'valuation-harness-bot': {
     engine: 'Engine 3: Valuation & Reasoning Harness',
     role: 'AVM Financial Arbitrage & DQE Quality Control',
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     metrics: ['CapRate', 'PaybackPeriod', 'PriceVarianceVsCompoundAverage'],
     systemPrompt: `Conducts rigorous Cairo AVM appraisal and DQE validation. Calculates rental yields, investment payback, and flags underpriced arbitrage vs overpriced listings.`,
   },
@@ -90,7 +90,7 @@ const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
     systemPrompt: `Executes multi-line WhatsApp owner outreach at safe 30-45s human pacing, receives broker/agent units via Telegram Easy Listing Bot, and powers the luxury light-mode client portal.`,
   },
   'whatsapp-agent': {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxTokens: 512,
     replyInDMs: true,
@@ -100,7 +100,7 @@ const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
     systemPrompt: SIERRA_BLUE_SYSTEM_PROMPT,
   },
   'liela-bot': {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.8,
     maxTokens: 1024,
     plugins: ['openclaw', 'obsidian-memory'],
@@ -123,22 +123,22 @@ Format output as JSON: { type: "buy|sell|rent", propertyType: "apartment|villa",
     systemPrompt: `Orchestrates cross-system webhooks between Sierra Estates, Google Sheets, WhatsApp, and Property Finder.`,
   },
   'scribe-agent': {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.2,
     systemPrompt: `Standardize, cleanse, and normalize property inventory listings into canonical SBR Uniform Codes.`,
   },
   'curator-agent': {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.4,
     systemPrompt: `Curate bespoke property portfolios matching client budget, investment horizon, and target ROI.`,
   },
   'closer-agent': {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.6,
     systemPrompt: `Execute timely, respectful, and high-converting deal closure follow-ups for warm leads.`,
   },
   'matchmaker-agent': {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.3,
     systemPrompt: `Compute multi-dimensional similarity between buyer criteria and live inventory units.`,
   },

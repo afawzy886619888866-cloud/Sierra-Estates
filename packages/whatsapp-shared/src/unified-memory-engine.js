@@ -175,7 +175,7 @@ Synthesize 2-3 key actionable market insights or learned sales techniques (e.g. 
 Return in concise Markdown format.`;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
       });
 

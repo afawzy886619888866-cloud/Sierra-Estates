@@ -347,7 +347,7 @@ async function handleStakeholderInterview(chatId: number, text: string): Promise
       },
       { role: 'user', content: `${welcomeSequence}\n\nPrevious context: ${text}\nGenerate the next Sierra-style question.` }
     ],
-    { model: 'gemini-1.5-flash' }
+    { model: 'gemini-2.5-flash' }
   );
 
   const finalMessage = sierraResponse.choices[0].message.content;

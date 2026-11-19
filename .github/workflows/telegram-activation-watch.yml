@@ -1,46 +1,39 @@
 name: Telegram activation watch
 
-# WHY THIS EXISTS (2026-11-13): the Telegram lane is fully wired (migration
-# 044 role chats, /staffsetup, 3-way dispatch, env-sync) but the bot token
-# was revoked at BotFather — every send honestly skips until the operator
-# installs a fresh token. The remaining steps after token installation
-# (carry the token to Vercel, register the webhook, verify, smoke-test the
-# send) were a 5-step manual runbook. This watcher completes them
-# automatically the moment the TELEGRAM_BOT_TOKEN secret turns valid.
+# WHY THIS EXISTS (2026-11-13; migrated to Cloudflare 2026-11-19):
+# the Telegram lane is wired (migration 044 role chats, /staffsetup, 3-way
+# dispatch, env-sync). Once TELEGRAM_BOT_TOKEN is valid at BotFather, this
+# watcher automatically completes activation:
 #
 # HOW IT RUNS:
-#   • hourly: getMe with the GitHub secret. 401 Unauthorized = still
-#     revoked → log an honest one-line skip and exit 0 (a green, quiet
-#     no-op; an alert would be wrong — the revoked state is known and
-#     owned by the operator runbook).
+#   • hourly: getMe with the GitHub secret. 401 Unauthorized = revoked →
+#     log an honest one-line skip and exit 0 (green no-op).
 #   • valid token → ACTIVATE:
-#       1. setWebhook on the Phase 6 route (client domain, secret_token =
+#       1. setWebhook on `${CLIENT_URL}/api/telegram/webhook` (secret_token =
 #          TELEGRAM_WEBHOOK_SECRET — the route fails closed without it)
 #       2. getWebhookInfo verification (url + pending_update_count)
-#       3. sendMessage smoke test to TELEGRAM_CHAT_ID (delivery proof)
-#       4. dispatch deploy-vercel.yml env_sync_only=true — PATCHes env
-#          values to both Vercel projects WITHOUT deploying (env PATCHes do
-#          not consume the free-tier deploy quota; the new token reaches
-#          both apps on their next natural build/reboot)
-#       5. self-disable this schedule (nothing left to watch)
+#       3. sendMessage smoke test to TELEGRAM_CHAT_ID (gracefully warns if
+#          TELEGRAM_CHAT_ID is placeholder or owner hasn't tapped /start yet)
+#       4. dispatch deploy-cloudflare.yml when live delivery succeeds (to ensure
+#          unified Cloudflare Worker `sierra-estates` carries any updated secret)
+#       5. self-disable this watcher schedule (re-triggerable via workflow_dispatch)
 #
-# FAILURE HONESTY: a failed activation step fails the run loudly (red) —
-# the operator sees exactly which step; the schedule stays armed and
-# retries next hour. It never reports activation without verification.
+# FAILURE HONESTY: hard API errors fail loudly (red); unstarted personal DM
+# (`chat not found` or placeholder TELEGRAM_CHAT_ID) emits an explicit warning
+# once the webhook is verified on Cloudflare rather than failing hourly.
 #
 # SECURITY: the token is used only for api.telegram.org calls from this
 # runner and is never printed (curl -s + jq field extraction; no set -x).
 
 on:
   schedule:
-    # :47 past the hour — off the top-of-hour GitHub cron congestion and
-    # clear of the 05:12 UTC deploy self-heal window.
+    # :47 past the hour — off top-of-hour GitHub cron congestion.
     - cron: "47 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: read
-  actions: write  # dispatch deploy-vercel env_sync + self-disable when activated
+  actions: write  # dispatch deploy-cloudflare + self-disable when activated
 
 concurrency:
   group: telegram-activation-watch

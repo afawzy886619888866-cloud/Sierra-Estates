@@ -102,7 +102,7 @@ Respond clearly, concisely, and actionable.`;
 
     try {
       const response = await this.ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           { role: 'user', parts: [{ text: `${systemPrompt}\n\nUser Query: ${query}` }] }
         ]

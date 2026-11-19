@@ -105,7 +105,7 @@ PERSONA ALIGNMENT: Align the intelligence with "Sierra's" Editorial Luxury stand
         { role: 'system', content: systemPrompt },
         { role: 'user', content: promptContent }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0 }
+      { model: 'gemini-2.5-flash', temperature: 0 }
     );
 
     return data.choices[0].message.content || "Stakeholder ready for closer engagement based on curated portfolio interaction.";

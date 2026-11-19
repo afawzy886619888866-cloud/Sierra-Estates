@@ -17,11 +17,13 @@ jobs:
   jira-sync:
     name: Detect Jira Issue & Link GitHub Activity
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 5
+          submodules: false
 
       - name: Extract Jira Issue Key
         id: jira_key

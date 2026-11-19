@@ -96,7 +96,7 @@ Output: 2-3 sentences explaining why this asset is a strategic acquisition for a
         { role: 'system', content: systemPrompt },
         { role: 'user', content: 'Generate the financial justification.' }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0.3 }
+      { model: 'gemini-2.5-flash', temperature: 0.3 }
     );
 
     return data.choices[0].message.content || "Asset selected for high capital ceiling and robust liquidity profile.";

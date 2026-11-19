@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         'Authorization': `Bearer ${gateway.token}` 
       },
       body: JSON.stringify({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
         temperature: 0
       })

@@ -173,7 +173,7 @@ Output: Return ONLY a JSON array of objects:
         { role: 'system', content: systemPrompt.replace('{{GLOBAL_TRENDS}}', trendsString) },
         { role: 'user', content: `Analyze strategic matching for this stakeholder: ${JSON.stringify(userPayload)}` }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0.1 }
+      { model: 'gemini-2.5-flash', temperature: 0.1 }
     );
 
     const content = data.choices[0].message.content;

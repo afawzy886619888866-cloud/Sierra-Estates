@@ -1,6 +1,9 @@
 name: production-smoke
 
 on:
+  workflow_run:
+    workflows: ["Deploy Cloudflare (Unified · sierra-estates)"]
+    types: [completed]
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
@@ -15,9 +18,22 @@ concurrency:
 jobs:
   smoke:
     name: Production smoke checks
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: false
       - name: Run production smoke test
-        run: bash scripts/ops/sierra/smoke_production.sh
+        run: |
+          set -o pipefail
+          bash scripts/ops/sierra/smoke_production.sh | tee /tmp/smoke.log
+          rc=${PIPESTATUS[0]}
+          {
+            echo "### Sierra Estates Production Smoke Test"
+            echo '```text'
+            cat /tmp/smoke.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"

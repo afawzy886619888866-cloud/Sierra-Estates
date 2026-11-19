@@ -175,52 +175,97 @@ jobs:
           pnpm exec next build --webpack
           npx opennextjs-cloudflare build --skipNextBuild --minify
           find .open-next -name '*.map' -delete
+          HANDLER_PATH=".open-next/server-functions/default/handler.mjs"
+          if [ -f "$HANDLER_PATH" ]; then
+            HANDLER_SIZE=$(ls -lh "$HANDLER_PATH" | awk '{print $5}')
+            echo "Minified OpenNext worker handler size: $HANDLER_SIZE"
+            echo "### Cloudflare Worker Build (`$CF_WORKER_NAME`)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Minified \`handler.mjs\` size: **$HANDLER_SIZE**" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Deploy unified worker sierra-estates & sync runtime secrets
         working-directory: apps/sierra-estates-realty
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SBR_SECRET_KEY: ${{ secrets.SBR_SECRET_KEY }}
+          SIERRA_SECRET_KEY: ${{ secrets.SIERRA_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_URL: ${{ secrets.DEEPSEEK_API_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_HR_CHAT_ID: ${{ secrets.TELEGRAM_HR_CHAT_ID }}
+          TELEGRAM_GENERAL_CHAT_ID: ${{ secrets.TELEGRAM_GENERAL_CHAT_ID }}
+          WHATSAPP_API_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN }}
+          WHATSAPP_API_URL: ${{ secrets.WHATSAPP_API_URL }}
+          WHATSAPP_GATEWAY_URL: ${{ secrets.WHATSAPP_GATEWAY_URL }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          INVENTORY_SHEET_ID: ${{ secrets.INVENTORY_SHEET_ID }}
+          MASTER_SHEET_ID: ${{ secrets.MASTER_SHEET_ID }}
+          SHEETS_WEBAPP_URL: ${{ secrets.SHEETS_WEBAPP_URL }}
+          WF_SHEET_WRITE_URL: ${{ secrets.WF_SHEET_WRITE_URL }}
+          PROPERTY_FINDER_API_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY }}
+          PROPERTY_FINDER_API_SECRET: ${{ secrets.PROPERTY_FINDER_API_SECRET }}
+          PF_WEBHOOK_SECRET: ${{ secrets.PF_WEBHOOK_SECRET }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: |
           set -euo pipefail
           npx wrangler deploy --name "$CF_WORKER_NAME"
-          cat > /tmp/cf-secrets.json <<JSON
-          {
-            "NEXT_PUBLIC_SUPABASE_URL": "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}",
-            "NEXT_PUBLIC_SUPABASE_ANON_KEY": "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}",
-            "SUPABASE_SERVICE_ROLE_KEY": "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}",
-            "SESSION_SECRET": "${{ secrets.SESSION_SECRET }}",
-            "ADMIN_API_KEY": "${{ secrets.ADMIN_API_KEY }}",
-            "CRON_SECRET": "${{ secrets.CRON_SECRET }}",
-            "SBR_SECRET_KEY": "${{ secrets.SBR_SECRET_KEY }}",
-            "SIERRA_SECRET_KEY": "${{ secrets.SIERRA_SECRET_KEY }}",
-            "GEMINI_API_KEY": "${{ secrets.GEMINI_API_KEY }}",
-            "GOOGLE_AI_API_KEY": "${{ secrets.GOOGLE_AI_API_KEY }}",
-            "OPENCLAW_PROVIDER": "gemini",
-            "AI_MODEL": "gemini-2.5-flash",
-            "GEMINI_MODEL": "gemini-2.5-flash",
-            "TELEGRAM_BOT_TOKEN": "${{ secrets.TELEGRAM_BOT_TOKEN }}",
-            "TELEGRAM_WEBHOOK_SECRET": "${{ secrets.TELEGRAM_WEBHOOK_SECRET }}",
-            "WA_ADMIN_NUMBER": "01092048333",
-            "WHATSAPP_API_TOKEN": "${{ secrets.WHATSAPP_API_TOKEN }}",
-            "WHATSAPP_API_URL": "${{ secrets.WHATSAPP_API_URL }}",
-            "WHATSAPP_GATEWAY_URL": "${{ secrets.WHATSAPP_GATEWAY_URL }}",
-            "WHATSAPP_PHONE_NUMBER_ID": "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}",
-            "INVENTORY_SHEET_ID": "${{ secrets.INVENTORY_SHEET_ID }}",
-            "MASTER_SHEET_ID": "${{ secrets.MASTER_SHEET_ID }}",
-            "SHEETS_WEBAPP_URL": "${{ secrets.SHEETS_WEBAPP_URL }}",
-            "WF_SHEET_WRITE_URL": "${{ secrets.WF_SHEET_WRITE_URL }}",
-            "PROPERTY_FINDER_API_KEY": "${{ secrets.PROPERTY_FINDER_API_KEY }}",
-            "PROPERTY_FINDER_API_SECRET": "${{ secrets.PROPERTY_FINDER_API_SECRET }}",
-            "PF_WEBHOOK_SECRET": "${{ secrets.PF_WEBHOOK_SECRET }}",
-            "UPSTASH_REDIS_REST_URL": "${{ secrets.UPSTASH_REDIS_REST_URL }}",
-            "UPSTASH_REDIS_REST_TOKEN": "${{ secrets.UPSTASH_REDIS_REST_TOKEN }}"
-          }
-          JSON
-          jq 'with_entries(select(.value != ""))' /tmp/cf-secrets.json > /tmp/cf-secrets-clean.json
+          jq -n '
+            {
+              NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
+              NEXT_PUBLIC_SUPABASE_ANON_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+              SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
+              SESSION_SECRET: env.SESSION_SECRET,
+              ADMIN_API_KEY: env.ADMIN_API_KEY,
+              CRON_SECRET: env.CRON_SECRET,
+              SBR_SECRET_KEY: env.SBR_SECRET_KEY,
+              SIERRA_SECRET_KEY: env.SIERRA_SECRET_KEY,
+              GEMINI_API_KEY: env.GEMINI_API_KEY,
+              GOOGLE_AI_API_KEY: env.GOOGLE_AI_API_KEY,
+              OPENCLAW_PROVIDER: "gemini",
+              AI_MODEL: "gemini-2.5-flash",
+              GEMINI_MODEL: "gemini-2.5-flash",
+              DEEPSEEK_API_KEY: env.DEEPSEEK_API_KEY,
+              DEEPSEEK_API_URL: env.DEEPSEEK_API_URL,
+              OPENAI_API_KEY: env.OPENAI_API_KEY,
+              GOOGLE_SERVICE_ACCOUNT_KEY: env.GOOGLE_SERVICE_ACCOUNT_KEY,
+              GOOGLE_SHEET_ID: env.GOOGLE_SHEET_ID,
+              TELEGRAM_BOT_TOKEN: env.TELEGRAM_BOT_TOKEN,
+              TELEGRAM_WEBHOOK_SECRET: env.TELEGRAM_WEBHOOK_SECRET,
+              TELEGRAM_HR_CHAT_ID: env.TELEGRAM_HR_CHAT_ID,
+              TELEGRAM_GENERAL_CHAT_ID: env.TELEGRAM_GENERAL_CHAT_ID,
+              WA_ADMIN_NUMBER: "01092048333",
+              WHATSAPP_API_TOKEN: env.WHATSAPP_API_TOKEN,
+              WHATSAPP_API_URL: env.WHATSAPP_API_URL,
+              WHATSAPP_GATEWAY_URL: env.WHATSAPP_GATEWAY_URL,
+              WHATSAPP_PHONE_NUMBER_ID: env.WHATSAPP_PHONE_NUMBER_ID,
+              INVENTORY_SHEET_ID: env.INVENTORY_SHEET_ID,
+              MASTER_SHEET_ID: env.MASTER_SHEET_ID,
+              SHEETS_WEBAPP_URL: env.SHEETS_WEBAPP_URL,
+              WF_SHEET_WRITE_URL: env.WF_SHEET_WRITE_URL,
+              PROPERTY_FINDER_API_KEY: env.PROPERTY_FINDER_API_KEY,
+              PROPERTY_FINDER_API_SECRET: env.PROPERTY_FINDER_API_SECRET,
+              PF_WEBHOOK_SECRET: env.PF_WEBHOOK_SECRET,
+              UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
+              UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN
+            } | with_entries(select(.value != null and .value != ""))
+          ' > /tmp/cf-secrets-clean.json
           npx wrangler secret bulk /tmp/cf-secrets-clean.json --name "$CF_WORKER_NAME" || \
             echo "::warning::secret bulk sync failed for $CF_WORKER_NAME — deployment stands, sync manually with 'wrangler secret bulk'."
-          rm -f /tmp/cf-secrets.json /tmp/cf-secrets-clean.json
+          rm -f /tmp/cf-secrets-clean.json
 
       - name: Verify custom domains on sierra-estates
         env:
@@ -246,16 +291,54 @@ jobs:
       - name: Smoke test live production domains & 4-Engine Brain
         run: |
           set -euo pipefail
+          APEX_CODE=000
           for i in $(seq 1 6); do
             BODY=$(curl -sS --max-time 20 "https://sierra-estates.net/" || true)
-            CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://sierra-estates.net/" || echo 000)
-            if [ "$CODE" = "200" ] && [ "$BODY" != "Hello world" ]; then
+            APEX_CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://sierra-estates.net/" || echo 000)
+            if [ "$APEX_CODE" = "200" ] && [ "$BODY" != "Hello world" ]; then
               echo "PASS: https://sierra-estates.net/ live (HTTP 200, real Next.js HTML)."
               break
             fi
-            echo "attempt $i: HTTP $CODE (len=${#BODY}) — waiting"; sleep 10
+            echo "attempt $i: HTTP $APEX_CODE (len=${#BODY}) — waiting"; sleep 10
           done
-          echo "www.sierra-estates.net:   HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://www.sierra-estates.net/)"
-          echo "api/health:               HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://sierra-estates.net/api/health)"
-          echo "api/openclaw-terminal:    HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://sierra-estates.net/api/openclaw-terminal)"
-          echo "admin.sierra-estates.net: HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://admin.sierra-estates.net/)"
+
+          WWW_CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://www.sierra-estates.net/" || echo 000)
+
+          HEALTH_CODE=000
+          for j in 1 2 3; do
+            HEALTH_CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://sierra-estates.net/api/health" || echo 000)
+            [ "$HEALTH_CODE" = "200" ] && break
+            echo "api/health attempt $j: HTTP $HEALTH_CODE — retrying"; sleep 5
+          done
+
+          BRAIN_CODE=000
+          for j in 1 2 3; do
+            BRAIN_CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://sierra-estates.net/api/openclaw-terminal" || echo 000)
+            [ "$BRAIN_CODE" = "200" ] && break
+            echo "api/openclaw-terminal attempt $j: HTTP $BRAIN_CODE — retrying"; sleep 5
+          done
+
+          ADMIN_CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://admin.sierra-estates.net/" || echo 000)
+
+          {
+            echo ""
+            echo "| Endpoint | HTTP Status | Expected |"
+            echo "| :--- | :---: | :---: |"
+            echo "| \`https://sierra-estates.net/\` | \`$APEX_CODE\` | \`200\` |"
+            echo "| \`https://www.sierra-estates.net/\` | \`$WWW_CODE\` | \`301/308\` |"
+            echo "| \`https://sierra-estates.net/api/health\` | \`$HEALTH_CODE\` | \`200\` |"
+            echo "| \`https://sierra-estates.net/api/openclaw-terminal\` | \`$BRAIN_CODE\` | \`200\` |"
+            echo "| \`https://admin.sierra-estates.net/\` | \`$ADMIN_CODE\` | \`302/200\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "sierra-estates.net:       HTTP $APEX_CODE"
+          echo "www.sierra-estates.net:   HTTP $WWW_CODE"
+          echo "api/health:               HTTP $HEALTH_CODE"
+          echo "api/openclaw-terminal:    HTTP $BRAIN_CODE"
+          echo "admin.sierra-estates.net: HTTP $ADMIN_CODE"
+
+          [ "$APEX_CODE" = "200" ] || { echo "::error::Apex returned HTTP $APEX_CODE"; exit 1; }
+          [ "$WWW_CODE" = "301" ] || [ "$WWW_CODE" = "308" ] || { echo "::error::www redirect returned HTTP $WWW_CODE"; exit 1; }
+          [ "$HEALTH_CODE" = "200" ] || { echo "::error::api/health returned HTTP $HEALTH_CODE"; exit 1; }
+          [ "$BRAIN_CODE" = "200" ] || { echo "::error::api/openclaw-terminal returned HTTP $BRAIN_CODE"; exit 1; }
+          [ "$ADMIN_CODE" = "302" ] || [ "$ADMIN_CODE" = "200" ] || { echo "::error::admin host returned HTTP $ADMIN_CODE"; exit 1; }

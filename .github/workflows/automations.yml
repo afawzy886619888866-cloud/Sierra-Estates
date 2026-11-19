@@ -1,14 +1,12 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Automations
-# GCP migration — AFTER infra/google-cloud is deployed this workflow is the
-# MANUAL EMERGENCY trigger. GCP Cloud Scheduler is the canonical scheduler,
-# so this workflow intentionally has no GitHub schedule to avoid duplicate
-# dispatcher calls and unnecessary operational cost. Use workflow_dispatch for
-# one-off runs when GCP scheduling is paused or broken.
+# Cloudflare Workers + GitHub Actions scheduler (2026-11-20).
+# GitHub Actions dispatches scheduled targets directly to the unified
+# Cloudflare Worker `sierra-estates` (`https://sierra-estates.net/api/cron/dispatch/...`),
+# with `workflow_dispatch` supporting manual per-job triggers.
 #
-# Required repository secret: CRON_SECRET (same value as the Vercel env var
-# and the GCP Secret Manager `cron_secret` entry). Without it the manual runs
-# fail auth and the workflow exits non-zero — visible, not silent.
+# Required repository secret: CRON_SECRET (synced to Cloudflare Worker
+# `sierra-estates` via deploy-cloudflare.yml). Without it runs fail auth loudly.
 on:
   workflow_dispatch:
     inputs:

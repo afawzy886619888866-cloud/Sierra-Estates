@@ -32,10 +32,13 @@ concurrency:
 jobs:
   run-sierra-engine:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+        with:
+          submodules: false
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5

@@ -106,7 +106,7 @@ Output as 2-3 powerful sentences in the 'Sierra' persona.`;
     const data = await GoogleAIService.chatCompletions(
       'closing-engine', 'acquisition-affirmation',
       [{ role: 'system', content: systemPrompt }],
-      { model: 'gemini-1.5-flash', temperature: 0.5 }
+      { model: 'gemini-2.5-flash', temperature: 0.5 }
     );
 
     return data.choices[0].message.content || "Strategic alignment affirmed. Acquisition protocol finalized.";

@@ -86,7 +86,7 @@ async function handleScribe(message: string) {
         system: enrichedSystemPrompt,
         user: message,
       },
-      { model: 'gemini-1.5-flash', temperature: 0.3 }
+      { model: 'gemini-2.5-flash', temperature: 0.3 }
     );
 
     const isVIP = responseText.includes('[VIP_ALERT_TRIGGER]');
@@ -131,7 +131,7 @@ Provide a highly analytical, quiet-luxury tone assessment of the user's request.
         system: systemPrompt,
         user: message,
       },
-      { model: 'gemini-1.5-flash', temperature: 0.2 }
+      { model: 'gemini-2.5-flash', temperature: 0.2 }
     );
 
     return NextResponse.json({ success: true, response: responseText });

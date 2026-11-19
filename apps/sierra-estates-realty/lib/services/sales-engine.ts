@@ -142,7 +142,7 @@ Output the response as a single cohesive paragraph.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: 'Generate the strategic summary for this stakeholder package.' }
       ],
-      { model: 'gemini-1.5-flash', temperature: 0.7 }
+      { model: 'gemini-2.5-flash', temperature: 0.7 }
     );
 
     return data.choices[0].message.content || "Strategic portfolio recommendation based on structural market alignment.";

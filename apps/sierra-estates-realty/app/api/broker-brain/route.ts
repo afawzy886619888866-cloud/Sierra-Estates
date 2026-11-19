@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
     let reply: string | null = null;
     try {
       const genAI = getGemini();
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       // Convert history to Gemini format
       const geminiHistory = history.slice(-20).map(m => ({
@@ -298,5 +298,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ status: 'Broker Brain API active', model: 'gemini-2.0-flash', units: 11488 });
+  return NextResponse.json({ status: 'Broker Brain API active', model: 'gemini-2.5-flash', units: 11488 });
 }

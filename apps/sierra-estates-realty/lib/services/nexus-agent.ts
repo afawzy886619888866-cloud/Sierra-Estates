@@ -71,7 +71,7 @@ export class NexusAgent {
             { role: 'system', content: `Summarize the results of the tool execution for the user. Be concise and professional.` },
             { role: 'user', content: `Original Order: ${order}\nTool Results: ${conversationLog}` }
           ],
-          { model: 'gemini-1.5-flash' }
+          { model: 'gemini-2.5-flash' }
         );
 
         return {

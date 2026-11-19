@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Sierra Estates — PRODUCTION SMOKE TEST (production edition, 15 checks)
-# Target: https://sierra-estates.net (+ admin.sierra-estates.net)
-# Rebuilt 2026-10-12 after sandbox wipe. Known pitfalls encoded below:
+# Sierra Estates — PRODUCTION SMOKE TEST (Cloudflare Workers edition, 17 checks)
+# Target: https://sierra-estates.net (+ www 301 redirect + admin.sierra-estates.net)
+# Rebuilt 2026-10-12; updated 2026-11-20 for Cloudflare Edge. Known pitfalls:
 #   [P1] /api/inventory items live under `units[]`, coords under `lat`/`lng`
 #   [P2] `set -o pipefail` + `curl | grep -q` races (SIGPIPE/141) — every
 #        response is saved to a temp file FIRST, then inspected
-#   [P3] sitemap.xml is dynamically rendered — cold starts can 5xx; retry x3
+#   [P3] dynamic routes / SSR isolates can hit cold-start 5xx/1102 — retry x3
 # Usage: ./smoke_production.sh [BASE_URL] [ADMIN_URL]
 # Exit code = number of failed checks (0 = all green)
 # ============================================================================
@@ -25,7 +25,32 @@ bad()  { FAIL=$((FAIL+1)); FAILED_NAMES+=("$1"); printf '  \033[31mFAIL\033[0m %
 note() { printf '  \033[2m·····\033[0m %s\n' "$1"; }
 
 http_code() { # url outfile -> prints code
-  curl -s -o "$2" -w '%{http_code}' -L --max-time 30 "$1" 2>/dev/null
+  curl -s -o "$2" -w '%{http_code}' -L --max-time 30 "$1" 2>/dev/null || echo "000"
+}
+
+http_code_retry() { # url outfile [max_attempts] -> retries transient 000/502/503/504/52x/1102
+  local url="$1" out="$2" max="${3:-3}" attempt=1 code="000"
+  while [ "$attempt" -le "$max" ]; do
+    code=$(http_code "$url" "$out")
+    if [ "$code" = "200" ]; then
+      echo "$code"
+      return 0
+    fi
+    case "$code" in
+      000|500|502|503|504|520|522|524)
+        if grep -qiE '1102|1101|Worker exceeded|temporarily unavailable' "$out" 2>/dev/null || [ "$code" != "500" ]; then
+          if [ "$attempt" -lt "$max" ]; then
+            sleep 4
+            attempt=$((attempt+1))
+            continue
+          fi
+        fi
+        ;;
+    esac
+    echo "$code"
+    return 0
+  done
+  echo "$code"
 }
 
 echo "================================================================"
@@ -35,13 +60,13 @@ echo "================================================================"
 
 # --- 1-4: core public pages ------------------------------------------------
 for path in "/" "/explore" "/properties" "/compounds"; do
-  code=$(http_code "$BASE_URL$path" "$TMP/page.html")
+  code=$(http_code_retry "$BASE_URL$path" "$TMP/page.html" 3)
   if [ "$code" = "200" ]; then ok "GET $path → 200"; else bad "GET $path → $code (want 200)"; fi
 done
 
 # --- 5: property detail page (dynamic id from live inventory) ---------------
 INV="$TMP/inventory.json"
-code=$(http_code "$BASE_URL/api/inventory" "$INV")
+code=$(http_code_retry "$BASE_URL/api/inventory" "$INV" 3)
 # --- 6: /api/inventory reachable + valid JSON -------------------------------
 if [ "$code" = "200" ] && python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$INV" 2>/dev/null; then
   ok "GET /api/inventory → 200 + valid JSON"
