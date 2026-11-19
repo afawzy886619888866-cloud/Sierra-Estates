@@ -27,6 +27,16 @@
       "tools": [
         "*"
       ]
+    },
+    "openclaw": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "scripts/openclaw-mcp-server.mjs"
+      ],
+      "tools": [
+        "*"
+      ]
     }
   }
 }
