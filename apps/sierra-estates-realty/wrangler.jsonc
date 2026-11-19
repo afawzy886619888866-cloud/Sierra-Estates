@@ -2,7 +2,7 @@
   // Cloudflare Worker config for the Sierra Estates Next.js app
   // (@opennextjs/cloudflare). The deploy workflow (deploy-cloudflare.yml)
   // overrides the worker NAME per matrix role with --name:
-  //   client -> sierra-estates      (custom domain: sierra-estates.net)
+  //   client -> sierra-estates      (custom domain: sierra-estates.net, www.sierra-estates.net)
   //   admin  -> sierra-estates88    (custom domain: admin.sierra-estates.net)
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
@@ -13,19 +13,6 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  "durable_objects": {
-    "bindings": [
-      { "name": "DOQueueHandler", "class_name": "DOQueueHandler" },
-      { "name": "DOShardedTagCache", "class_name": "DOShardedTagCache" },
-      { "name": "DOCachePurge", "class_name": "DOCachePurge" }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache", "DOCachePurge"]
-    }
-  ],
   "observability": {
     "enabled": true
   }

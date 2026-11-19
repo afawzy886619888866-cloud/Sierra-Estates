@@ -318,3 +318,4 @@ sierra-live-cutover/
 # OpenNext / Cloudflare local artifacts
 .open-next/
 .wrangler/
+sierra-estates.worktrees/

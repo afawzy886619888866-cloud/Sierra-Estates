@@ -169,6 +169,7 @@ jobs:
         working-directory: apps/sierra-estates-realty
         env:
           NODE_OPTIONS: --max-old-space-size=6144
+          NEXT_PUBLIC_SITE_MODE: ${{ matrix.role == 'admin' && 'admin' || 'client' }}
           NEXT_PUBLIC_SITE_URL: ${{ matrix.siteUrl }}
           NEXT_PUBLIC_CLIENT_URL: ${{ vars.NEXT_PUBLIC_CLIENT_URL }}
           NEXT_PUBLIC_ADMIN_URL: ${{ vars.NEXT_PUBLIC_ADMIN_URL }}
