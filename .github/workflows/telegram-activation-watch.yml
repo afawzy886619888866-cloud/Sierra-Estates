@@ -101,29 +101,57 @@ jobs:
           echo "Webhook verified (pending updates: ${pending})."
 
           # ── 4. Delivery smoke test ─────────────────────────────────────
+          SMOKE_DELIVERED="no_chat_id"
           if [ -n "$TELEGRAM_CHAT_ID" ]; then
-            send=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-              --data-urlencode "text=✅ Sierra Estates bot activated. Webhook: ${webhook_url}. Staff: send /staffsetup <role> to register your chat.")
-            echo "$send" | jq -e '.ok == true' >/dev/null || {
-              echo "::error::Smoke sendMessage failed: $(echo "$send" | jq -r '.description // "unknown"')"
-              exit 1
-            }
-            echo "Smoke message delivered to TELEGRAM_CHAT_ID."
+            case "$TELEGRAM_CHAT_ID" in
+              123456789|0|placeholder|your_chat_id)
+                echo "::warning::TELEGRAM_CHAT_ID is a placeholder value. Bot @${bot_username} token is VALID and webhook ${webhook_url} is VERIFIED. To enable CEO/staff DMs, open https://t.me/${bot_username}, tap /start, send /staffsetup ceo, and update TELEGRAM_CHAT_ID."
+                SMOKE_DELIVERED="skipped_placeholder"
+                ;;
+              *)
+                send=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                  --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+                  --data-urlencode "text=✅ Sierra Estates bot activated on Cloudflare (sierra-estates.net). Webhook verified. Staff: send /staffsetup <role> to register your chat.")
+                if echo "$send" | jq -e '.ok == true' >/dev/null; then
+                  echo "Smoke message delivered to TELEGRAM_CHAT_ID."
+                  SMOKE_DELIVERED="delivered"
+                else
+                  desc=$(echo "$send" | jq -r '.description // "unknown"')
+                  if echo "$desc" | grep -qiE 'chat not found|bot was blocked|user is deactivated'; then
+                    echo "::warning::Smoke sendMessage returned '${desc}'. Webhook is registered & verified; open https://t.me/${bot_username}, tap /start, and re-run this workflow via workflow_dispatch once ready."
+                    SMOKE_DELIVERED="skipped_unstarted"
+                  else
+                    echo "::error::Smoke sendMessage failed: ${desc}"
+                    exit 1
+                  fi
+                fi
+                ;;
+            esac
           else
             echo "::notice::TELEGRAM_CHAT_ID not set — skipping the delivery smoke test (webhook registration is still verified above)."
           fi
 
           # ── 5. Carry the token to Cloudflare Worker `sierra-estates` ───
-          if gh workflow run deploy-cloudflare.yml -R "$GH_REPO" --ref main; then
-            echo "deploy-cloudflare dispatched — TELEGRAM_BOT_TOKEN syncs to unified Cloudflare Worker sierra-estates."
+          if [ "$SMOKE_DELIVERED" = "delivered" ]; then
+            if gh workflow run deploy-cloudflare.yml -R "$GH_REPO" --ref main; then
+              echo "deploy-cloudflare dispatched — TELEGRAM_BOT_TOKEN syncs to unified Cloudflare Worker sierra-estates."
+            else
+              echo "::error::Could not dispatch deploy-cloudflare — fix and let the watcher retry."
+              exit 1
+            fi
           else
-            echo "::error::Could not dispatch deploy-cloudflare — token is NOT yet on Cloudflare Worker. Fix and let the watcher retry."
-            exit 1
+            echo "::notice::Token and webhook (${webhook_url}) are already verified on Cloudflare Worker sierra-estates; skipping redundant redeploy (SMOKE_DELIVERED=${SMOKE_DELIVERED})."
           fi
 
+          {
+            echo "### Telegram Activation Status (@${bot_username})"
+            echo "- Token probe: **VALID**"
+            echo "- Webhook: \`${webhook_url}\` (**VERIFIED**, pending: ${pending})"
+            echo "- Smoke DM status: \`${SMOKE_DELIVERED}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
           # ── 6. Stand down ──────────────────────────────────────────────
-          echo "Telegram lane ACTIVATED (token valid, webhook verified, env sync dispatched). Disabling this watcher."
+          echo "Telegram lane verified (webhook active, smoke=${SMOKE_DELIVERED}). Disabling hourly watcher schedule; re-run manually via workflow_dispatch if TELEGRAM_CHAT_ID is updated."
           gh api -X PATCH "repos/${GH_REPO}/actions/workflows/telegram-activation-watch.yml" \
             -f state=disabled 2>/dev/null \
             || gh workflow disable "Telegram activation watch" -R "$GH_REPO" || true

@@ -1,12 +1,10 @@
 name: CI
 
-# PRIMARY GATE (2026-10-19 re-enabled): the repository is PUBLIC, so
-# GitHub-hosted standard runners cost zero Actions minutes — the push/PR
-# triggers removed during the quota outage (see section 0 of
-# docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md) are restored alongside the
-# in-Vercel ci-preflight gate (vercel.json buildCommand), which remains the
-# deploy-time authority. IF this repository ever becomes PRIVATE again,
-# revert to `workflow_dispatch`-only to avoid burning paid minutes.
+# PRIMARY GATE (2026-10-19 re-enabled; Cloudflare cutover 2026-11-19):
+# the repository is PUBLIC, so GitHub-hosted standard runners cost zero
+# Actions minutes — the push/PR triggers run full checks before
+# deploy-cloudflare.yml triggers via workflow_run. IF this repository ever
+# becomes PRIVATE again, review minute usage carefully.
 
 on:
   push:
