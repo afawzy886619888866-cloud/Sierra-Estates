@@ -12,8 +12,8 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Expanded model support to include latest previews and stable aliases
 export type GeminiModel = 
-  | "gemini-1.5-flash" 
-  | "gemini-1.5-pro" 
+  | "gemini-2.5-flash" 
+  | "gemini-2.5-pro" 
   | "gemini-flash-latest" 
   | "gemini-pro-latest" 
   | "gemini-3-pro-preview" 
@@ -27,8 +27,9 @@ export interface ChatOptions {
 }
 
 function normalizeModelName(model?: string): string {
-  if (!model) return "gemini-3.6-flash";
-  if (model.includes("1.5") || model.includes("2.5")) return "gemini-3.6-flash";
+  if (!model) return process.env.GEMINI_MODEL || process.env.AI_MODEL || "gemini-2.5-flash";
+  if (model === "gemini-1.5-pro") return "gemini-2.5-pro";
+  if (model.includes("1.5") || model.includes("2.0") || model.includes("3.5")) return "gemini-2.5-flash";
   return model;
 }
 

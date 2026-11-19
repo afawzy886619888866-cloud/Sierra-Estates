@@ -159,7 +159,7 @@ async function parseUserInput(
   stage: IntakeStage,
   lang: 'ar' | 'en'
 ): Promise<Partial<IntakeSession['data']>> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `You are parsing a WhatsApp real estate inquiry message from an Egyptian client.
 Language detected: ${lang === 'ar' ? 'Arabic' : 'English'}

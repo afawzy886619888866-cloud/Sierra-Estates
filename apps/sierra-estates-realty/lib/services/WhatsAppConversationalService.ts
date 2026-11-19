@@ -83,7 +83,7 @@ export class WhatsAppConversationalService {
         dynamicSystemPrompt += `\n\n${ragContext}`;
       }
 
-      const modelName = process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.0-flash";
+      const modelName = process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.5-flash";
       const model = genAI.getGenerativeModel({ model: modelName, systemInstruction: dynamicSystemPrompt });
       
       const chatSession = model.startChat({
