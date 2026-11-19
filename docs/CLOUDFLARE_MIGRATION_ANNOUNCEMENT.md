@@ -58,7 +58,7 @@ Two complementary mitigations govern this notice:
 
 ---
 
-## 4. Unified Sync Command (Credentials, Cloudflare Secrets & Project Memory)
+## 5. Unified Sync Command (Credentials, Cloudflare Secrets & Project Memory)
 
 Run from PowerShell in `H:\Sierra Estates`:
 

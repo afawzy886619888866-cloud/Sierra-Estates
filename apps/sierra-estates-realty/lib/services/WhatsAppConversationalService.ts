@@ -111,7 +111,7 @@ export class WhatsAppConversationalService {
       } catch (err: any) {
         logger.warn(`[ConversationalService] Primary generation fallback: ${err?.message}`);
         try {
-          const fallbackModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.5-flash", systemInstruction: dynamicSystemPrompt });
+          const fallbackModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash", systemInstruction: dynamicSystemPrompt });
           const fallbackRes = await fallbackModel.generateContent(message);
           replyText = fallbackRes.response.text();
         } catch {
@@ -178,7 +178,7 @@ export class WhatsAppConversationalService {
         .map(m => `${m.role.toUpperCase()}: ${m.content}`)
         .join('\n');
 
-      const model = genAI.getGenerativeModel({ model: process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.5-flash" });
       // Phase 5 profile (master spec): the full qualification set, split into
       // HARD constraints (budget cap, location, minimum bedrooms, rent-vs-sale)
       // and SOFT preferences (furnishing, finishing, view, pool, move-in date…).
