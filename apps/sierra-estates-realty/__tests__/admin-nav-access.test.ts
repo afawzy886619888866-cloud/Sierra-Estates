@@ -119,9 +119,10 @@ describe('lib/admin-nav-access — spec role matrix', () => {
   });
 
   it('restricts viewer to read-only dashboards and the inventory overview', () => {
-    for (const id of ['overview', 'inventory_os', 'listings', 'masterplan_gis', 'heatmap']) {
+    for (const id of ['overview', 'inventory_os', 'inventree_hub', 'listings', 'masterplan_gis', 'heatmap']) {
       expect(isNavTabAllowedForRole(id, 'viewer')).toBe(true);
     }
+    expect(isNavTabAllowedForRole('requests_sheet', 'sales_agent')).toBe(true);
     // Nothing that writes or administers.
     for (const id of ['inventory_command', 'easy_listing', 'excel_merger', 'real_estate_processor', 'leads', 'settings', 'roles', 'access_approvals', 'security', 'curator']) {
       expect(isNavTabAllowedForRole(id, 'viewer')).toBe(false);

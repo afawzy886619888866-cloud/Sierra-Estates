@@ -233,6 +233,8 @@ export default function AppsControlCenter() {
   const [section, setSection] = useState<Section>('overview');
   const [gateway, setGateway] = useState<GatewayInfo | null>(null);
   const [queued, setQueued] = useState(0);
+  const [runnerOnline, setRunnerOnline] = useState(false);
+  const [runnerWorkflowsCount, setRunnerWorkflowsCount] = useState(0);
   const [lastCheck, setLastCheck] = useState('');
   const [checking, setChecking] = useState(false);
   const [clock, setClock] = useState('--:--');
