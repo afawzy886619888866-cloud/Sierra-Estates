@@ -146,7 +146,7 @@ jobs:
           set -euo pipefail
           node scripts/ensure-snapshot.mjs
           pnpm exec next build --webpack
-          npx opennextjs-cloudflare build --skipNextBuild
+          npx opennextjs-cloudflare build --skipNextBuild --minify
 
       - name: Deploy unified worker sierra-estates & sync runtime secrets
         working-directory: apps/sierra-estates-realty
