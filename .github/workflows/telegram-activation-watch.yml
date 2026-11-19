@@ -121,16 +121,11 @@ jobs:
             echo "::notice::TELEGRAM_CHAT_ID not set — skipping the delivery smoke test (webhook registration is still verified above)."
           fi
 
-          # ── 5. Carry the token to both Vercel projects ────────────────
-          # env_sync_only dispatch: PATCHes env values (no build, no deploy
-          # quota). The gate in deploy-vercel.yml authorizes env-sync-only
-          # dispatches without the production CI gate by design (no
-          # artifact leaves the repo).
-          if gh workflow run deploy-vercel.yml -R "$GH_REPO" --ref main \
-              -f target_env=production -f emergency_override=false -f env_sync_only=true; then
-            echo "deploy-vercel env_sync_only dispatched — TELEGRAM_BOT_TOKEN reaches both Vercel projects without consuming deploy quota."
+          # ── 5. Carry the token to Cloudflare Worker `sierra-estates` ───
+          if gh workflow run deploy-cloudflare.yml -R "$GH_REPO" --ref main; then
+            echo "deploy-cloudflare dispatched — TELEGRAM_BOT_TOKEN syncs to unified Cloudflare Worker sierra-estates."
           else
-            echo "::error::Could not dispatch deploy-vercel env_sync_only — token is NOT yet on Vercel. Fix and let the watcher retry."
+            echo "::error::Could not dispatch deploy-cloudflare — token is NOT yet on Cloudflare Worker. Fix and let the watcher retry."
             exit 1
           fi
 

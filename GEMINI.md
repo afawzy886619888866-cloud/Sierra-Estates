@@ -1,9 +1,10 @@
 # Antigravity Project Guidelines · Sierra Estates (`Sierra-Estates`)
 
-## 1. Authoritative Backend & Architecture
+## 1. Authoritative Backend, Hosting & Architecture
 
 - **Supabase is the Sole Authoritative Backend**: All database tables, Auth, pgvector embeddings, real-time queues, and media storage live in Supabase Postgres (`https://gaxfqcietzoonlmatiot.supabase.co`).
-- **Legacy Deployments Retired**: Firebase deployments are permanently deactivated. Never deploy to Firebase or reintroduce Firebase hosting/rules workflows.
+- **Cloudflare Workers (`sierra-estates`) is the Sole Authoritative Production Host**: Production runs on a **single unified Cloudflare Worker** (`sierra-estates`, Account `22804b3ba513993444a33357d7bca953`, Zone `sierra-estates.net` / `e2263fa4159f29a08a8d589d08e9ce8e`) built via `@opennextjs/cloudflare` and deployed exclusively by `.github/workflows/deploy-cloudflare.yml`. It serves `https://sierra-estates.net`, `https://www.sierra-estates.net`, and `https://admin.sierra-estates.net` (host-rewritten to `/admin` and protected by Cloudflare Zero Trust Access). Deployments must never create new Cloudflare Worker projects.
+- **Legacy Deployments Permanently Retired**: Both **Firebase** and **Vercel** deployments are permanently deactivated. Never deploy to Vercel or Firebase or reintroduce Vercel/Firebase hosting workflows or CNAMEs.
 - **Environment & Secrets**: Never commit or expose service role keys, database secrets, or API tokens client-side. Always use `process.env.SUPABASE_SERVICE_ROLE_KEY` in server-only contexts and `NEXT_PUBLIC_*` strictly for public values.
 
 ## 2. Next.js App Router & TypeScript Standards
