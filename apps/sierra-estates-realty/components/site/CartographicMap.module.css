@@ -1538,3 +1538,26 @@
     min-height: 320px !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .permanentCompoundBadgeHover,
+  .permanentCompoundBadgeActive,
+  .popupCard,
+  .qrModalOverlay {
+    animation: none !important;
+  }
+
+  .zoneBtn,
+  .featureToggle,
+  .themeModeBtn,
+  .quickThemePill,
+  .compoundPill,
+  .permanentGlowingPill,
+  .permanentCompoundBadge,
+  .masterplanUnitPin,
+  .whatsAppBtn,
+  .qrChatBtn,
+  .qrDownloadBtn {
+    transition: none !important;
+  }
+}

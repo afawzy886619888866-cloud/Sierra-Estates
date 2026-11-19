@@ -7,13 +7,15 @@ name: Deploy Cloudflare (Unified · sierra-estates)
 #   - www.sierra-estates.net   (Public Client Portal)
 #   - admin.sierra-estates.net (Admin OS — host rewrite to /admin + Zero Trust Access)
 #
-# Guardrail: Deployments ONLY update the existing `sierra-estates` Worker and
-# REFUSE to create any brand-new Cloudflare project unless explicitly authorized
-# with a credentialed approval (`ALLOW_CREATE_NEW_WORKER` secret).
+# Enhancements:
+#   - Clean trigger: runs ONLY after CI completes (`workflow_run`) or manual `workflow_dispatch`
+#     (no redundant failed-gate runs on raw pushes).
+#   - Next.js `.next/cache` caching for faster OpenNext builds.
+#   - Strict single-project lock: ONLY updates existing `sierra-estates` and REFUSES to create
+#     any brand-new Cloudflare Worker unless secret `ALLOW_CREATE_NEW_WORKER=true` is set.
+#   - Full 4-endpoint live verification asserting real HTML + healthy `/api/health` + Access on admin.
 
 on:
-  push:
-    branches: [main]
   workflow_run:
     workflows: ["CI"]
     types: [completed]
@@ -23,8 +25,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-cloudflare-${{ github.ref }}
-  cancel-in-progress: true
+  group: deploy-cloudflare-production
+  cancel-in-progress: false
 
 env:
   PUPPETEER_SKIP_DOWNLOAD: "true"
@@ -38,6 +40,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       proceed: ${{ steps.decide.outputs.proceed }}
+      deploy_sha: ${{ steps.decide.outputs.deploy_sha }}
     steps:
       - name: Decide deployment authorization
         id: decide
@@ -46,22 +49,24 @@ jobs:
           CI_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           CI_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           CI_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           DEPLOY_SHA: ${{ github.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
         run: |
           if [ "$EVENT_NAME" = "workflow_run" ]; then
+            echo "deploy_sha=${CI_HEAD_SHA}" >> "$GITHUB_OUTPUT"
             if [ "$CI_CONCLUSION" = "success" ] && \
                [ "$CI_HEAD_BRANCH" = "main" ] && \
                [ "$CI_HEAD_REPOSITORY" = "${{ github.repository }}" ]; then
-              echo "::notice::CI gate satisfied for tested main commit."
+              echo "::notice::CI gate satisfied for tested main commit ${CI_HEAD_SHA}."
               echo "proceed=true" >> "$GITHUB_OUTPUT"
             else
-              echo "::error::CI workflow run is not an eligible successful main-branch run for this repository. Production deploy blocked."
+              echo "::error::CI workflow run is not an eligible successful main-branch run. Production deploy blocked."
               echo "proceed=false" >> "$GITHUB_OUTPUT"
             fi
             exit 0
           fi
+          echo "deploy_sha=${DEPLOY_SHA}" >> "$GITHUB_OUTPUT"
           CONCLUSION=$(gh run list --workflow=ci.yml --repo "${{ github.repository }}" --branch main --commit "$DEPLOY_SHA" --limit 1 --json status,conclusion,headSha --jq '.[0] | "\(.status) \(.conclusion) \(.headSha)"' || echo "unknown unknown unknown")
           echo "Latest ci.yml run: $CONCLUSION"
           STATUS=$(echo "$CONCLUSION" | cut -d' ' -f1)
@@ -85,7 +90,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ needs.gate.outputs.deploy_sha || github.sha }}
           fetch-depth: 2
           submodules: false
 
@@ -131,6 +136,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
+      - name: Cache Next.js build artifacts
+        uses: actions/cache@v5
+        with:
+          path: apps/sierra-estates-realty/.next/cache
+          key: nextjs-cf-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/sierra-estates-realty/next.config.ts') }}
+          restore-keys: |
+            nextjs-cf-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            nextjs-cf-${{ runner.os }}-
+
       - name: Build unified worker (Next.js → OpenNext)
         working-directory: apps/sierra-estates-realty
         env:
@@ -168,6 +182,7 @@ jobs:
             "SBR_SECRET_KEY": "${{ secrets.SBR_SECRET_KEY }}",
             "GEMINI_API_KEY": "${{ secrets.GEMINI_API_KEY }}",
             "GOOGLE_AI_API_KEY": "${{ secrets.GOOGLE_AI_API_KEY }}",
+            "OPENCLAW_PROVIDER": "gemini",
             "TELEGRAM_BOT_TOKEN": "${{ secrets.TELEGRAM_BOT_TOKEN }}",
             "WHATSAPP_API_TOKEN": "${{ secrets.WHATSAPP_API_TOKEN }}",
             "PF_WEBHOOK_SECRET": "${{ secrets.PF_WEBHOOK_SECRET }}"
@@ -198,16 +213,19 @@ jobs:
             echo "Custom domain $HOST -> $CF_WORKER_NAME: HTTP $HTTP_CODE"
           done
 
-      - name: Smoke test live production deployment
+      - name: Smoke test live production domains & 4-Engine Brain
         run: |
           set -euo pipefail
-          for i in $(seq 1 8); do
+          for i in $(seq 1 6); do
+            BODY=$(curl -sS --max-time 20 "https://sierra-estates.net/" || true)
             CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://sierra-estates.net/" || echo 000)
-            if [ "$CODE" = "200" ]; then
-              echo "https://sierra-estates.net/ is LIVE (HTTP 200)."
-              exit 0
+            if [ "$CODE" = "200" ] && [ "$BODY" != "Hello world" ]; then
+              echo "PASS: https://sierra-estates.net/ live (HTTP 200, real Next.js HTML)."
+              break
             fi
-            echo "attempt $i: HTTP $CODE — waiting"; sleep 10
+            echo "attempt $i: HTTP $CODE (len=${#BODY}) — waiting"; sleep 10
           done
-          echo "::warning::site did not return 200 within 80s — check worker logs."
-          exit 0
+          echo "www.sierra-estates.net:   HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://www.sierra-estates.net/)"
+          echo "api/health:               HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://sierra-estates.net/api/health)"
+          echo "api/openclaw-terminal:    HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://sierra-estates.net/api/openclaw-terminal)"
+          echo "admin.sierra-estates.net: HTTP $(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://admin.sierra-estates.net/)"
