@@ -309,9 +309,9 @@ export default function PropertyCard({
 
           {/* Upfront Essential Metrics */}
           <div className="specs">
-            <div><BedDouble className="i" /><b>{p.beds > 0 ? p.beds : '?'}</b><span>{t('beds')}</span></div>
-            <div><Bath className="i" /><b>{p.bath > 0 ? p.bath : '?'}</b><span>{t('baths')}</span></div>
-            <div><Scaling className="i" /><b>{p.area > 0 ? p.area : '?'}</b><span>m²</span></div>
+            <div><BedDouble className="i" /><b>{p.beds > 0 ? p.beds : '—'}</b><span>{t('beds')}</span></div>
+            <div><Bath className="i" /><b>{p.bath > 0 ? p.bath : '—'}</b><span>{t('baths')}</span></div>
+            <div><Scaling className="i" /><b>{p.area > 0 ? p.area : '—'}</b><span>m²</span></div>
             <div className="spec-sqm" style={{ color: '#C9A84C', fontWeight: 600 }}>
               <b>{sqmPriceFormatted}</b>
               <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
@@ -514,7 +514,7 @@ export default function PropertyCard({
           </h3>
 
           <div className="specs-editorial">
-            <span>{p.beds > 0 ? p.beds : '?'} {t('beds')}</span>
+            <span>{p.beds > 0 ? p.beds : '—'} {t('beds')}</span>
             <span>·</span>
             <span>{p.bath > 0 ? p.bath : '?'} {t('baths')}</span>
             <span>·</span>
