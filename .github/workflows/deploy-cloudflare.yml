@@ -204,9 +204,10 @@ jobs:
             "UPSTASH_REDIS_REST_TOKEN": "${{ secrets.UPSTASH_REDIS_REST_TOKEN }}"
           }
           JSON
-          npx wrangler secret bulk /tmp/cf-secrets.json --name "$CF_WORKER_NAME" || \
+          jq 'with_entries(select(.value != ""))' /tmp/cf-secrets.json > /tmp/cf-secrets-clean.json
+          npx wrangler secret bulk /tmp/cf-secrets-clean.json --name "$CF_WORKER_NAME" || \
             echo "::warning::secret bulk sync failed for $CF_WORKER_NAME — deployment stands, sync manually with 'wrangler secret bulk'."
-          rm -f /tmp/cf-secrets.json
+          rm -f /tmp/cf-secrets.json /tmp/cf-secrets-clean.json
 
       - name: Verify custom domains on sierra-estates
         env:
