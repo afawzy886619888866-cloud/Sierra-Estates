@@ -701,9 +701,9 @@ export default function PropertyCard({
 
         {/* Upfront Essential Metrics */}
         <div className="specs">
-          <div><BedDouble className="i" /><b>{p.beds > 0 ? p.beds : '?'}</b><span>{t('beds')}</span></div>
-          <div><Bath className="i" /><b>{p.bath > 0 ? p.bath : '?'}</b><span>{t('baths')}</span></div>
-          <div><Scaling className="i" /><b>{p.area > 0 ? p.area : '?'}</b><span>m²</span></div>
+          <div><BedDouble className="i" /><b>{p.beds > 0 ? p.beds : '—'}</b><span>{t('beds')}</span></div>
+          <div><Bath className="i" /><b>{p.bath > 0 ? p.bath : '—'}</b><span>{t('baths')}</span></div>
+          <div><Scaling className="i" /><b>{p.area > 0 ? p.area : '—'}</b><span>m²</span></div>
           <div
             className="spec-sqm"
             title={isAr ? 'سعر المتر المربع التقديري' : 'Estimated Price per Square Meter'}
