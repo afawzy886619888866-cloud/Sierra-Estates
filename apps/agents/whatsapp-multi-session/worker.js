@@ -1,5 +1,9 @@
 'use strict';
 
+// Bypass incompatible native ws addons (bufferutil / utf-8-validate) on newer Node runtimes
+if (!process.env.WS_NO_BUFFER_UTIL) process.env.WS_NO_BUFFER_UTIL = '1';
+if (!process.env.WS_NO_UTF_8_VALIDATE) process.env.WS_NO_UTF_8_VALIDATE = '1';
+
 // Process-level resilience guards to prevent un-scanned line timeouts or Puppeteer closing from exiting the gateway
 process.on('unhandledRejection', (reason, promise) => {
   console.warn('[worker] Unhandled Rejection (handled safely):', reason?.message || reason);
@@ -265,13 +269,19 @@ async function initSession(sessionId) {
 
   console.log(`[${sessionId}] Starting WhatsApp client instance...`);
 
-  // Forcefully terminate any lingering Chrome process locking this profile
+  // Forcefully terminate any lingering Chrome process locking this profile (hidden, no terminal window)
   try {
-    const { execSync } = require('child_process');
+    const { execFileSync } = require('child_process');
     if (process.platform === 'win32') {
-      execSync(`powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name = 'chrome.exe'\\" | Where-Object { $_.CommandLine -like '*profile-${sessionId}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`, { stdio: 'ignore' });
+      const safeId = String(sessionId).replace(/[^a-zA-Z0-9_-]/g, '');
+      const psScript = `Get-CimInstance Win32_Process -Filter "Name = 'chrome.exe'" | Where-Object { $_.CommandLine -like '*profile-${safeId}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+      execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', psScript], {
+        stdio: 'ignore',
+        windowsHide: true,
+        timeout: 10000
+      });
     } else {
-      execSync(`pkill -f "profile-${sessionId}" || true`, { stdio: 'ignore' });
+      execFileSync('pkill', ['-f', `profile-${sessionId}`], { stdio: 'ignore', timeout: 5000 });
     }
   } catch (_) {}
 
@@ -279,7 +289,7 @@ async function initSession(sessionId) {
   try {
     const profDir = path.join(AUTH_BASE_DIR, `profile-${sessionId}`);
     if (fs.existsSync(profDir)) {
-      ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'lockfile'].forEach((f) => {
+      ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'lockfile', 'DevToolsActivePort'].forEach((f) => {
         const fp = path.join(profDir, f);
         if (fs.existsSync(fp)) fs.unlinkSync(fp);
       });
@@ -441,6 +451,7 @@ async function initSession(sessionId) {
     } catch (_) {}
 
     s.status = 'READY';
+    s.retryCount = 0;
     s.qrDataUrl = null;
     s.qrAscii = null;
     s.lastActive = new Date().toISOString();
@@ -597,16 +608,18 @@ async function initSession(sessionId) {
     console.error(`[${sessionId}] Failed to initialize:`, err.message);
     s.status = 'ERROR';
     s.error = err.message;
-    // Auto-recover from errors or timeouts after 12 seconds so lines never stay permanently dead
+    // Auto-recover with exponential backoff (12s → 24s → 48s → max 120s) so lines don't spin tightly on persistent errors
+    s.retryCount = (s.retryCount || 0) + 1;
+    const backoffMs = Math.min(12000 * Math.pow(2, s.retryCount - 1), 120000);
     setTimeout(() => {
       if (s.status === 'ERROR') {
-        console.log(`[${sessionId}] Auto-recovering session from ERROR state (${err.message})...`);
+        console.log(`[${sessionId}] Auto-recovering session from ERROR state (attempt #${s.retryCount}, backoff ${Math.round(backoffMs / 1000)}s: ${err.message})...`);
         s.status = 'INITIALIZING';
         s.error = null;
         s.qrDataUrl = null;
         initSession(sessionId);
       }
-    }, 12000);
+    }, backoffMs);
   }
 }
 
