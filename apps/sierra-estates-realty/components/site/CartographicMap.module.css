@@ -440,6 +440,7 @@
   min-height: 540px;
   overflow: hidden;
   cursor: grab;
+  -webkit-user-select: none;
   user-select: none;
   background-color: #061122;
 }
@@ -464,6 +465,7 @@
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
   display: block;
 }
@@ -622,6 +624,7 @@
   background-color: rgba(6, 17, 34, 0.88);
   color: #f6d88b;
   border-color: rgba(212, 175, 55, 0.45);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -1417,6 +1420,7 @@
   z-index: 30;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   white-space: nowrap;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 

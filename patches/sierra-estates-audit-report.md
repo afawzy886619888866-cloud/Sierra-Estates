@@ -44,7 +44,7 @@ All in `apps/sierra-estates-realty/app/api/**` (boundary-respecting; landed to `
 
 `main`'s CI had been failing for hours before any of this session's merges — every recent run died at **Lint**, which masked everything downstream. Two independent causes:
 
-1. **`turbo.json` parse error (PR #46).** Vercel's bot added `"tags": ["ci"]` blocks (commit `e5f16bf03`, merged as PR #43) to `turbo.json` and two package-level turbo configs; the installed turbo rejects the key (`Found an unknown key 'tags'`), so every `turbo run` — including `pnpm lint` — exited 1. Removal is purely subtractive (no cache/dependsOn/outputs semantics). 
+1. **`turbo.json` parse error (PR #46).** Vercel's bot added `"tags": ["ci"]` blocks (commit `e5f16bf03`, merged as PR #43) to `turbo.json` and two package-level turbo configs; the installed turbo rejects the key (`Found an unknown key 'tags'`), so every `turbo run` — including `pnpm lint` — exited 1. Removal is purely subtractive (no cache/dependsOn/outputs semantics).
 2. **Pure-mode CSS modules (PR #47).** With lint fixed, the build failed 3× *deterministically*, but the CI retry wrapper labeled each attempt "known next/font Google-fetch flake." The raw logs told the real story: `Selector ":global(.leaflet-container) svg, …" is not pure`. Root cause: **Next runs css-loader `modules.mode: 'pure'` for `*.module.css`** (verified in `next/dist/build/webpack/config/blocks/css/loaders/modules.js`: "Disallow global style exports…"), which rejects *any* fully-global selector. The fix anchors the four global rules to the file's own `.gisEmbedWrap` wrapper (the div around the Leaflet map) — the same valid pattern the file already uses at its bottom (`.editorialFrame :global(.leaflet-container)`). Verified with the real css-loader v6 in pure mode: the pre-fix file reproduces the exact CI error; the fixed file compiles clean. Two hardening pieces shipped with it:
    - `scripts/check-css-modules-purity.mjs` — fast static check of the real pure-mode rule, wired into CI **before** the build (verified both directions: clean tree passes, injected violation fails with `file:line`).
    - The build-retry loop now retries **only** on the actual flake signature (`fonts.googleapis.com` fetch failure or the null-read loader crash); any other failure exits fast with the real error on top.
@@ -143,6 +143,7 @@ Files: `download/sierra-estates-end-to-end-fixes.patch` (PRs #45–#47), `downlo
 | Inventory | source: **supabase**, 3,850 live units | — |
 
 **What the last mile took (PRs #53, #54):** the outage had a second half. Even after #51/#52, the env-sync was writing to entries that production deployments could not see:
+
 - **PR #53** (`5ca2ddabe2`) — pagination (the project list endpoint truncates at 100 vars), "already exists" no longer silently skips, target repair for critical keys, runtime `SUPABASE_URL` fallback (the app resolves `NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL || POSTGRES_URL` at runtime).
 - **PR #54** (`25297b7a1b`) — duplicate-aware handling (stale `[development]`-only copies existed beside production copies), PATCH-first target repair, key-refetch repair for "already exists", and a post-sync verification pass that fails loudly when a CRITICAL_KEY lacks a production-target copy.
 
@@ -151,6 +152,7 @@ The decisive evidence came from PR #54's repair path: every variable — includi
 Recovery timeline (2026-11-12, UTC): env-sync repaired → 20:45 repair PATCHes land → 20:59 workflow run starts → ~21:00 client aliases healthy deployment → 21:34 admin aliases healthy deployment (queued behind client, max-parallel: 1).
 
 **Operator actions (final):**
+
 1. ~~Apply migration 043~~ ✅ done.
 2. ~~Restore production~~ ✅ done — both client and admin verified healthy (client: health ok, inventory supabase/3,850 units, homepage 200; admin: health ok, 26,184 props, login flow 200).
 3. Optional hygiene: delete the stale `[development]`-only duplicate env entries in the Vercel dashboards (both projects) — the sync now diagnoses them loudly but only repairs CRITICAL keys.

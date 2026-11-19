@@ -3,19 +3,23 @@
 This project uses the MCD protocol for deterministic AI alignment and safety.
 
 ## Protocol Entrance
+
 Before performing any task, the agent must identify the current phase and load the appropriate command from `.amphion/control-plane/mcd/`.
 
 ## Core References
+
 - [Governance Guardrails](.amphion/control-plane/GUARDRAILS.md)
 - [MCD Playbook](.amphion/control-plane/MCD_PLAYBOOK.md)
 
 ## Workflow
+
 1. **Research** via the Evaluate command.
 2. **Plan** via the Contract command.
 3. **Build** via the Execute command.
 4. **Finalize** via the Closeout command.
 
 ## Utility Commands
+
 - **Help** via the Help command (`/help`): [HELP.md](.amphion/control-plane/mcd/HELP.md) (authority: `.amphion/control-plane/MCD_HELP_SOURCE.md`).
 - **Remember** via the Remember command (`/remember`) for non-phase memory checkpoints.
 
@@ -36,6 +40,7 @@ To invoke a slash command, read the corresponding workflow file:
 - **ingest-listings** → [.agents/workflows/ingest-listings.md](.agents/workflows/ingest-listings.md)
 
 ## Product Manager Experience
+
 1. **Proactive Guidance**: If the user starts a session without a specific request, proactively ask them if they want to improve their Project Charter / PRD, or if they have an idea to start the first MCD cycle.
 2. **Observability**: Always keep the Command Deck updated by creating/updating contract cards in the active milestone.
 
@@ -44,6 +49,7 @@ To invoke a slash command, read the corresponding workflow file:
 **ALL board writes MUST use the Command Deck API. Direct SQLite writes, Python scripts, and filesystem substitutes are non-canonical and violate GUARDRAILS write-boundary policy.**
 
 Resolve API location:
+
 1. Read `port` from `.amphion/config.json`.
 2. If `port` is missing or config.json does not exist, run `/amphion` to configure the workspace.
 3. Base URL is `http://127.0.0.1:{resolvedPort}`.
@@ -58,7 +64,7 @@ If MCP tools are unavailable, fall back to the REST API:
 | Find (board map) | GET | `/api/find` | — (optional: `?q=`, `?milestoneId=`, `?list=`) |
 | Create chart | POST | `/api/charts` | `boardId`, `title`; opt: `markdown`, `description` |
 | Create milestone | POST | `/api/milestones` | `boardId`, `title`, `code` |
-| Create card | POST | `/api/cards` | `boardId`, `milestoneId`, `listId`, `title`; opt: `priority` (P0-P3), `kind` (task|bug) |
+| Create card | POST | `/api/cards` | `boardId`, `milestoneId`, `listId`, `title`; opt: `priority` (P0-P3), `kind` (`task` or `bug`) |
 | Update card | PATCH | `/api/cards/{id}` | `boardId`; opt: `listId`, `title`, `priority`, `kind` |
 | Move card | POST | `/api/cards/{id}/move` | `listId` |
 | Delete card | DELETE | `/api/cards/{id}` | — |
@@ -72,11 +78,13 @@ If MCP tools are unavailable, fall back to the REST API:
 Each MCD contract card is a discrete context window. Treat each card as an isolated task.
 
 **Task start (fresh session):**
+
 1. `GET /api/find` (or `GET /api/state`) to resolve active board + milestone.
 2. `GET /api/memory/query?key=task.{issueNumber}.handoff` to load prior handoff state if it exists.
 
 **Task completion (before ending session):**
-```
+
+```http
 POST /api/memory/events
 {
   "memoryKey": "task.{issueNumber}.handoff",
@@ -95,7 +103,6 @@ POST /api/memory/events
 }
 ```
 
-
 ## Agent Registry, I/O Contracts & Critical Invariants
 
 Centralized prompt contracts live in [`prompts/index.ts`](./prompts/index.ts) (mirrored in `apps/sierra-estates-realty/lib/prompts/index.ts`), unified agent handlers live in [`agents/index.ts`](./agents/index.ts), core validators live in [`core/index.ts`](./core/index.ts), and automation status definitions live in [`automations/index.ts`](./automations/index.ts).
@@ -110,6 +117,7 @@ Centralized prompt contracts live in [`prompts/index.ts`](./prompts/index.ts) (m
 | **CareerEvaluatorAgent** | Evaluates `/career` candidates across Sales & Admin tracks (`Tier A/B/C`) | `career-evaluator` | `POST /api/careers/apply` or Admin Career Sheet sync | `{ applicationId, role, experienceYears, hasVehicle, achievements }` | `CareerEvaluationSchema` |
 
 ### Critical System Invariants (Never Violate)
+
 1. **Public Group Contact Privacy Lock:** `WhatsAppDispatcherAgent` (`formatPublicGroupAutoReply`) MUST restrict WhatsApp group auto-replies strictly to unit details and `unitCode` — NEVER expose owner or broker phone numbers in public/group chats. Forward confidential phone numbers privately ONLY to `01092048333` (`AGENCY_HELPLINE`).
 2. **Phone & Unit Deduplication Lock:** All incoming phones must pass through `normalizeEgyptianPhone()` (`core/deduplication.ts`) into 11-digit `01xxxxxxxxx` format and be keyed with canonical compound + area bucket (`buildUnitDedupKey`) before database upsert or Google Sheets append.
 3. **Rent Ceiling & Commission Guard:** Rental units use monthly EGP rates (`<= 400,000 EGP`); resale listings store full EGP price. Standard brokerage commission rates and AVM pricing estimates must never be silently fabricated.
@@ -127,10 +135,9 @@ Read `docs/README.md` inside that installed package first, then read the relevan
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
 <!-- END:turborepo-agent-rules -->
 
-
 ---
 
-# Sierra Estates — Platform Agent Guide (Module 1–5 Revision, 2026-11-15)
+## Sierra Estates — Platform Agent Guide (Module 1–5 Revision, 2026-11-15)
 
 ## Core rules
 
@@ -154,7 +161,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 
 ## End-to-end data flow
 
-```
+```text
 ingestion (web forms / WhatsApp / Telegram / cron)
   → AI parsing (Gemini) & unit coding (unit-codes.ts)
   → dedup (phone + compound + unit-no./BUA ±5% — AddListingPipeline.findDuplicateListing)

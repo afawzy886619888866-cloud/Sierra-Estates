@@ -9,6 +9,7 @@ This registry provides the canonical catalog of all active AI agent skills, plug
 These 31 core skills are version-controlled in Git, held at **Priority 1 (Highest Precedence)**, and structured to power the self-learning, adaptive real estate engine.
 
 ### 🧠 Engine 1 · Memory Engine (Learning, Intent & Context)
+
 *Tracks multi-turn buyer/owner episodes, learns shifting customer preferences, and maintains persistent CRM state.*
 
 - **`ecc-memory-engine`**: Episodic Context Cache (ECC) & Entity Graph Memory Engine tracking multi-turn buyer/owner episodes, historical price drops, and entity relations.
@@ -19,6 +20,7 @@ These 31 core skills are version-controlled in Git, held at **Priority 1 (Highes
 - **`supabase-postgres-best-practices`**: Official Postgres best practices maintained by Supabase (indexing, RLS security, EXPLAIN analysis, and pgvector).
 
 ### 🗺️ Engine 2 · RAG & GIS Map Engine (Inventory & Media Discovery)
+
 *Matches buyer criteria against 20,281 listings across New Cairo compounds, spatial GIS coordinates, and verified media.*
 
 - **`sierra-map-agent`**: GIS boundary verification, compound-to-inventory mapping, and automated WhatsApp media harvesting.
@@ -27,6 +29,7 @@ These 31 core skills are version-controlled in Git, held at **Priority 1 (Highes
 - **`real-estate-excel-processor`**: End-to-end listing ingestion, bilingual column normalization, deduplication, and Excel workbook regeneration.
 
 ### ⚖️ Engine 3 · Evaluation & Reasoning Harness (Valuation, Arabic NLU & Quality Gates)
+
 *Evaluates market prices with Cairo AVM, ensures mathematical accuracy, and validates code/data safety.*
 
 - **`real-estate-valuation-analyzer`**: Evaluates rental and resale listings into financial decisions (Underpriced, Fair Value, Overpriced) via Cap Rates and pricing arbitrage.
@@ -39,6 +42,7 @@ These 31 core skills are version-controlled in Git, held at **Priority 1 (Highes
 - **`code-review-and-quality`**: Multi-dimensional code quality, maintainability, and regression prevention.
 
 ### ⚙️ Engine 4 · Workflows, Closer & Experience Engine (Speed, Action & UI/UX)
+
 *Executes automated outreach, negotiates deals via closer bot, and delivers high-polish, ultra-fast client UX.*
 
 - **`sierra-closer-agent`**: Stage-9 Closer Bot & high-value deal negotiation. Executes 5-stage closing workflows, post-viewing feedback, due diligence, and Arabic/English negotiation.
