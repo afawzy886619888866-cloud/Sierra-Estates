@@ -1,47 +1,35 @@
-name: Deploy Cloudflare (Client + Admin)
+name: Deploy Cloudflare (Unified · sierra-estates)
 
-# Hosting contract (2026-11-18): production surfaces run on Cloudflare
-# Workers built with @opennextjs/cloudflare. Deploys are gated on a green CI
-# run for the exact commit (fail-closed, same policy as the retired Vercel
-# pipeline). Requires repo secret CLOUDFLARE_API_TOKEN (token needs
-# Workers Scripts:Edit on the account + Zone DNS:Edit on sierra-estates.net
-# for the custom-domain attach). CLOUDFLARE_ACCOUNT_ID is a repo variable.
+# Hosting contract (2026-11-19): Single unified Cloudflare Worker (`sierra-estates`)
+# built with @opennextjs/cloudflare. Serves all 3 hostnames via Next.js host-based
+# rewrites in apps/sierra-estates-realty/next.config.ts:
+#   - sierra-estates.net       (Public Client Portal)
+#   - www.sierra-estates.net   (Public Client Portal)
+#   - admin.sierra-estates.net (Admin OS — host rewrite to /admin + Zero Trust Access)
+#
+# Guardrail: Deployments ONLY update the existing `sierra-estates` Worker and
+# REFUSE to create any brand-new Cloudflare project unless explicitly authorized
+# with a credentialed approval (`ALLOW_CREATE_NEW_WORKER` secret).
 
 on:
-  # Auto-deploy on every push to main: the gate re-verifies a green CI run
-  # for the exact commit before releasing (fail-closed). workflow_run is
-  # kept as the canonical post-CI trigger; push covers the case where
-  # GitHub's workflow_run scheduling is unavailable (e.g. right after the
-  # workflow file itself changes).
   push:
     branches: [main]
   workflow_run:
     workflows: ["CI"]
     types: [completed]
   workflow_dispatch:
-    inputs:
-      target:
-        description: 'Which worker to deploy'
-        required: true
-        default: 'both'
-        type: choice
-        options:
-          - both
-          - client
-          - admin
 
 permissions:
   contents: read
 
 concurrency:
-  # push + workflow_run on main share refs/heads/main -> one production
-  # queue; dispatches on other refs stay isolated.
   group: deploy-cloudflare-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+  CF_WORKER_NAME: "sierra-estates"
 
 jobs:
   gate:
@@ -50,7 +38,6 @@ jobs:
     timeout-minutes: 5
     outputs:
       proceed: ${{ steps.decide.outputs.proceed }}
-      target: ${{ steps.decide.outputs.target }}
     steps:
       - name: Decide deployment authorization
         id: decide
@@ -62,12 +49,7 @@ jobs:
           DEPLOY_SHA: ${{ github.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          INPUT_TARGET: ${{ inputs.target || 'both' }}
         run: |
-          echo "target=${INPUT_TARGET}" >> "$GITHUB_OUTPUT"
-          # workflow_run is privileged because it carries the deployment
-          # secrets. Only release a successful CI run for this repository's
-          # main branch, and deploy that exact tested SHA (checkout below).
           if [ "$EVENT_NAME" = "workflow_run" ]; then
             if [ "$CI_CONCLUSION" = "success" ] && \
                [ "$CI_HEAD_BRANCH" = "main" ] && \
@@ -80,8 +62,6 @@ jobs:
             fi
             exit 0
           fi
-          # Manually requested production deploys must have a successful CI
-          # run for the exact selected commit, not merely a newer green run.
           CONCLUSION=$(gh run list --workflow=ci.yml --repo "${{ github.repository }}" --branch main --commit "$DEPLOY_SHA" --limit 1 --json status,conclusion,headSha --jq '.[0] | "\(.status) \(.conclusion) \(.headSha)"' || echo "unknown unknown unknown")
           echo "Latest ci.yml run: $CONCLUSION"
           STATUS=$(echo "$CONCLUSION" | cut -d' ' -f1)
@@ -96,43 +76,12 @@ jobs:
           fi
 
   deploy:
-    name: OpenNext deploy · ${{ matrix.role }}
+    name: OpenNext deploy · sierra-estates
     needs: gate
-    # NOTE: matrix context is NOT legal in a job-level if that also
-    # references needs (GitHub evaluates the needs pass first and rejects
-    # 'matrix' as unrecognized). The per-role target filter therefore
-    # lives on the step-level conditions below.
     if: ${{ needs.gate.outputs.proceed == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        # NOTE: secrets are NOT readable inside strategy.matrix (GitHub
-        # rejects the workflow at parse time) — every secret lookup happens
-        # at step level below.
-        include:
-          - role: client
-            worker: sierra-estates
-            hostname: sierra-estates.net
-            siteUrl: https://sierra-estates.net
-          - role: admin
-            worker: sierra-estates88
-            hostname: admin.sierra-estates.net
-            siteUrl: https://admin.sierra-estates.net
     steps:
-      - name: Role target filter
-        id: role_gate
-        env:
-          TARGET: ${{ needs.gate.outputs.target }}
-        run: |
-          if [ "$TARGET" != "both" ] && [ "$TARGET" != "${{ matrix.role }}" ]; then
-            echo "::notice::target=$TARGET — skipping ${{ matrix.role }}."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -151,26 +100,42 @@ jobs:
           node-version: '22'
           cache: pnpm
 
-      - name: Verify deployment credentials (fail loudly)
-        if: ${{ steps.role_gate.outputs.skip != 'true' }}
+      - name: Verify credentials & enforce existing single-project lock
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          ALLOW_CREATE_NEW_WORKER: ${{ secrets.ALLOW_CREATE_NEW_WORKER }}
         run: |
-          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
-            echo "::error::CLOUDFLARE_API_TOKEN repository secret is missing. Create a Cloudflare API token with 'Workers Scripts:Edit' (account) + 'Zone DNS:Edit' (zone sierra-estates.net) and add it as the CLOUDFLARE_API_TOKEN repository secret — deploys must never silently skip."
+          set -euo pipefail
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Missing CLOUDFLARE_API_TOKEN secret or CLOUDFLARE_ACCOUNT_ID variable."
             exit 1
           fi
-          echo "Cloudflare credentials present for the ${{ matrix.role }} worker."
+          if [ "$CF_WORKER_NAME" != "sierra-estates" ]; then
+            echo "::error::Single-project policy violation: target worker must be 'sierra-estates', got '$CF_WORKER_NAME'."
+            exit 1
+          fi
+          HTTP_CODE=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$CF_WORKER_NAME")
+          if [ "$HTTP_CODE" != "200" ]; then
+            if [ "$ALLOW_CREATE_NEW_WORKER" != "true" ]; then
+              echo "::error::Worker '$CF_WORKER_NAME' does not exist (HTTP $HTTP_CODE). Creating a brand-new Cloudflare project is blocked unless secret ALLOW_CREATE_NEW_WORKER=true is explicitly set."
+              exit 1
+            fi
+            echo "::warning::ALLOW_CREATE_NEW_WORKER=true verified — authorized to provision '$CF_WORKER_NAME'."
+          else
+            echo "Verified existing single Cloudflare Worker project: $CF_WORKER_NAME (HTTP 200)."
+          fi
 
       - name: Install dependencies
-        if: ${{ steps.role_gate.outputs.skip != 'true' }}
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Build ${{ matrix.role }} worker (Next.js → OpenNext)
-        if: ${{ steps.role_gate.outputs.skip != 'true' }}
+      - name: Build unified worker (Next.js → OpenNext)
         working-directory: apps/sierra-estates-realty
         env:
           NODE_OPTIONS: --max-old-space-size=6144
-          NEXT_PUBLIC_SITE_MODE: ${{ matrix.role == 'admin' && 'admin' || 'client' }}
-          NEXT_PUBLIC_SITE_URL: ${{ matrix.siteUrl }}
+          NEXT_PUBLIC_SITE_URL: https://sierra-estates.net
           NEXT_PUBLIC_CLIENT_URL: ${{ vars.NEXT_PUBLIC_CLIENT_URL }}
           NEXT_PUBLIC_ADMIN_URL: ${{ vars.NEXT_PUBLIC_ADMIN_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -183,17 +148,14 @@ jobs:
           pnpm exec next build --webpack
           npx opennextjs-cloudflare build --skipNextBuild
 
-      - name: Deploy worker ${{ matrix.worker }}
-        if: ${{ steps.role_gate.outputs.skip != 'true' }}
+      - name: Deploy unified worker sierra-estates & sync runtime secrets
         working-directory: apps/sierra-estates-realty
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          npx wrangler deploy --name "${{ matrix.worker }}"
-          # Runtime secrets (server-side reads at request time) — one bulk
-          # upload instead of N single-secret deploys. Values never printed.
+          npx wrangler deploy --name "$CF_WORKER_NAME"
           cat > /tmp/cf-secrets.json <<JSON
           {
             "NEXT_PUBLIC_SUPABASE_URL": "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}",
@@ -210,14 +172,11 @@ jobs:
             "PF_WEBHOOK_SECRET": "${{ secrets.PF_WEBHOOK_SECRET }}"
           }
           JSON
-          npx wrangler secret bulk /tmp/cf-secrets.json --name "${{ matrix.worker }}" || \
-            echo "::warning::secret bulk sync failed for ${{ matrix.worker }} — deployment stands, sync manually with 'wrangler secret bulk'."
+          npx wrangler secret bulk /tmp/cf-secrets.json --name "$CF_WORKER_NAME" || \
+            echo "::warning::secret bulk sync failed for $CF_WORKER_NAME — deployment stands, sync manually with 'wrangler secret bulk'."
           rm -f /tmp/cf-secrets.json
 
-      - name: Attach custom domain (auto-creates DNS)
-        if: ${{ steps.role_gate.outputs.skip != 'true' }}
-        # Worker Custom Domains replace manual DNS records: attaching the
-        # hostname to the worker creates/updates the zone record itself.
+      - name: Verify custom domains on sierra-estates
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -226,31 +185,28 @@ jobs:
           ZONE_ID=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             "https://api.cloudflare.com/client/v4/zones?name=sierra-estates.net" | jq -r '.result[0].id // empty')
           if [ -z "$ZONE_ID" ]; then
-            echo "::warning::zone sierra-estates.net not visible to this token — attach the custom domain manually in the CF dashboard (Workers → ${{ matrix.worker }} → Settings → Domains & Routes → Add → Custom Domain)."
+            echo "::warning::zone sierra-estates.net not visible to this token — skipping custom domain verify."
             exit 0
           fi
-          HTTP_CODE=$(curl -sS -o /tmp/cf-domain.json -w '%{http_code}' -X PUT \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains" \
-            -d "{\"zone_id\":\"$ZONE_ID\",\"hostname\":\"${{ matrix.hostname }}\",\"service\":\"${{ matrix.worker }}\",\"environment\":\"production\"}")
-          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
-            echo "Custom domain ${{ matrix.hostname }} → worker ${{ matrix.worker }} attached (DNS auto-created)."
-          else
-            echo "::warning::custom-domain attach returned HTTP $HTTP_CODE: $(head -c 300 /tmp/cf-domain.json) — attach manually in the dashboard if the token lacks Zone DNS:Edit."
-          fi
+          for HOST in sierra-estates.net www.sierra-estates.net admin.sierra-estates.net; do
+            HTTP_CODE=$(curl -sS -o /tmp/cf-domain.json -w '%{http_code}' -X PUT \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains" \
+              -d "{\"zone_id\":\"$ZONE_ID\",\"hostname\":\"$HOST\",\"service\":\"$CF_WORKER_NAME\",\"environment\":\"production\"}")
+            echo "Custom domain $HOST -> $CF_WORKER_NAME: HTTP $HTTP_CODE"
+          done
 
-      - name: Smoke the deployment
-        if: ${{ steps.role_gate.outputs.skip != 'true' && matrix.role == 'client' }}
+      - name: Smoke test live production deployment
         run: |
           set -euo pipefail
-          for i in $(seq 1 10); do
-            CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://${{ matrix.hostname }}/" || echo 000)
+          for i in $(seq 1 8); do
+            CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://sierra-estates.net/" || echo 000)
             if [ "$CODE" = "200" ]; then
-              echo "https://${{ matrix.hostname }}/ is live (HTTP 200)."
+              echo "https://sierra-estates.net/ is LIVE (HTTP 200)."
               exit 0
             fi
-            echo "attempt $i: HTTP $CODE — waiting for DNS/propagation"; sleep 15
+            echo "attempt $i: HTTP $CODE — waiting"; sleep 10
           done
-          echo "::warning::site did not return 200 within 150s — check the worker logs and the custom-domain attach step."
+          echo "::warning::site did not return 200 within 80s — check worker logs."
           exit 0

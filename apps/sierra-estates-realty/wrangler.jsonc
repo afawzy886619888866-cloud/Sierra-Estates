@@ -1,9 +1,9 @@
 {
-  // Cloudflare Worker config for the Sierra Estates Next.js app
-  // (@opennextjs/cloudflare). The deploy workflow (deploy-cloudflare.yml)
-  // overrides the worker NAME per matrix role with --name:
-  //   client -> sierra-estates      (custom domain: sierra-estates.net, www.sierra-estates.net)
-  //   admin  -> sierra-estates88    (custom domain: admin.sierra-estates.net)
+  // Unified Cloudflare Worker config for Sierra Estates (@opennextjs/cloudflare).
+  // Single project (`sierra-estates`) serves all 3 custom domains via host rewrites:
+  //   - sierra-estates.net       (Client Portal)
+  //   - www.sierra-estates.net   (Client Portal)
+  //   - admin.sierra-estates.net (Admin OS -> /admin, protected by Zero Trust Access)
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
   "name": "sierra-estates",
