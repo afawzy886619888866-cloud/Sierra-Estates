@@ -516,9 +516,9 @@ export default function PropertyCard({
           <div className="specs-editorial">
             <span>{p.beds > 0 ? p.beds : '—'} {t('beds')}</span>
             <span>·</span>
-            <span>{p.bath > 0 ? p.bath : '?'} {t('baths')}</span>
+            <span>{p.bath > 0 ? p.bath : '—'} {t('baths')}</span>
             <span>·</span>
-            <span>{p.area > 0 ? p.area : '?'} m²</span>
+            <span>{p.area > 0 ? p.area : '—'} m²</span>
             <span>·</span>
             <span className="spec-sqm" style={{ color: '#C9A84C' }}>{sqmPriceFormatted} {isAr ? 'ج/م²' : 'EGP/m²'}</span>
             {finishing && (
