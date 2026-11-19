@@ -112,6 +112,8 @@ const SLUGS = [
   'media-harvester',
   'paced-outreach',
   '13-paced-outreach',
+  'number-verifier',
+  'owner-feedback-registry',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -154,6 +156,8 @@ const SCRIPTS = {
   'media-harvester': '03-media-harvester/index.js',
   'paced-outreach': '13-paced-outreach/paced-outreach.js',
   '13-paced-outreach': '13-paced-outreach/paced-outreach.js',
+  'number-verifier': '11-number-verifier/verify.js',
+  'owner-feedback-registry': 'lib/owner-feedback-registry.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -1276,6 +1280,22 @@ async function main() {
       name_ar: 'تقرير المراسلات والردود اليومي',
       description: 'Daily audit of all contacted owners, inbound replies, opt-outs, and sheet write-back verification.',
       schedule: '30 21 * * *',
+      category: 'outreach',
+    },
+    {
+      slug: 'number-verifier',
+      name: 'WhatsApp Number Pre-Flight Verifier',
+      name_ar: 'فاحص أرقام الواتساب الصامت',
+      description: 'Nightly probe verifying candidate owner numbers against the OpenWA gateway without messaging, caching valid/invalid numbers.',
+      schedule: '0 2 * * *',
+      category: 'outreach',
+    },
+    {
+      slug: 'owner-feedback-registry',
+      name: 'Owner Feedback Registry & Sheet Cleaner',
+      name_ar: 'سجل فيدباك الملاك وتنقيح الشيت',
+      description: 'Merges outreach ledger, DM replies, and contacted CSV into categorized owner inventory tabs (Available, Negotiating, Brokers, Inactive) and syncs exclusion lists.',
+      schedule: '15 */2 * * *',
       category: 'outreach',
     },
   ];

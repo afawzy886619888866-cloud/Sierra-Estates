@@ -55,7 +55,7 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('request'), slug: z.string().min(1).max(64) }),
 ]);
 
-// Valid workflow-slug allowlist — mirrors runner's SCRIPTS map (all 18 registered slugs)
+// Valid workflow-slug allowlist — mirrors runner's SCRIPTS map
 const RUNNER_SLUGS = new Set([
   'whatsapp-scraper', 'owner-search', 'owner-contact', 'email-sender',
   'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach',
@@ -63,6 +63,8 @@ const RUNNER_SLUGS = new Set([
   'curator-guardian', 'atlas-sync-guardian', 'antigravity-closer-guardian',
   'ops-watchdog', 'contact-partitioner', 'daily-outreach-report', 'broker-sync',
   'usb-phone-harvester', 'outreach-2h-digest',
+  'gemini-property-classifier', 'media-harvester', 'paced-outreach', '13-paced-outreach',
+  'number-verifier', 'owner-feedback-registry',
 ]);
 
 function opsHeaders(): Record<string, string> {

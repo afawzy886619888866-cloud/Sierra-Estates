@@ -48,18 +48,38 @@ if ($Service -eq "all") {
 if (Test-Pm2Installed -and ($Service -eq "all" -or $Service -eq "runner")) {
     $EcosystemFile = Join-Path $RepoRoot "ecosystem.config.cjs"
     if (Test-Path $EcosystemFile) {
+        $port2786Active = Test-PortListening 2786
+        $pm2RunnerOnline = $false
+        try {
+            $pm2List = pm2 jlist 2>$null | ConvertFrom-Json
+            $runnerProc = $pm2List | Where-Object { $_.name -eq "sierra-workflow-runner" } | Select-Object -First 1
+            if ($runnerProc -and $runnerProc.pm2_env.status -eq "online") {
+                $pm2RunnerOnline = $true
+            }
+        } catch {}
+
         if ($Service -eq "runner") {
-            pm2 startOrReload $EcosystemFile --only sierra-workflow-runner --update-env
+            if ($port2786Active -and -not $pm2RunnerOnline) {
+                pm2 delete sierra-workflow-runner 2>$null | Out-Null
+                Write-Output "Port :2786 is already served externally (Docker); skipping PM2 sierra-workflow-runner."
+            } else {
+                pm2 startOrReload $EcosystemFile --only sierra-workflow-runner --update-env
+            }
         } else {
-            pm2 startOrReload $EcosystemFile --update-env
+            if ($port2786Active -and -not $pm2RunnerOnline) {
+                pm2 delete sierra-workflow-runner 2>$null | Out-Null
+                pm2 startOrReload $EcosystemFile --only "sierra-openwa-gateway,sierra-admin-bridge,sierra-fastapi-engine" --update-env
+            } else {
+                pm2 startOrReload $EcosystemFile --update-env
+            }
         }
         pm2 save
         Write-Output "PM2 daemonized services via $EcosystemFile and saved process list."
         if ($Service -eq "all" -or $Service -eq "runner") {
             try {
-                $health = Invoke-RestMethod -Uri "http://127.0.0.1:2786/health" -TimeoutSec 3 -ErrorAction SilentlyContinue
+                $health = Invoke-RestMethod -Uri "http://127.0.0.1:2786/api/health" -TimeoutSec 3 -ErrorAction SilentlyContinue
                 if ($health.ok) {
-                    Write-Output "Workflow Runner (:2786/health) verified OK."
+                    Write-Output "Workflow Runner (:2786/api/health) verified OK."
                 }
             } catch {}
             exit 0

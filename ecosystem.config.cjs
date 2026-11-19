@@ -17,7 +17,7 @@ module.exports = {
         PORT: 2786,
         RUNNER_PORT: 2786,
         RUNNER_BIND: '127.0.0.1',
-        HEALTHCHECK_URL: 'http://127.0.0.1:2786/health',
+        HEALTHCHECK_URL: 'http://127.0.0.1:2786/api/health',
       },
       error_file: './.state/pm2-runner-error.log',
       out_file: './.state/pm2-runner-out.log',
