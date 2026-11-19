@@ -101,15 +101,32 @@ jobs:
           fi
 
           status=0
+          {
+            echo "### Automations Dispatch Summary"
+            echo ""
+            echo "| Target | Status | Details |"
+            echo "| :--- | :---: | :--- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Warm up the Cloudflare Worker isolate cleanly before dispatching cron targets
+          curl -sS -o /dev/null --max-time 20 --retry 1 "${SITE_URL}/api/health" || true
+
           for target in ${TARGETS//,/ }; do
             echo "── Dispatching '${target}' ─────────────────────────────────"
-            if ! curl -sS --fail-with-body --show-error \
+            RESP_FILE="/tmp/dispatch-${target}.txt"
+            if curl -sS --fail-with-body --show-error \
                  --retry 3 --retry-delay 15 --retry-all-errors \
                  --max-time 240 \
                  --write-out '\nHTTP %{http_code} in %{time_total}s\n' \
+                 -o "$RESP_FILE" \
                  "${SITE_URL}/api/cron/dispatch/${target}?source=github-actions&force=${FORCE}" \
                  -H "Authorization: Bearer ${CRON_SECRET}"; then
+              cat "$RESP_FILE"
+              echo "| \`${target}\` | ✅ PASS | HTTP 200 |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              cat "$RESP_FILE" || true
               echo "::warning::Dispatch '${target}' failed after retries — the failure is recorded in automation_runs + the failed_orchestrations DLQ."
+              echo "| \`${target}\` | ❌ FAIL | Recorded in \`failed_orchestrations\` DLQ |" >> "$GITHUB_STEP_SUMMARY"
               status=1
             fi
           done
