@@ -94,12 +94,12 @@ export const AUTOMATION_REGISTRY: AutomationSpec[] = [
   },
   {
     id: 'vercel-cron-leads-listings',
-    name: 'Vercel Serverless Daily Crons (Leads, Listings, Reservations)',
+    name: 'Cloudflare & GitHub Scheduled Daily Crons (Leads, Listings, Reservations)',
     category: 'cron',
     entryPoint: 'apps/sierra-estates-realty/app/api/cron/sync-leads/route.ts',
-    scheduleOrTrigger: 'Cron: 00:00, 02:00, 06:00, 06:30 UTC (vercel.json)',
+    scheduleOrTrigger: 'Cron: 00:00, 02:00, 06:00, 06:30 UTC (.github/workflows/automations.yml -> sierra-estates)',
     requiredEnvKeys: ['CRON_SECRET', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'],
-    description: 'Cleans expired reservations, re-indexes CRM leads, and detects inventory price changes.',
+    description: 'Cleans expired reservations, re-indexes CRM leads, and detects inventory price changes on Cloudflare Worker sierra-estates.',
   },
   {
     id: 'property-finder-atlas-sync',

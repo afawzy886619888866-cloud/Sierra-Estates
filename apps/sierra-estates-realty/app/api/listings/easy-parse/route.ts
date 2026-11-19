@@ -72,8 +72,14 @@ function missingFields(
   return KEY_FIELDS.filter(k => result[k] === null || result[k] === undefined);
 }
 
-const API_KEY =
-  process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "";
+function resolveGeminiApiKey(): string {
+  return (
+    process.env.GOOGLE_AI_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY ||
+    ""
+  );
+}
 
 /**
  * Fallback heuristic extractor when AI API key is unavailable in dev/offline.
@@ -370,12 +376,13 @@ export async function POST(req: NextRequest) {
 
     const { rawText, images } = parseResult.data;
 
-    // If Gemini API Key is available, use neural parsing for elite extraction
-    if (API_KEY) {
+    // Resolve Gemini API Key at request time (required on Cloudflare Workers runtime)
+    const apiKey = resolveGeminiApiKey();
+    if (apiKey) {
       try {
-        const genAI = new GoogleGenerativeAI(API_KEY);
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-          model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+          model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
         });
 
         const prompt = `You are the Sierra Estates AI Scribe (Easy Listing Extractor).

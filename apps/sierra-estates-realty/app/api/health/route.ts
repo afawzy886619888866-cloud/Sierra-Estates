@@ -119,7 +119,7 @@ export async function GET() {
       },
       aiOrchestrator: {
         status: aiConfigured ? 'configured' : 'fallback',
-        primaryModel: process.env.AI_MODEL || 'gemini-2.0-flash',
+        primaryModel: process.env.AI_MODEL || 'gemini-2.5-flash',
       },
       omnichannel: {
         status: 'healthy',
