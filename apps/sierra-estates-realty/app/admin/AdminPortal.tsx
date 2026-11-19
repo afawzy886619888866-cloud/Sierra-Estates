@@ -162,6 +162,8 @@ function pageLabelFor(tab: string, T: TranslationFn): string {
     contracts: isAr ? 'العقود الإلكترونية' : 'Digital Contracts',
     workflow_studio: isAr ? 'استوديو سير العمل' : 'Workflow Studio',
     workflow_ops: isAr ? 'تشغيل سير العمل' : 'Workflow Ops',
+    owner_feedback: isAr ? 'سجل فيدباك الملاك' : 'Owner Feedback Registry',
+    requests_sheet: isAr ? 'شيت طلبات العملاء أونلاين' : 'Requests Online Spreadsheet',
     openclaw: isAr ? 'طرفية أوبن كلو' : 'OpenClaw Terminal',
     nexus: isAr ? 'نيكسوس المباشر' : 'Nexus Telemetry',
     memory_brain: isAr ? 'الذاكرة المركزية' : 'Memory Brain',
@@ -2071,8 +2073,10 @@ const DEPARTMENT_HUBS: Record<string, { parent: string; titleEn: string; titleAr
     titleAr: 'منظومة المخزون',
     items: [
       { id: 'inventory_command', labelEn: 'Master Inventory OS', labelAr: 'المخزون الرئيسي الموحد', icon: '🏢' },
+      { id: 'inventree_hub', labelEn: 'InvenTree Hub & RAG', labelAr: 'نظام إنفنتري والذاكرة', icon: '📦' },
       { id: 'easy_listing', labelEn: 'Easy Listing Studio', labelAr: 'استوديو الإدراج السريع', icon: '🏷️' },
       { id: 'excel_merger', labelEn: 'Excel & CSV Sync Hub', labelAr: 'دمج الشيتات والإكسل', icon: '🗂️' },
+      { id: 'real_estate_processor', labelEn: 'Master Inventory Processor', labelAr: 'المعالج المركزي للمخزون', icon: '🏘️' },
       { id: 'masterplan_gis', labelEn: '3D GIS Masterplan', labelAr: 'مخطط 3D GIS', icon: '🧭' },
       { id: 'cairo_plaza', labelEn: 'Cairo Plaza Media Hub', labelAr: 'مشروع كايرو بلازا', icon: '🏢' },
     ],
@@ -2096,6 +2100,8 @@ const DEPARTMENT_HUBS: Record<string, { parent: string; titleEn: string; titleAr
     titleAr: 'عمليات الواتساب',
     items: [
       { id: 'whatsapp_outreach', labelEn: 'WhatsApp Command', labelAr: 'مرسل الواتساب المجدول', icon: '💬' },
+      { id: 'owner_feedback', labelEn: 'Owner Feedback Registry', labelAr: 'سجل فيدباك الملاك', icon: '📋' },
+      { id: 'workflow_ops', labelEn: 'Workflow Ops & Control', labelAr: 'مركز التحكم بمسارات العمل', icon: '⚙️' },
       { id: 'whatsapp_chat_import', labelEn: 'Chat Harvester & NLP', labelAr: 'استيراد محادثات الواتساب', icon: '📲' },
     ],
   },
@@ -2105,8 +2111,11 @@ const DEPARTMENT_HUBS: Record<string, { parent: string; titleEn: string; titleAr
     titleAr: 'أسطول الذكاء الاصطناعي',
     items: [
       { id: 'intelligence', labelEn: 'Agent Fleet Telemetry', labelAr: 'أسطول الوكلاء', icon: '🤖' },
+      { id: 'agents', labelEn: 'Autonomous Agents', labelAr: 'الوكلاء الذاتيين', icon: '🤖' },
       { id: 'workflows', labelEn: 'Automations & Engine', labelAr: 'محرك الأتمتة', icon: '⚡' },
       { id: 'workflow_studio', labelEn: 'Workflow Studio', labelAr: 'استوديو سير العمل', icon: '🧩' },
+      { id: 'openclaw', labelEn: 'OpenClaw Terminal', labelAr: 'طرفية أوبن كلو', icon: '🦞' },
+      { id: 'nexus', labelEn: 'Nexus Telemetry', labelAr: 'بث نيكسوس المباشر', icon: '📡' },
       { id: 'memory_brain', labelEn: 'Central Memory & DeepSeek', labelAr: 'الذاكرة المركزية', icon: '🧬' },
       { id: 'notebookllm', labelEn: 'NotebookLM Audio Studio', labelAr: 'الملخصات الصوتية', icon: '🎙️' },
     ],
@@ -2151,6 +2160,18 @@ function AdminApp() {
   const isPartner = isPartnerRole(currentUser?.role);
   const guardedSetTab = useCallback((id: string) => {
     setTab((current) => (isNavTabAllowedForRole(id, currentUser?.role) ? id : current));
+  }, [currentUser?.role]);
+
+  // Honor ?tab=<id> deep-link query param once session role resolves.
+  const initialQueryTabApplied = useRef(false);
+  useEffect(() => {
+    if (initialQueryTabApplied.current || !currentUser?.role) return;
+    if (typeof window === 'undefined') return;
+    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+    initialQueryTabApplied.current = true;
+    if (requestedTab && isNavTabAllowedForRole(requestedTab, currentUser.role)) {
+      setTab(requestedTab);
+    }
   }, [currentUser?.role]);
 
   // When the session resolves, a role that may not keep the current tab
@@ -2952,9 +2973,12 @@ function AdminApp() {
                   {[
                     // Stage 1 · Most Used Real Estate Operations
                     { id: 'inventory_command', label: isAr ? 'المخزون العقاري الموحد' : 'Inventory Command & OS', icon: '🏢' },
+                    { id: 'inventree_hub', label: isAr ? 'نظام إنفنتري والذاكرة' : 'InvenTree Hub & RAG', icon: '📦' },
                     { id: 'easy_listing', label: isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio', icon: '🏷️' },
                     { id: 'requests_sheet', label: isAr ? 'شيت طلبات العملاء أونلاين' : 'Requests Online Spreadsheet', icon: '📋' },
                     { id: 'whatsapp_outreach', label: isAr ? 'محطة الواتساب' : 'WhatsApp Station', icon: '🛰️' },
+                    { id: 'owner_feedback', label: isAr ? 'سجل فيدباك الملاك' : 'Owner Feedback Registry', icon: '📋' },
+                    { id: 'workflow_ops', label: isAr ? 'مركز التحكم بمسارات العمل' : 'Workflow Ops & Control', icon: '⚙️' },
                     // Stage 2 · Autonomous AI & Workflows
                     { id: 'agents', label: isAr ? 'أسطول الوكلاء الذكي' : 'Autonomous Agents Fleet', icon: '🤖' },
                     { id: 'workflows', label: isAr ? 'محرك الأتمتة وسير العمل' : 'Workflows & Orchestrator', icon: '⚡' },

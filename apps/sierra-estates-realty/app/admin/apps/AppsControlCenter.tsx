@@ -267,13 +267,23 @@ export default function AppsControlCenter() {
   const poll = useCallback(async (silent = false) => {
     if (!silent) setChecking(true);
     try {
-      const res = await fetch('/api/admin/whatsapp/outbox?limit=1', { cache: 'no-store' });
-      const json = await res.json().catch(() => null);
+      const [outboxRes, runnerRes] = await Promise.all([
+        fetch('/api/admin/whatsapp/outbox?limit=1', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/admin/workflow-ops', { cache: 'no-store' }).catch(() => null),
+      ]);
+      const json = outboxRes ? await outboxRes.json().catch(() => null) : null;
       if (json && json.success) {
         setGateway(json.gateway || null);
         setQueued(Number(json.stats?.queued || 0));
-        setLastCheck(new Date().toLocaleTimeString());
       }
+      const runnerJson = runnerRes ? await runnerRes.json().catch(() => null) : null;
+      if (runnerJson && runnerJson.ok) {
+        setRunnerOnline(true);
+        setRunnerWorkflowsCount(Array.isArray(runnerJson.workflows) ? runnerJson.workflows.length : 0);
+      } else {
+        setRunnerOnline(false);
+      }
+      setLastCheck(new Date().toLocaleTimeString());
     } catch { /* next poll retries */ } finally {
       if (!silent) setChecking(false);
     }
@@ -319,7 +329,7 @@ export default function AppsControlCenter() {
 
   const launch = (actionType: string, actionTarget: string) => {
     if (actionType === 'external') window.open(actionTarget, '_blank');
-    else window.open('/admin', '_self');
+    else window.open(`/admin?tab=${encodeURIComponent(actionTarget)}`, '_self');
   };
 
   return (
@@ -501,11 +511,17 @@ export default function AppsControlCenter() {
                           <dd className="iq-mono">WORKFLOW_OPS_URL</dd>
                         </dl>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <span className="iq-chip warn">{t.runnerStatus}</span>
+                          <span className={`iq-chip ${runnerOnline ? 'ok' : 'warn'}`}>
+                            <span className={`iq-dot ${runnerOnline ? 'ok' : 'warn'}`} />
+                            {runnerOnline ? t.online : t.runnerStatus}
+                          </span>
+                          {runnerWorkflowsCount > 0 && (
+                            <span className="iq-chip">{runnerWorkflowsCount} jobs</span>
+                          )}
                           <span className="iq-chip">EC2 retired</span>
                         </div>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <button className="iq-btn iq-btn-ghost iq-btn-sm" onClick={() => window.open('/admin', '_self')}>
+                          <button className="iq-btn iq-btn-ghost iq-btn-sm" onClick={() => window.open('/admin?tab=workflow_ops', '_self')}>
                             ⚡ {t.openRunner}
                           </button>
                         </div>
