@@ -10,7 +10,7 @@
     "tunnel": "node scripts/tunnel.mjs",
     "dev:web": "pnpm --filter sierra-estates-client-page dev",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 TURBO_UI=false node scripts/sync-inventory-snapshot.mjs && turbo run build",
-    "lint": "node scripts/check-no-compiled-twins.mjs && node scripts/check-legacy-runtime-boundary.mjs && turbo run lint && pnpm exec eslint workflows",
+    "lint": "node scripts/check-no-compiled-twins.mjs && node scripts/check-legacy-runtime-boundary.mjs && cross-env NODE_OPTIONS=--max-old-space-size=4096 TURBO_UI=false turbo run lint && pnpm exec eslint workflows",
     "check:twins": "node scripts/check-no-compiled-twins.mjs",
     "type-check": "cross-env NODE_OPTIONS=--max-old-space-size=4096 TURBO_UI=false turbo run type-check",
     "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
@@ -132,7 +132,8 @@
       "prismjs": ">=1.30.0",
       "music-metadata": ">=11.16.0",
       "file-type": ">=21.3.1",
-      "uuid": ">=11.1.1"
+      "uuid": ">=11.1.1",
+      "effect": ">=3.22.1 <4"
     },
     "patchedDependencies": {
       "@opennextjs/cloudflare@1.20.17": "patches/@opennextjs__cloudflare@1.20.17.patch"

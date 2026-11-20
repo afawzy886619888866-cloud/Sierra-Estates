@@ -46,9 +46,8 @@ minimumReleaseAgeExclude:
 
 packages:
   - apps/*
-  # deploy/ is the SPA from the -19-6-AI repo, deployed as a separate Vercel
-  # project (admin.sierra-estates.net) with its own vercel.json — outside the
-  # workspace. (The old apps/frontend note was stale: no such dir exists.)
+  # deploy/ is the legacy static SPA workspace outside pnpm; production now
+  # runs via unified Cloudflare Workers (@opennextjs/cloudflare) from apps/sierra-estates-realty.
   - packages/agents
   - packages/agents-api
   - packages/agents-core
@@ -95,7 +94,7 @@ catalog:
   tailwind-merge: ^3.3.1
   tailwindcss: ^4.3.3
   tsx: ^4.21.0
-  typescript: 7.0.2
+  typescript: 5.9.3
   vite: ^8.3.1
   wouter: ^3.3.5
   zod: ^3.25.76
@@ -114,11 +113,10 @@ onlyBuiltDependencies:
   - sharp
 
 # ---------------------------------------------------------------------------
-# DEPENDENCY OVERRIDES — single source of truth
+# DEPENDENCY OVERRIDES — synchronized with package.json pnpm.overrides
 #
-# The pnpm.overrides block was removed from package.json because the pnpm CLI
-# wrapper (v10+) ignores it and emits a noisy warning. pnpm-workspace.yaml is
-# now the sole location for overrides across all pnpm major versions.
+# package.json `pnpm.overrides` is consumed by pnpm@9.15.4 (`packageManager`)
+# and mirrored identically in `pnpm-workspace.yaml` `overrides:` for pnpm 10+ parity.
 # ---------------------------------------------------------------------------
 overrides:
   # replit uses linux-x64 only, we can exclude all other platforms
