@@ -110,8 +110,8 @@ export const AUTOMATION_JOBS: readonly AutomationJob[] = [
     {
         name: 'price-index',
         window: null,
-        dedupeHours: 720,
-        description: 'Monthly Sierra Price Index snapshot (1st of the month, 04:15 UTC). dedupeHours = 30 days — a re-fire inside the month records an honest skipped run.',
+        dedupeHours: 6,
+        description: 'Monthly Sierra Price Index snapshot (1st of the month, 04:15 UTC). The monthly cadence lives in the schedule; dedupe only guards dispatch races — recordMonthlySnapshot upserts per YYYY-MM period, so a re-run is idempotent.',
     },
 ];
 
