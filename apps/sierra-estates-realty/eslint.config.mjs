@@ -8,7 +8,7 @@ import { dirname } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default [
-  { ignores: ['.next/**', '.vercel/**', 'out/**', 'build/**', 'coverage/**', 'next-env.d.ts', 'public/**', 'node_modules/**'] },
+  { ignores: ['.next/**', '.open-next/**', '.wrangler/**', '.vercel/**', 'out/**', 'build/**', 'coverage/**', 'next-env.d.ts', 'public/**', 'node_modules/**'] },
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
