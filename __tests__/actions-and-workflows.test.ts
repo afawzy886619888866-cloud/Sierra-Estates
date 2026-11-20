@@ -12,7 +12,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     'codeql.yml',
     'dependency-review.yml',
     'deploy-supabase.yml',
-    'deploy-vercel.yml',
     'whatsapp-outreach.yml',
   ];
 
@@ -45,7 +44,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     it('primary Node workflows should use Node.js 22 and pnpm setup', () => {
       const nodeWorkflows = [
         'ci.yml',
-        'deploy-vercel.yml',
         'agent-fleet.yml',
         'whatsapp-outreach.yml',
       ];
@@ -59,7 +57,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     it('submodule cloning should be disabled across workflows to prevent ghost-submodule fetch failures', () => {
       const submodulesWorkflows = [
         'ci.yml',
-        'deploy-vercel.yml',
         'agent-fleet.yml',
         'whatsapp-outreach.yml',
       ];
@@ -87,7 +84,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     it('CI and deployment workflows must declare concurrency groups to cancel obsolete runs', () => {
       const cancelConcurrencyWorkflows = [
         'ci.yml',
-        'deploy-vercel.yml',
+        'deploy-cloudflare.yml',
       ];
 
       for (const wf of cancelConcurrencyWorkflows) {
@@ -96,7 +93,11 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
         if (wf === 'ci.yml') {
           expect(content, `${wf} should preserve in-progress CI runs`).toContain('cancel-in-progress: false');
         } else {
-          expect(content, `${wf} should cancel-in-progress: true`).toContain('cancel-in-progress: true');
+          // 2026-11-19 (Lane A unified architecture): production deploys are
+          // SERIALIZED — cancel-in-progress: false, so a mid-deploy is never
+          // killed; obsolete runs queue instead of racing.
+          expect(content, `${wf} should serialize deploys (cancel-in-progress: false)`).toContain('cancel-in-progress: false');
+          expect(content, `${wf} should pin a dedicated concurrency group`).toContain('group:');
         }
       }
     });

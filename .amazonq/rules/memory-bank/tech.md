@@ -106,7 +106,7 @@
 
 - **Client:** `apps/sierra-estates-realty` → `sierra-estates.net` (Next.js)
 - **Admin:** `apps/admin-dashboard` → `admin.sierra-estates.net` (Vite SPA)
-- Trigger: GitHub Actions `deploy-vercel.yml` on push to `main`
+- Trigger: GitHub Actions `deploy-cloudflare.yml` (workflow_run after green CI / manual dispatch)
 - Flow: `vercel pull` → `vercel build` → `vercel deploy --prebuilt --archive=tgz`
 - Vercel native git auto-deploy is **DISABLED** — use GitHub Actions only
 

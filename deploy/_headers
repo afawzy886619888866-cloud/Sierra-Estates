@@ -1,0 +1,39 @@
+# Legacy static portal headers — converted 1:1 from the retired
+# deploy/vercel.json header rules to the Cloudflare Workers Assets _headers
+# format. Consumed automatically by `wrangler deploy`; the file itself is
+# never served.
+
+# Immutable brand imagery (vercel.json: /(.*)\.(png|jpg|jpeg|webp|svg|ico))
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+/*.jpeg
+  Cache-Control: public, max-age=31536000, immutable
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+/*.ico
+  Cache-Control: public, max-age=31536000, immutable
+
+# Weekly-cached shared assets (vercel.json: shared.css|compounds.css|shared.js|data.standalone.js|data.js)
+/shared.css
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/compounds.css
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/shared.js
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/data.standalone.js
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/data.js
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+# HTML must revalidate every time (vercel.json: /(.*)\.html)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Admin pages: always revalidate + keep out of search indexes (vercel.json: /admin/(.*))
+/admin/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Robots-Tag: noindex, nofollow

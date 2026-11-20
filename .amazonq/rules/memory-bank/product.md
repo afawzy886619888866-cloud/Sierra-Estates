@@ -64,4 +64,4 @@ Firebase project: **`sierra-blu`** | Deployed on: **Vercel** (Next.js app) + **G
 - **Backend:** Fully intact — all 82 API routes, Firebase Functions, Python service, WhatsApp/PropertyFinder workers
 - **Frontend:** Client-facing UI intentionally removed for redesign (see `NEXT_STEPS.md`)
 - **Admin UI:** Active at `/admin` route
-- **Deployment:** Vercel (GitHub Actions `deploy-vercel.yml`) — Vercel native git auto-deploy is **disabled**
+- **Deployment:** Cloudflare Workers (GitHub Actions `deploy-cloudflare.yml`, unified worker) — the Vercel pipeline was **deleted** (2026-11-20)

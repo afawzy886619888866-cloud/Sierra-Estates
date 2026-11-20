@@ -52,7 +52,7 @@ To ensure you stay well within the monthly free tier moving forward, the reposit
 |---|---|---|---|
 | `ci.yml` | Triggered on broad file changes, redundant sub-jobs | Lean single-job pipeline running only type-check, lint, test, and build on `main` push/PR | **~75% reduction** in CI minutes |
 | `codeql.yml` | Ran on every push and PR | Scheduled **weekly** + manual `workflow_dispatch` only | **~85% reduction** in heavyweight SAST minutes |
-| `deploy-vercel.yml` | Delegated to Vercel native build engine | Retained for production promotion gating | Minimal Actions minute usage |
+| `deploy-vercel.yml` | Delegated to Vercel native build engine | **Deleted** (2026-11-20) — production deploys moved to `deploy-cloudflare.yml` | Zero minutes |
 | `deploy-supabase.yml` | Runs only on `supabase/schema.sql` change | Path-scoped trigger | Zero waste |
 | Redundant workflows | 8 workflows (`stale.yml`, `backend-tests.yml`, `pr-size.yml`, `labeler.yml`, etc.) running constantly | **Removed** | **100% elimination** of redundant runs |
 

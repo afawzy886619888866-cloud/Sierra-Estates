@@ -277,7 +277,7 @@ mod tests {
 ## Deployment Rules
 
 1. **Never push directly to `main`** — all changes via PR
-2. **Vercel deploys via GitHub Actions only** — `deploy-vercel.yml`; Vercel native git auto-deploy is **DISABLED**
+2. **Deploys via GitHub Actions only** — `deploy-cloudflare.yml` (unified Cloudflare Worker); the Vercel pipeline was **deleted** (2026-11-20)
 3. **Firebase deploy via `pnpm deploy:firebase`** — never use `firebase deploy` without `--only` flag
 4. **Client routes protected** — never modify `app/(client)/` without explicit permission
 5. **Environment variables** — add new vars to both `.env.example` AND `turbo.json` `globalEnv` array

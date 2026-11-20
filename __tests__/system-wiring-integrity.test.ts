@@ -298,19 +298,17 @@ describe('System Wiring & Integration Verification Test Suite', () => {
       }).not.toThrow();
     });
 
-    it('root and app vercel.json must disable automatic git deployment', () => {
-      const rootVercel = JSON.parse(
-        fs.readFileSync(path.join(ROOT_DIR, 'vercel.json'), 'utf-8')
-      );
-      const appVercel = JSON.parse(
-        fs.readFileSync(
-          path.join(ROOT_DIR, 'apps', 'sierra-estates-realty', 'vercel.json'),
-          'utf-8'
-        )
-      );
-
-      expect(rootVercel.git?.deploymentEnabled).toBe(false);
-      expect(appVercel.git?.deploymentEnabled).toBe(false);
+    it('Vercel project configs must stay retired (Cloudflare wrangler configs in place)', () => {
+      // Hosting contract (2026-11-18): production runs on Cloudflare
+      // Workers. vercel.json files were removed with the Vercel retirement;
+      // these guards keep them from coming back by accident.
+      expect(fs.existsSync(path.join(ROOT_DIR, 'vercel.json'))).toBe(false);
+      expect(
+        fs.existsSync(path.join(ROOT_DIR, 'apps', 'sierra-estates-realty', 'vercel.json'))
+      ).toBe(false);
+      expect(
+        fs.existsSync(path.join(ROOT_DIR, 'apps', 'sierra-estates-realty', 'wrangler.jsonc'))
+      ).toBe(true);
     });
 
     it('turbo.json must define pipelines for all core monorepo lifecycle stages', () => {
