@@ -127,16 +127,12 @@ async function bookViewingOnCalendar(viewing) {
   const calendarId = process.env.GOOGLE_CALENDAR_ID;
   if (!calendarId) return { ok: false, note: 'GOOGLE_CALENDAR_ID not set (booking queued in CRM only)' };
   try {
-    const { createSheetsClient } = require('../lib/google-sheets');
-    // The service account (GOOGLE_SERVICE_ACCOUNT_JSON) is reused for the
-    // Calendar scope when the calendar is shared with the service account.
-    const google = require('googleapis').google;
-    const auth = new google.auth.GoogleAuth({
-      keyFile: undefined,
-      credentials: JSON.parse(Buffer.from(String(process.env.GOOGLE_SERVICE_ACCOUNT_JSON), 'base64').toString('utf8')),
-      scopes: ['https://www.googleapis.com/auth/calendar'],
-    });
-    const cal = google.calendar({ version: 'v3', auth });
+    // The service account (GOOGLE_SERVICE_ACCOUNT_JSON, plain/base64/file) is
+    // reused for the Calendar scope when the calendar is shared with it.
+    // Zero-dep REST client — no googleapis (~45 MB) at workflow runtime.
+    const { createCalendarClient } = require('../lib/google-sheets');
+    const cal = createCalendarClient();
+    if (!cal) throw new Error('Google service account credentials not configured');
     const start = new Date(viewing.scheduled_at);
     const end = new Date(start.getTime() + 60 * 60 * 1000);
     const attendees = [

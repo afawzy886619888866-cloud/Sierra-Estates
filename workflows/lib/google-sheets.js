@@ -3,9 +3,15 @@
  * Shared Google Sheets & Environment Loader for Sierra Estates Workflows.
  * Supports both inline JSON credentials (GOOGLE_SERVICE_ACCOUNT_JSON, plain or base64)
  * for Docker / GitHub Actions and file-path credentials (GOOGLE_SERVICE_ACCOUNT_KEY).
+ *
+ * 2026-11 (perf): createSheetsClient/createCalendarClient are now backed by
+ * lib/sheets-http.js (zero-dependency JWT + REST client) instead of the
+ * ~45 MB `googleapis` package. The exported call shapes are unchanged, so
+ * every consumer keeps working without edits.
  */
 const fs = require('fs');
 const path = require('path');
+const { createSheets, createCalendar, SHEETS_SCOPE, CALENDAR_SCOPE } = require('./sheets-http');
 
 function loadWorkflowEnv(workflowDir = path.resolve(__dirname, '..')) {
   const repoRoot = path.resolve(workflowDir, '..');
@@ -99,17 +105,20 @@ function resolveSpreadsheetId() {
   ).trim();
 }
 
-function createSheetsClient(scopes = ['https://www.googleapis.com/auth/spreadsheets']) {
+function createSheetsClient(scopes = [SHEETS_SCOPE]) {
   const creds = resolveGoogleCredentials();
   if (!creds) return null;
-  const { google } = require('googleapis');
-  return google.sheets({
-    version: 'v4',
-    auth: new google.auth.GoogleAuth({
-      credentials: creds,
-      scopes,
-    }),
-  });
+  // Lightweight zero-dep client; the `scopes` argument is kept for API parity
+  // (only the Sheets scope is used by every current caller).
+  void scopes;
+  return createSheets(creds);
+}
+
+/** Calendar v3 client over the same service-account credentials (zero-dep). */
+function createCalendarClient() {
+  const creds = resolveGoogleCredentials();
+  if (!creds) return null;
+  return createCalendar(creds);
 }
 
 module.exports = {
@@ -117,4 +126,5 @@ module.exports = {
   resolveGoogleCredentials,
   resolveSpreadsheetId,
   createSheetsClient,
+  createCalendarClient,
 };
