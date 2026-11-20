@@ -3,7 +3,7 @@ import '../../../site-styles/property.css';
 import '../../../site-styles/site-refinements.css';
 import PropertyDetail from './PropertyDetail';
 import { HZDATA } from '@/lib/site/data';
-import snapshot from '@/lib/inventory/snapshot.json';
+import { loadSnapshotUnits } from '@/lib/inventory/snapshot-lazy';
 import { getRecord } from '@sierra-estates/db';
 
 /**
@@ -36,8 +36,9 @@ async function resolveForMeta(id: string): Promise<Record<string, any> | null> {
     // DB unreachable — fall through to the committed snapshot below.
   }
 
-  // 2. Committed catalog snapshot (server-side only)
-  const units: any[] = (snapshot as any)?.units || [];
+  // 2. Committed catalog snapshot (server-side, loaded lazily — a 6.7 MB
+  //    static JSON import made cold-isolate boots intermittently 500).
+  const units: any[] = await loadSnapshotUnits();
   const unit = units.find(
     (u) =>
       String(u.code || '').toLowerCase() === needle ||

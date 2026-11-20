@@ -104,6 +104,21 @@ function isRealSuccess(httpStatus: number, body: unknown): boolean {
     return true;
 }
 
+/**
+ * Telemetry that can never mask a job outcome: a failing
+ * recordAutomationRun/recordAutomationFailure inside executeJob's CATCH
+ * path used to escape the route entirely — the worker answered with a raw
+ * Cloudflare 1101 instead of JSON (seen on check-availability-sla,
+ * 2026-11-20). Every telemetry write goes through this guard.
+ */
+async function safeRecord(label: string, fn: () => Promise<unknown>): Promise<void> {
+    try {
+        await fn();
+    } catch (err) {
+        logger.warn(`[dispatch] telemetry ${label} failed (job outcome unaffected): ${(err as Error).message}`);
+    }
+}
+
 async function executeJob(
     job: AutomationJob,
     req: NextRequest,
@@ -205,7 +220,9 @@ async function executeJob(
         const error = err instanceof Error ? err.message : String(err);
         const finishedAt = new Date();
         const durationMs = Date.now() - startedMs;
-        await recordAutomationRun({
+        // Guarded: telemetry failure here must never escape the catch path
+        // (that escape is what surfaced as a raw Cloudflare 1101).
+        await safeRecord('failed-run', () => recordAutomationRun({
             job: job.name,
             triggerSource,
             status: 'failed',
@@ -213,8 +230,8 @@ async function executeJob(
             finishedAt,
             durationMs,
             error,
-        });
-        await recordAutomationFailure(job.name, error, {});
+        }));
+        await safeRecord('failure-record', () => recordAutomationFailure(job.name, error, {}));
         return { job: job.name, status: 'failed', error, durationMs };
     }
 }
