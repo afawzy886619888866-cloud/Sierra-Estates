@@ -54,6 +54,7 @@ const FLEET_TASKS = [
   'deepseek:develop',
   'check-thresholds',
   'openclaw:task',
+  'embeddings:generate',
   'cline:audit',
   'cline:hygiene',
   'cline:docs-sync',

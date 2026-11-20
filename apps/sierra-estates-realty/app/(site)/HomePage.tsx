@@ -3,7 +3,6 @@
 /** Port of deploy/index.html with direct 3D virtual tour and embedded interactive masterplan map. */
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { SIERRA_ADD_LISTING_URL } from '@/lib/site/external-links';
 import dynamic from 'next/dynamic';
 import {
   FileSpreadsheet,
@@ -57,15 +56,6 @@ const CartographicMap = dynamic(() => import('@/components/site/CartographicMap'
   loading: () => (
     <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
       Loading Cartographic Masterplan…
-    </div>
-  ),
-});
-
-const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
-  ssr: false,
-  loading: () => (
-    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
-      Loading interactive map…
     </div>
   ),
 });
@@ -307,7 +297,6 @@ export default function HomePage() {
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('ready');
   const [liveTotalCount, setLiveTotalCount] = useState<number | null>(null);
   const allCompounds = HZDATA.compounds as MapCompound[];
-  const featuredCompounds = HZDATA.featured as string[];
   const compoundCount = allCompounds.length || 38;
 
   // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
@@ -331,7 +320,7 @@ export default function HomePage() {
             : 0;
         const reportedTotal = Math.max(
           segmentsTotal,
-          Number(data.totalCount ?? data.total ?? data.count ?? mapped.length)
+          Number(data.totalCount ?? data.total ?? data.count ?? data.units.length)
         );
         if (Number.isFinite(reportedTotal) && reportedTotal > 0) {
           setLiveTotalCount(reportedTotal);

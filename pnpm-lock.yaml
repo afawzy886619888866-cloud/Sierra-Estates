@@ -36,6 +36,7 @@ overrides:
   music-metadata: '>=11.16.0'
   file-type: '>=21.3.1'
   uuid: '>=11.1.1'
+  effect: '>=3.22.1 <4'
 
 patchedDependencies:
   '@opennextjs/cloudflare@1.20.17':
@@ -147,7 +148,7 @@ importers:
         version: 3.2.2(react@19.3.0)
       '@hookform/resolvers':
         specifier: ^5.1.1
-        version: 5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(effect@3.21.0)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0))(zod@4.6.7)
+        version: 5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(effect@3.22.5)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0))(zod@4.6.7)
       '@mdxeditor/editor':
         specifier: ^3.39.1
         version: 3.55.0(@codemirror/language@6.13.1)(@lezer/highlight@1.2.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -2352,7 +2353,7 @@ packages:
       class-transformer: '>=0.4.0'
       class-validator: '>=0.12.0'
       computed-types: ^1.0.0
-      effect: ^3.10.3
+      effect: '>=3.22.1 <4'
       fluentvalidation-ts: ^3.0.0
       fp-ts: ^2.7.0
       io-ts: ^2.0.0
@@ -6501,8 +6502,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@3.21.0:
-    resolution: {integrity: sha512-PPN80qRokCd1f015IANNhrwOnLO7GrrMQfk4/lnZRE/8j7UPWrNNjPV0uBrZutI/nHzernbW+J0hdqQysHiSnQ==}
+  effect@3.22.5:
+    resolution: {integrity: sha512-AdIU4llI19BzhJ4xUBZix7kS8oiYSlCsJ61j3UM3UyJw9ecDrsrrweDFm/Ku1nHbJWMLoynK+1Me4it3Zkmjpw==}
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -12618,14 +12619,14 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@hookform/resolvers@5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(effect@3.21.0)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0))(zod@4.6.7)':
+  '@hookform/resolvers@5.9.2(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(effect@3.22.5)(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0))(zod@4.6.7)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.91.0(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
       '@sinclair/typebox': 0.34.52
       '@standard-schema/spec': 1.1.0
-      effect: 3.21.0
+      effect: 3.22.5
       zod: 4.6.7
 
   '@humanfs/core@0.19.2':
@@ -13829,7 +13830,7 @@ snapshots:
     dependencies:
       c12: 3.1.0
       deepmerge-ts: 8.0.2
-      effect: 3.21.0
+      effect: 3.22.5
       empathic: 2.0.0
     transitivePeerDependencies:
       - magicast
@@ -17222,7 +17223,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@3.21.0:
+  effect@3.22.5:
     dependencies:
       '@standard-schema/spec': 1.1.0
       fast-check: 3.23.2
