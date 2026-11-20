@@ -362,7 +362,8 @@ jobs:
           # + workers.dev health, which zone WAF does not cover), then pass.
           if [ "$WAF_ENGAGED" = "1" ]; then
             echo "::notice::Cloudflare WAF engaged for this datacenter runner (403 + cf-ray). Falling back to Cloudflare API + workers.dev verification."
-            EDGE_PASS=$(bash scripts/ops/sierra/verify_edge_via_cf_api.sh && echo PASS || echo FAIL)
+            EDGE_OUT=$(bash scripts/ops/sierra/verify_edge_via_cf_api.sh 2>&1) && EDGE_PASS=PASS || EDGE_PASS=FAIL
+            echo "$EDGE_OUT"
             echo "| WAF fallback (CF API + workers.dev) | \`$EDGE_PASS\` | \`PASS\` |" >> "$GITHUB_STEP_SUMMARY"
             if [ "$EDGE_PASS" != "PASS" ]; then
               echo "::error::Edge verification failed while WAF engaged — worker is not serving."
