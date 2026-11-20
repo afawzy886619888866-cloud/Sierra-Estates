@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T01:28:33.710Z",
+  "generatedAt": "2026-11-20T17:04:48.341Z",
   "specVersion": "3.1.0",
   "mediaQualityPolicy": {
     "minPhotos": 6,
@@ -36,24 +36,348 @@
     ]
   },
   "inventorySummary": {
-    "totalSupabaseListings": 22970,
-    "priorityCohortEvaluated": 2435,
+    "totalSupabaseListings": 26406,
+    "priorityCohortEvaluated": 2527,
     "excludedBreakdown": {
-      "unavailable_owner_status": 588,
-      "inactive_status": 482,
-      "already_live_on_pf": 189,
-      "below_market_price_floor": 489,
-      "duplicate_unit_fingerprint": 58,
-      "unmapped_property_type": 58,
-      "missing_area_sqm": 133,
-      "unresolved_pf_location_id": 66
+      "already_live_on_pf": 278,
+      "below_market_price_floor": 73,
+      "inactive_status": 478,
+      "missing_area_sqm": 732,
+      "duplicate_unit_fingerprint": 16,
+      "unmapped_property_type": 81,
+      "unavailable_owner_status": 532,
+      "unresolved_pf_location_id": 37
     },
     "tier1aGateReadyCount": 0,
-    "tier1bPrimePhotoUnitsCount": 3,
+    "tier1bPrimePhotoUnitsCount": 8,
     "tier2SheetAvailableOwnersCount": 35
   },
   "tier1aGateReadyAds": [],
   "tier1bPrimePhotoUnits": [
+    {
+      "tier": "tier1b_prime_photo_units",
+      "adScore": 77,
+      "id": "d998ece9-e80b-4d9b-b245-5f8ef2406599",
+      "reference": "MI-S-3S-48M",
+      "compound": "Mivida",
+      "pfLocationId": 2751,
+      "propertyType": "villa",
+      "offeringType": "sale",
+      "priceEgp": 48000000,
+      "areaSqm": 200,
+      "bedrooms": "3",
+      "bathrooms": "2",
+      "titleEn": "Standalone Villa in Mivida (RESALE)",
+      "titleAr": null,
+      "descriptionEn": "Verified villa for sale in Mivida. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "realPhotoCount": 1,
+      "qualifyingPhotoCount": 1,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 5,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [
+        {
+          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1179,
+          "height": 803,
+          "format": "jpeg",
+          "byteSize": 74441,
+          "qualifying": true,
+          "issue": null
+        }
+      ],
+      "isDirectOwner": true,
+      "isSheetSynced": false,
+      "onClientMap": true,
+      "publishStatus": "PUBLISHABLE",
+      "status": "active",
+      "missingForGate": [
+        "needs_5_more_qualifying_photos_min_800x600px",
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ],
+      "atlasPayload": {
+        "reference": "MI-S-3S-48M",
+        "category": "residential",
+        "type": "villa",
+        "offeringType": "sale",
+        "location": {
+          "id": 2751
+        },
+        "size": 200,
+        "bedrooms": "3",
+        "bathrooms": "2",
+        "assignedTo": {
+          "id": 79509
+        },
+        "price": {
+          "type": "sale",
+          "amounts": {
+            "sale": 48000000
+          }
+        },
+        "title": {
+          "en": "Standalone Villa in Mivida (RESALE)"
+        },
+        "description": {
+          "en": "Verified villa for sale in Mivida. Features 3 bedrooms, 2 bathrooms, 200 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
+        },
+        "media": {
+          "images": [
+            {
+              "original": {
+                "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "tier": "tier1b_prime_photo_units",
+      "adScore": 77,
+      "id": "61d49edb-9af6-4769-9508-1ba92f6a1bdd",
+      "reference": "MI-S-4F-38M+G+P",
+      "compound": "Mivida",
+      "pfLocationId": 2751,
+      "propertyType": "villa",
+      "offeringType": "sale",
+      "priceEgp": 38000000,
+      "areaSqm": 450,
+      "bedrooms": "4",
+      "bathrooms": "3",
+      "titleEn": "Standalone Villa in Mivida (RESALE)",
+      "titleAr": null,
+      "descriptionEn": "Verified villa for sale in Mivida. Features 4 bedrooms, 3 bathrooms, 450 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "realPhotoCount": 1,
+      "qualifyingPhotoCount": 1,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 5,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [
+        {
+          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1179,
+          "height": 803,
+          "format": "jpeg",
+          "byteSize": 74441,
+          "qualifying": true,
+          "issue": null
+        }
+      ],
+      "isDirectOwner": true,
+      "isSheetSynced": false,
+      "onClientMap": true,
+      "publishStatus": "PUBLISHABLE",
+      "status": "active",
+      "missingForGate": [
+        "needs_5_more_qualifying_photos_min_800x600px",
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ],
+      "atlasPayload": {
+        "reference": "MI-S-4F-38M+G+P",
+        "category": "residential",
+        "type": "villa",
+        "offeringType": "sale",
+        "location": {
+          "id": 2751
+        },
+        "size": 450,
+        "bedrooms": "4",
+        "bathrooms": "3",
+        "assignedTo": {
+          "id": 79509
+        },
+        "price": {
+          "type": "sale",
+          "amounts": {
+            "sale": 38000000
+          }
+        },
+        "title": {
+          "en": "Standalone Villa in Mivida (RESALE)"
+        },
+        "description": {
+          "en": "Verified villa for sale in Mivida. Features 4 bedrooms, 3 bathrooms, 450 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
+        },
+        "media": {
+          "images": [
+            {
+              "original": {
+                "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "tier": "tier1b_prime_photo_units",
+      "adScore": 70,
+      "id": "a2ac81e9-a9aa-4283-b00b-21fd0fce5e51",
+      "reference": "WA-CA64A2CE",
+      "compound": "Mountain View Hyde Park",
+      "pfLocationId": 2763,
+      "propertyType": "apartment",
+      "offeringType": "rent",
+      "priceEgp": 80000,
+      "areaSqm": 278,
+      "bedrooms": "4",
+      "bathrooms": "3",
+      "titleEn": "Luxury Luxury Apartment for Rent in Mountain View Hyde Park, New Cairo",
+      "titleAr": "شقة فاخرة راقية للإيجار في ماونتن فيو هايد بارك - التجمع الخامس - الجولدن سكوير",
+      "descriptionEn": "Exclusive luxury apartment for Rent in the prestigious gated community of Mountain View Hyde Park, New Cairo.\n\nProperty Highlights:\n• Total Built-up Area: 278 SQM\n• Bedrooms: 4\n• Bathrooms: 3\n• Finishing: Ultra Super Lux\n• Location Highlight: في قلب الجولدن سكوير بإطلالة مباشرة على الهايد بارك ولاجونز طبيعية\n\nFinancials:\n• Asking Price: 80,000 EGP / Month\n• Listing Reference: WA-CA64A2CE\n\nContact Sierra Estates Private Client Advisory to schedule a private viewing.",
+      "realPhotoCount": 6,
+      "qualifyingPhotoCount": 6,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 0,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0162.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1024,
+          "height": 682,
+          "format": "jpeg",
+          "byteSize": 63727,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0164.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 828,
+          "height": 1024,
+          "format": "jpeg",
+          "byteSize": 162083,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0165.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1024,
+          "height": 682,
+          "format": "jpeg",
+          "byteSize": 66902,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0166.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1024,
+          "height": 682,
+          "format": "jpeg",
+          "byteSize": 68357,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0168.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1024,
+          "height": 682,
+          "format": "jpeg",
+          "byteSize": 79070,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0169.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1024,
+          "height": 682,
+          "format": "jpeg",
+          "byteSize": 72596,
+          "qualifying": true,
+          "issue": null
+        }
+      ],
+      "isDirectOwner": false,
+      "isSheetSynced": false,
+      "onClientMap": true,
+      "publishStatus": "PUBLISHABLE",
+      "status": "active",
+      "missingForGate": [
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ],
+      "atlasPayload": {
+        "reference": "WA-CA64A2CE",
+        "category": "residential",
+        "type": "apartment",
+        "offeringType": "rent",
+        "location": {
+          "id": 2763
+        },
+        "size": 278,
+        "bedrooms": "4",
+        "bathrooms": "3",
+        "assignedTo": {
+          "id": 79509
+        },
+        "price": {
+          "type": "monthly",
+          "amounts": {
+            "monthly": 80000
+          }
+        },
+        "title": {
+          "en": "Luxury Luxury Apartment for Rent in Mountain View Hyde Park, New Cairo",
+          "ar": "شقة فاخرة راقية للإيجار في ماونتن فيو هايد بارك - التجمع الخامس - الجولدن سكوير"
+        },
+        "description": {
+          "en": "Exclusive luxury apartment for Rent in the prestigious gated community of Mountain View Hyde Park, New Cairo.\n\nProperty Highlights:\n• Total Built-up Area: 278 SQM\n• Bedrooms: 4\n• Bathrooms: 3\n• Finishing: Ultra Super Lux\n• Location Highlight: في قلب الجولدن سكوير بإطلالة مباشرة على الهايد بارك ولاجونز طبيعية\n\nFinancials:\n• Asking Price: 80,000 EGP / Month\n• Listing Reference: WA-CA64A2CE\n\nContact Sierra Estates Private Client Advisory to schedule a private viewing.",
+          "ar": "فرصة عقارية راقية للإيجار في أميز مواقع ماونتن فيو هايد بارك (التجمع الخامس - الجولدن سكوير).\n\n مواصفات الوحدة:\n- النوع: شقة فاخرة\n- المساحة الإجمالية: 278 م²\n- غرف النوم: 4\n- الحمامات: 3\n- حالة التشطيب: تشطيب ألترا سوبر لوكس جاهز للمعاينة الفورية\n- المزايا: في قلب الجولدن سكوير بإطلالة مباشرة على الهايد بارك ولاجونز طبيعية\n\n القيمة المالية:\n- السعر المطلوب: 80,000 ج.م / شهرياً\n- كود الوحدة للرجوع السريع: WA-CA64A2CE\n\n للحجز والمعاينة والتفاصيل الإضافية، يرجى التواصل مباشرة مع إدارة المبيعات في Sierra Estates."
+        },
+        "media": {
+          "images": [
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0162.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0164.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0165.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0166.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0168.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/ca64a2cede124989/IMG-20250515-WA0169.jpg"
+              }
+            }
+          ]
+        }
+      }
+    },
     {
       "tier": "tier1b_prime_photo_units",
       "adScore": 65,
@@ -209,6 +533,82 @@
     {
       "tier": "tier1b_prime_photo_units",
       "adScore": 65,
+      "id": "cd22e380-3704-4be8-9c98-86bbcb06aec8",
+      "reference": "HY-A-3F-11.5M-D2",
+      "compound": "Hyde Park",
+      "pfLocationId": 2790,
+      "propertyType": "apartment",
+      "offeringType": "sale",
+      "priceEgp": 11500000,
+      "areaSqm": 190,
+      "bedrooms": "3",
+      "bathrooms": "2",
+      "titleEn": "Apartment in Hyde Park (RESALE)",
+      "titleAr": null,
+      "descriptionEn": "Verified apartment for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements.",
+      "realPhotoCount": 1,
+      "qualifyingPhotoCount": 0,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 6,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [
+        {
+          "url": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 668,
+          "height": 455,
+          "format": "jpeg",
+          "byteSize": 30774,
+          "qualifying": false,
+          "issue": "Resolution 668x455px below minimum 800x600px"
+        }
+      ],
+      "isDirectOwner": true,
+      "isSheetSynced": false,
+      "onClientMap": true,
+      "publishStatus": "PUBLISHABLE",
+      "status": "active",
+      "missingForGate": [
+        "needs_6_more_qualifying_photos_min_800x600px",
+        "1_photo_below_800x600px",
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ],
+      "atlasPayload": {
+        "reference": "HY-A-3F-11.5M-D2",
+        "category": "residential",
+        "type": "apartment",
+        "offeringType": "sale",
+        "location": {
+          "id": 2790
+        },
+        "size": 190,
+        "bedrooms": "3",
+        "bathrooms": "2",
+        "assignedTo": {
+          "id": 79509
+        },
+        "price": {
+          "type": "sale",
+          "amounts": {
+            "sale": 11500000
+          }
+        },
+        "title": {
+          "en": "Apartment in Hyde Park (RESALE)"
+        },
+        "description": {
+          "en": "Verified apartment for sale in Hyde Park. Features 3 bedrooms, 2 bathrooms, 190 sqm built-up area. Contact Sierra Estates for private viewing arrangements."
+        },
+        "media": {
+          "images": []
+        }
+      }
+    },
+    {
+      "tier": "tier1b_prime_photo_units",
+      "adScore": 65,
       "id": "abb462a0-4db9-40ec-8f55-659310a2b21f",
       "reference": "OSA540-D2",
       "compound": "Eastown",
@@ -279,6 +679,312 @@
         },
         "media": {
           "images": []
+        }
+      }
+    },
+    {
+      "tier": "tier1b_prime_photo_units",
+      "adScore": 62,
+      "id": "6ace1c6d-e191-4848-8e34-63846193d07f",
+      "reference": "WA-E24CD266",
+      "compound": "New Cairo",
+      "pfLocationId": 2786,
+      "propertyType": "apartment",
+      "offeringType": "rent",
+      "priceEgp": 50000,
+      "areaSqm": 195,
+      "bedrooms": "3",
+      "bathrooms": "3",
+      "titleEn": "Luxury Luxury Apartment for Rent in New Cairo, New Cairo",
+      "titleAr": "شقة فاخرة راقية للإيجار في New Cairo - القاهرة الجديدة",
+      "descriptionEn": "Exclusive luxury apartment for Rent in the prestigious gated community of New Cairo, New Cairo.\n\nProperty Highlights:\n• Total Built-up Area: 195 SQM\n• Bedrooms: 3\n• Bathrooms: 3\n• Finishing: Ultra Super Lux\n• Location Highlight: موقع استراتيجي هادئ بالقرب من أهم المحاور والخدمات الرئيسية\n\nFinancials:\n• Asking Price: 50,000 EGP / Month\n• Listing Reference: WA-E24CD266\n\nContact Sierra Estates Private Client Advisory to schedule a private viewing.",
+      "realPhotoCount": 19,
+      "qualifyingPhotoCount": 15,
+      "requiredPhotoCount": 6,
+      "photosNeededFor6": 0,
+      "minDimensionsRequired": "800x600",
+      "photosDetailed": [
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0163.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 960,
+          "height": 1280,
+          "format": "jpeg",
+          "byteSize": 112359,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0164.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 144186,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0165.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 158636,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0166.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 118776,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0167.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 96454,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0168.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 94796,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0169.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 121075,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0170.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 960,
+          "height": 1280,
+          "format": "jpeg",
+          "byteSize": 93176,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0171.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 960,
+          "height": 1280,
+          "format": "jpeg",
+          "byteSize": 117251,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0172.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 663,
+          "format": "jpeg",
+          "byteSize": 78216,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0173.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 696,
+          "format": "jpeg",
+          "byteSize": 103776,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0174.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 960,
+          "format": "jpeg",
+          "byteSize": 162107,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0175.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 720,
+          "format": "jpeg",
+          "byteSize": 133407,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0176.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 960,
+          "height": 1280,
+          "format": "jpeg",
+          "byteSize": 110568,
+          "qualifying": true,
+          "issue": null
+        },
+        {
+          "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0177.jpg",
+          "reachable": true,
+          "httpStatus": 206,
+          "width": 1280,
+          "height": 720,
+          "format": "jpeg",
+          "byteSize": 119904,
+          "qualifying": true,
+          "issue": null
+        }
+      ],
+      "isDirectOwner": false,
+      "isSheetSynced": false,
+      "onClientMap": true,
+      "publishStatus": "PUBLISHABLE",
+      "status": "active",
+      "missingForGate": [
+        "staff_verification_stamp",
+        "quality_score_0_below_75"
+      ],
+      "atlasPayload": {
+        "reference": "WA-E24CD266",
+        "category": "residential",
+        "type": "apartment",
+        "offeringType": "rent",
+        "location": {
+          "id": 2786
+        },
+        "size": 195,
+        "bedrooms": "3",
+        "bathrooms": "3",
+        "assignedTo": {
+          "id": 79509
+        },
+        "price": {
+          "type": "monthly",
+          "amounts": {
+            "monthly": 50000
+          }
+        },
+        "title": {
+          "en": "Luxury Luxury Apartment for Rent in New Cairo, New Cairo",
+          "ar": "شقة فاخرة راقية للإيجار في New Cairo - القاهرة الجديدة"
+        },
+        "description": {
+          "en": "Exclusive luxury apartment for Rent in the prestigious gated community of New Cairo, New Cairo.\n\nProperty Highlights:\n• Total Built-up Area: 195 SQM\n• Bedrooms: 3\n• Bathrooms: 3\n• Finishing: Ultra Super Lux\n• Location Highlight: موقع استراتيجي هادئ بالقرب من أهم المحاور والخدمات الرئيسية\n\nFinancials:\n• Asking Price: 50,000 EGP / Month\n• Listing Reference: WA-E24CD266\n\nContact Sierra Estates Private Client Advisory to schedule a private viewing.",
+          "ar": "فرصة عقارية راقية للإيجار في أميز مواقع New Cairo (القاهرة الجديدة).\n\n مواصفات الوحدة:\n- النوع: شقة فاخرة\n- المساحة الإجمالية: 195 م²\n- غرف النوم: 3\n- الحمامات: 3\n- حالة التشطيب: تشطيب ألترا سوبر لوكس جاهز للمعاينة الفورية\n- المزايا: موقع استراتيجي هادئ بالقرب من أهم المحاور والخدمات الرئيسية\n\n القيمة المالية:\n- السعر المطلوب: 50,000 ج.م / شهرياً\n- كود الوحدة للرجوع السريع: WA-E24CD266\n\n للحجز والمعاينة والتفاصيل الإضافية، يرجى التواصل مباشرة مع إدارة المبيعات في Sierra Estates."
+        },
+        "media": {
+          "images": [
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0163.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0164.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0165.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0166.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0167.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0168.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0169.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0170.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0171.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0172.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0173.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0174.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0175.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0176.jpg"
+              }
+            },
+            {
+              "original": {
+                "url": "https://gaxfqcietzoonlmatiot.supabase.co/storage/v1/object/public/property-media/whatsapp-units/e24cd26660337101/IMG-20250512-WA0177.jpg"
+              }
+            }
+          ]
         }
       }
     }
