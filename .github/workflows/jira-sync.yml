@@ -89,23 +89,20 @@ jobs:
             MSG="GitHub commit ${{ github.sha }} pushed to main by @${PR_ACTOR}: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}\nCommit: $(git log -1 --pretty=%s)"
           fi
 
-          PAYLOAD=$(cat <<EOF
-          {
-            "body": {
-              "type": "doc",
-              "version": 1,
-              "content": [
+          PAYLOAD=$(jq -n --arg msg "$MSG" '{
+            body: {
+              type: "doc",
+              version: 1,
+              content: [
                 {
-                  "type": "paragraph",
-                  "content": [
-                    { "type": "text", "text": "$MSG" }
+                  type: "paragraph",
+                  content: [
+                    { type: "text", text: $msg }
                   ]
                 }
               ]
             }
-          }
-          EOF
-          )
+          }')
 
           curl -s -S -X POST "$CLEAN_URL/rest/api/3/issue/$JIRA_KEY/comment" \
             -H "Authorization: $AUTH_HEADER" \
