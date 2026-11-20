@@ -29,6 +29,16 @@ export interface VideoTeaserFrame {
   overlayMetrics?: Record<string, string | number>;
 }
 
+export interface VideoTeaserOmniFlashSpec {
+  model: 'gemini-omni-1.2-flash';
+  aspectRatio: '9:16' | '16:9';
+  durationSeconds: number;
+  resolution: '720p' | '1080p';
+  prompt: string;
+  referenceImages: string[];
+  cliCommand: string;
+}
+
 export interface VideoTeaserResponse {
   teaserId: string;
   timestamp: string;
@@ -43,6 +53,7 @@ export interface VideoTeaserResponse {
     caption: string;
     mediaUrl: string;
   };
+  omniFlash?: VideoTeaserOmniFlashSpec;
 }
 
 export class VideoTeaserEngine {
@@ -142,6 +153,12 @@ export class VideoTeaserEngine {
       `🎥 شاهد جولة الفيديو السريعة أعلاه 👆\n` +
       `للمعاينة الميدانية أو للتفاوض المباشر مع المالك، تواصل مع فريقنا: https://wa.me/201092048333`;
 
+    const referenceImages = (request.images || []).filter(Boolean).slice(0, 6);
+    const omniPrompt =
+      `Continuous unbroken twilight architectural push-in shot of this luxury ${request.unitType} in ${request.compound}, New Cairo (${request.areaSqm} sqm). ` +
+      `Natural-language scene pacing with warm architectural golden hour illumination, tranquil garden light reflections, subtle minimalist ambient piano texture, and zero spoken dialogue.` +
+      (referenceImages.length > 0 ? ` Use the provided reference images faithfully to preserve facade geometry and finishes.` : '');
+
     return {
       teaserId,
       timestamp: new Date().toISOString(),
@@ -155,6 +172,15 @@ export class VideoTeaserEngine {
       whatsAppSharePayload: {
         caption: whatsAppCaption,
         mediaUrl: videoStreamUrl,
+      },
+      omniFlash: {
+        model: 'gemini-omni-1.2-flash',
+        aspectRatio,
+        durationSeconds: 10,
+        resolution: '1080p',
+        prompt: omniPrompt,
+        referenceImages,
+        cliCommand: `python scripts/generate-omni-video-teaser.py --aspect-ratio ${aspectRatio} --resolution 1080p --duration 10 --output media/${request.sierraCode}.mp4`,
       },
     };
   }

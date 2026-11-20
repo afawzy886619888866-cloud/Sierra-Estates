@@ -72,6 +72,7 @@
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
 html{scroll-behavior:smooth;}
+::selection{background:rgba(201,168,76,.26);color:var(--ink);}
 body{font-family:var(--font);color:var(--text);background:var(--white);font-size:15px;line-height:1.6;transition:background .4s;}
 [dir="rtl"] body{letter-spacing:0!important;}
 img{display:block;max-width:100%;}
@@ -107,8 +108,10 @@ p{text-wrap:pretty;}
 [dir="rtl"] .scroll-cue-label{writing-mode:vertical-rl;}
 
 /* ── motion ─────────────────────────────── */
-.rv{opacity:1;transform:translateY(16px);transition:transform .55s var(--ease-out);}
+.rv{opacity:1;transform:translateY(16px);transition:transform .55s var(--silk);}
 .rv.in{transform:none;will-change:auto;}
+.comp img{transition:transform .55s var(--silk);}
+.comp:hover img{transform:scale(1.05);}
 .rv.d1{transition-delay:.05s}.rv.d2{transition-delay:.1s}.rv.d3{transition-delay:.15s}
 .rv.d4{transition-delay:.2s}.rv.d5{transition-delay:.25s}
 /* safety net: shared.js force-reveals if the observer never runs (hidden tab, print, headless) */

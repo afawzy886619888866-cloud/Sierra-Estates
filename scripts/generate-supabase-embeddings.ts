@@ -37,8 +37,8 @@ if (isDryRun) {
     console.log('  EMBEDDINGS GENERATOR — DRY-RUN CAPABILITY CHECK');
     console.log('═══════════════════════════════════════════════════════════════════════');
     console.log(`  Supabase URL:        ${SUPABASE_URL}`);
-    console.log(`  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_KEY ? '✓ present' : '✗ MISSING — vercel env add SUPABASE_SERVICE_ROLE_KEY production'}`);
-    console.log(`  GOOGLE_GENAI_API_KEY:      ${GEMINI_KEY ? '✓ present' : '✗ MISSING — vercel env add GOOGLE_GENAI_API_KEY production'}`);
+    console.log(`  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_KEY ? '✓ present' : '✗ MISSING — add in GitHub Secrets / Cloudflare Workers (deploy-cloudflare.yml)'}`);
+    console.log(`  GOOGLE_GENAI_API_KEY:      ${GEMINI_KEY ? '✓ present' : '✗ MISSING — add in GitHub Secrets / Cloudflare Workers (deploy-cloudflare.yml)'}`);
     console.log(`  Model:               gemini-embedding-001 (768 dimensions)`);
     console.log('');
     if (!SUPABASE_KEY || !GEMINI_KEY) {
@@ -52,13 +52,13 @@ if (isDryRun) {
 
 if (!SUPABASE_KEY) {
     console.error('❌ SUPABASE_SERVICE_ROLE_KEY missing in environment');
-    console.error('   Add it in Vercel (vercel env add SUPABASE_SERVICE_ROLE_KEY production) and redeploy, or export it locally.');
+    console.error('   Add it in GitHub Secrets / Cloudflare Workers (deploy-cloudflare.yml), or export it locally.');
     process.exit(1);
 }
 
 if (!GEMINI_KEY) {
     console.error('❌ GOOGLE_GENAI_API_KEY missing in environment');
-    console.error('   Add it in Vercel (vercel env add GOOGLE_GENAI_API_KEY production) and redeploy, or export it locally.');
+    console.error('   Add it in GitHub Secrets / Cloudflare Workers (deploy-cloudflare.yml), or export it locally.');
     process.exit(1);
 }
 
@@ -72,10 +72,72 @@ const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
 // Parse command line arguments
 const batchArg = args.find(a => a.startsWith('--batch='));
 const delayArg = args.find(a => a.startsWith('--delay='));
+const compoundArg = args.find(a => a.startsWith('--compound='));
 const isContinuous = args.includes('--continuous');
+const skipFlagshipPriority = args.includes('--all-order');
 
 const BATCH_SIZE = batchArg ? parseInt(batchArg.split('=')[1], 10) : 100;
 const PACING_DELAY_MS = delayArg ? parseInt(delayArg.split('=')[1], 10) : 120;
+const TARGET_COMPOUND = compoundArg ? compoundArg.split('=')[1].trim() : '';
+
+const FLAGSHIP_COMPOUNDS = [
+    'Hyde Park',
+    'Mivida',
+    'Mountain View',
+    'Uptown Cairo',
+    'Eastown',
+    'Villette',
+    'Palm Hills',
+    'Taj City',
+    'Madinaty',
+    'Al Rehab',
+];
+
+const COMPOUND_AR_ALIASES: Array<[RegExp, string]> = [
+    [/hyde\s*park/i, 'هايد بارك القاهرة الجديدة'],
+    [/mivida/i, 'ميفيدا التجمع الخامس إعمار'],
+    [/mountain\s*view/i, 'ماونتن فيو أي سيتي القاهرة الجديدة'],
+    [/uptown/i, 'أب تاون كايرو المقطم'],
+    [/eastown/i, 'إيستاون سوديك التجمع الخامس'],
+    [/villette/i, 'فيليت سوديك القاهرة الجديدة'],
+    [/palm\s*hills/i, 'بالم هيلز التجمع'],
+    [/taj\s*city/i, 'تاج سيتي القاهرة الجديدة'],
+    [/madinaty/i, 'مدينتي'],
+    [/rehab/i, 'الرحاب القاهرة الجديدة'],
+];
+
+function buildBilingualContextText(listing: any): string {
+    const comp = String(listing.compound || '').trim();
+    const deal = String(listing.deal_type || '').toLowerCase();
+    const ptype = String(listing.property_type || '').toLowerCase();
+
+    const arComp = COMPOUND_AR_ALIASES
+        .filter(([re]) => re.test(comp))
+        .map(([, ar]) => ar)
+        .join(' / ');
+
+    const arDeal = deal.includes('rent') ? 'للإيجار إيجار شهري' : deal.includes('sale') || deal.includes('resale') ? 'للبيع إعادة بيع تمليك' : '';
+    const arType =
+        ptype.includes('apartment') ? 'شقة سكنية' :
+        ptype.includes('standalone') ? 'فيلا مستقلة ستاند الون' :
+        ptype.includes('villa') ? 'فيلا' :
+        ptype.includes('town') ? 'تاون هاوس' :
+        ptype.includes('twin') ? 'توين هاوس' :
+        ptype.includes('penthouse') ? 'بنتهاوس روف' :
+        ptype.includes('duplex') ? 'دوبلكس' : '';
+
+    return [
+        listing.title ? `Title: ${listing.title}` : null,
+        comp ? `Compound: ${comp}${arComp ? ` / ${arComp}` : ''}` : null,
+        listing.property_type ? `Type: ${listing.property_type}${arType ? ` / ${arType}` : ''}` : null,
+        listing.deal_type ? `Deal: ${listing.deal_type}${arDeal ? ` / ${arDeal}` : ''}` : null,
+        `Price: ${listing.price ? Number(listing.price).toLocaleString() + ' EGP' : 'Price on request'}`,
+        listing.bedrooms ? `Bedrooms: ${listing.bedrooms} (${listing.bedrooms} غرف)` : null,
+        listing.area_sqm ? `Area: ${listing.area_sqm} sqm (${listing.area_sqm} متر)` : null,
+        listing.finishing_type ? `Finishing: ${listing.finishing_type}` : null,
+        listing.description ? `Description: ${listing.description}` : null,
+    ].filter(Boolean).join(' | ');
+}
 
 function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -124,16 +186,45 @@ async function processBatch(batchSize: number): Promise<number> {
     console.log(`\n📦 Pending catalog listings: ${pendingCount.toLocaleString()}`);
     console.log(`🚀 Fetching next batch of up to ${batchSize} listings...`);
 
-    // Prioritize listings with rich compounds and pricing first
-    const { data: listings, error } = await supabase
-        .from('listings')
-        .select('id, ref_id, title, compound, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, finishing_type, description')
-        .is('embedding_768', null)
-        .order('compound', { ascending: true, nullsFirst: false })
-        .limit(batchSize);
+    let listings: any[] = [];
+    if (TARGET_COMPOUND) {
+        const { data, error } = await supabase
+            .from('listings')
+            .select('id, ref_id, title, compound, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, finishing_type, description')
+            .is('embedding_768', null)
+            .ilike('compound', `%${TARGET_COMPOUND}%`)
+            .limit(batchSize);
+        if (error) console.error('❌ Error fetching compound listings:', error.message);
+        listings = data || [];
+    } else {
+        if (!skipFlagshipPriority) {
+            const perCompound = Math.max(5, Math.ceil(batchSize / FLAGSHIP_COMPOUNDS.length));
+            for (const comp of FLAGSHIP_COMPOUNDS) {
+                if (listings.length >= batchSize) break;
+                const { data } = await supabase
+                    .from('listings')
+                    .select('id, ref_id, title, compound, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, finishing_type, description')
+                    .is('embedding_768', null)
+                    .eq('publish_status', 'PUBLISHABLE')
+                    .ilike('compound', `%${comp}%`)
+                    .limit(Math.min(perCompound, batchSize - listings.length));
+                if (data?.length) listings.push(...data);
+            }
+        }
+        if (listings.length < batchSize) {
+            const remaining = batchSize - listings.length;
+            const { data, error } = await supabase
+                .from('listings')
+                .select('id, ref_id, title, compound, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, finishing_type, description')
+                .is('embedding_768', null)
+                .order('compound', { ascending: true, nullsFirst: false })
+                .limit(remaining);
+            if (error) console.error('❌ Error fetching listings:', error.message);
+            if (data?.length) listings.push(...data);
+        }
+    }
 
-    if (error || !listings || listings.length === 0) {
-        if (error) console.error('❌ Error fetching listings:', error.message);
+    if (listings.length === 0) {
         return 0;
     }
 
@@ -143,21 +234,8 @@ async function processBatch(batchSize: number): Promise<number> {
     for (let i = 0; i < listings.length; i++) {
         const listing = listings[i];
         try {
-            // §21 no-fabrication: the embedding context carries only fields the
-            // row actually states — absent fields are omitted entirely, never
-            // filled with invented 'New Cairo' / 'Apartment' / 'sale' / 3BR /
-            // 200 sqm / 'Finished' values that would poison semantic search.
-            const contextText = [
-                listing.title ? `Title: ${listing.title}` : null,
-                listing.compound ? `Compound: ${listing.compound}` : null,
-                listing.property_type ? `Type: ${listing.property_type}` : null,
-                listing.deal_type ? `Deal: ${listing.deal_type}` : null,
-                `Price: ${listing.price ? Number(listing.price).toLocaleString() + ' EGP' : 'Price on request'}`,
-                listing.bedrooms ? `Bedrooms: ${listing.bedrooms}` : null,
-                listing.area_sqm ? `Area: ${listing.area_sqm} sqm` : null,
-                listing.finishing_type ? `Finishing: ${listing.finishing_type}` : null,
-                listing.description ? `Description: ${listing.description}` : null,
-            ].filter(Boolean).join(' | ');
+            // §21 no-fabrication: strictly factual fields + bilingual synonyms of actual values
+            const contextText = buildBilingualContextText(listing);
 
             const embedding = await embedWithRetry(contextText);
 

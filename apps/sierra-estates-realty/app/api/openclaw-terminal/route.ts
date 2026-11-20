@@ -154,6 +154,14 @@ export async function GET() {
         ragAndGis: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
         valuationHarness: true,
         workflowsAndCloser: true,
+        videoTeaser: "gemini-omni-1.2-flash",
+      },
+      endpoints: {
+        harness: "/api/internal/run-harness",
+        ragSearch: "/api/internal/rag-search",
+        inventoryHub: "/api/inventory/hub",
+        inventorySheets: "/api/inventory/sheets/all",
+        videoTeaser: "/api/teasers/video",
       },
     },
   });

@@ -27,7 +27,6 @@ import HomeHero from '@/components/site/HomeHero';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
-import { usePublicListings } from '@/lib/site/usePublicListings';
 import { getCuratedListingImage, isStockPhotoUrl } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
@@ -153,7 +152,7 @@ const INITIAL_MIVIDA_UNITS: CardListing[] = [
   },
   {
     id: 'MU50A005-D2',
-    code: 'TEST-OWNER-MU50A005',
+    code: 'SE-MVD-S-170-D2',
     cmp: 'Mivida',
     zone: '5th Settlement',
     type: 'Apartment',
@@ -306,9 +305,9 @@ export default function HomePage() {
   const [listings, setListings] = useState<CardListing[]>(INITIAL_FEATURED_LISTINGS);
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('ready');
+  const [liveTotalCount, setLiveTotalCount] = useState<number | null>(null);
   const allCompounds = HZDATA.compounds as MapCompound[];
   const featuredCompounds = HZDATA.featured as string[];
-  const { units: _publicUnits } = usePublicListings(500);
   const compoundCount = allCompounds.length || 38;
 
   // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
@@ -323,6 +322,20 @@ export default function HomePage() {
           return;
         }
         setInventoryStatus('ready');
+        const segmentsTotal =
+          data.segments && typeof data.segments === 'object'
+            ? Object.values(data.segments as Record<string, unknown>).reduce<number>(
+                (sum, v) => sum + (Number.isFinite(Number(v)) ? Number(v) : 0),
+                0
+              )
+            : 0;
+        const reportedTotal = Math.max(
+          segmentsTotal,
+          Number(data.totalCount ?? data.total ?? data.count ?? mapped.length)
+        );
+        if (Number.isFinite(reportedTotal) && reportedTotal > 0) {
+          setLiveTotalCount(reportedTotal);
+        }
         if (data.units.length === 0) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
           // §21 no-fabrication: real prices & verified direct owner detection
@@ -697,7 +710,7 @@ export default function HomePage() {
                   <span>
                     {hasActiveFilters && matchingCount > 0
                       ? (isAr ? `${matchingCount.toLocaleString()} وحدة متوفرة ومؤكدة` : `${matchingCount.toLocaleString()} Verified Units Available`)
-                      : (isAr ? '12,333+ وحدة متوفرة ومؤكدة' : '12,333+ Verified Units Available')}
+                      : (isAr ? `${(liveTotalCount ?? 5000).toLocaleString()}+ وحدة متوفرة ومؤكدة` : `${(liveTotalCount ?? 5000).toLocaleString()}+ Verified Units Available`)}
                   </span>
                 </div>
 
@@ -1008,6 +1021,27 @@ export default function HomePage() {
                     <FileSpreadsheet style={{ width: 15, height: 15 }} />
                     <span>{isAr ? 'فتح كشف الإكسل للوحدات' : 'Open Excel Units Sheet'}</span>
                   </button>
+                  <a
+                    href="/api/inventory/sheets/all"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn"
+                    style={{
+                      padding: '8px 14px',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      borderRadius: 10,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      border: '1px solid rgba(200, 150, 26, 0.35)',
+                      color: 'var(--ink, #0f172a)',
+                      textDecoration: 'none',
+                    }}
+                    title={isAr ? 'تصدير جدول الوحدات المتصل بقاعدة البيانات مباشرة (CSV)' : 'Live Supabase-backed CSV sheet feed'}
+                  >
+                    <span>{isAr ? 'الشيت الحي CSV' : 'Live CSV Sheet'}</span>
+                  </a>
                   <button
                     type="button"
                     onClick={() => setSelectedMapCompound(null)}
@@ -1196,7 +1230,7 @@ export default function HomePage() {
           </div>
           <div className="grid-comp" id="comp-grid">
             {compoundTiles.map(({ n, c, img }, i) => (
-              <Link key={n} className={`comp rv d${i + 1}`} href="/compounds">
+              <Link key={n} className={`comp rv d${i + 1}`} href={`/properties?compound=${encodeURIComponent(c.n)}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={img} alt={c.n} loading="lazy" />
                 <div className="co-scrim" />
@@ -1252,7 +1286,7 @@ export default function HomePage() {
           agents, EGP 4.2B closed) had no data source. */}
       <section className="stats">
         <div className="wrap">
-          <div className="stat rv"><b>12,333+</b><span>{t('stat1')}</span></div>
+          <div className="stat rv"><b>{(liveTotalCount ?? 5000).toLocaleString()}+</b><span>{t('stat1')}</span></div>
           <div className="stat rv d1"><b data-count="38">{compoundCount || 38}</b><span>{t('stat2')}</span></div>
           <div className="stat rv d2"><b data-count="100" data-suffix="%">100%</b><span>{t('stat3')}</span></div>
           <div className="stat rv d3"><b data-count="100" data-suffix="%">100%</b><span>{t('stat4')}</span></div>

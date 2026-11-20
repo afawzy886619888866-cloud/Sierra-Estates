@@ -35,7 +35,7 @@ jobs:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v6.1.1
         with:
           version: 9.15.4
 

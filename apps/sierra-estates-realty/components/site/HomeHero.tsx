@@ -38,27 +38,40 @@ export default function HomeHero() {
   const [cur, setCur] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
   const [captionOut, setCaptionOut] = useState(false);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [pointer, setPointer] = useState({ x: 50, y: 50 });
+  const headerRef = useRef<HTMLElement>(null);
+  const rafRef = useRef<number | null>(null);
   const firstPaint = useRef(true);
   const timerRef = useRef<number | null>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const el = headerRef.current;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
-    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
-    const normX = (e.clientX - rect.left) / rect.width - 0.5;
-    const normY = (e.clientY - rect.top) / rect.height - 0.5;
-    setPointer({ x: Math.round(xPct), y: Math.round(yPct) });
-    setTilt({ x: normX * 18, y: normY * 18 });
+    const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    const tx = (((e.clientX - rect.left) / rect.width) - 0.5) * 18;
+    const ty = (((e.clientY - rect.top) / rect.height) - 0.5) * 18;
+
+    if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+    rafRef.current = window.requestAnimationFrame(() => {
+      el.style.setProperty('--hero-mx', `${xPct}%`);
+      el.style.setProperty('--hero-my', `${yPct}%`);
+      el.style.setProperty('--hero-tx', `${tx.toFixed(2)}px`);
+      el.style.setProperty('--hero-ty', `${ty.toFixed(2)}px`);
+    });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    setTilt({ x: 0, y: 0 });
+    if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+    const el = headerRef.current;
+    if (!el) return;
+    el.style.setProperty('--hero-tx', '0px');
+    el.style.setProperty('--hero-ty', '0px');
   }, []);
 
   const startTimer = useCallback(() => {
     if (timerRef.current) window.clearInterval(timerRef.current);
+    if (typeof document !== 'undefined' && document.hidden) return;
     timerRef.current = window.setInterval(() => {
       setCur((prev) => {
         const next = (prev + 1) % slides.length;
@@ -74,8 +87,21 @@ export default function HomeHero() {
 
   useEffect(() => {
     startTimer();
+    const onVis = () => {
+      if (document.hidden) {
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      } else {
+        startTimer();
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
     return () => {
+      document.removeEventListener('visibilitychange', onVis);
       if (timerRef.current) window.clearInterval(timerRef.current);
+      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     };
   }, [startTimer]);
 
@@ -103,6 +129,7 @@ export default function HomeHero() {
 
   return (
     <header
+      ref={headerRef}
       className="hero"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -119,7 +146,7 @@ export default function HomeHero() {
           inset: 0,
           pointerEvents: 'none',
           zIndex: 2,
-          background: `radial-gradient(850px circle at ${pointer.x}% ${pointer.y}%, rgba(200, 150, 26, 0.14) 0%, transparent 65%)`,
+          background: 'radial-gradient(850px circle at var(--hero-mx, 50%) var(--hero-my, 50%), rgba(200, 150, 26, 0.14) 0%, transparent 65%)',
           transition: 'background 0.15s ease-out',
         }}
       />
@@ -138,9 +165,8 @@ export default function HomeHero() {
               fetchPriority={i === 0 ? 'high' : 'low'}
               decoding={i === 0 ? 'sync' : 'async'}
               style={{
-                transform: `translate3d(${tilt.x * -0.6}px, ${tilt.y * -0.6}px, 0) scale(1.04)`,
+                transform: 'translate3d(calc(var(--hero-tx, 0px) * -0.6), calc(var(--hero-ty, 0px) * -0.6), 0) scale(1.04)',
                 transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                willChange: 'transform',
                 ...(sl.objectPosition ? { objectPosition: sl.objectPosition } : {}),
               }}
             />
@@ -154,9 +180,8 @@ export default function HomeHero() {
         <div
           className="hero-col"
           style={{
-            transform: `translate3d(${tilt.x * 0.4}px, ${tilt.y * 0.4}px, 0)`,
+            transform: 'translate3d(calc(var(--hero-tx, 0px) * 0.4), calc(var(--hero-ty, 0px) * 0.4), 0)',
             transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            willChange: 'transform',
           }}
         >
           {/* Glowing Laser Tag */}
