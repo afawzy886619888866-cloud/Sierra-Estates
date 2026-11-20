@@ -8,7 +8,6 @@ loadWorkflowEnv(path.join(__dirname, '..'));
  * Sends campaign emails from the Sheets "email_campaigns" tab via SendGrid,
  * with open/click tracking enabled.
  */
-const { google } = require('googleapis');
 const fs = require('fs');
 
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';

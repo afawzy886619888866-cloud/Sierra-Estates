@@ -43,7 +43,10 @@ describe('workflows (Automations & Scraper Pipelines)', () => {
       const code = fs.readFileSync(scraperScriptPath, 'utf-8');
 
       expect(code).toContain('whatsapp-web.js');
-      expect(code).toContain('googleapis');
+      // 2026-11: the scraper uses the zero-dependency sheets-http client
+      // (lib/sheets-http.js) instead of the ~45MB googleapis package.
+      expect(code).toContain('sheets-http');
+      expect(code).not.toContain("require('googleapis')");
       expect(code).toContain('GROUPS_TO_WATCH');
       expect(code).toContain('appendToSheet');
     });
