@@ -47,10 +47,12 @@ function mapDealType(raw: unknown, text: string): 'sale' | 'rent' | 'resale' | '
 }
 
 function buildTitle(extracted: Record<string, unknown>): string {
-  const compound = String(extracted.compound || 'New Cairo');
+  // §21 no-fabrication: unknown compound stays empty — never default to a
+  // real place name (phase13 security sweep enforces this).
+  const compound = String(extracted.compound || '');
   const type = String(extracted.property_type || 'Unit');
   const area = extracted.area_sqm ? ` ${extracted.area_sqm}m²` : '';
-  return `${compound} — ${type}${area} (WhatsApp intake)`;
+  return `${compound ? `${compound} — ` : ''}${type}${area} (WhatsApp intake)`;
 }
 
 export async function GET(req: NextRequest) {
@@ -150,7 +152,7 @@ export async function POST(req: NextRequest) {
   const price = Number(ex.price_egp) || 0;
   const listingInsert = {
     title: buildTitle(ex),
-    compound: String(ex.compound || 'New Cairo'),
+    compound: String(ex.compound || ''),
     location_area: (ex.zone as string) || null,
     property_type: (ex.property_type as string) || 'apartment',
     deal_type: mapDealType(ex.deal_type, waiting.raw_message),
