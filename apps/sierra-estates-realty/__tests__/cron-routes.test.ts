@@ -4,9 +4,9 @@
  *   /api/cron/sync-leads          /api/cron/sync-listings
  *   /api/cron/maintenance         /api/cron/sync-master-sheet
  *
- * These are scheduled via the Phase 11 dispatcher — vercel.json fires the
- * night/morning windows and .github/workflows/automations.yml adds the
- * per-job schedules — so their auth contract and their failure handling are
+ * These are scheduled via the Phase 11 dispatcher — since the 2026-11-20
+ * Vercel retirement, .github/workflows/automations.yml fires every window —
+ * so their auth contract and their failure handling are
  * load-bearing: a route that throws on a transient upstream error must
  * return a 5xx (so the schedulers retry and report) rather than a
  * misleading 200.

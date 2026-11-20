@@ -298,38 +298,14 @@ describe('/api/cron/dispatch/[job]', () => {
 
 // ─── Scheduling contracts ────────────────────────────────────────────────────
 describe('scheduling configuration (Phase 11)', () => {
-    function readCrons(file: string): { path: string; schedule: string }[] {
-        const config = JSON.parse(readFileSync(file, 'utf8'));
-        return config.crons ?? [];
-    }
-
-    it('keeps BOTH vercel.json files within the Vercel Hobby 2-cron cap', () => {
+    it('keeps vercel.json retired — scheduling lives in GitHub Actions', () => {
+        // 2026-11-20 Vercel retirement: the vercel.json cron files were removed
+        // with the rest of the Vercel pipeline (deploy-vercel.yml, env-sync
+        // scripts, root configs). The dispatch schedule contract is pinned
+        // against .github/workflows/automations.yml below; these guards keep
+        // the retired configs from resurrecting by accident.
         for (const file of [join(APP_DIR, 'vercel.json'), join(REPO_ROOT, 'vercel.json')]) {
-            const crons = readCrons(file);
-            expect(crons.length).toBeLessThanOrEqual(2);
-            expect(crons.map((c) => c.path).sort()).toEqual(
-                ['/api/cron/dispatch/morning', '/api/cron/dispatch/night'].sort(),
-            );
-        }
-    });
-
-    it('keeps BOTH vercel.json files free of non-schema keys (e.g. $comment)', () => {
-        // Vercel validates vercel.json against its published schema BEFORE the build
-        // starts; an unknown top-level key (like "$comment", added as an ad-hoc
-        // comment on 2026-10-17) fails the whole deployment with
-        // "should NOT have additional property" — no build log, no CI gate.
-        // This contract catches that class of failure at test time instead.
-        const SCHEMA_KEYS = new Set([
-            '$schema', 'version', 'name', 'scope', 'public', 'framework',
-            'buildCommand', 'devCommand', 'installCommand', 'outputDirectory',
-            'functions', 'builds', 'routes', 'rewrites', 'redirects', 'headers',
-            'cleanUrls', 'trailingSlash', 'github', 'git', 'regions', 'crons',
-            'env', 'exclude', 'live', 'fluid',
-        ]);
-        for (const file of [join(APP_DIR, 'vercel.json'), join(REPO_ROOT, 'vercel.json')]) {
-            const config = JSON.parse(readFileSync(file, 'utf8'));
-            const illegal = Object.keys(config).filter((k) => !SCHEMA_KEYS.has(k));
-            expect(illegal).toEqual([]);
+            expect(existsSync(file)).toBe(false);
         }
     });
 
