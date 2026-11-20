@@ -19,7 +19,7 @@ const sourceRoots = [
   'scripts',
 ];
 const sourceExtensions = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx']);
-const skippedDirectories = new Set(['node_modules', '.next', 'dist', 'build', 'coverage', 'graphify-out']);
+const skippedDirectories = new Set(['node_modules', '.next', '.open-next', '.wrangler', 'dist', 'build', 'coverage', 'graphify-out']);
 const thisFile = path.resolve(fileURLToPath(import.meta.url));
 const files = new Set(configFiles.map((file) => path.join(root, file)));
 

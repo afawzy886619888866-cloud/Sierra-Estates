@@ -22,6 +22,8 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
           entry.name === 'node_modules' ||
           entry.name === '.git' ||
           entry.name === '.next' ||
+          entry.name === '.open-next' ||
+          entry.name === '.wrangler' ||
           entry.name === '.turbo' ||
           entry.name === 'dist' ||
           entry.name === 'coverage' ||
