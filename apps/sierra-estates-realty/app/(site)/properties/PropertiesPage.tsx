@@ -374,6 +374,35 @@ export default function PropertiesPage() {
     if (radius && !isNaN(Number(radius))) setRadiusKm(Number(radius));
   }, []);
 
+  // Reflect filter state back into the URL — every filtered view becomes a
+  // shareable link. history.replaceState keeps the back button returning to
+  // the unfiltered page, and the first pass is skipped so a deep-linked
+  // filter parsed above is never clobbered.
+  const urlSyncReady = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!urlSyncReady.current) {
+      urlSyncReady.current = true;
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const set = (key: string, value: string | null) => {
+      if (value === null || value === '') params.delete(key);
+      else params.set(key, value);
+    };
+    set('q', searchQuery.trim() || null);
+    set('mode', selectedMode !== 'all' ? selectedMode : null);
+    set('type', selectedType !== 'All Types' ? selectedType : null);
+    set('compound', selectedCompound !== 'All Compounds' ? selectedCompound : null);
+    set('beds', selectedBeds !== 'all' ? selectedBeds : null);
+    set('price', selectedPriceRange !== 'all' ? selectedPriceRange : null);
+    set('condition', selectedCondition !== 'all' ? selectedCondition : null);
+    set('view', viewMode !== 'split' ? viewMode : null);
+    set('radius', radiusKm !== null ? String(radiusKm) : null);
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange, selectedCondition, viewMode, radiusKm]);
+
   // Mount fetch, realtime re-sync and 5-min reconciliation all run through
   // loadInventory above — no duplicate fetch effect here anymore.
 
@@ -667,7 +696,7 @@ export default function PropertiesPage() {
                 </span>
               </div>
               {realtimeLive && (
-                <div style={{
+                <div className="props-badge-live" style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   background: 'rgba(16, 185, 124, 0.1)', border: '1px solid rgba(16, 185, 124, 0.3)',
                   borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#0f9d76', fontWeight: 600,
