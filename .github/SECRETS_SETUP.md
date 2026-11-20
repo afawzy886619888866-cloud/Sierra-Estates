@@ -1,16 +1,17 @@
 # GitHub Actions environment setup
 
-The active deployment uses Vercel + Supabase. Do not add Firebase credentials or
-any other provider credentials to the active workflow.
+The active deployment uses **Cloudflare Workers + Supabase** (unified worker
+via `.github/workflows/deploy-cloudflare.yml`; Vercel was fully retired in
+PR #74 — `VERCEL_*` secrets are obsolete and must NOT be recreated). Do not
+add Firebase credentials or any other provider credentials to the active
+workflow.
 
 ## Required values
 
 Configure these in GitHub repository **Secrets and variables → Actions**:
 
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `CLIENT_VERCEL_PROJECT_ID`
-- `ADMIN_VERCEL_PROJECT_ID`
+- `CLOUDFLARE_API_TOKEN` (secret) — wrangler deploy token
+- `CLOUDFLARE_ACCOUNT_ID` (repository **variable**, not a secret — as wired in deploy-cloudflare.yml)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`

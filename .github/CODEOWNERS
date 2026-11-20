@@ -5,16 +5,18 @@
 #
 # Why these paths: the deploy pipeline and security rules have each been
 # silently overwritten by unrelated work in this repo, reintroducing bugs that
-# fail quietly in production — a Vercel env upsert that 400s behind a warning,
-# an ungated admin endpoint, a lockfile that breaks CI install.
+# fail quietly in production — a stale Vercel-era deploy config, an ungated
+# admin endpoint, a lockfile that breaks CI install.
 
 # Default owner for everything not matched below.
 *                               @afawzy886619888866-cloud
 
 # Deploy pipeline and CI gates. Changes here decide what reaches production
-# and whether anything is checked before it does.
+# and whether anything is checked before it does. (Vercel retired — the
+# former /vercel.json entry is gone with it; the unified worker config
+# lives under /deploy/.)
 /.github/workflows/             @afawzy886619888866-cloud
-/vercel.json                    @afawzy886619888866-cloud
+/deploy/                        @afawzy886619888866-cloud
 /turbo.json                     @afawzy886619888866-cloud
 
 # Security rules. Supabase RLS policies live in the database; the previous
@@ -30,7 +32,7 @@
 /apps/sierra-estates-realty/proxy.ts                 @afawzy886619888866-cloud
 
 # Dependency resolution — an out-of-sync lockfile fails `--frozen-lockfile`,
-# which is what CI and the Vercel build both run.
+# which is what CI and the Cloudflare worker build both run.
 /pnpm-lock.yaml                 @afawzy886619888866-cloud
 /pnpm-workspace.yaml            @afawzy886619888866-cloud
 /package.json                   @afawzy886619888866-cloud
