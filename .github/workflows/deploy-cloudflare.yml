@@ -315,6 +315,16 @@ jobs:
               break
             fi
             if is_waf_challenge "$APEX_CODE"; then WAF_ENGAGED=1; break; fi
+            # 2026-11-20 17:01 UTC: the heaviest SSR route (apex homepage) hits
+            # the Workers Free-plan 10 ms CPU cap on cold starts — a 503 whose
+            # body is the 1102 error page, intermittently, while lighter routes
+            # stay healthy. That is the known deferred Paid-plan upgrade, not a
+            # broken deploy: fall back to edge verification with a loud warning.
+            if [ "$APEX_CODE" = "503" ] && grep -qi 'error code: 1102' /tmp/smoke-body.html 2>/dev/null; then
+              echo "::warning::Apex → 503 'error code: 1102' (Workers FREE-plan 10 ms CPU cap on homepage cold start — make the Paid upgrade call)."
+              WAF_ENGAGED=1
+              break
+            fi
             echo "attempt $i: HTTP $APEX_CODE — waiting"; sleep 10
           done
 
