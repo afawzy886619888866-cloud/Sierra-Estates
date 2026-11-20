@@ -136,8 +136,8 @@ describe('verifyCronRequest — CRON_SECRET set', () => {
 });
 
 describe('verifyCronRequest — mirrored-project ownership guard', () => {
-  // The client and admin Vercel projects build from the same directory and
-  // both register the vercel.json crons; only the client may execute them.
+  // The client and admin hosts are served by the same unified worker; only
+  // the client project id may execute the cron dispatch routes.
   const CLIENT = 'prj_client11111111111111111111';
   const ADMIN = 'prj_admin11111111111111111111';
 
