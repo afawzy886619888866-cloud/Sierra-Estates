@@ -115,7 +115,7 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
       'pnpm-workspace.yaml',
       'turbo.json',
       'tsconfig.json',
-      'vercel.json',
+      'pnpm-lock.yaml',
       '.env.example',
       'README.md',
     ];

@@ -20,8 +20,6 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
         'type-check',
         'test',
         'test:ci',
-        'deploy:preview',
-        'deploy:prod',
         'deploy:supabase',
         'deploy:schema',
         'vertex-agent',
@@ -61,7 +59,6 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
       'publish-recommendation.ts',
       'write-memory.ts',
       'merge-inventory-master.ts',
-      'sync-vercel-env.js',
       'deployment/push_all_vercel_envs.js',
     ];
 

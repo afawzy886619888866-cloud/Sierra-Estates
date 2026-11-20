@@ -180,68 +180,29 @@ describe('Action Routing & Deployment Dispatch Test Suite', () => {
   // 5. Automations, Background Workers & Cron Dispatch
   // ==========================================================================
   describe('5. Automations & Cron Dispatch', () => {
-    it('all Vercel cron triggers map to implemented Next.js routes', () => {
-      const vercelJsonPath = path.join(ROOT_DIR, 'vercel.json');
-      const config = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf-8'));
-      expect(config.crons).toBeDefined();
+    it('all GitHub Actions cron schedules map to the implemented, auth-gated dispatcher route', () => {
+      // 2026-11: the Vercel cron fallback windows are retired with
+      // vercel.json; scheduling lives in automations.yml, which calls the
+      // Phase 11 dispatcher for each window/job target with Bearer CRON_SECRET.
+      const wfPath = path.join(ROOT_DIR, '.github', 'workflows', 'automations.yml');
+      const wf = fs.readFileSync(wfPath, 'utf-8');
+      expect(wf).toContain('SITE_URL: https://sierra-estates.net');
+      expect(wf).toContain('CRON_SECRET: ${{ secrets.CRON_SECRET }}');
+      expect(wf).toContain('/api/cron/dispatch/');
 
-      // Collect every implemented route under app/api as a segment list where
-      // dynamic directories ([job]) match any single URL segment.
-      const routes: string[][] = [];
-      const walk = (dir: string, acc: string[]) => {
-        if (!fs.existsSync(dir)) return;
-        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-          if (entry.isDirectory()) {
-            walk(path.join(dir, entry.name), [...acc, entry.name]);
-          } else if (entry.name === 'route.ts') {
-            routes.push(acc);
-          }
-        }
-      };
-      walk(path.join(CLIENT_APP_DIR, 'app', 'api'), []);
-
-      const routeMatches = (urlSegments: string[]) =>
-        routes.some(
-          (route) =>
-            route.length === urlSegments.length &&
-            route.every((seg, i) => seg.startsWith('[') || seg === urlSegments[i])
-        );
-
-      for (const cron of config.crons) {
-        const urlSegments = cron.path.replace(/^\/api\//, '').split('/');
+      const targets = ['whatsapp-dispatch', 'lead-timers', 'check-availability-sla', 'night', 'morning', 'sync-leads'];
+      for (const target of targets) {
         expect(
-          routeMatches(urlSegments),
-          `Cron route ${cron.path} must map to an implemented Next.js route (static or dynamic)`
-        ).toBe(true);
-
-        // The matched route file must verify authorization. For dynamic
-        // dispatchers, assert against the dispatcher file itself.
-        const staticPath = path.join(CLIENT_APP_DIR, 'app', 'api', ...urlSegments, 'route.ts');
-        let routeContent: string;
-        if (fs.existsSync(staticPath)) {
-          routeContent = fs.readFileSync(staticPath, 'utf-8');
-        } else {
-          // dynamic: walk the concrete directories
-          let dir = path.join(CLIENT_APP_DIR, 'app', 'api');
-          let matched = true;
-          for (const seg of urlSegments) {
-            const entries = fs.existsSync(dir)
-              ? fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory())
-              : [];
-            const next = entries.find((e) => e.name === seg || e.name.startsWith('['));
-            if (!next) { matched = false; break; }
-            dir = path.join(dir, next.name);
-          }
-          expect(matched, `Cron route ${cron.path} must resolve to a route.ts`).toBe(true);
-          const file = path.join(dir, 'route.ts');
-          expect(fs.existsSync(file), `Cron route ${cron.path} must resolve to a route.ts`).toBe(true);
-          routeContent = fs.readFileSync(file, 'utf-8');
-        }
-        expect(
-          routeContent.includes('CRON_SECRET') || routeContent.includes('verifyAdminRequest') || routeContent.includes('auth'),
-          `Cron endpoint ${cron.path} must verify authorization`
+          wf.includes(target),
+          `schedule mapping for '${target}' must exist in automations.yml`
         ).toBe(true);
       }
+
+      const dispatchRoute = path.join(CLIENT_APP_DIR, 'app', 'api', 'cron', 'dispatch', '[job]', 'route.ts');
+      expect(fs.existsSync(dispatchRoute), 'the /api/cron/dispatch/[job] dispatcher route must exist').toBe(true);
+      const routeContent = fs.readFileSync(dispatchRoute, 'utf-8');
+      expect(routeContent).toContain('verifyCronRequest');
+      expect(routeContent).toContain('CRON_SECRET');
     });
 
     it('automations worker package exists and isolates background jobs', () => {
@@ -251,31 +212,44 @@ describe('Action Routing & Deployment Dispatch Test Suite', () => {
   });
 
   // ==========================================================================
-  // 6. Vercel Project Matrix & Deployment Routing
+  // 6. Cloudflare Deployment Matrix & Routing
   // ==========================================================================
-  describe('6. Vercel Project Matrix & Deployment Dispatch', () => {
-    it('sync-vercel-env.js reads Client and Admin project IDs from environment without hardcoded account IDs', () => {
-      const syncScriptPath = path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js');
-      expect(fs.existsSync(syncScriptPath)).toBe(true);
-      const content = fs.readFileSync(syncScriptPath, 'utf-8');
+  describe('6. Cloudflare Deployment Matrix & Routing', () => {
+    it('deploy-cloudflare.yml deploys the unified sierra-estates worker to both hostnames', () => {
+      // 2026-11-19 (Lane A): ONE unified worker serves all hostnames via
+      // host-based rewrites; worker creation is locked (ALLOW_CREATE_NEW_WORKER).
+      const wfPath = path.join(ROOT_DIR, '.github', 'workflows', 'deploy-cloudflare.yml');
+      const wf = fs.readFileSync(wfPath, 'utf-8');
 
-      expect(content).toContain('CLIENT_VERCEL_PROJECT_ID');
-      expect(content).toContain('ADMIN_VERCEL_PROJECT_ID');
-      expect(content).not.toMatch(/team_[A-Za-z0-9]{10,}|prj_[A-Za-z0-9]{10,}/);
-      expect(content).toContain('SUPABASE_PROPERTY_MEDIA_BUCKET');
-      expect(content).toContain('SUPABASE_MEDIA_BUCKET');
+      expect(wf).toContain('OpenNext deploy · sierra-estates');
+      expect(wf).toContain('npx wrangler deploy --name "$CF_WORKER_NAME"');
+      for (const host of ['sierra-estates.net', 'admin.sierra-estates.net']) {
+        expect(wf.includes(host), `hostname ${host} must be verified by the deploy workflow`).toBe(true);
+      }
+      expect(wf).toContain('ALLOW_CREATE_NEW_WORKER');
+      expect(wf).toContain('npx wrangler secret bulk');
     });
 
-    it('.vercelignore excludes local cache bloat to protect upload quotas', () => {
-      const vercelIgnorePath = path.join(ROOT_DIR, '.vercelignore');
-      expect(fs.existsSync(vercelIgnorePath)).toBe(true);
-      const content = fs.readFileSync(vercelIgnorePath, 'utf-8');
+    it('legacy static portal ships a prepared (not yet wired) Workers Assets config', () => {
+      // Hosting for deploy/ is a Lane A decision (single-worker lock). The
+      // config + converted headers are ready for a second static worker or
+      // public/ ingestion; nothing in the unified workflow references them yet.
+      const wranglerPath = path.join(ROOT_DIR, 'deploy', 'wrangler.jsonc');
+      expect(fs.existsSync(wranglerPath)).toBe(true);
+      const conf = JSON.parse(
+        fs.readFileSync(wranglerPath, 'utf-8').replace(/^\s*\/\/.*$/gm, '')
+      );
+      expect(conf.name).toBe('sierra-estates-legacy');
+      expect(conf.assets?.directory).toBe('.');
 
-      expect(content).toContain('.amazonq');
-      expect(content).toContain('SE-Vercel-deploy-main*');
-      expect(content).toContain('.reports/**');
-      expect(content).toContain('libArchive/**');
-      expect(content).toContain('stubArchive/**');
+      const headersPath = path.join(ROOT_DIR, 'deploy', '_headers');
+      expect(fs.existsSync(headersPath)).toBe(true);
+      const headers = fs.readFileSync(headersPath, 'utf-8');
+      expect(headers).toContain('/admin/*');
+      expect(headers).toContain('X-Robots-Tag');
+
+      const wf = fs.readFileSync(path.join(ROOT_DIR, '.github', 'workflows', 'deploy-cloudflare.yml'), 'utf-8');
+      expect(wf.includes('sierra-estates-legacy'), 'prepared legacy config must NOT be wired into the unified workflow').toBe(false);
     });
   });
 });
