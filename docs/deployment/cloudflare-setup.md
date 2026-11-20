@@ -122,8 +122,8 @@ with `CRON_SECRET` — decide after observing one cycle.
 1. The Vercel account/projects were already canceled — no action needed there
    unless a project still exists; delete remaining projects to free names.
 2. Remove any Vercel DNS records from the zone (see step 6).
-3. Close PR #69 on GitHub — it revises `deploy-vercel.yml`, which no longer
-   exists; its Vercel migration plan is obsolete.
+3. Close PR #69 on GitHub — it revised the retired `deploy-vercel.yml`
+   (deleted in the 2026-11-20 sweep); its Vercel migration plan is obsolete.
 
 ---
 

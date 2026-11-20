@@ -38,4 +38,4 @@ Amazon Q must operate as a synchronized developer assistant adhering to the foll
 1. **Memory Synchronization:** Read `obsidian-store.json` for persistent project state and architectural context before recommending changes.
 2. **ECC Skill Alignment:** Utilize skills from `.agent/skills/` and `.agents/skills/` for testing, code review, and refactoring tasks.
 3. **Strict Client Guardrails:** Never modify client-facing routes under `apps/sierra-estates-realty/app/(client)/` without explicit user permission.
-4. **Vercel GitHub Actions Policy:** Orchestrate deployments exclusively through `.github/workflows/deploy-vercel.yml` (native Vercel GitHub integration must remain disabled).
+4. **Deployment Policy:** Orchestrate deployments exclusively through `.github/workflows/deploy-cloudflare.yml` (the retired `deploy-vercel.yml` was deleted in the 2026-11-20 sweep).

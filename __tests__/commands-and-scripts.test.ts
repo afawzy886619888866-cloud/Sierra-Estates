@@ -59,7 +59,6 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
       'publish-recommendation.ts',
       'write-memory.ts',
       'merge-inventory-master.ts',
-      'deployment/push_all_vercel_envs.js',
     ];
 
     for (const file of requiredScriptFiles) {

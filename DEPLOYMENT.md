@@ -6,7 +6,7 @@ This document is the **single source of truth** for all deployment, operations, 
 - **Authoritative Datastore:** **Supabase PostgreSQL** (`https://gaxfqcietzoonlmatiot.supabase.co`) with `pgvector`, Auth, Storage, and RLS.
 - **Worker & Outreach Control Plane:** Local / Docker Workflow Runner (`:2786`) and OpenWA 8-Line Pool (`:2785`) connected via **Cloudflare Tunnel**.
 - **Heavy / Background Processing:** Executes strictly in workers (`workflows/`, GitHub Actions, n8n), never inside user-facing Next.js request handlers.
-- **Retired Infrastructure:** Legacy Firebase deployments, the legacy AWS EC2 host (`54.89.162.250`) and the **Vercel hosting pipeline** (projects, `vercel.json` configs, `deploy-vercel.yml` — disabled via API) are permanently deactivated.
+- **Retired Infrastructure:** Legacy Firebase deployments, the legacy AWS EC2 host (`54.89.162.250`) and the **Vercel hosting pipeline** (projects, `vercel.json` configs, `deploy-vercel.yml` — deleted in the 2026-11-20 sweep) are permanently deactivated.
 
 ---
 
@@ -33,7 +33,7 @@ Cloudflare Workers deployments are managed through wrangler configuration files:
 * **Static Fallback (pending):** `deploy/wrangler.jsonc` + `deploy/_headers` hold a prepared, **not yet wired** Workers Assets config for the legacy portal — enabling it is a Lane A call (second static worker vs. `public/` ingestion into the unified worker).
 
 > [!WARNING]
-> Do NOT recreate Vercel projects or re-enable `deploy-vercel.yml` — the Vercel pipeline is retired. The workflow file is kept only as a disabled, reversible reference; re-enabling it requires the Vercel secrets that have been decommissioned.
+> Do NOT recreate Vercel projects or re-enable `deploy-vercel.yml` — the Vercel pipeline is retired. The workflow file was deleted in the 2026-11-20 sweep; restoring it would require reinstating the decommissioned Vercel secrets and vercel.json configs.
 >
 > The unified worker is under a strict single-project lock: `deploy-cloudflare.yml` refuses to create any brand-new Cloudflare Worker unless secret `ALLOW_CREATE_NEW_WORKER=true` is explicitly set.
 

@@ -86,9 +86,6 @@
     "GMAIL_USER",
     "GMAIL_PASS",
     "SESSION_SECRET",
-    "VERCEL_TOKEN",
-    "VERCEL_ORG_ID",
-    "CLIENT_VERCEL_PROJECT_ID",
     "N8N_BASE_URL",
     "N8N_API_KEY",
     "PF_WEBHOOK_SECRET",
@@ -109,11 +106,7 @@
     "http_proxy",
     "https_proxy",
     "no_proxy",
-    "CI",
-    "VERCEL",
-    "VERCEL_ENV",
-    "VERCEL_URL",
-    "VERCEL_GIT_COMMIT_SHA"
+    "CI"
   ],
   "tasks": {
     "build": {

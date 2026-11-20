@@ -159,13 +159,7 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     key: 'CRON_SECRET',
     group: 'DEPLOYMENT',
     required: false,
-    description: 'Bearer secret protecting Vercel Cron endpoints',
-  },
-  {
-    key: 'VERCEL_ORG_ID',
-    group: 'DEPLOYMENT',
-    required: false,
-    description: 'Vercel team/organization identifier for CLI & GitHub Actions',
+    description: 'Bearer secret protecting /api/cron/dispatch endpoints (GitHub Actions scheduler)',
   },
 ];
 
