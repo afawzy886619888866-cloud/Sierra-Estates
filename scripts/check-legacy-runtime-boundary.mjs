@@ -9,7 +9,7 @@ const runtimeRoots = [
   'packages/db/lib',
 ];
 const extensions = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx']);
-const skipped = new Set(['node_modules', '.next', 'dist', 'build', 'coverage']);
+const skipped = new Set(['node_modules', '.next', '.open-next', '.wrangler', 'dist', 'build', 'coverage']);
 const forbidden = [
   /\b(?:from|require\()\s*['"][^'"]*firebase(?:-admin)?[^'"]*['"]/,
   /\b(?:NEXT_PUBLIC_)?FIREBASE_[A-Z0-9_]+/,

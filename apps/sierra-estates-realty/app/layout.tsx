@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import {
   Plus_Jakarta_Sans,
   Inter,
