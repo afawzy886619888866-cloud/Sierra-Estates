@@ -224,7 +224,7 @@ async function sendEmail(to, templateKey, variables = {}, opts = {}) {
     if (!nodemailer) {
       try {
         nodemailer = require('nodemailer');
-      } catch (e) {
+      } catch (_e) {
         throw new Error('nodemailer is not installed for SMTP transport');
       }
     }
