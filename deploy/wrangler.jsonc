@@ -1,0 +1,23 @@
+{
+  // Legacy static portal (deploy/ fallback site) — buildless Cloudflare Worker
+  // using Workers Static Assets. Replaces the retired Vercel static project
+  // ("sierra-estates-static-portal", deployed via vercel.json + Vercel CLI).
+  //
+  // - No `main` script: pure assets, no runtime code, no secrets.
+  // - html_handling "auto-trailing-slash" reproduces the old vercel.json
+  //   `cleanUrls: true` + `trailingSlash: false` behaviour (serves /about.html
+  //   at /about, redirects the slashed variant).
+  // - Headers (cache tiers + /admin noindex) live in ./_headers (same format
+  //   the Vercel header rules were converted from).
+  //
+  // Deployed by .github/workflows/deploy-cloudflare.yml (matrix role
+  // "legacy") to worker `sierra-estates-legacy` at legacy.sierra-estates.net.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "sierra-estates-legacy",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": ".",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  }
+}

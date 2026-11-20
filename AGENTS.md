@@ -191,5 +191,5 @@ reference implementation in `app/api/listings/add/route.ts` and `app/api/admin/l
 - **Sole Production Host:** Unified Cloudflare Worker **`sierra-estates`** (`@opennextjs/cloudflare`, Account `22804b3ba513993444a33357d7bca953`, Zone `sierra-estates.net` / `e2263fa4159f29a08a8d589d08e9ce8e`).
 - **Active Domains:** `https://sierra-estates.net`, `https://www.sierra-estates.net` (public), and `https://admin.sierra-estates.net` (Admin OS via Next.js host rewrite + Cloudflare Zero Trust Access).
 - **Single-Project Lock:** `.github/workflows/deploy-cloudflare.yml` ONLY updates existing `sierra-estates` and fails closed if any attempt would create a new Worker without explicit `ALLOW_CREATE_NEW_WORKER=true`.
-- **Retired Platforms:** Vercel and Firebase are permanently retired. Legacy `deploy-vercel.yml` and `deploy-admin-retry.yml` are disabled on GitHub Actions; `telegram-activation-watch.yml` is migrated to `deploy-cloudflare.yml`.
+- **Retired Platforms:** Vercel and Firebase are permanently retired. Legacy `deploy-vercel.yml` and `deploy-admin-retry.yml` were deleted in the 2026-11-20 retirement sweep; `telegram-activation-watch.yml` is migrated to `deploy-cloudflare.yml`.
 - **Canonical Announcement & Sync Script:** See `docs/CLOUDFLARE_MIGRATION_ANNOUNCEMENT.md` and `scripts/sync-sierra-cloudflare-and-memory.ps1`.

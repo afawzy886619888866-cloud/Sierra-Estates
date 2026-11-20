@@ -10,8 +10,6 @@ const forbiddenNames = [
 const configFiles = [
   '.env.example',
   'apps/sierra-estates-realty/.env.local.example',
-  'scripts/sync-vercel-env.js',
-  'scripts/deployment/push_all_vercel_envs.js',
   'turbo.json',
 ];
 const sourceRoots = [

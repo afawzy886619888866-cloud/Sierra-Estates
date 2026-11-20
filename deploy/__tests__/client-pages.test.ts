@@ -107,12 +107,24 @@ describe('deploy/ (Static Client Portal & Pages)', () => {
       }
     });
 
-    it('standalone vercel.json should exist with caching headers', () => {
-      const vercelJsonPath = path.join(DEPLOY_DIR, 'vercel.json');
-      expect(fs.existsSync(vercelJsonPath)).toBe(true);
-      const conf = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf-8'));
-      expect(conf.headers).toBeDefined();
-      expect(Array.isArray(conf.headers)).toBe(true);
+    it('standalone hosting config should exist with caching headers (Cloudflare Workers Assets)', () => {
+      // Replaces the retired deploy/vercel.json (Vercel) with the Cloudflare
+      // buildless assets worker config + its converted header rules.
+      const wranglerPath = path.join(DEPLOY_DIR, 'wrangler.jsonc');
+      expect(fs.existsSync(wranglerPath)).toBe(true);
+      const conf = JSON.parse(
+        fs.readFileSync(wranglerPath, 'utf-8').replace(/^\s*\/\/.*$/gm, ''),
+      );
+      expect(conf.name).toBe('sierra-estates-legacy');
+      expect(conf.assets?.directory).toBe('.');
+      expect(conf.assets?.html_handling).toBe('auto-trailing-slash');
+
+      const headersPath = path.join(DEPLOY_DIR, '_headers');
+      expect(fs.existsSync(headersPath)).toBe(true);
+      const headers = fs.readFileSync(headersPath, 'utf-8');
+      expect(headers).toMatch(/immutable/);            // brand imagery tier
+      expect(headers).toMatch(/must-revalidate/);      // HTML tier
+      expect(headers).toMatch(/X-Robots-Tag:\s*noindex/); // /admin exclusion
     });
   });
 });

@@ -64,8 +64,13 @@ const nextConfig: NextConfig = {
 
   // Legacy path: /dashboard used to serve the retired Houyez /client portal.
   // Redirect to home instead of rewriting to a route that no longer exists.
+  // /old-landing was a permanent redirect in the retired root vercel.json —
+  // carried over here so the Cloudflare deployment keeps the same contract.
   async redirects() {
-    return [{ source: '/dashboard', destination: '/', permanent: false }];
+    return [
+      { source: '/dashboard', destination: '/', permanent: false },
+      { source: '/old-landing', destination: '/', permanent: true },
+    ];
   },
 
   serverExternalPackages: [
@@ -151,6 +156,10 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Carried over from the retired root vercel.json global header set.
+          // Static asset dirs below override it with immutable caching (later
+          // rules win in Next's headers()), mirroring the old Vercel contract.
+          { key: 'Cache-Control', value: 'no-cache, no-transform' },
         ],
       },
       {

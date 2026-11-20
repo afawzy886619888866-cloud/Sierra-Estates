@@ -40,19 +40,25 @@ describe('Backend Services, Cloud Functions & APIs Test Suite', () => {
   });
 
   describe('Cron Bridge Handlers Contract', () => {
-    it('should define scheduled cron job paths in root vercel.json', () => {
-      const vercelJson = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'vercel.json'), 'utf-8'));
-      const cronPaths = vercelJson.crons.map((c: any) => c.path);
-
-      // 2026-10: Vercel Hobby allows only TWO cron slots, so all scheduled
-      // jobs run through the Phase 11 dispatcher (see
-      // apps/sierra-estates-realty/app/api/cron/dispatch/[job]/route.ts):
-      //   night @ 02:45 UTC + morning @ 06:45 UTC windows over the job
-      //   registry in lib/server/automation-jobs.ts. The contract pinned
-      //   here: both windows are scheduled AND the legacy per-job endpoints
-      //   still exist as dispatcher-invocable routes.
-      expect(cronPaths).toContain('/api/cron/dispatch/night');
-      expect(cronPaths).toContain('/api/cron/dispatch/morning');
+    it('should schedule night + morning dispatch windows in GitHub Actions and pin the job registry', () => {
+      // 2026-11: Vercel (and its vercel.json cron slots) is retired — the
+      // scheduling contract moved to .github/workflows/automations.yml,
+      // which calls the Phase 11 dispatcher (see
+      // apps/sierra-estates-realty/app/api/cron/dispatch/[job]/route.ts)
+      // with the same Bearer CRON_SECRET contract over the job
+      // registry in lib/server/automation-jobs.ts. The contract pinned
+      // here: both windows are scheduled AND the legacy per-job endpoints
+      // still exist as dispatcher-invocable routes.
+      const automationsWf = fs.readFileSync(
+        path.join(ROOT_DIR, '.github/workflows/automations.yml'),
+        'utf-8'
+      );
+      expect(automationsWf).toContain("'10 2 * * *'");
+      expect(automationsWf).toContain("'10 6 * * *'");
+      expect(automationsWf).toContain("TARGET='night'");
+      expect(automationsWf).toContain("TARGET='morning'");
+      expect(automationsWf).toContain('/api/cron/dispatch/');
+      expect(automationsWf).toContain('CRON_SECRET');
 
       const registry = fs.readFileSync(
         path.join(ROOT_DIR, 'apps/sierra-estates-realty/lib/server/automation-jobs.ts'),

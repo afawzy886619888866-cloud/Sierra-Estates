@@ -102,6 +102,11 @@ PR as their headers instruct — they self-document as temporary.
 
 ## STEP 3 — ✅ DONE (absorbed by live production): Vercel deploy
 
+> [!NOTE] 2026-11-20: the Vercel pipeline is RETIRED (workflows and env-sync
+> scripts deleted). Production now deploys the unified Cloudflare Worker
+> `sierra-estates` via `.github/workflows/deploy-cloudflare.yml` — see
+> [DEPLOYMENT.md](../../DEPLOYMENT.md). The topology below is historical.
+
 The Vercel–GitHub integration auto-deployed main; production at
 **https://sierra-estates.net** (admin at **admin.sierra-estates.net**, also
 200). Deployment topology (from the repo's own `scripts/sync-vercel-env.js`):

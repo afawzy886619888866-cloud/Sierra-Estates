@@ -1,0 +1,5 @@
+# Workers Assets upload exclusions for the legacy static portal
+# (same spirit as the retired deploy/vercel.json on Vercel, which only
+# served the portal surface files).
+__tests__
+wrangler.jsonc

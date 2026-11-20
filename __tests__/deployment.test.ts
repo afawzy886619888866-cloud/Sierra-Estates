@@ -8,80 +8,22 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
   const REALTY_APP_DIR = path.join(ROOT_DIR, 'apps', 'sierra-estates-realty');
 
   describe('Vercel Git Integration', () => {
-    it('root vercel.json must disable automatic git deployments', () => {
-      const rootVercelPath = path.join(ROOT_DIR, 'vercel.json');
-      expect(fs.existsSync(rootVercelPath)).toBe(true);
-      const config = JSON.parse(fs.readFileSync(rootVercelPath, 'utf-8'));
-      expect(config.git).toBeDefined();
-      expect(config.git.deploymentEnabled).toBe(false);
+    it('Vercel project configs must stay retired (no vercel.json resurrection)', () => {
+      // Hosting contract (2026-11-18): production runs on Cloudflare Workers.
+      // The root + app vercel.json files were removed with the Vercel
+      // retirement — these guards keep them from coming back by accident.
+      expect(fs.existsSync(path.join(ROOT_DIR, 'vercel.json'))).toBe(false);
+      expect(fs.existsSync(path.join(REALTY_APP_DIR, 'vercel.json'))).toBe(false);
+      expect(fs.existsSync(path.join(ROOT_DIR, '.vercelignore'))).toBe(false);
+      // The Cloudflare contract that replaced them:
+      expect(fs.existsSync(path.join(REALTY_APP_DIR, 'wrangler.jsonc'))).toBe(true);
+      expect(fs.existsSync(path.join(ROOT_DIR, 'deploy', 'wrangler.jsonc'))).toBe(true);
     });
 
-    it('apps/sierra-estates-realty/vercel.json must disable automatic git deployments', () => {
-      const appVercelPath = path.join(REALTY_APP_DIR, 'vercel.json');
-      expect(fs.existsSync(appVercelPath)).toBe(true);
-      const config = JSON.parse(fs.readFileSync(appVercelPath, 'utf-8'));
-      expect(config.git).toBeDefined();
-      expect(config.git.deploymentEnabled).toBe(false);
-    });
-
-    it('deploy-vercel.yml should enforce max-parallel: 1 to prevent simultaneous deploy rate limits', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployWf).toContain('max-parallel: 1');
-      expect(deployWf).toContain('timeout-minutes: 20');
-    });
-
-    it('deploy-vercel.yml should include 429 rate limit backoff and retry mechanisms', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployWf).toContain('429');
-      expect(deployWf).toContain('Rate limited');
-      expect(deployWf).toContain('sleep');
-    });
-  });
-
-  describe('Domain Routing & Project Matrix', () => {
-    it('deploy-vercel.yml should define separate client and admin projects', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployWf).toContain('role: client');
-      expect(deployWf).toContain('domain: sierra-estates.net');
-      expect(deployWf).toContain('role: admin');
-      expect(deployWf).toContain('domain: admin.sierra-estates.net');
-      expect(deployWf).toContain('apps/sierra-estates-realty');
-    });
-
-    it('deploy-vercel.yml should sync all critical environment variable categories', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      
-      // Routing & URLs
-      expect(deployWf).toContain('NEXT_PUBLIC_CLIENT_URL');
-      expect(deployWf).toContain('NEXT_PUBLIC_ADMIN_URL');
-      // Supabase Primary Backend
-      expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_URL');
-      expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
-      expect(deployWf).toContain('SUPABASE_SERVICE_ROLE_KEY');
-
-      // Legacy Firebase environment synchronization must remain retired.
-      expect(deployWf).not.toContain('FIREBASE_PROJECT_ID');
-      expect(deployWf).not.toContain('FIREBASE_SERVICE_ACCOUNT_JSON');
-      
-      // AI & LLMs
-      expect(deployWf).toContain('GOOGLE_AI_API_KEY');
-      expect(deployWf).toContain('GEMINI_API_KEY');
-      expect(deployWf).toContain('DEEPSEEK_API_KEY');
-      
-      // Property Finder & AWS
-      expect(deployWf).toContain('PROPERTY_FINDER_API_KEY');
-      expect(deployWf).toContain('AWS_ACCESS_KEY_ID');
-      
-      // Security
-      expect(deployWf).toContain('SESSION_SECRET');
-      expect(deployWf).toContain('SBR_SECRET_KEY');
-      expect(deployWf).toContain('CRON_SECRET');
-      expect(deployWf).toContain('ADMIN_API_KEY');
-      
-      // Communications
-      expect(deployWf).toContain('TELEGRAM_BOT_TOKEN');
-      expect(deployWf).toContain('WHATSAPP_API_TOKEN');
-      expect(deployWf).toContain('SENDGRID_API_KEY');
+    it('Vercel deploy workflows are deleted (retirement completed 2026-11-20)', () => {
+      for (const wf of ['deploy-vercel.yml', 'deploy-admin-retry.yml']) {
+        expect(fs.existsSync(path.join(WORKFLOWS_DIR, wf)), `${wf} must not exist`).toBe(false);
+      }
     });
   });
 
@@ -93,9 +35,6 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       ];
       const files = [
         path.join(ROOT_DIR, '.env.example'),
-        path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'),
-        path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js'),
-        path.join(ROOT_DIR, 'scripts', 'deployment', 'push_all_vercel_envs.js'),
         path.join(ROOT_DIR, 'turbo.json'),
       ];
 
@@ -113,36 +52,39 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       expect(fs.existsSync(path.join(WORKFLOWS_DIR, 'deploy-supabase.yml'))).toBe(true);
     });
 
-    it('fails deployments visibly when deployment credentials are absent', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf8');
-      expect(deployWf).toContain('::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required');
-      expect(deployWf).toContain('VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository');
-      expect(deployWf).toContain('exit 1');
-    });
   });
 
-  describe('Vercel Scripts & Deployment Tools', () => {
-    it('sync-vercel-env.js should be present, valid and define client & admin env sets', () => {
-      const syncScriptPath = path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js');
-      expect(fs.existsSync(syncScriptPath)).toBe(true);
-      const code = fs.readFileSync(syncScriptPath, 'utf-8');
-      expect(code).toContain('CLIENT_ENV_VARS');
-      expect(code).toContain('ADMIN_ENV_VARS');
-      expect(code).toContain('syncVarsToProject');
-      expect(code).toContain('429');
-      expect(code).toContain('SUPABASE_PROPERTY_MEDIA_BUCKET');
-      expect(code).toContain('SUPABASE_MEDIA_BUCKET');
-      expect(code).not.toMatch(/CLIENT_ENV_VARS[\s\S]*SUPABASE_ACCESS_TOKEN/);
+  describe('Cloudflare Scripts & Deployment Tools', () => {
+    it('deploy-cloudflare.yml must fail visibly when Cloudflare credentials are absent', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-cloudflare.yml'), 'utf8');
+      expect(deployWf).toContain('::error::Missing CLOUDFLARE_API_TOKEN secret or CLOUDFLARE_ACCOUNT_ID variable.');
+      expect(deployWf).toContain('exit 1');
     });
 
-    it('push_all_vercel_envs.js should resolve monorepo root correctly', () => {
-      const pushScriptPath = path.join(ROOT_DIR, 'scripts', 'deployment', 'push_all_vercel_envs.js');
-      expect(fs.existsSync(pushScriptPath)).toBe(true);
-      const code = fs.readFileSync(pushScriptPath, 'utf-8');
-      expect(code).toContain('apps/sierra-estates-realty/.env.local');
-      expect(code).toContain('varsToAdd');
-      expect(code).toContain('SUPABASE_PROPERTY_MEDIA_BUCKET');
-      expect(code).toContain('SUPABASE_MEDIA_BUCKET');
+    it('deploy-cloudflare.yml must enforce the strict single-project lock (no accidental worker creation)', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-cloudflare.yml'), 'utf8');
+      expect(deployWf).toContain('ALLOW_CREATE_NEW_WORKER');
+      expect(deployWf).toContain('does not exist (HTTP $HTTP_CODE). Creating a brand-new Cloudflare project is blocked');
+      expect(deployWf).toContain('exit 1');
+    });
+
+    it('deploy-cloudflare.yml must verify the live deployment (health + apex)', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-cloudflare.yml'), 'utf8');
+      expect(deployWf).toContain('https://sierra-estates.net/api/health');
+      expect(deployWf).toContain('Apex returned HTTP');
+    });
+
+    it('package.json must not reference the retired Vercel CLI', () => {
+      const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf-8'));
+      const vercelScripts = Object.entries(pkg.scripts).filter(([, cmd]) =>
+        /\bvercel\b/.test(cmd as string),
+      );
+      expect(vercelScripts, `scripts still referencing the Vercel CLI: ${vercelScripts.map(([n]) => n).join(', ')}`).toEqual([]);
+    });
+
+    it('retired Vercel support scripts stay deleted', () => {
+      expect(fs.existsSync(path.join(ROOT_DIR, 'scripts', 'deployment', 'push_all_vercel_envs.js'))).toBe(false);
+      expect(fs.existsSync(path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js'))).toBe(false);
     });
 
     it('verify-deploy-readiness.ts should check environment and build prerequisites', () => {
@@ -155,27 +97,6 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
   });
 
   describe('CI-Gated Deployment & Emergency Override Safety', () => {
-    it('deploy-vercel.yml must configure workflow_dispatch with emergency_override input and actions:read permission', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployWf).toContain('emergency_override:');
-      expect(deployWf).toContain('actions: read');
-    });
-
-    it('deploy-vercel.yml must define a gate job that blocks production deploys without successful CI or audited override', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployWf).toContain('gate:');
-      expect(deployWf).toContain('needs: [gate]');
-      expect(deployWf).toContain('gh run list --workflow=ci.yml');
-      expect(deployWf).toContain('EMERGENCY_OVERRIDE');
-      expect(deployWf).toContain('AUDIT ALERT');
-    });
-
-    it('deploy-vercel.yml must preserve preview deployment behavior without requiring production CI gate', () => {
-      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployWf).toContain('"$TARGET_ENV" = "preview"');
-      expect(deployWf).toContain('CI production gate bypassed for preview environment');
-    });
-
     it('ci.yml must trigger on push to main, pull_request, and workflow_dispatch', () => {
       const ciWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'ci.yml'), 'utf-8');
       expect(ciWf).toContain('branches: [main]');
@@ -194,10 +115,12 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       expect(ciWf).toContain('build');
     });
 
-    it('package.json deploy:prod must enforce pre-flight readiness checks', () => {
-      const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf-8'));
-      expect(pkg.scripts['deploy:prod']).toContain('deploy:check');
-      expect(pkg.scripts['deploy:prod']).toMatch(/\bvercel(?:@\d+\.\d+\.\d+)?\s+--prod\b/);
+    it('deploy-cloudflare.yml must gate production deploys on a green CI run for the exact commit', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-cloudflare.yml'), 'utf-8');
+      expect(deployWf).toContain('CI gate (production) · audit + block');
+      expect(deployWf).toContain('needs: gate');
+      expect(deployWf).toContain('gh run list --workflow=ci.yml');
+      expect(deployWf).toContain('Production deploy BLOCKED');
     });
   });
 });

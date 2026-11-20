@@ -65,7 +65,7 @@ SE-Vercel-deploy/
 │
 ├── scripts/                       # Maintenance and deployment scripts
 ├── docs/                          # Architecture, API, deployment, migration docs
-├── .github/workflows/             # CI/CD (deploy-vercel.yml, lint, type-check, test)
+├── .github/workflows/             # CI/CD (deploy-cloudflare.yml, ci.yml, lint, type-check, test)
 ├── firestore.rules                # Production Firestore security rules
 ├── storage.rules                  # Production Storage security rules
 ├── firebase.json                  # Firebase config (Functions + Firestore + Storage + Hosting redirect)
