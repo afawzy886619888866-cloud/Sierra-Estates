@@ -1,25 +1,31 @@
 'use strict';
 /**
- * Workflow 03: Owner Contact  (rewired 2026-10)
- * ─────────────────────────────────────────
+ * Workflow 03: Owner Contact  (rewired & hardened 2026-11)
+ * ───────────────────────────────────────────────────────────────────────────
  * Sends WhatsApp introduction messages to property owners discovered by
  * Workflow 02 (`owner_leads` Google Sheet tab and/or Supabase `public.leads`
  * where `origin_channel = 'workflow-02-owner-search'` and `stage = 'inbound'`),
- * dispatching via the OpenWA gateway session pool (`OPENWA_SESSION_IDS` or
- * `OPENWA_SESSION_ID`) and honoring opt-out suppression.
+ * dispatching round-robin across healthy OpenWA gateway sessions
+ * (`OPENWA_SESSION_IDS` / `OPENWA_SESSION_ID`), honoring opt-out suppression,
+ * cross-deduping against `09-owner-outreach` (`owner-outreach-ledger.jsonl` +
+ * `public.owner_outreach_log`), and logging audit rows to `owner_outreach_log`.
  *
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
+const fs = require('fs');
 const path = require('path');
 const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
 loadWorkflowEnv(path.join(__dirname, '..'));
 const { GatewayClient, requestJson } = require('../lib/gateway-client');
 const { enforceOutreachNotice } = require('../lib/notice');
 const { loadOptOutSet } = require('../lib/inbox');
+const { normalizePhone } = require('../lib/phone-utils');
 
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
 const SB_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
+const LEDGER_FILE = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
 const DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
 
@@ -29,8 +35,11 @@ const summary = {
   failed: 0,
   skipped: 0,
   skippedOptOut: 0,
+  skippedAlreadyContacted: 0,
   capped: 0,
   source: 'none',
+  bySession: {},
+  auditWritten: 0,
   dryRun: DRY_RUN,
 };
 
@@ -41,14 +50,113 @@ function failUnconfigured(msg) {
 
 const CONTACT_TEMPLATE = `السلام عليكم ورحمة الله وبركاته يا فندم، بعد التحية،
 
-أنا ليلى، أول بوت عقاري مصري خاص بالعقارات وتحديداً الريسيل والإيجارات في التجمع الخامس من فريق Sierra Estates 🏡✨
+مع حضرتك فريق الاستشارات العقارية في Sierra Estates بالتجمع الخامس.
 
-نتواصل مع سيادتكم بخصوص عقاركم المعروض في ___LOCATION___، حيث يتوفر لدينا عدد من العملاء المهتمين بالتنفيذ الفوري للتنسيق المباشر مع حضرتك.
+بنعتذر لو تواصلنا جاء في وقت غير مناسب؛ كنا حابين نستفسر من سيادتكم إذا كانت الوحدة المعروضة في ___LOCATION___ لا تزال متاحة حالياً، للتنسيق المباشر مع حضرتك وعرضها على عملائنا الجادين.
 
-هل الوحدة ما زالت متاحة لمراجعة التفاصيل وتنسيق المعاينة للعملاء؟
-
-يسعدنا جداً التعاون المثمر مع حضرتك، ولكم منا خالص التقدير 🤝
+إذا كانت الوحدة غير متاحة حالياً فنعتذر لحضرتك وشاكرين جداً وقتك الكريم 🤝
 (لعدم استقبال رسائل أخرى، أرسل كلمة "إلغاء")`;
+
+/** Build canonical Arabic owner-inquiry message (no unit code, no price). */
+function buildContactMessage(item = {}) {
+  const rawLoc = String(item.location || item.compound || '').trim();
+  const loc = !rawLoc || /^(new cairo|القاهرة الجديدة|التجمع|التجمع الخامس|5th settlement)$/i.test(rawLoc)
+    ? 'القاهرة الجديدة'
+    : rawLoc;
+  return enforceOutreachNotice(
+    'owner-negotiation',
+    CONTACT_TEMPLATE.replace('___LOCATION___', loc),
+  );
+}
+
+/** Generate normalized phone lookup keys (201..., 01..., raw digits). */
+function addPhoneKeys(set, raw) {
+  if (!raw) return;
+  const norm = normalizePhone(String(raw));
+  if (norm) set.add(norm);
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits) {
+    set.add(digits);
+    if (digits.startsWith('20') && digits.length === 12) set.add('0' + digits.slice(2));
+    if (digits.startsWith('01') && digits.length === 11) set.add('2' + digits);
+  }
+}
+
+/**
+ * Cross-workflow deduplication set from local `owner-outreach-ledger.jsonl`
+ * AND Supabase `public.owner_outreach_log`.
+ */
+async function loadContactedPhones(opts = {}) {
+  const seen = new Set();
+  const ledgerPath = opts.ledgerFile || LEDGER_FILE;
+  try {
+    if (fs.existsSync(ledgerPath)) {
+      const lines = fs.readFileSync(ledgerPath, 'utf8').split(/\r?\n/);
+      for (const l of lines) {
+        if (!l.trim()) continue;
+        try {
+          const entry = JSON.parse(l);
+          if (entry && entry.phone) addPhoneKeys(seen, entry.phone);
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
+
+  const sbUrl = opts.sbUrl !== undefined ? opts.sbUrl : SB_URL;
+  const sbKey = opts.sbKey !== undefined ? opts.sbKey : SB_KEY;
+  if (sbUrl && sbKey && opts.skipSupabase !== true) {
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const sb = createClient(sbUrl, sbKey, { auth: { persistSession: false, autoRefreshToken: false } });
+      const { data } = await sb
+        .from('owner_outreach_log')
+        .select('phone')
+        .order('sent_at', { ascending: false })
+        .limit(5000);
+      for (const row of data || []) {
+        if (row && row.phone) addPhoneKeys(seen, row.phone);
+      }
+    } catch (err) {
+      console.warn(`owner-contact: Supabase outreach dedup query skipped (${err.message})`);
+    }
+  }
+  return seen;
+}
+
+function appendLedgerEntry(entry, ledgerPath = LEDGER_FILE) {
+  try {
+    fs.mkdirSync(path.dirname(ledgerPath), { recursive: true });
+    fs.appendFileSync(ledgerPath, JSON.stringify(entry) + '\n', 'utf8');
+  } catch (err) {
+    console.warn(`owner-contact: failed writing ledger (${err.message})`);
+  }
+}
+
+async function auditOutreachLog(entry) {
+  if (!SB_URL || !SB_KEY) return false;
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const sb = createClient(SB_URL, SB_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { error } = await sb.from('owner_outreach_log').insert({
+      phone: entry.phone,
+      listing_code: entry.code || null,
+      session_name: entry.session || null,
+      direction: 'outbound',
+      availability: 'inbound_lead',
+      message_text: entry.text || null,
+      dry_run: false,
+      sent_at: entry.at || new Date().toISOString(),
+    });
+    if (error) {
+      console.warn(`owner-contact: Supabase audit INSERT warning: ${error.message}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn(`owner-contact: Supabase audit failed: ${err.message}`);
+    return false;
+  }
+}
 
 async function getSheetOwnerLeads(sheets) {
   const response = await sheets.spreadsheets.values.get({
@@ -146,6 +254,9 @@ async function main() {
       console.log(`SUMMARY ${JSON.stringify(summary)}`);
       process.exit(0);
     }
+    if (st.status === 'ready') {
+      readyPool.push({ name: gw.sessionId || 'default', uuid: gw.sessionId || null });
+    }
   } else {
     console.log(`gateway pool ready: ${readyPool.map((p) => p.name).join(', ')}`);
   }
@@ -163,49 +274,80 @@ async function main() {
   console.log(`pending owner leads (${summary.source}): ${leads.length}`);
 
   const optedOut = loadOptOutSet();
+  const contactedPhones = await loadContactedPhones();
+  let poolIdx = 0;
 
   for (const item of leads) {
     if (summary.sent >= DAILY_CAP) {
-      summary.capped = leads.length - summary.sent - summary.skipped - summary.skippedOptOut - summary.failed;
+      summary.capped = leads.length - summary.sent - summary.skipped - summary.skippedOptOut - summary.skippedAlreadyContacted - summary.failed;
       console.log(`daily cap ${DAILY_CAP} reached — remaining rows stay pending`);
       break;
     }
 
     const rawPhone = item.phone;
     const digits = rawPhone.replace(/\D/g, '');
-    if (!rawPhone || rawPhone === 'No contact') {
+    const norm = normalizePhone(rawPhone);
+    const localDigits = digits.startsWith('20') && digits.length === 12 ? '0' + digits.slice(2) : digits;
+
+    if (!rawPhone || rawPhone === 'No contact' || !digits) {
       if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'SKIPPED');
       else await updateSupabaseLeadStage(item.leadId, 'disqualified');
       summary.skipped++;
       continue;
     }
 
-    if (digits && optedOut.has(digits)) {
+    if (optedOut.has(digits) || optedOut.has(norm) || optedOut.has(localDigits)) {
       if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'OPTED_OUT');
       else await updateSupabaseLeadStage(item.leadId, 'closed');
       summary.skippedOptOut++;
       continue;
     }
 
-    const text = enforceOutreachNotice(
-      'owner-negotiation',
-      CONTACT_TEMPLATE
-        .replace('___PRICE___', item.price || 'السعر المعروض')
-        .replace('___LOCATION___', item.location ? item.location : 'القاهرة الجديدة')
-    );
+    if (contactedPhones.has(norm) || contactedPhones.has(digits) || contactedPhones.has(localDigits)) {
+      if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'ALREADY_CONTACTED');
+      else if (!DRY_RUN) await updateSupabaseLeadStage(item.leadId, 'contacted');
+      summary.skippedAlreadyContacted++;
+      continue;
+    }
+
+    const text = buildContactMessage(item);
+    const entry = readyPool.length
+      ? readyPool[poolIdx++ % readyPool.length]
+      : { name: 'dry-run', uuid: null };
 
     if (DRY_RUN) {
-      console.log(`[dry-run] would send to ${rawPhone} (${item.title})`);
+      console.log(`[dry-run] would send via ${entry.name} to ${rawPhone} (${item.title})`);
+      summary.bySession[entry.name] = (summary.bySession[entry.name] || 0) + 1;
       summary.sent++;
       continue;
     }
 
     try {
-      await gw.sendText(rawPhone, text, { retries: 2 });
+      await gw.sendText(rawPhone, text, { sessionId: entry.uuid || entry.name, retries: 2 });
+      const sentAt = new Date().toISOString();
       if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'CONTACTED');
       else await updateSupabaseLeadStage(item.leadId, 'contacted');
+
+      addPhoneKeys(contactedPhones, rawPhone);
+      appendLedgerEntry({
+        phone: norm || digits,
+        code: item.leadId || '',
+        at: sentAt,
+        session: entry.name,
+        worker: '03-owner-contact',
+      });
+      const audited = await auditOutreachLog({
+        phone: norm || digits,
+        code: item.leadId || '',
+        session: entry.name,
+        text,
+        at: sentAt,
+      });
+      if (audited) summary.auditWritten++;
+
+      summary.bySession[entry.name] = (summary.bySession[entry.name] || 0) + 1;
       summary.sent++;
-      console.log(`sent → ${rawPhone} (${item.title})`);
+      console.log(`sent via ${entry.name} → ${rawPhone} (${item.title})`);
     } catch (err) {
       if (item.kind === 'sheet') await updateSheetStatus(sheets, item.sheetRow, 'ERROR');
       summary.failed++;
@@ -224,7 +366,13 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error(`owner-contact FAILED: ${err.message}`);
-  process.exit(1);
-});
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CONTACT_TEMPLATE, buildContactMessage, loadContactedPhones };
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`owner-contact FAILED: ${err.message}`);
+    process.exit(1);
+  });
+}

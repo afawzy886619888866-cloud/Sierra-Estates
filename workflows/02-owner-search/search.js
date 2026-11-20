@@ -107,32 +107,42 @@ async function insertSupabaseOwnerLead(unit) {
   return true;
 }
 
-async function searchPropertyFinder() {
-  const apiKey = process.env.PROPERTY_FINDER_API_KEY;
-  const apiSecret = process.env.PROPERTY_FINDER_API_SECRET;
+async function searchPropertyFinder(opts = {}) {
+  const apiKey = opts.apiKey !== undefined ? opts.apiKey : process.env.PROPERTY_FINDER_API_KEY;
+  const apiSecret = opts.apiSecret !== undefined ? opts.apiSecret : process.env.PROPERTY_FINDER_API_SECRET;
+  const pfToken = opts.pfToken !== undefined ? opts.pfToken : PF_TOKEN;
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  const hasDistinctLegacyToken = Boolean(pfToken && pfToken !== apiKey);
 
   if (apiKey && apiSecret) {
     try {
-      const tokenRes = await fetch('https://atlas.propertyfinder.com/v1/auth/token', {
+      const tokenRes = await fetchImpl('https://atlas.propertyfinder.com/v1/auth/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ apiKey, apiSecret }),
         signal: AbortSignal.timeout(12000),
       });
+      if (tokenRes.status === 401 || tokenRes.status === 403) {
+        failUnconfigured(`PF Atlas auth rejected (HTTP ${tokenRes.status}) — rotate credentials`);
+      }
       if (!tokenRes.ok) throw new Error(`Atlas auth HTTP ${tokenRes.status}`);
       const tokenData = await tokenRes.json();
-      const accessToken = tokenData.accessToken;
+      const accessToken = tokenData && tokenData.accessToken;
+      if (!accessToken) throw new Error('PF Atlas malformed response: missing accessToken');
 
-      const leadsRes = await fetch('https://atlas.propertyfinder.com/v1/leads?perPage=50', {
+      const leadsRes = await fetchImpl('https://atlas.propertyfinder.com/v1/leads?perPage=50', {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
         signal: AbortSignal.timeout(15000),
       });
       if (leadsRes.status === 429) {
-        throw new Error('Atlas leads HTTP 429 rate limited — back off');
+        throw new Error('PF Atlas HTTP 429 rate limited — back off');
       }
       if (!leadsRes.ok) throw new Error(`Atlas leads HTTP ${leadsRes.status}`);
       const payload = await leadsRes.json();
-      const rawLeads = Array.isArray(payload.data) ? payload.data : [];
+      if (!payload || typeof payload !== 'object' || !Array.isArray(payload.data)) {
+        throw new Error(`PF Atlas malformed response: ${JSON.stringify(payload).slice(0, 100)}`);
+      }
+      const rawLeads = payload.data;
 
       const rows = rawLeads.map((item) => {
         const phoneContact = (item.sender?.contacts || []).find((c) => c.type === 'phone');
@@ -157,11 +167,14 @@ async function searchPropertyFinder() {
       console.log(`PF Atlas returned ${rows.length} verified inbound leads`);
       return rows;
     } catch (err) {
+      if (!hasDistinctLegacyToken || /rate limited|429/i.test(err.message)) {
+        throw err;
+      }
       console.warn(`PF Atlas lead query failed (${err.message}) — checking legacy fallback`);
     }
   }
 
-  if (!PF_TOKEN) failUnconfigured('PROPERTY_FINDER_API_KEY / PROPERTY_FINDER_JWT_TOKEN missing');
+  if (!pfToken) failUnconfigured('PROPERTY_FINDER_API_KEY / PROPERTY_FINDER_JWT_TOKEN missing');
 
   try {
     const params = new URLSearchParams({
@@ -173,10 +186,10 @@ async function searchPropertyFinder() {
       limit: process.env.PF_LIMIT || '50',
     });
 
-    const response = await fetch(`${PF_API_BASE}/properties?${params.toString()}`, {
+    const response = await fetchImpl(`${PF_API_BASE}/properties?${params.toString()}`, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${PF_TOKEN}`,
+        Authorization: `Bearer ${pfToken}`,
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(10000),
@@ -257,7 +270,7 @@ async function main() {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { hasOwnerEvidence, buildLeadRow };
+  module.exports = { hasOwnerEvidence, buildLeadRow, searchPropertyFinder };
 }
 
 if (require.main === module) {

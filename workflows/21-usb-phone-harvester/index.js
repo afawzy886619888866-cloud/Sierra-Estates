@@ -23,16 +23,48 @@ const { loadWorkflowEnv } = require('../lib/google-sheets');
 
 loadWorkflowEnv(path.join(__dirname, '..'));
 
-const ROOT_DIR = path.resolve(__dirname, '..', '..');
-const IMPORT_DIR = path.join(ROOT_DIR, 'data', 'whatsapp-phone-import');
-const STATE_DIR = path.join(ROOT_DIR, 'workflows', '.state');
-const GOOGLE_DRIVE_BASE = 'G:\\My Drive\\Sierra_Estates_Units_Media';
+const WORKFLOWS_DIR = path.resolve(__dirname, '..');
+const rawRoot = path.resolve(__dirname, '..', '..');
+const ROOT_DIR = rawRoot === '/' ? WORKFLOWS_DIR : rawRoot;
+const DATA_DIR = process.env.WF_DATA_DIR || path.join(ROOT_DIR, 'data');
+const IMPORT_DIR = process.env.USB_IMPORT_DIR || path.join(DATA_DIR, 'whatsapp-phone-import');
+const INBOX_DIR = path.join(__dirname, 'inbox');
+const STATE_DIR = process.env.WF_STATE_DIR || path.join(WORKFLOWS_DIR, '.state');
+const GOOGLE_DRIVE_BASE = process.env.GOOGLE_DRIVE_BASE || 'G:\\My Drive\\Sierra_Estates_Units_Media';
 
-if (!fs.existsSync(IMPORT_DIR)) fs.mkdirSync(IMPORT_DIR, { recursive: true });
-if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
+for (const dir of [STATE_DIR, INBOX_DIR]) {
+  try {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  } catch (_) {}
+}
+try {
+  if (!fs.existsSync(IMPORT_DIR)) fs.mkdirSync(IMPORT_DIR, { recursive: true });
+} catch (_) {}
+
+function findTxtFiles(dir) {
+  let results = [];
+  if (!dir || !fs.existsSync(dir)) return results;
+  for (const item of fs.readdirSync(dir)) {
+    const full = path.join(dir, item);
+    try {
+      if (fs.statSync(full).isDirectory()) {
+        results = results.concat(findTxtFiles(full));
+      } else if (item.endsWith('.txt') && !/license|readme/i.test(item)) {
+        results.push(full);
+      }
+    } catch (_) {}
+  }
+  return results;
+}
 
 async function pullFromPhoneViaPowershell() {
+  if (process.platform !== 'win32') {
+    return 'SKIPPED_NON_WINDOWS_HOST';
+  }
   const scriptPath = path.join(ROOT_DIR, 'scripts', 'pull-usb-phone.ps1');
+  if (!fs.existsSync(scriptPath)) {
+    return 'NO_USB_SCRIPT_PRESENT';
+  }
   try {
     const out = execSync(`pwsh -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`, {
       encoding: 'utf8',
@@ -41,6 +73,41 @@ async function pullFromPhoneViaPowershell() {
     return out.trim();
   } catch (err) {
     return `NOTICE: ${err.message}`;
+  }
+}
+
+async function fetchOpenWaRecentUnits(parseMod, opts = {}) {
+  const baseUrl = String(opts.baseUrl || process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785').replace(/\/+$/, '');
+  const apiKey = opts.apiKey || process.env.OPENWA_OPERATOR_KEY || process.env.OPENWA_ADMIN_API_KEY || process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_API_KEY || '';
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  if (typeof fetchImpl !== 'function') return [];
+
+  try {
+    const headers = apiKey ? { 'X-API-Key': apiKey } : {};
+    const res = await fetchImpl(`${baseUrl}/api/harvester/recent`, {
+      headers,
+      signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined,
+    });
+    if (!res.ok) return [];
+    const payload = await res.json().catch(() => null);
+    const list = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+    const units = [];
+    for (const item of list) {
+      if (!item || typeof item !== 'object') continue;
+      const rawText = String(item.rawText || item.text || item.description || '').trim();
+      if (!rawText || item.isRequest) continue;
+      if (parseMod.isClientRequest && parseMod.isClientRequest(rawText)) continue;
+      const synthetic = {
+        timestampRaw: item.timestampRaw || item.postedDate || item.timestamp || new Date().toISOString().slice(0, 16),
+        sender: item.senderName || item.sender || item.brokerPhone || 'WhatsApp',
+        text: rawText,
+      };
+      const parsed = parseMod.extractUnitDetails(synthetic, item.sourceGroup || item.groupName || 'OpenWA Live Harvester');
+      if (parsed && !parsed.isRequest) units.push(parsed);
+    }
+    return units;
+  } catch (_) {
+    return [];
   }
 }
 
@@ -56,28 +123,13 @@ async function run() {
   console.log(`      ${phoneRes.split('\n')[0] || 'USB Check Complete'}`);
 
   // 2. Load Parser & Exporter Modules
-  const { parseWhatsAppExport, parseGroupedListings } = await import('./parse-engine.mjs');
+  const parseMod = await import('./parse-engine.mjs');
+  const { parseWhatsAppExport, parseGroupedListings } = parseMod;
   const { exportUnitsToExcel } = await import('./export-sheets.mjs');
 
-  // 3. Scan Staged Chat Files
+  // 3. Scan Staged Chat Files (IMPORT_DIR + local inbox/) + OpenWA Gateway fallback
   console.log('\n[2/5] Parsing & Grouping WhatsApp chats (Filtering out buyer requests)...');
-  function findTxtFiles(dir) {
-    let results = [];
-    if (!fs.existsSync(dir)) return results;
-    for (const item of fs.readdirSync(dir)) {
-      const full = path.join(dir, item);
-      try {
-        if (fs.statSync(full).isDirectory()) {
-          results = results.concat(findTxtFiles(full));
-        } else if (item.endsWith('.txt') && !item.includes('license') && !item.includes('readme')) {
-          results.push(full);
-        }
-      } catch (_) {}
-    }
-    return results;
-  }
-
-  const chatFiles = findTxtFiles(IMPORT_DIR);
+  const chatFiles = Array.from(new Set([...findTxtFiles(IMPORT_DIR), ...findTxtFiles(INBOX_DIR)]));
   console.log(`      Found ${chatFiles.length} WhatsApp chat export(s).`);
 
   const rawUnits = [];
@@ -101,6 +153,14 @@ async function run() {
     } catch (err) {
       console.error(`      Error reading ${f}:`, err.message);
     }
+  }
+
+  let openWaFallbackCount = 0;
+  if (chatFiles.length === 0 || process.env.USB_INCLUDE_OPENWA === '1') {
+    const liveUnits = await fetchOpenWaRecentUnits(parseMod);
+    openWaFallbackCount = liveUnits.length;
+    for (const u of liveUnits) rawUnits.push(u);
+    console.log(`      OpenWA Live Fallback harvested ${openWaFallbackCount} real unit(s).`);
   }
 
   console.log(`      ✓ Filtered out & ignored ${ignoredRequestsCount} buyer/client requests.`);
@@ -138,7 +198,9 @@ async function run() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   let sb = null;
-  let registeredInDbCount = 0;
+  let dbInserted = 0;
+  let dbAlreadyExisted = 0;
+  let dbErrors = 0;
 
   if (supabaseUrl && serviceKey) {
     sb = createClient(supabaseUrl, serviceKey, {
@@ -147,47 +209,71 @@ async function run() {
 
     const CHUNK_SIZE = 50;
     for (let i = 0; i < dedupedUnits.length; i += CHUNK_SIZE) {
-      const chunk = dedupedUnits.slice(i, i + CHUNK_SIZE).map((u) => ({
-        code: u.unitCode,
-        title: `${u.propertyType} in ${u.compound}`,
-        compound: u.compound,
-        location_area: u.zone,
-        price: u.priceEgp || 0,
-        bedrooms: u.bedrooms || 3,
-        bathrooms: u.bathrooms || 2,
-        area_sqm: u.areaSqm || 0,
-        property_type: u.propertyType,
-        deal_type: (u.dealType || 'sale').toLowerCase(),
-        owner_name: u.senderName || null,
-        owner_phone: u.phoneNormalized || null,
-        description: u.rawText || `${u.propertyType} in ${u.compound}`,
-        source_channel: 'whatsapp_usb_import',
-        dupe_check_hash: u.dupeHash,
-        status: 'active',
-        availability: 'available',
-        raw_data: {
-          posted_date: u.postedDate,
-          posted_day: u.postedDay,
-          source_group: u.sourceGroup,
-          advertiser_type: u.advertiser,
-          ingested_at: new Date().toISOString()
-        }
-      }));
+      const seenCodes = new Set();
+      const seenHashes = new Set();
+      const chunk = [];
+      for (const u of dedupedUnits.slice(i, i + CHUNK_SIZE)) {
+        if (seenCodes.has(u.unitCode) || seenHashes.has(u.dupeHash)) continue;
+        seenCodes.add(u.unitCode);
+        seenHashes.add(u.dupeHash);
+        chunk.push({
+          code: u.unitCode,
+          title: `${u.propertyType} in ${u.compound}`,
+          compound: u.compound,
+          location_area: u.zone,
+          price: u.priceEgp || 0,
+          bedrooms: u.bedrooms || 3,
+          bathrooms: u.bathrooms || 2,
+          area_sqm: u.areaSqm || 0,
+          property_type: u.propertyType,
+          deal_type: (u.dealType || 'sale').toLowerCase(),
+          owner_name: u.senderName || null,
+          owner_phone: u.phoneNormalized || null,
+          description: u.rawText || `${u.propertyType} in ${u.compound}`,
+          source_channel: 'whatsapp_usb_import',
+          dupe_check_hash: u.dupeHash,
+          status: 'active',
+          availability: 'available',
+          raw_data: {
+            posted_date: u.postedDate,
+            posted_day: u.postedDay,
+            source_group: u.sourceGroup,
+            advertiser_type: u.advertiser,
+            ingested_at: new Date().toISOString()
+          }
+        });
+      }
+      if (!chunk.length) continue;
 
-      const hashes = chunk.map((c) => c.dupe_check_hash);
-      const { data: existing } = await sb.from('listings').select('id, dupe_check_hash').in('dupe_check_hash', hashes);
-      const existingMap = new Map((existing || []).map((r) => [r.dupe_check_hash, r.id]));
+      const hashes = Array.from(new Set(chunk.map((c) => c.dupe_check_hash).filter(Boolean)));
+      const codes = Array.from(new Set(chunk.map((c) => c.code).filter(Boolean)));
+      const existingHashes = new Set();
+      const existingCodes = new Set();
 
-      const toInsert = chunk.filter((c) => !existingMap.has(c.dupe_check_hash));
+      if (hashes.length) {
+        const { data: exByHash } = await sb.from('listings').select('dupe_check_hash').in('dupe_check_hash', hashes);
+        for (const r of exByHash || []) if (r.dupe_check_hash) existingHashes.add(r.dupe_check_hash);
+      }
+      if (codes.length) {
+        const { data: exByCode } = await sb.from('listings').select('code').in('code', codes);
+        for (const r of exByCode || []) if (r.code) existingCodes.add(r.code);
+      }
+
+      const toInsert = chunk.filter((c) => !existingHashes.has(c.dupe_check_hash) && !existingCodes.has(c.code));
+      dbAlreadyExisted += (chunk.length - toInsert.length);
       if (toInsert.length > 0) {
         const { error } = await sb.from('listings').insert(toInsert);
-        if (!error) registeredInDbCount += toInsert.length;
-        else console.error(`      DB Insert warning:`, error.message);
+        if (!error) {
+          dbInserted += toInsert.length;
+        } else {
+          dbErrors += toInsert.length;
+          console.error(`      DB Insert warning:`, error.message);
+        }
       }
-      registeredInDbCount += (chunk.length - toInsert.length);
     }
-    console.log(`      ✓ Confirmed in System (Supabase listings): ${registeredInDbCount} units.`);
+    console.log(`      ✓ Confirmed in System (Supabase listings): inserted=${dbInserted}, existed=${dbAlreadyExisted}, errors=${dbErrors}`);
   }
+  const registeredInDbCount = dbInserted + dbAlreadyExisted;
 
   // 6. SECOND ACTION: Organize Photos on Google Drive under Unit Code
   // "وحط صورها علي الدريف بنفس كود الوحدة"
@@ -197,13 +283,15 @@ async function run() {
   let photosUploadedToSupabase = 0;
 
   // Search directories for image files
+  const mediaFallbackDir = path.join(DATA_DIR, 'whatsapp-media');
   const searchDirs = [
     IMPORT_DIR,
-    path.join(ROOT_DIR, 'data', 'whatsapp-media'),
+    INBOX_DIR,
+    ...(fs.existsSync(mediaFallbackDir) ? [mediaFallbackDir] : []),
     ...chatFiles.map((f) => path.dirname(f))
   ];
 
-  const hasDrive = fs.existsSync('G:\\My Drive');
+  const hasDrive = process.platform === 'win32' && fs.existsSync('G:\\My Drive');
   if (hasDrive && !fs.existsSync(GOOGLE_DRIVE_BASE)) {
     fs.mkdirSync(GOOGLE_DRIVE_BASE, { recursive: true });
   }
@@ -288,13 +376,13 @@ async function run() {
   // 7. THIRD ACTION: Organize and Export to Multi-Tab Master Excel & CSV
   // "ونظم الوحدات دي علي الشيت"
   console.log('\n[FINAL] Generating Date-Organized Master Spreadsheet...');
-  const exportRes = exportUnitsToExcel(dedupedUnits, {
-    outputDir: path.join(ROOT_DIR, 'data'),
-    userDownloadsDir: 'C:\\Users\\Sierr\\Downloads',
+  const exportRes = await exportUnitsToExcel(dedupedUnits, {
+    outputDir: DATA_DIR,
+    userDownloadsDir: process.platform === 'win32' ? 'C:\\Users\\Sierr\\Downloads' : null,
     driveBaseDir: GOOGLE_DRIVE_BASE
   });
 
-  console.log(`      ✓ Saved Primary Workbook: ${exportRes.primaryPath}`);
+  console.log(`      ✓ Saved Primary Export:   ${exportRes.primaryPath}`);
   console.log(`      ✓ Saved CSV Snapshot:     ${exportRes.csvPath}`);
   if (exportRes.mirrorPath) {
     console.log(`      ✓ Mirrored to Downloads:  ${exportRes.mirrorPath}`);
@@ -305,7 +393,7 @@ async function run() {
   console.log(` Total Available Real Units (By Date): ${exportRes.availableCount}`);
   console.log(` Direct Owners Identified:              ${exportRes.ownersCount}`);
   console.log(` Units with Google Drive Photos:        ${exportRes.drivePhotosCount}`);
-  console.log(` Units Confirmed in Supabase DB:        ${registeredInDbCount}`);
+  console.log(` Units Confirmed in Supabase DB:        ${registeredInDbCount} (new: ${dbInserted}, existing: ${dbAlreadyExisted})`);
   console.log(` Google Drive Media Vault:              ${GOOGLE_DRIVE_BASE}`);
   console.log('================================================================\n');
 
@@ -314,19 +402,33 @@ async function run() {
     workflow: 'usb-phone-harvester',
     last_run_at: new Date().toISOString(),
     status: 'ok',
+    chat_files: chatFiles.length,
+    openwa_fallback: openWaFallbackCount,
     available_units: exportRes.availableCount,
     direct_owners: exportRes.ownersCount,
     drive_photos_count: exportRes.drivePhotosCount,
     db_registered_count: registeredInDbCount,
+    db_inserted: dbInserted,
+    db_existing: dbAlreadyExisted,
+    db_errors: dbErrors,
+    xlsx_written: exportRes.xlsxWritten,
     excel_path: exportRes.primaryPath,
+    csv_path: exportRes.csvPath,
     drive_base: GOOGLE_DRIVE_BASE
   };
   fs.writeFileSync(path.join(STATE_DIR, 'usb-phone-harvester.json'), JSON.stringify(telemetry, null, 2), 'utf8');
+  console.log(`SUMMARY ${JSON.stringify(telemetry)}`);
 
   process.exit(0);
 }
 
-run().catch((err) => {
-  console.error('Harvester failed:', err);
-  process.exit(1);
-});
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { findTxtFiles, pullFromPhoneViaPowershell, fetchOpenWaRecentUnits };
+}
+
+if (require.main === module) {
+  run().catch((err) => {
+    console.error('Harvester failed:', err);
+    process.exit(1);
+  });
+}

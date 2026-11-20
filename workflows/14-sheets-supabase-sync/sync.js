@@ -50,6 +50,7 @@
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
 
+const fs = require('fs');
 const path = require('path');
 const { loadWorkflowEnv, createSheetsClient } = require('../lib/google-sheets');
 
@@ -64,12 +65,15 @@ const MASTER_TAB = process.env.MASTER_INVENTORY_TAB || 'Master_Inventory';
 const REAL_TAB = process.env.REAL_AVAILABLE_TAB || 'Real_Available_Units';
 const WRITE_URL = (process.env.WF_SHEET_WRITE_URL || '').trim();
 const WRITE_SECRET = (process.env.WF_SHEET_WRITE_SECRET || '').trim();
+const APPS_SCRIPT_MAX_ROWS = parseInt(process.env.APPS_SCRIPT_MAX_ROWS || '250', 10);
+const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const summary = {
   dbRows: 0, sheetRows: 0, sheetToDb: 0, dbToSheet: 0,
+  localMirrorRows: 0, sheetWriteOk: null, sheetWriteError: null, appsScriptStatus: null,
   realAvailable: 0, unpublished: 0, reset: 0, tier2SearchOnly: 0,
   versionConflicts: 0, appsScriptFallback: false, errors: 0,
 };
@@ -178,33 +182,132 @@ function supabase() {
   return sb;
 }
 
-async function loadDbListings() {
-  const client = supabase();
+/** Parse RFC-4180 CSV text into an array of row string arrays. */
+function parseCsvText(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQ = false;
+  const src = String(text || '').replace(/^\uFEFF/, '');
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (inQ) {
+      if (c === '"') {
+        if (src[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQ = false;
+        }
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQ = true;
+    } else if (c === ',') {
+      row.push(field);
+      field = '';
+    } else if (c === '\n') {
+      row.push(field);
+      field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else if (c !== '\r') {
+      field += c;
+    }
+  }
+  if (field !== '' || row.length) {
+    row.push(field);
+    if (row.length > 1 || row[0] !== '') rows.push(row);
+  }
+  return rows;
+}
+
+/** Escape and serialize a 2D array to RFC-4180 CSV text. */
+function serializeCsvRows(headers, rows) {
+  const esc = (val) => {
+    const s = val === undefined || val === null ? '' : String(val);
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const out = [headers.map(esc).join(',')];
+  for (const r of rows) {
+    out.push(r.map(esc).join(','));
+  }
+  return out.join('\n') + '\n';
+}
+
+/**
+ * Zero-credential public gviz CSV read fallback when Service Account creds
+ * are absent. Fails open cleanly (warns and returns []) on HTTP/HTML errors.
+ */
+async function readPublicSheetCsv(opts = {}) {
+  if (typeof opts.csvText === 'string') {
+    return parseCsvText(opts.csvText);
+  }
+  const sheetId = String(
+    opts.sheetId ||
+    process.env.UNITS_SHEET_ID ||
+    process.env.MASTER_SHEET_ID ||
+    process.env.GOOGLE_SHEET_ID ||
+    ''
+  ).trim();
+  const gid = String(opts.gid || process.env.UNITS_SHEET_GID || '1127958606').trim();
+  if (!sheetId) return [];
+
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  if (typeof fetchImpl !== 'function') return [];
+
+  const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?tqx=out:csv&gid=${encodeURIComponent(gid)}`;
+  try {
+    const res = await fetchImpl(url, {
+      redirect: 'follow',
+      signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined,
+    });
+    if (!res.ok) {
+      log(`public CSV fallback HTTP ${res.status} — continuing without sheet rows`);
+      return [];
+    }
+    const body = await res.text();
+    if (!body || /^\s*</.test(body)) {
+      log('public CSV fallback returned HTML/empty — continuing without sheet rows');
+      return [];
+    }
+    return parseCsvText(body);
+  } catch (err) {
+    log(`public CSV fallback failed (${err.message}) — continuing without sheet rows`);
+    return [];
+  }
+}
+
+async function loadDbListings(overrideClient) {
+  const client = overrideClient || supabase();
   if (!client) return [];
-  const baseCols = [
+  let activeCols = [
     'id', 'code', 'unit_code', 'se_code', 'created_at', 'updated_at',
-    'deal_type', 'compound', 'property_type', 'area_sqm', 'bedrooms', 'bathroom_count',
+    'deal_type', 'compound', 'property_type', 'area_sqm', 'bedrooms', 'bathrooms',
     'floor_number', 'furnishing_status', 'finishing_type', 'price',
     'ai_fair_price', 'is_featured_gem', 'owner_name', 'owner_phone',
     'contact_status', 'listing_status', 'availability', 'status',
     'publish_to_client', 'automation', 'images', 'photo_count',
-    'agent', 'verified_by_employee', 'verified_available_date',
+    'agent', 'sourced_by_agent', 'broker_name', 'broker_phone',
+    'verified_by_employee', 'verified_available_date',
+    'version_id', 'score_tier', 'source_channel',
   ];
-  const extendedCols = [...baseCols, 'version_id', 'score_tier', 'advertiser_role', 'source_type'];
-  let activeCols = extendedCols.join(',');
-  // Optional/renamed columns may not exist on older schemas — probe and fall back.
   const rows = [];
   let page = 0;
   for (;;) {
     const from = page * 1000;
-    let { data, error } = await client.from('listings').select(activeCols).range(from, from + 999);
-    if (error && /(version_id|score_tier|advertiser_role|source_type)/.test(error.message)) {
-      activeCols = baseCols.join(',');
-      ({ data, error } = await client.from('listings').select(activeCols).range(from, from + 999));
-    }
-    if (error && /bathroom_count/.test(error.message)) {
-      activeCols = activeCols.replace('bathroom_count', 'bathrooms');
-      ({ data, error } = await client.from('listings').select(activeCols).range(from, from + 999));
+    let data = null;
+    let error = null;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      ({ data, error } = await client.from('listings').select(activeCols.join(',')).range(from, from + 999));
+      if (!error) break;
+      const missingMatch = String(error.message || '').match(/column\s+(?:listings\.)?([a-z0-9_]+)\s+does\s+not\s+exist/i);
+      if (!missingMatch) break;
+      const badCol = missingMatch[1];
+      if (!activeCols.includes(badCol)) break;
+      activeCols = activeCols.filter((c) => c !== badCol);
+      if (!activeCols.length) break;
     }
     if (error) throw new Error(`listings read: ${error.message}`);
     rows.push(...(data || []));
@@ -223,6 +326,7 @@ function dbRowToSheetRow(r) {
   const photoCount = Number.isFinite(Number(r.photo_count))
     ? Number(r.photo_count)
     : (Array.isArray(r.images) ? r.images.length : 0);
+  const inferredAdvertiserRole = r.advertiser_role || (r.broker_name || r.broker_phone ? 'broker' : null);
   const row = {
     Unit_Code: (r.code || r.unit_code || r.se_code || '').trim(),
     Date_Added: r.created_at || '',
@@ -243,7 +347,7 @@ function dbRowToSheetRow(r) {
     Owner_Mobile_Internal: phone || 'NULL',
     Contact_Status: v.coerceDropdown('Contact_Status', r.contact_status) || 'Not Contacted Yet',
     Listing_Status: v.coerceDropdown('Listing_Status', r.listing_status) || 'Pending Verification',
-    Sourced_By_Agent: r.agent || 'NULL',
+    Sourced_By_Agent: r.sourced_by_agent || r.agent || 'NULL',
     Verified_By_Employee: r.verified_by_employee || 'NULL',
     Media_Links: Array.isArray(r.images) && r.images.length ? r.images.slice(0, 10).join(' , ') : 'NULL',
     Notes: 'NULL',
@@ -255,8 +359,8 @@ function dbRowToSheetRow(r) {
     __status: r.status || '',
     __versionId: r.version_id ?? null,
     __scoreTier: r.score_tier || null,
-    __advertiserRole: r.advertiser_role || null,
-    __sourceType: r.source_type || null,
+    __advertiserRole: inferredAdvertiserRole,
+    __sourceType: r.source_type || r.source_channel || null,
     __photoCount: photoCount,
   };
   const tierInfo = classifyBrokerTier(row);
@@ -406,36 +510,32 @@ function maskPhone(phone) {
 async function main() {
   const ctx = sheetCtx();
   const client = supabase();
-  const useAppsScript = !ctx;
-  if (useAppsScript) {
-    if (!WRITE_URL && !DRY_RUN) {
-      console.log('UNCONFIGURED: Google Sheets credentials/sheet id missing and WF_SHEET_WRITE_URL unset');
-      process.exit(2);
-    }
-    summary.appsScriptFallback = true;
-  }
+  const useAppsScript = Boolean(!ctx && WRITE_URL);
   if (!client && !DRY_RUN) {
     console.log('UNCONFIGURED: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing');
     process.exit(2);
   }
+  if (useAppsScript) {
+    summary.appsScriptFallback = true;
+  }
 
   // ── BULK RESET MODE (/reset_outreach_status) ────────────────────────────
   if (process.argv.includes('--reset-outreach')) {
-    if (!ctx || !client) {
-      console.log('UNCONFIGURED: --reset-outreach requires Google Sheets API context and Supabase');
+    if (!client) {
+      console.log('UNCONFIGURED: --reset-outreach requires Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)');
       process.exit(2);
     }
     await resetOutreachStatus(ctx, client);
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
-    process.exit(0);
+    process.exit(summary.errors > 0 ? 1 : 0);
   }
 
-  log(`sync start${DRY_RUN ? ' (DRY-RUN)' : ''}${useAppsScript ? ' (AppsScript-fallback)' : ''} — master=${MASTER_TAB} real=${REAL_TAB} batch=${BATCH_SIZE}`);
+  log(`sync start${DRY_RUN ? ' (DRY-RUN)' : ''}${useAppsScript ? ' (AppsScript-fallback)' : ctx ? '' : ' (local-mirror-fallback)'} — master=${MASTER_TAB} real=${REAL_TAB} batch=${BATCH_SIZE}`);
   if (ctx && !DRY_RUN) await ensureTabs(ctx);
 
   // 1. Load both sides.
-  const dbRows = client ? await withBackoff(loadDbListings, 'db-load') : [];
-  const sheetRaw = ctx ? await readTab(ctx, MASTER_TAB) : [];
+  const dbRows = client ? await withBackoff(() => loadDbListings(client), 'db-load') : [];
+  const sheetRaw = ctx ? await readTab(ctx, MASTER_TAB) : await readPublicSheetCsv();
   summary.dbRows = dbRows.length;
   const header = sheetRaw[0] || MASTER_HEADERS;
   const sheetRecs = sheetRaw.slice(1).map((r) => sheetRowToRecord(header, r));
@@ -575,18 +675,22 @@ async function main() {
   }
   summary.realAvailable = realRows.length;
 
-  if (useAppsScript) {
-    const pushRes = await withBackoff(
-      () => pushUnitsViaAppsScript(WRITE_URL, { rows: masterRows, realRows, tab: MASTER_TAB, realTab: REAL_TAB }, { dryRun: DRY_RUN }),
-      'apps-script:upsert_units',
-    );
-    if (!pushRes.ok && !DRY_RUN) {
-      summary.errors++;
-      log(`Apps Script upsert_units failed: status=${pushRes.status}`);
-    } else {
-      summary.dbToSheet = masterRows.length;
+  // Always write local canonical CSV mirrors in STATE_DIR/sheets-mirror when not dry-run.
+  if (!DRY_RUN) {
+    try {
+      const mirrorDir = path.join(STATE_DIR, 'sheets-mirror');
+      fs.mkdirSync(mirrorDir, { recursive: true });
+      fs.writeFileSync(path.join(mirrorDir, 'Master_Inventory.csv'), serializeCsvRows(MASTER_HEADERS, masterRows), 'utf8');
+      fs.writeFileSync(path.join(mirrorDir, 'Real_Available_Units.csv'), serializeCsvRows(REAL_HEADERS, realRows), 'utf8');
+      summary.localMirrorRows = masterRows.length;
+    } catch (mirrorErr) {
+      log(`local CSV mirror warning: ${mirrorErr.message}`);
     }
-  } else if (!DRY_RUN) {
+  } else {
+    summary.localMirrorRows = masterRows.length;
+  }
+
+  if (ctx && !DRY_RUN) {
     // Clear the data area then write (header stays).
     await withBackoff(() => ctx.sheets.spreadsheets.values.clear({
       spreadsheetId: ctx.spreadsheetId, range: `'${MASTER_TAB}'!A2:W100000`,
@@ -598,8 +702,38 @@ async function main() {
       spreadsheetId: ctx.spreadsheetId, range: `'${REAL_TAB}'!A2:X100000`,
     }), 'clear:real');
     if (realRows.length) await writeRows(ctx, REAL_TAB, 2, realRows);
-  } else {
+    summary.sheetWriteOk = true;
+  } else if (ctx && DRY_RUN) {
     summary.dbToSheet = masterRows.length;
+    summary.sheetWriteOk = true;
+  } else if (useAppsScript) {
+    // Prioritize realRows + most recently updated masterRows within APPS_SCRIPT_MAX_ROWS.
+    const sortedRecentMaster = [...merged.values()]
+      .sort((a, b) => (Date.parse(b.Last_Action_Timestamp || 0) || 0) - (Date.parse(a.Last_Action_Timestamp || 0) || 0))
+      .slice(0, APPS_SCRIPT_MAX_ROWS)
+      .map(masterRowArray);
+    const slicedReal = realRows.slice(0, APPS_SCRIPT_MAX_ROWS);
+
+    const pushRes = await withBackoff(
+      () => pushUnitsViaAppsScript(WRITE_URL, { rows: sortedRecentMaster, realRows: slicedReal, tab: MASTER_TAB, realTab: REAL_TAB }, { dryRun: DRY_RUN }),
+      'apps-script:upsert_units',
+    );
+    const bodyOk = Boolean(pushRes && pushRes.ok && (DRY_RUN || (typeof pushRes.body === 'object' && pushRes.body !== null && pushRes.body.ok !== false)));
+    summary.appsScriptStatus = pushRes && typeof pushRes.status === 'number' ? pushRes.status : null;
+    if (!bodyOk && !DRY_RUN) {
+      summary.sheetWriteOk = false;
+      summary.sheetWriteError = `apps_script_http_${pushRes?.status || 'error'}`;
+      summary.dbToSheet = 0;
+      log(`Apps Script upsert_units non-ok: status=${pushRes?.status || 'err'} (honest sheetWriteOk=false; Supabase & local CSV mirror intact)`);
+    } else {
+      summary.sheetWriteOk = true;
+      summary.dbToSheet = DRY_RUN ? masterRows.length : sortedRecentMaster.length;
+    }
+  } else {
+    summary.sheetWriteOk = false;
+    summary.sheetWriteError = 'no_sheet_writer_configured';
+    summary.dbToSheet = 0;
+    log('No Google Sheets Service Account or WF_SHEET_WRITE_URL configured — local CSV mirror + Supabase ops completed');
   }
 
   if (!DRY_RUN && client) {
@@ -697,32 +831,36 @@ async function resetOutreachStatus(ctx, client) {
   if (error) { summary.errors++; log(`db reset failed: ${error.message}`); }
   else summary.reset += (dbReset || []).length;
 
-  // Sheet side (Master_Inventory).
-  const rows = await readTab(ctx, MASTER_TAB);
-  const header = rows[0] || MASTER_HEADERS;
-  const out = [header];
-  const contactIdx = header.findIndex((h) => String(h).trim() === 'Contact_Status');
-  const listingIdx = header.findIndex((h) => String(h).trim() === 'Listing_Status');
-  const tsIdx = header.findIndex((h) => String(h).trim() === 'Last_Action_Timestamp');
+  // Sheet side (Master_Inventory), only when Sheets API context is configured.
   let sheetResets = 0;
-  for (const row of rows.slice(1)) {
-    const r = [...row];
-    while (r.length < header.length) r.push('');
-    const contact = String(r[contactIdx] || '').trim();
-    const listing = String(r[listingIdx] || '').trim();
-    const keep = ['Verified Available', 'Sold', 'Rented', 'Not Available'];
-    if (!keep.includes(contact) && !['Sold', 'Rented'].includes(listing)) {
-      r[contactIdx] = 'Not Contacted Yet';
-      r[tsIdx] = new Date().toISOString();
-      sheetResets++;
+  if (ctx) {
+    const rows = await readTab(ctx, MASTER_TAB);
+    const header = rows[0] || MASTER_HEADERS;
+    const out = [header];
+    const contactIdx = header.findIndex((h) => String(h).trim() === 'Contact_Status');
+    const listingIdx = header.findIndex((h) => String(h).trim() === 'Listing_Status');
+    const tsIdx = header.findIndex((h) => String(h).trim() === 'Last_Action_Timestamp');
+    for (const row of rows.slice(1)) {
+      const r = [...row];
+      while (r.length < header.length) r.push('');
+      const contact = String(r[contactIdx] || '').trim();
+      const listing = String(r[listingIdx] || '').trim();
+      const keep = ['Verified Available', 'Sold', 'Rented', 'Not Available'];
+      if (!keep.includes(contact) && !['Sold', 'Rented'].includes(listing)) {
+        r[contactIdx] = 'Not Contacted Yet';
+        r[tsIdx] = new Date().toISOString();
+        sheetResets++;
+      }
+      out.push(r);
     }
-    out.push(r);
-  }
-  if (!DRY_RUN) {
-    await withBackoff(() => ctx.sheets.spreadsheets.values.clear({
-      spreadsheetId: ctx.spreadsheetId, range: `'${MASTER_TAB}'!A2:W100000`,
-    }), 'reset:clear');
-    if (out.length > 1) await writeRows(ctx, MASTER_TAB, 2, out.slice(1));
+    if (!DRY_RUN) {
+      await withBackoff(() => ctx.sheets.spreadsheets.values.clear({
+        spreadsheetId: ctx.spreadsheetId, range: `'${MASTER_TAB}'!A2:W100000`,
+      }), 'reset:clear');
+      if (out.length > 1) await writeRows(ctx, MASTER_TAB, 2, out.slice(1));
+    }
+  } else {
+    log('resetOutreachStatus: Google Sheets API context absent — Supabase DB reset applied');
   }
   summary.reset += sheetResets;
   log(`reset done: ${JSON.stringify(summary)}`);
@@ -738,6 +876,9 @@ if (require.main === module) {
 module.exports = {
   MASTER_HEADERS,
   REAL_HEADERS,
+  loadDbListings,
+  readPublicSheetCsv,
+  parseCsvText,
   dbRowToSheetRow,
   sheetRowToRecord,
   mergePreferNewer,

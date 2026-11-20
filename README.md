@@ -169,6 +169,8 @@ pnpm --filter sierra-estates-client-page type-check
 
 ## 📚 Core Technical Documentation
 
+- **[Project Status, Workflow Audit & Gap Analysis (`PROJECT_STATUS_AND_GAPS.md`)](./PROJECT_STATUS_AND_GAPS.md):** Live operational status across all server workflows, Nov 20 five-gap repairs (`14-sheets-supabase-sync`, `21-usb-phone-harvester`, `02-owner-search`, `04-email-sender`, `03-owner-contact`), and remaining external credential items.
+- **[Cloudflare Migration Announcement (`docs/CLOUDFLARE_MIGRATION_ANNOUNCEMENT.md`)](./docs/CLOUDFLARE_MIGRATION_ANNOUNCEMENT.md):** Unified Cloudflare Worker (`sierra-estates`) production cutover and Vercel/Firebase retirement record.
 - **[Architecture Blueprint (`ARCHITECTURE.md`)](./ARCHITECTURE.md):** In-depth system design, data models, package boundaries, and sequence diagrams.
 - **[Cloudflare Setup & DNS Guide (`docs/deployment/cloudflare-setup.md`)](./docs/deployment/cloudflare-setup.md):** Step-by-step custom domain and Cloudflare Email Routing configuration.
 - **[Deployment Manual (`DEPLOYMENT.md`)](./DEPLOYMENT.md):** Release procedures, environment hygiene, and operational runbooks.

@@ -81,10 +81,25 @@ services:
       # ── Master Inventory Sheet & Writeback Integration ──
       - UNITS_SHEET_ID=${UNITS_SHEET_ID:-1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk}
       - UNITS_SHEET_GID=${UNITS_SHEET_GID:-1127958606}
+      - MASTER_SHEET_ID=${MASTER_SHEET_ID:-}
       - BROKER_INBOX_SHEET_ID=${BROKER_INBOX_SHEET_ID:-}
       - WF_SHEET_WRITE_URL=${WF_SHEET_WRITE_URL:-}
       - WF_SHEET_WRITE_SECRET=${WF_SHEET_WRITE_SECRET:-}
       - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+      # ── Email & Site Config (Workflow 04) ──
+      - SITE_URL=${SITE_URL:-https://sierra-estates.net}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - EMAIL_APPS_SCRIPT_URL=${EMAIL_APPS_SCRIPT_URL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      # ── USB / WhatsApp Phone Harvester Data Paths (Workflow 21) ──
+      - WF_DATA_DIR=/app/data
+      - USB_IMPORT_DIR=/app/data/whatsapp-phone-import
       # ── Property Finder Enterprise Atlas Credentials (optional) ──
       - PROPERTY_FINDER_API_KEY=${PROPERTY_FINDER_API_KEY:-}
       - PROPERTY_FINDER_API_SECRET=${PROPERTY_FINDER_API_SECRET:-}
@@ -111,6 +126,8 @@ services:
     volumes:
       # Run-state (overlap locks, last-run summaries, opt-out ledger) survives rebuilds.
       - runner-state:/app/.state
+      # Staged WhatsApp chat exports for Workflow 21 (usb-phone-harvester).
+      - ../data/whatsapp-phone-import:/app/data/whatsapp-phone-import:ro
       # OPTIONAL Google service-account key file for private-sheet workflows
       # (if not using inline GOOGLE_SERVICE_ACCOUNT_JSON above).
       # Uncomment ONLY after the file exists on the host (a missing bind
