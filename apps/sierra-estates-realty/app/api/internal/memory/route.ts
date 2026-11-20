@@ -18,14 +18,22 @@ export async function GET(req: Request) {
       count = Object.keys(store).length;
     }
 
+    // §21 honesty: report the real count. No fabricated fallback number.
     return NextResponse.json({
       status: 'active',
-      indexedRecords: count || 822,
-      source: count > 0 ? 'obsidian-store' : 'static-fallback',
-      mockMode: count === 0,
+      indexedRecords: count,
+      source: count > 0 ? 'obsidian-store' : 'empty',
+      mockMode: false,
+      note: count === 0 ? 'obsidian-store.json absent or empty on this isolate' : undefined,
       lastSynchronized: new Date().toISOString(),
     });
   } catch (_error) {
-    return NextResponse.json({ status: 'active', indexedRecords: 822, source: 'static-fallback', mockMode: true });
+    return NextResponse.json({
+      status: 'active',
+      indexedRecords: 0,
+      source: 'unavailable',
+      mockMode: false,
+      note: 'obsidian-store.json not readable on this isolate',
+    });
   }
 }
