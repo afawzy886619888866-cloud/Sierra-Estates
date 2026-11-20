@@ -79,13 +79,13 @@ function validateProductionEnvironment() {
     if (!isConfigured(process.env[name])) missing.push(name);
   }
 
-  const isProductionTarget = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production' || process.env.VERIFY_STRICT_PROD === 'true';
+  const isProductionTarget = process.env.CLOUDFLARE_ENV === 'production' || process.env.CF_PAGES === '1' || process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production' || process.env.VERIFY_STRICT_PROD === 'true';
 
   if (missing.length > 0) {
     if (isProductionTarget) {
       throw new Error(`Missing required production configuration: ${missing.join(', ')}`);
     } else {
-      console.log(`⚠️  NOTICE: [${missing.join(', ')}] are configured in GitHub Secrets / Vercel for production deployments.`);
+      console.log(`⚠️  NOTICE: [${missing.join(', ')}] are configured in GitHub Secrets / Cloudflare Workers for production deployments.`);
     }
   }
 }
@@ -217,5 +217,5 @@ if (passedCount < RESULTS.length) {
   }
   process.exitCode = 1;
 } else {
-  console.log('🎉 SYSTEM READY FOR VERCEL PRODUCTION DEPLOYMENT!\n');
+  console.log('🎉 SYSTEM READY FOR CLOUDFLARE WORKERS PRODUCTION DEPLOYMENT!\n');
 }
