@@ -15,7 +15,7 @@
     "inventory:snapshot": "node scripts/generate-inventory-snapshot.mjs",
     "test": "node scripts/ensure-snapshot.mjs && jest --testPathPatterns=__tests__",
     "test:ci": "node scripts/ensure-snapshot.mjs && jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__",
-    "build:cf": "node scripts/ensure-snapshot.mjs && next build --webpack && opennextjs-cloudflare build --skipNextBuild",
+    "build:cf": "node scripts/ensure-snapshot.mjs && next build --webpack && opennextjs-cloudflare build --skipNextBuild --minify",
     "preview:cf": "opennextjs-cloudflare preview"
   },
   "dependencies": {
