@@ -101,6 +101,12 @@ export const AUTOMATION_JOBS: readonly AutomationJob[] = [
         dedupeHours: 0,
         description: 'Applies pending migration-ledger files. Deliberately unscheduled — manual dispatch only.',
     },
+    {
+        name: 'llm-catalog-refresh',
+        window: null,
+        dedupeHours: 2,
+        description: 'freellmapi integration: probes GET /models on every enabled free-LLM provider, stores discovered catalog + health (dispatched via the 25 */3 automations window or Admin → LLM Router).',
+    },
 ];
 
 export function getAutomationJob(name: string): AutomationJob | undefined {

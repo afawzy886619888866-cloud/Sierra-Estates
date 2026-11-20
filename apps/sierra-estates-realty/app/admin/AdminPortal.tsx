@@ -52,6 +52,7 @@ import { isNavTabAllowedForRole, navItemsForRole, navRequiredPermissionsFor } fr
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
+import LLMRouterView from '@/app/admin/views/LLMRouterView';
 import WhatsAppOutboxView from '@/app/admin/views/WhatsAppOutboxView';
 import RequestsSpreadsheetView from '@/components/admin/RequestsSpreadsheetView';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
@@ -2115,6 +2116,7 @@ const DEPARTMENT_HUBS: Record<string, { parent: string; titleEn: string; titleAr
       { id: 'workflows', labelEn: 'Automations & Engine', labelAr: 'محرك الأتمتة', icon: '⚡' },
       { id: 'workflow_studio', labelEn: 'Workflow Studio', labelAr: 'استوديو سير العمل', icon: '🧩' },
       { id: 'openclaw', labelEn: 'OpenClaw Terminal', labelAr: 'طرفية أوبن كلو', icon: '🦞' },
+      { id: 'llm_router', labelEn: 'LLM Router (Free APIs)', labelAr: 'راوتر النماذج المجانية', icon: '🔌' },
       { id: 'nexus', labelEn: 'Nexus Telemetry', labelAr: 'بث نيكسوس المباشر', icon: '📡' },
       { id: 'memory_brain', labelEn: 'Central Memory & DeepSeek', labelAr: 'الذاكرة المركزية', icon: '🧬' },
       { id: 'notebookllm', labelEn: 'NotebookLM Audio Studio', labelAr: 'الملخصات الصوتية', icon: '🎙️' },
@@ -2752,6 +2754,7 @@ function AdminApp() {
       case 'requests_sheet':return <RequestsSpreadsheetView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
+      case 'llm_router':return <LLMRouterView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={guardedSetTab}/>;
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;
