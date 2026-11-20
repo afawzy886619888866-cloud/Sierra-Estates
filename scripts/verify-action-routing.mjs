@@ -6,8 +6,8 @@
  * architectural targets without cross-boundary leaks or misconfigurations.
  * 
  * Target Domains:
- * 1. [CLIENT]     apps/sierra-estates-realty -> Vercel Client (sierra-estates-client-portal)
- * 2. [ADMIN]      apps/sierra-estates-realty/app/admin -> Vercel Admin (sierra-estates-admin-page)
+ * 1. [CLIENT]     apps/sierra-estates-realty -> Cloudflare Worker sierra-estates (sierra-estates.net)
+ * 2. [ADMIN]      apps/sierra-estates-realty/app/admin -> Cloudflare Worker sierra-estates (admin.sierra-estates.net)
  * 3. [DATABASE]   supabase/ & packages/db -> Supabase PostgreSQL (gaxfqcietzoonlmatiot)
  * 4. [AUTOMATION] apps/automations & infra/ -> Background Workers & Cron Jobs
  * 5. [SHARED]     packages/* & shared configs -> Monorepo Core
@@ -104,11 +104,11 @@ for (const file of changedFiles) {
 
 // Display target dispatch report
 if (targets.client.length) {
-  console.log(`  🌐 [Client Portal Target] -> Vercel: sierra-estates-client-portal (sierra-estates.net)`);
+  console.log(`  🌐 [Client Portal Target] -> Cloudflare Worker: sierra-estates (sierra-estates.net)`);
   targets.client.forEach((f) => console.log(`      • ${f}`));
 }
 if (targets.admin.length) {
-  console.log(`  🛡️  [Admin Portal Target]  -> Vercel: sierra-estates-admin-page (admin.sierra-estates.net)`);
+  console.log(`  🛡️  [Admin Portal Target]  -> Cloudflare Worker: sierra-estates (admin.sierra-estates.net)`);
   targets.admin.forEach((f) => console.log(`      • ${f}`));
 }
 if (targets.database.length) {
@@ -139,9 +139,9 @@ if (!fs.existsSync(clientPkg)) {
   violations.push('Missing apps/sierra-estates-realty/package.json client root.');
 }
 
-const vercelConfig = path.join(ROOT, 'vercel.json');
-if (!fs.existsSync(vercelConfig)) {
-  violations.push('Missing root vercel.json deployment configuration.');
+const wranglerConfig = path.join(ROOT, 'apps', 'sierra-estates-realty', 'wrangler.jsonc');
+if (!fs.existsSync(wranglerConfig)) {
+  violations.push('Missing apps/sierra-estates-realty/wrangler.jsonc Cloudflare Worker configuration.');
 }
 
 // Final Verdict
