@@ -276,10 +276,16 @@ async function runTool(name, args = {}) {
 
       // Fallback to Sierra Estates native OpenClaw task runner
       try {
+        const tsxCli = path.join(WORKSPACE_ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+        const hasTsxCli = fs.existsSync(tsxCli);
+        const cmd = hasTsxCli ? process.execPath : (process.platform === 'win32' ? 'npx.cmd' : 'npx');
+        const cmdArgs = hasTsxCli
+          ? [tsxCli, path.join(WORKSPACE_ROOT, 'scripts', 'openclaw-task-runner.ts'), task]
+          : ['tsx', path.join(WORKSPACE_ROOT, 'scripts', 'openclaw-task-runner.ts'), task];
         const { stdout, stderr } = await execFileAsync(
-          process.platform === 'win32' ? 'npx.cmd' : 'npx',
-          ['tsx', path.join(WORKSPACE_ROOT, 'scripts', 'openclaw-task-runner.ts'), task],
-          { cwd: WORKSPACE_ROOT, timeout: 60000 },
+          cmd,
+          cmdArgs,
+          { cwd: WORKSPACE_ROOT, timeout: 60000, shell: !hasTsxCli && process.platform === 'win32' },
         );
         return {
           ok: true,
