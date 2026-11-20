@@ -17,6 +17,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAppCheck } from "@/lib/server/app-check";
 import { applyRateLimit, publicEndpointLimiter } from "@/lib/server/rate-limit";
+import { getSupabaseAdmin, isSupabaseAdminConfigured } from "@sierra-estates/db";
+import { embedQuery768, isGeminiEmbeddingConfigured } from "@/lib/server/gemini-embeddings";
+import { isWebSearchConfigured, webSearch } from "@/lib/server/web-search";
 
 /** Longest prompt we will forward to the LLM provider. */
 const MAX_PROMPT_CHARS = 4000;
@@ -86,55 +89,161 @@ function resolveProviderConfig() {
   return { provider, apiKey, model, baseUrl };
 }
 
-async function callLLM(prompt: string): Promise<{ reply: string; diff?: string }> {
-  const { provider, apiKey, model, baseUrl } = resolveProviderConfig();
+/**
+ * Ordered LLM candidates for failover. The primary selection keeps the
+ * legacy single-provider semantics; the rest of the chain (openai, gemini,
+ * openrouter) engages only when the primary call fails — so one provider
+ * outage no longer takes the terminal down.
+ */
+export function resolveProviderCandidates() {
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+  const openclawKey = process.env.OPENCLAW_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const explicit = process.env.OPENCLAW_PROVIDER?.toLowerCase();
 
-  if (!apiKey) {
+  const primary = explicit || (geminiKey ? "gemini" : "openai");
+  const order = [primary, "openai", "gemini", "openrouter"];
+  const keyFor = (p: string) =>
+    openclawKey ||
+    (p === "gemini" ? geminiKey : undefined) ||
+    (p === "openai" ? openaiKey : undefined) ||
+    (p === "openrouter" ? openrouterKey : undefined);
+
+  const seen = new Set<string>();
+  const candidates: Array<{ provider: string; apiKey: string; model: string; baseUrl: string }> = [];
+  for (const provider of order) {
+    if (seen.has(provider)) continue;
+    seen.add(provider);
+    const apiKey = keyFor(provider);
+    if (!apiKey) continue;
+    candidates.push({
+      provider,
+      apiKey,
+      model: process.env.OPENCLAW_MODEL || DEFAULT_MODELS[provider] || "gemini-2.5-flash",
+      baseUrl: BASE_URLS[provider] || BASE_URLS.gemini,
+    });
+  }
+  return candidates;
+}
+
+/**
+ * Grounding context injected ahead of the prompt: real pgvector listing
+ * matches + (when configured) Tavily web hits. Every failure mode degrades
+ * to less context — the grounding is best-effort and NEVER fabricated
+ * (§21: real rows only, or nothing).
+ */
+async function buildGrounding(prompt: string): Promise<string> {
+  const parts: string[] = [];
+
+  if (isGeminiEmbeddingConfigured() && isSupabaseAdminConfigured()) {
+    try {
+      const embedding = await embedQuery768(prompt.slice(0, 1200));
+      const { data, error } = await getSupabaseAdmin().rpc("match_listings_gemini", {
+        query_embedding: embedding,
+        match_threshold: 0.2,
+        match_count: 3,
+      });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const lines = (data as Array<Record<string, unknown>>)
+          .slice(0, 3)
+          .map((r) => {
+            const price = typeof r.price === "number" && r.price > 0
+              ? `${r.price.toLocaleString("en-EG")} EGP`
+              : "price on request";
+            return `- [${r.ref_id ?? r.id}] ${r.compound ?? "compound n/a"} · ${r.title ?? ""} · ${r.bedrooms ?? "?"} bd · ${r.area_sqm ?? "?"} sqm · ${price} · deal: ${r.deal_type ?? "n/a"} · similarity ${(r.similarity as number)?.toFixed(2) ?? "?"}`;
+          });
+        parts.push(
+          "LIVE LISTING CONTEXT (real rows from Supabase pgvector; cite only these real units, never invent others):\n" +
+            lines.join("\n"),
+        );
+      }
+    } catch {
+      // Best-effort: a slow RPC must never block or fail the reply.
+    }
+  }
+
+  if (isWebSearchConfigured()) {
+    try {
+      const ws = await webSearch(prompt, 3);
+      if (ws.available && ws.hits.length > 0) {
+        parts.push(
+          "WEB CONTEXT (cite these URLs; do not assert unverified facts):\n" +
+            ws.hits.map((h) => `- ${h.title} — ${h.url}\n  ${h.snippet}`).join("\n"),
+        );
+      }
+    } catch {
+      // Best-effort.
+    }
+  }
+
+  return parts.join("\n\n");
+}
+
+async function callLLM(prompt: string, grounding = ""): Promise<{ reply: string; diff?: string }> {
+  const candidates = resolveProviderCandidates();
+
+  if (candidates.length === 0) {
     return {
       reply:
         "OpenClaw LLM key is not configured in this environment. Bind `GEMINI_API_KEY` (recommended) or `OPENCLAW_API_KEY` in Cloudflare Worker secrets / `.env.local`.",
     };
   }
 
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      ...(provider === "openrouter" && {
-        "HTTP-Referer": process.env.NEXT_PUBLIC_CLIENT_URL ?? "https://sierra-estates.net",
-        "X-Title": "Sierra Estates — OpenClaw Terminal",
-      }),
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user",   content: prompt },
-      ],
-      temperature: 0.25,
-      response_format: { type: "json_object" },
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
+  const systemContent = grounding
+    ? `${SYSTEM_PROMPT}\n\n=== GROUNDING (verified context for this turn) ===\n${grounding}\n=== END GROUNDING ===`
+    : SYSTEM_PROMPT;
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new Error(`LLM API returned ${res.status}${detail ? ": " + detail.slice(0, 200) : ""}`);
+  let lastError = "no provider attempted";
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(`${candidate.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${candidate.apiKey}`,
+          ...(candidate.provider === "openrouter" && {
+            "HTTP-Referer": process.env.NEXT_PUBLIC_CLIENT_URL ?? "https://sierra-estates.net",
+            "X-Title": "Sierra Estates — OpenClaw Terminal",
+          }),
+        },
+        body: JSON.stringify({
+          model: candidate.model,
+          messages: [
+            { role: "system", content: systemContent },
+            { role: "user",   content: prompt },
+          ],
+          temperature: 0.25,
+          response_format: { type: "json_object" },
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        lastError = `${candidate.provider} returned ${res.status}${detail ? ": " + detail.slice(0, 200) : ""}`;
+        continue; // failover to the next candidate
+      }
+
+      const json = await res.json();
+      const raw = json.choices?.[0]?.message?.content ?? "{}";
+
+      try {
+        const parsed = JSON.parse(raw) as { reply?: string; diff?: string };
+        return {
+          reply: parsed.reply ?? "Done.",
+          diff: parsed.diff ?? undefined,
+        };
+      } catch {
+        return { reply: String(raw) };
+      }
+    } catch (err) {
+      lastError = `${candidate.provider}: ${err instanceof Error ? err.message : "request failed"}`;
+      continue;
+    }
   }
 
-  const json  = await res.json();
-  const raw   = json.choices?.[0]?.message?.content ?? "{}";
-
-  try {
-    const parsed = JSON.parse(raw) as { reply?: string; diff?: string };
-    return {
-      reply: parsed.reply ?? "Done.",
-      diff:  parsed.diff  ?? undefined,
-    };
-  } catch {
-    return { reply: String(raw) };
-  }
+  throw new Error(`All configured LLM providers failed — last error: ${lastError}`);
 }
 
 /* ── Route handlers ──────────────────────────────────────────────────────── */
@@ -149,6 +258,7 @@ export async function GET() {
       provider,
       model,
       configured: Boolean(apiKey),
+      failoverChain: resolveProviderCandidates().map((c) => c.provider),
       engines: {
         memory: true,
         ragAndGis: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
@@ -191,7 +301,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await callLLM(prompt);
+    const grounding = await buildGrounding(prompt);
+    const result = await callLLM(prompt, grounding);
     return NextResponse.json(result);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Internal server error";
