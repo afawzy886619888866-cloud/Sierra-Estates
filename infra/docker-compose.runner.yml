@@ -70,6 +70,7 @@ services:
       # Lane opens 09:00 Cairo (owner requirement: WhatsApp lane open at least
       # 9am-9pm; PR #37). Keep this default in sync with outreach.js ACTIVE_HOURS.
       - WF_PARALLEL_LINES=${WF_PARALLEL_LINES:-7}
+      - WF_ROTATE_SINGLE_LINE=${WF_ROTATE_SINGLE_LINE:-0}
       - WF_HOST_SIDE=${WF_HOST_SIDE:-split}
       - WF_SLOT_BATCH=${WF_SLOT_BATCH:-20}
       - WF_SLOT_DEADLINE_MS=${WF_SLOT_DEADLINE_MS:-3000000}
