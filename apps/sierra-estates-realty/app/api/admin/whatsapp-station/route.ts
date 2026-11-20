@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
   const stationRow = rows.find((r) => r?.slug === STATION_SLUG) || null;
 
   // 2) waiting-list counts + registered broker groups
-  let counts = { PENDING: 0, APPROVED: 0, REJECTED: 0, IMPORTED: 0, total: 0 };
+  const counts = { PENDING: 0, APPROVED: 0, REJECTED: 0, IMPORTED: 0, total: 0 };
   let groups: Array<Record<string, unknown>> = [];
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
