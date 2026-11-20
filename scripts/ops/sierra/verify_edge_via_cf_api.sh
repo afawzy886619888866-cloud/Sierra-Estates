@@ -29,13 +29,23 @@ CODE=$(curl -sS -o "$TMP/worker.json" -w '%{http_code}' "${AUTH[@]}" \
 echo "CF API: worker '$WORKER' present (HTTP 200)."
 
 # 2) workers.dev preview (zone WAF does not apply there).
+# Cold isolates on the FREE plan often 5xx on the very first hit (startup CPU
+# cap); the hit itself warms the isolate, so ONE warm-up retry is honest
+# signal — a second consecutive failure is a real outage, not a cold start.
+wf_probe() { # url outfile -> http_code
+  curl -sS -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' \
+    -o "$2" -w '%{http_code}' --max-time 30 "$1" || echo 000
+}
 SUB=$(curl -sS "${AUTH[@]}" "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
   | jq -r '.result.subdomain // empty' 2>/dev/null || true)
 if [ -n "$SUB" ]; then
   BASE="https://$WORKER.$SUB.workers.dev"
 
-  HEALTH_CODE=$(curl -sS -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' \
-    -o "$TMP/preview.json" -w '%{http_code}' --max-time 30 "$BASE/api/health" || echo 000)
+  HEALTH_CODE=$(wf_probe "$BASE/api/health" "$TMP/preview.json")
+  if [ "$HEALTH_CODE" != "200" ] && [ "$HEALTH_CODE" != "000" ]; then
+    sleep 15
+    HEALTH_CODE=$(wf_probe "$BASE/api/health" "$TMP/preview.json")
+  fi
   if [ "$HEALTH_CODE" = "200" ] && jq -e '.status == "healthy"' "$TMP/preview.json" >/dev/null 2>&1; then
     echo "CF workers.dev: $BASE/api/health → 200 healthy."
     exit 0
@@ -46,8 +56,11 @@ if [ -n "$SUB" ]; then
     echo "::warning::workers.dev /api/health → HTTP $HEALTH_CODE (checking the SSR root page as serving proof)."
   fi
 
-  ROOT_CODE=$(curl -sS -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' \
-    -o "$TMP/preview.html" -w '%{http_code}' --max-time 30 "$BASE/" || echo 000)
+  ROOT_CODE=$(wf_probe "$BASE/" "$TMP/preview.html")
+  if [ "$ROOT_CODE" != "200" ] && [ "$ROOT_CODE" != "000" ]; then
+    sleep 15
+    ROOT_CODE=$(wf_probe "$BASE/" "$TMP/preview.html")
+  fi
   if [ "$ROOT_CODE" = "200" ] && grep -q '<!DOCTYPE html' "$TMP/preview.html" 2>/dev/null; then
     echo "CF workers.dev: $BASE/ → 200 with real Next.js HTML — worker is deployed AND serving."
     exit 0
@@ -58,9 +71,22 @@ else
 fi
 
 # 3) Deployment recency (weak signal: proves a deployment exists).
-DEP=$(curl -sS "${AUTH[@]}" \
-  "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/deployments/by-script?script_name=$WORKER" \
-  | jq -r '.result.items[0].modified_on // .result.items[0].created_on // empty' 2>/dev/null || true)
+# Try the per-script deployments endpoint first (canonical), then the
+# by-script filter, then the scripts listing — response shapes vary by
+# endpoint, so all three shapes are parsed.
+DEP=""
+for EP in \
+  "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$WORKER/deployments" \
+  "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/deployments/by_script?script_name=$WORKER"; do
+  DEP=$(curl -sS "${AUTH[@]}" "$EP" \
+    | jq -r '.result.items[0].modified_on // .result.items[0].created_on // .result.modified_on // .result.created_on // .result[0].modified_on // empty' 2>/dev/null || true)
+  [ -n "$DEP" ] && break
+done
+if [ -z "$DEP" ]; then
+  # Last resort: the scripts listing carries modified_on per script.
+  DEP=$(curl -sS "${AUTH[@]}" "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts" \
+    | jq -r --arg w "$WORKER" '.result[] | select(.id == $w) | .modified_on // .created_on // empty' 2>/dev/null || true)
+fi
 if [ -n "$DEP" ]; then
   echo "CF API: latest deployment for '$WORKER' at $DEP (weak-pass: workers.dev not checkable)."
   exit 0

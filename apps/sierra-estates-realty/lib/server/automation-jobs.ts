@@ -107,6 +107,12 @@ export const AUTOMATION_JOBS: readonly AutomationJob[] = [
         dedupeHours: 2,
         description: 'freellmapi integration: probes GET /models on every enabled free-LLM provider, stores discovered catalog + health (dispatched via the 25 */3 automations window or Admin → LLM Router).',
     },
+    {
+        name: 'price-index',
+        window: null,
+        dedupeHours: 720,
+        description: 'Monthly Sierra Price Index snapshot (1st of the month, 04:15 UTC). dedupeHours = 30 days — a re-fire inside the month records an honest skipped run.',
+    },
 ];
 
 export function getAutomationJob(name: string): AutomationJob | undefined {

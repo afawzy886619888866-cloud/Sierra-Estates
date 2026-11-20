@@ -1,50 +1,26 @@
 import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logger } from '@/lib/logger';
-import { sharedMemory } from '@sierra-estates/memory-engine';
 import { scheduleViewing } from './viewing-engine';
-import snapshot from '@/lib/inventory/snapshot.json';
 import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
+import {
+  SESSIONS_STORE_KEY,
+  getSessions as storeGetSessions,
+  saveSessions as storeSaveSessions,
+  sweepTimeouts as storeSweepTimeouts,
+  type VerificationUnitItem,
+  type BatchAvailabilitySession,
+} from './AvailabilitySessionStore';
 
-export interface VerificationUnitItem {
-  unitId: string;
-  unitCode: string;
-  compound: string;
-  propertyType: string;
-  operation: 'rent' | 'buy' | string;
-  priceLabel: string;
-  price: number;
-  contactPhone: string;
-  contactName: string;
-  ownerType: 'owner' | 'broker' | 'unknown';
-  status: 'inquiry_sent' | 'no_contact_on_file' | 'available' | 'unavailable' | 'expired';
-  sentAt: number;
-  expiresAt: number;
-  replyReceivedAt?: number;
-  refinedNotes?: string;
-  photoUrls: string[];
-  rawReplyText?: string;
-}
-
-export interface BatchAvailabilitySession {
-  id: string;
-  clientName: string;
-  clientPhone: string;
-  notes?: string;
-  createdAt: number;
-  expiresAt: number; // 1 hour after createdAt
-  status: 'active' | 'completed' | 'expired';
-  units: VerificationUnitItem[];
-  viewingProposed: boolean;
-  viewingScheduled: boolean;
-  scheduledViewingId?: string;
-}
+// Session interfaces + the light session store live in AvailabilitySessionStore
+// (automation enhancement 2026-11-20: the cron sweep must NOT pull this
+// module's heavy deps — 6.7 MB snapshot.json / Gemini / WhatsApp — under
+// Cloudflare's FREE-plan 10 ms CPU cap). Types re-exported unchanged.
+export type { VerificationUnitItem, BatchAvailabilitySession } from './AvailabilitySessionStore';
+export { SESSIONS_STORE_KEY };
 
 const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
 const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
-
-// In-memory / persistent fallback registry for batch requests
-const SESSIONS_STORE_KEY = 'availability_batch_sessions';
 
 export class AvailabilityVerificationService {
   public static readonly MAX_UNITS_LIMIT = 40;
@@ -64,9 +40,11 @@ export class AvailabilityVerificationService {
   }
 
   /**
-   * Look up unit details from snapshot.json
+   * Look up unit details from the inventory snapshot (lazy-loaded: the 6.7 MB
+   * snapshot must not be parsed on module import — cold-start CPU cap).
    */
-  public static findUnitById(unitId: string): any | null {
+  public static async findUnitById(unitId: string): Promise<any | null> {
+    const snapshot = (await import('@/lib/inventory/snapshot.json')).default;
     const rawUnits: any[] = (snapshot as any)?.units || [];
     const found = rawUnits.find(
       (u) => u.id === unitId || u.code === unitId || String(u.id) === String(unitId)
@@ -75,64 +53,17 @@ export class AvailabilityVerificationService {
   }
 
   /**
-   * Helper to fetch all sessions from shared memory
+   * Helper to fetch all sessions — delegates to the light AvailabilitySessionStore.
    */
   public static async getSessions(): Promise<Record<string, BatchAvailabilitySession>> {
-    try {
-      const stored = await sharedMemory.read(SESSIONS_STORE_KEY);
-      return (stored as Record<string, BatchAvailabilitySession>) || {};
-    } catch {
-      return {};
-    }
+    return storeGetSessions();
   }
 
   /**
-   * Helper to persist sessions to shared memory
+   * Helper to persist sessions — delegates to the light AvailabilitySessionStore.
    */
   public static async saveSessions(sessions: Record<string, BatchAvailabilitySession>): Promise<void> {
-    try {
-      await sharedMemory.write(SESSIONS_STORE_KEY, sessions, {
-        author: 'system',
-        tags: ['availability', 'radar-net'],
-      });
-    } catch (err) {
-      logger.warn(`[AvailabilityService] Failed to persist sessions to sharedMemory: ${(err as Error).message}`);
-    }
-
-    // Authoritative persistence in Supabase PostgreSQL
-    try {
-      const { getSupabaseAdmin } = await import('@sierra-estates/db');
-      const supabase = getSupabaseAdmin();
-      if (supabase) {
-        await supabase.from('unified_memory').upsert({
-          agent_id: 'system',
-          category: 'radar-net',
-          key: SESSIONS_STORE_KEY,
-          value: sessions,
-          source: 'AvailabilityVerificationService',
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'agent_id,key' });
-
-        for (const s of Object.values(sessions).slice(-10)) {
-          await supabase.from('inquiries').upsert({
-            id: s.id,
-            mode: 'radar-net-availability',
-            name: s.clientName,
-            phone: s.clientPhone,
-            zone: s.units[0]?.compound || '',
-            property_type: s.units[0]?.propertyType || '',
-            budget: `${s.units.length} units selected (max 40)`,
-            status: s.status === 'active' ? 'inquiry_sent' : s.status,
-            source: 'listing-net-radar',
-            notes: `Availability verification for ${s.units.length} units. Notes: ${s.notes || 'None'}`,
-            updated_by: 'AvailabilityVerificationService',
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'id' });
-        }
-      }
-    } catch (dbErr) {
-      logger.warn(`[AvailabilityService] Supabase sync note: ${(dbErr as Error).message}`);
-    }
+    return storeSaveSessions(sessions);
   }
 
   /**
@@ -205,7 +136,7 @@ export class AvailabilityVerificationService {
     const verificationUnits: VerificationUnitItem[] = [];
 
     for (const id of unitIds) {
-      const unit = this.findUnitById(id);
+      const unit = await this.findUnitById(id);
       const unitCode = unit?.code || id;
       // §21 no-fabrication: unknown compound/type stay empty — the inquiry
       // message phrases around them instead of inventing 'New Cairo'/'Apartment'.
@@ -323,50 +254,11 @@ export class AvailabilityVerificationService {
   }
 
   /**
-   * Sweeps active sessions and enforces the 1-Hour SLA.
-   * If an owner/broker does not reply within 1 hour, mark as unavailable.
+   * Sweeps active sessions and enforces the 1-Hour SLA — delegates to the
+   * light AvailabilitySessionStore (cron path must stay CPU-light).
    */
   public static async sweepTimeouts(): Promise<{ expiredUnitsCount: number; updatedSessions: number }> {
-    const sessions = await this.getSessions();
-    const now = Date.now();
-    let expiredUnitsCount = 0;
-    let updatedSessions = 0;
-
-    for (const sessionId of Object.keys(sessions)) {
-      const session = sessions[sessionId];
-      if (session.status !== 'active') continue;
-
-      let sessionModified = false;
-      let allSettled = true;
-
-      for (const unit of session.units) {
-        if (unit.status === 'inquiry_sent') {
-          if (now >= unit.expiresAt) {
-            unit.status = 'unavailable';
-            unit.refinedNotes = 'غير متاحة (لم يتم الرد من جهة الاتصال خلال مهلة الساعة)';
-            expiredUnitsCount++;
-            sessionModified = true;
-          } else {
-            allSettled = false;
-          }
-        }
-      }
-
-      if (allSettled) {
-        session.status = 'completed';
-        sessionModified = true;
-      }
-
-      if (sessionModified) {
-        updatedSessions++;
-      }
-    }
-
-    if (updatedSessions > 0) {
-      await this.saveSessions(sessions);
-    }
-
-    return { expiredUnitsCount, updatedSessions };
+    return storeSweepTimeouts();
   }
 
   /**
