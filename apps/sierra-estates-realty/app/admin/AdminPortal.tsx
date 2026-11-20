@@ -42,6 +42,8 @@ import {
   ViewingsView,
   AccessApprovalsView,
   OwnerFeedbackRegistryView,
+  WhatsAppStationView,
+  ListingWaitingListView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import AddListingForm from '@/components/client/AddListingForm';
@@ -2752,6 +2754,8 @@ function AdminApp() {
       case 'requests_sheet':return <RequestsSpreadsheetView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
+      case 'whatsapp_station':return <WhatsAppStationView lang={langKey}/>;
+      case 'listing_waiting_list':return <ListingWaitingListView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={guardedSetTab}/>;
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;

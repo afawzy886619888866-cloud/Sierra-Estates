@@ -223,6 +223,24 @@ export const NAV_ITEMS = (T: TranslationFn, role?: unknown): NavItem[] => {
       badge: 'Registry',
       badgeCls: 'nb-blue',
     },
+    // 4b-2. WhatsApp Station (portable scraping skill — QR/USB → waiting list)
+    {
+      id: 'whatsapp_station',
+      label: isAr ? 'محطة واتساب (حصاد العروض)' : 'WhatsApp Station (Harvest)',
+      icon: '📡',
+      section: isAr ? 'المراسلات والتسويق' : 'Outreach & Comms',
+      badge: 'Skill',
+      badgeCls: 'nb-green',
+    },
+    // 4b-3. Listing Waiting List (staging triage → approve → PF ad → site/map)
+    {
+      id: 'listing_waiting_list',
+      label: isAr ? 'قائمة انتظار العروض' : 'Listing Waiting List',
+      icon: '⏳',
+      section: isAr ? 'العمليات العقارية' : 'Core Real Estate',
+      badge: 'New',
+      badgeCls: 'nb-gold',
+    },
     // 4c. Server-Side Workflow Control Plane (10 background automation jobs & runner control)
     {
       id: 'workflow_ops',
