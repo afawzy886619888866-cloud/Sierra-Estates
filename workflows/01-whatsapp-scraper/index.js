@@ -43,23 +43,17 @@ const GROUPS_TO_WATCH = (process.env.SCRAPER_GROUPS || 'مجموعة وسطاء 
 let googleSheetsClient = null;
 
 /**
- * Lazy Google Sheets authentication
+ * Lazy Google Sheets authentication (zero-dep REST client — no googleapis)
  */
 function getSheetsClient() {
   if (googleSheetsClient) return googleSheetsClient;
   if (!SHEET_ID || !SA_PATH || !fs.existsSync(SA_PATH)) return null;
   try {
-    const { google } = require('googleapis');
+    const { createSheets } = require('../lib/sheets-http');
     const creds = JSON.parse(fs.readFileSync(SA_PATH, 'utf8'));
     googleSheetsClient = {
       sheetId: SHEET_ID,
-      sheets: google.sheets({
-        version: 'v4',
-        auth: new google.auth.GoogleAuth({
-          credentials: creds,
-          scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-        }),
-      }),
+      sheets: createSheets(creds),
     };
     return googleSheetsClient;
   } catch (err) {
