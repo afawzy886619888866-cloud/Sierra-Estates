@@ -594,7 +594,12 @@ export default function LiveMap({
 }: LiveMapProps) {
   const isAr = lang === 'ar';
   // Default to Google Hybrid for rich satellite + road overlays
-  const [tileStyle, setTileStyle] = useState<MapTileStyle>('google-hybrid');
+  // Auto-dark: default the basemap to the Carto dark style when the shell
+  // renders in dark mode, so the map never flashes a light basemap inside a
+  // dark theme. Users can still switch styles from the layer panel.
+  const [tileStyle, setTileStyle] = useState<MapTileStyle>(
+    () => (mode === 'dark' ? 'dark' : 'google-hybrid'),
+  );
   const [zoom, setZoom] = useState(12);
   const [currentCenter, setCurrentCenter] = useState<[number, number]>(centerCoords || NEW_CAIRO_DEFAULT_CENTER);
   const [legendOpen, setLegendOpen] = useState(true);
