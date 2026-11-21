@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronRequest } from '@/lib/server/cron-auth';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,6 +19,23 @@ export async function GET(req: NextRequest) {
   try {
     const { sweepTimeouts } = await import('@/lib/services/AvailabilitySessionStore');
     const result = await sweepTimeouts();
+    // Super Broker Memory: the availability engine remembers the SLA sweep
+    // (lazy import keeps this cold start light, mirroring the sweep above).
+    try {
+      const { soulRemember } = await import('@/lib/memory/broker-soul');
+      await soulRemember({
+        agent: 'availability-engine',
+        kind: 'event',
+        scope: 'global',
+        subject: 'availability-sla',
+        content: `SLA sweep marked ${result.expiredUnitsCount} unresponsive unit(s) unavailable across ${result.updatedSessions} session(s).`,
+        importance: result.expiredUnitsCount > 0 ? 3 : 2,
+        confidence: 0.9,
+        source: 'cron/check-availability-sla',
+      });
+    } catch (soulErr) {
+      logger.warn('[cron/check-availability-sla] Soul remember skipped:', (soulErr as Error).message);
+    }
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),

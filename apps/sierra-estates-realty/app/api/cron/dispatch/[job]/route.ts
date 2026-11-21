@@ -70,6 +70,7 @@ const JOB_HANDLERS: Record<string, () => Promise<{ GET: (req: NextRequest) => Pr
     'whatsapp-dispatch': () => import('../../whatsapp-dispatch/route'),
     'apply-migrations': () => import('../../apply-migrations/route'),
     'llm-catalog-refresh': () => import('../../llm-catalog-refresh/route'),
+    'memory-consolidation': () => import('../../memory-consolidation/route'),
     'price-index': () => import('../../price-index/route'),
 };
 

@@ -113,6 +113,12 @@ export const AUTOMATION_JOBS: readonly AutomationJob[] = [
         dedupeHours: 6,
         description: 'Monthly Sierra Price Index snapshot (1st of the month, 04:15 UTC). The monthly cadence lives in the schedule; dedupe only guards dispatch races — recordMonthlySnapshot upserts per YYYY-MM period, so a re-run is idempotent.',
     },
+    {
+        name: 'memory-consolidation',
+        window: null,
+        dedupeHours: 12,
+        description: 'Super Broker Memory growth pass: distills the period\'s entries into a digest + durable insights (LLM-routed via the free-provider router when enabled, stats-only otherwise). Dispatched via the 25 */3 automations window or Admin → Super Broker Memory.',
+    },
 ];
 
 export function getAutomationJob(name: string): AutomationJob | undefined {
