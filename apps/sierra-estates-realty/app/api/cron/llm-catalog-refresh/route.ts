@@ -21,6 +21,23 @@ export async function GET(req: NextRequest) {
 
     try {
         const summary = await refreshCatalog();
+        // Super Broker Memory: the router remembers its fleet health so other
+        // agents recall which free providers are alive before routing.
+        try {
+            const { soulRemember } = await import('@/lib/memory/broker-soul');
+            await soulRemember({
+                agent: 'llm-router',
+                kind: 'event',
+                scope: 'global',
+                subject: 'llm-fleet-health',
+                content: `Catalog refresh: ${summary.ok}/${summary.checked} free providers healthy, ${summary.totalModels} models discovered${summary.failed ? `, ${summary.failed} failed` : ''}.`,
+                importance: 2,
+                confidence: 0.95,
+                source: 'cron/llm-catalog-refresh',
+            });
+        } catch (soulErr) {
+            logger.warn('[cron/llm-catalog-refresh] Soul remember skipped:', (soulErr as Error).message);
+        }
         return NextResponse.json({
             success: true,
             timestamp: new Date().toISOString(),

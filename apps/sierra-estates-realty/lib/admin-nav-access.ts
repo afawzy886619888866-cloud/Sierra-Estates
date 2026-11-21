@@ -79,6 +79,7 @@ export const NAV_REQUIRED_PERMISSIONS: Readonly<Record<string, readonly string[]
   deployment: ['settings:write'],
   api_gateway: ['settings:write'],
   llm_router: ['settings:write'],
+  super_broker_memory: ['automation:read'],
   settings: ['settings:write'],
 
   // Analytics

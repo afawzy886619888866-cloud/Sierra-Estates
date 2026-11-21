@@ -10,6 +10,7 @@ import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
+import { soulRemember } from '@/lib/memory/broker-soul';
 import {
   buildCanonicalPayloadFromParsed,
   upsertCanonicalListing,
@@ -222,6 +223,26 @@ export async function POST(req: NextRequest) {
         logger.info(
           `[WhatsApp Ingest] Canonical ${canonical.action} for fingerprint ${canonical.fingerprint}`,
         );
+        // Super Broker Memory: the ingest engine remembers what it saw so
+        // every other agent recalls the listing signal. Subject stays abstract
+        // (fingerprint/code) — no phone numbers (privacy lock ③).
+        try {
+          await soulRemember({
+            agent: 'whatsapp-ingest',
+            kind: 'observation',
+            scope: 'unit',
+            subject: `listing:${canonical.fingerprint}`,
+            content:
+              `WhatsApp listing ${canonical.action}: ${parsed.compound || 'compound unspecified'}, ` +
+              `${parsed.bedrooms || 0}BR, ${parsed.price || 'price unspecified'} ${parsed.currency || 'EGP'}.`,
+            importance: 3,
+            confidence: 0.75,
+            source: 'whatsapp-station',
+            metadata: { canonicalAction: canonical.action, fingerprint: canonical.fingerprint },
+          });
+        } catch (soulErr) {
+          logger.warn('[WhatsApp Ingest] Soul remember skipped:', (soulErr as Error).message);
+        }
       }
     }
     

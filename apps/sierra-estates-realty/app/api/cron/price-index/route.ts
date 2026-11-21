@@ -38,6 +38,24 @@ export async function GET(req: NextRequest) {
       logger.warn({ err }, '[PriceIndexCron] Non-blocking activity record failure');
     });
 
+    // Super Broker Memory: pricing knowledge is core broker knowledge — the
+    // price-index engine remembers each snapshot on the shared spine.
+    try {
+      const { soulRemember } = await import('@/lib/memory/broker-soul');
+      await soulRemember({
+        agent: 'price-index-engine',
+        kind: 'event',
+        scope: 'global',
+        subject: `price-index:${nowPeriod}`,
+        content: `Sierra Price Index ${nowPeriod}: ${index.marketSummary.totalTrackedCompounds} compounds tracked, market average ${index.marketSummary.avgPricePerSqm.toLocaleString()} EGP/m².`,
+        importance: 4,
+        confidence: 0.95,
+        source: 'cron/price-index',
+      });
+    } catch (soulErr: unknown) {
+      logger.warn({ err: soulErr }, '[PriceIndexCron] Soul remember skipped');
+    }
+
     return NextResponse.json({
       success: true,
       period: nowPeriod,
