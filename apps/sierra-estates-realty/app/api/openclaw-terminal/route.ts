@@ -128,6 +128,30 @@ export function resolveProviderCandidates() {
 }
 
 /**
+ * FULL candidate chain (freellmapi integration, 2026-11-20): admin-configured
+ * free providers from the agent LLM router (agent_llm_providers, editable in
+ * Admin → LLM Router) come FIRST — operator intent outranks env defaults —
+ * then the legacy env chain above as fallback. Best-effort: a DB/cache
+ * failure degrades to the env chain only.
+ */
+export async function resolveAllCandidates(): Promise<Array<{ provider: string; apiKey: string; model: string; baseUrl: string }>> {
+  const legacy = resolveProviderCandidates();
+  try {
+    const { resolveCandidates } = await import("@/lib/llm/agent-router");
+    const routerCandidates = (await resolveCandidates()).map(({ provider, apiKey, baseUrl }) => ({
+      provider: `router:${provider.slug}`,
+      apiKey: apiKey || "",
+      model: process.env.OPENCLAW_MODEL || provider.default_model || (provider.models?.[0]?.id ?? "gemini-2.5-flash"),
+      baseUrl,
+    }));
+    return [...routerCandidates, ...legacy];
+  } catch (err) {
+    console.warn(`[openclaw-terminal] router candidates unavailable — env chain only: ${(err as Error).message}`);
+    return legacy;
+  }
+}
+
+/**
  * Grounding context injected ahead of the prompt: real pgvector listing
  * matches + (when configured) Tavily web hits. Every failure mode degrades
  * to less context — the grounding is best-effort and NEVER fabricated
@@ -181,12 +205,12 @@ async function buildGrounding(prompt: string): Promise<string> {
 }
 
 async function callLLM(prompt: string, grounding = ""): Promise<{ reply: string; diff?: string }> {
-  const candidates = resolveProviderCandidates();
+  const candidates = await resolveAllCandidates();
 
   if (candidates.length === 0) {
     return {
       reply:
-        "OpenClaw LLM key is not configured in this environment. Bind `GEMINI_API_KEY` (recommended) or `OPENCLAW_API_KEY` in Cloudflare Worker secrets / `.env.local`.",
+        "OpenClaw LLM key is not configured in this environment. Enable a free provider in Admin → LLM Router (freellmapi integration) and set its env key, or bind `GEMINI_API_KEY` / `OPENCLAW_API_KEY` in Cloudflare Worker secrets / `.env.local`.",
     };
   }
 
@@ -258,7 +282,7 @@ export async function GET() {
       provider,
       model,
       configured: Boolean(apiKey),
-      failoverChain: resolveProviderCandidates().map((c) => c.provider),
+      failoverChain: (await resolveAllCandidates()).map((c) => c.provider),
       engines: {
         memory: true,
         ragAndGis: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),

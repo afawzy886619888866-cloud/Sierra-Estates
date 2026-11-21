@@ -75,7 +75,7 @@ jobs:
           SCHEDULE=$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
           case "${SCHEDULE}" in
             '10 * * * *')    TARGET='whatsapp-dispatch' ;;
-            '25 */3 * * *')  TARGET='lead-timers,check-availability-sla' ;;
+            '25 */3 * * *')  TARGET='lead-timers,check-availability-sla,llm-catalog-refresh' ;;
             '10 2 * * *')    TARGET='night' ;;
             '10 6 * * *')    TARGET='morning' ;;
             '10 10 * * *')   TARGET='sync-leads' ;;
