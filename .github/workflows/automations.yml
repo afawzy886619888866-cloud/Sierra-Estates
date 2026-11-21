@@ -44,6 +44,8 @@ on:
     - cron: '10 6 * * *'
     # Daily sync leads (10:10 UTC = 12:10 Cairo)
     - cron: '10 10 * * *'
+    # Monthly price-index snapshot (04:15 UTC on the 1st = 06:15 Cairo)
+    - cron: '15 4 1 * *'
   workflow_call:
     secrets:
       CRON_SECRET:
@@ -79,6 +81,7 @@ jobs:
             '10 2 * * *')    TARGET='night' ;;
             '10 6 * * *')    TARGET='morning' ;;
             '10 10 * * *')   TARGET='sync-leads' ;;
+            '15 4 1 * *')    TARGET='price-index' ;;
             '')              TARGET="${INPUT_TARGET:-night}" ;;
             *)               echo "Unmapped schedule: ${SCHEDULE}" >&2; exit 1 ;;
           esac
