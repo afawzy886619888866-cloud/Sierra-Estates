@@ -34,7 +34,7 @@ const rememberSchema = z.object({
         importance: z.number().int().min(1).max(5).optional(),
         scope: z.enum(['global', 'client', 'unit', 'owner', 'broker', 'agent']).optional(),
         source: z.string().max(120).nullable().optional(),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
     }),
 });
 

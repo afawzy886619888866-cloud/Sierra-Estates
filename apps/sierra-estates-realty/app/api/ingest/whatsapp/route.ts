@@ -234,8 +234,7 @@ export async function POST(req: NextRequest) {
             subject: `listing:${canonical.fingerprint}`,
             content:
               `WhatsApp listing ${canonical.action}: ${parsed.compound || 'compound unspecified'}, ` +
-              `${parsed.bedrooms || 0}BR, ${parsed.price || 'price unspecified'} ${parsed.currency || 'EGP'}, ` +
-              `unit ${listing.extractedData?.sierraCode || 'code pending'}.`,
+              `${parsed.bedrooms || 0}BR, ${parsed.price || 'price unspecified'} ${parsed.currency || 'EGP'}.`,
             importance: 3,
             confidence: 0.75,
             source: 'whatsapp-station',
