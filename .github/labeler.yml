@@ -47,7 +47,7 @@
     - any-glob-to-any-file:
       - 'infra/**'
       - 'docker-compose*.yml'
-      - 'vercel.json'
+      - 'deploy/**'
 
 'api':
   - changed-files:

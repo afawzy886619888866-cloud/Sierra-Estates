@@ -28,3 +28,5 @@ export { default as AccessApprovalsView } from './AccessApprovalsView';
 export { default as AdminInventoryTable } from './AdminInventoryTable';
 export { default as InvenTreeHubView } from './InvenTreeHubView';
 export { default as OwnerFeedbackRegistryView } from './OwnerFeedbackRegistryView';
+export { default as WhatsAppStationView } from './WhatsAppStationView';
+export { default as ListingWaitingListView } from './ListingWaitingListView';
