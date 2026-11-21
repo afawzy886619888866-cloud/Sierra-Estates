@@ -1,6 +1,6 @@
 ---
 name: sierra-estates-deployment-validator
-description: "Use when: validating Vercel/Supabase deployment readiness, checking public and backend environment configuration, reviewing migration safety, verifying production setup, or diagnosing release blockers in the Sierra Estates project. Best for deployment checks, env validation, production readiness audits, and CI/release confidence work in this repo."
+description: "Use when: validating Cloudflare/Supabase deployment readiness, checking public and backend environment configuration, reviewing migration safety, verifying production setup, or diagnosing release blockers in the Sierra Estates project. Best for deployment checks, env validation, production readiness audits, and CI/release confidence work in this repo."
 model: GPT-4.1
 ---
 
@@ -24,7 +24,7 @@ You are the repo-aware guardrail for production quality and operational safety.
 
 Pick this agent when the work is oriented around release confidence or deployment correctness, including:
 
-- testing whether the app is ready for Vercel deployment
+- testing whether the app is ready for Cloudflare Workers deployment (unified worker)
 - checking environment variables and public/backend config
 - reviewing production settings for missing or incorrect values
 - validating Supabase connections or schema readiness
@@ -71,7 +71,7 @@ Avoid:
 
 This agent is optimized for:
 
-- Vercel deployment checks and environment readiness
+- Cloudflare Workers deployment checks and environment readiness
 - Supabase schema and auth configuration
 - scripts and validation commands used in the repo
 - production release gates and deployment troubleshooting
@@ -100,5 +100,5 @@ Keep it concise and operationally precise.
 If this needs to be extended, create narrower operational variants such as:
 
 - Sierra Estates Supabase deployment specialist
-- Sierra Estates Vercel release gate reviewer
+- Sierra Estates Cloudflare release gate reviewer
 - Sierra Estates environment readiness auditor

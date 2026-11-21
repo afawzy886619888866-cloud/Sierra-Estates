@@ -8,7 +8,7 @@
 
 ## Deployment & architecture policy ([DEPLOYMENT.md](../DEPLOYMENT.md))
 
-- [ ] No heavy/long-running work added to a Next.js request or Vercel function (scrapers/agents/bulk sends run on a worker — Cloud Run / n8n / Actions).
+- [ ] No heavy/long-running work added to a Next.js request or Cloudflare Worker request (scrapers/agents/bulk sends run on the runner host / n8n / Actions).
 - [ ] Admin changes (if any) stay in `apps/sierra-estates-realty/app/admin/` — no second admin UI.
 - [ ] No secrets/service-account JSON committed; new env vars documented in `*.env.example` only.
 - [ ] New app/service (if any) classified per §7 and **registered in the DEPLOYMENT.md matrix + CLAUDE.md**.
@@ -22,4 +22,4 @@
 
 ## Deploy impact
 
-<!-- e.g. "auto-deploys to Vercel prod on merge", "needs `firebase deploy` after", "Cloud Run only", "docs only — no deploy" -->
+<!-- e.g. "auto-deploys to Cloudflare (unified worker) on merge", "needs Supabase migration applied", "runner-host only", "docs only — no deploy" -->

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import fs from 'node:fs';
 import path from 'node:path';
-import snapshot from '@/lib/inventory/snapshot.json';
+import { loadSnapshotUnits } from '@/lib/inventory/snapshot-lazy';
 
 const SITE_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net';
 
@@ -33,7 +33,7 @@ function readWhatsAppIngestedUnits(): any[] {
  * live catalog listing (from the committed snapshot, which the prebuild
  * `ensure-snapshot` step refreshes from the master sheet).
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -58,8 +58,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/ar/virtual-tour`, changeFrequency: 'monthly', priority: 0.3, lastModified: now },
   ];
 
-  // Live catalog listing pages
-  const snapUnits: any[] = (snapshot as any)?.units || [];
+  // Live catalog listing pages — snapshot loaded lazily (6.7 MB JSON is far
+  // too heavy to instantiate during cold-isolate module init; that cost made
+  // /sitemap.xml the deterministic 500 in production-smoke, 2026-11-20).
+  const snapUnits: any[] = await loadSnapshotUnits();
   const waUnits: any[] = readWhatsAppIngestedUnits();
   const liveUnits = [
     ...waUnits.map((u) => ({ ...u, code: u.sierraCode || u.code || u.id })),
