@@ -151,6 +151,7 @@ const SCRIPTS = {
   'daily-outreach-report': 'lib/daily-outreach-report.js',
   'broker-sync': '20-broker-sync/sync.js',
   'usb-phone-harvester': '21-usb-phone-harvester/index.js',
+  'whatsapp-station': '22-whatsapp-station/index.js',
   'outreach-2h-digest': 'lib/two-hour-outreach-digest.js',
   'gemini-property-classifier': '02-gemini-property-classifier/index.js',
   'media-harvester': '03-media-harvester/index.js',

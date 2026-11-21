@@ -48,6 +48,8 @@ export const NAV_REQUIRED_PERMISSIONS: Readonly<Record<string, readonly string[]
   pipeline: ['leads:read:all'],
   tasks: ['leads:read:all'],
   owner_feedback: ['inventory:write'],
+  whatsapp_station: ['campaigns:write', 'inventory:write'],
+  listing_waiting_list: ['inventory:write'],
   inventory_os: ['inventory:read'],
   inventree_hub: ['inventory:read'],
   masterplan_gis: ['inventory:read'],

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logger } from '@/lib/logger';
 import { scheduleViewing } from './viewing-engine';
+import { loadSnapshotUnits } from '@/lib/inventory/snapshot-lazy';
 import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
 import {
   SESSIONS_STORE_KEY,
@@ -40,12 +41,21 @@ export class AvailabilityVerificationService {
   }
 
   /**
-   * Look up unit details from the inventory snapshot (lazy-loaded: the 6.7 MB
-   * snapshot must not be parsed on module import — cold-start CPU cap).
+   * Look up unit details from the committed snapshot. The snapshot is
+   * loaded LAZILY (loadSnapshotUnits) — never statically at module init,
+   * which blew the cold-isolate startup budget (error 1101 on the
+   * check-availability-sla cron). Call `ensureUnitIndex()` before relying
+   * on this method.
    */
-  public static async findUnitById(unitId: string): Promise<any | null> {
-    const snapshot = (await import('@/lib/inventory/snapshot.json')).default;
-    const rawUnits: any[] = (snapshot as any)?.units || [];
+  private static unitIndex: any[] | null = null;
+
+  public static async ensureUnitIndex(): Promise<any[]> {
+    if (!this.unitIndex) this.unitIndex = await loadSnapshotUnits();
+    return this.unitIndex;
+  }
+
+  public static findUnitById(unitId: string): any | null {
+    const rawUnits: any[] = this.unitIndex || [];
     const found = rawUnits.find(
       (u) => u.id === unitId || u.code === unitId || String(u.id) === String(unitId)
     );
@@ -122,6 +132,9 @@ export class AvailabilityVerificationService {
     if (!unitIds || unitIds.length === 0) {
       throw new Error('Selection Net is empty. Please select at least 1 unit.');
     }
+
+    // Load the (lazily imported) catalog index before unit lookups below.
+    await this.ensureUnitIndex();
 
     if (unitIds.length > this.MAX_UNITS_LIMIT) {
       throw new Error(
