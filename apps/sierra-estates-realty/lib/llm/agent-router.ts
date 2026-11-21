@@ -204,11 +204,75 @@ function bustCache(): void {
     cache = null;
 }
 
+const VALID_KINDS = new Set<ProviderRow['kind']>([
+    'openai-compat',
+    'gemini-openai',
+    'freellmapi-upstream',
+    'cloudflare-ai',
+]);
+
+/**
+ * Normalizes rows returned by `@sierra-estates/db` (`toRecord` converts
+ * snake_case Postgres columns to camelCase) back into the canonical
+ * `ProviderRow` shape expected by the router, admin UI, and model endpoints.
+ */
+export function normalizeProviderRow(raw: Record<string, unknown>): ProviderRow {
+    const rawKind = typeof raw.kind === 'string' ? raw.kind : 'openai-compat';
+    const kind: ProviderRow['kind'] = VALID_KINDS.has(rawKind as ProviderRow['kind'])
+        ? (rawKind as ProviderRow['kind'])
+        : 'openai-compat';
+
+    const baseUrlRaw = raw.base_url ?? raw.baseUrl;
+    const apiKeyEnvRaw = raw.api_key_env ?? raw.apiKeyEnv;
+    const defaultModelRaw = raw.default_model ?? raw.defaultModel;
+
+    const rawModels = Array.isArray(raw.models) ? raw.models : [];
+    const models: ProviderRow['models'] = rawModels
+        .filter((m): m is Record<string, unknown> => Boolean(m && typeof m === 'object'))
+        .map((m) => {
+            const ownedBy = m.owned_by ?? m.ownedBy;
+            return {
+                id: typeof m.id === 'string' ? m.id : String(m.id ?? ''),
+                ...(typeof ownedBy === 'string' && ownedBy.length > 0 ? { owned_by: ownedBy } : {}),
+            };
+        })
+        .filter((m) => m.id.length > 0);
+
+    const rawHealth = raw.health && typeof raw.health === 'object' ? (raw.health as Record<string, unknown>) : {};
+    const statusRaw = rawHealth.status;
+    const latencyRaw = rawHealth.latencyMs ?? rawHealth.latency_ms;
+    const checkedAtRaw = rawHealth.checkedAt ?? rawHealth.checked_at;
+    const lastErrorRaw = rawHealth.lastError ?? rawHealth.last_error;
+
+    const health: ProviderRow['health'] = {
+        ...(statusRaw === 'ok' || statusRaw === 'error' ? { status: statusRaw } : {}),
+        ...(typeof latencyRaw === 'number' ? { latencyMs: latencyRaw } : {}),
+        ...(typeof checkedAtRaw === 'string' ? { checkedAt: checkedAtRaw } : {}),
+        ...(typeof lastErrorRaw === 'string' ? { lastError: lastErrorRaw } : {}),
+    };
+
+    return {
+        id: typeof raw.id === 'number' ? raw.id : Number(raw.id ?? 0),
+        slug: typeof raw.slug === 'string' ? raw.slug : String(raw.slug ?? ''),
+        label: typeof raw.label === 'string' ? raw.label : String(raw.label ?? raw.slug ?? ''),
+        kind,
+        base_url: typeof baseUrlRaw === 'string' ? baseUrlRaw : '',
+        api_key_env: typeof apiKeyEnvRaw === 'string' && apiKeyEnvRaw.length > 0 ? apiKeyEnvRaw : null,
+        default_model: typeof defaultModelRaw === 'string' && defaultModelRaw.length > 0 ? defaultModelRaw : null,
+        enabled: Boolean(raw.enabled),
+        priority: typeof raw.priority === 'number' ? raw.priority : Number(raw.priority ?? 100),
+        models,
+        health,
+        ...(typeof raw.notes === 'string' ? { notes: raw.notes } : {}),
+    };
+}
+
 export async function listProviders(force = false): Promise<ProviderRow[]> {
     if (!force && cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.rows;
     let rows: ProviderRow[] = [];
     try {
-        rows = (await listRecords<ProviderRow>(TABLE, { orderBy: { column: 'priority', ascending: true } })) as ProviderRow[];
+        const rawRows = await listRecords<Record<string, unknown>>(TABLE, { orderBy: { column: 'priority', ascending: true } });
+        rows = rawRows.map(normalizeProviderRow);
     } catch (err) {
         // Table missing (migration not applied yet) — fall through to seed so
         // routing can still work from static config.
@@ -219,7 +283,7 @@ export async function listProviders(force = false): Promise<ProviderRow[]> {
     for (const seed of AGENT_LLM_SEED) {
         if (known.has(seed.slug)) continue;
         try {
-            const inserted = (await insertRecord<ProviderRow>(TABLE, {
+            const inserted = await insertRecord<Record<string, unknown>>(TABLE, {
                 slug: seed.slug,
                 label: seed.label,
                 kind: seed.kind,
@@ -231,8 +295,8 @@ export async function listProviders(force = false): Promise<ProviderRow[]> {
                 models: [],
                 health: {},
                 notes: seed.notes,
-            })) as ProviderRow;
-            rows.push(inserted);
+            });
+            rows.push(normalizeProviderRow(inserted));
         } catch (err) {
             logger.warn(`[llm-router] seed insert ${seed.slug} failed: ${(err as Error).message}`);
         }
@@ -256,7 +320,7 @@ export function resolveApiKey(provider: ProviderRow): string | undefined {
 }
 
 function resolveBaseUrl(provider: ProviderRow): string {
-    return provider.base_url
+    return (provider.base_url || '')
         .replace('{FREELLMAPI_UPSTREAM_URL}', (process.env.FREELLMAPI_UPSTREAM_URL || '').replace(/\/$/, ''))
         .replace('{CLOUDFLARE_ACCOUNT_ID}', process.env.CLOUDFLARE_ACCOUNT_ID || '');
 }
