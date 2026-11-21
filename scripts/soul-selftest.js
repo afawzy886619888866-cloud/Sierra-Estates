@@ -89,8 +89,11 @@ check('engine hook: llm-router remembers fleet health', !!catalog && /llm-fleet-
 // 7. Secrets hygiene — no literal credentials anywhere in the Soul
 const soulFiles = [
   'apps/sierra-estates-realty/lib/memory/broker-soul.ts',
+  'apps/sierra-estates-realty/lib/server/agent-bearer.ts',
   'apps/sierra-estates-realty/app/api/admin/soul/route.ts',
   'apps/sierra-estates-realty/app/api/agents/soul/route.ts',
+  'apps/sierra-estates-realty/app/api/agents/openclaw/v1/chat/completions/route.ts',
+  'apps/sierra-estates-realty/app/api/agents/openclaw/v1/models/route.ts',
   'apps/sierra-estates-realty/app/api/cron/memory-consolidation/route.ts',
   'apps/sierra-estates-realty/app/admin/views/SuperBrokerMemoryView.tsx',
   'supabase/migrations/20261120_054_super_broker_memory.sql',
@@ -102,6 +105,20 @@ for (const f of soulFiles) {
   if (content && secretPattern.test(content)) { secretsClean = false; console.log(`        secret-pattern hit in ${f}`); }
 }
 check('no literal secrets in Soul files', secretsClean);
+
+// 8. OpenClaw gateway — OpenAI-compatible API for the user's OpenClaw agent
+const bearer = read('apps/sierra-estates-realty/lib/server/agent-bearer.ts');
+check('agent bearer auth helper exists (SBR_SECRET_KEY, constant-time)', !!bearer && /verifyBearerSecret/.test(bearer) && /timingSafeEqual/.test(bearer) && /SBR_SECRET_KEY/.test(bearer));
+const ocChat = read('apps/sierra-estates-realty/app/api/agents/openclaw/v1/chat/completions/route.ts');
+check('OpenClaw chat/completions route exists (OpenAI-compatible)', !!ocChat && /chat\.completion/.test(ocChat) && /choices/.test(ocChat));
+check('OpenClaw gateway is bearer-guarded (never a real LLM key)', !!ocChat && /verifyBearerSecret/.test(ocChat));
+check('OpenClaw gateway routes through the free-provider LLM router', !!ocChat && /routeChatCompletion/.test(ocChat) && /agent: 'openclaw'/.test(ocChat));
+check('OpenClaw gateway injects Soul memory before answering', !!ocChat && /soulContext/.test(ocChat));
+check('OpenClaw gateway remembers the exchange on the spine', !!ocChat && /soulRemember/.test(ocChat) && /'openclaw'/.test(ocChat));
+check('OpenClaw gateway enforces the privacy lock on user content', !!ocChat && /looksLikePhone/.test(ocChat) && /422/.test(ocChat));
+check('OpenClaw gateway is non-streaming (honest 400 on stream:true)', !!ocChat && /stream/.test(ocChat) && /non-streaming only/.test(ocChat));
+const ocModels = read('apps/sierra-estates-realty/app/api/agents/openclaw/v1/models/route.ts');
+check('OpenClaw models route exists (soul-auto + enabled defaults)', !!ocModels && /soul-auto/.test(ocModels) && /listProviders/.test(ocModels));
 
 console.log(`\n=== RESULT: ${pass} PASS / ${fail} FAIL ===\n`);
 process.exit(fail ? 1 : 0);
